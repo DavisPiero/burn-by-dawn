@@ -17,6 +17,18 @@ export function neighbors(q, r) {
   return NEIGHBOR_DIRS.map((d) => ({ q: q + d.q, r: r + d.r }));
 }
 
+// The q value a rectangular map's row r should start from. Because axial
+// pixel-x has a built-in shear (see axialToPixel), a naive q in [0, width)
+// on every row draws a parallelogram, not a rectangle. Shifting each row's
+// starting q by -floor(r/2) cancels that shear so the map's bounding box
+// renders as a rectangle (with the usual half-hex zigzag on the left/right
+// edges). Hexes are still addressed by their true (q, r) — this only picks
+// which (q, r) pairs belong to a rectangular map; it is not an offset
+// coordinate system (SPEC.md §2 forbids that for game logic, not this).
+export function rowQStart(r) {
+  return -Math.floor(r / 2);
+}
+
 // Axial to pixel, size = hex circumradius. SPEC.md §2.
 export function axialToPixel(q, r, size) {
   return {
