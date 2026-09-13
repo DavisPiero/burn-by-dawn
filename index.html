@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Night Drop</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #1a1a18;
+      color: #e8e8e8;
+      font-family: system-ui, sans-serif;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      min-width: 1280px;
+      min-height: 800px;
+      box-sizing: border-box;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    #coord-readout {
+      font-family: monospace;
+      font-size: 14px;
+    }
+    #board {
+      width: 100%;
+      max-width: 1400px;
+      height: auto;
+      background: #2a2a26;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>NIGHT DROP — M0: hex grid</h1>
+    <div id="coord-readout">No hex selected — click one.</div>
+    <svg id="board"></svg>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
