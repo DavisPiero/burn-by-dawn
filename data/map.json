@@ -1,0 +1,36 @@
+{
+  "_comment": "The map. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i (see src/hex.js). Terrain ids must exist in data/terrain.json. Objectives and patrol routes land at M4/M5.",
+  "name": "Night Drop — first pass",
+  "width": 18,
+  "height": 13,
+  "hexSize": 46,
+  "legend": {
+    "F": "field",
+    "T": "track",
+    "H": "hedgerow",
+    "W": "wood",
+    "O": "orchard",
+    "M": "marsh",
+    "C": "canal",
+    "R": "ridge",
+    "B": "farmhouse",
+    "E": "emplacement",
+    "X": "bridge",
+    "L": "lock"
+  },
+  "rows": [
+    "WWWFFHFFTFFHCFFOOF",
+    "WWRFFHFFTFFHCFFOOF",
+    "WRRFFHFFTFFHCFBBFF",
+    "WRRFHHFFTFFHCFBBFF",
+    "WWRFHFFHTFFMCFFTFF",
+    "FWRFHFFHTFFMCFETFF",
+    "FWRFHFFTTTTXXXTTFF",
+    "FFRFHFFHFFFMCFFHFF",
+    "FFFOHFBHFFFMCFFHFF",
+    "FFOOHHHHFFFMCFFHFF",
+    "FEFOFFFHFFFMCCFFFF",
+    "FFFFFFFHFFFMMCCFFF",
+    "FFFFFFFFFFFMMLCCFF"
+  ]
+}
