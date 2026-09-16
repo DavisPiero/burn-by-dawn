@@ -1,0 +1,23 @@
+{
+  "_comment": "Balance numbers. Never hardcode any of these in logic (CLAUDE.md rule 5). M2 needs the turn clock and the AP pools; detection thresholds, vision radii, fuse lengths and charge counts arrive with M4/M5.",
+
+  "turnLimit": 20,
+
+  "minimumStep": true,
+  "_minimumStep": "A unit at FULL action points may always move one hex, even into terrain that costs more than its whole pool, spending everything it has. Without this a 2 AP sapper can never enter a 3 AP marsh hex, which locks two thirds of the roster out of the canal towpath approach (SPEC.md §8). Unused AP is still never banked (SPEC.md §4).",
+
+  "roles": {
+    "sapper": {
+      "label": "Sapper",
+      "actionPoints": 2
+    },
+    "scout": {
+      "label": "Scout",
+      "actionPoints": 3
+    },
+    "gunner": {
+      "label": "Gunner",
+      "actionPoints": 2
+    }
+  }
+}
