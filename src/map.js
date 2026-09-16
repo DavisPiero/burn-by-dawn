@@ -183,7 +183,7 @@ function validateEnemies(map, types, mapUrl, enemiesUrl) {
     standing.set(key, `enemies[${i}]`);
   });
 
-  // The reserve squad of SPEC.md §6, which enters from the road edge at Stand-To.
+  // The reserve squad of SPEC.md §6, which enters from the road edge at Alarmed.
   const reserve = map.reserve;
   if (!reserve) throw new Error(`${mapUrl}: needs a "reserve" object`);
   const where = `${mapUrl}: reserve`;

@@ -28,7 +28,7 @@
       "route": [[-3, 9], [0, 6]] }
   ],
 
-  "_reserve": "The Stand-To reserve squad (SPEC.md §6). It enters once, on the first free entryHexes hex, the first enemy phase the alert is at Stand-To. The road leaves the map at the north edge, so that is where it comes in.",
+  "_reserve": "The reserve squad (SPEC.md §6). It enters once, on the first free entryHexes hex, the first enemy phase the alert is at Alarmed. The road leaves the map at the north edge, so that is where it comes in.",
   "reserve": { "id": "reserve", "label": "Reserve squad", "type": "reserve", "facing": "SE", "entryHexes": [[8, 0], [8, 1], [7, 1]] },
 
   "legend": {

@@ -68,7 +68,7 @@ export function alertStateOf(points, rules) {
 }
 
 /**
- * Raise the alert. Points cap at the top state's threshold: past Stand-To
+ * Raise the alert. Points cap at the top state's threshold: past Alarmed
  * there is nowhere left to go, and uncapped points would make decay take
  * several quiet spells to shift a single step. Any raise, even one the cap
  * swallows, spoils the turn for decay.
@@ -240,9 +240,9 @@ function pushAlertChange(events, before, after, rules) {
  *
  *   Calm        walk the route.
  *   Suspicious  walk, but stop and sweep every `suspiciousPauseEvery`-th turn.
- *   Alarmed     the `alarmedConverge` nearest moving enemies head for the last
+ *   Alert       the `alertConverge` nearest moving enemies head for the last
  *               known contact; the rest walk.
- *   Stand-To    every moving enemy heads for it, and the reserve squad enters.
+ *   Alarmed     every moving enemy heads for it, and the reserve squad enters.
  *
  * Whoever reaches the contact sweeps, the contact is marked searched, and from
  * the next phase everyone goes back to their route. Enemies move one at a time
@@ -254,7 +254,7 @@ export function runEnemyPhase(state, map, rules) {
   let enemies = state.enemies;
   let reserveDeployed = state.reserveDeployed;
 
-  if (stateId === 'standTo' && !reserveDeployed) {
+  if (stateId === 'alarmed' && !reserveDeployed) {
     const placed = deployReserve(map, state.units, enemies);
     if (placed) {
       enemies = [...enemies, placed];
@@ -297,13 +297,13 @@ export function runEnemyPhase(state, map, rules) {
 function chooseHunters(enemies, contact, stateId, rules) {
   if (!contact || contact.searched) return new Set();
   const mobile = enemies.filter((e) => e.speed > 0);
-  if (stateId === 'standTo') return new Set(mobile.map((e) => e.id));
-  if (stateId !== 'alarmed') return new Set();
+  if (stateId === 'alarmed') return new Set(mobile.map((e) => e.id));
+  if (stateId !== 'alert') return new Set();
   // Nearest by hex distance; Array.sort is stable, so ties go to data order.
   return new Set(
     [...mobile]
       .sort((a, b) => hexDistance(a, contact) - hexDistance(b, contact))
-      .slice(0, rules.patrols.alarmedConverge)
+      .slice(0, rules.patrols.alertConverge)
       .map((e) => e.id),
   );
 }

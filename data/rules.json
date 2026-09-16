@@ -39,17 +39,17 @@
     "states": [
       { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0 },
       { "id": "suspicious", "label": "Suspicious", "from": 2, "visionBonus": 1 },
-      { "id": "alarmed", "label": "Alarmed", "from": 4, "visionBonus": 1 },
-      { "id": "standTo", "label": "Stand-To", "from": 7, "visionBonus": 1 }
+      { "id": "alert", "label": "Alert", "from": 4, "visionBonus": 1 },
+      { "id": "alarmed", "label": "Alarmed", "from": 7, "visionBonus": 1 }
     ]
   },
 
-  "_patrols": "How the alert states move patrols (SPEC.md §6). Suspicious: a patrol stops to sweep on every `suspiciousPauseEvery`-th turn and walks on the others — read literally, 'pause and sweep' would freeze patrols for the rest of the mission once an explosion pins the alert at Suspicious. A sweep turns the patrol `sweepRotation` hex directions (3 is an about-face). Alarmed: the `alarmedConverge` nearest moving enemies head for the last known contact. Stand-To: every moving enemy does. Whoever reaches it sweeps, the contact counts as searched, and everyone goes back to their route.",
+  "_patrols": "How the alert states move patrols (SPEC.md §6). Suspicious: a patrol stops to sweep on every `suspiciousPauseEvery`-th turn and walks on the others — read literally, 'pause and sweep' would freeze patrols for the rest of the mission once an explosion pins the alert at Suspicious. A sweep turns the patrol `sweepRotation` hex directions (3 is an about-face). Alert: the `alertConverge` nearest moving enemies head for the last known contact. Alarmed: every moving enemy does. Whoever reaches it sweeps, the contact counts as searched, and everyone goes back to their route.",
 
   "patrols": {
     "suspiciousPauseEvery": 2,
     "sweepRotation": 3,
-    "alarmedConverge": 2
+    "alertConverge": 2
   },
 
   "landing": {
