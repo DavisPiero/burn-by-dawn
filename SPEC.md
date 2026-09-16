@@ -313,6 +313,10 @@ back to their route. Enemies out of earshot keep walking; they feel only the dia
 The most recent event hex is the **last known contact** that every patrol hunts at
 Stand-To.
 
+**A repeat is not a new contact.** An event on a hex that enemies are already heading to
+or searching updates that contact instead of starting a new one: nobody new sets off, the
+search is not restarted, and the turn report says it once.
+
 ### Contact and enemy fire
 
 Being spotted is a warning, not a wound:
@@ -470,7 +474,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M2** | Units, selection, movement, AP, end turn, hover path preview | Six counters move, hover shows path and cost, turn counter reaches 20 |
 | **M3** | Trait hook system + the six characters loaded from `roster.json` | All six traits fire; adding a 7th character needs no code |
 | **M4** | Enemies, patrol routes, vision arcs, alert dial, detection readout on hover | Patrols walk, arcs draw, hover shows risk pips |
-| **M5a** | Contact and combat: enemy fire, wounds and death, bodies, hide, suppress, stabilise, noise and hearing | A spotted man can break contact or be shot; two hits kill; hide and suppress change the readout; noise draws only enemies in earshot |
+| **M5a** | Contact and combat: enemy fire, wounds and death, bodies, hide, suppress, stabilise, noise and hearing, repeat sightings folded into the open contact | A spotted man can break contact or be shot; two hits kill; hide and suppress change the readout; noise draws only enemies in earshot; a man seen on the same hex turn after turn is searched and reported once |
 | **M5b** | Charges, fuses, explosions, explosion floor, win/lose, exfil, exfil watched by the reserve | A full mission can be won and lost |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
