@@ -145,6 +145,11 @@ All costs and modifiers below are numbers in `rules.json`.
   not undone: he is still one hit from death. The wound is dressed, not healed.
 - **Pick up a charge** — 1 AP, standing on a hex with a dropped charge (§5), if he can
   carry one.
+- **Throw a stone** (any trooper) — costs **1 AP**. Pick a hex **up to 3 away**; no line
+  of sight needed, it is lobbed. It is a noise event on that hex (§6): **alert +1**, and
+  enemies in earshot react to it — patrols go and look, sentries turn to face it. The
+  trade is deliberate: you choose where they look, and you pay a sighting's worth of alert
+  for it. The hover readout shows which enemies would hear it before the player commits.
 
 ### Desktop interaction (this matters more than it sounds)
 
@@ -293,7 +298,8 @@ cap at Alarmed. One event is not a whole state: a single sighting leaves the gar
 Calm, a second makes it Suspicious.
 
 Raised by: being spotted (+1), gunfire (+2), an explosion (+3), the fuel dump exploding
-(+4, instead of +3), a body found (+1), an abandoned parachute found (+1, see §9).
+(+4, instead of +3), a body found (+1), an abandoned parachute found (+1, see §9), a
+thrown stone (+1, §4 Actions).
 Enemy fire at troopers raises nothing extra — the sighting that caused it already counted.
 
 **Decay:** after 4 quiet turns (no alert raised) the points drop to the start of the
@@ -308,10 +314,17 @@ plus a silently cut telephone line still does; the bridge plus the fuel dump is 
 ### Noise: the dial is global, the reaction is local
 
 Every event that raises the alert happens at a hex and is **heard within a radius** set in
-`rules.json` (starting numbers: spotted 3, parachute or body found 3, gunfire 5,
-explosion 7), plus the current state's hearing bonus. Hearing is distance only; walls do
-not stop sound. Enemies that hear it leave their route, walk to that hex, sweep, and go
-back to their route. Enemies out of earshot keep walking; they feel only the dial.
+`rules.json` (starting numbers: spotted 3, parachute or body found 3, thrown stone 3,
+gunfire 5, explosion 7), plus the current state's hearing bonus. Hearing is distance
+only; walls do not stop sound. Enemies that hear it leave their route, walk to that hex,
+sweep, and go back to their route. Enemies out of earshot keep walking; they feel only
+the dial.
+
+**Sentries cannot leave their post.** A sentry that hears a noise turns to face it in the
+enemy phase instead, and holds that facing through the next player phase and detection
+check; in the enemy phase after that it turns back to its facing in `map.json`. So a stone
+thrown on turn N opens the ground the sentry was watching for turn N+1. The turned facing
+is drawn like any other, so the gap is visible.
 
 The most recent event hex is the **last known contact** that every patrol hunts at
 Alarmed.
@@ -349,10 +362,16 @@ hexes. It is drawn, so the player can see the exit narrowing and route around it
 
 Three objectives, each on a different approach:
 
-1. **Rail bridge over the canal** (PRIMARY) — 2 charges, on separate hexes.
+1. **Rail bridge over the canal** (PRIMARY) — 2 charges, on separate hexes. The charges
+   go on the **piers, placed from the canal banks beside the bridge**, not on the deck:
+   the towpath runs directly under it (§8). The deck is in the bridge post's view every
+   turn; the banks are watched only some turns, so the skill is timing, not luck.
 2. **Telephone exchange, village** (secondary) — 1 charge, or a Scout can cut the line
    silently: slower, raises no alert.
 3. **Fuel dump and tank laager** (secondary) — 1 charge. Largest blast, +4 alert.
+
+Every objective lists its **charge hexes** in `map.json`: the hexes a trooper must stand
+on to place a charge on it. Hovering an objective highlights them (§4).
 
 Placing a charge costs 1 AP and sets a 3-turn fuse by default. Charges can be placed and
 left. A trooper inside the blast radius at detonation dies, wounded or not — hits (§5) do
@@ -477,8 +496,8 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M2** | Units, selection, movement, AP, end turn, hover path preview | Six counters move, hover shows path and cost, turn counter reaches 20 |
 | **M3** | Trait hook system + the six characters loaded from `roster.json` | All six traits fire; adding a 7th character needs no code |
 | **M4** | Enemies, patrol routes, vision arcs, alert dial, detection readout on hover | Patrols walk, arcs draw, hover shows risk pips |
-| **M5a** | Contact and combat: enemy fire, wounds and death, bodies, hide, suppress, stabilise, noise and hearing, repeat sightings folded into the open contact | A spotted man can break contact or be shot; two hits kill; hide and suppress change the readout; noise draws only enemies in earshot; a man seen on the same hex turn after turn is searched and reported once |
-| **M5b** | Charges, fuses, explosions, explosion floor, win/lose, exfil, exfil watched by the reserve | A full mission can be won and lost |
+| **M5a** | Contact and combat: enemy fire, wounds and death, bodies, hide, suppress, stabilise, noise and hearing, repeat sightings folded into the open contact, throw a stone | A spotted man can break contact or be shot; two hits kill; hide and suppress change the readout; noise draws only enemies in earshot; a man seen on the same hex turn after turn is searched and reported once; a thrown stone turns the bridge post away for a turn |
+| **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
 | **M8** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
