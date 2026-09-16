@@ -29,6 +29,43 @@
       font-family: monospace;
       font-size: 14px;
     }
+    #error {
+      max-width: 900px;
+      padding: 12px 16px;
+      border: 2px solid #c1272d;
+      background: #2a1516;
+      color: #f2e8d5;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+    #legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px 18px;
+      margin: 0;
+      padding: 0;
+      max-width: 1400px;
+      list-style: none;
+      font-size: 13px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-swatch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: 1px solid #1a1a18;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 13px;
+    }
     #board {
       width: 100%;
       max-width: 1400px;
@@ -39,8 +76,10 @@
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M0: hex grid</h1>
-    <div id="coord-readout">No hex selected — click one.</div>
+    <h1>NIGHT DROP — M1: terrain</h1>
+    <div id="error" hidden></div>
+    <div id="coord-readout">Loading map…</div>
+    <ul id="legend"></ul>
     <svg id="board"></svg>
   </div>
   <script type="module" src="src/main.js"></script>
