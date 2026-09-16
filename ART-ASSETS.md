@@ -130,6 +130,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | Asset | viewBox |
 |---|---|
 | `marker-charge.svg` | 28 x 28 |
+| `marker-parachute.svg` | 28 x 28 (an abandoned canopy, §9 — must read as spent kit on the ground, not as a chute in the air) |
 | `marker-fuse-1..5.svg` | 28 x 28 (five number tokens, hand-inked digits) |
 | `marker-wounded.svg` | 28 x 28 |
 | `marker-suppressed.svg` | 28 x 28 |

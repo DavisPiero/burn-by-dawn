@@ -49,6 +49,9 @@ export const GRID = {
   stroke: PALETTE.ink,
   strokeWidth: 1,
   strokeOpacity: 0.45,
+  // The clipped half-hexes past the straight border. Drawn, so the border
+  // reads as a printed crop rather than a void, but visibly dead.
+  outOfPlayOpacity: 0.35,
 };
 
 export const SELECTION = {

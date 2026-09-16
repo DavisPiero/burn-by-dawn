@@ -224,7 +224,8 @@ pips. The player must see risk before committing.
 | **Alarmed** | Nearest two patrols converge on last known contact. Vision +1. |
 | **Stand-To** | All patrols hunt. A reserve squad enters from the road edge. Exfil watched. |
 
-Raised by: being spotted (+1), gunfire (+2), an explosion (+2), a body found (+1).
+Raised by: being spotted (+1), gunfire (+2), an explosion (+2), a body found (+1),
+an abandoned parachute found (+1, see §9).
 Decays one step after 4 quiet turns. Never decays below Suspicious once an explosion
 has gone off.
 
@@ -272,6 +273,27 @@ Landing in Wood or Marsh costs that trooper their first turn. Landing in Canal w
 Scatter stays small. It is texture, not chaos. The player's plan should survive it.
 
 Turn 1 is therefore always a regroup problem, different every time, never unfair.
+
+### Parachutes
+
+Every trooper leaves a **parachute** on the hex he lands in. It is evidence, and what he
+does about it is the second decision of turn 1.
+
+- A trooper standing on his own parachute can **pack it up for 1 AP**, removing it. Only
+  his own, only from that hex. He cannot go back for someone else's.
+- A parachute left behind is found when an enemy moves **onto or adjacent to** it during
+  the enemy phase: alert **+1**, the parachute is removed, and that hex becomes a last
+  known contact for the Alarmed behaviour in §6. Found once, never again.
+- Patrol routes are drawn, so the player can see which parachutes are actually at risk
+  before deciding. This is a visible cost, not a hidden one.
+
+That is the whole mechanic: stealth costs action points, speed costs alert. It puts the
+design spine — *your own actions make the rest of the mission harder* — on the drop, which
+is otherwise the one part of the mission with no consequences attached.
+
+The player does **not** choose landing hexes. The drop run plus scatter decides where the
+men and their parachutes end up; choosing both would remove the scatter, and the scatter is
+what makes turn 1 different every time.
 
 ---
 
@@ -329,7 +351,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M3** | Trait hook system + the six characters loaded from `roster.json` | All six traits fire; adding a 7th character needs no code |
 | **M4** | Enemies, patrol routes, vision arcs, alert dial, detection readout on hover | Patrols walk, arcs draw, hover shows risk pips |
 | **M5** | Charges, fuses, explosions, win/lose, exfil | A full mission can be won and lost |
-| **M6** | Drop phase | Three drop runs, seeded scatter, regroup turn works |
+| **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
 | **M8** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 

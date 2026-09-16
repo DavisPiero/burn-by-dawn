@@ -12,7 +12,7 @@
 // every hover, and is small enough that doing so is free.
 
 import { axialToPixel, hexCorners } from '../hex.js';
-import { forEachCell, legendCharAt, terrainIdAt } from '../map.js';
+import { forEachCell, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
 import { COUNTER, GRID, PATH, SELECTION, counterFrameId, createSpriteDefs, roleSymbolId, terrainStyle } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -39,9 +39,21 @@ function cornersToPoints(center, corners) {
 export function createBoard(svg, map, handlers) {
   const corners = hexCorners(map.hexSize);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  svg.appendChild(createSpriteDefs());
 
-  const terrain = el('g', {});
+  const defs = createSpriteDefs();
+  // A straight printed border instead of a serrated one. Only the terrain is
+  // clipped: counters overhang the top and bottom edges by a few pixels, which
+  // reads as a chit laid near the edge of the page, and clipping them would
+  // slice them instead.
+  const edge = boardEdges(map);
+  const clip = el('clipPath', { id: 'board-edge' });
+  clip.appendChild(el('rect', {
+    x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
+  }));
+  defs.appendChild(clip);
+  svg.appendChild(defs);
+
+  const terrain = el('g', { 'clip-path': 'url(#board-edge)' });
   // Everything below is overlay: it must never eat a pointer event meant for
   // the hex underneath it.
   const reachable = el('g', { 'pointer-events': 'none' });
@@ -53,18 +65,28 @@ export function createBoard(svg, map, handlers) {
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
     const style = terrainStyle(terrainIdAt(map, q, r));
+    const inPlay = isInPlay(map, q, r);
 
     const hex = el('g', { 'data-q': q, 'data-r': r });
-    hex.style.cursor = 'pointer';
 
     hex.appendChild(el('polygon', {
       points: cornersToPoints(center, corners),
       fill: style.fill,
+      'fill-opacity': inPlay ? 1 : GRID.outOfPlayOpacity,
       stroke: GRID.stroke,
       'stroke-width': GRID.strokeWidth,
-      'stroke-opacity': GRID.strokeOpacity,
+      'stroke-opacity': inPlay ? GRID.strokeOpacity : GRID.strokeOpacity * GRID.outOfPlayOpacity,
     }));
 
+    // The half-hexes past the border get terrain and nothing else: no labels
+    // to be sliced by the clip, and no pointer events, so they cannot be
+    // hovered, selected or moved to.
+    if (!inPlay) {
+      terrain.appendChild(hex);
+      return;
+    }
+
+    hex.style.cursor = 'pointer';
     hex.appendChild(text(legendCharAt(map, q, r), {
       x: center.x, y: center.y - 3, 'font-size': 16, 'font-weight': 'bold',
       fill: style.ink, 'fill-opacity': 0.8,
@@ -280,22 +302,41 @@ function drawCounter(unit, number, map, isSelected) {
 }
 
 /**
- * Bounding box in pixels for the whole board, padded by one hex size so edge
- * hexes aren't clipped. Used to size the SVG viewBox. Scans actual cell centres
- * rather than assuming q starts at 0 on every row, since rows are shifted
- * (hex.js rowQStart) to keep the map rectangular.
+ * The straight border the board is clipped to, in pixels.
+ *
+ * Left and right are the bounding box of the in-play hexes, so every in-play
+ * hex is whole and only the retired edge hexes are cut. Top and bottom are the
+ * hexes' shoulder line, which trims the pointed tips off the first and last
+ * rows without costing any playable area.
  */
-export function boardPixelBounds(map) {
-  const pad = map.hexSize;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+export function boardEdges(map) {
+  const half = map.hexSize * Math.sqrt(3) / 2; // half a hex width
+  let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
 
   forEachCell(map, (q, r) => {
     const { x, y } = axialToPixel(q, r, map.hexSize);
-    minX = Math.min(minX, x);
-    minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x);
-    maxY = Math.max(maxY, y);
+    top = Math.min(top, y - map.hexSize / 2);
+    bottom = Math.max(bottom, y + map.hexSize / 2);
+    if (!isInPlay(map, q, r)) return;
+    left = Math.min(left, x - half);
+    right = Math.max(right, x + half);
   });
 
-  return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
+  return { left, right, top, bottom };
+}
+
+/**
+ * The SVG viewBox. The board itself is flush to boardEdges; this adds a few
+ * pixels of margin so a counter standing on the top or bottom row, which
+ * overhangs the border slightly, is not cut off by the edge of the SVG.
+ */
+export function boardPixelBounds(map) {
+  const pad = 8;
+  const edge = boardEdges(map);
+  return {
+    minX: edge.left - pad,
+    minY: edge.top - pad,
+    maxX: edge.right + pad,
+    maxY: edge.bottom + pad,
+  };
 }
