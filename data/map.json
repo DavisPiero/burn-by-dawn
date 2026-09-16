@@ -4,6 +4,15 @@
   "width": 18,
   "height": 13,
   "hexSize": 46,
+  "_startHexes": "Placeholder deployment, one per trooper in data/roster.json order. The drop phase at M6 replaces these with a chosen drop run plus seeded scatter. Spread across the three approach corridors of SPEC.md \u00a78 so movement is worth testing.",
+  "startHexes": [
+    [2, 2],
+    [6, 1],
+    [2, 1],
+    [8, 3],
+    [9, 2],
+    [7, 5]
+  ],
   "legend": {
     "F": "field",
     "T": "track",

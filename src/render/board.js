@@ -1,102 +1,265 @@
-// Draws the hex grid and its terrain into an <svg>. Reads state and map data,
-// never mutates them — CLAUDE.md hard rule 7. Click handling is delegated back
-// to the caller via onHexClick; this module makes no game-state decisions.
+// Draws the hex grid, the terrain, the counters and the hover path preview.
+// Reads state and map data, never mutates them — CLAUDE.md hard rule 7. It
+// makes no game-state decisions: pointer events are handed straight back to
+// the caller, and the move plan it draws is computed elsewhere and passed in.
 //
-// Colour comes from theme.js only. Terrain rules come from the map data only.
-// Nothing about a terrain type is written down in here, so editing the JSON
-// changes the map with no code change (SPEC.md §12, M1).
+// Colour and sprites come from theme.js only. Terrain rules come from the map
+// data only. Nothing about a terrain type is written down in here, so editing
+// the JSON changes the map with no code change (SPEC.md §12, M1).
+//
+// The board is built in two passes. The terrain never changes during play, so
+// it is drawn once; the pieces layer redraws on every state change, including
+// every hover, and is small enough that doing so is free.
 
 import { axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, legendCharAt, terrainIdAt } from '../map.js';
-import { GRID, SELECTION, terrainStyle } from './theme.js';
+import { COUNTER, GRID, PATH, SELECTION, createSpriteDefs, roleSymbolId, terrainStyle } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-function cornersToPoints(center, corners) {
-  return corners.map((c) => `${center.x + c.x},${center.y + c.y}`).join(' ');
-}
-
-function el(name, attrs) {
+function el(name, attrs = {}) {
   const node = document.createElementNS(SVG_NS, name);
   for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
   return node;
 }
 
+function cornersToPoints(center, corners) {
+  return corners.map((c) => `${center.x + c.x},${center.y + c.y}`).join(' ');
+}
+
 /**
+ * Build the static half of the board: sprite defs, terrain hexes and the
+ * (empty) layers the pieces pass fills in. Call once.
+ *
  * @param {SVGSVGElement} svg
- * @param {{selected: {q:number,r:number}|null}} state
  * @param {object} map loaded map data, see map.js loadMap
- * @param {(q:number, r:number) => void} onHexClick
+ * @param {{onHexClick:Function, onHexHover:Function, onHexLeave:Function}} handlers
+ * @returns {object} layer references, to hand to renderPieces
  */
-export function renderBoard(svg, state, map, onHexClick) {
+export function createBoard(svg, map, handlers) {
   const corners = hexCorners(map.hexSize);
-
-  // Clear previous render. Rendering owns only DOM it created, never state.
   while (svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.appendChild(createSpriteDefs());
 
-  const grid = el('g', {});
-  // Selected hex outline is drawn last so neighbouring hexes cannot overdraw it.
-  const highlight = el('g', {});
-  svg.appendChild(grid);
-  svg.appendChild(highlight);
+  const terrain = el('g', {});
+  // Everything below is overlay: it must never eat a pointer event meant for
+  // the hex underneath it.
+  const reachable = el('g', { 'pointer-events': 'none' });
+  const path = el('g', { 'pointer-events': 'none' });
+  const highlight = el('g', { 'pointer-events': 'none' });
+  const counters = el('g', { 'pointer-events': 'none' });
+  for (const layer of [terrain, reachable, path, highlight, counters]) svg.appendChild(layer);
 
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
-    const points = cornersToPoints(center, corners);
     const style = terrainStyle(terrainIdAt(map, q, r));
-    const isSelected = state.selected && state.selected.q === q && state.selected.r === r;
 
     const hex = el('g', { 'data-q': q, 'data-r': r });
     hex.style.cursor = 'pointer';
 
     hex.appendChild(el('polygon', {
-      points,
+      points: cornersToPoints(center, corners),
       fill: style.fill,
       stroke: GRID.stroke,
       'stroke-width': GRID.strokeWidth,
       'stroke-opacity': GRID.strokeOpacity,
     }));
 
-    const code = el('text', {
-      x: center.x,
-      y: center.y - 3,
-      'text-anchor': 'middle',
-      'dominant-baseline': 'middle',
-      'font-size': 16,
-      'font-family': 'monospace',
-      'font-weight': 'bold',
-      fill: style.ink,
-      'fill-opacity': 0.8,
-    });
-    code.textContent = legendCharAt(map, q, r);
-    hex.appendChild(code);
+    hex.appendChild(text(legendCharAt(map, q, r), {
+      x: center.x, y: center.y - 3, 'font-size': 16, 'font-weight': 'bold',
+      fill: style.ink, 'fill-opacity': 0.8,
+    }));
+    hex.appendChild(text(`${q},${r}`, {
+      x: center.x, y: center.y + 14, 'font-size': 9, fill: style.ink, 'fill-opacity': 0.4,
+    }));
 
-    const coords = el('text', {
-      x: center.x,
-      y: center.y + 14,
-      'text-anchor': 'middle',
-      'dominant-baseline': 'middle',
-      'font-size': 9,
-      'font-family': 'monospace',
-      fill: style.ink,
-      'fill-opacity': 0.4,
-    });
-    coords.textContent = `${q},${r}`;
-    hex.appendChild(coords);
+    hex.addEventListener('click', () => handlers.onHexClick(q, r));
+    hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
+    terrain.appendChild(hex);
+  });
 
-    hex.addEventListener('click', () => onHexClick(q, r));
-    grid.appendChild(hex);
+  svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
-    if (isSelected) {
-      highlight.appendChild(el('polygon', {
-        points,
+  return { svg, map, corners, reachable, path, highlight, counters };
+}
+
+function text(content, attrs) {
+  const node = el('text', {
+    'text-anchor': 'middle',
+    'dominant-baseline': 'middle',
+    'font-family': 'monospace',
+    'pointer-events': 'none',
+    ...attrs,
+  });
+  node.textContent = content;
+  return node;
+}
+
+/**
+ * Redraw everything that changes: reachable tint, hover path, selection
+ * outline and the counters.
+ *
+ * @param {object} layers from createBoard
+ * @param {object} state
+ * @param {{reachable: Map|null, plan: object|null}} view derived in main.js —
+ *        pathing is a game rule and does not belong in a render module.
+ */
+export function renderPieces(layers, state, view) {
+  const { corners, map } = layers;
+  for (const layer of [layers.reachable, layers.path, layers.highlight, layers.counters]) {
+    layer.replaceChildren();
+  }
+
+  if (view.reachable) {
+    const inset = corners.map((c) => ({ x: c.x * PATH.reachableInset, y: c.y * PATH.reachableInset }));
+    for (const { q, r, cost } of view.reachable.values()) {
+      if (cost === 0) continue;
+      const center = axialToPixel(q, r, map.hexSize);
+      layers.reachable.appendChild(el('polygon', {
+        points: cornersToPoints(center, corners),
+        fill: PATH.reachableFill,
+        'fill-opacity': PATH.reachableOpacity,
+      }));
+      layers.reachable.appendChild(el('polygon', {
+        points: cornersToPoints(center, inset),
         fill: 'none',
-        stroke: SELECTION.stroke,
-        'stroke-width': SELECTION.strokeWidth,
-        'pointer-events': 'none',
+        stroke: PATH.reachableStroke,
+        'stroke-width': PATH.reachableStrokeWidth,
+        'stroke-opacity': PATH.reachableStrokeOpacity,
       }));
     }
+  }
+
+  if (view.plan) drawPlan(layers, view.plan);
+
+  if (state.selectedHex) {
+    layers.highlight.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(state.selectedHex.q, state.selectedHex.r, map.hexSize), corners),
+      fill: 'none',
+      stroke: SELECTION.stroke,
+      'stroke-width': SELECTION.strokeWidth,
+    }));
+  }
+
+  for (const unit of state.units) {
+    layers.counters.appendChild(drawCounter(unit, map, unit.id === state.selectedUnitId));
+  }
+}
+
+// --- hover path preview -----------------------------------------------------
+// SPEC.md §4: hovering a hex with a trooper selected draws the path and shows
+// the total AP cost. The detection risk readout the same paragraph asks for
+// needs enemies, so it arrives at M4.
+
+function drawPlan(layers, plan) {
+  const { map } = layers;
+  const points = plan.path.map((hex) => axialToPixel(hex.q, hex.r, map.hexSize));
+  const split = plan.affordableUpTo;
+
+  if (split > 0) {
+    layers.path.appendChild(polyline(points.slice(0, split + 1), {
+      stroke: PATH.lineStroke,
+      'stroke-width': PATH.lineWidth,
+    }));
+  }
+  if (split < points.length - 1) {
+    layers.path.appendChild(polyline(points.slice(split), {
+      stroke: PATH.overspendStroke,
+      'stroke-opacity': PATH.overspendOpacity,
+      'stroke-width': PATH.lineWidth,
+      'stroke-dasharray': PATH.overspendDash,
+    }));
+  }
+
+  points.forEach((point, i) => {
+    if (i === 0) return;
+    const withinReach = i <= split;
+    layers.path.appendChild(el('circle', {
+      cx: point.x,
+      cy: point.y,
+      r: PATH.stepRadius,
+      fill: withinReach ? PATH.lineStroke : 'none',
+      stroke: withinReach ? PATH.lineStroke : PATH.overspendStroke,
+      'stroke-opacity': withinReach ? 1 : PATH.overspendOpacity,
+      'stroke-width': 2,
+    }));
   });
+
+  const end = points[points.length - 1];
+  if (end) drawCostBadge(layers.path, end, plan);
+}
+
+function drawCostBadge(layer, at, plan) {
+  const label = plan.minimumStep ? `${plan.total} AP — all of it` : `${plan.total} AP`;
+  const width = label.length * 6.4 + 12;
+  const y = at.y - 30;
+
+  const badge = el('g', {});
+  badge.appendChild(el('rect', {
+    x: at.x - width / 2, y: y - 11, width, height: 20, rx: 4,
+    fill: plan.affordable ? PATH.badgeFill : PATH.blockedStroke,
+  }));
+  badge.appendChild(text(label, {
+    x: at.x, y: y - 1, 'font-size': 11, 'font-weight': 'bold', fill: PATH.badgeText,
+  }));
+  layer.appendChild(badge);
+}
+
+function polyline(points, attrs) {
+  return el('polyline', {
+    points: points.map((p) => `${p.x},${p.y}`).join(' '),
+    fill: 'none',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    ...attrs,
+  });
+}
+
+// --- counters ---------------------------------------------------------------
+// All art is <use> of a registry symbol (CLAUDE.md rule 8). The AP pips and
+// the selection ring are drawn here as geometry, the same way the hex outlines
+// are: they are readouts of state, not artwork, and they have no asset id.
+
+function drawCounter(unit, map, isSelected) {
+  const center = axialToPixel(unit.q, unit.r, map.hexSize);
+  const size = COUNTER.size;
+  const group = el('g', {
+    transform: `translate(${center.x - size / 2}, ${center.y - size / 2})`,
+    opacity: unit.ap === 0 ? COUNTER.spentOpacity : 1,
+  });
+
+  group.appendChild(el('use', { href: '#counter-frame-allied', width: size, height: size }));
+  group.appendChild(el('use', { href: `#${roleSymbolId(unit.role)}`, x: 16, y: 12, width: 24, height: 24 }));
+
+  const name = text(unit.shortName, {
+    x: 27, y: 46.5, 'font-size': COUNTER.nameSize, 'font-weight': 'bold',
+    fill: COUNTER.nameFill, textLength: 46, lengthAdjust: 'spacingAndGlyphs',
+  });
+  group.appendChild(name);
+
+  for (let i = 0; i < unit.apMax; i++) {
+    const spent = i >= unit.ap;
+    group.appendChild(el('circle', {
+      cx: 27 - ((unit.apMax - 1) * 8) / 2 + i * 8,
+      cy: 7.5,
+      r: COUNTER.pipRadius,
+      fill: spent ? 'none' : COUNTER.pipFill,
+      stroke: COUNTER.pipFill,
+      'stroke-width': 1,
+      'stroke-opacity': spent ? 0.5 : 1,
+    }));
+  }
+
+  if (isSelected) {
+    group.appendChild(el('rect', {
+      x: -2, y: -2, width: size, height: size, rx: 7,
+      fill: 'none',
+      stroke: COUNTER.selectedStroke,
+      'stroke-width': COUNTER.selectedStrokeWidth,
+    }));
+  }
+
+  return group;
 }
 
 /**

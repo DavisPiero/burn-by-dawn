@@ -1,9 +1,9 @@
-// Terrain loading and lookup. Pathing and line of sight also belong in this
-// file (SPEC.md §1) but arrive at M2 and M4 — M1 only loads terrain.
+// Terrain loading, lookup and pathing. Line of sight also belongs in this file
+// (SPEC.md §1) but arrives at M4.
 //
 // Pure functions plus one fetch. Nothing here touches the DOM.
 
-import { rowQStart } from './hex.js';
+import { hexDistance, neighbors, rowQStart } from './hex.js';
 
 /**
  * Load and validate the map and the terrain table.
@@ -12,12 +12,17 @@ import { rowQStart } from './hex.js';
  * data-driven map is only useful if a typo says so out loud.
  */
 export async function loadMap(mapUrl = 'data/map.json', terrainUrl = 'data/terrain.json') {
-  const [map, terrain] = await Promise.all([fetchJson(mapUrl), fetchJson(terrainUrl)]);
+  const [map, terrain] = await Promise.all([loadJson(mapUrl), loadJson(terrainUrl)]);
   validate(map, terrain, mapUrl, terrainUrl);
   return { ...map, terrain: terrain.types };
 }
 
-async function fetchJson(url) {
+/**
+ * Fetch and parse a JSON data file. Exported because every /data file wants
+ * the same cache behaviour and the same loud failure, and map.js is where
+ * that behaviour already lived.
+ */
+export async function loadJson(url) {
   let response;
   try {
     // no-cache, not the default: the whole point of M1 is that editing the
@@ -60,6 +65,33 @@ function validate(map, terrain, mapUrl, terrainUrl) {
         throw new Error(`${mapUrl}: row ${r}, column ${i}: "${row[i]}" is not in the legend`);
       }
     }
+  });
+  // After the rows, so a start hex can trust the grid it indexes into.
+  validateStartHexes(map, terrain, mapUrl);
+}
+
+// Deployment hexes are placeholders until the drop phase at M6, but a trooper
+// standing in a canal is a silent bug, so check them now.
+function validateStartHexes(map, terrain, mapUrl) {
+  if (!Array.isArray(map.startHexes)) {
+    throw new Error(`${mapUrl}: "startHexes" must be an array of [q, r] pairs`);
+  }
+  const seen = new Set();
+  map.startHexes.forEach((hex, i) => {
+    if (!Array.isArray(hex) || hex.length !== 2 || !hex.every(Number.isInteger)) {
+      throw new Error(`${mapUrl}: startHexes[${i}] must be a [q, r] pair of integers, got ${JSON.stringify(hex)}`);
+    }
+    const [q, r] = hex;
+    if (!inBounds(map, q, r)) {
+      throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is off the map`);
+    }
+    const id = map.legend[map.rows[r][columnOf(q, r)]];
+    if (terrain.types[id].moveCost === null) {
+      throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is ${id}, which is impassable`);
+    }
+    const key = `${q},${r}`;
+    if (seen.has(key)) throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is already used by another trooper`);
+    seen.add(key);
   });
 }
 
@@ -105,4 +137,108 @@ export function forEachCell(map, callback) {
       callback(qStart + i, r);
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Pathing. SPEC.md §2: A* over hex neighbours, cost from the terrain table.
+// Line of sight also belongs in this file but arrives at M4.
+//
+// Terrain cost is never written down here — it is read from the loaded terrain
+// table, so editing data/terrain.json changes pathing with no code change.
+
+/** Stable string key for an axial coord. Used for visited sets and cost maps. */
+export function hexKey(q, r) {
+  return `${q},${r}`;
+}
+
+/**
+ * Cost to enter a hex, or null if it cannot be entered at all — off the map,
+ * impassable terrain, or listed in `blocked` (occupied hexes, supplied by the
+ * caller; map.js knows nothing about units).
+ */
+export function enterCost(map, q, r, blocked) {
+  if (blocked && blocked.has(hexKey(q, r))) return null;
+  const terrain = terrainAt(map, q, r);
+  if (!isPassable(terrain)) return null;
+  return terrain.moveCost;
+}
+
+/**
+ * Cheapest path from `from` to `to`, as an array of coords starting with
+ * `from` and ending with `to`. Returns null if no path exists. `blocked` is a
+ * Set of hexKey()s that may not be entered. Unbounded by AP — affordability is
+ * a unit rule and lives in units.js.
+ */
+export function findPath(map, from, to, blocked) {
+  const startKey = hexKey(from.q, from.r);
+  const goalKey = hexKey(to.q, to.r);
+  if (startKey === goalKey) return [{ q: from.q, r: from.r }];
+  if (enterCost(map, to.q, to.r, blocked) === null) return null;
+
+  const cameFrom = new Map();
+  const gScore = new Map([[startKey, 0]]);
+  // Small board (18x13), so a scanned open list is faster than a heap and
+  // very much easier to read.
+  const open = [{ q: from.q, r: from.r, f: hexDistance(from, to) }];
+
+  while (open.length > 0) {
+    let bestAt = 0;
+    for (let i = 1; i < open.length; i++) if (open[i].f < open[bestAt].f) bestAt = i;
+    const current = open.splice(bestAt, 1)[0];
+    const currentKey = hexKey(current.q, current.r);
+
+    if (currentKey === goalKey) return reconstruct(cameFrom, current);
+
+    for (const next of neighbors(current.q, current.r)) {
+      const step = enterCost(map, next.q, next.r, blocked);
+      if (step === null) continue;
+      const tentative = gScore.get(currentKey) + step;
+      const nextKey = hexKey(next.q, next.r);
+      if (gScore.has(nextKey) && tentative >= gScore.get(nextKey)) continue;
+      gScore.set(nextKey, tentative);
+      cameFrom.set(nextKey, current);
+      // Cheapest terrain costs 1, so plain hex distance never overestimates.
+      open.push({ q: next.q, r: next.r, f: tentative + hexDistance(next, to) });
+    }
+  }
+  return null;
+}
+
+function reconstruct(cameFrom, end) {
+  const path = [{ q: end.q, r: end.r }];
+  let cursor = end;
+  while (cameFrom.has(hexKey(cursor.q, cursor.r))) {
+    cursor = cameFrom.get(hexKey(cursor.q, cursor.r));
+    path.unshift({ q: cursor.q, r: cursor.r });
+  }
+  return path;
+}
+
+/**
+ * Every hex reachable from `from` for `budget` or less, as a Map of
+ * hexKey -> { q, r, cost }. The origin is included at cost 0. Dijkstra, not
+ * A*, because there is no single goal.
+ */
+export function reachableWithin(map, from, budget, blocked) {
+  const found = new Map([[hexKey(from.q, from.r), { q: from.q, r: from.r, cost: 0 }]]);
+  const frontier = [{ q: from.q, r: from.r, cost: 0 }];
+
+  while (frontier.length > 0) {
+    let bestAt = 0;
+    for (let i = 1; i < frontier.length; i++) if (frontier[i].cost < frontier[bestAt].cost) bestAt = i;
+    const current = frontier.splice(bestAt, 1)[0];
+
+    for (const next of neighbors(current.q, current.r)) {
+      const step = enterCost(map, next.q, next.r, blocked);
+      if (step === null) continue;
+      const cost = current.cost + step;
+      if (cost > budget) continue;
+      const key = hexKey(next.q, next.r);
+      if (found.has(key) && found.get(key).cost <= cost) continue;
+      const entry = { q: next.q, r: next.r, cost };
+      found.set(key, entry);
+      frontier.push(entry);
+    }
+  }
+  return found;
 }

@@ -14,7 +14,6 @@
     #app {
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 8px;
       padding: 16px;
       min-width: 1280px;
@@ -25,9 +24,15 @@
       font-size: 18px;
       margin: 0;
     }
+    #spread {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
     #coord-readout {
       font-family: monospace;
       font-size: 14px;
+      min-height: 18px;
     }
     #error {
       max-width: 900px;
@@ -42,11 +47,9 @@
     #legend {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 6px 18px;
       margin: 0;
       padding: 0;
-      max-width: 1400px;
       list-style: none;
       font-size: 13px;
     }
@@ -67,21 +70,201 @@
       font-size: 13px;
     }
     #board {
-      width: 100%;
-      max-width: 1400px;
+      flex: 1 1 auto;
+      min-width: 0;
       height: auto;
       background: #2a2a26;
+    }
+
+    /* The right-hand page of the spread. Plain for now; SPEC.md §11 dresses
+       it as printed paper at M7. */
+    #panel {
+      flex: 0 0 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #turn-counter {
+      font-family: ui-monospace, monospace;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #f2e8d5;
+    }
+    #turn-counter.dawn {
+      color: #c1272d;
+    }
+    #end-turn {
+      padding: 10px;
+      font: inherit;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #1a1a18;
+      background: #f2e8d5;
+      border: 2px solid #1a1a18;
+      cursor: pointer;
+    }
+    #end-turn:disabled {
+      background: #6b6b63;
+      color: #2a2a26;
+      cursor: default;
+    }
+    #roster {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .roster-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: #2a2a26;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .roster-item.selected {
+      border-color: #c1272d;
+    }
+    .roster-item.spent {
+      opacity: 0.55;
+    }
+    .roster-key {
+      font-family: ui-monospace, monospace;
+      font-weight: bold;
+      color: #5c6b4a;
+    }
+    .roster-text {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .roster-who {
+      font-size: 13px;
+    }
+    .roster-detail {
+      font-size: 11px;
+      opacity: 0.65;
+    }
+    .roster-ap {
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    #keys {
+      font-size: 11px;
+      opacity: 0.6;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M1: terrain</h1>
+    <h1>NIGHT DROP — M2: units, movement, AP, turn clock</h1>
     <div id="error" hidden></div>
+    <div id="spread">
+      <svg id="board"></svg>
+      <aside id="panel">
+        <div id="turn-counter"></div>
+        <button id="end-turn" type="button"></button>
+        <ul id="roster"></ul>
+        <div id="keys">
+          1–6 select trooper · Tab cycle · H hold position<br />
+          Space end turn · Esc or right-click cancel
+        </div>
+      </aside>
+    </div>
     <div id="coord-readout">Loading map…</div>
     <ul id="legend"></ul>
-    <svg id="board"></svg>
   </div>
+  <!--
+    Failure reporting. This is a classic script, not a module, and it runs
+    before the game does, so it still works when the module itself is what
+    failed. Without it, a module that will not load or link leaves the page
+    sitting on "Loading map…" with nothing said out loud — which is exactly
+    the guessing game the loud data errors in map.js exist to prevent.
+  -->
+  <script>
+    (function () {
+      var box = document.getElementById('error');
+      var started = false; // src/main.js began executing
+      var ready = false;   // …and got all the way through its first render
+
+      function report(what, detail) {
+        box.hidden = false;
+        box.textContent = what + '\n\n' + detail
+          + '\n\nBrowser: ' + navigator.userAgent;
+      }
+
+      // Opened by double-clicking the file rather than through ./run.sh.
+      // Browsers block ES modules over file:// (SPEC.md §1), so the page
+      // renders its static furniture and the game never loads at all. Say so
+      // at once — the symptoms otherwise look like a broken game.
+      if (location.protocol === 'file:') {
+        report('This page was opened as a file, so the game cannot run.',
+          'Browsers refuse to load ES modules over file://, which is why the\n'
+          + 'board is empty and the keys do nothing. Nothing is wrong with the game.\n\n'
+          + 'Start the server and use the address it prints:\n\n'
+          + '    ./run.sh\n'
+          + '    http://localhost:8000');
+        return;
+      }
+
+      // The page is not ours alone: browser extensions inject scripts into it
+      // and throw their own failures at these same listeners. Blaming the game
+      // for MetaMask's connection error is worse than saying nothing, because
+      // it sends whoever is debugging into the wrong file entirely.
+      function notOurs(where) {
+        return /-extension:\/\//.test(where || '');
+      }
+
+      // Once the game is running, only failures traceable to our own files are
+      // worth a banner over the board. Before it is running, report anything
+      // that is not plainly a guest: at that point nothing else should be
+      // failing, and a false negative costs more than a false positive.
+      function ignore(where) {
+        if (notOurs(where)) return true;
+        return ready && where.indexOf(location.origin) === -1;
+      }
+
+      window.addEventListener('error', function (event) {
+        // Subresource failures (a module that 404s) arrive as an error event
+        // on the element and carry no message, so say which one it was.
+        if (event.target && event.target !== window && event.target.src) {
+          if (notOurs(event.target.src)) return;
+          report('A script failed to load.', event.target.src);
+          return;
+        }
+        var where = (event.filename || '') + ':' + (event.lineno || '?');
+        if (ignore(where)) return;
+        report(ready ? 'The game hit an error.' : 'The game threw before it could start.',
+          (event.message || 'Unknown error') + '\n' + where);
+      }, true);
+
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event.reason;
+        var detail = (reason && (reason.stack || reason.message)) || String(reason);
+        if (ignore(detail)) return;
+        report(ready ? 'The game hit an error.' : 'The game failed while starting.', detail);
+      });
+
+      // Nothing above fires for a module the browser refuses to run at all,
+      // so also notice that the game simply never started.
+      window.addEventListener('night-drop-started', function () { started = true; });
+      window.addEventListener('night-drop-ready', function () { ready = true; });
+      setTimeout(function () {
+        if (started || !box.hidden) return;
+        report('The game never started.',
+          'index.html loaded but src/main.js did not run. Usually this means the\n'
+          + 'browser could not parse a module, or the page was opened over file://\n'
+          + 'instead of through ./run.sh. Check the browser console for the reason.');
+      }, 3000);
+    }());
+  </script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
