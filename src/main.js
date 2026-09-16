@@ -174,6 +174,10 @@ try {
 
   renderLegend(legend, map);
   render();
+
+  // The board is up. The failure reporter in index.html stops attributing
+  // stray page errors — extensions throw plenty — to the game's startup.
+  window.dispatchEvent(new Event('night-drop-ready'));
 } catch (error) {
   readout.textContent = '';
   renderError(errorBox, error);
