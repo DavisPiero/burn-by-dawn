@@ -4,11 +4,18 @@
 //
 // SPEC.md §4 gives a turn five phases: player, detection, enemy, fuse, alert
 // decay. endTurn runs everything after the player phase. The fuse phase
-// arrives with charges at M5. Save/load arrives when there is a mission worth
+// arrives with charges at M5b. Save/load arrives when there is a mission worth
 // saving.
+//
+// The player-phase actions of SPEC.md §4 are here too. units.js says whether a
+// man can take one; these take it.
 
-import { createAlert, createEnemies, decayAlert, runDetection, runEnemyPhase } from './enemy.js';
-import { createUnits, fillActionPoints, unitById } from './units.js';
+import { createAlert, createEnemies, decayAlert, makeNoise, runDetection, runEnemyPhase } from './enemy.js';
+import { applyHook } from './traits.js';
+import {
+  checkHide, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  createUnits, fillActionPoints, unitById,
+} from './units.js';
 
 /** `traits` is the validated table from traits.js validateTraits. */
 export function createInitialState(roster, traits, rules, map) {
@@ -18,8 +25,14 @@ export function createInitialState(roster, traits, rules, map) {
     units: createUnits(roster, traits, rules, map.startHexes),
     enemies: createEnemies(map),
     alert: createAlert(),
-    // Where the garrison last saw a trooper: { q, r, searched }, or null.
+    // The most recent noise the garrison heard: { q, r, searched }, or null.
+    // Every patrol hunts it at Alarmed (SPEC.md §6).
     contact: null,
+    // Noises made since the last enemy phase, heard in it: { kind, q, r }.
+    noises: [],
+    // SPEC.md §5: the dead leave bodies; the wounded and the dead drop charges.
+    bodies: [],
+    droppedCharges: [],
     reserveDeployed: false,
     // What happened at the last turn boundary, for the turn report.
     report: [],
@@ -27,6 +40,9 @@ export function createInitialState(roster, traits, rules, map) {
     selectedHex: null, // hex inspection, from M0; survives alongside unit selection
     hoverHex: null,
     showRoutes: false, // the R overlay, SPEC.md §4
+    // An action waiting for the player to click its target: 'suppress',
+    // 'stone' or 'stabilise'. Interface state, like the hover.
+    targeting: null,
   };
 }
 
@@ -87,7 +103,26 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
     throw new Error(`${rulesUrl}: "patrols.suspiciousPauseEvery" must be a positive integer`);
   }
   requireCount(rules.patrols.sweepRotation, '"patrols.sweepRotation"', rulesUrl);
-  requireCount(rules.patrols.alertConverge, '"patrols.alertConverge"', rulesUrl);
+  states.forEach((s, i) => requireCount(s.hearingBonus, `"alert.states[${i}].hearingBonus"`, rulesUrl));
+  requireCount(rules.alert.stone, '"alert.stone"', rulesUrl);
+  requireCount(rules.alert.bodyFound, '"alert.bodyFound"', rulesUrl);
+
+  // Noise, contact and wounds, SPEC.md §5 and §6.
+  for (const kind of ['spotted', 'found', 'stone', 'gunfire']) {
+    requireCount(rules.noise?.[kind], `"noise.${kind}"`, rulesUrl);
+  }
+  if (!Number.isInteger(rules.combat?.hitsToKill) || rules.combat.hitsToKill < 1) {
+    throw new Error(`${rulesUrl}: "combat.hitsToKill" must be a positive integer`);
+  }
+  requireCount(rules.combat.woundedActionPoints, '"combat.woundedActionPoints"', rulesUrl);
+
+  // Actions, SPEC.md §4.
+  requireCount(rules.actions?.hide?.apCost, '"actions.hide.apCost"', rulesUrl);
+  requireCount(rules.actions.hide.concealment, '"actions.hide.concealment"', rulesUrl);
+  requireCount(rules.actions?.suppress?.apCost, '"actions.suppress.apCost"', rulesUrl);
+  requireCount(rules.actions?.throwStone?.apCost, '"actions.throwStone.apCost"', rulesUrl);
+  requireCount(rules.actions.throwStone.range, '"actions.throwStone.range"', rulesUrl);
+  requireCount(rules.actions?.pickUpCharge?.apCost, '"actions.pickUpCharge.apCost"', rulesUrl);
 }
 
 function requireCount(value, what, rulesUrl) {
@@ -97,14 +132,17 @@ function requireCount(value, what, rulesUrl) {
 }
 
 export function selectUnit(state, unitId) {
-  return { ...state, selectedUnitId: unitId, selectedHex: null };
+  if (unitById(state.units, unitId)?.dead) return state;
+  return { ...state, selectedUnitId: unitId, selectedHex: null, targeting: null };
 }
 
 export function selectHex(state, q, r) {
   return { ...state, selectedHex: { q, r } };
 }
 
+/** Esc and right-click: back out of targeting first, then out of the selection. */
 export function deselect(state) {
+  if (state.targeting) return { ...state, targeting: null };
   return { ...state, selectedUnitId: null, selectedHex: null };
 }
 
@@ -131,6 +169,7 @@ export function moveUnit(state, unitId, plan) {
           q: destination.q,
           r: destination.r,
           ap: Math.max(0, unit.ap - plan.total),
+          hidden: false, // spending AP brings him out of hiding (SPEC.md §4)
           // Every hex he entered, for the detection phase (enemy.js testedHexes).
           trail: [...unit.trail, ...plan.path.slice(1)],
         }
@@ -145,6 +184,84 @@ export function holdUnit(state, unitId) {
     ...state,
     units: state.units.map((unit) => (unit.id === unitId ? { ...unit, ap: 0 } : unit)),
   };
+}
+
+// --- actions (SPEC.md §4) -------------------------------------------------------
+//
+// Each takes the check from units.js first and returns the state unchanged if
+// it fails, so a stray key press can never make an illegal move. Spending AP
+// on anything but hiding brings a man out of hiding.
+
+function spend(state, unitId, cost, changes = {}) {
+  return {
+    ...state,
+    units: state.units.map((u) => (
+      u.id === unitId ? { ...u, ap: Math.max(0, u.ap - cost), hidden: false, ...changes } : u
+    )),
+  };
+}
+
+/** Go to ground: pay the cost, lose the rest of the turn, hidden on this hex. */
+export function hideUnit(state, unitId, rules) {
+  const unit = unitById(state.units, unitId);
+  if (!checkHide(unit, rules).ok) return state;
+  return spend(state, unitId, unit.ap, { hidden: true });
+}
+
+/**
+ * A gunner fires on an enemy: it will not fire at the next detection check or
+ * move in the next enemy phase. Gunfire is loud — the onFire hook sets how
+ * loud — and is heard from the gunner's hex.
+ */
+export function suppressEnemy(state, unitId, enemyId, map, rules) {
+  const unit = unitById(state.units, unitId);
+  const enemy = state.enemies.find((e) => e.id === enemyId);
+  const check = checkSuppress(map, unit, enemy, rules);
+  if (!check.ok) return state;
+  const alert = applyHook(unit, 'onFire', 'alert', rules.alert.gunfire).value;
+  const fired = {
+    ...spend(state, unitId, check.cost),
+    enemies: state.enemies.map((e) => (e.id === enemyId ? { ...e, suppressed: true } : e)),
+  };
+  return makeNoise(fired, 'gunfire', unit, alert, rules).state;
+}
+
+/** Throw a stone: a noise on that hex for the next enemy phase. */
+export function throwStone(state, unitId, hex, map, rules) {
+  const unit = unitById(state.units, unitId);
+  const check = checkThrowStone(map, unit, hex, rules);
+  if (!check.ok) return state;
+  return makeNoise(spend(state, unitId, check.cost), 'stone', hex, rules.alert.stone, rules).state;
+}
+
+/** Spend a full turn dressing a wound: his pool and his charges come back next turn. */
+export function stabiliseUnit(state, unitId, patientId) {
+  const unit = unitById(state.units, unitId);
+  const patient = unitById(state.units, patientId);
+  const check = checkStabilise(unit, patient);
+  if (!check.ok) return state;
+  const spent = spend(state, unitId, check.cost);
+  return {
+    ...spent,
+    units: spent.units.map((u) => (u.id === patientId ? { ...u, stabilised: true } : u)),
+  };
+}
+
+/** Pick up one dropped charge from his own hex. */
+export function pickUpCharge(state, unitId, rules) {
+  const unit = unitById(state.units, unitId);
+  const check = checkPickUpCharge(state.droppedCharges, unit, rules);
+  if (!check.ok) return state;
+  const index = state.droppedCharges.findIndex((c) => c.q === unit.q && c.r === unit.r);
+  return {
+    ...spend(state, unitId, check.cost, { charges: unit.charges + 1 }),
+    droppedCharges: state.droppedCharges.filter((_, i) => i !== index),
+  };
+}
+
+/** Wait for a click on the target of an action; null cancels. */
+export function setTargeting(state, action) {
+  return { ...state, targeting: action };
 }
 
 /** Show or hide every patrol route. SPEC.md §4, the `R` key. */
@@ -163,6 +280,8 @@ export function endTurn(state, rules, map) {
 
   const detected = runDetection(state, map, rules);
   const moved = runEnemyPhase(detected.state, map, rules);
+  // Detection before the enemy phase, so a man shot and killed is gone before
+  // anyone walks up to him — and the enemy beside him then finds the body.
   const decayed = decayAlert(moved.state, rules);
   const next = decayed.state;
 
@@ -174,6 +293,9 @@ export function endTurn(state, rules, map) {
     // so the leader's command radius is measured now, not mid-turn.
     units: fillActionPoints(next.units, rules).map((unit) => ({ ...unit, trail: [] })),
     selectedHex: null,
+    targeting: null,
+    // A dead man cannot stay selected.
+    selectedUnitId: next.units.find((u) => u.id === state.selectedUnitId)?.dead ? null : state.selectedUnitId,
   };
 }
 
@@ -191,7 +313,7 @@ export function selectedUnit(state) {
  * falls back to plain order once everyone is spent.
  */
 export function nextUnitId(state) {
-  const { units } = state;
+  const units = state.units.filter((u) => !u.dead);
   if (units.length === 0) return null;
   const from = units.findIndex((u) => u.id === state.selectedUnitId);
 

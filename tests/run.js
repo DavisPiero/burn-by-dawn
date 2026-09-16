@@ -1,10 +1,11 @@
 // A tiny in-browser test runner. Each test file exports an array of
 // [name, fn] pairs; fn may be async and throws to fail.
 
+import combatTests from './combat.test.js';
 import enemyTests from './enemy.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');

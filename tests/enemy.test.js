@@ -39,7 +39,9 @@ function enemy(q, r, facingName, extra = {}) {
   return {
     id: `test-${q},${r}`, label: 'Test', type: 'patrol', typeLabel: 'Patrol',
     visionRadius: 3, arcDegrees: 120, detection: 3, speed: 3,
-    q, r, facing: facing(facingName), route: null, loop: false, waypoint: 0, routeStep: 1,
+    q, r, facing: facing(facingName), homeFacing: facing(facingName), turned: false,
+    route: null, loop: false, waypoint: 0, routeStep: 1,
+    investigating: null, holding: null, watching: null, suppressed: false,
     ...extra,
   };
 }
@@ -148,7 +150,8 @@ export default [
     const result = runDetection(s, map, rules);
     equal(result.events.filter((ev) => ev.kind === 'spotted').length, 1, 'spotted once');
     equal(result.state.alert.points, rules.alert.spotted, 'alert +spotted');
-    equal(`${result.state.contact.q},${result.state.contact.r}`, `${spot.q + 2},${spot.r}`, 'contact is where he was seen');
+    const noise = result.state.noises[result.state.noises.length - 1];
+    equal(`${noise.kind} ${noise.q},${noise.r}`, `spotted ${spot.q + 2},${spot.r}`, 'the noise is where he was seen');
   }],
 
   ['a trooper who starts in an arc and walks out of it is not tested where he started', async () => {
@@ -265,33 +268,29 @@ export default [
     });
   }],
 
-  ['Alert sends the nearest patrols to the contact, and the one that gets there searches it', async () => {
+  ['Alarmed sends every patrol to the last known contact, and the one that gets there searches it', async () => {
     const { map, rules, state } = await loadAll();
     const mobile = state.enemies.filter((e) => e.speed > 0);
     const target = mobile[0];
-    // A contact one step from the first patrol, which is then surely nearest.
     const step = NEIGHBOR_DIRS
       .map((d) => ({ q: target.q + d.q, r: target.r + d.r }))
       .find((h) => isInPlay(map, h.q, h.r) && map.terrain[terrainIdAt(map, h.q, h.r)].moveCost !== null
         && !state.enemies.some((e) => e.q === h.q && e.r === h.r));
-    const alertState = {
+    const alarmed = {
       ...state,
       units: state.units.map((u) => ({ ...u, q: 100 + u.q, r: u.r })), // off the board, out of the way
-      alert: { ...state.alert, points: rules.alert.states[2].from },
+      alert: { ...state.alert, points: rules.alert.states[3].from },
       contact: { ...step, searched: false },
+      reserveDeployed: true,
     };
-    const byDistance = [...mobile].sort((a, b) => hexDistance(a, step) - hexDistance(b, step));
-    const hunters = new Set(byDistance.slice(0, rules.patrols.alertConverge).map((e) => e.id));
-    const result = runEnemyPhase(alertState, map, rules);
+    const result = runEnemyPhase(alarmed, map, rules);
     const arrived = result.state.enemies.find((e) => e.id === target.id);
     equal(`${arrived.q},${arrived.r}`, `${step.q},${step.r}`, 'nearest patrol reached the contact');
     assert(result.state.contact.searched, 'contact searched');
-    assert(result.events.some((e) => e.kind === 'searched'), 'searched event');
-    for (const e of mobile) {
-      if (hunters.has(e.id)) continue;
+    equal(result.events.filter((e) => e.kind === 'searched').length, 1, 'searched once');
+    for (const e of mobile.slice(1)) {
       const after = result.state.enemies.find((x) => x.id === e.id);
-      const planned = walkRoute(map, e, new Set(), rules);
-      equal(`${after.q},${after.r}`, `${planned.q},${planned.r}`, `${e.id} kept to its route`);
+      assert(hexDistance(after, step) < hexDistance(e, step) || hexDistance(e, step) <= 1, `${e.id} closed on the contact`);
     }
   }],
 
