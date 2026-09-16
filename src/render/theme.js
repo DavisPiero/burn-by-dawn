@@ -211,6 +211,7 @@ export const RISK = {
   spottedFill: PALETTE.red,
   // A man in contact who would be spotted again there is shot (SPEC.md §6).
   shotFill: PALETTE.red,
+  pinnedFill: PALETTE.ink,
   shotText: PALETTE.paper,
 };
 

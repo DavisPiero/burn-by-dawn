@@ -77,7 +77,7 @@ function scenario(state, role, at, enemies, changes = {}) {
 const unitIn = (state, id) => unitById(state.units, id);
 
 export default [
-  ['spotted once is a warning: in contact, alert up, no hit, a noise where he was seen', async () => {
+  ['spotted once is a warning: in contact, alert up, no hit, contact where he was seen, no noise', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 5);
     const e = enemy(row.q, row.r, 'E');
@@ -88,7 +88,50 @@ export default [
     equal(unit.hits, 0, 'not hit');
     equal(result.state.alert.points, rules.alert.spotted, 'alert +spotted');
     equal(result.state.enemies[0].holding.unitId, unitId, 'the spotter holds him');
-    equal(result.state.noises.at(-1).kind, 'spotted', 'noise queued');
+    equal(`${result.state.contact.q},${result.state.contact.r}`, `${row.q + 2},${row.r}`, 'last known contact');
+    equal(result.state.noises.length, 0, 'a sighting is not a noise');
+  }],
+
+  ['a man already in contact is not counted again when he is seen again', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const e = enemy(row.q, row.r, 'E', { suppressed: true }); // sees him, cannot shoot
+    const { state: s, unitId } = scenario(state, 'sapper', { q: row.q + 2, r: row.r }, [e], { inContact: true });
+    const result = runDetection(s, map, rules);
+    equal(result.state.alert.points, 0, 'no alert rise');
+    assert(result.state.alert.raisedThisTurn, 'but not a quiet turn');
+    assert(unitIn(result.state, unitId).inContact, 'still in contact');
+    equal(result.state.contact, s.contact, 'contact not moved');
+  }],
+
+  ['shot in cover he is pinned, not hit: one AP less next turn, never below 1', async () => {
+    const { map, rules, state } = await loadAll();
+    const coverId = Object.keys(map.terrain).find((id) => rules.combat.shotResult[map.terrain[id].cover] === 'pinned'
+      && map.terrain[id].moveCost !== null && !map.terrain[id].blocksLOS);
+    // An enemy two hexes west of a cover hex, looking east, on in-play ground.
+    let spot = null;
+    for (let r = 0; r < map.height && !spot; r++) {
+      for (let q = -r; q < map.width && !spot; q++) {
+        if (isInPlay(map, q, r) && terrainIdAt(map, q, r) === coverId && isInPlay(map, q - 2, r)
+          && terrainIdAt(map, q - 1, r) === 'field' && terrainIdAt(map, q - 2, r) === 'field') spot = { q, r };
+      }
+    }
+    assert(spot, `no ${coverId} hex with open field to its west`);
+    const e = enemy(spot.q - 1, spot.r, 'E'); // adjacent, so cover still gets him spotted
+    const { state: s, unitId } = scenario(state, 'sapper', spot, [e], { inContact: true });
+    const before = unitIn(s, unitId);
+    const result = runDetection(s, map, rules);
+    const unit = unitIn(result.state, unitId);
+    assert(result.events.some((ev) => ev.kind === 'pinned'), 'pinned event');
+    equal(unit.hits, 0, 'not hit');
+    equal(unit.charges, before.charges, 'kept his charge');
+    const pool = unitIn({ units: fillActionPoints(result.state.units, rules) }, unitId);
+    const plain = unitIn({ units: fillActionPoints(result.state.units.map((u) => ({ ...u, pinned: false })), rules) }, unitId);
+    equal(pool.apMax, Math.max(1, plain.apMax - rules.combat.pinnedApLoss), 'smaller pool');
+    const wounded = unitIn({ units: fillActionPoints(result.state.units.map((u) => ({ ...u, hits: 1 })), rules) }, unitId);
+    equal(wounded.apMax, 1, 'a pinned wounded man keeps 1 AP');
+    const again = runDetection({ ...result.state, enemies: [e] }, map, rules);
+    assert(!unitIn(again.state, unitId).pinned || again.events.some((ev) => ev.kind === 'pinned'), 'pinned lasts one pool');
   }],
 
   ['spotted again next turn by a free enemy he is shot: wounded, charge dropped, 1 AP, and he says so', async () => {

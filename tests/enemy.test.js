@@ -150,8 +150,8 @@ export default [
     const result = runDetection(s, map, rules);
     equal(result.events.filter((ev) => ev.kind === 'spotted').length, 1, 'spotted once');
     equal(result.state.alert.points, rules.alert.spotted, 'alert +spotted');
-    const noise = result.state.noises[result.state.noises.length - 1];
-    equal(`${noise.kind} ${noise.q},${noise.r}`, `spotted ${spot.q + 2},${spot.r}`, 'the noise is where he was seen');
+    equal(`${result.state.contact.q},${result.state.contact.r}`, `${spot.q + 2},${spot.r}`, 'contact is where he was seen');
+    equal(result.state.noises.length, 0, 'a sighting is not a noise');
   }],
 
   ['a trooper who starts in an arc and walks out of it is not tested where he started', async () => {
