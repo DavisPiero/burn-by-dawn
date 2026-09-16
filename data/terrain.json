@@ -1,0 +1,101 @@
+{
+  "_comment": "Terrain rules table, SPEC.md §3. Global, not per-map: map.json references these ids. moveCost null means impassable. cover is none | light | heavy. All balance numbers live here, never in logic (CLAUDE.md rule 5).",
+  "types": {
+    "field": {
+      "label": "Field",
+      "moveCost": 1,
+      "cover": "none",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "fully exposed"
+    },
+    "track": {
+      "label": "Track",
+      "moveCost": 1,
+      "cover": "none",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "exposed, fast"
+    },
+    "hedgerow": {
+      "label": "Hedgerow",
+      "moveCost": 2,
+      "cover": "heavy",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "the safe artery"
+    },
+    "wood": {
+      "label": "Wood",
+      "moveCost": 2,
+      "cover": "heavy",
+      "blocksLOS": true,
+      "spotBonus": 0,
+      "notes": "bad landing"
+    },
+    "orchard": {
+      "label": "Orchard",
+      "moveCost": 1,
+      "cover": "light",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": ""
+    },
+    "marsh": {
+      "label": "Marsh",
+      "moveCost": 3,
+      "cover": "light",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "bad landing"
+    },
+    "canal": {
+      "label": "Canal",
+      "moveCost": null,
+      "cover": "none",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "crossable only at bridge or lock"
+    },
+    "ridge": {
+      "label": "Ridge",
+      "moveCost": 2,
+      "cover": "light",
+      "blocksLOS": true,
+      "spotBonus": 1,
+      "notes": "high ground, +1 spot radius"
+    },
+    "farmhouse": {
+      "label": "Farmhouse",
+      "moveCost": 1,
+      "cover": "heavy",
+      "blocksLOS": true,
+      "spotBonus": 0,
+      "notes": "may be occupied"
+    },
+    "emplacement": {
+      "label": "Emplacement",
+      "moveCost": null,
+      "cover": "none",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "enemy position"
+    },
+    "bridge": {
+      "label": "Bridge",
+      "moveCost": 1,
+      "cover": "none",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "canal crossing; not in the SPEC §3 table, added at M1 so §3's crossable only at bridge/lock is expressible"
+    },
+    "lock": {
+      "label": "Lock",
+      "moveCost": 1,
+      "cover": "light",
+      "blocksLOS": false,
+      "spotBonus": 0,
+      "notes": "canal crossing on foot; same addition as bridge"
+    }
+  }
+}
