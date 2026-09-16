@@ -15,7 +15,8 @@ Read these before drawing anything. They are what make the swap painless.
 **SVG (default for everything that is a shape)**
 - Export with a `viewBox`, and **strip `width`/`height` attributes**. The game scales them.
 - **No hardcoded colours.** Use CSS classes only: `.ink`, `.paper`, `.green`, `.red`,
-  `.blue`. The palette lives in `theme.js` and must stay tunable.
+  `.blue`, and `.leader` for the ranking man's marks only (see the leader counter below).
+  The palette lives in `theme.js` and must stay tunable.
 - **Do not bake in the halftone.** Fills get the halftone `<pattern>` applied in code so
   density can be tuned per element.
 - **Do not bake in the misregistration.** The 0.5px colour offset is applied in code.
@@ -68,7 +69,7 @@ Names: holloway, fitch, vance, barrow, speers, nunn.
 | Asset | viewBox | Notes |
 |---|---|---|
 | `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square, name strip along the bottom |
-| `counter-frame-allied-leader.svg` | 56 x 56 | the ranking man. Same die-cut silhouette as above so the two read as one set — distinguish it by the name strip and a rank flash, not by a different shape |
+| `counter-frame-allied-leader.svg` | 56 x 56 | the ranking man. Same die-cut silhouette as above so the two read as one set — distinguish it by the name strip and a rank flash, not by a different shape. Strip and rank flash use `.leader` |
 | `counter-frame-enemy.svg` | 56 x 56 | visually distinct at a glance, not just recoloured |
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
 | `symbol-scout.svg` | 24 x 24 | binoculars |

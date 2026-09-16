@@ -7,7 +7,7 @@
 // has nothing to show until M4. This is the plain version of the same panel.
 
 import { terrainAt } from '../map.js';
-import { terrainStyle } from './theme.js';
+import { PALETTE, terrainStyle } from './theme.js';
 
 function describeCost(terrain) {
   return terrain.moveCost === null ? 'impassable' : `move ${terrain.moveCost}`;
@@ -45,6 +45,9 @@ export function renderRoster(element, state, map, view, onSelect) {
     const key = document.createElement('span');
     key.className = 'roster-key';
     key.textContent = String(i + 1);
+    // The same colour as his counter's name strip, so the panel and the board
+    // point at the same man.
+    if (unit.leader) key.style.color = PALETTE.leader;
 
     const who = document.createElement('span');
     who.className = 'roster-who';

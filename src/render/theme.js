@@ -7,7 +7,7 @@
 // same ids, same viewBoxes, so no game or render code changes.
 //
 // Symbols colour themselves with the class names ART-ASSETS.md mandates
-// (.ink, .paper, .green, .red, .blue) so a supplied SVG drops straight in.
+// (.ink, .paper, .green, .red, .blue, .leader) so a supplied SVG drops straight in.
 // Stroke versions of the same classes are prefixed `stroke-`.
 //
 // The halftone patterns and the 0.5px misregistration offset arrive at M7.
@@ -18,6 +18,11 @@ export const PALETTE = {
   green: '#5C6B4A',
   red: '#C1272D',
   blue: '#3D5A73',
+  // The sixth spot colour, for the ranking man only: his counter's name strip
+  // and chevrons, and his number in the roster. Brighter and more saturated
+  // than cold blue so he stands out, and kept apart from it so the canal and
+  // the move range do not light up too (SPEC.md §11).
+  leader: '#2F7BBF',
 };
 
 // fill: the hex body. ink: anything drawn on top of it, so labels stay legible
@@ -144,16 +149,16 @@ const SPRITES = {
     draw: () => alliedFrame('green'),
   },
 
-  // The ranking man: blue name strip, plus a sergeant's three chevrons. Blue,
-  // not red — red on a friendly counter read as an error. The chevrons sit
+  // The ranking man: leader-blue name strip, plus a sergeant's three chevrons.
+  // Not red — red on a friendly counter read as an error. The chevrons sit
   // in the right-hand margin of the counter, clear of the role symbol (x 16-40)
   // and the AP pips along the top centre.
   'counter-frame-allied-leader': {
     viewBox: '0 0 56 56',
-    draw: () => alliedFrame('blue', [
+    draw: () => alliedFrame('leader', [
       svg('path', {
         d: 'M42 12 L46 8 L50 12 M42 19 L46 15 L50 19 M42 26 L46 22 L50 26',
-        fill: 'none', class: 'stroke-blue', 'stroke-width': 1.8,
+        fill: 'none', class: 'stroke-leader', 'stroke-width': 1.8,
         'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       }),
     ]),

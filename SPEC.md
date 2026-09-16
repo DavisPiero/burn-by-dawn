@@ -351,7 +351,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Paper cream ground, fibre texture, centre-fold crease and gutter shadow between pages.
 - Ben-Day halftone dots for all tonal fill, as SVG `<pattern>` defs.
 - Palette: paper `#F2E8D5`, ink `#1A1A18`, army green `#5C6B4A`, danger red `#C1272D`,
-  cold blue `#3D5A73`. Nothing else.
+  cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
+  the ranking man (his counter's name strip and rank flash, his number on the roster).
+  Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, drop shadow, symbol, name strip. They snap down
   with a 2-frame stepped rotation. No smooth easing anywhere — stepped animation reads as
