@@ -8,6 +8,9 @@ the mission harder.* Charges have fuse timers, explosions raise the garrison ale
 and alert sends patrols toward your last known position. The order and timing of your
 demolitions is the strategy.
 
+**Players:** single-player. The garrison is not an opponent; it follows the rules in §6,
+so the hover readout can show exactly what it will do.
+
 **Feel:** casual to pick up, rewarding to plan. No twitch. No fail-state that arrives
 without warning. The player should always be able to see the risk before committing.
 
