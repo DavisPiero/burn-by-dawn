@@ -11,8 +11,8 @@
 // it is drawn once; the pieces layer redraws on every state change, including
 // every hover, and is small enough that doing so is free.
 
-import { axialToPixel, hexCorners } from '../hex.js';
-import { forEachCell, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
+import { NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
+import { forEachCell, hexKey, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
 import { COUNTER, GRID, PATH, SELECTION, counterFrameId, createSpriteDefs, roleSymbolId, terrainStyle } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -132,25 +132,7 @@ export function renderPieces(layers, state, view) {
     layer.replaceChildren();
   }
 
-  if (view.reachable) {
-    const inset = corners.map((c) => ({ x: c.x * PATH.reachableInset, y: c.y * PATH.reachableInset }));
-    for (const { q, r, cost } of view.reachable.values()) {
-      if (cost === 0) continue;
-      const center = axialToPixel(q, r, map.hexSize);
-      layers.reachable.appendChild(el('polygon', {
-        points: cornersToPoints(center, corners),
-        fill: PATH.reachableFill,
-        'fill-opacity': PATH.reachableOpacity,
-      }));
-      layers.reachable.appendChild(el('polygon', {
-        points: cornersToPoints(center, inset),
-        fill: 'none',
-        stroke: PATH.reachableStroke,
-        'stroke-width': PATH.reachableStrokeWidth,
-        'stroke-opacity': PATH.reachableStrokeOpacity,
-      }));
-    }
-  }
+  if (view.reachable) drawReachable(layers, view.reachable);
 
   if (view.plan) drawPlan(layers, view.plan);
 
@@ -169,6 +151,67 @@ export function renderPieces(layers, state, view) {
     // in three places.
     layers.counters.appendChild(drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId));
   });
+}
+
+// --- move range ---------------------------------------------------------------
+
+/**
+ * For each neighbour direction, the two corner indices of the edge shared with
+ * the neighbour that way. Worked out from the geometry — the two corners that
+ * point furthest toward the neighbour's centre — rather than written out by
+ * hand, because the corner order and the SPEC.md §2 direction order do not
+ * line up and a hand-made table is an easy thing to get subtly wrong.
+ */
+function edgeCorners(corners, size) {
+  return NEIGHBOR_DIRS.map((d) => {
+    const toward = axialToPixel(d.q, d.r, size);
+    return corners
+      .map((c, i) => ({ i, dot: c.x * toward.x + c.y * toward.y }))
+      .sort((a, b) => b.dot - a.dot)
+      .slice(0, 2)
+      .map((c) => c.i);
+  });
+}
+
+/**
+ * Tint every hex the selected trooper can reach this turn, then draw one
+ * line round the outside of the area: every hex edge whose neighbour is not
+ * reachable. The trooper's own hex counts as inside, so the line never cuts
+ * between him and his range.
+ */
+function drawReachable(layers, reachable) {
+  const { corners, map } = layers;
+  const edges = edgeCorners(corners, map.hexSize);
+  let outline = '';
+
+  for (const { q, r, cost } of reachable.values()) {
+    const center = axialToPixel(q, r, map.hexSize);
+    if (cost > 0) {
+      layers.reachable.appendChild(el('polygon', {
+        points: cornersToPoints(center, corners),
+        fill: PATH.reachableFill,
+        'fill-opacity': PATH.reachableOpacity,
+      }));
+    }
+    NEIGHBOR_DIRS.forEach((d, dir) => {
+      if (reachable.has(hexKey(q + d.q, r + d.r))) return;
+      const [a, b] = edges[dir].map((i) => corners[i]);
+      outline += `M${center.x + a.x},${center.y + a.y} L${center.x + b.x},${center.y + b.y} `;
+    });
+  }
+
+  for (const [stroke, width] of [
+    [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth],
+    [PATH.reachableEdge, PATH.reachableEdgeWidth],
+  ]) {
+    layers.reachable.appendChild(el('path', {
+      d: outline,
+      fill: 'none',
+      stroke,
+      'stroke-width': width,
+      'stroke-linecap': 'round',
+    }));
+  }
 }
 
 // --- hover path preview -----------------------------------------------------
