@@ -199,6 +199,20 @@
           + '\n\nBrowser: ' + navigator.userAgent;
       }
 
+      // Opened by double-clicking the file rather than through ./run.sh.
+      // Browsers block ES modules over file:// (SPEC.md §1), so the page
+      // renders its static furniture and the game never loads at all. Say so
+      // at once — the symptoms otherwise look like a broken game.
+      if (location.protocol === 'file:') {
+        report('This page was opened as a file, so the game cannot run.',
+          'Browsers refuse to load ES modules over file://, which is why the\n'
+          + 'board is empty and the keys do nothing. Nothing is wrong with the game.\n\n'
+          + 'Start the server and use the address it prints:\n\n'
+          + '    ./run.sh\n'
+          + '    http://localhost:8000');
+        return;
+      }
+
       window.addEventListener('error', function (event) {
         // Subresource failures (a module that 404s) arrive as an error event
         // on the element and carry no message, so say which one it was.
