@@ -136,6 +136,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-wounded.svg` | 28 x 28 |
 | `marker-suppressed.svg` | 28 x 28 |
 | `marker-spotted.svg` | 28 x 28 |
+| `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
+| `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
 | `stamp-destroyed.svg` | 200 x 80 (red rubber stamp, rotated in code) |
 

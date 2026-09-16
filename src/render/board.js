@@ -15,7 +15,7 @@
 import { NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, hexKey, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
 import {
-  CONTACT, COUNTER, ENEMY, GRID, PATH, RISK, ROUTE, SELECTION, VISION,
+  CONTACT, COUNTER, ENEMY, GRID, MARKER, NOISE, PATH, RISK, ROUTE, SELECTION, TARGET, VISION, WATCH,
   counterFrameId, createSpriteDefs, enemySymbolId, roleSymbolId, terrainStyle,
 } from './theme.js';
 
@@ -126,7 +126,9 @@ function text(content, attrs) {
 
 /**
  * Redraw everything that changes: vision, reachable tint, routes, hover path
- * and its risk pips, selection outline, the contact marker and the counters.
+ * and its risk pips, selection outline, contact and noise rings, who is
+ * watching whom, bodies and dropped charges, action targets, and the counters
+ * with their markers.
  *
  * @param {object} layers from createBoard
  * @param {object} state
@@ -145,10 +147,16 @@ export function renderPieces(layers, state, view) {
 
   for (const route of view.routes) drawRoute(layers, route);
 
+  if (view.targets) drawTargets(layers, view.targets);
+
   if (view.plan) drawPlan(layers, view.plan);
   if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
 
-  if (state.contact && !state.contact.searched) drawContact(layers, state.contact);
+  for (const hex of view.searchHexes) drawContact(layers, hex);
+  for (const noise of state.noises) drawNoise(layers, noise);
+  for (const body of state.bodies) drawOnGround(layers, 'marker-body', body, -1);
+  for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
+  for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
 
   if (state.selectedHex) {
     layers.highlight.appendChild(el('polygon', {
@@ -160,19 +168,69 @@ export function renderPieces(layers, state, view) {
   }
 
   for (const enemy of state.enemies) {
-    layers.counters.appendChild(drawEnemy(enemy, map, enemy.id === view.hoverEnemy?.id));
+    const hovered = enemy.id === view.hoverEnemy?.id;
+    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id));
+    if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
+    layers.counters.appendChild(counter);
   }
 
   state.units.forEach((unit, i) => {
+    if (unit.dead) return;
     // The number on the counter is the trooper's place in the roster, which is
     // also his 1-6 hotkey and his position in the panel. One ordering, shown
     // in three places.
     const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
-    if (view.spottedIds.has(unit.id)) {
-      counter.appendChild(el('use', { href: '#marker-spotted', x: 38, y: -12, width: 22, height: 22 }));
-    }
+    // In contact top right, where the eye goes first; his condition top left.
+    if (unit.inContact) counter.appendChild(marker('marker-spotted', 38, -12));
+    if (unit.hits > 0 && !unit.stabilised) counter.appendChild(marker('marker-wounded', -6, -12));
+    if (unit.hidden) counter.appendChild(marker('marker-hidden', 38, 38));
     layers.counters.appendChild(counter);
   });
+}
+
+function marker(id, x, y) {
+  return el('use', { href: `#${id}`, x, y, width: MARKER.size, height: MARKER.size });
+}
+
+// Things left on the ground sit in a lower corner of their hex, a body to one
+// side and dropped charges to the other, so both show when they share it.
+function drawOnGround(layers, id, at, side) {
+  const p = axialToPixel(at.q, at.r, layers.map.hexSize);
+  const size = MARKER.groundSize;
+  layers.highlight.appendChild(el('use', {
+    href: `#${id}`, x: p.x + side * 18 - size / 2, y: p.y + 14 - size / 2, width: size, height: size,
+  }));
+}
+
+// SPEC.md §6: an enemy holding contact faces its man, and the board says who
+// has whom with a dashed line to the hex it saw him on.
+function drawWatch(layers, enemy) {
+  const { map } = layers;
+  const a = axialToPixel(enemy.q, enemy.r, map.hexSize);
+  const b = axialToPixel(enemy.watching.q, enemy.watching.r, map.hexSize);
+  layers.routes.appendChild(polyline([a, b], { stroke: WATCH.casing, 'stroke-width': WATCH.casingWidth }));
+  layers.routes.appendChild(polyline([a, b], {
+    stroke: WATCH.stroke, 'stroke-width': WATCH.width, 'stroke-dasharray': WATCH.dash,
+  }));
+}
+
+// A noise made this turn, heard in the enemy phase.
+function drawNoise(layers, noise) {
+  const p = axialToPixel(noise.q, noise.r, layers.map.hexSize);
+  for (const [stroke, width] of [[NOISE.casing, NOISE.casingWidth], [NOISE.stroke, NOISE.width]]) {
+    layers.highlight.appendChild(el('circle', { cx: p.x, cy: p.y, r: NOISE.radius, fill: 'none', stroke, 'stroke-width': width }));
+  }
+  layers.highlight.appendChild(text('!', {
+    x: p.x, y: p.y - NOISE.radius - 2, 'font-size': 18, 'font-weight': 'bold', fill: NOISE.text,
+  }));
+}
+
+// Where the action being aimed can go.
+function drawTargets(layers, targets) {
+  drawAreaEdge(layers, layers.reachable, targets, [
+    [TARGET.casing, TARGET.casingWidth],
+    [TARGET.stroke, TARGET.width],
+  ]);
 }
 
 // --- vision, routes, contact ------------------------------------------------
@@ -257,6 +315,14 @@ function drawRisk(layers, plan, risk) {
       stroke: result.spotted ? RISK.spottedStroke : RISK.badgeStroke,
       'stroke-width': result.spotted ? 2.5 : 1.2,
     }));
+    if (result.shot) {
+      layers.risk.appendChild(el('rect', {
+        x: at.x - 17, y: y + 8, width: 34, height: 13, rx: 2, fill: RISK.shotFill,
+      }));
+      layers.risk.appendChild(text('SHOT', {
+        x: at.x, y: y + 15, 'font-size': 9, 'font-weight': 'bold', fill: RISK.shotText,
+      }));
+    }
     for (let p = 0; p < count; p++) {
       const colour = result.spotted ? RISK.spottedFill : RISK.pipFill;
       layers.risk.appendChild(el('circle', {
@@ -418,7 +484,7 @@ function drawCounter(unit, number, map, isSelected) {
   const size = COUNTER.size;
   const group = el('g', {
     transform: `translate(${center.x - size / 2}, ${center.y - size / 2})`,
-    opacity: unit.ap === 0 ? COUNTER.spentOpacity : 1,
+    opacity: unit.hidden ? MARKER.hiddenOpacity : unit.ap === 0 ? COUNTER.spentOpacity : 1,
   });
 
   group.appendChild(el('use', { href: `#${counterFrameId(unit)}`, width: size, height: size }));
@@ -471,7 +537,7 @@ function drawCounter(unit, number, map, isSelected) {
 
 // Enemy counters: frame, type, a strip naming the type, and a wedge outside
 // the counter pointing the way it faces.
-function drawEnemy(enemy, map, isHovered) {
+function drawEnemy(enemy, map, isHovered, hears) {
   const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', { transform: `translate(${center.x - size / 2}, ${center.y - size / 2})` });
@@ -503,6 +569,12 @@ function drawEnemy(enemy, map, isHovered) {
     group.appendChild(el('rect', {
       x: -2, y: -2, width: size, height: size, rx: 9,
       fill: 'none', stroke: COUNTER.selectedStroke, 'stroke-width': COUNTER.selectedStrokeWidth,
+    }));
+  }
+  if (hears) {
+    group.appendChild(el('circle', {
+      cx: size / 2, cy: size / 2, r: size / 2 + 6,
+      fill: 'none', stroke: TARGET.hearsStroke, 'stroke-width': TARGET.hearsWidth, 'stroke-dasharray': '4 3',
     }));
   }
   return group;

@@ -86,8 +86,20 @@ function describeEvent(event) {
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road at (${event.q}, ${event.r}).`;
     case 'searched': return `${event.label} reaches (${event.q}, ${event.r}) and searches it.`;
+    case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.${event.line ? ` “${event.line}”` : ''}`;
+    case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
+    case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} at (${event.q}, ${event.r}).`;
+    case 'bodyFound': return `${event.label} finds ${event.name}'s body at (${event.q}, ${event.r}).`;
     default: return event.kind;
   }
+}
+
+const NOISE_WORDS = { spotted: 'a sighting', found: 'the shout over a body', stone: 'a noise', gunfire: 'gunfire' };
+
+function listOf(labels) {
+  if (!labels || labels.length === 0) return 'someone';
+  if (labels.length === 1) return labels[0];
+  return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
 }
 
 /**
@@ -95,7 +107,9 @@ function describeEvent(event) {
  * "Bridge patrol: 3 − cover 2 − conceal 0 + close 1 = 2 of 3".
  */
 export function describeDetection(d) {
-  let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover} − conceal ${d.concealment} + close ${d.proximity}`;
+  let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover} − conceal ${d.concealment}`;
+  if (d.hidden) sum += ` − hidden ${d.hidden}`;
+  sum += ` + close ${d.proximity}`;
   if (d.trait) sum += ` ${d.trait > 0 ? '+' : '−'} trait ${Math.abs(d.trait)}`;
   return `${sum} = ${d.score} of ${d.threshold}`;
 }
@@ -107,9 +121,14 @@ export function describeRisk(plan, risk) {
   const seen = tested.filter((i) => risk[i]);
   if (seen.length === 0) return plan.steps === 0 ? 'unseen here' : 'unseen all the way';
   const spotted = seen.filter((i) => risk[i].spotted);
+  const shot = seen.filter((i) => risk[i].shot);
   const worstAt = seen.reduce((a, b) => (risk[b].score > risk[a].score ? b : a));
   const hex = plan.path[worstAt];
   const where = `(${hex.q}, ${hex.r})`;
+  if (shot.length > 0) {
+    const at = plan.path[shot[0]];
+    return `SHOT — he is in contact and ${risk[shot[0]].enemyLabel} would see him again at (${at.q}, ${at.r}): ${describeDetection(risk[shot[0]])}`;
+  }
   if (spotted.length > 0) {
     return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — at ${where} ${describeDetection(risk[worstAt])}`;
   }
@@ -148,6 +167,7 @@ export function renderRoster(element, state, map, view, onSelect) {
     item.className = 'roster-item';
     if (unit.id === state.selectedUnitId) item.classList.add('selected');
     if (unit.ap === 0) item.classList.add('spent');
+    if (unit.dead) item.classList.add('dead');
 
     const key = document.createElement('span');
     key.className = 'roster-key';
@@ -160,8 +180,25 @@ export function renderRoster(element, state, map, view, onSelect) {
     who.className = 'roster-who';
     who.textContent = unit.name;
 
+    const status = describeStatus(unit);
+    if (status) {
+      const tag = document.createElement('span');
+      tag.className = 'roster-status';
+      tag.textContent = status;
+      who.append(' ', tag);
+    }
+
     const detail = document.createElement('span');
     detail.className = 'roster-detail';
+    if (unit.dead) {
+      detail.textContent = unit.roleLabel;
+      const text = document.createElement('span');
+      text.className = 'roster-text';
+      text.append(who, detail);
+      item.append(key, text);
+      element.appendChild(item);
+      return;
+    }
     const terrain = terrainAt(map, unit.q, unit.r);
     const where = `${unit.roleLabel} · ${terrain ? terrain.label : 'off map'} (${unit.q}, ${unit.r})`;
     // An AP pool that is bigger than the role's own number needs to say why,
@@ -196,6 +233,47 @@ export function renderRoster(element, state, map, view, onSelect) {
     item.addEventListener('click', () => onSelect(unit.id));
     element.appendChild(item);
   });
+}
+
+/** His condition in a word or two, or null when there is nothing to say. */
+function describeStatus(unit) {
+  if (unit.dead) return 'KILLED';
+  const parts = [];
+  if (unit.hits > 0) parts.push(unit.stabilised ? 'DRESSED' : 'WOUNDED');
+  if (unit.inContact) parts.push('IN CONTACT');
+  if (unit.hidden) parts.push('HIDDEN');
+  return parts.length ? parts.join(' · ') : null;
+}
+
+/**
+ * The selected man's actions (SPEC.md §4), as buttons with their key and cost.
+ * `actions` is worked out in main.js: [{ id, key, label, cost, ok, reason,
+ * active }]. A button that cannot be used says why on hover and underneath.
+ */
+export function renderActions(element, actions, onAction) {
+  element.replaceChildren();
+  if (!actions) {
+    element.hidden = true;
+    return;
+  }
+  element.hidden = false;
+  for (const action of actions) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'action';
+    if (action.active) button.classList.add('active');
+    button.disabled = !action.ok && !action.active;
+    button.title = action.ok ? action.help : action.reason;
+    const name = document.createElement('span');
+    name.className = 'action-name';
+    name.textContent = `${action.label} [${action.key}]`;
+    const cost = document.createElement('span');
+    cost.className = 'action-cost';
+    cost.textContent = action.active ? 'click a target · Esc' : action.ok ? action.cost : action.reason;
+    button.append(name, cost);
+    button.addEventListener('click', () => onAction(action.id));
+    element.appendChild(button);
+  }
 }
 
 // How a hook stat reads to a player. A stat missing here still renders, by
@@ -239,9 +317,16 @@ export function describeEffect(effect) {
  */
 export function renderReadout(element, state, map, view) {
   const hex = state.hoverHex ?? state.selectedHex;
+  if (view?.targetLabel) {
+    element.textContent = view.targetLabel;
+    return;
+  }
   if (view?.hoverEnemy) {
     const e = view.hoverEnemy;
-    const doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
+    let doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
+    if (e.investigating) doing = `going to look at (${e.investigating.q}, ${e.investigating.r})`;
+    if (e.watching) doing = `has a man in its sights at (${e.watching.q}, ${e.watching.r})`;
+    if (e.suppressed) doing = 'SUPPRESSED — will not fire or move this turn';
     element.textContent = `(${e.q}, ${e.r}) ${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.`;
     return;
   }
@@ -268,6 +353,7 @@ export function renderReadout(element, state, map, view) {
   let line = `(${hex.q}, ${hex.r}) ${terrain.label} — ${parts.join(', ')}`;
   if (view?.moveLabel) line += `   ▸ ${view.moveLabel}`;
   if (view?.riskLabel) line += `   ▸ ${view.riskLabel}`;
+  if (view?.hideLabel) line += `   ▸ ${view.hideLabel}`;
   element.textContent = line;
 }
 

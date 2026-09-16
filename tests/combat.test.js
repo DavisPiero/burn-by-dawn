@@ -285,6 +285,22 @@ export default [
     equal(phase.state.enemies.find((e) => e.id === 'idle').investigating, null, 'nobody new set off');
   }],
 
+  ['two patrols sent to one noise: the first to arrive reports the search, the second does not, even a turn later', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 7);
+    const hex = { q: row.q + 3, r: row.r };
+    const close = enemy(row.q + 2, row.r, 'E', { id: 'close', investigating: hex });
+    const far = enemy(row.q - 3, row.r, 'E', { id: 'far', speed: 1, investigating: hex });
+    const s = { ...state, units: state.units.map((u, i) => ({ ...u, q: 200 + i, r: 0 })), enemies: [close, far] };
+    let phase = runEnemyPhase(s, map, rules);
+    let reports = phase.events.filter((e) => e.kind === 'searched').length;
+    for (let turn = 0; turn < 8; turn++) {
+      phase = runEnemyPhase({ ...phase.state, noises: [] }, map, rules);
+      reports += phase.events.filter((e) => e.kind === 'searched').length;
+    }
+    equal(reports, 1, 'searched reported once');
+  }],
+
   ['a body is found by an enemy that ends beside it: alert up, a noise, and only once', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 5);

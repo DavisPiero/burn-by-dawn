@@ -222,6 +222,52 @@
       color: #c1272d;
       font-weight: bold;
     }
+    .roster-item.dead {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .roster-status {
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      color: #c1272d;
+    }
+    #actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .action {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 5px 8px;
+      font: inherit;
+      text-align: left;
+      color: #1a1a18;
+      background: #f2e8d5;
+      border: 2px solid #1a1a18;
+      cursor: pointer;
+    }
+    .action:disabled {
+      background: #3a3a34;
+      color: #9a9486;
+      border-color: #3a3a34;
+      cursor: default;
+    }
+    .action.active {
+      background: #3d5a73;
+      color: #f2e8d5;
+    }
+    .action-name {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .action-cost {
+      font-size: 10px;
+      opacity: 0.8;
+    }
     .roster-ap {
       font-family: ui-monospace, monospace;
       font-size: 12px;
@@ -236,7 +282,7 @@
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M4: enemies and alert</h1>
+    <h1>NIGHT DROP — M5a: contact and combat</h1>
     <div id="error" hidden></div>
     <div id="spread">
       <svg id="board"></svg>
@@ -248,9 +294,11 @@
           <div id="alert-caption"></div>
         </div>
         <ul id="report"></ul>
+        <div id="actions" hidden></div>
         <ul id="roster"></ul>
         <div id="keys">
           1–6 select trooper · Tab cycle · H hold position<br />
+          G hide · S suppress · T throw stone · A stabilise · P pick up<br />
           Space end turn · Esc or right-click cancel<br />
           R patrol routes · hover an enemy for its arc and route
         </div>

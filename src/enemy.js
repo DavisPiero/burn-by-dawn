@@ -368,7 +368,7 @@ export function makeNoise(state, kind, hex, alertAmount, rules) {
 function hearNoises(enemies, noises, contact, alertPoints, rules) {
   const events = [];
   for (const noise of noises) {
-    const repeat = enemies.some((e) => e.investigating && sameHex(e.investigating, noise))
+    const repeat = enemies.some((e) => e.investigating && !e.investigating.searched && sameHex(e.investigating, noise))
       || (contact && !contact.searched && sameHex(contact, noise));
     if (repeat) continue;
     contact = { q: noise.q, r: noise.r, searched: false };
@@ -444,7 +444,6 @@ export function runEnemyPhase(state, map, rules) {
 
   const hunting = stateId === 'alarmed' && contact && !contact.searched;
   const pauses = stateId === 'suspicious' && state.turn % rules.patrols.suspiciousPauseEvery === 0;
-  const searchedHexes = new Set();
 
   for (let i = 0; i < enemies.length; i++) {
     const enemy = enemies[i];
@@ -480,10 +479,15 @@ export function runEnemyPhase(state, map, rules) {
       moved = result.enemy;
       if (result.arrived || result.stuck) {
         moved = { ...sweep(moved, rules), investigating: null };
-        const key = hexKey(goal.q, goal.r);
-        if (!searchedHexes.has(key)) {
-          searchedHexes.add(key);
+        // The first to get there reports the search. Anyone else still on the
+        // way keeps walking but has nothing new to report (SPEC.md §6 repeat).
+        if (!goal.searched) {
           events.push({ kind: 'searched', label: enemy.label, q: goal.q, r: goal.r });
+          enemies = enemies.map((e, j) => (
+            j !== i && e.investigating && sameHex(e.investigating, goal)
+              ? { ...e, investigating: { ...e.investigating, searched: true } }
+              : e
+          ));
         }
         if (contact && sameHex(contact, goal)) contact = { ...contact, searched: true };
       }
