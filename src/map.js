@@ -177,26 +177,31 @@ export function hexKey(q, r) {
  * Cost to enter a hex, or null if it cannot be entered at all — off the map,
  * impassable terrain, or listed in `blocked` (occupied hexes, supplied by the
  * caller; map.js knows nothing about units).
+ *
+ * `adjust`, if given, turns the terrain's cost into this mover's cost. It is
+ * how the onMoveCost trait hook reaches pathing without map.js knowing what a
+ * trait is. It never sees impassable hexes, so no trait can make a canal
+ * walkable. It must not return less than 1, or the A* heuristic overestimates.
  */
-export function enterCost(map, q, r, blocked) {
+export function enterCost(map, q, r, blocked, adjust = null) {
   if (blocked && blocked.has(hexKey(q, r))) return null;
   if (!isInPlay(map, q, r)) return null;
   const terrain = terrainAt(map, q, r);
   if (!isPassable(terrain)) return null;
-  return terrain.moveCost;
+  return adjust ? adjust(terrain.moveCost) : terrain.moveCost;
 }
 
 /**
  * Cheapest path from `from` to `to`, as an array of coords starting with
  * `from` and ending with `to`. Returns null if no path exists. `blocked` is a
  * Set of hexKey()s that may not be entered. Unbounded by AP — affordability is
- * a unit rule and lives in units.js.
+ * a unit rule and lives in units.js. `adjust` as for enterCost.
  */
-export function findPath(map, from, to, blocked) {
+export function findPath(map, from, to, blocked, adjust = null) {
   const startKey = hexKey(from.q, from.r);
   const goalKey = hexKey(to.q, to.r);
   if (startKey === goalKey) return [{ q: from.q, r: from.r }];
-  if (enterCost(map, to.q, to.r, blocked) === null) return null;
+  if (enterCost(map, to.q, to.r, blocked, adjust) === null) return null;
 
   const cameFrom = new Map();
   const gScore = new Map([[startKey, 0]]);
@@ -213,14 +218,15 @@ export function findPath(map, from, to, blocked) {
     if (currentKey === goalKey) return reconstruct(cameFrom, current);
 
     for (const next of neighbors(current.q, current.r)) {
-      const step = enterCost(map, next.q, next.r, blocked);
+      const step = enterCost(map, next.q, next.r, blocked, adjust);
       if (step === null) continue;
       const tentative = gScore.get(currentKey) + step;
       const nextKey = hexKey(next.q, next.r);
       if (gScore.has(nextKey) && tentative >= gScore.get(nextKey)) continue;
       gScore.set(nextKey, tentative);
       cameFrom.set(nextKey, current);
-      // Cheapest terrain costs 1, so plain hex distance never overestimates.
+      // Every step costs at least 1 — the cheapest terrain, and the onMoveCost
+      // floor in traits.js — so plain hex distance never overestimates.
       open.push({ q: next.q, r: next.r, f: tentative + hexDistance(next, to) });
     }
   }
@@ -240,9 +246,9 @@ function reconstruct(cameFrom, end) {
 /**
  * Every hex reachable from `from` for `budget` or less, as a Map of
  * hexKey -> { q, r, cost }. The origin is included at cost 0. Dijkstra, not
- * A*, because there is no single goal.
+ * A*, because there is no single goal. `adjust` as for enterCost.
  */
-export function reachableWithin(map, from, budget, blocked) {
+export function reachableWithin(map, from, budget, blocked, adjust = null) {
   const found = new Map([[hexKey(from.q, from.r), { q: from.q, r: from.r, cost: 0 }]]);
   const frontier = [{ q: from.q, r: from.r, cost: 0 }];
 
@@ -252,7 +258,7 @@ export function reachableWithin(map, from, budget, blocked) {
     const current = frontier.splice(bestAt, 1)[0];
 
     for (const next of neighbors(current.q, current.r)) {
-      const step = enterCost(map, next.q, next.r, blocked);
+      const step = enterCost(map, next.q, next.r, blocked, adjust);
       if (step === null) continue;
       const cost = current.cost + step;
       if (cost > budget) continue;

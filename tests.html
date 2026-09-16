@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Night Drop — tests</title>
+  <style>
+    body { margin: 16px; background: #1a1a18; color: #e8e8e8; font-family: ui-monospace, monospace; font-size: 13px; }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    #summary { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+    .pass { color: #8fa36f; }
+    .fail { color: #e0474d; }
+    li { margin: 2px 0; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <!-- Served by ./run.sh like the game: open http://localhost:8000/tests.html.
+       No test framework and no Node (CLAUDE.md rules 1 and 2). -->
+  <h1>NIGHT DROP — tests</h1>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+  <script type="module" src="tests/run.js"></script>
+</body>
+</html>

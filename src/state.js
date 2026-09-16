@@ -9,11 +9,12 @@
 
 import { createUnits, fillActionPoints, unitById } from './units.js';
 
-export function createInitialState(roster, rules, map) {
+/** `traits` is the validated table from traits.js validateTraits. */
+export function createInitialState(roster, traits, rules, map) {
   validateRules(rules);
   return {
     turn: 1,
-    units: createUnits(roster, rules, map.startHexes),
+    units: createUnits(roster, traits, rules, map.startHexes),
     selectedUnitId: null,
     selectedHex: null, // hex inspection, from M0; survives alongside unit selection
     hoverHex: null,
@@ -35,6 +36,20 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
     if (!Number.isInteger(role.actionPoints) || role.actionPoints <= 0) {
       throw new Error(`${rulesUrl}: role "${id}" needs a positive integer "actionPoints", got ${JSON.stringify(role.actionPoints)}`);
     }
+    requireCount(role.spotRadius, `role "${id}" "spotRadius"`, rulesUrl);
+    requireCount(role.charges, `role "${id}" "charges"`, rulesUrl);
+  }
+  // The bases the trait hooks modify (SPEC.md §5). Nothing acts on most of
+  // them until M4–M6, which is exactly when a missing one would go unnoticed.
+  requireCount(rules.charges?.placeApCost, '"charges.placeApCost"', rulesUrl);
+  requireCount(rules.charges?.fuseTurns, '"charges.fuseTurns"', rulesUrl);
+  requireCount(rules.alert?.gunfire, '"alert.gunfire"', rulesUrl);
+  requireCount(rules.landing?.badLandingTurnsLost, '"landing.badLandingTurnsLost"', rulesUrl);
+}
+
+function requireCount(value, what, rulesUrl) {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`${rulesUrl}: ${what} must be a non-negative integer, got ${JSON.stringify(value)}`);
   }
 }
 

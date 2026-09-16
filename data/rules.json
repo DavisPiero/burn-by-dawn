@@ -1,5 +1,5 @@
 {
-  "_comment": "Balance numbers. Never hardcode any of these in logic (CLAUDE.md rule 5). M2 needs the turn clock and the AP pools; detection thresholds, vision radii, fuse lengths and charge counts arrive with M4/M5.",
+  "_comment": "Balance numbers. Never hardcode any of these in logic (CLAUDE.md rule 5). M2 needs the turn clock and the AP pools; detection thresholds and vision radii arrive with M4.",
 
   "_actionPoints": "Raised by one from the 2/3/2 of SPEC.md §5's first draft. Hedgerow costs 2 and is the safe artery of §8, so a 2 AP sapper spent his whole turn on a single hedgerow hex and the middle approach was unusable. The scout keeps his +1 over the other roles, which is how §5 stated his edge. Doubling instead would have let a scout cross a third of the map in one turn and taken the pressure out of the 20-turn clock.",
 
@@ -15,18 +15,41 @@
   },
   "_command": "The leader's command radius. At the start of each turn a trooper within `radius` hexes of a trooper flagged `leader` in roster.json gets `bonusActionPoints` added to his pool for that turn — he has been given orders. Measured at the moment the pool is filled, so moving next to the leader mid-turn pays off on the following turn. This is a rule, not a trait: it modifies other troopers, and SPEC.md §5's hooks only ever modify their own owner.",
 
+  "_bases": "The base values the trait hooks modify (SPEC.md §5, §7, §9). They landed at M3 so every trait can be shown firing against a real number; the systems that act on them — charges and fuses at M5, gunfire at M4/M5, the drop at M6, trooper vision at M4 — arrive later and must read them from here.",
+
+  "charges": {
+    "placeApCost": 1,
+    "fuseTurns": 3
+  },
+
+  "alert": {
+    "gunfire": 2
+  },
+
+  "landing": {
+    "badLandingTurnsLost": 1
+  },
+
+  "_spotRadius": "SPEC.md §5 gives the scout 3 and is silent on the others; 2 was chosen for sappers and gunners.",
+
   "roles": {
     "sapper": {
       "label": "Sapper",
-      "actionPoints": 3
+      "actionPoints": 3,
+      "spotRadius": 2,
+      "charges": 1
     },
     "scout": {
       "label": "Scout",
-      "actionPoints": 4
+      "actionPoints": 4,
+      "spotRadius": 3,
+      "charges": 0
     },
     "gunner": {
       "label": "Gunner",
-      "actionPoints": 3
+      "actionPoints": 3,
+      "spotRadius": 2,
+      "charges": 0
     }
   }
 }

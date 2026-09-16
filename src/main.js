@@ -7,7 +7,8 @@ import {
   createInitialState, deselect, endTurn, holdUnit, isDawn, moveUnit,
   nextUnitId, selectHex, selectUnit, selectedUnit, setHover,
 } from './state.js';
-import { planMove, reachableFor, unitAt } from './units.js';
+import { validateTraits } from './traits.js';
+import { planMove, reachableFor, traitEffects, unitAt } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
 import {
   describePlan, renderEndTurnButton, renderError, renderLegend, renderReadout,
@@ -34,14 +35,18 @@ let layers = null;
  * worked out.
  */
 function deriveView() {
+  // What each man's traits do to his numbers, for the roster. Base values come
+  // from rules.json, which the render modules do not read.
+  const traitEffectsById = new Map(state.units.map((u) => [u.id, traitEffects(u, rules)]));
+
   const unit = selectedUnit(state);
-  if (!unit) return { reachable: null, plan: null, moveLabel: null };
+  if (!unit) return { reachable: null, plan: null, moveLabel: null, traitEffectsById };
 
   const reachable = reachableFor(map, state.units, unit, rules);
   const hex = state.hoverHex;
   const plan = hex ? planMove(map, state.units, unit, hex, rules) : null;
   const moveLabel = hex ? describePlan(plan, unit) : null;
-  return { reachable, plan, moveLabel };
+  return { reachable, plan, moveLabel, traitEffectsById };
 }
 
 function render() {
@@ -49,7 +54,7 @@ function render() {
   renderPieces(layers, state, view);
   renderTurnCounter(turnCounter, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
-  renderRoster(rosterList, state, map, handleRosterClick);
+  renderRoster(rosterList, state, map, view, handleRosterClick);
   renderReadout(readout, state, map, view);
 }
 
@@ -149,9 +154,10 @@ window.dispatchEvent(new Event('night-drop-started'));
 try {
   map = await loadMap();
   rules = await loadJson('data/rules.json');
+  const traits = validateTraits(await loadJson('data/traits.json'));
   const roster = await loadJson('data/roster.json');
 
-  state = createInitialState(roster, rules, map);
+  state = createInitialState(roster, traits, rules, map);
 
   const bounds = boardPixelBounds(map);
   svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);

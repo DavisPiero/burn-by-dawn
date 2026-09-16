@@ -30,9 +30,10 @@ export function renderEndTurnButton(button, state, rules) {
 
 /**
  * The six, always visible, in roster order — the rail of SPEC.md §11 without
- * its portraits. The number in front of each is its `1`–`6` hotkey.
+ * its portraits. The number in front of each is its `1`–`6` hotkey. Each man's
+ * traits are listed with what they do to his numbers, worked out in main.js.
  */
-export function renderRoster(element, state, map, onSelect) {
+export function renderRoster(element, state, map, view, onSelect) {
   element.replaceChildren();
 
   state.units.forEach((unit, i) => {
@@ -56,6 +57,7 @@ export function renderRoster(element, state, map, onSelect) {
     // An AP pool that is bigger than the role's own number needs to say why,
     // or the player is left guessing where the extra point came from.
     detail.textContent = unit.leader ? `${where} · leading` : where;
+    detail.append(` · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
 
     const ap = document.createElement('span');
     ap.className = 'roster-ap';
@@ -70,11 +72,53 @@ export function renderRoster(element, state, map, onSelect) {
     const text = document.createElement('span');
     text.className = 'roster-text';
     text.append(who, detail);
+    for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
+      const trait = document.createElement('span');
+      trait.className = 'roster-trait';
+      trait.title = effect.description ?? '';
+      const name = document.createElement('b');
+      name.textContent = effect.name;
+      trait.append(name, ` — ${describeEffect(effect)}`);
+      text.appendChild(trait);
+    }
 
     item.append(key, text, ap);
     item.addEventListener('click', () => onSelect(unit.id));
     element.appendChild(item);
   });
+}
+
+// How a hook stat reads to a player. A stat missing here still renders, by
+// its id, so a trait on a new stat is ugly rather than invisible.
+const STAT_WORDS = {
+  landingPenalty: { label: 'bad landing', unit: ' turn lost', units: ' turns lost' },
+  scatterDistance: { label: 'scatter', unit: ' hex', units: ' hexes' },
+  actionPoints: { label: 'AP pool', unit: ' AP', units: ' AP' },
+  moveCost: { label: 'move cost', unit: ' AP', units: ' AP' },
+  spotRadius: { label: 'spot radius', unit: ' hex', units: ' hexes' },
+  detection: { label: 'detection against him', unit: '', units: '' },
+  charges: { label: 'charges carried', unit: '', units: '' },
+  apCost: { label: 'placing a charge', unit: ' AP', units: ' AP' },
+  fuse: { label: 'fuse', unit: ' turn', units: ' turns' },
+  alert: { label: 'gunfire alert', unit: '', units: '' },
+};
+
+function amount(value, words) {
+  return `${value}${Math.abs(value) === 1 ? words.unit : words.units}`;
+}
+
+/**
+ * "fuse 3 → 2 turns" where the base is known; "move cost +1 AP" where it
+ * depends on the situation.
+ */
+export function describeEffect(effect) {
+  const words = STAT_WORDS[effect.stat] ?? { label: effect.stat, unit: '', units: '' };
+  if (effect.base !== null) {
+    return `${words.label} ${effect.base} → ${amount(effect.value, words)}`;
+  }
+  const { op, value } = effect.modifier;
+  const change = op === 'set' ? `always ${amount(value, words)}` : `${value >= 0 ? '+' : ''}${amount(value, words)}`;
+  return `${words.label} ${change}`;
 }
 
 /**

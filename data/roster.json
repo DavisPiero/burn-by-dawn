@@ -1,16 +1,66 @@
 {
-  "_comment": "The six, SPEC.md §5. M2 needs names and roles only — a trooper's role picks its AP pool out of data/rules.json. The `traits` and `dialogue` fields land at M3 together with the trait hook system; nothing in code reads a trooper by name (CLAUDE.md rule 6).",
+  "_comment": "The six, SPEC.md §5. A trooper's role picks his base numbers out of data/rules.json; his `traits` are ids from data/traits.json that modify those numbers through the hook system. Nothing in code reads a trooper by name (CLAUDE.md rule 6). A seventh trooper is one more entry here plus one more start hex in data/map.json (until the drop replaces start hexes at M6).",
 
-  "_leader": "`leader` marks the ranking man so his counter is drawn differently. It is a data flag driving art only — it carries no mechanic, and adding one would mean a new trait on an existing hook, never a code branch on his name.",
+  "_leader": "`leader` marks the ranking man. It picks his counter frame and makes him the source of the command radius in data/rules.json. It is a flag, not a name, so promoting someone else is a one-line edit here.",
 
   "_shortName": "What fits on the counter's name strip. It is not required to be the surname: Holloway goes by his nickname.",
 
+  "_dialogue": "Three lines each, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5). Every key is required, even for a man who will never place a charge. These are PLACEHOLDER lines, written to be replaced. They are data only until the speech bubbles at M7.",
+
   "troopers": [
-    { "id": "holloway", "name": "Sgt. Alec \"Dutch\" Holloway", "shortName": "DUTCH",  "role": "sapper", "leader": true },
-    { "id": "fitch",    "name": "Pte. Ronnie Fitch",           "shortName": "FITCH",  "role": "sapper" },
-    { "id": "vance",    "name": "Cpl. Eddie Vance",            "shortName": "VANCE",  "role": "scout"  },
-    { "id": "barrow",   "name": "Pte. Tom Barrow",             "shortName": "BARROW", "role": "scout"  },
-    { "id": "speers",   "name": "Cpl. Stan Speers",            "shortName": "SPEERS", "role": "gunner" },
-    { "id": "nunn",     "name": "Pte. Wilf Nunn",              "shortName": "NUNN",   "role": "gunner" }
+    {
+      "id": "holloway", "name": "Sgt. Alec \"Dutch\" Holloway", "shortName": "DUTCH", "role": "sapper", "leader": true,
+      "traits": ["steady-hands"],
+      "dialogue": {
+        "onLand": "Right. Nobody wanders off till I've found the rest of you.",
+        "onPlaceCharge": "Set. Walk away from it — then run.",
+        "onWounded": "Only a scratch. Keep the lads moving."
+      }
+    },
+    {
+      "id": "fitch", "name": "Pte. Ronnie Fitch", "shortName": "FITCH", "role": "sapper",
+      "traits": ["quick-work"],
+      "dialogue": {
+        "onLand": "Down soft as you like. Whose cabbages are these?",
+        "onPlaceCharge": "Done. You'd not have got the wrapper off.",
+        "onWounded": "Oh, that's torn it."
+      }
+    },
+    {
+      "id": "vance", "name": "Cpl. Eddie Vance", "shortName": "VANCE", "role": "scout",
+      "traits": ["cats-eyes"],
+      "dialogue": {
+        "onLand": "I can see the church from here. We're about right.",
+        "onPlaceCharge": "Not my trade, this. Hope it goes bang.",
+        "onWounded": "Should've kept my head down. Go on, I'll catch up."
+      }
+    },
+    {
+      "id": "barrow", "name": "Pte. Tom Barrow", "shortName": "BARROW", "role": "scout",
+      "traits": ["treetops"],
+      "dialogue": {
+        "onLand": "Missed every tree in France. Told you I would.",
+        "onPlaceCharge": "Which end's the dangerous one?",
+        "onWounded": "Leave it. Get to the bridge."
+      }
+    },
+    {
+      "id": "speers", "name": "Cpl. Stan Speers", "shortName": "SPEERS", "role": "gunner",
+      "traits": ["cool-head"],
+      "dialogue": {
+        "onLand": "Bren's in one piece. That's all that matters.",
+        "onPlaceCharge": "Don't ask me to do that again.",
+        "onWounded": "Bit of bother. Still got one good arm."
+      }
+    },
+    {
+      "id": "nunn", "name": "Pte. Wilf Nunn", "shortName": "NUNN", "role": "gunner",
+      "traits": ["ox"],
+      "dialogue": {
+        "onLand": "Carried the spare all the way down, Sarge.",
+        "onPlaceCharge": "Heavy old thing. Glad to be shot of it.",
+        "onWounded": "Somebody take the charge off me."
+      }
+    }
   ]
 }

@@ -1,0 +1,44 @@
+{
+  "_comment": "Trait definitions, SPEC.md §5. A trait is one hook and one modifier: { stat, op, value }, where op is add or set and stat is one the hook is allowed to change (the list lives in src/traits.js HOOKS). No other fields are accepted — no conditions, no usage limits, no references to other traits. A trooper takes a trait by listing its id in data/roster.json. A trait that cannot be written this way is flavour text, not a trait.",
+
+  "_coolHead": "SPEC.md §5 first wrote Cool Head as 'no alert rise, once per mission'. A usage limit is a condition, not a modifier, so it became a flat -1 to the alert gunfire raises.",
+
+  "traits": {
+    "steady-hands": {
+      "name": "Steady Hands",
+      "description": "Cuts his fuses short. His charges go off a turn sooner — good near dawn, bad if he is still inside the blast.",
+      "hook": "onPlaceCharge",
+      "modifier": { "stat": "fuse", "op": "add", "value": -1 }
+    },
+    "quick-work": {
+      "name": "Quick Work",
+      "description": "Has a charge set before anyone else has the wrapper off. Placing a charge costs him nothing.",
+      "hook": "onPlaceCharge",
+      "modifier": { "stat": "apCost", "op": "set", "value": 0 }
+    },
+    "cats-eyes": {
+      "name": "Cat's Eyes",
+      "description": "Sees in the dark better than the rest. One more hex of spot radius.",
+      "hook": "onSpotRadius",
+      "modifier": { "stat": "spotRadius", "op": "add", "value": 1 }
+    },
+    "treetops": {
+      "name": "Treetops",
+      "description": "Knows how to come down through branches. A bad landing costs him nothing.",
+      "hook": "onLand",
+      "modifier": { "stat": "landingPenalty", "op": "set", "value": 0 }
+    },
+    "cool-head": {
+      "name": "Cool Head",
+      "description": "Fires short, controlled bursts. His gunfire raises the alert one step less.",
+      "hook": "onFire",
+      "modifier": { "stat": "alert", "op": "add", "value": -1 }
+    },
+    "ox": {
+      "name": "Ox",
+      "description": "Carries more than he should. One extra charge.",
+      "hook": "onChargeCapacity",
+      "modifier": { "stat": "charges", "op": "add", "value": 1 }
+    }
+  }
+}
