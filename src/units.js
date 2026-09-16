@@ -58,6 +58,7 @@ export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data
       dialogue: validateDialogue(trooper, rosterUrl),
       q,
       r,
+      trail: [], // hexes entered this turn, for the detection phase
       apBase: role.actionPoints,
       apMax: role.actionPoints,
       ap: role.actionPoints,
@@ -140,7 +141,7 @@ function validateDialogue(trooper, rosterUrl) {
 // --- trait-modified numbers ---------------------------------------------------
 //
 // Where each hook gets its base value. The systems that act on most of these
-// arrive later (charges M5, gunfire M4/M5, the drop M6, vision M4); they call
+// arrive later (charges M5, gunfire M5, the drop M6); they call
 // these, or applyHook with their own base, rather than reading rules.json raw.
 
 /** Charges carried. SPEC.md §5 loadout, onChargeCapacity. */
@@ -204,16 +205,18 @@ export function unitById(units, id) {
 }
 
 /**
- * Hexes another trooper is standing in. A trooper blocks a hex for everyone
- * else — you cannot walk through a man and you cannot stand on him. SPEC.md
- * does not say so either way; this is the conventional reading, and it is what
- * makes the regroup problem of SPEC.md §9 mean anything.
+ * Hexes another trooper or any enemy is standing in. A trooper blocks a hex
+ * for everyone else — you cannot walk through a man and you cannot stand on
+ * him. SPEC.md does not say so either way; this is the conventional reading,
+ * and it is what makes the regroup problem of SPEC.md §9 mean anything. An
+ * enemy blocks the same way.
  */
-export function occupiedHexes(units, exceptId = null) {
+export function occupiedHexes(units, exceptId = null, enemies = []) {
   const blocked = new Set();
   for (const unit of units) {
     if (unit.id !== exceptId) blocked.add(hexKey(unit.q, unit.r));
   }
+  for (const enemy of enemies) blocked.add(hexKey(enemy.q, enemy.r));
   return blocked;
 }
 
@@ -246,8 +249,8 @@ export function affordability(unit, cost, steps, rules) {
  * unit could actually reach this turn, so the renderer can draw the reachable
  * part of a long path differently from the rest.
  */
-export function planMove(map, units, unit, target, rules) {
-  const blocked = occupiedHexes(units, unit.id);
+export function planMove(map, units, unit, target, rules, enemies = []) {
+  const blocked = occupiedHexes(units, unit.id, enemies);
   const path = findPath(map, unit, target, blocked, moveCostFor(unit));
   if (!path) return null;
 
@@ -279,19 +282,18 @@ function runningCosts(map, path, unit) {
  * Includes the minimum-step neighbours: at full AP a unit can always step once,
  * so those hexes are reachable even when they cost more than the whole pool.
  */
-export function reachableFor(map, units, unit, rules) {
-  const blocked = occupiedHexes(units, unit.id);
+export function reachableFor(map, units, unit, rules, enemies = []) {
+  const blocked = occupiedHexes(units, unit.id, enemies);
   const reachable = reachableWithin(map, unit, unit.ap, blocked, moveCostFor(unit));
   if (rules.minimumStep && unit.ap === unit.apMax) {
-    for (const step of neighbourPlans(map, units, unit, rules)) {
+    for (const step of neighbourPlans(map, blocked, unit, rules)) {
       if (!reachable.has(step.key)) reachable.set(step.key, step.entry);
     }
   }
   return reachable;
 }
 
-function neighbourPlans(map, units, unit, rules) {
-  const blocked = occupiedHexes(units, unit.id);
+function neighbourPlans(map, blocked, unit, rules) {
   const out = [];
   for (const next of neighbors(unit.q, unit.r)) {
     const cost = enterCost(map, next.q, next.r, blocked, moveCostFor(unit));
