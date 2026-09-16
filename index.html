@@ -14,7 +14,6 @@
     #app {
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 8px;
       padding: 16px;
       min-width: 1280px;
@@ -25,9 +24,15 @@
       font-size: 18px;
       margin: 0;
     }
+    #spread {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
     #coord-readout {
       font-family: monospace;
       font-size: 14px;
+      min-height: 18px;
     }
     #error {
       max-width: 900px;
@@ -42,11 +47,9 @@
     #legend {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 6px 18px;
       margin: 0;
       padding: 0;
-      max-width: 1400px;
       list-style: none;
       font-size: 13px;
     }
@@ -67,20 +70,116 @@
       font-size: 13px;
     }
     #board {
-      width: 100%;
-      max-width: 1400px;
+      flex: 1 1 auto;
+      min-width: 0;
       height: auto;
       background: #2a2a26;
+    }
+
+    /* The right-hand page of the spread. Plain for now; SPEC.md §11 dresses
+       it as printed paper at M7. */
+    #panel {
+      flex: 0 0 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #turn-counter {
+      font-family: ui-monospace, monospace;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #f2e8d5;
+    }
+    #turn-counter.dawn {
+      color: #c1272d;
+    }
+    #end-turn {
+      padding: 10px;
+      font: inherit;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #1a1a18;
+      background: #f2e8d5;
+      border: 2px solid #1a1a18;
+      cursor: pointer;
+    }
+    #end-turn:disabled {
+      background: #6b6b63;
+      color: #2a2a26;
+      cursor: default;
+    }
+    #roster {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .roster-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: #2a2a26;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .roster-item.selected {
+      border-color: #c1272d;
+    }
+    .roster-item.spent {
+      opacity: 0.55;
+    }
+    .roster-key {
+      font-family: ui-monospace, monospace;
+      font-weight: bold;
+      color: #5c6b4a;
+    }
+    .roster-text {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .roster-who {
+      font-size: 13px;
+    }
+    .roster-detail {
+      font-size: 11px;
+      opacity: 0.65;
+    }
+    .roster-ap {
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    #keys {
+      font-size: 11px;
+      opacity: 0.6;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M1: terrain</h1>
+    <h1>NIGHT DROP — M2: units, movement, AP, turn clock</h1>
     <div id="error" hidden></div>
+    <div id="spread">
+      <svg id="board"></svg>
+      <aside id="panel">
+        <div id="turn-counter"></div>
+        <button id="end-turn" type="button"></button>
+        <ul id="roster"></ul>
+        <div id="keys">
+          1–6 select trooper · Tab cycle · H hold position<br />
+          Space end turn · Esc or right-click cancel
+        </div>
+      </aside>
+    </div>
     <div id="coord-readout">Loading map…</div>
     <ul id="legend"></ul>
-    <svg id="board"></svg>
   </div>
   <script type="module" src="src/main.js"></script>
 </body>
