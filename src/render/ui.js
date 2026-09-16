@@ -52,11 +52,20 @@ export function renderRoster(element, state, map, onSelect) {
     const detail = document.createElement('span');
     detail.className = 'roster-detail';
     const terrain = terrainAt(map, unit.q, unit.r);
-    detail.textContent = `${unit.roleLabel} · ${terrain ? terrain.label : 'off map'} (${unit.q}, ${unit.r})`;
+    const where = `${unit.roleLabel} · ${terrain ? terrain.label : 'off map'} (${unit.q}, ${unit.r})`;
+    // An AP pool that is bigger than the role's own number needs to say why,
+    // or the player is left guessing where the extra point came from.
+    detail.textContent = unit.leader ? `${where} · leading` : where;
 
     const ap = document.createElement('span');
     ap.className = 'roster-ap';
     ap.textContent = `${unit.ap}/${unit.apMax} AP`;
+    if (unit.commandBonus > 0) {
+      const bonus = document.createElement('span');
+      bonus.className = 'roster-bonus';
+      bonus.textContent = `+${unit.commandBonus} orders`;
+      detail.append(' · ', bonus);
+    }
 
     const text = document.createElement('span');
     text.className = 'roster-text';

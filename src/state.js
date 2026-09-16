@@ -7,7 +7,7 @@
 // fuse or escalate yet — so endTurn is the whole turn boundary for now.
 // Save/load arrives when there is a mission worth saving.
 
-import { createUnits, unitById } from './units.js';
+import { createUnits, fillActionPoints, unitById } from './units.js';
 
 export function createInitialState(roster, rules, map) {
   validateRules(rules);
@@ -92,7 +92,9 @@ export function endTurn(state, rules) {
   return {
     ...state,
     turn: state.turn + 1,
-    units: state.units.map((unit) => ({ ...unit, ap: unit.apMax })),
+    // Pools are refilled from where everyone is standing at the turn boundary,
+    // so the leader's command radius is measured now, not mid-turn.
+    units: fillActionPoints(state.units, rules),
     selectedHex: null,
   };
 }

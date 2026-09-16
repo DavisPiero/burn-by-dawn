@@ -85,6 +85,9 @@ function validateStartHexes(map, terrain, mapUrl) {
     if (!inBounds(map, q, r)) {
       throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is off the map`);
     }
+    if (!isInPlay(map, q, r)) {
+      throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is an edge hex that is out of play`);
+    }
     const id = map.legend[map.rows[r][columnOf(q, r)]];
     if (terrain.types[id].moveCost === null) {
       throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is ${id}, which is impassable`);
@@ -99,6 +102,25 @@ function validateStartHexes(map, terrain, mapUrl) {
 // board is rectangular — see hex.js rowQStart.
 export function columnOf(q, r) {
   return q - rowQStart(r);
+}
+
+/**
+ * Is this hex actually in play?
+ *
+ * Because odd rows are sheared half a hex to the right (see hex.js rowQStart),
+ * a rectangular grid has a serrated left and right edge. The board is drawn
+ * clipped to a straight border, which cuts exactly one hex per row in half:
+ * column 0 on even rows, the last column on odd rows — 13 of 234. Those are
+ * retired from play rather than left as half-hexes a trooper could stand on
+ * and be drawn sliced down the middle. Every in-play hex is a whole hex.
+ *
+ * The top and bottom borders need no such thing: clipping there only removes
+ * the hexes' pointed tips, so those rows stay whole and playable.
+ */
+export function isInPlay(map, q, r) {
+  if (!inBounds(map, q, r)) return false;
+  const i = columnOf(q, r);
+  return r % 2 === 0 ? i > 0 : i < map.width - 1;
 }
 
 export function inBounds(map, q, r) {
@@ -158,6 +180,7 @@ export function hexKey(q, r) {
  */
 export function enterCost(map, q, r, blocked) {
   if (blocked && blocked.has(hexKey(q, r))) return null;
+  if (!isInPlay(map, q, r)) return null;
   const terrain = terrainAt(map, q, r);
   if (!isPassable(terrain)) return null;
   return terrain.moveCost;

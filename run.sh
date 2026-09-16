@@ -69,4 +69,27 @@ fi
   echo "Server did not come up on port ${PORT} within 5 seconds."
 ) &
 
-exec python3 -m http.server "${PORT}"
+# Still just python3's own stdlib server — nothing to install — but with
+# caching turned off. `python3 -m http.server` sends no Cache-Control, so a
+# browser is free to reuse a module script without asking, and editing a file
+# in /src then reloading can silently run the old code. map.js already forces
+# revalidation for the /data JSON; this covers everything else.
+exec python3 - "${PORT}" <<'PYTHON'
+import sys
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+
+class NoStoreHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store, must-revalidate')
+        super().end_headers()
+
+
+port = int(sys.argv[1])
+server = ThreadingHTTPServer(('', port), NoStoreHandler)
+print('Serving HTTP on port %d, caching disabled' % port, flush=True)
+try:
+    server.serve_forever()
+except KeyboardInterrupt:
+    print()
+PYTHON
