@@ -14,11 +14,59 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Serving on http://localhost:${PORT}  (ctrl-C to stop)"
+# True if something is already listening on the port. Uses bash's /dev/tcp so
+# there is nothing to install.
+port_answers() {
+  (exec 3<>"/dev/tcp/127.0.0.1/${1}") 2>/dev/null
+}
 
-# Open a browser once the server is up, on macOS.
-if command -v open >/dev/null 2>&1; then
-  ( sleep 1; open "http://localhost:${PORT}" ) &
+open_browser() {
+  if command -v open >/dev/null 2>&1; then
+    open "http://localhost:${PORT}"
+  fi
+}
+
+# Check the port before announcing anything. A leftover server from an earlier
+# session is the usual cause, and it is probably already serving this directory.
+if port_answers "${PORT}"; then
+  holder_pid=""
+  holder_dir=""
+  if command -v lsof >/dev/null 2>&1; then
+    holder_pid="$(lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN -t 2>/dev/null | head -n 1 || true)"
+    if [ -n "${holder_pid}" ]; then
+      holder_dir="$(lsof -a -p "${holder_pid}" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -n 1 || true)"
+    fi
+  fi
+
+  if [ -n "${holder_dir}" ] && [ "${holder_dir}" = "${PWD}" ]; then
+    echo "Already serving this directory on http://localhost:${PORT} (PID ${holder_pid})."
+    echo "Nothing to start. Opening it."
+    open_browser
+    exit 0
+  fi
+
+  echo "Port ${PORT} is already in use, and not by this game."
+  if [ -n "${holder_pid}" ]; then
+    echo "  Held by PID ${holder_pid}${holder_dir:+, serving ${holder_dir}}"
+    echo "  Stop it with:  kill ${holder_pid}"
+  fi
+  echo "  Or use another port:  ./run.sh $((PORT + 1))"
+  exit 1
 fi
 
-python3 -m http.server "${PORT}"
+# Announce it and open a browser only once it actually answers, in the
+# background, so the server itself can stay in the foreground where ctrl-C
+# reaches it directly.
+(
+  for _ in $(seq 1 50); do
+    if port_answers "${PORT}"; then
+      echo "Serving on http://localhost:${PORT}  (ctrl-C to stop)"
+      open_browser
+      exit 0
+    fi
+    sleep 0.1
+  done
+  echo "Server did not come up on port ${PORT} within 5 seconds."
+) &
+
+exec python3 -m http.server "${PORT}"

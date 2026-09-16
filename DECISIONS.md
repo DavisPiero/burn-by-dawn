@@ -25,3 +25,6 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-09-16 | M1 | A terrain id with no theme.js colour renders magenta instead of failing — an unstyled new terrain should be obvious on the board, not invisible
 2026-09-16 | M1 | Data fetched with cache: 'no-cache' — the browser was serving a stale terrain.json after an edit, which silently defeats the whole point of a data-driven map
 2026-09-16 | M1 | Bad map data throws with file, row and column and renders as an on-page error — a data-driven map is only useful if a typo says so out loud
+2026-09-16 | M1 | run.sh checks the port before printing "Serving" — it announced success and opened a browser before python3 had bound, so a port clash looked like a working server
+2026-09-16 | M1 | run.sh exits 0 and just opens the browser when the port is already held by a server on this same directory — a leftover server from an earlier session is the common case and it is already serving the game
+2026-09-16 | M1 | run.sh keeps python3 in the foreground via exec and moves the announce/open to a background subshell — backgrounding the server instead meant bash set SIGINT to ignored on it, so ctrl-C could not reach it
