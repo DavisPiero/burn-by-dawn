@@ -1,10 +1,12 @@
 {
   "_comment": "Balance numbers. Never hardcode any of these in logic (CLAUDE.md rule 5). M2 needs the turn clock and the AP pools; detection thresholds, vision radii, fuse lengths and charge counts arrive with M4/M5.",
 
+  "_actionPoints": "Raised by one from the 2/3/2 of SPEC.md §5's first draft. Hedgerow costs 2 and is the safe artery of §8, so a 2 AP sapper spent his whole turn on a single hedgerow hex and the middle approach was unusable. The scout keeps his +1 over the other roles, which is how §5 stated his edge. Doubling instead would have let a scout cross a third of the map in one turn and taken the pressure out of the 20-turn clock.",
+
   "turnLimit": 20,
 
   "minimumStep": true,
-  "_minimumStep": "A unit at FULL action points may always move one hex, even into terrain that costs more than its whole pool, spending everything it has. Without this a 2 AP sapper can never enter a 3 AP marsh hex, which locks two thirds of the roster out of the canal towpath approach (SPEC.md §8). Unused AP is still never banked (SPEC.md §4).",
+  "_minimumStep": "A unit at FULL action points may always move one hex, even into terrain that costs more than its whole pool, spending everything it has. Unused AP is still never banked (SPEC.md §4). This was added when a 2 AP sapper could never enter a 3 AP marsh at all; the pools below now cover that directly, so its remaining job is the wounded trooper of SPEC.md §5, who drops to 1 AP and would otherwise be unable to leave a hedgerow.",
 
   "command": {
     "radius": 2,
@@ -16,15 +18,15 @@
   "roles": {
     "sapper": {
       "label": "Sapper",
-      "actionPoints": 2
+      "actionPoints": 3
     },
     "scout": {
       "label": "Scout",
-      "actionPoints": 3
+      "actionPoints": 4
     },
     "gunner": {
       "label": "Gunner",
-      "actionPoints": 2
+      "actionPoints": 3
     }
   }
 }
