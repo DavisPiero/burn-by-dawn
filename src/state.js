@@ -71,7 +71,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.alert.quietTurnsToDecay, '"alert.quietTurnsToDecay"', rulesUrl);
   // The behaviours in enemy.js key off these four ids; their thresholds and
   // bonuses are free to change.
-  const ids = ['calm', 'suspicious', 'alarmed', 'standTo'];
+  const ids = ['calm', 'suspicious', 'alert', 'alarmed'];
   const states = rules.alert.states;
   if (!Array.isArray(states) || states.map((s) => s?.id).join() !== ids.join()) {
     throw new Error(`${rulesUrl}: "alert.states" must be the four states ${ids.join(', ')}, in that order`);
@@ -87,7 +87,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
     throw new Error(`${rulesUrl}: "patrols.suspiciousPauseEvery" must be a positive integer`);
   }
   requireCount(rules.patrols.sweepRotation, '"patrols.sweepRotation"', rulesUrl);
-  requireCount(rules.patrols.alarmedConverge, '"patrols.alarmedConverge"', rulesUrl);
+  requireCount(rules.patrols.alertConverge, '"patrols.alertConverge"', rulesUrl);
 }
 
 function requireCount(value, what, rulesUrl) {

@@ -7,7 +7,7 @@
 // version of the same panel.
 
 import { terrainAt } from '../map.js';
-import { DIAL, PALETTE, terrainStyle } from './theme.js';
+import { ALERT_STATE, DIAL, PALETTE, terrainStyle } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -46,7 +46,8 @@ export function renderAlertDial(svg, caption, alert) {
     item.textContent = s.label;
     if (i === alert.index) {
       item.className = 'active';
-      item.style.color = PALETTE.red;
+      item.style.background = ALERT_STATE[s.id];
+      item.style.color = ALERT_STATE.text;
     }
     list.appendChild(item);
   });

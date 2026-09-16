@@ -172,6 +172,18 @@ export const RISK = {
 
 // The alert dial's four sectors run clockwise from lower left to lower right,
 // like a gauge. Angles are degrees from straight up.
+// The active state in the list beside the alert dial, keyed by the state ids
+// in data/rules.json. Each is a filled chip with paper lettering: green and
+// cold blue are too dark to read as text on the ink panel. Alert's dull red is
+// the farmhouse tone, red mixed toward ink, so the two reds stay a step apart.
+export const ALERT_STATE = {
+  calm: PALETTE.green,
+  suspicious: PALETTE.blue,
+  alert: '#8C3F38',
+  alarmed: PALETTE.red,
+  text: PALETTE.paper,
+};
+
 export const DIAL = {
   startAngle: -135,
   sweep: 270,

@@ -376,8 +376,10 @@ function drawPlan(layers, plan) {
     }));
   });
 
+  // Hovering his own hex is not a move: no badge. It would sit under his
+  // counter, and "0 AP" says nothing. The risk pips for standing still stay.
   const end = points[points.length - 1];
-  if (end) drawCostBadge(layers.path, end, plan);
+  if (end && plan.steps > 0) drawCostBadge(layers.path, end, plan);
 }
 
 function drawCostBadge(layer, at, plan) {

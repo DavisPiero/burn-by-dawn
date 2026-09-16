@@ -210,7 +210,7 @@ export default [
     equal(last.events[0].kind, 'alertDecay', 'event');
   }],
 
-  ['alert caps at Stand-To', async () => {
+  ['alert caps at Alarmed', async () => {
     const { rules, state } = await loadAll();
     const alert = raiseAlert(state.alert, 99, rules);
     equal(alert.points, rules.alert.states[rules.alert.states.length - 1].from, 'capped');
@@ -265,7 +265,7 @@ export default [
     });
   }],
 
-  ['Alarmed sends the nearest patrols to the contact, and the one that gets there searches it', async () => {
+  ['Alert sends the nearest patrols to the contact, and the one that gets there searches it', async () => {
     const { map, rules, state } = await loadAll();
     const mobile = state.enemies.filter((e) => e.speed > 0);
     const target = mobile[0];
@@ -274,15 +274,15 @@ export default [
       .map((d) => ({ q: target.q + d.q, r: target.r + d.r }))
       .find((h) => isInPlay(map, h.q, h.r) && map.terrain[terrainIdAt(map, h.q, h.r)].moveCost !== null
         && !state.enemies.some((e) => e.q === h.q && e.r === h.r));
-    const alarmed = {
+    const alertState = {
       ...state,
       units: state.units.map((u) => ({ ...u, q: 100 + u.q, r: u.r })), // off the board, out of the way
       alert: { ...state.alert, points: rules.alert.states[2].from },
       contact: { ...step, searched: false },
     };
     const byDistance = [...mobile].sort((a, b) => hexDistance(a, step) - hexDistance(b, step));
-    const hunters = new Set(byDistance.slice(0, rules.patrols.alarmedConverge).map((e) => e.id));
-    const result = runEnemyPhase(alarmed, map, rules);
+    const hunters = new Set(byDistance.slice(0, rules.patrols.alertConverge).map((e) => e.id));
+    const result = runEnemyPhase(alertState, map, rules);
     const arrived = result.state.enemies.find((e) => e.id === target.id);
     equal(`${arrived.q},${arrived.r}`, `${step.q},${step.r}`, 'nearest patrol reached the contact');
     assert(result.state.contact.searched, 'contact searched');
@@ -295,10 +295,10 @@ export default [
     }
   }],
 
-  ['Stand-To brings the reserve squad on once', async () => {
+  ['Alarmed brings the reserve squad on once', async () => {
     const { map, rules, state } = await loadAll();
-    const standTo = { ...state, alert: { ...state.alert, points: rules.alert.states[3].from } };
-    const first = runEnemyPhase(standTo, map, rules);
+    const alarmed = { ...state, alert: { ...state.alert, points: rules.alert.states[3].from } };
+    const first = runEnemyPhase(alarmed, map, rules);
     equal(first.state.enemies.length, state.enemies.length + 1, 'reserve added');
     assert(first.state.reserveDeployed, 'flagged');
     const second = runEnemyPhase(first.state, map, rules);

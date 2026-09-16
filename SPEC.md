@@ -285,11 +285,11 @@ pips. The player must see risk before committing.
 |---|---|---|
 | **Calm** | 0 | Patrols walk fixed routes. |
 | **Suspicious** | 2 | Patrols pause and sweep. Vision radius +1. |
-| **Alarmed** | 4 | Vision +1. Hearing +3: noise draws enemies from further away. |
-| **Stand-To** | 7 | All patrols hunt last known contact. A reserve squad enters from the road edge and watches exfil. |
+| **Alert** | 4 | Vision +1. Hearing +3: noise draws enemies from further away. |
+| **Alarmed** | 7 | All patrols hunt last known contact. A reserve squad enters from the road edge and watches exfil. |
 
-Alert is a **points total**; "From" is the points at which each state begins, and points
-cap at Stand-To. One event is not a whole state: a single sighting leaves the garrison
+The alert level is a **points total**; "From" is the points at which each state begins, and points
+cap at Alarmed. One event is not a whole state: a single sighting leaves the garrison
 Calm, a second makes it Suspicious.
 
 Raised by: being spotted (+1), gunfire (+2), an explosion (+3), the fuel dump exploding
@@ -303,7 +303,7 @@ state below; in Calm, to 0.
 Suspicious again. After the first bang the garrison never fully settles.
 
 What this does to a run: the bridge alone leaves the garrison Suspicious; the bridge
-plus a silently cut telephone line still does; the bridge plus the fuel dump is Stand-To.
+plus a silently cut telephone line still does; the bridge plus the fuel dump is Alarmed.
 
 ### Noise: the dial is global, the reaction is local
 
@@ -314,7 +314,7 @@ not stop sound. Enemies that hear it leave their route, walk to that hex, sweep,
 back to their route. Enemies out of earshot keep walking; they feel only the dial.
 
 The most recent event hex is the **last known contact** that every patrol hunts at
-Stand-To.
+Alarmed.
 
 **A repeat is not a new contact.** An event on a hex that enemies are already heading to
 or searching updates that contact instead of starting a new one: nobody new sets off, the
@@ -324,7 +324,7 @@ search is not restarted, and the turn report says it once.
 
 Being spotted is a warning, not a wound:
 
-1. **Detection check, turn N** — an enemy spots a trooper. Alert +1. The trooper is
+1. **Detection check, turn N** — an enemy spots a trooper. The alert rises by 1. The trooper is
    **in contact** and wears the spotted marker. In the enemy phase, every enemy that
    spotted him **stays put and turns to face him**, so the player can see exactly who
    has him.
@@ -339,7 +339,7 @@ fired on is never a surprise.
 
 ### Exfil watched
 
-At Stand-To the reserve squad does not hunt. It enters from the road edge, marches to a
+At Alarmed the reserve squad does not hunt. It enters from the road edge, marches to a
 guard hex set in `map.json` beside the exfil, and stands there as a sentry facing the exfil
 hexes. It is drawn, so the player can see the exit narrowing and route around it.
 
@@ -403,7 +403,7 @@ does about it is the second decision of turn 1.
   his own, only from that hex. He cannot go back for someone else's.
 - A parachute left behind is found when an enemy moves **onto or adjacent to** it during
   the enemy phase: alert **+1**, the parachute is removed, and that hex becomes a last
-  known contact for the Alarmed behaviour in §6. Found once, never again.
+  known contact (§6). Found once, never again.
 - Patrol routes are drawn, so the player can see which parachutes are actually at risk
   before deciding. This is a visible cost, not a hidden one.
 
@@ -424,7 +424,7 @@ what makes turn 1 different every time.
 
 **Exfil** is a short run of hexes on the **south map edge**, listed in `map.json`, away
 from all three drop runs (north, east, west — §9). A trooper who ends a move on an exfil
-hex is out: removed from the board, safe, and counted. At Stand-To the reserve squad
+hex is out: removed from the board, safe, and counted. At Alarmed the reserve squad
 watches it (§6).
 
 Results page, styled as the back page of the annual, listing all six by name and fate:
@@ -432,7 +432,7 @@ Results page, styled as the back page of the annual, listing all six by name and
 - Objectives destroyed (primary 3, each secondary 2)
 - Troopers exfiltrated (1 each)
 - Turns remaining (1 per 2 turns)
-- Never reached Stand-To (+3)
+- Never reached Alarmed (+3)
 
 ---
 

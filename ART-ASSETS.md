@@ -77,7 +77,7 @@ Names: holloway, fitch, vance, barrow, speers, nunn.
 | `counter-enemy-sentry.svg` | 56 x 56 | static post |
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
-| `counter-enemy-reserve.svg` | 56 x 56 | the Stand-To squad |
+| `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |
 
 Counters are 56px inside an 80px hex, so the hex edge stays visible underneath. Design the
 drop shadow as part of the frame, angled consistently (I'd suggest down-right, 2px, hard
@@ -147,7 +147,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 |---|---|---|
 | `ui-caption-box.svg` | 400 x 120 | comic caption frame. **Must stretch** — supply as 9-slice, i.e. corners and edges as separate paths, or keep the border a simple enough shape that code can redraw it. |
 | `ui-speech-bubble.svg` | 240 x 120 | same stretching requirement, plus a separate tail path so it can point in any direction |
-| `ui-alert-dial.svg` | 240 x 240 | face only, with tick marks for Calm / Suspicious / Alarmed / Stand-To |
+| `ui-alert-dial.svg` | 240 x 240 | face only, with tick marks for Calm / Suspicious / Alert / Alarmed |
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable |
