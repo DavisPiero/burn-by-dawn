@@ -6,11 +6,13 @@
 // the base numbers out of data/rules.json, and his traits modify them through
 // the hooks in traits.js (CLAUDE.md rules 5 and 6).
 //
-// Actions other than movement (place charge, cut wire, suppress, hide,
-// stabilise) arrive with the milestones that need them.
+// Whether a man can take an action (hide, suppress, throw a stone, stabilise,
+// pick up a charge — SPEC.md §4 Actions) is worked out here, as a check that
+// says why not. Taking it changes more than the man, so the transitions live
+// in state.js. Placing charges and cutting wire arrive at M5b.
 
 import { hexDistance, neighbors } from './hex.js';
-import { enterCost, findPath, hexKey, reachableWithin } from './map.js';
+import { enterCost, findPath, hasLineOfSight, hexKey, isInPlay, reachableWithin, terrainAt } from './map.js';
 import { applyHook } from './traits.js';
 
 /**
@@ -59,6 +61,14 @@ export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data
       q,
       r,
       trail: [], // hexes entered this turn, for the detection phase
+      // SPEC.md §5 Wounds and §6 contact. `inContact`: spotted at the last
+      // detection check, so spotted again means shot. `hidden`: gone to
+      // ground, until he next spends AP (§4 Actions).
+      hits: 0,
+      dead: false,
+      stabilised: false,
+      inContact: false,
+      hidden: false,
       apBase: role.actionPoints,
       apMax: role.actionPoints,
       ap: role.actionPoints,
@@ -89,7 +99,7 @@ export function commandBonus(unit, units, rules) {
   if (unit.leader && !command.leaderReceivesOwnBonus) return 0;
 
   const led = units.some((other) => (
-    other.leader && other.id !== unit.id && hexDistance(other, unit) <= command.radius
+    other.leader && !other.dead && other.id !== unit.id && hexDistance(other, unit) <= command.radius
   ));
   return led ? command.bonusActionPoints : 0;
 }
@@ -102,6 +112,13 @@ export function commandBonus(unit, units, rules) {
  */
 export function fillActionPoints(units, rules) {
   return units.map((unit) => {
+    if (unit.dead) return { ...unit, commandBonus: 0, apMax: 0, ap: 0 };
+    // A wounded man drops to a flat pool until he is stabilised (SPEC.md §5).
+    // Orders do not lift it: the point of the wound is that he is slow.
+    if (isWounded(unit)) {
+      const pool = rules.combat.woundedActionPoints;
+      return { ...unit, commandBonus: 0, apMax: pool, ap: pool };
+    }
     // Trait first, then orders: onActionPoints modifies the man's own pool,
     // and command is added on top of whatever that pool turned out to be.
     const own = applyHook(unit, 'onActionPoints', 'actionPoints', unit.apBase).value;
@@ -196,8 +213,9 @@ export function moveCostFor(unit) {
   return (terrainCost) => applyHook(unit, 'onMoveCost', 'moveCost', terrainCost).value;
 }
 
+/** A living trooper on this hex. The dead are off the board. */
 export function unitAt(units, q, r) {
-  return units.find((u) => u.q === q && u.r === r) ?? null;
+  return units.find((u) => !u.dead && u.q === q && u.r === r) ?? null;
 }
 
 export function unitById(units, id) {
@@ -214,7 +232,7 @@ export function unitById(units, id) {
 export function occupiedHexes(units, exceptId = null, enemies = []) {
   const blocked = new Set();
   for (const unit of units) {
-    if (unit.id !== exceptId) blocked.add(hexKey(unit.q, unit.r));
+    if (unit.id !== exceptId && !unit.dead) blocked.add(hexKey(unit.q, unit.r));
   }
   for (const enemy of enemies) blocked.add(hexKey(enemy.q, enemy.r));
   return blocked;
@@ -302,4 +320,98 @@ function neighbourPlans(map, blocked, unit, rules) {
     out.push({ key: hexKey(next.q, next.r), entry: { q: next.q, r: next.r, cost } });
   }
   return out;
+}
+
+// --- condition ------------------------------------------------------------------
+
+/** Hit and not yet stabilised: the 1 AP man of SPEC.md §5. */
+export function isWounded(unit) {
+  return !unit.dead && unit.hits > 0 && !unit.stabilised;
+}
+
+/** A wounded man cannot carry a charge until he is stabilised (SPEC.md §5). */
+export function canCarryCharges(unit) {
+  return !unit.dead && !isWounded(unit);
+}
+
+/**
+ * How far this trooper sees, for suppress: his role's radius through the
+ * onSpotRadius hook, plus the high ground he is standing on.
+ */
+export function spotRadiusOf(map, unit, rules) {
+  const own = applyHook(unit, 'onSpotRadius', 'spotRadius', rules.roles[unit.role].spotRadius).value;
+  return own + (terrainAt(map, unit.q, unit.r)?.spotBonus ?? 0);
+}
+
+// --- action checks ---------------------------------------------------------------
+//
+// Each returns { ok, cost, reason }. `reason` is a short phrase for the
+// readout when `ok` is false. They only look; state.js does.
+
+function canAct(unit, cost) {
+  if (!unit || unit.dead) return 'not on the board';
+  if (unit.ap < cost) return unit.ap === 0 ? 'no AP left this turn' : `needs ${cost} AP, has ${unit.ap}`;
+  return null;
+}
+
+function result(cost, reason) {
+  return { ok: reason === null, cost, reason };
+}
+
+/** Go to ground (SPEC.md §4): 1 AP, ends his turn. */
+export function checkHide(unit, rules) {
+  const cost = rules.actions.hide.apCost;
+  if (unit?.hidden) return result(cost, 'already hidden');
+  return result(cost, canAct(unit, cost));
+}
+
+/** Suppress (SPEC.md §4): gunners only, a visible enemy — in spot radius, clear line. */
+export function checkSuppress(map, unit, enemy, rules) {
+  const cost = rules.actions.suppress.apCost;
+  if (!unit || !rules.roles[unit.role].suppress) return result(cost, `a ${unit ? unit.roleLabel.toLowerCase() : 'trooper'} cannot suppress`);
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  if (!enemy) return result(cost, 'pick an enemy');
+  if (enemy.suppressed) return result(cost, `${enemy.label} is already suppressed`);
+  const radius = spotRadiusOf(map, unit, rules);
+  if (hexDistance(unit, enemy) > radius) return result(cost, `out of range — he sees ${radius} hex${radius === 1 ? '' : 'es'}`);
+  if (!hasLineOfSight(map, unit, enemy)) return result(cost, 'no clear line of sight');
+  return result(cost, null);
+}
+
+/** Throw a stone (SPEC.md §4): any hex up to `range` away, no line of sight needed. */
+export function checkThrowStone(map, unit, hex, rules) {
+  const { apCost: cost, range } = rules.actions.throwStone;
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  if (!hex || !isInPlay(map, hex.q, hex.r)) return result(cost, 'pick a hex on the map');
+  const distance = hexDistance(unit, hex);
+  if (distance === 0) return result(cost, 'not at his own feet');
+  if (distance > range) return result(cost, `too far — ${range} hexes at most`);
+  return result(cost, null);
+}
+
+/**
+ * Stabilise (SPEC.md §4): a full turn beside a wounded man. "Full turn" means
+ * the helper has not spent any AP yet, and it costs his whole pool.
+ */
+export function checkStabilise(unit, patient) {
+  const cost = unit ? unit.apMax : 0;
+  if (!unit || unit.dead) return result(cost, 'not on the board');
+  if (!patient || patient.id === unit.id) return result(cost, 'pick a wounded man beside him');
+  if (!isWounded(patient)) return result(cost, `${patient.shortName} is not wounded`);
+  if (hexDistance(unit, patient) !== 1) return result(cost, `${patient.shortName} is not beside him`);
+  if (unit.ap === 0 || unit.ap < unit.apMax) return result(cost, 'takes a full turn — he has already spent AP');
+  return result(cost, null);
+}
+
+/** Pick up a charge (SPEC.md §4): 1 AP, from his own hex, if he can carry one more. */
+export function checkPickUpCharge(droppedCharges, unit, rules) {
+  const cost = rules.actions.pickUpCharge.apCost;
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  if (!droppedCharges.some((c) => c.q === unit.q && c.r === unit.r)) return result(cost, 'no charge on this hex');
+  if (!canCarryCharges(unit)) return result(cost, 'wounded — stabilise him first');
+  if (unit.charges >= chargeCapacity(unit, rules)) return result(cost, 'cannot carry any more');
+  return result(cost, null);
 }

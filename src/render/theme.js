@@ -159,6 +159,47 @@ export const CONTACT = {
   text: PALETTE.red,
 };
 
+// M5a (SPEC.md §6): who is watching a man in contact, what the garrison has
+// heard, and where an action can be aimed.
+export const WATCH = {
+  // A dashed line from an enemy holding contact to the hex it saw him on.
+  stroke: PALETTE.red,
+  casing: PALETTE.paper,
+  width: 2.5,
+  casingWidth: 5,
+  dash: '5 5',
+};
+
+export const NOISE = {
+  // A noise made this turn, not yet heard: a ring round the hex, the same
+  // family as the contact ring but solid, because it is certain.
+  stroke: PALETTE.ink,
+  casing: PALETTE.paper,
+  width: 3,
+  casingWidth: 6,
+  radius: 24,
+  text: PALETTE.ink,
+};
+
+export const TARGET = {
+  // Where the action being aimed can go: a cased blue outline, the same family
+  // as the move range, because it is also "where he can reach".
+  stroke: PALETTE.blue,
+  casing: PALETTE.paper,
+  width: 4,
+  casingWidth: 8,
+  // Enemies that would hear a stone, ringed while the stone is being aimed.
+  hearsStroke: PALETTE.red,
+  hearsWidth: 3,
+};
+
+export const MARKER = {
+  size: 22,
+  // A hidden man's counter is printed faint, so a glance says who is down.
+  hiddenOpacity: 0.6,
+  groundSize: 26,
+};
+
 // Detection risk pips under each step of the hover path.
 export const RISK = {
   badgeFill: PALETTE.paper,
@@ -168,6 +209,9 @@ export const RISK = {
   pipGap: 8.5,
   pipFill: PALETTE.ink,
   spottedFill: PALETTE.red,
+  // A man in contact who would be spotted again there is shot (SPEC.md §6).
+  shotFill: PALETTE.red,
+  shotText: PALETTE.paper,
 };
 
 // The alert dial's four sectors run clockwise from lower left to lower right,
@@ -335,6 +379,64 @@ const SPRITES = {
       svg('circle', { cx: 14, cy: 14, r: 12, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
       svg('rect', { x: 12, y: 6, width: 4, height: 10, rx: 1, class: 'paper' }),
       svg('circle', { cx: 14, cy: 20.5, r: 2.2, class: 'paper' }),
+    ],
+  },
+
+  // A trooper who has taken a hit and is not yet stabilised.
+  'marker-wounded': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('circle', { cx: 14, cy: 14, r: 12, class: 'paper' }),
+      svg('rect', { x: 11, y: 5, width: 6, height: 18, class: 'red' }),
+      svg('rect', { x: 5, y: 11, width: 18, height: 6, class: 'red' }),
+      svg('circle', { cx: 14, cy: 14, r: 12, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+
+  // An enemy pinned by a gunner: a burst of three strokes over a bar.
+  'marker-suppressed': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('circle', { cx: 14, cy: 14, r: 12, class: 'paper' }),
+      svg('path', { d: 'M8 8 L12 15 M14 6 L14 15 M20 8 L16 15', fill: 'none', class: 'stroke-ink', 'stroke-width': 2.4, 'stroke-linecap': 'round' }),
+      svg('rect', { x: 6, y: 17, width: 16, height: 4, class: 'ink' }),
+      svg('circle', { cx: 14, cy: 14, r: 12, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+
+  // Gone to ground (SPEC.md §4 Hide): a closed eye.
+  'marker-hidden': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('circle', { cx: 14, cy: 14, r: 12, class: 'green' }),
+      svg('path', { d: 'M6 13 Q14 21 22 13', fill: 'none', class: 'stroke-paper', 'stroke-width': 2.4, 'stroke-linecap': 'round' }),
+      svg('path', { d: 'M9 17 L7.5 20 M14 18.5 L14 22 M19 17 L20.5 20', fill: 'none', class: 'stroke-paper', 'stroke-width': 1.8, 'stroke-linecap': 'round' }),
+      svg('circle', { cx: 14, cy: 14, r: 12, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+
+  // A fallen trooper's body on the ground (SPEC.md §5): a helmet on a cross.
+  'marker-body': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, class: 'paper' }),
+      svg('rect', { x: 12.5, y: 5, width: 3, height: 19, class: 'ink' }),
+      svg('rect', { x: 7, y: 10, width: 14, height: 3, class: 'ink' }),
+      svg('path', { d: 'M6 24 Q14 14 22 24 Z', class: 'green' }),
+      svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+
+  // A demolition charge: a satchel with a fuse. Dropped on the ground at M5a;
+  // placed on an objective at M5b.
+  'marker-charge': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('rect', { x: 4, y: 10, width: 20, height: 14, rx: 2, class: 'green' }),
+      svg('rect', { x: 4, y: 10, width: 20, height: 5, class: 'ink', 'fill-opacity': 0.5 }),
+      svg('path', { d: 'M14 10 C14 5 19 6 20 3', fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+      svg('circle', { cx: 20.5, cy: 3, r: 2, class: 'red' }),
+      svg('rect', { x: 4, y: 10, width: 20, height: 14, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
     ],
   },
 

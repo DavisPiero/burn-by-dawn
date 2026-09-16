@@ -162,7 +162,9 @@ to be casual while still being strategic.
 - **Hover an objective**: show what it needs (charges, fuse, blast radius).
 - **Right-click**: deselect / cancel.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
-  `H` hold position, `R` toggle patrol-route overlay.
+  `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
+  `S` suppress, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge. An action
+  with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
 ---
 

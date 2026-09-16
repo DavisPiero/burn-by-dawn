@@ -24,6 +24,29 @@ export function directionOf(a, b) {
   return NEIGHBOR_DIRS.findIndex((d) => a.q + d.q === b.q && a.r + d.r === b.r);
 }
 
+/**
+ * The facing (index into NEIGHBOR_DIRS) that points most nearly from `from` at
+ * `to`, which need not be adjacent. Measured in pixel space like inArc; on an
+ * exact tie between two directions the first in NEIGHBOR_DIRS order wins, so
+ * the answer never depends on floating-point noise. Returns -1 for the same hex.
+ */
+export function facingToward(from, to) {
+  const v = axialToPixel(to.q - from.q, to.r - from.r, 1);
+  const len = Math.hypot(v.x, v.y);
+  if (len === 0) return -1;
+  let best = -1;
+  let bestCos = -Infinity;
+  NEIGHBOR_DIRS.forEach((d, i) => {
+    const f = axialToPixel(d.q, d.r, 1);
+    const cos = (f.x * v.x + f.y * v.y) / (Math.hypot(f.x, f.y) * len);
+    if (cos > bestCos + 1e-9) {
+      bestCos = cos;
+      best = i;
+    }
+  });
+  return best;
+}
+
 export function neighbors(q, r) {
   return NEIGHBOR_DIRS.map((d) => ({ q: q + d.q, r: r + d.r }));
 }
