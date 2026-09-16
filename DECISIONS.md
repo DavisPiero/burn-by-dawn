@@ -150,3 +150,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-09-17 | M5 prep | Explosion floor kept exactly as §6 wrote it (never below Suspicious once anything has exploded), floor state to live in rules.json — it was only unbuilt, not unclear
 2026-09-17 | M5 prep | Blast deaths ignore hits — a man inside the blast radius dies wounded or not, as §7 already said
 2026-09-17 | M5 prep | M5 split into M5a (contact and combat) and M5b (charges, win/lose, exfil) — the combat layer added here roughly doubles M5, and each milestone is one session
+2026-09-17 | M5 prep | An alert event on a hex already being investigated updates that contact rather than opening a new one, so nobody new sets off and the report says it once — at M4 a man spotted on the same hex every turn made patrols "search" it every turn and the report repeated itself; scheduled for M5a with the rest of the contact rework; confirmed with the operator
