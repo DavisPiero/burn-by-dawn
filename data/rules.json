@@ -6,6 +6,13 @@
   "minimumStep": true,
   "_minimumStep": "A unit at FULL action points may always move one hex, even into terrain that costs more than its whole pool, spending everything it has. Without this a 2 AP sapper can never enter a 3 AP marsh hex, which locks two thirds of the roster out of the canal towpath approach (SPEC.md §8). Unused AP is still never banked (SPEC.md §4).",
 
+  "command": {
+    "radius": 2,
+    "bonusActionPoints": 1,
+    "leaderReceivesOwnBonus": false
+  },
+  "_command": "The leader's command radius. At the start of each turn a trooper within `radius` hexes of a trooper flagged `leader` in roster.json gets `bonusActionPoints` added to his pool for that turn — he has been given orders. Measured at the moment the pool is filled, so moving next to the leader mid-turn pays off on the following turn. This is a rule, not a trait: it modifies other troopers, and SPEC.md §5's hooks only ever modify their own owner.",
+
   "roles": {
     "sapper": {
       "label": "Sapper",

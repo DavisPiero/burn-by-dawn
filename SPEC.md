@@ -177,9 +177,24 @@ Names are placeholders and will be replaced.
 | 5 | Cpl. Stan Speers | Gunner | Cool Head | `onFire` | no alert rise, once per mission |
 | 6 | Pte. Wilf Nunn | Gunner | Ox | `onChargeCapacity` | +1 charge |
 
-Holloway is the ranking man. That is flavour, not a mechanic: he has no leadership
-rule, because a leadership rule would have to be a trait on an existing hook like
-anything else. His counter is drawn differently so the player can find him.
+### Command
+
+Holloway is the ranking man, and that is a mechanic. At the start of each turn, every
+trooper within **2 hexes** of the leader gets **+1 AP** for that turn: he has been given
+his orders. The leader does not give the bonus to himself.
+
+It is measured when pools are filled, so walking into the leader's radius mid-turn pays
+off on the following turn, not the current one.
+
+This is a **rule in `rules.json`, not a trait**, and that distinction matters. Every hook
+in the table above modifies the trooper who owns the trait. Command modifies *other*
+troopers, conditional on their distance from him, which the hook system cannot express
+and must not be extended to cover. The leader is a `leader` flag on a roster entry, so
+promoting a different trooper is a one-line data change and no code knows anyone's name.
+
+What it buys the design: the command radius rewards moving as a group, and §6 punishes
+moving as a group, because more men sit inside one vision arc. Speed against stealth,
+decided every turn. It also makes losing Holloway expensive, which is the point of §5.
 
 Nunn carrying a charge means a gunner can finish the job if both sappers are down. That
 redundancy is deliberate — it is what stops a bad drop from being an unwinnable run.

@@ -8,7 +8,7 @@
 // Actions other than movement (place charge, cut wire, suppress, hide,
 // stabilise) arrive with the milestones that need them.
 
-import { neighbors } from './hex.js';
+import { hexDistance, neighbors } from './hex.js';
 import { enterCost, findPath, hexKey, reachableWithin, terrainAt } from './map.js';
 
 /**
@@ -27,7 +27,7 @@ export function createUnits(roster, rules, startHexes, rosterUrl = 'data/roster.
     );
   }
 
-  return troopers.map((trooper, i) => {
+  const units = troopers.map((trooper, i) => {
     const role = rules.roles?.[trooper.role];
     if (!role) {
       throw new Error(`${rosterUrl}: trooper "${trooper.id}" has role "${trooper.role}", which data/rules.json does not define`);
@@ -39,13 +39,54 @@ export function createUnits(roster, rules, startHexes, rosterUrl = 'data/roster.
       shortName: trooper.shortName,
       role: trooper.role,
       roleLabel: role.label,
-      // Drives which counter frame is drawn, nothing else. See data/roster.json.
+      // Picks his counter frame, and marks him as the source of the command
+      // bonus below. See data/roster.json.
       leader: trooper.leader === true,
       q,
       r,
-      ap: role.actionPoints,
+      apBase: role.actionPoints,
       apMax: role.actionPoints,
+      ap: role.actionPoints,
     };
+  });
+
+  // Everyone has to be on the board before the command radius can be measured.
+  return fillActionPoints(units, rules);
+}
+
+/**
+ * The leader's command radius: a trooper within `command.radius` hexes of a
+ * trooper flagged `leader` has been given his orders and gets
+ * `command.bonusActionPoints` for the turn.
+ *
+ * This is a rule in data/rules.json rather than a trait, and deliberately so.
+ * Every hook in SPEC.md §5 modifies the trooper who owns the trait; this
+ * modifies *other* troopers, which the hook system has no way to express and
+ * which §5 explicitly refuses to extend it to cover. Nothing here branches on
+ * anybody's name — move the `leader` flag in roster.json and the bonus moves
+ * with it (CLAUDE.md rule 6).
+ */
+export function commandBonus(unit, units, rules) {
+  const command = rules.command;
+  if (!command?.bonusActionPoints) return 0;
+  if (unit.leader && !command.leaderReceivesOwnBonus) return 0;
+
+  const led = units.some((other) => (
+    other.leader && other.id !== unit.id && hexDistance(other, unit) <= command.radius
+  ));
+  return led ? command.bonusActionPoints : 0;
+}
+
+/**
+ * Refill every trooper's pool for a new turn. The pool is the role's own
+ * number plus any command bonus earned by where he is standing *now*, so
+ * `apMax` is this turn's pool and `apBase` is the role's. Unused AP is never
+ * carried over (SPEC.md §4).
+ */
+export function fillActionPoints(units, rules) {
+  return units.map((unit) => {
+    const bonus = commandBonus(unit, units, rules);
+    return { ...unit, commandBonus: bonus, apMax: unit.apBase + bonus, ap: unit.apBase + bonus };
   });
 }
 
