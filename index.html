@@ -11,13 +11,18 @@
       color: #e8e8e8;
       font-family: system-ui, sans-serif;
     }
+    /* The whole game fits the window; the board scales to whatever room is
+       left over. Nothing here is a breakpoint or a mobile layout (CLAUDE.md
+       rule 3) — it is one desktop layout that measures the viewport instead of
+       assuming it. The hover readout is the game's risk display (SPEC.md §4)
+       and must never be below the fold. */
     #app {
       display: flex;
       flex-direction: column;
       gap: 8px;
       padding: 16px;
       min-width: 1280px;
-      min-height: 800px;
+      height: 100%;
       box-sizing: border-box;
     }
     h1 {
@@ -27,9 +32,15 @@
     #spread {
       display: flex;
       gap: 16px;
-      align-items: flex-start;
+      align-items: stretch;
+      /* Takes the height the fixed rows above and below do not want, and
+         min-height:0 lets it actually shrink rather than forcing the page
+         taller than the window. */
+      flex: 1 1 auto;
+      min-height: 0;
     }
     #coord-readout {
+      flex: 0 0 auto;
       font-family: monospace;
       font-size: 14px;
       min-height: 18px;
@@ -45,6 +56,7 @@
       white-space: pre-wrap;
     }
     #legend {
+      flex: 0 0 auto;
       display: flex;
       flex-wrap: wrap;
       gap: 6px 18px;
@@ -69,11 +81,14 @@
       font-weight: bold;
       font-size: 13px;
     }
+    /* Sized by both axes, so the SVG's own preserveAspectRatio letterboxes the
+       board to fit rather than dictating the page height. No background: the
+       terrain paints the whole board, so a backdrop would only show as bars
+       down the sides when the fit is width-limited. */
     #board {
       flex: 1 1 auto;
       min-width: 0;
-      height: auto;
-      background: #2a2a26;
+      height: 100%;
     }
 
     /* The right-hand page of the spread. Plain for now; SPEC.md §11 dresses
@@ -83,6 +98,8 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      min-height: 0;
+      overflow-y: auto;
     }
     #turn-counter {
       font-family: ui-monospace, monospace;
