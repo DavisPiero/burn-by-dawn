@@ -1,20 +1,26 @@
-// Terrain loading, lookup and pathing. Line of sight also belongs in this file
-// (SPEC.md §1) but arrives at M4.
+// Terrain loading, lookup, pathing and line of sight (SPEC.md §1, §2).
 //
 // Pure functions plus one fetch. Nothing here touches the DOM.
 
-import { hexDistance, neighbors, rowQStart } from './hex.js';
+import { DIRECTION_NAMES, hexDistance, hexLine, neighbors, rowQStart } from './hex.js';
 
 /**
- * Load and validate the map and the terrain table.
- * Returns a map object: the raw JSON plus a resolved `terrain` table.
+ * Load and validate the map, the terrain table and the enemy types.
+ * Returns a map object: the raw JSON plus resolved `terrain` and `enemyTypes`
+ * tables. Enemy types ride along with the map for the same reason terrain
+ * does: the map's placements name them, and they are checked together.
  * Throws with a human-readable message if the data is unusable — a
  * data-driven map is only useful if a typo says so out loud.
  */
-export async function loadMap(mapUrl = 'data/map.json', terrainUrl = 'data/terrain.json') {
-  const [map, terrain] = await Promise.all([loadJson(mapUrl), loadJson(terrainUrl)]);
+export async function loadMap(
+  mapUrl = 'data/map.json', terrainUrl = 'data/terrain.json', enemiesUrl = 'data/enemies.json',
+) {
+  const [map, terrain, enemies] = await Promise.all([loadJson(mapUrl), loadJson(terrainUrl), loadJson(enemiesUrl)]);
   validate(map, terrain, mapUrl, terrainUrl);
-  return { ...map, terrain: terrain.types };
+  const loaded = { ...map, terrain: terrain.types };
+  validateEnemyTypes(enemies, enemiesUrl);
+  validateEnemies(loaded, enemies.types, mapUrl, enemiesUrl);
+  return { ...loaded, enemyTypes: enemies.types };
 }
 
 /**
@@ -98,6 +104,99 @@ function validateStartHexes(map, terrain, mapUrl) {
   });
 }
 
+const ENEMY_TYPE_FIELDS = ['visionRadius', 'arcDegrees', 'detection', 'speed'];
+
+function validateEnemyTypes(json, url) {
+  if (!json || typeof json.types !== 'object' || Array.isArray(json.types)) {
+    throw new Error(`${url}: expected a "types" object of id -> enemy type`);
+  }
+  for (const [id, type] of Object.entries(json.types)) {
+    if (typeof type.label !== 'string' || type.label === '') throw new Error(`${url}: type "${id}" needs a "label"`);
+    for (const field of ENEMY_TYPE_FIELDS) {
+      if (!Number.isInteger(type[field]) || type[field] < 0) {
+        throw new Error(`${url}: type "${id}" "${field}" must be a non-negative integer, got ${JSON.stringify(type[field])}`);
+      }
+    }
+  }
+}
+
+/**
+ * Enemy placements (SPEC.md §6). A post stands on `at` and never moves — it
+ * may stand on an emplacement, which §3 calls an enemy position and nobody
+ * else may enter. A patrol walks `route`, a list of waypoints, starting on the
+ * first: `loop` true goes last-to-first, false walks back the way it came.
+ * Every leg of a route must actually be walkable, or the patrol silently
+ * stands still forever.
+ */
+function validateEnemies(map, types, mapUrl, enemiesUrl) {
+  if (!Array.isArray(map.enemies)) throw new Error(`${mapUrl}: "enemies" must be an array`);
+  const ids = new Set();
+  const standing = new Map(map.startHexes.map(([q, r], i) => [hexKey(q, r), `startHexes[${i}]`]));
+
+  const checkHex = (hex, where, needPassable) => {
+    if (!Array.isArray(hex) || hex.length !== 2 || !hex.every(Number.isInteger)) {
+      throw new Error(`${where} must be a [q, r] pair of integers, got ${JSON.stringify(hex)}`);
+    }
+    const [q, r] = hex;
+    if (!isInPlay(map, q, r)) throw new Error(`${where} (${q}, ${r}) is off the map or out of play`);
+    if (needPassable && !isPassable(terrainAt(map, q, r))) {
+      throw new Error(`${where} (${q}, ${r}) is ${terrainIdAt(map, q, r)}, which is impassable`);
+    }
+  };
+  const checkFacing = (facing, where) => {
+    if (!DIRECTION_NAMES.includes(facing)) {
+      throw new Error(`${where} "facing" must be one of ${DIRECTION_NAMES.join(', ')}, got ${JSON.stringify(facing)}`);
+    }
+  };
+
+  map.enemies.forEach((enemy, i) => {
+    const where = `${mapUrl}: enemies[${i}]`;
+    if (typeof enemy.id !== 'string' || enemy.id === '') throw new Error(`${where} needs an "id"`);
+    if (ids.has(enemy.id)) throw new Error(`${where} id "${enemy.id}" is used twice`);
+    ids.add(enemy.id);
+    if (typeof enemy.label !== 'string' || enemy.label === '') throw new Error(`${where} needs a "label"`);
+    const type = types[enemy.type];
+    if (!type) throw new Error(`${where} has type "${enemy.type}", which ${enemiesUrl} does not define`);
+    checkFacing(enemy.facing, where);
+
+    let start;
+    if (enemy.route !== undefined) {
+      if (enemy.at !== undefined) throw new Error(`${where} has both "at" and "route"; a post has one, a patrol the other`);
+      if (type.speed === 0) throw new Error(`${where} walks a route, but type "${enemy.type}" has speed 0`);
+      if (!Array.isArray(enemy.route) || enemy.route.length < 2) throw new Error(`${where} "route" needs at least two waypoints`);
+      if (typeof enemy.loop !== 'boolean') throw new Error(`${where} needs "loop": true or false`);
+      enemy.route.forEach((hex, w) => checkHex(hex, `${where} route[${w}]`, true));
+      const legs = enemy.route.map((hex, w) => [hex, enemy.route[w + 1] ?? (enemy.loop ? enemy.route[0] : null)]);
+      for (const [a, b] of legs) {
+        if (!b) continue;
+        if (!findPath(map, { q: a[0], r: a[1] }, { q: b[0], r: b[1] }, null)) {
+          throw new Error(`${where} cannot walk from (${a}) to (${b})`);
+        }
+      }
+      start = enemy.route[0];
+    } else {
+      checkHex(enemy.at, `${where} "at"`, false);
+      start = enemy.at;
+    }
+    const key = hexKey(start[0], start[1]);
+    if (standing.has(key)) throw new Error(`${where} starts on (${start}), already taken by ${standing.get(key)}`);
+    standing.set(key, `enemies[${i}]`);
+  });
+
+  // The reserve squad of SPEC.md §6, which enters from the road edge at Stand-To.
+  const reserve = map.reserve;
+  if (!reserve) throw new Error(`${mapUrl}: needs a "reserve" object`);
+  const where = `${mapUrl}: reserve`;
+  if (typeof reserve.id !== 'string' || ids.has(reserve.id)) throw new Error(`${where} needs a unique "id"`);
+  if (typeof reserve.label !== 'string' || reserve.label === '') throw new Error(`${where} needs a "label"`);
+  if (!types[reserve.type]) throw new Error(`${where} has type "${reserve.type}", which ${enemiesUrl} does not define`);
+  checkFacing(reserve.facing, where);
+  if (!Array.isArray(reserve.entryHexes) || reserve.entryHexes.length === 0) {
+    throw new Error(`${where} needs at least one "entryHexes" [q, r]`);
+  }
+  reserve.entryHexes.forEach((hex, i) => checkHex(hex, `${where} entryHexes[${i}]`, true));
+}
+
 // Column index of an axial coord within its row. Rows are shifted so the
 // board is rectangular — see hex.js rowQStart.
 export function columnOf(q, r) {
@@ -163,7 +262,6 @@ export function forEachCell(map, callback) {
 
 // ---------------------------------------------------------------------------
 // Pathing. SPEC.md §2: A* over hex neighbours, cost from the terrain table.
-// Line of sight also belongs in this file but arrives at M4.
 //
 // Terrain cost is never written down here — it is read from the loaded terrain
 // table, so editing data/terrain.json changes pathing with no code change.
@@ -270,4 +368,23 @@ export function reachableWithin(map, from, budget, blocked, adjust = null) {
     }
   }
   return found;
+}
+
+// ---------------------------------------------------------------------------
+// Line of sight. SPEC.md §2: a hex line, blocked by terrain whose blocksLOS is
+// set (wood, farmhouse, ridge in data/terrain.json).
+//
+// Only the hexes strictly between the two ends block. The viewer's own hex
+// does not — a sentry on a ridge sees off it — and neither does the target's:
+// a man standing in a wood is behind heavy cover, which the detection score
+// already counts, and letting the wood block too would count it twice and make
+// him invisible from every angle. Units never block.
+
+export function hasLineOfSight(map, from, to) {
+  const line = hexLine(from, to);
+  for (let i = 1; i < line.length - 1; i++) {
+    const terrain = terrainAt(map, line[i].q, line[i].r);
+    if (terrain && terrain.blocksLOS) return false;
+  }
+  return true;
 }

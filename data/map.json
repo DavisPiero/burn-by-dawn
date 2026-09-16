@@ -1,5 +1,5 @@
 {
-  "_comment": "The map. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i (see src/hex.js). Terrain ids must exist in data/terrain.json. Objectives and patrol routes land at M4/M5.",
+  "_comment": "The map. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i (see src/hex.js). Terrain ids must exist in data/terrain.json. Enemy placements and patrol routes are below; objectives land at M5.",
   "name": "Night Drop — first pass",
   "width": 18,
   "height": 13,
@@ -13,6 +13,24 @@
     [9, 2],
     [7, 5]
   ],
+
+  "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes.",
+  "enemies": [
+    { "id": "post-bridge", "label": "Bridge post", "type": "sentry", "at": [12, 5], "facing": "W" },
+    { "id": "post-base", "label": "Base post", "type": "sentry", "at": [-4, 10], "facing": "NE" },
+    { "id": "patrol-bridge", "label": "Bridge patrol", "type": "patrol", "facing": "W", "loop": false,
+      "route": [[12, 6], [4, 6]] },
+    { "id": "patrol-lanes", "label": "Lanes patrol", "type": "patrol", "facing": "SE", "loop": true,
+      "route": [[2, 7], [4, 9], [3, 11], [-1, 11], [-1, 8]] },
+    { "id": "patrol-village", "label": "Village patrol", "type": "patrol", "facing": "E", "loop": true,
+      "route": [[12, 2], [16, 1], [15, 3], [13, 4]] },
+    { "id": "patrol-base", "label": "Base patrol", "type": "patrol", "facing": "NE", "loop": false,
+      "route": [[-3, 9], [0, 6]] }
+  ],
+
+  "_reserve": "The Stand-To reserve squad (SPEC.md §6). It enters once, on the first free entryHexes hex, the first enemy phase the alert is at Stand-To. The road leaves the map at the north edge, so that is where it comes in.",
+  "reserve": { "id": "reserve", "label": "Reserve squad", "type": "reserve", "facing": "SE", "entryHexes": [[8, 0], [8, 1], [7, 1]] },
+
   "legend": {
     "F": "field",
     "T": "track",

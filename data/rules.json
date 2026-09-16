@@ -1,5 +1,5 @@
 {
-  "_comment": "Balance numbers. Never hardcode any of these in logic (CLAUDE.md rule 5). M2 needs the turn clock and the AP pools; detection thresholds and vision radii arrive with M4.",
+  "_comment": "Balance numbers. Never hardcode any of these in logic (CLAUDE.md rule 5). Enemy vision radii and speeds are in data/enemies.json; the detection and alert numbers are here.",
 
   "_actionPoints": "Raised by one from the 2/3/2 of SPEC.md §5's first draft. Hedgerow costs 2 and is the safe artery of §8, so a 2 AP sapper spent his whole turn on a single hedgerow hex and the middle approach was unusable. The scout keeps his +1 over the other roles, which is how §5 stated his edge. Doubling instead would have let a scout cross a third of the map in one turn and taken the pressure out of the 20-turn clock.",
 
@@ -22,33 +22,64 @@
     "fuseTurns": 3
   },
 
+  "_detection": "SPEC.md §6: detection = base(enemy) - cover(terrain) - concealment(trooper) + proximity, then the onDetectionCheck trait hook; spotted when it reaches `threshold`. No dice: the hover readout shows exactly this sum. `cover` is keyed by the cover word in data/terrain.json. `proximity[d]` is the bonus at d hexes, past the end of the list it is 0. A trooper is tested on every hex he entered this turn, or on the hex he stands on if he never moved. Starting numbers, for the M8 balance pass: open ground in an arc is spotted, heavy cover is safe unless an enemy is adjacent, and a scout in heavy cover is safe even then.",
+
+  "detection": {
+    "threshold": 3,
+    "cover": { "none": 0, "light": 1, "heavy": 2 },
+    "proximity": [0, 2, 1]
+  },
+
+  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 1/2/3 this is the literal reading of §6, where every +1 is one step. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him.",
+
   "alert": {
-    "gunfire": 2
+    "gunfire": 2,
+    "spotted": 1,
+    "quietTurnsToDecay": 4,
+    "states": [
+      { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0 },
+      { "id": "suspicious", "label": "Suspicious", "from": 1, "visionBonus": 1 },
+      { "id": "alarmed", "label": "Alarmed", "from": 2, "visionBonus": 1 },
+      { "id": "standTo", "label": "Stand-To", "from": 3, "visionBonus": 1 }
+    ]
+  },
+
+  "_patrols": "How the alert states move patrols (SPEC.md §6). Suspicious: a patrol stops to sweep on every `suspiciousPauseEvery`-th turn and walks on the others — read literally, 'pause and sweep' would freeze patrols for the rest of the mission once an explosion pins the alert at Suspicious. A sweep turns the patrol `sweepRotation` hex directions (3 is an about-face). Alarmed: the `alarmedConverge` nearest moving enemies head for the last known contact. Stand-To: every moving enemy does. Whoever reaches it sweeps, the contact counts as searched, and everyone goes back to their route.",
+
+  "patrols": {
+    "suspiciousPauseEvery": 2,
+    "sweepRotation": 3,
+    "alarmedConverge": 2
   },
 
   "landing": {
     "badLandingTurnsLost": 1
   },
 
-  "_spotRadius": "SPEC.md §5 gives the scout 3 and is silent on the others; 2 was chosen for sappers and gunners.",
+  "_spotRadius": "SPEC.md §5 gives the scout 3 and is silent on the others; 2 was chosen for sappers and gunners. Nothing uses a trooper's spot radius until the gunner's suppress at M5: there is no fog of war (§6).",
+
+  "_concealment": "concealment(trooper) in the detection formula. SPEC.md §5: detection against a scout is reduced one step.",
 
   "roles": {
     "sapper": {
       "label": "Sapper",
       "actionPoints": 3,
       "spotRadius": 2,
+      "concealment": 0,
       "charges": 1
     },
     "scout": {
       "label": "Scout",
       "actionPoints": 4,
       "spotRadius": 3,
+      "concealment": 1,
       "charges": 0
     },
     "gunner": {
       "label": "Gunner",
       "actionPoints": 3,
       "spotRadius": 2,
+      "concealment": 0,
       "charges": 0
     }
   }
