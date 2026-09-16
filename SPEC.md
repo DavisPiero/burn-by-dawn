@@ -172,6 +172,10 @@ when you still have to get clear of the blast (§7). That he is also the leader 
 sharpens it further. That tension is deliberate; if it plays badly, the lever is the sign,
 not the hook.
 
+Cool Head was first written as "no alert rise, once per mission". A usage limit is a
+condition, not a modifier, so it could not be a trait either. It is now a flat **−1 to the
+alert his gunfire raises**, every time: +1 instead of +2 at the current numbers.
+
 ### The six
 
 Names are placeholders and will be replaced.
@@ -182,7 +186,7 @@ Names are placeholders and will be replaced.
 | 2 | Pte. Ronnie Fitch | Sapper | Quick Work | `onPlaceCharge` | placing costs 0 AP |
 | 3 | Cpl. Eddie Vance | Scout | Cat's Eyes | `onSpotRadius` | +1 |
 | 4 | Pte. Tom Barrow | Scout | Treetops | `onLand` | ignores bad-landing penalty |
-| 5 | Cpl. Stan Speers | Gunner | Cool Head | `onFire` | no alert rise, once per mission |
+| 5 | Cpl. Stan Speers | Gunner | Cool Head | `onFire` | gunfire alert −1 |
 | 6 | Pte. Wilf Nunn | Gunner | Ox | `onChargeCapacity` | +1 charge |
 
 ### Command
