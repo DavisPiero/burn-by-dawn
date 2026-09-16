@@ -164,13 +164,21 @@ and **one modifier**. The rules engine calls the hook and applies any matching m
 
 Adding a seventh character is then a JSON entry and a portrait.
 
+Steady Hands was first written as "fuse ±1 turn, player's choice". A choice is not a
+modifier, so that could not be a trait under the rules above. It is now a fixed **fuse
+−1**, which makes it the one trait that can cost you something: Holloway's charges go off
+a turn sooner, which is what you want when dawn is close and exactly what you do not want
+when you still have to get clear of the blast (§7). That he is also the leader (below)
+sharpens it further. That tension is deliberate; if it plays badly, the lever is the sign,
+not the hook.
+
 ### The six
 
 Names are placeholders and will be replaced.
 
 | # | Name | Role | Trait | Hook | Effect |
 |---|---|---|---|---|---|
-| 1 | Sgt. Alec "Dutch" Holloway | Sapper | Steady Hands | `onPlaceCharge` | fuse ±1 turn, player's choice |
+| 1 | Sgt. Alec "Dutch" Holloway | Sapper | Steady Hands | `onPlaceCharge` | fuse −1 turn |
 | 2 | Pte. Ronnie Fitch | Sapper | Quick Work | `onPlaceCharge` | placing costs 0 AP |
 | 3 | Cpl. Eddie Vance | Scout | Cat's Eyes | `onSpotRadius` | +1 |
 | 4 | Pte. Tom Barrow | Scout | Treetops | `onLand` | ignores bad-landing penalty |
@@ -201,9 +209,9 @@ redundancy is deliberate — it is what stops a bad drop from being an unwinnabl
 
 ### Roles (the three code behaviours)
 
-- **Sapper** — 2 AP. Places and sets charges. Carries 1 charge.
-- **Scout** — 3 AP. Spot radius 3. Detection against him reduced one step. No charges.
-- **Gunner** — 2 AP. Can suppress a visible enemy: it loses its next move. Firing is loud,
+- **Sapper** — 3 AP. Places and sets charges. Carries 1 charge.
+- **Scout** — 4 AP. Spot radius 3. Detection against him reduced one step. No charges.
+- **Gunner** — 3 AP. Can suppress a visible enemy: it loses its next move. Firing is loud,
   +2 alert. No charges (unless Ox).
 
 Wounded troopers drop to 1 AP and cannot carry a charge. Another trooper can spend a full
