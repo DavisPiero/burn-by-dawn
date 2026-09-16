@@ -2,7 +2,7 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
-import { alertIndex, detectionAt, listeners, routePath, visibleHexes, visionRadiusOf } from './enemy.js';
+import { alertIndex, detectionAt, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson } from './map.js';
 import {
@@ -125,7 +125,9 @@ function deriveView() {
       // Moving brings him out of hiding, so only standing still keeps it.
       const mover = plan.steps > 0 ? { ...unit, hidden: false } : unit;
       const result = detectionAt(map, rules, state.enemies, state.alert.points, mover, step);
-      return result && { ...result, shot: unit.inContact && result.spotted && result.firing };
+      if (!result) return null;
+      const shot = unit.inContact && result.spotted && result.firing;
+      return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null };
     });
     view.riskLabel = describeRisk(plan, view.risk);
     if (plan.steps === 0 && checkHide(unit, rules).ok) {

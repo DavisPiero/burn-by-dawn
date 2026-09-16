@@ -316,10 +316,14 @@ function drawRisk(layers, plan, risk) {
       'stroke-width': result.spotted ? 2.5 : 1.2,
     }));
     if (result.shot) {
+      // What the shot does there: HIT in the open, PINNED in cover (SPEC.md §5).
+      const label = result.shotResult === 'hit' ? 'HIT' : 'PINNED';
+      const tagWidth = label.length * 6 + 8;
       layers.risk.appendChild(el('rect', {
-        x: at.x - 17, y: y + 8, width: 34, height: 13, rx: 2, fill: RISK.shotFill,
+        x: at.x - tagWidth / 2, y: y + 8, width: tagWidth, height: 13, rx: 2,
+        fill: result.shotResult === 'hit' ? RISK.shotFill : RISK.pinnedFill,
       }));
-      layers.risk.appendChild(text('SHOT', {
+      layers.risk.appendChild(text(label, {
         x: at.x, y: y + 15, 'font-size': 9, 'font-weight': 'bold', fill: RISK.shotText,
       }));
     }

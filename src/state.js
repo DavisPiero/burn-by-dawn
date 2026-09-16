@@ -108,13 +108,19 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.alert.bodyFound, '"alert.bodyFound"', rulesUrl);
 
   // Noise, contact and wounds, SPEC.md §5 and §6.
-  for (const kind of ['spotted', 'found', 'stone', 'gunfire']) {
+  for (const kind of ['found', 'stone', 'gunfire']) {
     requireCount(rules.noise?.[kind], `"noise.${kind}"`, rulesUrl);
   }
   if (!Number.isInteger(rules.combat?.hitsToKill) || rules.combat.hitsToKill < 1) {
     throw new Error(`${rulesUrl}: "combat.hitsToKill" must be a positive integer`);
   }
   requireCount(rules.combat.woundedActionPoints, '"combat.woundedActionPoints"', rulesUrl);
+  requireCount(rules.combat.pinnedApLoss, '"combat.pinnedApLoss"', rulesUrl);
+  for (const cover of ['none', 'light', 'heavy']) {
+    if (!['hit', 'pinned'].includes(rules.combat.shotResult?.[cover])) {
+      throw new Error(`${rulesUrl}: "combat.shotResult.${cover}" must be "hit" or "pinned"`);
+    }
+  }
 
   // Actions, SPEC.md §4.
   requireCount(rules.actions?.hide?.apCost, '"actions.hide.apCost"', rulesUrl);

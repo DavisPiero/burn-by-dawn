@@ -88,6 +88,7 @@ function describeEvent(event) {
     case 'searched': return `${event.label} reaches (${event.q}, ${event.r}) and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.${event.line ? ` “${event.line}”` : ''}`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
+    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in cover, not hit.`;
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} at (${event.q}, ${event.r}).`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body at (${event.q}, ${event.r}).`;
     default: return event.kind;
@@ -126,8 +127,11 @@ export function describeRisk(plan, risk) {
   const hex = plan.path[worstAt];
   const where = `(${hex.q}, ${hex.r})`;
   if (shot.length > 0) {
-    const at = plan.path[shot[0]];
-    return `SHOT — he is in contact and ${risk[shot[0]].enemyLabel} would see him again at (${at.q}, ${at.r}): ${describeDetection(risk[shot[0]])}`;
+    // The shot lands on the most exposed hex he would be shot on (SPEC.md §5).
+    const worst = shot.find((i) => risk[i].shotResult === 'hit') ?? shot[0];
+    const at = plan.path[worst];
+    const outcome = risk[worst].shotResult === 'hit' ? 'SHOT — HIT in the open' : 'SHOT — PINNED in cover, not hit';
+    return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again at (${at.q}, ${at.r}): ${describeDetection(risk[worst])}`;
   }
   if (spotted.length > 0) {
     return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — at ${where} ${describeDetection(risk[worstAt])}`;
@@ -241,6 +245,7 @@ function describeStatus(unit) {
   const parts = [];
   if (unit.hits > 0) parts.push(unit.stabilised ? 'DRESSED' : 'WOUNDED');
   if (unit.inContact) parts.push('IN CONTACT');
+  if (unit.pinned) parts.push('PINNED');
   if (unit.hidden) parts.push('HIDDEN');
   return parts.length ? parts.join(' · ') : null;
 }

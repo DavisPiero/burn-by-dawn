@@ -150,6 +150,14 @@ All costs and modifiers below are numbers in `rules.json`.
   enemies in earshot react to it — patrols go and look, sentries turn to face it. The
   trade is deliberate: you choose where they look, and you pay a sighting's worth of alert
   for it. The hover readout shows which enemies would hear it before the player commits.
+- **RAF diversion** (once per mission, while the leader is alive) — costs **no AP**, called
+  at any point in the player phase. A diversionary raid on the town pulls the garrison's
+  attention: the **alert drops one state** (to the start of the state below), **every
+  enemy abandons its search or held contact** and goes back to its route or post, and
+  **every trooper is out of contact**. It does not undo wounds, deaths, bodies already
+  found, or the explosion floor (§6). The leader carries the radio, so it is gone if he
+  is dead; that is a rule keyed to the `leader` flag, not a trait (§5 Command). Calling it
+  forfeits the "never reached Alarmed" score (§10): a clean run still scores highest.
 
 ### Desktop interaction (this matters more than it sounds)
 
@@ -254,10 +262,19 @@ redundancy is deliberate — it is what stops a bad drop from being an unwinnabl
 
 ### Wounds
 
-There are no hit-point bars. A trooper has **two hits** (`hitsToKill` in `rules.json`):
-the first **wounds** him, the second **kills** him. A trooper takes **at most one hit per
-turn**, however many enemies fire, so there are always at least two turns between being
-first spotted and dying.
+There are no hit-point bars and no dice. What a shot does depends on the cover of the hex
+he is shot on (`combat.shotResult` in `rules.json`):
+
+| Cover where he is shot | Result |
+|---|---|
+| none (field, track, bridge) | **Hit** |
+| light or heavy | **Pinned** — no hit, but his next turn's pool is 1 AP smaller (never below 1), and he stays in contact |
+
+A trooper has **two hits** (`hitsToKill`): the first **wounds** him, the second **kills**
+him. A trooper is shot **at most once per turn**, however many enemies fire, so there are
+always at least two turns between being first spotted and dying — and a man who keeps to
+cover is never hit at all, only pinned. If he was seen on several hexes in one move, the
+shot lands on the most exposed of the hexes where he would be shot.
 
 Wounded troopers drop to 1 AP and cannot carry a charge; a charge he was carrying drops
 on his hex for anyone to pick up (§4 Actions). Another trooper can spend a full turn
@@ -292,19 +309,20 @@ pips. The player must see risk before committing.
 |---|---|---|
 | **Calm** | 0 | Patrols walk fixed routes. |
 | **Suspicious** | 2 | Patrols pause and sweep. Vision radius +1. |
-| **Alert** | 4 | Vision +1. Hearing +3: noise draws enemies from further away. |
+| **Alert** | 4 | Vision +1. Hearing +1: noise draws enemies from further away. |
 | **Alarmed** | 7 | All patrols hunt last known contact. A reserve squad enters from the road edge and watches exfil. |
 
 The alert level is a **points total**; "From" is the points at which each state begins, and points
 cap at Alarmed. One event is not a whole state: a single sighting leaves the garrison
 Calm, a second makes it Suspicious.
 
-Raised by: being spotted (+1), gunfire (+2), an explosion (+3), the fuel dump exploding
+Raised by: being spotted (+1, and only when he was not already in contact — a man already
+counted is not counted again each turn he stays in view), gunfire (+2), an explosion (+3), the fuel dump exploding
 (+4, instead of +3), a body found (+1), an abandoned parachute found (+1, see §9), a
 thrown stone (+1, §4 Actions).
 Enemy fire at troopers raises nothing extra — the sighting that caused it already counted.
 
-**Decay:** after 4 quiet turns (no alert raised) the points drop to the start of the
+**Decay:** after 4 quiet turns (no alert raised and nobody spotted) the points drop to the start of the
 state below; in Calm, to 0.
 
 **Explosion floor:** once any charge has exploded, the alert never decays below
@@ -315,9 +333,11 @@ plus a silently cut telephone line still does; the bridge plus the fuel dump is 
 
 ### Noise: the dial is global, the reaction is local
 
-Every event that raises the alert happens at a hex and is **heard within a radius** set in
-`rules.json` (starting numbers: spotted 3, parachute or body found 3, thrown stone 3,
-gunfire 5, explosion 7), plus the current state's hearing bonus. Hearing is distance
+Every **noise** happens at a hex and is **heard within a radius** set in `rules.json`
+(starting numbers: parachute or body found 3, thrown stone 3, gunfire 5, explosion 7),
+plus the current state's hearing bonus. **A sighting is not a noise**: the enemies that
+spot a man hold and face him (below), but nobody else comes running unless something is
+heard. Hearing is distance
 only; walls do not stop sound. Enemies that hear it leave their route, walk to that hex,
 sweep, and go back to their route. Enemies out of earshot keep walking; they feel only
 the dial.
@@ -328,8 +348,9 @@ check; in the enemy phase after that it turns back to its facing in `map.json`. 
 thrown on turn N opens the ground the sentry was watching for turn N+1. The turned facing
 is drawn like any other, so the gap is visible.
 
-The most recent event hex is the **last known contact** that every patrol hunts at
-Alarmed.
+The most recent noise hex, or the hex of a first sighting, is the **last known contact**
+that every patrol hunts at Alarmed. Seeing a man who is already in contact again does not
+move it.
 
 **A repeat is not a new contact.** An event on a hex that enemies are already heading to
 or searching updates that contact instead of starting a new one: nobody new sets off, the
@@ -346,11 +367,12 @@ Being spotted is a warning, not a wound:
 2. **Player phase, turn N+1** — he has one turn to break contact: get out of sight, hide,
    or have a gunner suppress whoever is watching (§4 Actions).
 3. **Detection check, turn N+1** — if any enemy spots him again (the same sum and
-   threshold, no dice), **he is shot**: one hit (§5 Wounds). A suppressed enemy does not
-   fire. If nobody spots him, contact ends.
+   threshold, no dice), **he is shot**: hit in the open, pinned in cover (§5 Wounds). The
+   alert does not rise again for him. A suppressed enemy does not fire. If nobody spots
+   him, contact ends.
 
-The hover readout marks every path hex where a man in contact would be shot, so being
-fired on is never a surprise.
+The hover readout marks every path hex where a man in contact would be shot, and whether
+it would hit or pin him there, so being fired on is never a surprise.
 
 ### Exfil watched
 
@@ -453,7 +475,7 @@ Results page, styled as the back page of the annual, listing all six by name and
 - Objectives destroyed (primary 3, each secondary 2)
 - Troopers exfiltrated (1 each)
 - Turns remaining (1 per 2 turns)
-- Never reached Alarmed (+3)
+- Never reached Alarmed and never called the RAF diversion (+3)
 
 ---
 
@@ -499,7 +521,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M3** | Trait hook system + the six characters loaded from `roster.json` | All six traits fire; adding a 7th character needs no code |
 | **M4** | Enemies, patrol routes, vision arcs, alert dial, detection readout on hover | Patrols walk, arcs draw, hover shows risk pips |
 | **M5a** | Contact and combat: enemy fire, wounds and death, bodies, hide, suppress, stabilise, noise and hearing, repeat sightings folded into the open contact, throw a stone | A spotted man can break contact or be shot; two hits kill; hide and suppress change the readout; noise draws only enemies in earshot; a man seen on the same hex turn after turn is searched and reported once; a thrown stone turns the bridge post away for a turn |
-| **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols |
+| **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve, RAF diversion | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols; the diversion can be called once, only while the leader lives, and costs the clean-run score |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
 | **M8** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |

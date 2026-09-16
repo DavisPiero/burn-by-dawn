@@ -221,39 +221,51 @@ export function testedHexes(unit) {
 }
 
 /**
+ * What a shot does to a man standing on this detection result's hex: 'hit' or
+ * 'pinned', by the cover there (SPEC.md §5 Wounds). No dice, so the hover
+ * readout and the detection phase always agree.
+ */
+export function shotResultOf(result, rules) {
+  return rules.combat.shotResult[result.coverLabel];
+}
+
+/**
  * Phase 2 (SPEC.md §4 and §6 "Contact and enemy fire"). Every enemy tests
  * every living trooper, against the arcs as they stood all through the
  * player phase.
  *
- * - A trooper spotted raises the alert once, however many enemies or hexes
- *   saw him, makes a noise where he was seen, and is in contact. Every enemy
- *   that spotted him holds and faces him in the enemy phase.
+ * - A trooper spotted is in contact, and every enemy that spotted him holds
+ *   and faces him in the enemy phase. A sighting is not a noise: nobody else
+ *   comes.
+ * - A first sighting raises the alert once, however many enemies or hexes saw
+ *   him, and moves the last known contact to the surest one. A man already in
+ *   contact was counted when he was first seen, and is not counted again.
  * - A trooper who was already in contact and is spotted again by an enemy
- *   that is not suppressed is shot: one hit, never more than one a turn.
+ *   that is not suppressed is shot, never more than once a turn: hit if any
+ *   hex he would be shot on is open ground, pinned if all of them are cover.
  * - A trooper nobody spots is out of contact.
- *
- * The noises are queued for the enemy phase, surest sighting last, so it is
- * the one that becomes the last known contact.
  */
 export function runDetection(state, map, rules) {
   const events = [];
   let alert = state.alert;
+  let contact = state.contact;
   let enemies = state.enemies.map((e) => ({ ...e, holding: null, watching: null }));
-  let units = state.units;
+  // Pinned lasts one pool; the pool has been filled since, so it is spent.
+  let units = state.units.map((u) => (u.pinned ? { ...u, pinned: false } : u));
   let bodies = state.bodies;
   let droppedCharges = state.droppedCharges;
-  const sightings = [];
+  let best = null;
 
   for (const unit of state.units) {
     if (unit.dead) continue;
     let seenAt = null;
-    let firing = false;
+    const shotResults = [];
     const firers = new Set();
     for (const hex of testedHexes(unit)) {
       const result = detectionAt(map, rules, state.enemies, state.alert.points, unit, hex);
       if (!result || !result.spotted) continue;
       seenAt = { hex, result };
-      if (result.firing) firing = true;
+      if (result.firing) shotResults.push(shotResultOf(result, rules));
       for (const id of result.spotters) {
         enemies = enemies.map((e) => (e.id === id ? { ...e, holding: { unitId: unit.id, q: hex.q, r: hex.r } } : e));
         if (!state.enemies.find((e) => e.id === id).suppressed) firers.add(id);
@@ -269,35 +281,48 @@ export function runDetection(state, map, rules) {
       kind: 'spotted', unitId: unit.id, unitName: unit.shortName,
       enemyLabel: seenAt.result.enemyLabel, q: seenAt.hex.q, r: seenAt.hex.r, score: seenAt.result.score,
     });
-    alert = raiseAlert(alert, rules.alert.spotted, rules);
-    sightings.push(seenAt);
+    // Seeing a man spoils a quiet turn even when he is not counted again: the
+    // garrison does not settle while it has someone in its sights (SPEC.md §6).
+    alert = { ...alert, raisedThisTurn: true };
 
-    if (unit.inContact && firing) {
-      const shot = applyHit(unit, rules);
-      const labels = state.enemies.filter((e) => firers.has(e.id)).map((e) => e.label);
-      events.push({
-        kind: shot.dead ? 'killed' : 'wounded', unitId: unit.id, unitName: unit.shortName,
-        by: labels, line: shot.dead ? null : unit.dialogue?.onWounded ?? null,
-      });
-      if (unit.charges > 0) {
-        droppedCharges = [...droppedCharges, ...Array.from({ length: unit.charges }, () => ({ q: unit.q, r: unit.r }))];
-      }
-      if (shot.dead) bodies = [...bodies, { unitId: unit.id, name: unit.shortName, q: unit.q, r: unit.r, found: false }];
-      units = updateUnit(units, unit.id, shot);
-    } else {
+    if (!unit.inContact) {
+      alert = raiseAlert(alert, rules.alert.spotted, rules);
+      if (!best || seenAt.result.score >= best.result.score) best = seenAt;
       units = updateUnit(units, unit.id, { inContact: true });
+      continue;
     }
+    if (shotResults.length === 0) continue; // only suppressed enemies see him
+
+    const by = state.enemies.filter((e) => firers.has(e.id)).map((e) => e.label);
+    if (!shotResults.includes('hit')) {
+      events.push({ kind: 'pinned', unitId: unit.id, unitName: unit.shortName, by });
+      units = updateUnit(units, unit.id, { pinned: true });
+      continue;
+    }
+
+    const shot = applyHit(unit, rules);
+    events.push({
+      kind: shot.dead ? 'killed' : 'wounded', unitId: unit.id, unitName: unit.shortName,
+      by, line: shot.dead ? null : unit.dialogue?.onWounded ?? null,
+    });
+    if (unit.charges > 0) {
+      droppedCharges = [...droppedCharges, ...Array.from({ length: unit.charges }, () => ({ q: unit.q, r: unit.r }))];
+    }
+    if (shot.dead) bodies = [...bodies, { unitId: unit.id, name: unit.shortName, q: unit.q, r: unit.r, found: false }];
+    units = updateUnit(units, unit.id, shot);
   }
 
   // A dead man holds nobody's attention.
   const living = new Set(units.filter((u) => !u.dead).map((u) => u.id));
   enemies = enemies.map((e) => (e.holding && !living.has(e.holding.unitId) ? { ...e, holding: null } : e));
 
-  sightings.sort((a, b) => a.result.score - b.result.score);
-  const noises = [...state.noises, ...sightings.map((s) => ({ kind: 'spotted', q: s.hex.q, r: s.hex.r }))];
+  // A repeat is not a new contact (SPEC.md §6).
+  if (best && !(contact && !contact.searched && sameHex(contact, best.hex))) {
+    contact = { q: best.hex.q, r: best.hex.r, searched: false };
+  }
 
   pushAlertChange(events, state.alert.points, alert.points, rules);
-  return { state: { ...state, alert, enemies, units, bodies, droppedCharges, noises }, events };
+  return { state: { ...state, alert, contact, enemies, units, bodies, droppedCharges }, events };
 }
 
 /**

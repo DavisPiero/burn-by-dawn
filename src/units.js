@@ -68,6 +68,7 @@ export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data
       dead: false,
       stabilised: false,
       inContact: false,
+      pinned: false, // shot at in cover: his next pool is smaller
       hidden: false,
       apBase: role.actionPoints,
       apMax: role.actionPoints,
@@ -116,15 +117,21 @@ export function fillActionPoints(units, rules) {
     // A wounded man drops to a flat pool until he is stabilised (SPEC.md §5).
     // Orders do not lift it: the point of the wound is that he is slow.
     if (isWounded(unit)) {
-      const pool = rules.combat.woundedActionPoints;
+      const pool = pinnedPool(unit, rules.combat.woundedActionPoints, rules);
       return { ...unit, commandBonus: 0, apMax: pool, ap: pool };
     }
     // Trait first, then orders: onActionPoints modifies the man's own pool,
     // and command is added on top of whatever that pool turned out to be.
     const own = applyHook(unit, 'onActionPoints', 'actionPoints', unit.apBase).value;
     const bonus = commandBonus(unit, units, rules);
-    return { ...unit, commandBonus: bonus, apMax: own + bonus, ap: own + bonus };
+    const pool = pinnedPool(unit, own + bonus, rules);
+    return { ...unit, commandBonus: bonus, apMax: pool, ap: pool };
   });
+}
+
+/** Shot at in cover last turn (SPEC.md §5): a smaller pool, but never below 1. */
+function pinnedPool(unit, pool, rules) {
+  return unit.pinned ? Math.max(Math.min(pool, 1), pool - rules.combat.pinnedApLoss) : pool;
 }
 
 function resolveTraits(trooper, traits, rosterUrl) {
