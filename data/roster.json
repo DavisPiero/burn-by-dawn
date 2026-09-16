@@ -1,12 +1,16 @@
 {
   "_comment": "The six, SPEC.md §5. M2 needs names and roles only — a trooper's role picks its AP pool out of data/rules.json. The `traits` and `dialogue` fields land at M3 together with the trait hook system; nothing in code reads a trooper by name (CLAUDE.md rule 6).",
 
+  "_leader": "`leader` marks the ranking man so his counter is drawn differently. It is a data flag driving art only — it carries no mechanic, and adding one would mean a new trait on an existing hook, never a code branch on his name.",
+
+  "_shortName": "What fits on the counter's name strip. It is not required to be the surname: Holloway goes by his nickname.",
+
   "troopers": [
-    { "id": "holloway", "name": "Sgt. Alec \"Dutch\" Holloway", "shortName": "HOLLOWAY", "role": "sapper" },
-    { "id": "fitch",    "name": "Pte. Ronnie Fitch",           "shortName": "FITCH",    "role": "sapper" },
-    { "id": "vance",    "name": "Cpl. Eddie Vance",            "shortName": "VANCE",    "role": "scout"  },
-    { "id": "merrow",   "name": "Pte. Tom Merrow",             "shortName": "MERROW",   "role": "scout"  },
-    { "id": "bree",     "name": "Cpl. Stan Bree",              "shortName": "BREE",     "role": "gunner" },
-    { "id": "nunn",     "name": "Pte. Wilf Nunn",              "shortName": "NUNN",     "role": "gunner" }
+    { "id": "holloway", "name": "Sgt. Alec \"Dutch\" Holloway", "shortName": "DUTCH",  "role": "sapper", "leader": true },
+    { "id": "fitch",    "name": "Pte. Ronnie Fitch",           "shortName": "FITCH",  "role": "sapper" },
+    { "id": "vance",    "name": "Cpl. Eddie Vance",            "shortName": "VANCE",  "role": "scout"  },
+    { "id": "barrow",   "name": "Pte. Tom Barrow",             "shortName": "BARROW", "role": "scout"  },
+    { "id": "speers",   "name": "Cpl. Stan Speers",            "shortName": "SPEERS", "role": "gunner" },
+    { "id": "nunn",     "name": "Pte. Wilf Nunn",              "shortName": "NUNN",   "role": "gunner" }
   ]
 }

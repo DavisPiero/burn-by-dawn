@@ -39,6 +39,8 @@ export function createUnits(roster, rules, startHexes, rosterUrl = 'data/roster.
       shortName: trooper.shortName,
       role: trooper.role,
       roleLabel: role.label,
+      // Drives which counter frame is drawn, nothing else. See data/roster.json.
+      leader: trooper.leader === true,
       q,
       r,
       ap: role.actionPoints,

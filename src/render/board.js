@@ -13,7 +13,7 @@
 
 import { axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, legendCharAt, terrainIdAt } from '../map.js';
-import { COUNTER, GRID, PATH, SELECTION, createSpriteDefs, roleSymbolId, terrainStyle } from './theme.js';
+import { COUNTER, GRID, PATH, SELECTION, counterFrameId, createSpriteDefs, roleSymbolId, terrainStyle } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -141,9 +141,12 @@ export function renderPieces(layers, state, view) {
     }));
   }
 
-  for (const unit of state.units) {
-    layers.counters.appendChild(drawCounter(unit, map, unit.id === state.selectedUnitId));
-  }
+  state.units.forEach((unit, i) => {
+    // The number on the counter is the trooper's place in the roster, which is
+    // also his 1-6 hotkey and his position in the panel. One ordering, shown
+    // in three places.
+    layers.counters.appendChild(drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId));
+  });
 }
 
 // --- hover path preview -----------------------------------------------------
@@ -220,7 +223,7 @@ function polyline(points, attrs) {
 // the selection ring are drawn here as geometry, the same way the hex outlines
 // are: they are readouts of state, not artwork, and they have no asset id.
 
-function drawCounter(unit, map, isSelected) {
+function drawCounter(unit, number, map, isSelected) {
   const center = axialToPixel(unit.q, unit.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', {
@@ -228,14 +231,28 @@ function drawCounter(unit, map, isSelected) {
     opacity: unit.ap === 0 ? COUNTER.spentOpacity : 1,
   });
 
-  group.appendChild(el('use', { href: '#counter-frame-allied', width: size, height: size }));
+  group.appendChild(el('use', { href: `#${counterFrameId(unit)}`, width: size, height: size }));
   group.appendChild(el('use', { href: `#${roleSymbolId(unit.role)}`, x: 16, y: 12, width: 24, height: 24 }));
 
-  const name = text(unit.shortName, {
-    x: 27, y: 46.5, 'font-size': COUNTER.nameSize, 'font-weight': 'bold',
-    fill: COUNTER.nameFill, textLength: 46, lengthAdjust: 'spacingAndGlyphs',
-  });
-  group.appendChild(name);
+  // Roster number, boxed off at the left of the name strip.
+  group.appendChild(el('rect', {
+    x: 1, y: 38, width: COUNTER.nameBoxLeft - 1, height: 15,
+    fill: COUNTER.numberFill, 'fill-opacity': 0.85,
+  }));
+  group.appendChild(text(String(number), {
+    x: COUNTER.nameBoxLeft / 2, y: 46.5,
+    'font-size': COUNTER.nameSize, 'font-weight': 'bold', fill: COUNTER.numberText,
+  }));
+
+  // Scaled as whole type, never stretched: a long name comes out smaller, not
+  // condensed, so lettering keeps the same proportions on every counter.
+  const room = COUNTER.nameBoxRight - COUNTER.nameBoxLeft;
+  const fitted = room / Math.max(1, unit.shortName.length * COUNTER.nameAspect);
+  group.appendChild(text(unit.shortName, {
+    x: (COUNTER.nameBoxLeft + COUNTER.nameBoxRight) / 2, y: 46.5,
+    'font-size': Math.min(COUNTER.nameSize, fitted).toFixed(2),
+    'font-weight': 'bold', fill: COUNTER.nameFill,
+  }));
 
   for (let i = 0; i < unit.apMax; i++) {
     const spent = i >= unit.ap;

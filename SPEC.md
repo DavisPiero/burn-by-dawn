@@ -173,9 +173,13 @@ Names are placeholders and will be replaced.
 | 1 | Sgt. Alec "Dutch" Holloway | Sapper | Steady Hands | `onPlaceCharge` | fuse ±1 turn, player's choice |
 | 2 | Pte. Ronnie Fitch | Sapper | Quick Work | `onPlaceCharge` | placing costs 0 AP |
 | 3 | Cpl. Eddie Vance | Scout | Cat's Eyes | `onSpotRadius` | +1 |
-| 4 | Pte. Tom Merrow | Scout | Treetops | `onLand` | ignores bad-landing penalty |
-| 5 | Cpl. Stan Bree | Gunner | Cool Head | `onFire` | no alert rise, once per mission |
+| 4 | Pte. Tom Barrow | Scout | Treetops | `onLand` | ignores bad-landing penalty |
+| 5 | Cpl. Stan Speers | Gunner | Cool Head | `onFire` | no alert rise, once per mission |
 | 6 | Pte. Wilf Nunn | Gunner | Ox | `onChargeCapacity` | +1 charge |
+
+Holloway is the ranking man. That is flavour, not a mechanic: he has no leadership
+rule, because a leadership rule would have to be a trait on an existing hook like
+anything else. His counter is drawn differently so the player can find him.
 
 Nunn carrying a charge means a gunner can finish the job if both sappers are down. That
 redundancy is deliberate — it is what stops a bad drop from being an unwinnable run.

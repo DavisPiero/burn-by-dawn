@@ -59,7 +59,7 @@ mud at counter size, so don't try to make one asset do both.
 | `portrait-<name>-full.svg` x6 | 240 x 300 | roster rail. Head and shoulders, pulp comic linework. Needs a greyed-out state — supply as one file, code handles desaturation. |
 | `portrait-<name>-chip.svg` x6 | 32 x 32 | on the counter. Silhouette-level simplicity. Helmet shape, one distinguishing feature. Must read at 32px on a busy map. |
 
-Names: holloway, fitch, vance, merrow, bree, nunn.
+Names: holloway, fitch, vance, barrow, speers, nunn.
 
 ---
 
@@ -68,6 +68,7 @@ Names: holloway, fitch, vance, merrow, bree, nunn.
 | Asset | viewBox | Notes |
 |---|---|---|
 | `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square, name strip along the bottom |
+| `counter-frame-allied-leader.svg` | 56 x 56 | the ranking man. Same die-cut silhouette as above so the two read as one set — distinguish it by the name strip and a rank flash, not by a different shape |
 | `counter-frame-enemy.svg` | 56 x 56 | visually distinct at a glance, not just recoloured |
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
 | `symbol-scout.svg` | 24 x 24 | binoculars |

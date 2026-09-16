@@ -60,11 +60,21 @@ export const SELECTION = {
 // them — ART-ASSETS.md §3.
 export const COUNTER = {
   size: 56,
+  // The name strip is 52 wide with the roster number boxed off at its left,
+  // so this is what is left for the name itself.
+  nameBoxLeft: 14,
+  nameBoxRight: 53,
   selectedStroke: PALETTE.red,
   selectedStrokeWidth: 3,
   spentOpacity: 0.55, // a trooper with no AP left greys back
   nameFill: PALETTE.paper,
   nameSize: 9,
+  // Glyphs are never stretched to fill the strip — a long name scales down as
+  // whole type instead, so every counter's lettering keeps the same
+  // proportions. Roughly the width of one character at font-size 1.
+  nameAspect: 0.62,
+  numberFill: PALETTE.ink,
+  numberText: PALETTE.paper,
   pipFill: PALETTE.ink,
   pipRadius: 2.6,
 };
@@ -104,24 +114,41 @@ function svg(name, attrs = {}, children = []) {
   return node;
 }
 
+// Both allied frames are the same die-cut silhouette so the six read as one
+// set of chits; only the name strip's colour and the rank flash differ. The
+// drop shadow is part of the frame, down-right 2px and hard edged: a cardboard
+// chit, not a soft UI shadow (ART-ASSETS.md §3).
+function alliedFrame(stripClass, extras = []) {
+  return [
+    svg('rect', { x: 3, y: 3, width: 52, height: 52, rx: 5, class: 'ink', 'fill-opacity': 0.55 }),
+    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, class: 'paper' }),
+    svg('path', { d: 'M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', class: stripClass }),
+    ...extras,
+    svg('rect', {
+      x: 1, y: 1, width: 52, height: 52, rx: 5,
+      fill: 'none', class: 'stroke-ink', 'stroke-width': 2,
+    }),
+  ];
+}
+
 const SPRITES = {
-  // Die-cut rounded square with a name strip along the bottom. The drop shadow
-  // is part of the frame, down-right 2px and hard edged: a cardboard chit, not
-  // a soft UI shadow (ART-ASSETS.md §3).
   'counter-frame-allied': {
     viewBox: '0 0 56 56',
-    draw: () => [
-      svg('rect', { x: 3, y: 3, width: 52, height: 52, rx: 5, class: 'ink', 'fill-opacity': 0.55 }),
-      svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, class: 'paper' }),
+    draw: () => alliedFrame('green'),
+  },
+
+  // The ranking man: red name strip, plus a sergeant's three chevrons. They sit
+  // in the right-hand margin of the counter, clear of the role symbol (x 16-40)
+  // and the AP pips along the top centre.
+  'counter-frame-allied-leader': {
+    viewBox: '0 0 56 56',
+    draw: () => alliedFrame('red', [
       svg('path', {
-        d: 'M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z',
-        class: 'green',
+        d: 'M42 12 L46 8 L50 12 M42 19 L46 15 L50 19 M42 26 L46 22 L50 26',
+        fill: 'none', class: 'stroke-red', 'stroke-width': 1.8,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       }),
-      svg('rect', {
-        x: 1, y: 1, width: 52, height: 52, rx: 5,
-        fill: 'none', class: 'stroke-ink', 'stroke-width': 2,
-      }),
-    ],
+    ]),
   },
 
   // Role symbols, 24x24. Silhouette level — they sit at 24px on a busy map.
@@ -153,6 +180,15 @@ const SPRITES = {
     ],
   },
 };
+
+/**
+ * Sprite id for a trooper's counter frame. `leader` is a flag on the roster
+ * entry, so this stays a data lookup rather than a branch on anybody's name
+ * (CLAUDE.md rule 6).
+ */
+export function counterFrameId(unit) {
+  return unit.leader ? 'counter-frame-allied-leader' : 'counter-frame-allied';
+}
 
 /** Sprite id for a trooper's role symbol. Roles come from data, ids from here. */
 export function roleSymbolId(role) {
