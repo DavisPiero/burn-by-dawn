@@ -55,9 +55,14 @@ export function renderAlertDial(svg, caption, alert) {
   const state = alert.states[alert.index];
   const note = document.createElement('div');
   note.className = 'alert-note';
-  note.textContent = alert.index > 0
-    ? `vision +${state.visionBonus} · quiet ${alert.quietTurns}/${alert.quietTurnsToDecay} to ease`
-    : `vision +${state.visionBonus}`;
+  // Several events share one state (SPEC.md §6), so the needle alone cannot
+  // warn that the next sighting tips the dial; the points to go do.
+  const next = alert.states[alert.index + 1];
+  const parts = [`alert ${alert.points}`];
+  if (next) parts.push(`${next.from - alert.points} to ${next.label}`);
+  parts.push(`vision +${state.visionBonus}`);
+  if (alert.points > 0) parts.push(`quiet ${alert.quietTurns}/${alert.quietTurnsToDecay} to ease`);
+  note.textContent = parts.join(' · ');
   caption.appendChild(note);
 }
 

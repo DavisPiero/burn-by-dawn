@@ -81,8 +81,9 @@ export function raiseAlert(alert, amount, rules) {
 
 /**
  * Phase 5 (SPEC.md §4): after `quietTurnsToDecay` turns with no rise, drop to
- * the start of the state below. The explosion floor (never below Suspicious
- * once something has gone off) arrives with explosions at M5.
+ * the start of the state below. In Calm, points short of Suspicious fall to 0
+ * without an event: the state has not changed. The explosion floor (never
+ * below Suspicious once something has gone off) arrives with explosions at M5b.
  */
 export function decayAlert(state, rules) {
   const events = [];
@@ -93,6 +94,9 @@ export function decayAlert(state, rules) {
     const to = rules.alert.states[index - 1];
     events.push({ kind: 'alertDecay', from: rules.alert.states[index].label, to: to.label });
     points = to.from;
+    quietTurns = 0;
+  } else if (quietTurns >= rules.alert.quietTurnsToDecay && points > 0) {
+    points = 0;
     quietTurns = 0;
   }
   return { state: { ...state, alert: { points, quietTurns, raisedThisTurn: false } }, events };

@@ -30,7 +30,7 @@
     "proximity": [0, 2, 1]
   },
 
-  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 1/2/3 this is the literal reading of §6, where every +1 is one step. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him.",
+  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him.",
 
   "alert": {
     "gunfire": 2,
@@ -38,9 +38,9 @@
     "quietTurnsToDecay": 4,
     "states": [
       { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0 },
-      { "id": "suspicious", "label": "Suspicious", "from": 1, "visionBonus": 1 },
-      { "id": "alarmed", "label": "Alarmed", "from": 2, "visionBonus": 1 },
-      { "id": "standTo", "label": "Stand-To", "from": 3, "visionBonus": 1 }
+      { "id": "suspicious", "label": "Suspicious", "from": 2, "visionBonus": 1 },
+      { "id": "alarmed", "label": "Alarmed", "from": 4, "visionBonus": 1 },
+      { "id": "standTo", "label": "Stand-To", "from": 7, "visionBonus": 1 }
     ]
   },
 

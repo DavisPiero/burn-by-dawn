@@ -184,9 +184,21 @@ export default [
     equal(blocked, null, 'no path onto the enemy');
   }],
 
-  ['one spot raises the alert one step, and it eases after the quiet turns', async () => {
+  ['one spot is not a whole alert step, and quiet turns clear it', async () => {
     const { rules, state } = await loadAll();
     let s = { ...state, alert: raiseAlert(state.alert, rules.alert.spotted, rules) };
+    equal(alertIndex(s.alert.points, rules), 0, 'still calm');
+    s = decayAlert(s, rules).state; // the turn it rose is not quiet
+    for (let i = 0; i < rules.alert.quietTurnsToDecay - 1; i++) s = decayAlert(s, rules).state;
+    equal(s.alert.points, 1, 'not yet cleared');
+    const cleared = decayAlert(s, rules);
+    equal(cleared.state.alert.points, 0, 'cleared');
+    equal(cleared.events.length, 0, 'no event: the state never changed');
+  }],
+
+  ['reaching Suspicious raises the alert one step, and it eases after the quiet turns', async () => {
+    const { rules, state } = await loadAll();
+    let s = { ...state, alert: raiseAlert(state.alert, rules.alert.states[1].from, rules) };
     equal(alertIndex(s.alert.points, rules), 1, 'suspicious');
     s = decayAlert(s, rules).state; // the turn it rose is not quiet
     for (let i = 0; i < rules.alert.quietTurnsToDecay - 1; i++) {
