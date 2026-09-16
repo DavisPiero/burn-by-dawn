@@ -66,7 +66,8 @@ run.sh            local static server, see §1
 
 Pointy-top hexes, **axial coordinates** `(q, r)`. No offset coords anywhere.
 
-Neighbours, in order N, NE, SE, S, SW, NW:
+Neighbours, in order NW, NE, E, SE, SW, W (pointy-top hexes have no straight north or
+south neighbour; facings in data use these names):
 `(0,-1) (+1,-1) (+1,0) (0,+1) (-1,+1) (-1,0)`
 
 Axial to pixel (size = hex circumradius):

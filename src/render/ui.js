@@ -3,11 +3,112 @@
 // rule 7) — clicks are handed straight back to the caller.
 //
 // SPEC.md §11 wants this as the right-hand page of a printed spread, with
-// portraits and an alert dial. That is the art pass at M7, and the alert dial
-// has nothing to show until M4. This is the plain version of the same panel.
+// portraits and an alert dial. That is the art pass at M7. This is the plain
+// version of the same panel.
 
 import { terrainAt } from '../map.js';
-import { PALETTE, terrainStyle } from './theme.js';
+import { DIAL, PALETTE, terrainStyle } from './theme.js';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgEl(name, attrs = {}) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  return node;
+}
+
+/**
+ * The garrison alert dial, SPEC.md §6. The face and needle are registry
+ * sprites. The state names sit beside it rather than on the face, where they
+ * are unreadable at panel size; they come from data/rules.json, so renaming a
+ * state is data. `alert` is derived in main.js:
+ * { index, states, points, quietTurns, quietTurnsToDecay }.
+ */
+export function renderAlertDial(svg, caption, alert) {
+  svg.replaceChildren();
+  svg.appendChild(svgEl('use', { href: '#ui-alert-dial', width: 240, height: 240 }));
+  const step = DIAL.sweep / alert.states.length;
+  const angle = DIAL.startAngle + step * (alert.index + 0.5);
+  svg.appendChild(svgEl('use', {
+    href: '#ui-alert-needle', x: 110, y: 10, width: 20, height: 120,
+    transform: `rotate(${angle} 120 120)`,
+  }));
+
+  caption.replaceChildren();
+  const heading = document.createElement('div');
+  heading.className = 'alert-heading';
+  heading.textContent = 'GARRISON ALERT';
+  caption.appendChild(heading);
+  const list = document.createElement('ol');
+  list.className = 'alert-states';
+  alert.states.forEach((s, i) => {
+    const item = document.createElement('li');
+    item.textContent = s.label;
+    if (i === alert.index) {
+      item.className = 'active';
+      item.style.color = PALETTE.red;
+    }
+    list.appendChild(item);
+  });
+  caption.appendChild(list);
+
+  const state = alert.states[alert.index];
+  const note = document.createElement('div');
+  note.className = 'alert-note';
+  note.textContent = alert.index > 0
+    ? `vision +${state.visionBonus} · quiet ${alert.quietTurns}/${alert.quietTurnsToDecay} to ease`
+    : `vision +${state.visionBonus}`;
+  caption.appendChild(note);
+}
+
+/** What happened at the last turn boundary, in words. */
+export function renderReport(element, state) {
+  element.replaceChildren();
+  const lines = state.report.map(describeEvent);
+  if (lines.length === 0) lines.push(state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.');
+  for (const line of lines) {
+    const item = document.createElement('li');
+    item.textContent = line;
+    element.appendChild(item);
+  }
+}
+
+function describeEvent(event) {
+  switch (event.kind) {
+    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} at (${event.q}, ${event.r}).`;
+    case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
+    case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
+    case 'reserve': return `${event.label} arrives on the road at (${event.q}, ${event.r}).`;
+    case 'searched': return `${event.label} reaches (${event.q}, ${event.r}) and searches it.`;
+    default: return event.kind;
+  }
+}
+
+/**
+ * SPEC.md §6's sum in words, one term at a time, so the player can see why:
+ * "Bridge patrol: 3 − cover 2 − conceal 0 + close 1 = 2 of 3".
+ */
+export function describeDetection(d) {
+  let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover} − conceal ${d.concealment} + close ${d.proximity}`;
+  if (d.trait) sum += ` ${d.trait > 0 ? '+' : '−'} trait ${Math.abs(d.trait)}`;
+  return `${sum} = ${d.score} of ${d.threshold}`;
+}
+
+/** The whole hover path's risk in one phrase. */
+export function describeRisk(plan, risk) {
+  if (!plan || !risk) return null;
+  const tested = plan.steps === 0 ? [0] : plan.path.map((_, i) => i).slice(1);
+  const seen = tested.filter((i) => risk[i]);
+  if (seen.length === 0) return plan.steps === 0 ? 'unseen here' : 'unseen all the way';
+  const spotted = seen.filter((i) => risk[i].spotted);
+  const worstAt = seen.reduce((a, b) => (risk[b].score > risk[a].score ? b : a));
+  const hex = plan.path[worstAt];
+  const where = `(${hex.q}, ${hex.r})`;
+  if (spotted.length > 0) {
+    return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — at ${where} ${describeDetection(risk[worstAt])}`;
+  }
+  return `seen, not spotted — worst ${where} ${describeDetection(risk[worstAt])}`;
+}
 
 function describeCost(terrain) {
   return terrain.moveCost === null ? 'impassable' : `move ${terrain.moveCost}`;
@@ -127,11 +228,17 @@ export function describeEffect(effect) {
 /**
  * One line about whatever the mouse is over. With a trooper selected this is
  * the path readout SPEC.md §4 asks for: route, total AP, and why not if not.
- * The per-hex detection risk pips belong here too, and arrive at M4 with the
- * enemies that would generate them.
+ * With it comes the detection risk along that path, and over an enemy, what
+ * that enemy is.
  */
 export function renderReadout(element, state, map, view) {
   const hex = state.hoverHex ?? state.selectedHex;
+  if (view?.hoverEnemy) {
+    const e = view.hoverEnemy;
+    const doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
+    element.textContent = `(${e.q}, ${e.r}) ${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.`;
+    return;
+  }
   if (!hex) {
     element.textContent = state.selectedUnitId
       ? 'Hover a hex to preview the move. Right-click or Esc to cancel.'
@@ -154,6 +261,7 @@ export function renderReadout(element, state, map, view) {
 
   let line = `(${hex.q}, ${hex.r}) ${terrain.label} — ${parts.join(', ')}`;
   if (view?.moveLabel) line += `   ▸ ${view.moveLabel}`;
+  if (view?.riskLabel) line += `   ▸ ${view.riskLabel}`;
   element.textContent = line;
 }
 

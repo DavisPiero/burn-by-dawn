@@ -115,6 +115,69 @@ export const PATH = {
 };
 
 // ---------------------------------------------------------------------------
+// Enemies, vision and alert (M4, SPEC.md §6).
+
+export const ENEMY = {
+  labelFill: PALETTE.paper,
+  labelSize: 8.5,
+  labelBoxLeft: 4,
+  labelBoxRight: 52,
+  // The small wedge outside the counter that says which way it is looking.
+  facingFill: PALETTE.red,
+  facingStroke: PALETTE.ink,
+  facingDistance: 33,
+  facingSize: 7,
+};
+
+export const VISION = {
+  // Every enemy's field of view, faint, so the board always shows where it is
+  // watched; the hovered enemy's, stronger and outlined. Red because being
+  // seen is the danger.
+  fill: PALETTE.red,
+  opacity: 0.16,
+  hoverOpacity: 0.3,
+  edgeCasing: PALETTE.paper,
+  edgeCasingWidth: 7,
+  edge: PALETTE.red,
+  edgeWidth: 3.5,
+};
+
+export const ROUTE = {
+  casing: PALETTE.paper,
+  casingWidth: 6,
+  stroke: PALETTE.ink,
+  width: 2.5,
+  dash: '8 6',
+  waypointSize: 9,
+};
+
+export const CONTACT = {
+  stroke: PALETTE.red,
+  width: 3,
+  dash: '6 4',
+  radius: 30,
+  text: PALETTE.red,
+};
+
+// Detection risk pips under each step of the hover path.
+export const RISK = {
+  badgeFill: PALETTE.paper,
+  badgeStroke: PALETTE.ink,
+  spottedStroke: PALETTE.red,
+  pipRadius: 3.2,
+  pipGap: 8.5,
+  pipFill: PALETTE.ink,
+  spottedFill: PALETTE.red,
+};
+
+// The alert dial's four sectors run clockwise from lower left to lower right,
+// like a gauge. Angles are degrees from straight up.
+export const DIAL = {
+  startAngle: -135,
+  sweep: 270,
+};
+
+// ---------------------------------------------------------------------------
 // Sprite registry. Ids and viewBoxes are ART-ASSETS.md's, exactly.
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -141,6 +204,36 @@ function alliedFrame(stripClass, extras = []) {
       fill: 'none', class: 'stroke-ink', 'stroke-width': 2,
     }),
   ];
+}
+
+// The enemy chit is cut with clipped corners and printed dark: it has to read
+// as the other side at a glance, not as a recoloured allied counter
+// (ART-ASSETS.md §3).
+const ENEMY_OUTLINE = 'M9 1 H45 L53 9 V45 L45 53 H9 L1 45 V9 Z';
+
+// A coal-scuttle helmet, the one shape that says German at counter size.
+function helmet(x, y, scale) {
+  const t = (px, py) => `${x + px * scale} ${y + py * scale}`;
+  return svg('path', {
+    d: `M${t(0, 12)} C${t(0, 4)} ${t(5, 0)} ${t(11, 0)} C${t(17, 0)} ${t(22, 4)} ${t(22, 10)} L${t(25, 13)} L${t(24, 15)} L${t(0, 15)} Z`,
+    class: 'paper',
+  });
+}
+
+// Gauge geometry for the alert dial, in its 240x240 viewBox.
+function dialPoint(angle, radius) {
+  const a = (angle - 90) * (Math.PI / 180);
+  return { x: 120 + radius * Math.cos(a), y: 120 + radius * Math.sin(a) };
+}
+
+function dialSector(from, to, inner, outer, cls) {
+  const p1 = dialPoint(from, outer), p2 = dialPoint(to, outer);
+  const p3 = dialPoint(to, inner), p4 = dialPoint(from, inner);
+  const large = to - from > 180 ? 1 : 0;
+  return svg('path', {
+    d: `M${p1.x} ${p1.y} A${outer} ${outer} 0 ${large} 1 ${p2.x} ${p2.y} L${p3.x} ${p3.y} A${inner} ${inner} 0 ${large} 0 ${p4.x} ${p4.y} Z`,
+    class: cls,
+  });
 }
 
 const SPRITES = {
@@ -192,7 +285,89 @@ const SPRITES = {
       svg('path', { d: 'M6 13 L3 20 M6 13 L9 20', class: 'stroke-ink', 'stroke-width': 1.6, fill: 'none' }),
     ],
   },
+
+  'counter-frame-enemy': {
+    viewBox: '0 0 56 56',
+    draw: () => [
+      svg('path', { d: ENEMY_OUTLINE, transform: 'translate(2 2)', class: 'ink', 'fill-opacity': 0.55 }),
+      svg('path', { d: ENEMY_OUTLINE, class: 'ink' }),
+      svg('path', { d: 'M1 38 H53 V45 L45 53 H9 L1 45 Z', class: 'red' }),
+      svg('path', { d: ENEMY_OUTLINE, fill: 'none', class: 'stroke-paper', 'stroke-width': 1, transform: 'translate(27 27) scale(0.9) translate(-27 -27)' }),
+      svg('path', { d: ENEMY_OUTLINE, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+
+  // Enemy types sit on the frame at full counter size, clear of the strip.
+  'counter-enemy-sentry': {
+    viewBox: '0 0 56 56',
+    draw: () => [
+      helmet(12, 13, 1.1),
+      svg('rect', { x: 40, y: 10, width: 4, height: 24, class: 'paper' }),
+      svg('rect', { x: 36, y: 10, width: 12, height: 4, class: 'paper' }),
+    ],
+  },
+  'counter-enemy-patrol': {
+    viewBox: '0 0 56 56',
+    draw: () => [helmet(6, 11, 0.85), helmet(26, 19, 0.85)],
+  },
+  'counter-enemy-reserve': {
+    viewBox: '0 0 56 56',
+    draw: () => [helmet(4, 8, 0.7), helmet(29, 8, 0.7), helmet(16, 22, 0.7)],
+  },
+
+  // Sits on top of a trooper counter that was seen at the last detection.
+  'marker-spotted': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('circle', { cx: 14, cy: 14, r: 12, class: 'red' }),
+      svg('circle', { cx: 14, cy: 14, r: 12, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+      svg('rect', { x: 12, y: 6, width: 4, height: 10, rx: 1, class: 'paper' }),
+      svg('circle', { cx: 14, cy: 20.5, r: 2.2, class: 'paper' }),
+    ],
+  },
+
+  // Face only: four sectors and the ticks between them. The state names are
+  // set as type by ui.js from data/rules.json, so renaming a state is data.
+  'ui-alert-dial': {
+    viewBox: '0 0 240 240',
+    draw: () => {
+      const parts = [
+        svg('circle', { cx: 122, cy: 122, r: 116, class: 'ink', 'fill-opacity': 0.55 }),
+        svg('circle', { cx: 120, cy: 120, r: 116, class: 'paper' }),
+      ];
+      const classes = ['green', 'blue', 'red', 'red'];
+      const opacities = [1, 1, 0.55, 1];
+      const step = DIAL.sweep / classes.length;
+      classes.forEach((cls, i) => {
+        const from = DIAL.startAngle + i * step;
+        const sector = dialSector(from, from + step, 94, 112, cls);
+        sector.setAttribute('fill-opacity', opacities[i]);
+        parts.push(sector);
+      });
+      for (let i = 0; i <= classes.length; i++) {
+        const a = DIAL.startAngle + i * step;
+        const p = dialPoint(a, 90), q = dialPoint(a, 114);
+        parts.push(svg('line', { x1: p.x, y1: p.y, x2: q.x, y2: q.y, class: 'stroke-ink', 'stroke-width': 3 }));
+      }
+      parts.push(svg('circle', { cx: 120, cy: 120, r: 116, fill: 'none', class: 'stroke-ink', 'stroke-width': 3 }));
+      return parts;
+    },
+  },
+  // Pivots at (10, 110); ui.js places that on the dial's centre and rotates.
+  'ui-alert-needle': {
+    viewBox: '0 0 20 120',
+    draw: () => [
+      svg('path', { d: 'M10 8 L14 104 L6 104 Z', class: 'ink' }),
+      svg('circle', { cx: 10, cy: 110, r: 8, class: 'ink' }),
+      svg('circle', { cx: 10, cy: 110, r: 3, class: 'paper' }),
+    ],
+  },
 };
+
+/** Sprite id for an enemy's type counter. Types come from data, ids from here. */
+export function enemySymbolId(type) {
+  return `counter-enemy-${type}`;
+}
 
 /**
  * Sprite id for a trooper's counter frame. `leader` is a flag on the roster

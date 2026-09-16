@@ -3,10 +3,11 @@
 // ever reads (CLAUDE.md hard rule 7).
 //
 // SPEC.md §4 gives a turn five phases: player, detection, enemy, fuse, alert
-// decay. M2 has only the player phase — there is nothing to detect, patrol,
-// fuse or escalate yet — so endTurn is the whole turn boundary for now.
-// Save/load arrives when there is a mission worth saving.
+// decay. endTurn runs everything after the player phase. The fuse phase
+// arrives with charges at M5. Save/load arrives when there is a mission worth
+// saving.
 
+import { createAlert, createEnemies, decayAlert, runDetection, runEnemyPhase } from './enemy.js';
 import { createUnits, fillActionPoints, unitById } from './units.js';
 
 /** `traits` is the validated table from traits.js validateTraits. */
@@ -15,9 +16,17 @@ export function createInitialState(roster, traits, rules, map) {
   return {
     turn: 1,
     units: createUnits(roster, traits, rules, map.startHexes),
+    enemies: createEnemies(map),
+    alert: createAlert(),
+    // Where the garrison last saw a trooper: { q, r, searched }, or null.
+    contact: null,
+    reserveDeployed: false,
+    // What happened at the last turn boundary, for the turn report.
+    report: [],
     selectedUnitId: null,
     selectedHex: null, // hex inspection, from M0; survives alongside unit selection
     hoverHex: null,
+    showRoutes: false, // the R overlay, SPEC.md §4
   };
 }
 
@@ -45,6 +54,40 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.charges?.fuseTurns, '"charges.fuseTurns"', rulesUrl);
   requireCount(rules.alert?.gunfire, '"alert.gunfire"', rulesUrl);
   requireCount(rules.landing?.badLandingTurnsLost, '"landing.badLandingTurnsLost"', rulesUrl);
+  for (const id of Object.keys(rules.roles)) {
+    requireCount(rules.roles[id].concealment, `role "${id}" "concealment"`, rulesUrl);
+  }
+
+  // Detection and alert, SPEC.md §6.
+  requireCount(rules.detection?.threshold, '"detection.threshold"', rulesUrl);
+  for (const cover of ['none', 'light', 'heavy']) {
+    requireCount(rules.detection?.cover?.[cover], `"detection.cover.${cover}"`, rulesUrl);
+  }
+  if (!Array.isArray(rules.detection?.proximity)) {
+    throw new Error(`${rulesUrl}: "detection.proximity" must be an array of bonuses by distance`);
+  }
+  rules.detection.proximity.forEach((v, i) => requireCount(v, `"detection.proximity[${i}]"`, rulesUrl));
+  requireCount(rules.alert.spotted, '"alert.spotted"', rulesUrl);
+  requireCount(rules.alert.quietTurnsToDecay, '"alert.quietTurnsToDecay"', rulesUrl);
+  // The behaviours in enemy.js key off these four ids; their thresholds and
+  // bonuses are free to change.
+  const ids = ['calm', 'suspicious', 'alarmed', 'standTo'];
+  const states = rules.alert.states;
+  if (!Array.isArray(states) || states.map((s) => s?.id).join() !== ids.join()) {
+    throw new Error(`${rulesUrl}: "alert.states" must be the four states ${ids.join(', ')}, in that order`);
+  }
+  states.forEach((s, i) => {
+    requireCount(s.from, `"alert.states[${i}].from"`, rulesUrl);
+    requireCount(s.visionBonus, `"alert.states[${i}].visionBonus"`, rulesUrl);
+    if (i === 0 ? s.from !== 0 : s.from <= states[i - 1].from) {
+      throw new Error(`${rulesUrl}: "alert.states" must start from 0 and rise, got ${states.map((x) => x.from).join(', ')}`);
+    }
+  });
+  if (!Number.isInteger(rules.patrols?.suspiciousPauseEvery) || rules.patrols.suspiciousPauseEvery < 1) {
+    throw new Error(`${rulesUrl}: "patrols.suspiciousPauseEvery" must be a positive integer`);
+  }
+  requireCount(rules.patrols.sweepRotation, '"patrols.sweepRotation"', rulesUrl);
+  requireCount(rules.patrols.alarmedConverge, '"patrols.alarmedConverge"', rulesUrl);
 }
 
 function requireCount(value, what, rulesUrl) {
@@ -83,7 +126,14 @@ export function moveUnit(state, unitId, plan) {
     ...state,
     units: state.units.map((unit) => (
       unit.id === unitId
-        ? { ...unit, q: destination.q, r: destination.r, ap: Math.max(0, unit.ap - plan.total) }
+        ? {
+          ...unit,
+          q: destination.q,
+          r: destination.r,
+          ap: Math.max(0, unit.ap - plan.total),
+          // Every hex he entered, for the detection phase (enemy.js testedHexes).
+          trail: [...unit.trail, ...plan.path.slice(1)],
+        }
         : unit
     )),
   };
@@ -97,19 +147,32 @@ export function holdUnit(state, unitId) {
   };
 }
 
+/** Show or hide every patrol route. SPEC.md §4, the `R` key. */
+export function toggleRoutes(state) {
+  return { ...state, showRoutes: !state.showRoutes };
+}
+
 /**
- * End the player phase. Dawn arrives on turn 20 (SPEC.md §4) and that is the
- * last playable turn, so the clock stops there. What happens at dawn — win,
- * lose, medal rating — is M5.
+ * End the player phase and run the rest of the turn, in SPEC.md §4's order:
+ * detection, enemy phase, (fuses at M5), alert decay. Dawn arrives on turn 20
+ * and that is the last playable turn, so the clock stops there. What happens
+ * at dawn — win, lose, medal rating — is M5.
  */
-export function endTurn(state, rules) {
+export function endTurn(state, rules, map) {
   if (isDawn(state, rules)) return state;
+
+  const detected = runDetection(state, map, rules);
+  const moved = runEnemyPhase(detected.state, map, rules);
+  const decayed = decayAlert(moved.state, rules);
+  const next = decayed.state;
+
   return {
-    ...state,
+    ...next,
     turn: state.turn + 1,
+    report: [...detected.events, ...moved.events, ...decayed.events],
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.
-    units: fillActionPoints(state.units, rules),
+    units: fillActionPoints(next.units, rules).map((unit) => ({ ...unit, trail: [] })),
     selectedHex: null,
   };
 }

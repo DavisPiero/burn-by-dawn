@@ -1,4 +1,5 @@
-// Draws the hex grid, the terrain, the counters and the hover path preview.
+// Draws the hex grid, the terrain, the counters, the enemies and their vision,
+// patrol routes, and the hover path preview with its detection risk pips.
 // Reads state and map data, never mutates them — CLAUDE.md hard rule 7. It
 // makes no game-state decisions: pointer events are handed straight back to
 // the caller, and the move plan it draws is computed elsewhere and passed in.
@@ -13,7 +14,10 @@
 
 import { NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, hexKey, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
-import { COUNTER, GRID, PATH, SELECTION, counterFrameId, createSpriteDefs, roleSymbolId, terrainStyle } from './theme.js';
+import {
+  CONTACT, COUNTER, ENEMY, GRID, PATH, RISK, ROUTE, SELECTION, VISION,
+  counterFrameId, createSpriteDefs, enemySymbolId, roleSymbolId, terrainStyle,
+} from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -56,11 +60,14 @@ export function createBoard(svg, map, handlers) {
   const terrain = el('g', { 'clip-path': 'url(#board-edge)' });
   // Everything below is overlay: it must never eat a pointer event meant for
   // the hex underneath it.
+  const vision = el('g', { 'pointer-events': 'none' });
   const reachable = el('g', { 'pointer-events': 'none' });
+  const routes = el('g', { 'pointer-events': 'none' });
   const path = el('g', { 'pointer-events': 'none' });
   const highlight = el('g', { 'pointer-events': 'none' });
   const counters = el('g', { 'pointer-events': 'none' });
-  for (const layer of [terrain, reachable, path, highlight, counters]) svg.appendChild(layer);
+  const risk = el('g', { 'pointer-events': 'none' });
+  for (const layer of [terrain, vision, reachable, routes, path, highlight, counters, risk]) svg.appendChild(layer);
 
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
@@ -102,7 +109,7 @@ export function createBoard(svg, map, handlers) {
 
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
-  return { svg, map, corners, reachable, path, highlight, counters };
+  return { svg, map, corners, vision, reachable, routes, path, highlight, counters, risk };
 }
 
 function text(content, attrs) {
@@ -118,23 +125,30 @@ function text(content, attrs) {
 }
 
 /**
- * Redraw everything that changes: reachable tint, hover path, selection
- * outline and the counters.
+ * Redraw everything that changes: vision, reachable tint, routes, hover path
+ * and its risk pips, selection outline, the contact marker and the counters.
  *
  * @param {object} layers from createBoard
  * @param {object} state
- * @param {{reachable: Map|null, plan: object|null}} view derived in main.js —
- *        pathing is a game rule and does not belong in a render module.
+ * @param {object} view derived in main.js — pathing, vision and detection are
+ *        game rules and do not belong in a render module.
  */
 export function renderPieces(layers, state, view) {
   const { corners, map } = layers;
-  for (const layer of [layers.reachable, layers.path, layers.highlight, layers.counters]) {
+  for (const layer of [layers.vision, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.risk]) {
     layer.replaceChildren();
   }
 
+  drawVision(layers, view.visionById, view.hoverEnemy);
+
   if (view.reachable) drawReachable(layers, view.reachable);
 
+  for (const route of view.routes) drawRoute(layers, route);
+
   if (view.plan) drawPlan(layers, view.plan);
+  if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
+
+  if (state.contact && !state.contact.searched) drawContact(layers, state.contact);
 
   if (state.selectedHex) {
     layers.highlight.appendChild(el('polygon', {
@@ -145,11 +159,115 @@ export function renderPieces(layers, state, view) {
     }));
   }
 
+  for (const enemy of state.enemies) {
+    layers.counters.appendChild(drawEnemy(enemy, map, enemy.id === view.hoverEnemy?.id));
+  }
+
   state.units.forEach((unit, i) => {
     // The number on the counter is the trooper's place in the roster, which is
     // also his 1-6 hotkey and his position in the panel. One ordering, shown
     // in three places.
-    layers.counters.appendChild(drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId));
+    const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
+    if (view.spottedIds.has(unit.id)) {
+      counter.appendChild(el('use', { href: '#marker-spotted', x: 38, y: -12, width: 22, height: 22 }));
+    }
+    layers.counters.appendChild(counter);
+  });
+}
+
+// --- vision, routes, contact ------------------------------------------------
+// SPEC.md §4: hovering an enemy highlights its vision arc and patrol route.
+// Every arc is drawn faintly all the time as well — there is no fog of war
+// (§6), and "arcs draw" is the M4 done-criterion.
+
+function drawVision(layers, visionById, hoverEnemy) {
+  const { corners, map } = layers;
+  const all = new Map();
+  for (const seen of visionById.values()) for (const [key, hex] of seen) all.set(key, hex);
+  for (const { q, r } of all.values()) {
+    layers.vision.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners),
+      fill: VISION.fill,
+      'fill-opacity': VISION.opacity,
+    }));
+  }
+  if (!hoverEnemy) return;
+  const mine = visionById.get(hoverEnemy.id);
+  for (const { q, r } of mine.values()) {
+    layers.vision.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners),
+      fill: VISION.fill,
+      'fill-opacity': VISION.hoverOpacity,
+    }));
+  }
+  drawAreaEdge(layers, layers.vision, mine, [
+    [VISION.edgeCasing, VISION.edgeCasingWidth],
+    [VISION.edge, VISION.edgeWidth],
+  ]);
+}
+
+function drawRoute(layers, route) {
+  const { map } = layers;
+  const points = route.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+  layers.routes.appendChild(polyline(points, { stroke: ROUTE.casing, 'stroke-width': ROUTE.casingWidth }));
+  layers.routes.appendChild(polyline(points, {
+    stroke: ROUTE.stroke, 'stroke-width': ROUTE.width, 'stroke-dasharray': ROUTE.dash,
+  }));
+  for (const w of route.waypoints) {
+    const p = axialToPixel(w.q, w.r, map.hexSize);
+    const size = ROUTE.waypointSize;
+    layers.routes.appendChild(el('rect', {
+      x: p.x - size / 2, y: p.y - size / 2, width: size, height: size,
+      fill: ROUTE.casing, stroke: ROUTE.stroke, 'stroke-width': 2,
+    }));
+  }
+}
+
+function drawContact(layers, contact) {
+  const p = axialToPixel(contact.q, contact.r, layers.map.hexSize);
+  layers.highlight.appendChild(el('circle', {
+    cx: p.x, cy: p.y, r: CONTACT.radius,
+    fill: 'none', stroke: CONTACT.stroke, 'stroke-width': CONTACT.width, 'stroke-dasharray': CONTACT.dash,
+  }));
+  layers.highlight.appendChild(text('?', {
+    x: p.x + CONTACT.radius - 4, y: p.y - CONTACT.radius + 4,
+    'font-size': 18, 'font-weight': 'bold', fill: CONTACT.text,
+  }));
+}
+
+// --- detection risk pips ------------------------------------------------------
+// SPEC.md §4 and §6: a detection readout for every hex on the hover path, as
+// pips. One pip per point of the threshold; filled pips are the score. Red
+// means that hex gets him spotted. A hex no enemy can see gets no pips.
+
+function drawRisk(layers, plan, risk) {
+  const { map } = layers;
+  plan.path.forEach((hex, i) => {
+    const result = risk[i];
+    if (!result) return;
+    const at = axialToPixel(hex.q, hex.r, map.hexSize);
+    const count = result.threshold;
+    const filled = Math.max(0, Math.min(count, result.score));
+    const width = count * RISK.pipGap + 6;
+    const y = at.y + 20;
+
+    layers.risk.appendChild(el('rect', {
+      x: at.x - width / 2, y: y - 7, width, height: 14, rx: 7,
+      fill: RISK.badgeFill,
+      stroke: result.spotted ? RISK.spottedStroke : RISK.badgeStroke,
+      'stroke-width': result.spotted ? 2.5 : 1.2,
+    }));
+    for (let p = 0; p < count; p++) {
+      const colour = result.spotted ? RISK.spottedFill : RISK.pipFill;
+      layers.risk.appendChild(el('circle', {
+        cx: at.x - ((count - 1) * RISK.pipGap) / 2 + p * RISK.pipGap,
+        cy: y,
+        r: RISK.pipRadius,
+        fill: p < filled ? colour : 'none',
+        stroke: colour,
+        'stroke-width': 1.2,
+      }));
+    }
   });
 }
 
@@ -181,43 +299,48 @@ function edgeCorners(corners, size) {
  */
 function drawReachable(layers, reachable) {
   const { corners, map } = layers;
+  for (const { q, r, cost } of reachable.values()) {
+    if (cost === 0) continue;
+    layers.reachable.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners),
+      fill: PATH.reachableFill,
+      'fill-opacity': PATH.reachableOpacity,
+    }));
+  }
+  drawAreaEdge(layers, layers.reachable, reachable, [
+    [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth],
+    [PATH.reachableEdge, PATH.reachableEdgeWidth],
+  ]);
+}
+
+/**
+ * One line round the outside of a set of hexes (a Map keyed by hexKey): every
+ * hex edge whose neighbour is not in the set, stroked once per [colour, width]
+ * pair, widest first, so the line can be cased.
+ */
+function drawAreaEdge(layers, layer, area, strokes) {
+  const { corners, map } = layers;
   const edges = edgeCorners(corners, map.hexSize);
   let outline = '';
-
-  for (const { q, r, cost } of reachable.values()) {
+  for (const { q, r } of area.values()) {
     const center = axialToPixel(q, r, map.hexSize);
-    if (cost > 0) {
-      layers.reachable.appendChild(el('polygon', {
-        points: cornersToPoints(center, corners),
-        fill: PATH.reachableFill,
-        'fill-opacity': PATH.reachableOpacity,
-      }));
-    }
     NEIGHBOR_DIRS.forEach((d, dir) => {
-      if (reachable.has(hexKey(q + d.q, r + d.r))) return;
+      if (area.has(hexKey(q + d.q, r + d.r))) return;
       const [a, b] = edges[dir].map((i) => corners[i]);
       outline += `M${center.x + a.x},${center.y + a.y} L${center.x + b.x},${center.y + b.y} `;
     });
   }
-
-  for (const [stroke, width] of [
-    [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth],
-    [PATH.reachableEdge, PATH.reachableEdgeWidth],
-  ]) {
-    layers.reachable.appendChild(el('path', {
-      d: outline,
-      fill: 'none',
-      stroke,
-      'stroke-width': width,
-      'stroke-linecap': 'round',
+  if (!outline) return;
+  for (const [stroke, width] of strokes) {
+    layer.appendChild(el('path', {
+      d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round',
     }));
   }
 }
 
 // --- hover path preview -----------------------------------------------------
 // SPEC.md §4: hovering a hex with a trooper selected draws the path and shows
-// the total AP cost. The detection risk readout the same paragraph asks for
-// needs enemies, so it arrives at M4.
+// the total AP cost. The risk pips for the same path are drawRisk, above.
 
 function drawPlan(layers, plan) {
   const { map } = layers;
@@ -341,6 +464,45 @@ function drawCounter(unit, number, map, isSelected) {
     }));
   }
 
+  return group;
+}
+
+// Enemy counters: frame, type, a strip naming the type, and a wedge outside
+// the counter pointing the way it faces.
+function drawEnemy(enemy, map, isHovered) {
+  const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
+  const size = COUNTER.size;
+  const group = el('g', { transform: `translate(${center.x - size / 2}, ${center.y - size / 2})` });
+
+  const d = NEIGHBOR_DIRS[enemy.facing];
+  const toward = axialToPixel(d.q, d.r, 1);
+  const len = Math.hypot(toward.x, toward.y);
+  const ux = toward.x / len, uy = toward.y / len;
+  const tip = { x: size / 2 + ux * (ENEMY.facingDistance + ENEMY.facingSize), y: size / 2 + uy * (ENEMY.facingDistance + ENEMY.facingSize) };
+  const base = { x: size / 2 + ux * ENEMY.facingDistance, y: size / 2 + uy * ENEMY.facingDistance };
+  const w = ENEMY.facingSize;
+  group.appendChild(el('polygon', {
+    points: `${tip.x},${tip.y} ${base.x - uy * w},${base.y + ux * w} ${base.x + uy * w},${base.y - ux * w}`,
+    fill: ENEMY.facingFill, stroke: ENEMY.facingStroke, 'stroke-width': 1.5,
+  }));
+
+  group.appendChild(el('use', { href: '#counter-frame-enemy', width: size, height: size }));
+  group.appendChild(el('use', { href: `#${enemySymbolId(enemy.type)}`, width: size, height: size }));
+
+  const label = enemy.typeLabel.toUpperCase();
+  const room = ENEMY.labelBoxRight - ENEMY.labelBoxLeft;
+  const fitted = room / Math.max(1, label.length * COUNTER.nameAspect);
+  group.appendChild(text(label, {
+    x: (ENEMY.labelBoxLeft + ENEMY.labelBoxRight) / 2, y: 45.5,
+    'font-size': Math.min(ENEMY.labelSize, fitted).toFixed(2), 'font-weight': 'bold', fill: ENEMY.labelFill,
+  }));
+
+  if (isHovered) {
+    group.appendChild(el('rect', {
+      x: -2, y: -2, width: size, height: size, rx: 9,
+      fill: 'none', stroke: COUNTER.selectedStroke, 'stroke-width': COUNTER.selectedStrokeWidth,
+    }));
+  }
   return group;
 }
 

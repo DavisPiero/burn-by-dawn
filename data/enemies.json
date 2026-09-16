@@ -1,0 +1,29 @@
+{
+  "_comment": "Enemy types, SPEC.md §6. Where each enemy stands or walks is in data/map.json; what kind of enemy it is lives here. visionRadius is in hexes before the alert bonus in data/rules.json and any terrain spotBonus at the hex it stands on. arcDegrees is the facing arc (SPEC.md §6: 120). detection is base(enemy) in the detection formula. speed is movement points per enemy phase, spent on the same terrain costs as the troopers pay; 0 means it never moves.",
+
+  "_vehicle": "ART-ASSETS.md lists a vehicle counter, but SPEC.md never says what a vehicle does differently, so there is no vehicle type yet.",
+
+  "types": {
+    "sentry": {
+      "label": "Sentry",
+      "visionRadius": 3,
+      "arcDegrees": 120,
+      "detection": 3,
+      "speed": 0
+    },
+    "patrol": {
+      "label": "Patrol",
+      "visionRadius": 3,
+      "arcDegrees": 120,
+      "detection": 3,
+      "speed": 3
+    },
+    "reserve": {
+      "label": "Reserve squad",
+      "visionRadius": 3,
+      "arcDegrees": 120,
+      "detection": 3,
+      "speed": 4
+    }
+  }
+}

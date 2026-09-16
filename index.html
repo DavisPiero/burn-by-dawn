@@ -126,6 +126,46 @@
       color: #2a2a26;
       cursor: default;
     }
+    #alert {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #alert-dial {
+      flex: 0 0 104px;
+      width: 104px;
+      height: 104px;
+    }
+    #alert-caption {
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .alert-heading {
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #f2e8d5;
+    }
+    .alert-states {
+      margin: 2px 0;
+      padding-left: 18px;
+      opacity: 0.8;
+    }
+    .alert-states .active {
+      font-weight: bold;
+      opacity: 1;
+    }
+    .alert-note {
+      font-size: 11px;
+      opacity: 0.65;
+    }
+    #report {
+      margin: 0;
+      padding: 6px 8px 6px 22px;
+      background: #2a2a26;
+      font-size: 12px;
+      line-height: 1.4;
+    }
     #roster {
       margin: 0;
       padding: 0;
@@ -192,17 +232,23 @@
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M3: traits and the six</h1>
+    <h1>NIGHT DROP — M4: enemies and alert</h1>
     <div id="error" hidden></div>
     <div id="spread">
       <svg id="board"></svg>
       <aside id="panel">
         <div id="turn-counter"></div>
         <button id="end-turn" type="button"></button>
+        <div id="alert">
+          <svg id="alert-dial" viewBox="0 0 240 240"></svg>
+          <div id="alert-caption"></div>
+        </div>
+        <ul id="report"></ul>
         <ul id="roster"></ul>
         <div id="keys">
           1–6 select trooper · Tab cycle · H hold position<br />
-          Space end turn · Esc or right-click cancel
+          Space end turn · Esc or right-click cancel<br />
+          R patrol routes · hover an enemy for its arc and route
         </div>
       </aside>
     </div>

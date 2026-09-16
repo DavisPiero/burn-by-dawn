@@ -2,17 +2,19 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
+import { alertIndex, detectionAt, routePath, visibleHexes, visionRadiusOf } from './enemy.js';
+import { DIRECTION_NAMES } from './hex.js';
 import { loadMap, loadJson } from './map.js';
 import {
   createInitialState, deselect, endTurn, holdUnit, isDawn, moveUnit,
-  nextUnitId, selectHex, selectUnit, selectedUnit, setHover,
+  nextUnitId, selectHex, selectUnit, selectedUnit, setHover, toggleRoutes,
 } from './state.js';
 import { validateTraits } from './traits.js';
 import { planMove, reachableFor, traitEffects, unitAt } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
 import {
-  describePlan, renderEndTurnButton, renderError, renderLegend, renderReadout,
-  renderRoster, renderTurnCounter,
+  describePlan, describeRisk, renderAlertDial, renderEndTurnButton, renderError, renderLegend,
+  renderReadout, renderReport, renderRoster, renderTurnCounter,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -22,36 +24,96 @@ const errorBox = document.getElementById('error');
 const turnCounter = document.getElementById('turn-counter');
 const endTurnButton = document.getElementById('end-turn');
 const rosterList = document.getElementById('roster');
+const alertDial = document.getElementById('alert-dial');
+const alertCaption = document.getElementById('alert-caption');
+const reportList = document.getElementById('report');
 
 let state = null;
 let map = null;
 let rules = null;
 let layers = null;
 
+// Vision only changes when an enemy moves or the alert changes, not on every
+// hover, so it is worked out once per enemy phase rather than per mouse move.
+let visionCache = { enemies: null, points: null, byId: null };
+
+function visionById() {
+  if (visionCache.enemies !== state.enemies || visionCache.points !== state.alert.points) {
+    visionCache = {
+      enemies: state.enemies,
+      points: state.alert.points,
+      byId: new Map(state.enemies.map((e) => [e.id, visibleHexes(map, e, state.alert.points, rules)])),
+    };
+  }
+  return visionCache.byId;
+}
+
 /**
  * Everything the renderers need that is derived rather than stored: where the
- * selected trooper can go, and what the hovered move would cost. Pathing is a
- * game rule, so it is computed here and handed to the render modules already
- * worked out.
+ * selected trooper can go, what the hovered move would cost and how likely it
+ * is to get him seen, and what every enemy can see. Pathing, vision and
+ * detection are game rules, so they are computed here and handed to the
+ * render modules already worked out.
  */
 function deriveView() {
   // What each man's traits do to his numbers, for the roster. Base values come
   // from rules.json, which the render modules do not read.
   const traitEffectsById = new Map(state.units.map((u) => [u.id, traitEffects(u, rules)]));
 
-  const unit = selectedUnit(state);
-  if (!unit) return { reachable: null, plan: null, moveLabel: null, traitEffectsById };
-
-  const reachable = reachableFor(map, state.units, unit, rules);
   const hex = state.hoverHex;
-  const plan = hex ? planMove(map, state.units, unit, hex, rules) : null;
-  const moveLabel = hex ? describePlan(plan, unit) : null;
-  return { reachable, plan, moveLabel, traitEffectsById };
+  const hoverEnemy = hex ? state.enemies.find((e) => e.q === hex.q && e.r === hex.r) ?? null : null;
+  const routes = (state.showRoutes ? state.enemies : hoverEnemy ? [hoverEnemy] : [])
+    .map((e) => routePath(map, e))
+    .filter(Boolean);
+  const spottedIds = new Set(state.report.filter((e) => e.kind === 'spotted').map((e) => e.unitId));
+
+  const view = {
+    traitEffectsById,
+    visionById: visionById(),
+    hoverEnemy,
+    hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
+    hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
+    routes,
+    spottedIds,
+    alert: {
+      index: alertIndex(state.alert.points, rules),
+      states: rules.alert.states,
+      points: state.alert.points,
+      quietTurns: state.alert.quietTurns,
+      quietTurnsToDecay: rules.alert.quietTurnsToDecay,
+    },
+    reachable: null,
+    plan: null,
+    moveLabel: null,
+    risk: null,
+    riskLabel: null,
+  };
+
+  const unit = selectedUnit(state);
+  if (!unit) return view;
+
+  view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
+  if (!hex || hoverEnemy) return view;
+
+  const plan = planMove(map, state.units, unit, hex, rules, state.enemies);
+  view.plan = plan;
+  view.moveLabel = describePlan(plan, unit);
+  if (plan) {
+    // The detection phase tests every hex he enters, or the hex he stands on
+    // if he stays put (enemy.js testedHexes), so that is what gets pips.
+    view.risk = plan.path.map((step, i) => (
+      i === 0 && plan.steps > 0 ? null : detectionAt(map, rules, state.enemies, state.alert.points, unit, step)
+    ));
+    view.riskLabel = describeRisk(plan, view.risk);
+  }
+  return view;
 }
 
 function render() {
   const view = deriveView();
   renderPieces(layers, state, view);
+  renderAlertDial(alertDial, alertCaption, view.alert);
+  renderReport(reportList, state);
   renderTurnCounter(turnCounter, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
   renderRoster(rosterList, state, map, view, handleRosterClick);
@@ -66,7 +128,7 @@ function handleHexClick(q, r) {
     state = selectUnit(state, unit.id);
   } else {
     const mover = selectedUnit(state);
-    const plan = mover ? planMove(map, state.units, mover, { q, r }, rules) : null;
+    const plan = mover ? planMove(map, state.units, mover, { q, r }, rules, state.enemies) : null;
     // An unaffordable target does nothing rather than moving part of the way:
     // a half-finished move the player did not ask for is worse than no move.
     if (plan && plan.affordable) {
@@ -95,13 +157,12 @@ function handleRosterClick(unitId) {
 
 function handleEndTurn() {
   if (isDawn(state, rules)) return;
-  state = endTurn(state, rules);
+  state = endTurn(state, rules, map);
   render();
 }
 
-// SPEC.md §4: 1–6 select, Tab cycle, Space end turn, Esc cancel, H hold.
-// R toggles the patrol-route overlay, which has nothing to toggle until the
-// patrols exist at M4, so it is left unbound rather than bound to nothing.
+// SPEC.md §4: 1–6 select, Tab cycle, Space end turn, Esc cancel, H hold,
+// R toggle the patrol-route overlay.
 function handleKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   const key = event.key;
@@ -125,7 +186,11 @@ function handleKey(event) {
     case ' ':
       event.preventDefault();
       if (isDawn(state, rules)) return;
-      state = endTurn(state, rules);
+      state = endTurn(state, rules, map);
+      break;
+    case 'r':
+    case 'R':
+      state = toggleRoutes(state);
       break;
     case 'Escape':
       state = deselect(state);
