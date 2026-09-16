@@ -181,6 +181,53 @@
     <div id="coord-readout">Loading map…</div>
     <ul id="legend"></ul>
   </div>
+  <!--
+    Failure reporting. This is a classic script, not a module, and it runs
+    before the game does, so it still works when the module itself is what
+    failed. Without it, a module that will not load or link leaves the page
+    sitting on "Loading map…" with nothing said out loud — which is exactly
+    the guessing game the loud data errors in map.js exist to prevent.
+  -->
+  <script>
+    (function () {
+      var box = document.getElementById('error');
+      var started = false;
+
+      function report(what, detail) {
+        box.hidden = false;
+        box.textContent = what + '\n\n' + detail
+          + '\n\nBrowser: ' + navigator.userAgent;
+      }
+
+      window.addEventListener('error', function (event) {
+        // Subresource failures (a module that 404s) arrive as an error event
+        // on the element and carry no message, so say which one it was.
+        if (event.target && event.target !== window && event.target.src) {
+          report('A script failed to load.', event.target.src);
+          return;
+        }
+        report('The game threw before it could start.',
+          (event.message || 'Unknown error') + '\n' + (event.filename || '') + ':' + (event.lineno || '?'));
+      }, true);
+
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event.reason;
+        report('The game failed while starting.',
+          (reason && (reason.stack || reason.message)) || String(reason));
+      });
+
+      // Nothing above fires for a module the browser refuses to run at all,
+      // so also notice that the game simply never started.
+      window.addEventListener('night-drop-started', function () { started = true; });
+      setTimeout(function () {
+        if (started || !box.hidden) return;
+        report('The game never started.',
+          'index.html loaded but src/main.js did not run. Usually this means the\n'
+          + 'browser could not parse a module, or the page was opened over file://\n'
+          + 'instead of through ./run.sh. Check the browser console for the reason.');
+      }, 3000);
+    }());
+  </script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

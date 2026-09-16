@@ -142,6 +142,10 @@ function handleKey(event) {
 
 // --- start ------------------------------------------------------------------
 
+// Tells the failure reporter in index.html that the module did run, so it can
+// tell "the browser would not run this" apart from "this threw".
+window.dispatchEvent(new Event('night-drop-started'));
+
 try {
   map = await loadMap();
   rules = await loadJson('data/rules.json');
