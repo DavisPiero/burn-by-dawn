@@ -86,14 +86,18 @@ export const COUNTER = {
 // turn's AP have to be told apart at a glance — that readout is the whole
 // point of hover (SPEC.md §4).
 export const PATH = {
-  // A single tint cannot read on both a cream field and a near-black wood, so
-  // reachable hexes get a tint plus an inset outline in the opposite value.
-  reachableFill: PALETTE.green,
-  reachableOpacity: 0.22,
-  reachableStroke: PALETTE.paper,
-  reachableStrokeWidth: 3,
-  reachableStrokeOpacity: 0.55,
-  reachableInset: 0.9,
+  // This turn's move range: a blue tint on each reachable hex, and one
+  // continuous line round the outside of the whole area. No single colour
+  // reads on both a cream field and a near-black wood, so the line is cased:
+  // a wide paper stroke under a narrower blue one. The casing carries it over
+  // dark terrain, the blue core over light. Blue rather than red because red
+  // is the hover path and the selection, and reads as danger.
+  reachableFill: PALETTE.blue,
+  reachableOpacity: 0.3,
+  reachableEdgeCasing: PALETTE.paper,
+  reachableEdgeCasingWidth: 12,
+  reachableEdge: PALETTE.blue,
+  reachableEdgeWidth: 6,
   lineStroke: PALETTE.red,
   lineWidth: 5,
   overspendStroke: PALETTE.ink,
@@ -140,15 +144,16 @@ const SPRITES = {
     draw: () => alliedFrame('green'),
   },
 
-  // The ranking man: red name strip, plus a sergeant's three chevrons. They sit
+  // The ranking man: blue name strip, plus a sergeant's three chevrons. Blue,
+  // not red — red on a friendly counter read as an error. The chevrons sit
   // in the right-hand margin of the counter, clear of the role symbol (x 16-40)
   // and the AP pips along the top centre.
   'counter-frame-allied-leader': {
     viewBox: '0 0 56 56',
-    draw: () => alliedFrame('red', [
+    draw: () => alliedFrame('blue', [
       svg('path', {
         d: 'M42 12 L46 8 L50 12 M42 19 L46 15 L50 19 M42 26 L46 22 L50 26',
-        fill: 'none', class: 'stroke-red', 'stroke-width': 1.8,
+        fill: 'none', class: 'stroke-blue', 'stroke-width': 1.8,
         'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       }),
     ]),
