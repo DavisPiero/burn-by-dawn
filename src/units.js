@@ -2,21 +2,31 @@
 // SPEC.md §4 (action points) and §5 (roles).
 //
 // Pure functions. Nothing here touches the DOM, and nothing here knows a
-// trooper by name — a trooper is a roster entry plus a role, and the role
-// picks the numbers out of data/rules.json (CLAUDE.md rules 5 and 6).
+// trooper by name — a trooper is a roster entry plus a role, the role picks
+// the base numbers out of data/rules.json, and his traits modify them through
+// the hooks in traits.js (CLAUDE.md rules 5 and 6).
 //
 // Actions other than movement (place charge, cut wire, suppress, hide,
 // stabilise) arrive with the milestones that need them.
 
 import { hexDistance, neighbors } from './hex.js';
-import { enterCost, findPath, hexKey, reachableWithin, terrainAt } from './map.js';
+import { enterCost, findPath, hexKey, reachableWithin } from './map.js';
+import { applyHook } from './traits.js';
 
 /**
- * Build the starting unit list from the roster, the rules table and the map's
- * deployment hexes. Throws if the data does not line up, because a trooper
- * silently missing from the board is worse than a loud failure.
+ * The events a trooper speaks on (SPEC.md §5). These are dialogue keys, not
+ * trait hooks: onWounded has no hook, and onLand and onPlaceCharge sharing a
+ * name with hooks is only because they happen at the same moment.
  */
-export function createUnits(roster, rules, startHexes, rosterUrl = 'data/roster.json') {
+export const DIALOGUE_KEYS = ['onLand', 'onPlaceCharge', 'onWounded'];
+
+/**
+ * Build the starting unit list from the roster, the trait table, the rules
+ * table and the map's deployment hexes. Throws if the data does not line up,
+ * because a trooper silently missing from the board — or a trait silently
+ * never firing — is worse than a loud failure.
+ */
+export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data/roster.json') {
   const troopers = roster?.troopers;
   if (!Array.isArray(troopers) || troopers.length === 0) {
     throw new Error(`${rosterUrl}: expected a non-empty "troopers" array`);
@@ -33,7 +43,7 @@ export function createUnits(roster, rules, startHexes, rosterUrl = 'data/roster.
       throw new Error(`${rosterUrl}: trooper "${trooper.id}" has role "${trooper.role}", which data/rules.json does not define`);
     }
     const [q, r] = startHexes[i];
-    return {
+    const unit = {
       id: trooper.id,
       name: trooper.name,
       shortName: trooper.shortName,
@@ -42,12 +52,18 @@ export function createUnits(roster, rules, startHexes, rosterUrl = 'data/roster.
       // Picks his counter frame, and marks him as the source of the command
       // bonus below. See data/roster.json.
       leader: trooper.leader === true,
+      // Resolved copies of his trait definitions, each carrying its id, so a
+      // hook call needs only the unit and state stays plain data.
+      traits: resolveTraits(trooper, traits, rosterUrl),
+      dialogue: validateDialogue(trooper, rosterUrl),
       q,
       r,
       apBase: role.actionPoints,
       apMax: role.actionPoints,
       ap: role.actionPoints,
     };
+    // Loadout is fixed at creation: onChargeCapacity is called once, here.
+    return { ...unit, charges: chargeCapacity(unit, rules) };
   });
 
   // Everyone has to be on the board before the command radius can be measured.
@@ -85,9 +101,98 @@ export function commandBonus(unit, units, rules) {
  */
 export function fillActionPoints(units, rules) {
   return units.map((unit) => {
+    // Trait first, then orders: onActionPoints modifies the man's own pool,
+    // and command is added on top of whatever that pool turned out to be.
+    const own = applyHook(unit, 'onActionPoints', 'actionPoints', unit.apBase).value;
     const bonus = commandBonus(unit, units, rules);
-    return { ...unit, commandBonus: bonus, apMax: unit.apBase + bonus, ap: unit.apBase + bonus };
+    return { ...unit, commandBonus: bonus, apMax: own + bonus, ap: own + bonus };
   });
+}
+
+function resolveTraits(trooper, traits, rosterUrl) {
+  const ids = trooper.traits ?? [];
+  if (!Array.isArray(ids)) {
+    throw new Error(`${rosterUrl}: trooper "${trooper.id}" "traits" must be an array of trait ids`);
+  }
+  return ids.map((id) => {
+    if (!Object.hasOwn(traits, id)) {
+      throw new Error(`${rosterUrl}: trooper "${trooper.id}" has trait "${id}", which data/traits.json does not define`);
+    }
+    return { id, ...traits[id] };
+  });
+}
+
+function validateDialogue(trooper, rosterUrl) {
+  const dialogue = trooper.dialogue;
+  for (const key of DIALOGUE_KEYS) {
+    if (typeof dialogue?.[key] !== 'string' || dialogue[key] === '') {
+      throw new Error(`${rosterUrl}: trooper "${trooper.id}" needs a "dialogue.${key}" line`);
+    }
+  }
+  for (const key of Object.keys(dialogue)) {
+    if (!DIALOGUE_KEYS.includes(key)) {
+      throw new Error(`${rosterUrl}: trooper "${trooper.id}" has dialogue key "${key}"; the keys are ${DIALOGUE_KEYS.join(', ')}`);
+    }
+  }
+  return { ...dialogue };
+}
+
+// --- trait-modified numbers ---------------------------------------------------
+//
+// Where each hook gets its base value. The systems that act on most of these
+// arrive later (charges M5, gunfire M4/M5, the drop M6, vision M4); they call
+// these, or applyHook with their own base, rather than reading rules.json raw.
+
+/** Charges carried. SPEC.md §5 loadout, onChargeCapacity. */
+export function chargeCapacity(unit, rules) {
+  return applyHook(unit, 'onChargeCapacity', 'charges', rules.roles[unit.role].charges).value;
+}
+
+/**
+ * The base value a hook stat starts from for this unit, or null where the
+ * base depends on the situation rather than the man — the hex being entered,
+ * the enemy looking, the scatter the RNG rolls.
+ */
+export function hookBase(unit, hook, stat, rules) {
+  const role = rules.roles[unit.role];
+  switch (`${hook}.${stat}`) {
+    case 'onActionPoints.actionPoints': return role.actionPoints;
+    case 'onSpotRadius.spotRadius': return role.spotRadius;
+    case 'onChargeCapacity.charges': return role.charges;
+    case 'onPlaceCharge.apCost': return rules.charges.placeApCost;
+    case 'onPlaceCharge.fuse': return rules.charges.fuseTurns;
+    case 'onFire.alert': return rules.alert.gunfire;
+    case 'onLand.landingPenalty': return rules.landing.badLandingTurnsLost;
+    default: return null;
+  }
+}
+
+/**
+ * What each of this unit's traits does to its numbers, one entry per trait:
+ * { id, name, description, hook, stat, modifier, base, value }. `base` and
+ * `value` are null when the base is situational (see hookBase).
+ */
+export function traitEffects(unit, rules) {
+  return (unit.traits ?? []).map((trait) => {
+    const { stat } = trait.modifier;
+    const base = hookBase(unit, trait.hook, stat, rules);
+    const value = base === null ? null : applyHook(unit, trait.hook, stat, base).value;
+    return {
+      id: trait.id,
+      name: trait.name,
+      description: trait.description,
+      hook: trait.hook,
+      stat,
+      modifier: trait.modifier,
+      base,
+      value,
+    };
+  });
+}
+
+/** This unit's cost to enter terrain of a given cost: the onMoveCost hook. */
+export function moveCostFor(unit) {
+  return (terrainCost) => applyHook(unit, 'onMoveCost', 'moveCost', terrainCost).value;
 }
 
 export function unitAt(units, q, r) {
@@ -143,10 +248,10 @@ export function affordability(unit, cost, steps, rules) {
  */
 export function planMove(map, units, unit, target, rules) {
   const blocked = occupiedHexes(units, unit.id);
-  const path = findPath(map, unit, target, blocked);
+  const path = findPath(map, unit, target, blocked, moveCostFor(unit));
   if (!path) return null;
 
-  const costs = runningCosts(map, path);
+  const costs = runningCosts(map, path, unit);
   const total = costs[costs.length - 1];
   const steps = path.length - 1;
   const { affordable, minimumStep = false, reason = null } = affordability(unit, total, steps, rules);
@@ -160,10 +265,11 @@ export function planMove(map, units, unit, target, rules) {
   return { path, costs, total, steps, affordable, affordableUpTo, minimumStep, reason };
 }
 
-function runningCosts(map, path) {
+function runningCosts(map, path, unit) {
+  const adjust = moveCostFor(unit);
   const costs = [0];
   for (let i = 1; i < path.length; i++) {
-    costs.push(costs[i - 1] + terrainAt(map, path[i].q, path[i].r).moveCost);
+    costs.push(costs[i - 1] + enterCost(map, path[i].q, path[i].r, null, adjust));
   }
   return costs;
 }
@@ -175,7 +281,7 @@ function runningCosts(map, path) {
  */
 export function reachableFor(map, units, unit, rules) {
   const blocked = occupiedHexes(units, unit.id);
-  const reachable = reachableWithin(map, unit, unit.ap, blocked);
+  const reachable = reachableWithin(map, unit, unit.ap, blocked, moveCostFor(unit));
   if (rules.minimumStep && unit.ap === unit.apMax) {
     for (const step of neighbourPlans(map, units, unit, rules)) {
       if (!reachable.has(step.key)) reachable.set(step.key, step.entry);
@@ -188,7 +294,7 @@ function neighbourPlans(map, units, unit, rules) {
   const blocked = occupiedHexes(units, unit.id);
   const out = [];
   for (const next of neighbors(unit.q, unit.r)) {
-    const cost = enterCost(map, next.q, next.r, blocked);
+    const cost = enterCost(map, next.q, next.r, blocked, moveCostFor(unit));
     if (cost === null) continue;
     if (!affordability(unit, cost, 1, rules).affordable) continue;
     out.push({ key: hexKey(next.q, next.r), entry: { q: next.q, r: next.r, cost } });
