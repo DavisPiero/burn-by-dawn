@@ -150,6 +150,17 @@ All costs and modifiers below are numbers in `rules.json`.
   enemies in earshot react to it — patrols go and look, sentries turn to face it. The
   trade is deliberate: you choose where they look, and you pay a sighting's worth of alert
   for it. The hover readout shows which enemies would hear it before the player commits.
+- **Place a charge** (anyone carrying one) — costs **1 AP** (the `onPlaceCharge` hook may
+  change it), standing on a charge hex of an objective that still needs charges (§7). One
+  charge per charge hex.
+- **Cut the line** (scout only) — a **full turn**, like stabilise: he must not have spent
+  any AP yet, and it costs his whole pool. Standing on a telephone exchange charge hex,
+  he destroys the exchange at once, silently: no alert, no noise (§7).
+- **Swim** (once the rail bridge is destroyed) — a **full turn**. From a hex beside the
+  canal, straight across one canal hex, to the bank opposite. A wounded man cannot swim.
+  He comes out in the open and is tested there like any hex he enters. It exists so a man
+  is never stranded by his own demolition; while the bridge stands it is the only way
+  over, so the chokepoint still matters.
 - **RAF diversion** (once per mission, while the leader is alive) — costs **no AP**, called
   at any point in the player phase. A diversionary raid on the town pulls the garrison's
   attention: the **alert drops one state** (to the start of the state below), **every
@@ -171,7 +182,8 @@ to be casual while still being strategic.
 - **Right-click**: deselect / cancel.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
-  `S` suppress, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge. An action
+  `S` suppress, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
+  charge, `X` cut the line, `W` swim, `D` RAF diversion. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
 ---
@@ -387,19 +399,27 @@ hexes. It is drawn, so the player can see the exit narrowing and route around it
 Three objectives, each on a different approach:
 
 1. **Rail bridge over the canal** (PRIMARY) — 2 charges, on separate hexes. The charges
-   go on the **piers, placed from the canal banks beside the bridge**, not on the deck:
-   the towpath runs directly under it (§8). The deck is in the bridge post's view every
-   turn; the banks are watched only some turns, so the skill is timing, not luck.
+   go on the **piers, placed from the west canal bank beside the bridge**, not on the deck:
+   the towpath runs directly under it (§8). The deck and the east bank are in the bridge
+   post's view every turn; the west bank is watched only some turns, so the skill is
+   timing, not luck. **A destroyed bridge is gone**: its hexes become canal, and the only
+   way over is to swim (§4 Actions).
 2. **Telephone exchange, village** (secondary) — 1 charge, or a Scout can cut the line
-   silently: slower, raises no alert.
-3. **Fuel dump and tank laager** (secondary) — 1 charge. Largest blast, +4 alert.
+   silently: a full turn instead of 1 AP, and it raises no alert (§4 Actions).
+3. **Fuel dump and tank laager** (secondary) — 1 charge. Largest blast, +4 alert. The dump
+   stands on the fields below the ridge, near the patrol base (§8).
 
 Every objective lists its **charge hexes** in `map.json`: the hexes a trooper must stand
-on to place a charge on it. Hovering an objective highlights them (§4).
+on to place a charge on it. Hovering an objective highlights them (§4). Charges needed,
+blast radius and alert are per kind of objective in `rules.json`.
 
-Placing a charge costs 1 AP and sets a 3-turn fuse by default. Charges can be placed and
-left. A trooper inside the blast radius at detonation dies, wounded or not — hits (§5) do
-not apply.
+Placing a charge costs 1 AP and sets a 3-turn fuse by default. The fuse burns down in
+every fuse phase, including the one at the end of the turn it was placed, and the charge
+goes off when it reaches 0: a 3-turn charge placed on turn N goes off at the end of turn
+N+2. Charges can be placed and left. An objective is destroyed once as many of its charges
+have gone off as it needs, in the same turn or not. A trooper inside the blast radius of a
+charge at detonation dies, wounded or not — hits (§5) do not apply — and the hover path
+warns of it. Enemies are not harmed by blasts: nothing in the game kills an enemy.
 
 **One objective, one explosion:** charges on the same objective that detonate in the same
 fuse phase are one explosion — the alert rises once and the noise is heard once. Charges
@@ -462,15 +482,27 @@ what makes turn 1 different every time.
 
 ## 10. Win, lose, score
 
-**Win:** primary destroyed AND at least 3 troopers reach an exfil hex by turn 20.
-**Lose:** primary intact at dawn, or fewer than 3 out.
+Every mission ends in one of three outcomes:
+
+- **Success:** primary destroyed AND at least 3 troopers reach an exfil hex by turn 20.
+- **Withdrawn:** the mission can no longer succeed, but the stick is not wiped out —
+  fewer than 3 men are still alive or already out, or there are not enough charges left
+  anywhere (carried, dropped or set) to finish the primary. Also: nobody is left on the
+  board and the primary is intact. The mission ends at once: any charges still burning go
+  off first, then every man still on the board gets out.
+- **Failed:** dawn arrives (the end of turn 20) without success, or every man is dead.
+  A man still on the board at dawn is left behind and does not count as out.
+
+The mission also ends when nobody is left on the board (all out or dead), after any
+charges still burning have gone off.
 
 **Exfil** is a short run of hexes on the **south map edge**, listed in `map.json`, away
 from all three drop runs (north, east, west — §9). A trooper who ends a move on an exfil
 hex is out: removed from the board, safe, and counted. At Alarmed the reserve squad
 watches it (§6).
 
-Results page, styled as the back page of the annual, listing all six by name and fate:
+Results page, styled as the back page of the annual, listing all six by name and fate
+(out, killed, left behind), and the score, whatever the outcome:
 
 - Objectives destroyed (primary 3, each secondary 2)
 - Troopers exfiltrated (1 each)
