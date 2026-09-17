@@ -216,6 +216,51 @@ export const RISK = {
   shotText: PALETTE.paper,
 };
 
+// M5b (SPEC.md §7, §10): objectives, their charge hexes, charges burning,
+// blasts about to happen, and the exfil.
+export const OBJECTIVE = {
+  // The footprint: a cased ink outline with its name, drawn over the terrain.
+  stroke: PALETTE.ink,
+  casing: PALETTE.paper,
+  width: 3,
+  casingWidth: 7,
+  label: PALETTE.ink,
+  labelCasing: PALETTE.paper,
+  primaryLabel: PALETTE.red,
+  // Charge hexes: a dashed ring, faint until the objective is hovered.
+  ringRadius: 17,
+  ringStroke: PALETTE.ink,
+  ringDash: '4 3',
+  ringOpacity: 0.45,
+  ringHoverOpacity: 1,
+  ringWidth: 2,
+  // A destroyed objective is stamped.
+  stampWidth: 110,
+  stampHeight: 44,
+  stampRotate: -12,
+};
+
+export const BLAST = {
+  // Hexes a charge going off in the coming fuse phase would kill a man on
+  // (SPEC.md §7): the "no fail-state without warning" line.
+  fill: PALETTE.red,
+  opacity: 0.18,
+  stroke: PALETTE.red,
+  casing: PALETTE.paper,
+  width: 3,
+  casingWidth: 6,
+  // The same area when an objective is only hovered: a preview, not a warning.
+  previewOpacity: 0.08,
+};
+
+export const EXFIL = {
+  stroke: PALETTE.green,
+  casing: PALETTE.paper,
+  width: 4,
+  casingWidth: 8,
+  label: PALETTE.green,
+};
+
 // The alert dial's four sectors run clockwise from lower left to lower right,
 // like a gauge. Angles are degrees from straight up.
 // The active state in the list beside the alert dial, keyed by the state ids
@@ -442,6 +487,43 @@ const SPRITES = {
     ],
   },
 
+  // Fuse tokens (ART-ASSETS.md §6 marker-fuse-1..5): turns left before the
+  // charge goes off, set in a paper disc with a red rim. 1 is the red one.
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((n) => [`marker-fuse-${n}`, {
+    viewBox: '0 0 28 28',
+    draw: () => {
+      const digit = svg('text', {
+        x: 14, y: 15, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        'font-family': 'ui-monospace, monospace', 'font-size': 17, 'font-weight': 'bold',
+        class: n === 1 ? 'paper' : 'ink',
+      });
+      digit.textContent = String(n);
+      return [
+        svg('circle', { cx: 14, cy: 14, r: 12, class: n === 1 ? 'red' : 'paper' }),
+        svg('circle', { cx: 14, cy: 14, r: 12, fill: 'none', class: 'stroke-red', 'stroke-width': 3 }),
+        digit,
+      ];
+    },
+  }])),
+
+  // A red rubber stamp for a destroyed objective (ART-ASSETS.md §6). Rotated in code.
+  'stamp-destroyed': {
+    viewBox: '0 0 200 80',
+    draw: () => {
+      const word = svg('text', {
+        x: 100, y: 42, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+        'font-family': 'ui-monospace, monospace', 'font-size': 38, 'font-weight': 'bold', 'letter-spacing': 4,
+        class: 'red',
+      });
+      word.textContent = 'DESTROYED';
+      return [
+        svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, class: 'paper', 'fill-opacity': 0.85 }),
+        svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, fill: 'none', class: 'stroke-red', 'stroke-width': 6 }),
+        word,
+      ];
+    },
+  },
+
   // Face only: four sectors and the ticks between them. The state names are
   // set as type by ui.js from data/rules.json, so renaming a state is data.
   'ui-alert-dial': {
@@ -497,6 +579,11 @@ export function counterFrameId(unit) {
 /** Sprite id for a trooper's role symbol. Roles come from data, ids from here. */
 export function roleSymbolId(role) {
   return `symbol-${role}`;
+}
+
+/** Sprite id for a fuse token: turns left, 1 to 5; longer fuses show 5. */
+export function fuseMarkerId(fuse) {
+  return `marker-fuse-${Math.min(5, Math.max(1, fuse))}`;
 }
 
 export function hasSprite(id) {

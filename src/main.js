@@ -6,10 +6,14 @@ import { alertIndex, detectionAt, listeners, routePath, shotResultOf, visibleHex
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson } from './map.js';
 import {
-  createInitialState, deselect, endTurn, hideUnit, holdUnit, isDawn, moveUnit, nextUnitId, pickUpCharge,
-  selectHex, selectUnit, selectedUnit, setHover, setTargeting, stabiliseUnit, suppressEnemy, throwStone,
-  toggleRoutes,
+  callDiversion, checkDiversion, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit, moveUnit,
+  nextUnitId, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover, setTargeting,
+  settleMission, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
+import {
+  blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
+  objectiveAt, primaryShortfall, swimTargets,
+} from './sabotage.js';
 import { validateTraits } from './traits.js';
 import {
   checkHide, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
@@ -17,8 +21,9 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
 import {
-  describeDetection, describePlan, describeRisk, renderActions, renderAlertDial, renderEndTurnButton,
-  renderError, renderLegend, renderReadout, renderReport, renderRoster, renderTurnCounter,
+  describeDetection, describePlan, describeRisk, renderActions, renderAlertDial, renderDiversion,
+  renderEndTurnButton, renderError, renderLegend, renderMission, renderReadout, renderReport, renderResults,
+  renderRoster, renderTurnCounter,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -32,21 +37,29 @@ const alertDial = document.getElementById('alert-dial');
 const alertCaption = document.getElementById('alert-caption');
 const reportList = document.getElementById('report');
 const actionBar = document.getElementById('actions');
+const diversionButton = document.getElementById('diversion');
+const missionList = document.getElementById('mission');
+const resultsBox = document.getElementById('results');
 
 let state = null;
+// `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
+// have left it (sabotage.js effectiveMap), refreshed on every render. Every
+// rule is handed `map`; the terrain layer is drawn once from `baseMap`.
+let baseMap = null;
 let map = null;
 let rules = null;
 let layers = null;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
-let visionCache = { enemies: null, points: null, byId: null };
+let visionCache = { enemies: null, points: null, map: null, byId: null };
 
 function visionById() {
-  if (visionCache.enemies !== state.enemies || visionCache.points !== state.alert.points) {
+  if (visionCache.enemies !== state.enemies || visionCache.points !== state.alert.points || visionCache.map !== map) {
     visionCache = {
       enemies: state.enemies,
       points: state.alert.points,
+      map,
       byId: new Map(state.enemies.map((e) => [e.id, visibleHexes(map, e, state.alert.points, rules)])),
     };
   }
@@ -101,7 +114,28 @@ function deriveView() {
     targets: null,
     targetLabel: null,
     hearsIds: null,
+    // SPEC.md §7, §10: the exfil, what the hovered objective needs, and the
+    // ground a charge going off this turn would kill a man on.
+    exfil: baseMap.exfil.map(([q, r]) => ({ q, r })),
+    blastArea: areaAround(blastHexesThisTurn(state, rules)),
+    hoverObjective: null,
+    previewBlastArea: null,
+    siteLabel: null,
+    blastLabel: null,
+    mission: describeMissionState(),
   };
+
+  const objective = hex && !hoverEnemy ? objectiveAt(state.objectives, hex) : null;
+  if (objective) {
+    view.hoverObjective = objective;
+    view.siteLabel = describeObjective(objective);
+    if (!objective.destroyed) {
+      const radius = kindOf(objective, rules).blastRadius;
+      view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius })));
+    }
+  } else if (hex && isExfil(baseMap, hex)) {
+    view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn.`;
+  }
 
   const unit = selectedUnit(state);
   if (!unit) return view;
@@ -130,6 +164,10 @@ function deriveView() {
       return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null };
     });
     view.riskLabel = describeRisk(plan, view.risk);
+    const end = plan.path[plan.path.length - 1];
+    if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
+      view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
+    }
     if (plan.steps === 0 && checkHide(unit, rules).ok) {
       const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
       view.hideLabel = hidden
@@ -138,6 +176,56 @@ function deriveView() {
     }
   }
   return view;
+}
+
+/** Every hex within each blast's radius, as a Map for the board's area drawing. */
+function areaAround(blasts) {
+  const area = new Map();
+  forEachCell(map, (q, r) => {
+    if (isInPlay(map, q, r) && inBlast(blasts, { q, r })) area.set(hexKey(q, r), { q, r });
+  });
+  return area;
+}
+
+function primaryLabel() {
+  return state.objectives.find((o) => o.primary).label.toLowerCase();
+}
+
+/** SPEC.md §4: hovering an objective shows what it needs. */
+function describeObjective(o) {
+  const kind = kindOf(o, rules);
+  const role = o.primary ? 'PRIMARY' : 'secondary';
+  if (o.destroyed) return `${o.label} (${role}) — DESTROYED${o.cut ? ', line cut' : ''}.`;
+  const set = state.charges.filter((c) => c.objectiveId === o.id);
+  const burning = set.length ? `, ${set.length} set (fuse ${set.map((c) => c.fuse).join(', ')})` : '';
+  const parts = [
+    `needs ${kind.chargesNeeded} charge${kind.chargesNeeded === 1 ? '' : 's'} on separate ringed hexes`,
+    `${o.detonated} gone off${burning}`,
+    `fuse ${rules.charges.fuseTurns} turns`,
+    `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge`,
+    `alert +${kind.alert}`,
+  ];
+  if (kind.cutLine) parts.push('or a scout can cut the line: a full turn, silent');
+  return `${o.label} (${role}) — ${parts.join(', ')}.`;
+}
+
+/** The mission at a glance for the panel: objectives, men out, the diversion. */
+function describeMissionState() {
+  const out = state.units.filter((u) => u.out).length;
+  return {
+    objectives: state.objectives.map((o) => {
+      const kind = kindOf(o, rules);
+      const set = state.charges.filter((c) => c.objectiveId === o.id).length;
+      return {
+        label: o.label, primary: o.primary, destroyed: o.destroyed, cut: o.cut,
+        detail: o.destroyed ? (o.cut ? 'line cut' : 'destroyed') : `${o.detonated + set}/${kind.chargesNeeded} charges${set ? `, ${set} burning` : ''}`,
+      };
+    }),
+    out,
+    minimumOut: rules.mission.minimumOut,
+    shortfall: primaryShortfall(state, rules),
+    diversion: checkDiversion(state, rules),
+  };
 }
 
 // SPEC.md §4 Actions, for the selected man: what each costs and, if he cannot
@@ -161,7 +249,24 @@ function actionsFor(unit) {
     { id: 'stone', key: 'T', label: 'Throw stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
     { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
     { id: 'pickUp', key: 'P', label: 'Pick up charge', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
+    placeChargeAction(unit),
+    { id: 'cut', key: 'X', label: 'Cut the line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
+    { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].map((a) => ({ ...a, active: state.targeting === a.id }));
+}
+
+// Place a charge, with its fuse — and a warning if setting it on a secondary
+// would leave too few for the primary, which ends the mission (SPEC.md §10).
+function placeChargeAction(unit) {
+  const check = checkPlaceCharge(state, unit, rules);
+  let cost = `${check.cost} AP, fuse ${check.fuse}`;
+  if (check.ok && !check.objective.primary && primaryShortfall(placeCharge(state, unit.id, rules), rules) > 0) {
+    cost += ` — leaves too few for the ${primaryLabel()}: WITHDRAWS`;
+  }
+  return {
+    id: 'charge', key: 'C', label: 'Place charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
+    ok: check.ok, reason: check.reason, cost,
+  };
 }
 
 function withCost(check, format) {
@@ -208,6 +313,12 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     } else {
       view.targetLabel = check ? `Throw a stone: ${check.reason}.` : 'Throw a stone: click a hex. Esc to cancel.';
     }
+  } else if (kind === 'swim') {
+    for (const h of swimTargets(map, state, unit, rules)) add(h);
+    const check = hex ? checkSwim(map, state, unit, hex, rules) : null;
+    view.targetLabel = check?.ok
+      ? `Swim to (${hex.q}, ${hex.r}) — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
+      : check ? `Swim: ${check.reason}.` : 'Swim: click the bank straight across the water. Esc to cancel.';
   } else if (kind === 'stabilise') {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);
     const patient = hex ? unitAt(state.units, hex.q, hex.r) : null;
@@ -221,6 +332,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 }
 
 function render() {
+  map = effectiveMap(baseMap, state.objectives, rules);
   const view = deriveView();
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
@@ -230,11 +342,24 @@ function render() {
   renderRoster(rosterList, state, map, view, handleRosterClick);
   renderActions(actionBar, view.actions, handleAction);
   renderReadout(readout, state, map, view);
+  renderMission(missionList, view.mission);
+  renderDiversion(diversionButton, view.mission.diversion);
+  renderResults(resultsBox, state.outcome);
+}
+
+/**
+ * Take a player action's result and see whether it ended the mission — the
+ * last man stepping onto the exfil, say, or a charge set on a secondary that
+ * leaves the primary short (SPEC.md §10).
+ */
+function commit(next) {
+  state = next === state ? state : settleMission(next, rules, baseMap);
 }
 
 // --- input ------------------------------------------------------------------
 
 function handleHexClick(q, r) {
+  if (state.outcome) return;
   if (state.targeting) {
     handleTargetClick(q, r);
     render();
@@ -249,7 +374,7 @@ function handleHexClick(q, r) {
     // An unaffordable target does nothing rather than moving part of the way:
     // a half-finished move the player did not ask for is worse than no move.
     if (plan && plan.affordable) {
-      state = moveUnit(state, mover.id, plan);
+      commit(moveUnit(state, mover.id, plan, baseMap));
     } else if (!mover) {
       state = selectHex(state, q, r);
     }
@@ -262,32 +387,47 @@ function handleHexClick(q, r) {
 function handleTargetClick(q, r) {
   const mover = selectedUnit(state);
   if (!mover) return;
-  const before = state;
+  let next = state;
   if (state.targeting === 'suppress') {
     const enemy = state.enemies.find((e) => e.q === q && e.r === r);
-    if (enemy) state = suppressEnemy(state, mover.id, enemy.id, map, rules);
+    if (enemy) next = suppressEnemy(state, mover.id, enemy.id, map, rules);
   } else if (state.targeting === 'stone') {
-    state = throwStone(state, mover.id, { q, r }, map, rules);
+    next = throwStone(state, mover.id, { q, r }, map, rules);
   } else if (state.targeting === 'stabilise') {
     const patient = unitAt(state.units, q, r);
-    if (patient) state = stabiliseUnit(state, mover.id, patient.id);
+    if (patient) next = stabiliseUnit(state, mover.id, patient.id);
+  } else if (state.targeting === 'swim') {
+    next = swimAcross(state, mover.id, { q, r }, map, rules);
   }
-  if (state !== before) state = setTargeting(state, null);
+  if (next !== state) commit(setTargeting(next, null));
 }
 
 /** An action button or its key. Aimed actions start aiming; the rest happen. */
 function handleAction(id) {
+  if (state.outcome) return;
+  if (id === 'diversion') {
+    commit(callDiversion(state, rules));
+    render();
+    return;
+  }
   const unit = selectedUnit(state);
   if (!unit) return;
   switch (id) {
     case 'hide':
-      state = hideUnit(state, unit.id, rules);
+      commit(hideUnit(state, unit.id, rules));
       break;
     case 'pickUp':
-      state = pickUpCharge(state, unit.id, rules);
+      commit(pickUpCharge(state, unit.id, rules));
+      break;
+    case 'charge':
+      commit(placeCharge(state, unit.id, rules));
+      break;
+    case 'cut':
+      commit(cutLine(state, unit.id, rules));
       break;
     case 'suppress':
     case 'stone':
+    case 'swim':
     case 'stabilise': {
       const action = actionsFor(unit).find((a) => a.id === id);
       if (state.targeting === id) state = setTargeting(state, null);
@@ -311,20 +451,22 @@ function handleHexLeave() {
 }
 
 function handleRosterClick(unitId) {
+  if (state.outcome) return;
   state = selectUnit(state, unitId);
   render();
 }
 
 function handleEndTurn() {
-  if (isDawn(state, rules)) return;
-  state = endTurn(state, rules, map);
+  state = endTurn(state, rules, baseMap);
   render();
 }
 
 // SPEC.md §4: 1–6 select, Tab cycle, Space end turn, Esc cancel, H hold,
-// R toggle the patrol-route overlay.
+// R toggle the patrol-route overlay, and the action keys. Once the mission is
+// over only R still does anything.
 function handleKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (state.outcome && event.key !== 'r' && event.key !== 'R') return;
   const key = event.key;
 
   if (key >= '1' && key <= '9') {
@@ -345,8 +487,7 @@ function handleKey(event) {
     }
     case ' ':
       event.preventDefault();
-      if (isDawn(state, rules)) return;
-      state = endTurn(state, rules, map);
+      state = endTurn(state, rules, baseMap);
       break;
     case 'r':
     case 'R':
@@ -375,11 +516,27 @@ function handleKey(event) {
     case 'P':
       handleAction('pickUp');
       return;
+    case 'c':
+    case 'C':
+      handleAction('charge');
+      return;
+    case 'x':
+    case 'X':
+      handleAction('cut');
+      return;
+    case 'w':
+    case 'W':
+      handleAction('swim');
+      return;
+    case 'd':
+    case 'D':
+      handleAction('diversion');
+      return;
     case 'h':
     case 'H': {
       const unit = selectedUnit(state);
       if (!unit) return;
-      state = holdUnit(state, unit.id);
+      commit(holdUnit(state, unit.id));
       const next = nextUnitId(state);
       if (next) state = selectUnit(state, next);
       break;
@@ -397,12 +554,13 @@ function handleKey(event) {
 window.dispatchEvent(new Event('night-drop-started'));
 
 try {
-  map = await loadMap();
+  baseMap = await loadMap();
+  map = baseMap;
   rules = await loadJson('data/rules.json');
   const traits = validateTraits(await loadJson('data/traits.json'));
   const roster = await loadJson('data/roster.json');
 
-  state = createInitialState(roster, traits, rules, map);
+  state = createInitialState(roster, traits, rules, baseMap);
 
   const bounds = boardPixelBounds(map);
   svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);
@@ -421,6 +579,7 @@ try {
     render();
   });
   endTurnButton.addEventListener('click', handleEndTurn);
+  diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
 
   renderLegend(legend, map);

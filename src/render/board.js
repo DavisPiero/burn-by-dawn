@@ -1,5 +1,6 @@
 // Draws the hex grid, the terrain, the counters, the enemies and their vision,
-// patrol routes, and the hover path preview with its detection risk pips.
+// patrol routes, the hover path preview with its detection risk pips, and the
+// objectives, charges, blasts and exfil of SPEC.md §7 and §10.
 // Reads state and map data, never mutates them — CLAUDE.md hard rule 7. It
 // makes no game-state decisions: pointer events are handed straight back to
 // the caller, and the move plan it draws is computed elsewhere and passed in.
@@ -15,8 +16,8 @@
 import { NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, hexKey, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
 import {
-  CONTACT, COUNTER, ENEMY, GRID, MARKER, NOISE, PATH, RISK, ROUTE, SELECTION, TARGET, VISION, WATCH,
-  counterFrameId, createSpriteDefs, enemySymbolId, roleSymbolId, terrainStyle,
+  BLAST, CONTACT, COUNTER, ENEMY, EXFIL, GRID, MARKER, NOISE, OBJECTIVE, PATH, RISK, ROUTE, SELECTION, TARGET,
+  VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId, roleSymbolId, terrainStyle,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -61,13 +62,17 @@ export function createBoard(svg, map, handlers) {
   // Everything below is overlay: it must never eat a pointer event meant for
   // the hex underneath it.
   const vision = el('g', { 'pointer-events': 'none' });
+  const sites = el('g', { 'pointer-events': 'none' });
   const reachable = el('g', { 'pointer-events': 'none' });
   const routes = el('g', { 'pointer-events': 'none' });
   const path = el('g', { 'pointer-events': 'none' });
   const highlight = el('g', { 'pointer-events': 'none' });
   const counters = el('g', { 'pointer-events': 'none' });
+  // Burning charges sit over the counters: a man standing on his own charge
+  // must not hide how long it has left.
+  const tokens = el('g', { 'pointer-events': 'none' });
   const risk = el('g', { 'pointer-events': 'none' });
-  for (const layer of [terrain, vision, reachable, routes, path, highlight, counters, risk]) svg.appendChild(layer);
+  for (const layer of [terrain, vision, sites, reachable, routes, path, highlight, counters, tokens, risk]) svg.appendChild(layer);
 
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
@@ -109,7 +114,7 @@ export function createBoard(svg, map, handlers) {
 
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
-  return { svg, map, corners, vision, reachable, routes, path, highlight, counters, risk };
+  return { svg, map, corners, vision, sites, reachable, routes, path, highlight, counters, tokens, risk };
 }
 
 function text(content, attrs) {
@@ -137,11 +142,12 @@ function text(content, attrs) {
  */
 export function renderPieces(layers, state, view) {
   const { corners, map } = layers;
-  for (const layer of [layers.vision, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.risk]) {
+  for (const layer of [layers.vision, layers.sites, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.tokens, layers.risk]) {
     layer.replaceChildren();
   }
 
   drawVision(layers, view.visionById, view.hoverEnemy);
+  drawSites(layers, state, view);
 
   if (view.reachable) drawReachable(layers, view.reachable);
 
@@ -186,6 +192,86 @@ export function renderPieces(layers, state, view) {
     if (unit.hidden) counter.appendChild(marker('marker-hidden', 38, 38));
     layers.counters.appendChild(counter);
   });
+}
+
+// --- objectives, charges, blasts, exfil (SPEC.md §7, §10) --------------------
+
+function drawSites(layers, state, view) {
+  const { map } = layers;
+  const areaOf = (hexes) => new Map(hexes.map((h) => [hexKey(h.q, h.r), h]));
+
+  drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
+  const exfilAt = labelPoint(map, view.exfil);
+  layers.sites.appendChild(casedText('EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, EXFIL.label));
+
+  if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);
+  if (view.blastArea.size > 0) {
+    fillArea(layers, view.blastArea, BLAST.opacity);
+    drawAreaEdge(layers, layers.sites, view.blastArea, [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
+  }
+
+  for (const objective of state.objectives) {
+    const hovered = objective.id === view.hoverObjective?.id;
+    drawAreaEdge(layers, layers.sites, areaOf(objective.hexes), [
+      [OBJECTIVE.casing, OBJECTIVE.casingWidth], [OBJECTIVE.stroke, OBJECTIVE.width],
+    ]);
+    const at = labelPoint(map, objective.hexes);
+    const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
+    layers.sites.appendChild(casedText(name, at.x, at.top - map.hexSize * 0.6, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    if (objective.destroyed) {
+      layers.highlight.appendChild(el('use', {
+        href: '#stamp-destroyed',
+        x: at.x - OBJECTIVE.stampWidth / 2, y: at.y - OBJECTIVE.stampHeight / 2,
+        width: OBJECTIVE.stampWidth, height: OBJECTIVE.stampHeight,
+        transform: `rotate(${OBJECTIVE.stampRotate} ${at.x} ${at.y})`,
+      }));
+      continue;
+    }
+    for (const h of objective.chargeHexes) {
+      const p = axialToPixel(h.q, h.r, map.hexSize);
+      for (const [stroke, width] of [[OBJECTIVE.casing, OBJECTIVE.ringWidth + 3], [OBJECTIVE.ringStroke, OBJECTIVE.ringWidth]]) {
+        layers.sites.appendChild(el('circle', {
+          cx: p.x, cy: p.y, r: OBJECTIVE.ringRadius, fill: 'none', stroke, 'stroke-width': width,
+          'stroke-dasharray': OBJECTIVE.ringDash, opacity: hovered ? OBJECTIVE.ringHoverOpacity : OBJECTIVE.ringOpacity,
+        }));
+      }
+    }
+  }
+
+  // A charge set and burning: the satchel, and a token with the turns left.
+  for (const charge of state.charges) {
+    const p = axialToPixel(charge.q, charge.r, map.hexSize);
+    const size = MARKER.groundSize;
+    layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - 30, y: p.y + 20, width: size, height: size }));
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 12, y: p.y + 24, width: MARKER.size, height: MARKER.size }));
+  }
+}
+
+function fillArea(layers, area, opacity) {
+  const { corners, map } = layers;
+  for (const { q, r } of area.values()) {
+    layers.sites.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners), fill: BLAST.fill, 'fill-opacity': opacity,
+    }));
+  }
+}
+
+/** The middle of a group of hexes, in pixels, and the top row's centre line. */
+function labelPoint(map, hexes) {
+  const points = hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+  return {
+    x: points.reduce((n, p) => n + p.x, 0) / points.length,
+    y: points.reduce((n, p) => n + p.y, 0) / points.length,
+    top: Math.min(...points.map((p) => p.y)),
+  };
+}
+
+function casedText(content, x, y, fill) {
+  const g = el('g', {});
+  const attrs = { x, y, 'font-size': 12, 'font-weight': 'bold', 'letter-spacing': 1 };
+  g.appendChild(text(content, { ...attrs, fill: 'none', stroke: OBJECTIVE.labelCasing, 'stroke-width': 4, 'stroke-linejoin': 'round' }));
+  g.appendChild(text(content, { ...attrs, fill }));
+  return g;
 }
 
 function marker(id, x, y) {
