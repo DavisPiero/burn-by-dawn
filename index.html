@@ -39,11 +39,17 @@
       flex: 1 1 auto;
       min-height: 0;
     }
+    /* A fixed four lines, whatever the hover says. A readout that grew with
+       its text took height from the board, which rescaled under the mouse on
+       every hover. ui.js renderReadout puts the warnings first, so anything
+       cut off at the bottom is terrain detail, never a risk. */
     #coord-readout {
       flex: 0 0 auto;
       font-family: monospace;
-      font-size: 14px;
-      min-height: 18px;
+      font-size: 13px;
+      line-height: 17px;
+      height: 68px;
+      overflow: hidden;
     }
     #error {
       max-width: 900px;
