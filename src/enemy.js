@@ -497,9 +497,9 @@ function sameHex(a, b) {
  *   Suspicious   walks, but stops and sweeps every `suspiciousPauseEvery`-th turn.
  *   otherwise    walks its route.
  *
- * Any enemy that walks onto an unfound body or a parachute this phase — passing
- * through or stopping — finds it (SPEC.md §5, §9): alert up, a noise there, and
- * it is found once. Standing beside one is not finding it.
+ * Any enemy that comes onto or beside an unfound body or a parachute this phase
+ * finds it (SPEC.md §5, §9): on or beside any hex it walks through, or the hex
+ * it ends on, whether it moved or not. Alert up, a noise there, found once.
  * Enemies cannot pass through troopers or each other. Suppression wears off at
  * the end of the phase.
  */
@@ -597,7 +597,9 @@ export function runEnemyPhase(state, map, rules) {
     }
     enemies = enemies.map((e, j) => (j === i ? moved : e));
 
-    const walkedOn = (hex) => entered.some((step) => sameHex(step, hex));
+    // Where it stood this go: every hex it walked through and where it ended.
+    const stood = [...entered, moved];
+    const walkedOn = (hex) => stood.some((at) => hexDistance(at, hex) <= 1);
     bodies = bodies.map((body) => {
       if (body.found || !walkedOn(body)) return body;
       alert = raiseAlert(alert, rules.alert.bodyFound, rules);

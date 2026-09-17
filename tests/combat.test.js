@@ -345,7 +345,7 @@ export default [
     equal(reports, 1, 'searched reported once');
   }],
 
-  ['a body is found by an enemy that walks onto it: alert up, a noise, and only once; beside it is not enough', async () => {
+  ['a body is found by an enemy on or beside it, standing or walking past: alert up, a noise, and only once', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 6);
     const body = { unitId: 'x', name: 'X', q: row.q + 2, r: row.r, found: false };
@@ -353,14 +353,19 @@ export default [
 
     const post = enemy(row.q + 1, row.r, 'E', { speed: 0, type: 'sentry' });
     const beside = runEnemyPhase({ ...state, units: parked, enemies: [post], bodies: [body] }, map, rules);
-    assert(!beside.state.bodies[0].found, 'a sentry beside it does not find it');
+    assert(beside.state.bodies[0].found, 'a sentry beside it finds it');
+    const away = enemy(row.q - 2, row.r, 'E', { speed: 0, type: 'sentry' });
+    const far = runEnemyPhase({ ...state, units: parked, enemies: [away], bodies: [body] }, map, rules);
+    assert(!far.state.bodies[0].found, 'two hexes off, nobody finds it');
 
+    // A patrol that walks past it along the row and ends two hexes beyond it.
+    const lying = { ...body, q: row.q + 1, r: row.r + 1 };
     const route = [{ q: row.q, r: row.r }, { q: row.q + 5, r: row.r }];
     const patrol = enemy(row.q, row.r, 'E', { route, waypoint: 1 });
-    const s = { ...state, units: parked, enemies: [patrol], bodies: [body] };
+    const s = { ...state, units: parked, enemies: [patrol], bodies: [lying] };
     const first = runEnemyPhase(s, map, rules);
-    assert(first.state.enemies[0].q > body.q, 'the patrol walked past it');
-    assert(first.state.bodies[0].found, 'found on the way through');
+    assert(hexDistance(first.state.enemies[0], lying) > 1, 'the patrol ended past it');
+    assert(first.state.bodies[0].found, 'found on the way past');
     equal(first.state.alert.points, rules.alert.bodyFound, 'alert +bodyFound');
     equal(first.state.noises.at(-1).kind, 'found', 'noise queued');
     const second = runEnemyPhase(first.state, map, rules);

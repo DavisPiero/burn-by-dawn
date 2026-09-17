@@ -291,7 +291,7 @@ export default [
     equal(checkPackParachute(walkedOff.parachutes, unitById(walkedOff.units, a.id), rules).ok, false, 'not from another hex');
   }],
 
-  ['a parachute is found by an enemy that walks onto it, not one beside it: alert +1, a noise, the last known contact, once', async () => {
+  ['a parachute is found by an enemy beside it or walking past it, not two hexes off: alert +1, a noise, the last known contact, once', async () => {
     const env = await loadAll();
     const { map, rules, traits, roster } = env;
     const s = landedState(roster, traits, rules, map);
@@ -312,8 +312,10 @@ export default [
       investigating: null, holding: null, watching: null, suppressed: false, ...extra,
     });
 
+    const far = runEnemyPhase({ ...base, enemies: [enemyAt(row.q, { speed: 0, type: 'sentry' })] }, map, rules);
+    equal(far.state.parachutes.length, 1, 'two hexes off: not found');
     const beside = runEnemyPhase({ ...base, enemies: [enemyAt(row.q + 1, { speed: 0, type: 'sentry' })] }, map, rules);
-    equal(beside.state.parachutes.length, 1, 'beside it: not found');
+    equal(beside.state.parachutes.length, 0, 'beside it: found');
 
     const route = [{ q: row.q, r: row.r }, { q: row.q + 5, r: row.r }];
     const walked = runEnemyPhase({ ...base, enemies: [enemyAt(row.q, { route, waypoint: 1 })] }, map, rules);

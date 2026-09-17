@@ -56,7 +56,7 @@
     "proximity": [0, 2, 1]
   },
 
-  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him, and only when he was not already in contact: a man already counted is not counted again each turn he stays in view. `stone` is a thrown stone, `bodyFound` a body an enemy walks onto and `parachuteFound` an abandoned parachute an enemy walks onto (SPEC.md §9). Enemy fire at troopers raises nothing: the sighting that caused it already counted. `hearingBonus` is added to every noise radius in that state.",
+  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him, and only when he was not already in contact: a man already counted is not counted again each turn he stays in view. `stone` is a thrown stone, `bodyFound` a body an enemy comes onto or beside and `parachuteFound` an abandoned parachute an enemy comes onto or beside (SPEC.md §9). Enemy fire at troopers raises nothing: the sighting that caused it already counted. `hearingBonus` is added to every noise radius in that state.",
 
   "alert": {
     "gunfire": 2,
@@ -80,7 +80,7 @@
     "sweepRotation": 3
   },
 
-  "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body or a parachute an enemy walked onto. A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off.",
+  "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body or a parachute an enemy came onto or beside, on its way or where it ended its go. A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off.",
 
   "noise": {
     "found": 3,

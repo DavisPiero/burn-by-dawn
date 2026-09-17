@@ -292,7 +292,7 @@ Wounded troopers drop to 1 AP and cannot carry a charge; a charge he was carryin
 on his hex for anyone to pick up (§4 Actions). Another trooper can spend a full turn
 adjacent to stabilise him (§4 Actions). Dead is permanent — there is one mission, and that
 is it. A dead trooper leaves a **body** on his hex, found by enemies the same way as a
-parachute (§9) — an enemy has to walk onto his hex: alert +1, once.
+parachute (§9): alert +1, once.
 
 ### Dialogue
 
@@ -471,10 +471,10 @@ does about it is the second decision of turn 1.
 
 - A trooper standing on his own parachute can **pack it up for 1 AP**, removing it. Only
   his own, only from that hex. He cannot go back for someone else's.
-- A parachute left behind is found when an enemy **walks onto its hex** during the enemy
-  phase, passing through or stopping there. Being beside it is not enough. Alert **+1**,
+- A parachute left behind is found when an enemy comes **onto or adjacent to** it during
+  the enemy phase — on or beside any hex it walks through, or where it ends its go. Alert **+1**,
   the parachute is removed, and that hex becomes a last known contact (§6). Found once,
-  never again. A man standing on his parachute keeps it safe, since no enemy can enter his hex.
+  never again.
 - Patrol routes are drawn, so the player can see which parachutes are actually at risk
   before deciding. This is a visible cost, not a hidden one.
 
