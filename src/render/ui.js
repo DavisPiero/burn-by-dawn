@@ -197,9 +197,9 @@ export function renderEndTurnButton(button, state, rules) {
 }
 
 /**
- * The mission at a glance (SPEC.md §7, §10): each objective and how far on it
- * is, how many men are out of how many needed, and a warning when there are no
- * longer enough charges for the primary.
+ * The mission at a glance (SPEC.md §7, §10): each objective, whether it is
+ * needed or optional and how far on it is, how many men are out of how many
+ * needed, and a warning when there are no longer enough charges for the primary.
  */
 export function renderMission(element, mission) {
   element.replaceChildren();
@@ -208,7 +208,11 @@ export function renderMission(element, mission) {
     if (o.destroyed) item.className = 'done';
     const name = document.createElement('b');
     name.textContent = o.primary ? `${o.label} ★` : o.label;
-    item.append(name, ` — ${o.detail}`);
+    // SPEC.md §10: only the primary is needed to win. Say so, or the three
+    // read as a checklist.
+    const role = document.createElement('i');
+    role.textContent = o.primary ? ' needed' : ` optional, +${o.points}`;
+    item.append(name, role, ` — ${o.detail}`);
     element.appendChild(item);
   }
   const out = document.createElement('li');

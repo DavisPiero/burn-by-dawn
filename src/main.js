@@ -245,7 +245,7 @@ function primaryLabel() {
 /** SPEC.md §4: hovering an objective shows what it needs. */
 function describeObjective(o) {
   const kind = kindOf(o, rules);
-  const role = o.primary ? 'PRIMARY' : 'secondary';
+  const role = o.primary ? 'PRIMARY, needed to win' : `optional, +${rules.scoring.secondary} score`;
   if (o.destroyed) return `${o.label} (${role}) — DESTROYED${o.cut ? ', line cut' : ''}.`;
   const set = state.charges.filter((c) => c.objectiveId === o.id);
   const burning = set.length ? `, ${set.length} set (fuse ${set.map((c) => c.fuse).join(', ')})` : '';
@@ -269,6 +269,7 @@ function describeMissionState() {
       const set = state.charges.filter((c) => c.objectiveId === o.id).length;
       return {
         label: o.label, primary: o.primary, destroyed: o.destroyed, cut: o.cut,
+        points: o.primary ? rules.scoring.primary : rules.scoring.secondary,
         detail: o.destroyed ? (o.cut ? 'line cut' : 'destroyed') : `${o.detonated + set}/${kind.chargesNeeded} charges${set ? `, ${set} burning` : ''}`,
       };
     }),
