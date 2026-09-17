@@ -394,7 +394,7 @@ export function describeEffect(effect) {
 }
 
 /**
- * One line about whatever the mouse is over. With a trooper selected this is
+ * A fixed-height readout about whatever the mouse is over. With a trooper selected this is
  * the path readout SPEC.md §4 asks for: route, total AP, and why not if not.
  * With it comes the detection risk along that path, and over an enemy, what
  * that enemy is.
@@ -434,13 +434,11 @@ export function renderReadout(element, state, map, view) {
   ];
   if (terrain.spotBonus) parts.push(`spot ${terrain.spotBonus > 0 ? '+' : ''}${terrain.spotBonus}`);
 
-  let line = `(${hex.q}, ${hex.r}) ${terrain.label} — ${parts.join(', ')}`;
-  if (view?.siteLabel) line += `   ▸ ${view.siteLabel}`;
-  if (view?.moveLabel) line += `   ▸ ${view.moveLabel}`;
-  if (view?.blastLabel) line += `   ▸ ${view.blastLabel}`;
-  if (view?.riskLabel) line += `   ▸ ${view.riskLabel}`;
-  if (view?.hideLabel) line += `   ▸ ${view.hideLabel}`;
-  element.textContent = line;
+  // Most important first: the readout is a fixed height (index.html), and
+  // whatever does not fit is cut from the end. The move, a blast and the
+  // detection risk must never be what gets cut.
+  const pieces = [view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', ')];
+  element.textContent = `(${hex.q}, ${hex.r}) ${terrain.label} — ${pieces.filter(Boolean).join('   ▸ ')}`;
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */
