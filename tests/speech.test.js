@@ -1,5 +1,6 @@
 // M7: speech bubbles (SPEC.md §5 Dialogue, §11). The lines are data in
-// roster.json; state.speech says who is saying what, and the board only draws it.
+// roster.json; state.speech says who last said what this turn, and the board
+// only draws it.
 
 import { loadJson, loadMap } from '../src/map.js';
 import { chooseDropRun, createInitialState, endTurn, holdUnit, jump, moveUnit, placeCharge } from '../src/state.js';
@@ -36,20 +37,19 @@ export default [
     equal(new Set(landed.speech.map((s) => s.unitId)).size, landed.speech.length, 'one line per man');
   }],
 
-  ['a man stops talking when he spends AP, and everyone at the turn boundary', async () => {
+  ['a man keeps his line through the turn, and lines are replaced at the turn boundary', async () => {
     const { map, rules, traits, roster } = await loadAll();
     let s = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 7), map, 'north'), map, rules);
     const mover = s.units.find((u) => onBoard(u) && u.ap > 0 && lineOf(s, u.id));
     assert(mover, 'someone can move');
-    const others = s.speech.length;
+    const said = lineOf(s, mover.id);
     const target = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]]
       .map(([dq, dr]) => ({ q: mover.q + dq, r: mover.r + dr }))
       .map((h) => planMove(map, s.units, mover, h, rules, s.enemies))
       .find((p) => p && p.affordable);
     assert(target, 'a step he can afford');
     s = moveUnit(s, mover.id, target, map);
-    equal(lineOf(s, mover.id), null, 'moved: silent');
-    equal(s.speech.length, others - 1, 'the others still talking');
+    equal(lineOf(s, mover.id), said, 'moved: still his line');
     s = holdUnit(s, s.units.find(onBoard).id);
     s = endTurn(s, rules, map);
     assert(s.speech.every((line) => s.report.some((e) => e.kind === 'wounded' && e.unitId === line.unitId)), 'only the newly wounded speak after the turn');

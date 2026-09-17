@@ -30,6 +30,7 @@ function html(tag, className, content) {
 // it covers the board rather than the panel; for anything else, below it.
 
 const popupBox = () => document.getElementById('popup');
+let popupAnchor = null;
 
 /** Show `content` (text, or a node) beside `anchor`. */
 export function showPopup(anchor, content) {
@@ -37,6 +38,7 @@ export function showPopup(anchor, content) {
   if (!box) return;
   box.replaceChildren(...[].concat(typeof content === 'function' ? content() : content));
   box.hidden = false;
+  popupAnchor = anchor;
   const a = anchor.getBoundingClientRect();
   const b = box.getBoundingClientRect();
   const panel = anchor.closest?.('#panel');
@@ -52,6 +54,15 @@ export function showPopup(anchor, content) {
 export function hidePopup() {
   const box = popupBox();
   if (box) box.hidden = true;
+  popupAnchor = null;
+}
+
+/**
+ * Hide the popup if what it belongs to has been redrawn away — a drop-run tab
+ * clicked, say — since the removed element will never report the mouse leaving.
+ */
+export function dropStalePopup() {
+  if (popupAnchor && !popupAnchor.isConnected) hidePopup();
 }
 
 /** Give an element a rollover. `content` may be a function, so it is built when shown. */
@@ -75,6 +86,46 @@ const KEYS = [
 
 export function renderKeys(button) {
   attachPopup(button, () => [html('b', null, 'KEYS'), `\n${KEYS}`]);
+}
+
+// --- fitting the spread to the window ---------------------------------------
+// The board is the game, so it takes all the room it can: as tall as the page
+// allows under the captions, or as wide as the page allows beside the right
+// page. The right page's share grows with the window (panelShare of it, from
+// panelMin to panelMax); it takes whatever the board leaves, up to panelMax,
+// and past that the spread is centred on the table. What the left page
+// has spare below a width-limited board goes to the captions. These numbers
+// are index.html's paddings and gaps, which must agree with them.
+
+export const SPREAD = {
+  minWidth: 1280,
+  minHeight: 760,
+  marginX: 8 + 22, // spread padding left and right (index.html #spread)
+  marginY: 8 + 8,
+  leftChromeX: 20 + 4 + 2 + 16, // outer gutter, its gap, left page padding
+  leftChromeY: 10 + 10 + 8, // left page padding, gap above the captions
+  captionMin: 92,
+  captionMax: 170,
+  panelMin: 380,
+  panelMax: 480,
+  panelShare: 0.27,
+};
+
+/** Size the board, captions and right page to the window. `aspect` is the board's width over height. */
+export function fitSpread(aspect, root = document.documentElement) {
+  const width = Math.max(window.innerWidth, SPREAD.minWidth);
+  const height = Math.max(window.innerHeight, SPREAD.minHeight);
+  const across = width - SPREAD.marginX - SPREAD.leftChromeX;
+  const down = height - SPREAD.marginY - SPREAD.leftChromeY;
+  const panelWanted = Math.min(SPREAD.panelMax, Math.max(SPREAD.panelMin, width * SPREAD.panelShare));
+  const boardW = Math.floor(Math.min((down - SPREAD.captionMin) * aspect, across - panelWanted));
+  const boardH = Math.floor(boardW / aspect);
+  const panelW = Math.min(SPREAD.panelMax, across - boardW);
+  const captionH = Math.min(SPREAD.captionMax, down - boardH);
+  root.style.setProperty('--left-w', `${boardW + SPREAD.leftChromeX}px`);
+  root.style.setProperty('--panel-w', `${panelW}px`);
+  root.style.setProperty('--board-h', `${boardH}px`);
+  root.style.setProperty('--caption-h', `${captionH}px`);
 }
 
 /** The cut-out note down the outer margin (ART-ASSETS.md ui-gutter-note). */
@@ -276,10 +327,12 @@ function describeCost(terrain) {
 
 /** Dawn arrives on turn 20 and that is the clock (SPEC.md §4). */
 export function renderTurnCounter(element, state, rules) {
+  const dawn = state.phase !== 'drop' && (state.outcome || state.turn >= rules.turnLimit);
+  element.classList.toggle('dawn', Boolean(dawn));
   if (state.phase === 'drop') element.textContent = 'THE DROP';
   else if (state.outcome) element.textContent = `TURN ${state.turn}/${rules.turnLimit} · OVER`;
   else if (state.turn >= rules.turnLimit) element.textContent = `TURN ${state.turn}/${rules.turnLimit} · DAWN`;
-  else element.textContent = `TURN ${state.turn}/${rules.turnLimit}`;
+  else element.textContent = `TURN ${state.turn} / ${rules.turnLimit}`;
 }
 
 /**
@@ -420,9 +473,9 @@ export function renderDropRuns(element, runs, onChoose) {
   }
 }
 
-/** A drop run's rollover, on its button and on its name on the board. */
+/** A drop run's rollover, on its button and on its tab on the board. */
 export function describeRun(run) {
-  return [html('b', null, run.label.toUpperCase()), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.`];
+  return [html('b', null, run.label.toUpperCase()), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
 }
 
 /** The seed (SPEC.md §1), with a link that replays the same drop. */

@@ -27,11 +27,15 @@ export const PALETTE = {
   leader: '#2F7BBF',
 };
 
-// SPEC.md §11: a typewriter Courier for text, and a condensed slab for the
-// masthead. Nothing is supplied, so these are faces every desktop ships.
+// SPEC.md §11: a typewriter Courier for text, a condensed slab for the
+// masthead, and comic lettering for speech bubbles. Nothing is supplied, so
+// these are faces desktops ship: Marker Felt and Chalkboard on a Mac, Segoe
+// Print and Ink Free on Windows. A supplied lettering face goes first in
+// `lettering` (see ART-ASSETS.md §8). Never Comic Sans.
 export const TYPE = {
   typewriter: '"Courier 10 Pitch", "Courier New", Courier, monospace',
   slab: '"Rockwell Condensed", "Roboto Slab", Rockwell, "American Typewriter", "Courier New", serif',
+  lettering: '"Marker Felt", "Segoe Print", "Ink Free", "Chalkboard SE", "Bradley Hand", fantasy',
 };
 
 // ---------------------------------------------------------------------------
@@ -44,6 +48,9 @@ export const HALFTONE = {
   cell: 5,
   angle: 45,
   densities: [10, 20, 35, 50, 70],
+  // The dots are printed faint, close to the colour under them: at full
+  // strength the screen fought everything drawn over it.
+  opacity: 0.25,
 };
 
 // Every colour fill is printed a hair off its ink outline. In the units of
@@ -65,7 +72,7 @@ function halftonePatterns() {
       patterns.push(svg('pattern', {
         id: `ht-${colour}-${density}`, width: s, height: s, patternUnits: 'userSpaceOnUse',
         patternTransform: `rotate(${HALFTONE.angle})`,
-      }, [svg('circle', { cx: s / 2, cy: s / 2, r: r.toFixed(3), fill: PALETTE[colour] })]));
+      }, [svg('circle', { cx: s / 2, cy: s / 2, r: r.toFixed(3), fill: PALETTE[colour], 'fill-opacity': HALFTONE.opacity })]));
     }
   }
   return patterns;
@@ -74,7 +81,9 @@ function halftonePatterns() {
 /** The same screen as a CSS background, for the HTML page. */
 export function halftoneCss(colour, density, cell = HALFTONE.cell) {
   const r = cell * Math.sqrt(density / 100 / Math.PI);
-  return `radial-gradient(circle, ${PALETTE[colour]} ${r.toFixed(2)}px, transparent ${(r + 0.6).toFixed(2)}px) 0 0 / ${cell}px ${cell}px`;
+  const hex = PALETTE[colour];
+  const rgba = `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${HALFTONE.opacity})`;
+  return `radial-gradient(circle, ${rgba} ${r.toFixed(2)}px, transparent ${(r + 0.6).toFixed(2)}px) 0 0 / ${cell}px ${cell}px`;
 }
 
 // Paper fibre: a tile of short hairline strokes and specks, drawn once from a
@@ -189,7 +198,10 @@ export const COUNTER = {
   nameBoxRight: 53,
   selectedStroke: PALETTE.red,
   selectedStrokeWidth: 3,
-  spentOpacity: 0.55, // a trooper with no AP left greys back
+  // A man with no AP left stays fully printed; only his die-cut edge goes from
+  // ink to grey (ink screened back toward paper), so the board still reads.
+  edge: PALETTE.ink,
+  spentEdge: '#A39E90',
   nameFill: PALETTE.paper,
   nameSize: 9,
   // Glyphs are never stretched to fill the strip — a long name scales down as
@@ -204,10 +216,10 @@ export const COUNTER = {
   role: { x: 2, y: 13, size: 14 },
 };
 
-// SPEC.md §11: counters snap down with a 2-frame stepped rotation, and a blast
-// is revealed in steps. No smooth easing anywhere.
+// SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
+// path a hex at a time, quickly, and stops; a blast is revealed in steps.
 export const MOTION = {
-  snapMs: 180,
+  travelMsPerHex: 70,
   blastMs: 1500,
 };
 
@@ -404,6 +416,18 @@ export const DROP = {
   idleOpacity: 0.45,
   label: PALETTE.ink,
   labelAlong: 0.3,
+  // Each run's name is a die-cut tab: click it to pick the run. The run being
+  // looked at is printed solid.
+  tabFill: PALETTE.paper,
+  tabText: PALETTE.ink,
+  tabSelectedFill: PALETTE.ink,
+  tabSelectedText: PALETTE.paper,
+  tabStroke: PALETTE.ink,
+  tabStrokeWidth: 3,
+  tabShadow: 4,
+  tabFontSize: 22,
+  tabPadX: 12,
+  tabHeight: 34,
   windStroke: PALETTE.blue,
   windWidth: 4,
   windLength: 60,
@@ -417,13 +441,15 @@ export const DROP = {
   areaWidth: 3,
 };
 
-// Speech bubbles on the board (SPEC.md §11): set in the typewriter face,
-// paper with an ink rule, the tail pointing at the man's counter.
+// Speech bubbles on the board (SPEC.md §11): comic lettering in capitals,
+// paper with an ink rule, the tail pointing at the man's counter. Shown for
+// the man selected or under the mouse.
 export const SPEECH = {
-  fontSize: 17,
-  lineHeight: 20,
-  charWidth: 0.6, // Courier: every glyph is 0.6em
-  maxChars: 24,
+  font: TYPE.lettering,
+  capitals: true,
+  fontSize: 20,
+  lineHeight: 23,
+  maxWidth: 230, // lines wrap at this width, measured in the face actually used
   padX: 10,
   padY: 8,
   gap: 38, // from the counter's centre to the near edge of the bubble
@@ -521,7 +547,9 @@ function alliedFrame(stripClass, extras = []) {
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', stripClass),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', toneClass('ink', 20)),
     ...extras,
-    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    // The die-cut edge takes its colour from --counter-edge, so board.js can
+    // grey a spent man's edge without a second frame.
+    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, fill: 'none', class: 'counter-edge', 'stroke-width': 2 }),
   ];
 }
 
@@ -1206,8 +1234,10 @@ const SPRITES = {
     viewBox: '0 0 600 60',
     draw: () => {
       const parts = [svg('rect', { x: 0, y: 0, width: 600, height: 60, class: 'paper' })];
-      const densities = [70, 70, 50, 50, 35, 35, 20, 20, 10, 10];
-      densities.forEach((d, i) => parts.push(svg('rect', { x: i * 60, y: 0, width: 61, height: 60, class: toneClass('blue', d) })));
+      for (let i = 0; i < 10; i++) {
+        parts.push(svg('rect', { x: i * 60, y: 0, width: 61, height: 60, class: 'blue', 'fill-opacity': (0.9 - i * 0.09).toFixed(2) }));
+        parts.push(svg('rect', { x: i * 60, y: 0, width: 61, height: 60, class: toneClass('ink', 35) }));
+      }
       parts.push(fill('M540 60 A40 40 0 0 1 620 60 Z', 'red', { 'fill-opacity': 0.7 }));
       let trees = 'M0 60 V50';
       for (let x = 0; x <= 600; x += 15) trees += ` Q${x + 4} ${40 + ((x * 7) % 9)} ${x + 8} ${48} L${x + 15} ${51}`;
@@ -1277,7 +1307,50 @@ export function roleSymbolId(role) {
  */
 export function portraitId(unitId, size) {
   const id = `portrait-${unitId}-${size}`;
-  return hasSprite(id) ? id : `portrait-fallback-${size}`;
+  return hasSprite(id) || SUPPLIED.has(id) ? id : `portrait-fallback-${size}`;
+}
+
+// Supplied portraits (ART-ASSETS.md §2). A PNG in PORTRAIT_FILES.dir named as
+// the manifest names it — portrait-holloway-full.png, portrait-holloway-chip.png
+// — replaces the drawn portrait of that id; nothing else needs editing. Missing
+// files are fine: the drawn one stays.
+export const PORTRAIT_FILES = {
+  dir: 'assets/portraits',
+  ext: 'png',
+  sizes: { full: { width: 240, height: 300 }, chip: { width: 32, height: 32 } },
+};
+
+const SUPPLIED = new Set();
+
+/**
+ * Look for a supplied portrait for each trooper id and swap each one found
+ * into its <symbol>, so every <use> of it shows the file. `onLoaded` is called
+ * after each swap, so the caller can redraw anything that picked a fallback.
+ */
+export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
+  const defs = document.getElementById('portrait-fallback-full')?.parentNode;
+  if (!defs) return;
+  for (const unitId of unitIds) {
+    for (const [size, box] of Object.entries(PORTRAIT_FILES.sizes)) {
+      const id = `portrait-${unitId}-${size}`;
+      const url = `${PORTRAIT_FILES.dir}/${id}.${PORTRAIT_FILES.ext}`;
+      const probe = new Image();
+      probe.onload = () => {
+        let symbol = document.getElementById(id);
+        if (!symbol) {
+          symbol = svg('symbol', { id, viewBox: `0 0 ${box.width} ${box.height}`, overflow: 'hidden' });
+          defs.appendChild(symbol);
+        }
+        symbol.setAttribute('overflow', 'hidden');
+        symbol.replaceChildren(svg('image', {
+          href: url, x: 0, y: 0, width: box.width, height: box.height, preserveAspectRatio: 'xMidYMid slice',
+        }));
+        SUPPLIED.add(id);
+        onLoaded(id);
+      };
+      probe.src = url;
+    }
+  }
 }
 
 /** Sprite id for a fuse token: turns left, 1 to 5; longer fuses show 5. */
@@ -1324,11 +1397,10 @@ function printCss() {
   // stays put.
   const offRegister = [...Object.keys(PALETTE).filter((c) => c !== 'ink').map((c) => `.${c}`), '[class*="tone-"]'];
   const misregister = `${offRegister.join(',')}{transform:translate(${MISREGISTER.x}px,${MISREGISTER.y}px)}`;
-  // Stepped, never eased: a counter snaps down in two frames, a blast is
-  // revealed in three and then gone.
+  // Stepped, never eased: a blast is revealed in three frames and then gone.
+  // A spent man's die-cut edge is set by board.js through --counter-edge.
   const motion = [
-    '@keyframes nd-snap{0%{transform:rotate(-14deg) scale(1.12)}50%{transform:rotate(5deg) scale(1.04)}100%{transform:none}}',
-    `.nd-snap{animation:nd-snap ${MOTION.snapMs}ms step-end both;transform-box:fill-box;transform-origin:center}`,
+    `.counter-edge{stroke:var(--counter-edge,${COUNTER.edge})}`,
     '@keyframes nd-blast{0%{transform:scale(0.35)}12%{transform:scale(0.75)}24%{transform:scale(1)}85%{opacity:1;transform:scale(1)}100%{opacity:0}}',
     `.nd-blast{animation:nd-blast ${MOTION.blastMs}ms step-end both;transform-box:fill-box;transform-origin:center}`,
   ];

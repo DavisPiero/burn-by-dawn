@@ -14,9 +14,9 @@
 // every hover, and is small enough that doing so is free.
 //
 // The only thing this module remembers between draws is how things looked
-// last time — where each counter stood and when a blast went off — so the
-// stepped snap and blast reveal play once rather than on every hover. That is
-// drawing memory, not game state.
+// last time — where each counter stood and when a blast went off — so a move
+// and a blast play out once rather than again on every hover. That is drawing
+// memory, not game state.
 
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
@@ -245,8 +245,7 @@ export function renderPieces(layers, state, view) {
 
   for (const enemy of state.enemies) {
     const hovered = enemy.id === view.hoverEnemy?.id;
-    const snap = snapFor(layers, `enemy:${enemy.id}`, enemy, now);
-    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id), snap);
+    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id));
     if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
     layers.counters.appendChild(counter);
   }
@@ -259,42 +258,58 @@ export function renderPieces(layers, state, view) {
     // The number on the counter is the trooper's place in the roster, which is
     // also his 1-6 hotkey and his position in the panel. One ordering, shown
     // in three places.
-    const snap = snapFor(layers, `unit:${unit.id}`, unit, now);
-    const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId, snap);
+    const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
     // In contact top right, where the eye goes first; his condition top left.
     if (unit.inContact) counter.appendChild(marker('marker-spotted', 38, -12));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(marker('marker-wounded', -6, -12));
     if (unit.hidden) counter.appendChild(marker('marker-hidden', 38, 38));
-    layers.counters.appendChild(counter);
+    const mover = el('g', {});
+    mover.appendChild(counter);
+    layers.counters.appendChild(mover);
+    travel(layers, mover, unit, now);
   });
 
   drawBlasts(layers, state, now);
-  drawSpeech(layers, state);
+  drawSpeech(layers, state, view.speakers ?? new Set());
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
 
 /**
- * Has this piece just arrived where it stands? Returns how far into its snap
- * it is, in ms, or null once the snap is over. A redraw part-way through
- * carries the animation on from where it was rather than starting it again.
+ * A man who has just moved travels his path to where he now stands: quickly,
+ * at a steady pace, and stops dead — no easing (SPEC.md §11). The path is the
+ * hexes he entered this turn after the one he was last drawn on. A redraw
+ * part-way through carries the journey on from where it was. A man appearing
+ * for the first time (the drop) simply appears.
  */
-function snapFor(layers, key, at, now) {
-  const where = hexKey(at.q, at.r);
+function travel(layers, mover, unit, now) {
+  const key = `unit:${unit.id}`;
+  const where = hexKey(unit.q, unit.r);
   const last = layers.motion.get(key);
-  if (!last || last.where !== where) {
-    layers.motion.set(key, { where, since: now });
-    return 0;
+  if (!last) {
+    layers.motion.set(key, { where, since: -Infinity, path: [], at: { q: unit.q, r: unit.r } });
+    return;
   }
-  const elapsed = now - last.since;
-  return elapsed < MOTION.snapMs ? elapsed : null;
-}
+  if (last.where !== where) {
+    const trail = unit.trail ?? [];
+    const from = trail.map((h) => hexKey(h.q, h.r)).lastIndexOf(last.where);
+    let steps = trail.slice(from + 1);
+    if (steps.length === 0 || hexKey(steps.at(-1).q, steps.at(-1).r) !== where) steps = [{ q: unit.q, r: unit.r }];
+    layers.motion.set(key, { where, since: now, path: [last.at, ...steps] });
+  }
+  layers.motion.get(key).at = { q: unit.q, r: unit.r };
 
-function snapGroup(elapsed) {
-  if (elapsed === null) return el('g', {});
-  const g = el('g', { class: 'nd-snap' });
-  g.style.animationDelay = `${-Math.round(elapsed)}ms`;
-  return g;
+  const journey = layers.motion.get(key);
+  const duration = (journey.path.length - 1) * MOTION.travelMsPerHex;
+  const elapsed = now - journey.since;
+  if (!(duration > 0) || elapsed >= duration || typeof mover.animate !== 'function') return;
+  const end = axialToPixel(unit.q, unit.r, layers.map.hexSize);
+  const frames = journey.path.map((h) => {
+    const p = axialToPixel(h.q, h.r, layers.map.hexSize);
+    return { transform: `translate(${p.x - end.x}px, ${p.y - end.y}px)` };
+  });
+  const animation = mover.animate(frames, { duration, easing: 'linear' });
+  animation.currentTime = elapsed;
 }
 
 // A starburst where each charge went off, revealed in steps and then gone.
@@ -321,29 +336,16 @@ function drawBlasts(layers, state, now) {
 
 // --- speech bubbles (SPEC.md §5 Dialogue, §11) ---------------------------------
 
-function wrapWords(line, maxChars) {
-  const lines = [];
-  let current = '';
-  for (const word of line.split(/\s+/)) {
-    if (current && current.length + 1 + word.length > maxChars) {
-      lines.push(current);
-      current = word;
-    } else {
-      current = current ? `${current} ${word}` : word;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
-}
-
 /**
- * Each man's line in a bubble near his counter, the tail pointing at him.
- * Bubbles are placed in turn, each at the nearest spot above or below him,
- * to either side, that stays on the board and covers neither an earlier
- * bubble nor any counter; the tail stretches to reach him. If nowhere is
- * clear, the nearest spot on the board is used anyway.
+ * The line of each man in `speakers` — the one selected and the one under the
+ * mouse — in a bubble near his counter, the tail pointing at him. Lines wrap
+ * by their measured width in the lettering face. Bubbles are placed in turn,
+ * each at the nearest spot above or below him, to either side, that stays on
+ * the board and covers neither an earlier bubble nor any counter; the tail
+ * stretches to reach him. If nowhere is clear, the nearest spot on the board
+ * is used anyway.
  */
-function drawSpeech(layers, state) {
+function drawSpeech(layers, state, speakers) {
   const { map } = layers;
   const edge = boardEdges(map);
   const half = COUNTER.size / 2;
@@ -356,13 +358,29 @@ function drawSpeech(layers, state) {
     ...state.enemies.map(counterBox),
   ];
   const overlaps = (a, b) => !(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);
+  const letter = (content, attrs = {}) => text(content, {
+    'text-anchor': 'start', 'font-size': SPEECH.fontSize, 'font-family': SPEECH.font, class: 'ink', ...attrs,
+  });
+  const measure = (content) => {
+    const probe = letter(content, { visibility: 'hidden' });
+    layers.speech.appendChild(probe);
+    const width = probe.getComputedTextLength();
+    probe.remove();
+    return width;
+  };
 
   for (const { unitId, line } of state.speech ?? []) {
+    if (!speakers.has(unitId)) continue;
     const unit = state.units.find((u) => u.id === unitId);
     if (!unit || !unit.landed || unit.dead || unit.out) continue;
     const c = axialToPixel(unit.q, unit.r, map.hexSize);
-    const lines = wrapWords(line, SPEECH.maxChars);
-    const width = Math.max(...lines.map((l) => l.length)) * SPEECH.fontSize * SPEECH.charWidth + SPEECH.padX * 2;
+    const lines = [];
+    for (const word of (SPEECH.capitals ? line.toUpperCase() : line).split(/\s+/)) {
+      const joined = lines.length ? `${lines.at(-1)} ${word}` : word;
+      if (lines.length && measure(joined) <= SPEECH.maxWidth) lines[lines.length - 1] = joined;
+      else lines.push(word);
+    }
+    const width = Math.max(...lines.map(measure)) + SPEECH.padX * 2;
     const height = lines.length * SPEECH.lineHeight + SPEECH.padY * 2;
 
     const options = [];
@@ -389,10 +407,7 @@ function drawSpeech(layers, state) {
     const g = el('g', { transform: `translate(${at.x} ${at.y})`, opacity: underMouse ? SPEECH.fadedOpacity : 1 });
     for (const part of speechBubble(width, height, { x: at.tip.x - at.x, y: at.tip.y - at.y })) g.appendChild(part);
     lines.forEach((l, i) => {
-      g.appendChild(text(l, {
-        x: SPEECH.padX, y: SPEECH.padY + SPEECH.lineHeight * (i + 0.5) + 1,
-        'text-anchor': 'start', 'font-size': SPEECH.fontSize, class: 'ink',
-      }));
+      g.appendChild(letter(l, { x: SPEECH.padX, y: SPEECH.padY + SPEECH.lineHeight * (i + 0.5) + 1 }));
     });
     layers.speech.appendChild(g);
   }
@@ -544,6 +559,7 @@ function drawDrop(layers, drop) {
     fillArea(layers, drop.area, DROP.areaOpacity, DROP.areaFill);
     drawAreaEdge(layers, layers.sites, drop.area, [[DROP.casing, DROP.areaWidth + 3], [DROP.areaStroke, DROP.areaWidth]]);
   }
+  const tabs = [];
   for (const run of [...drop.runs].sort((a, b) => Number(a.selected) - Number(b.selected))) {
     const group = el('g', { opacity: run.selected ? 1 : DROP.idleOpacity });
     const a = axialToPixel(run.from.q, run.from.r, map.hexSize);
@@ -564,15 +580,7 @@ function drawDrop(layers, drop) {
     // The name sits a way along the line, not at its start: the runs begin
     // close together in the north-west corner and their names would collide.
     const at = { x: a.x + (b.x - a.x) * DROP.labelAlong, y: a.y + (b.y - a.y) * DROP.labelAlong - map.hexSize * 0.35 };
-    const name = run.label.toUpperCase();
-    const hit = el('rect', {
-      x: at.x - name.length * 5, y: at.y - 12, width: name.length * 10, height: 24, fill: DROP.casing, 'fill-opacity': 0.001,
-      'pointer-events': 'all', cursor: 'help',
-    });
-    hit.addEventListener('mouseenter', () => layers.handlers.onRunHover?.(run.id, hit));
-    hit.addEventListener('mouseleave', () => layers.handlers.onRunLeave?.());
-    group.appendChild(casedText(name, at.x, at.y, DROP.label));
-    group.appendChild(hit);
+    tabs.push(runTab(layers, run, at));
 
     if (run.selected) {
       run.jumps.forEach((j, i) => {
@@ -583,6 +591,33 @@ function drawDrop(layers, drop) {
     }
     layers.routes.appendChild(group);
   }
+  // The tabs go over every line, and are never faded: they are what to click.
+  for (const tab of tabs) layers.routes.appendChild(tab);
+}
+
+/**
+ * A drop run's name as a die-cut tab with a hard shadow. Clicking it picks the
+ * run (the same as 1–3); hovering it shows the run's description.
+ */
+function runTab(layers, run, at) {
+  const name = run.label.toUpperCase();
+  const width = name.length * DROP.tabFontSize * 0.62 + DROP.tabPadX * 2;
+  const height = DROP.tabHeight;
+  const x = at.x - width / 2, y = at.y - height / 2;
+  const tab = el('g', { 'pointer-events': 'all', cursor: 'pointer' });
+  tab.appendChild(el('rect', { x: x + DROP.tabShadow, y: y + DROP.tabShadow, width, height, rx: 4, fill: DROP.tabStroke }));
+  tab.appendChild(el('rect', {
+    x, y, width, height, rx: 4, fill: run.selected ? DROP.tabSelectedFill : DROP.tabFill,
+    stroke: DROP.tabStroke, 'stroke-width': DROP.tabStrokeWidth,
+  }));
+  tab.appendChild(text(name, {
+    x: at.x, y: at.y + 1, 'font-size': DROP.tabFontSize, 'font-weight': 'bold', 'letter-spacing': 1,
+    fill: run.selected ? DROP.tabSelectedText : DROP.tabText,
+  }));
+  tab.addEventListener('mouseenter', () => layers.handlers.onRunHover?.(run.id, tab));
+  tab.addEventListener('mouseleave', () => layers.handlers.onRunLeave?.());
+  tab.addEventListener('click', () => layers.handlers.onRunChoose?.(run.id));
+  return tab;
 }
 
 /** An open arrowhead at `tip`, pointing away from `from`. */
@@ -874,14 +909,16 @@ function polyline(points, attrs) {
 // the selection ring are drawn here as geometry: they are readouts of state,
 // not artwork, and they have no asset id.
 
-function drawCounter(unit, number, map, isSelected, snap) {
+function drawCounter(unit, number, map, isSelected) {
   const center = axialToPixel(unit.q, unit.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', {
     transform: `translate(${center.x - size / 2}, ${center.y - size / 2})`,
-    opacity: unit.hidden ? MARKER.hiddenOpacity : unit.ap === 0 ? COUNTER.spentOpacity : 1,
+    opacity: unit.hidden ? MARKER.hiddenOpacity : 1,
   });
-  const body = snapGroup(snap);
+  // A man with no AP left is done for the turn: his die-cut edge goes grey.
+  if (unit.ap === 0) group.style.setProperty('--counter-edge', COUNTER.spentEdge);
+  const body = el('g', {});
   group.appendChild(body);
 
   body.appendChild(el('use', { href: `#${counterFrameId(unit)}`, width: size, height: size }));
@@ -939,7 +976,7 @@ function drawCounter(unit, number, map, isSelected, snap) {
 
 // Enemy counters: frame, type, a strip naming the type, and a wedge outside
 // the counter pointing the way it faces.
-function drawEnemy(enemy, map, isHovered, hears, snap) {
+function drawEnemy(enemy, map, isHovered, hears) {
   const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', { transform: `translate(${center.x - size / 2}, ${center.y - size / 2})` });
@@ -956,7 +993,7 @@ function drawEnemy(enemy, map, isHovered, hears, snap) {
     fill: ENEMY.facingFill, stroke: ENEMY.facingStroke, 'stroke-width': 1.5,
   }));
 
-  const body = snapGroup(snap);
+  const body = el('g', {});
   group.appendChild(body);
   body.appendChild(el('use', { href: '#counter-frame-enemy', width: size, height: size }));
   body.appendChild(el('use', { href: `#${enemySymbolId(enemy.type)}`, width: size, height: size }));
@@ -1011,15 +1048,17 @@ export function boardEdges(map) {
 /**
  * The SVG viewBox. The board itself is flush to boardEdges; this adds a few
  * pixels of margin so a counter standing on the top or bottom row, which
- * overhangs the border slightly, is not cut off by the edge of the SVG.
+ * overhangs the border slightly, is not cut off by the edge of the SVG. The
+ * sides get only enough for the border's stroke: margin there is wasted page.
  */
 export function boardPixelBounds(map) {
-  const pad = 8;
+  const padX = 3; // the border's own stroke
+  const padY = 8; // counters on the top and bottom rows overhang
   const edge = boardEdges(map);
   return {
-    minX: edge.left - pad,
-    minY: edge.top - pad,
-    maxX: edge.right + pad,
-    maxY: edge.bottom + pad,
+    minX: edge.left - padX,
+    minY: edge.top - padY,
+    maxX: edge.right + padX,
+    maxY: edge.bottom + padY,
   };
 }

@@ -70,9 +70,10 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     outcome: null,
     // What happened at the last turn boundary, for the turn report.
     report: [],
-    // Dialogue being spoken on the board (SPEC.md §5, §11): { unitId, line },
-    // at most one per man. Set when a man lands, places a charge or is wounded;
-    // his line goes when he next spends AP, and all of them at the turn boundary.
+    // Dialogue on the board (SPEC.md §5, §11): { unitId, line }, at most one
+    // per man, his latest. Set when a man lands, places a charge or is wounded,
+    // and kept until the turn boundary; the board shows it while he is selected
+    // or under the mouse.
     speech: [],
     selectedUnitId: null,
     selectedHex: null, // hex inspection, from M0; survives alongside unit selection
@@ -240,7 +241,7 @@ function speechFrom(events, units) {
   return speech;
 }
 
-/** Give a man a line, replacing any he was already saying; null silences him. */
+/** Give a man a line, replacing any he was already saying. */
 function say(speech, unitId, line) {
   const others = (speech ?? []).filter((s) => s.unitId !== unitId);
   return line ? [...others, { unitId, line }] : others;
@@ -280,11 +281,9 @@ export function setHover(state, hex) {
  */
 export function moveUnit(state, unitId, plan, map = null) {
   const destination = plan.path[plan.path.length - 1];
-  const speech = say(state.speech, unitId, null);
   if (map && isExfil(map, destination)) {
     return {
       ...state,
-      speech,
       units: state.units.map((unit) => (
         unit.id === unitId
           ? { ...unit, q: destination.q, r: destination.r, ap: 0, out: true, hidden: false, inContact: false, trail: [] }
@@ -295,7 +294,6 @@ export function moveUnit(state, unitId, plan, map = null) {
   }
   return {
     ...state,
-    speech,
     units: state.units.map((unit) => (
       unit.id === unitId
         ? {
@@ -329,7 +327,6 @@ export function holdUnit(state, unitId) {
 function spend(state, unitId, cost, changes = {}) {
   return {
     ...state,
-    speech: say(state.speech, unitId, null),
     units: state.units.map((u) => (
       u.id === unitId ? { ...u, ap: Math.max(0, u.ap - cost), hidden: false, ...changes } : u
     )),

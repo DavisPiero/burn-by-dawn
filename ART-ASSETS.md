@@ -50,17 +50,23 @@ procedural SVG pattern. Supply at 2x and it will be used as a pattern fill.
 
 ---
 
-## 2. The six — SVG
+## 2. The six — PNG
 
-Each character needs **two** drawings. A portrait drawn for the roster rail will turn to
+Each character needs **two** pictures. A portrait made for the roster rail will turn to
 mud at counter size, so don't try to make one asset do both.
 
-| Asset | viewBox | Notes |
-|---|---|---|
-| `portrait-<name>-full.svg` x6 | 240 x 300 | roster rail. Head and shoulders, pulp comic linework. Needs a greyed-out state — supply as one file, code handles desaturation. |
-| `portrait-<name>-chip.svg` x6 | 32 x 32 | on the counter. Silhouette-level simplicity. Helmet shape, one distinguishing feature. Must read at 32px on a busy map. |
+Portraits are the one place painted or photographic-style art is welcome, so they are
+**PNG**, not SVG, and the universal SVG rules above do not apply to them. Drop them into
+`/assets/portraits/` with exactly these names; the game picks them up on load, with no
+code change, and uses its own drawn portrait for any file that is missing.
 
-Names: holloway, fitch, vance, barrow, speers, nunn.
+| Asset | Size | Notes |
+|---|---|---|
+| `portrait-<name>-full.png` x6 | **4:5**, 960 x 1200 px (no smaller than 480 x 600) | Head and shoulders. 8-bit sRGB, opaque, a plain or simple background, no border and no text (code draws the frame, number and name). The roster rail crops to the middle — keep the face and helmet inside the central **80% of the width** and between **12% and 92% of the height**; eyes about 40% down. Shown at roughly 55 x 70 in the rail and 96 x 120 in the rollover, so it must read small: strong silhouette, clear light and dark. Code greys it out when the man is killed. |
+| `portrait-<name>-chip.png` x6 | **1:1**, 128 x 128 px | Optional. On the counter, about 15 px on screen. Helmet and face only, filling the frame, transparent background. Silhouette-level simplicity, one distinguishing feature. Without it the drawn chip is used, which will not match painted portraits. |
+
+Names: holloway, fitch, vance, barrow, speers, nunn — the trooper's `id` in
+`data/roster.json`, so a seventh man's portrait is named after his id.
 
 A trooper with no portrait of his own is drawn with `portrait-fallback-full` and
 `portrait-fallback-chip`, which live in code and are not to be supplied: they are what
@@ -168,11 +174,16 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 
 ## 8. Type
 
-No comic lettering: the annual look is carried by print, paper and colour (SPEC.md §11).
+The annual look is carried by print, paper and colour (SPEC.md §11); the one exception is
+the speech bubbles, which are comic lettering.
 
-- **Body, captions, speech bubbles, numbers and UI:** a typewriter Courier. `Courier 10
+- **Body, captions, numbers and UI:** a typewriter Courier. `Courier 10
   Pitch` if supplied, falling back to `Courier New`, `Courier`, `monospace`, which ship on
   every desktop, so nothing has to be supplied.
+- **Speech bubbles:** comic lettering, set in capitals. Until a face is supplied it falls
+  back to faces desktops ship (`Marker Felt`, `Segoe Print`, `Ink Free`, `Chalkboard SE`).
+  Never Comic Sans. A supplied lettering face is a WOFF2 in `/assets/fonts/` and goes
+  first in `TYPE.lettering` in `src/render/theme.js`, with an `@font-face` for it.
 - **Display / headings (optional):** a condensed slab for the masthead and big headings.
 
 Any face that is supplied: **WOFF2**, into `/assets/fonts/`. Check the licence permits web

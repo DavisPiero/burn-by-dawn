@@ -23,9 +23,9 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
-import { applyDocumentTheme } from './render/theme.js';
+import { applyDocumentTheme, loadSuppliedPortraits } from './render/theme.js';
 import {
-  DIVERSION_HELP, attachPopup, describeAlertStates, describeDetection, describePlan, describeRisk, describeRun,
+  DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   hidePopup, placeName, renderActions, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderTurnCounter, showPopup,
@@ -62,6 +62,8 @@ let layers = null;
 // and the last derived view, for rollovers built when they are shown.
 let highlightHex = null;
 let currentView = null;
+// The man whose roster row is under the mouse: he speaks, like the man selected.
+let hoverUnitId = null;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -108,6 +110,13 @@ function deriveView() {
     // Hexes carry no printed coordinates (SPEC.md §11), so text names places.
     place: (h) => placeName(map, state.objectives, exfil, h),
     highlightHex,
+    // Speech bubbles show for the man selected and the man under the mouse,
+    // on the board or in the roster (SPEC.md §11).
+    speakers: new Set([
+      state.selectedUnitId,
+      hoverUnitId,
+      hex ? unitAt(state.units, hex.q, hex.r)?.id : null,
+    ].filter(Boolean)),
     visionById: visionById(),
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
@@ -409,13 +418,14 @@ function render() {
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
-  renderRoster(rosterList, state, map, view, handleRosterClick);
+  renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome);
+  dropStalePopup();
 }
 
 /**
@@ -424,6 +434,16 @@ function render() {
  */
 function locateHex(hex) {
   highlightHex = hex;
+  renderBoard();
+}
+
+/** A hovered roster row makes that man speak; again only the board is redrawn. */
+function hoverRosterUnit(unitId) {
+  hoverUnitId = unitId;
+  renderBoard();
+}
+
+function renderBoard() {
   const view = deriveView();
   currentView = view;
   renderPieces(layers, state, view);
@@ -688,6 +708,10 @@ try {
 
   const bounds = boardPixelBounds(map);
   svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);
+  // The board takes all the room the window gives it (SPEC.md §11 layout).
+  const aspect = (bounds.maxX - bounds.minX) / (bounds.maxY - bounds.minY);
+  fitSpread(aspect);
+  window.addEventListener('resize', () => fitSpread(aspect));
 
   layers = createBoard(svg, map, {
     onHexClick: handleHexClick,
@@ -696,6 +720,7 @@ try {
     // A drop run's name on the board has the same rollover as its button.
     onRunHover: (runId, anchor) => showPopup(anchor, describeRun(currentView.dropRuns.find((r) => r.id === runId))),
     onRunLeave: hidePopup,
+    onRunChoose: handleChooseRun,
   });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of
@@ -709,6 +734,9 @@ try {
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
 
+  // Portrait art dropped into assets/portraits replaces the drawn portraits
+  // as each file arrives (ART-ASSETS.md §2).
+  loadSuppliedPortraits(state.units.map((u) => u.id), () => render());
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));

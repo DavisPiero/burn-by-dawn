@@ -1,8 +1,8 @@
-// The roster rail (SPEC.md §11): the six portraits, always visible, in roster
-// order, greying out as men are lost. Each slot is compact — face, number,
-// name, AP and one line of condition — and everything else about the man is
-// its rollover. Reads state, never mutates it (CLAUDE.md rule 7); a click is
-// handed back to the caller.
+// The roster rail (SPEC.md §11): the six, always visible, in roster order,
+// greying out as men are lost. One row each: a small portrait and four lines —
+// name and AP, condition or loadout, where he is, his trait — with the full
+// particulars and a bigger portrait as the row's rollover. Reads state, never
+// mutates it (CLAUDE.md rule 7); clicks and hovers are handed back to the caller.
 
 import { terrainAt } from '../map.js';
 import { portraitId } from './theme.js';
@@ -18,11 +18,28 @@ function html(tag, className, content) {
 }
 
 /**
+ * A portrait framed on head and shoulders, 4:5. The drawing is 240 x 300 with
+ * headroom; the frame crops to its middle so the face fills a small slot.
+ */
+function face(unitId, className) {
+  const frame = document.createElementNS(SVG_NS, 'svg');
+  if (className) frame.setAttribute('class', className);
+  frame.setAttribute('viewBox', '24 36 192 240');
+  frame.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttribute('href', `#${portraitId(unitId, 'full')}`);
+  use.setAttribute('width', 240);
+  use.setAttribute('height', 300);
+  frame.appendChild(use);
+  return frame;
+}
+
+/**
  * @param {HTMLElement} element the rail
  * @param {object} view derived in main.js: traitEffectsById, place
- * @param {Function} onSelect called with a unit id
+ * @param {{onSelect:Function, onHover:Function}} handlers onHover gets a unit id, or null
  */
-export function renderRoster(element, state, map, view, onSelect) {
+export function renderRoster(element, state, map, view, handlers) {
   element.replaceChildren();
 
   state.units.forEach((unit, i) => {
@@ -30,52 +47,51 @@ export function renderRoster(element, state, map, view, onSelect) {
     const slot = html('li', 'slot');
     if (unit.id === state.selectedUnitId) slot.classList.add('selected');
     if (lost) slot.classList.add('lost');
-    // The same colour as his counter's name strip, so the rail and the board
-    // point at the same man. A flag, not a name (CLAUDE.md rule 6).
+    // His number in the leader's blue, as on his counter's strip. A flag, not
+    // a name (CLAUDE.md rule 6).
     if (unit.leader) slot.classList.add('leader');
 
-    const face = document.createElementNS(SVG_NS, 'svg');
-    face.setAttribute('class', 'portrait');
-    // Framed on the head and shoulders: at slot size the full drawing's
-    // headroom would leave the face small.
-    face.setAttribute('viewBox', '20 44 200 236');
-    face.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-    const use = document.createElementNS(SVG_NS, 'use');
-    use.setAttribute('href', `#${portraitId(unit.id, 'full')}`);
-    use.setAttribute('width', 240);
-    use.setAttribute('height', 300);
-    face.appendChild(use);
-
-    const stamp = stampFor(unit);
-    const strip = html('div', 'slot-strip', [
-      html('div', 'slot-name', [html('span', null, unit.shortName), html('span', null, apText(unit))]),
-      html('div', 'slot-line', lineFor(unit)),
+    const portrait = html('div', 'slot-face', [face(unit.id), html('span', 'slot-num', String(i + 1))]);
+    const effects = view.traitEffectsById.get(unit.id) ?? [];
+    const text = html('div', 'slot-text', [
+      html('div', 'slot-name', [html('span', null, unit.name), html('span', null, apText(unit))]),
+      conditionLine(unit),
+      html('div', 'slot-line', whereLine(unit, view)),
+      html('div', 'slot-line slot-trait', effects.map((e) => `${e.name}: ${describeEffect(e)}`).join(' · ') || ' '),
     ]);
-    slot.append(face, html('span', 'slot-num', String(i + 1)), strip);
-    if (stamp) slot.appendChild(html('span', `slot-stamp${stamp.className ? ` ${stamp.className}` : ''}`, stamp.text));
+    slot.append(portrait, text);
 
     attachPopup(slot, () => describeUnit(unit, i + 1, state, map, view));
-    if (!lost && !unit.out) slot.addEventListener('click', () => onSelect(unit.id));
+    slot.addEventListener('mouseenter', () => handlers.onHover(unit.id));
+    slot.addEventListener('mouseleave', () => handlers.onHover(null));
+    if (!lost && !unit.out) slot.addEventListener('click', () => handlers.onSelect(unit.id));
     element.appendChild(slot);
   });
 }
 
 function apText(unit) {
   if (unit.dead || unit.out || !unit.landed) return '';
-  return `${unit.ap}/${unit.apMax}`;
+  return `${unit.ap}/${unit.apMax} AP`;
 }
 
-/** One line under his name: his condition, or his loadout when there is nothing wrong. */
-function lineFor(unit) {
-  if (unit.dead) return 'killed';
-  if (unit.out) return 'out — safe';
-  if (!unit.landed) return `${unit.roleLabel} · in the aircraft`;
+/** His condition in red when something is wrong, or his role and loadout. */
+function conditionLine(unit) {
+  if (unit.dead) return html('div', 'slot-line slot-warn', `${unit.roleLabel} · KILLED`);
+  if (unit.out) return html('div', 'slot-line', `${unit.roleLabel} · OUT — safe`);
   const status = conditions(unit);
-  if (status.length) return status.join(' · ');
-  const bits = [unit.roleLabel.toLowerCase()];
+  if (unit.landed && status.length) return html('div', 'slot-line slot-warn', status.join(' · '));
+  const bits = [unit.roleLabel];
   if (unit.charges > 0) bits.push(`${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
   if (unit.commandBonus > 0) bits.push(`+${unit.commandBonus} orders`);
-  return bits.join(' · ');
+  if (unit.leader) bits.push('leading');
+  return html('div', 'slot-line', bits.join(' · '));
+}
+
+function whereLine(unit, view) {
+  if (unit.dead) return 'left where he fell';
+  if (unit.out) return 'at the exfil';
+  if (!unit.landed) return 'in the aircraft';
+  return view.place(unit);
 }
 
 function conditions(unit) {
@@ -88,16 +104,7 @@ function conditions(unit) {
   return parts;
 }
 
-/** A rubber stamp across the portrait for the states that matter at a glance. */
-function stampFor(unit) {
-  if (unit.dead) return { text: 'KILLED' };
-  if (unit.out) return { text: 'OUT', className: 'safe' };
-  if (unit.inContact) return { text: 'IN CONTACT', className: 'warn' };
-  if (unit.hits > 0 && !unit.stabilised) return { text: 'WOUNDED', className: 'warn' };
-  return null;
-}
-
-/** The rollover: who he is, where he is, what he carries, and what his traits do. */
+/** The rollover: his portrait, who he is, where he is, what he carries, and what his traits do. */
 function describeUnit(unit, number, state, map, view) {
   const lines = [`${number}. ${unit.roleLabel}${unit.leader ? ' · leading the stick' : ''}`];
   if (unit.dead) lines.push('Killed.');
@@ -105,7 +112,7 @@ function describeUnit(unit, number, state, map, view) {
   else if (!unit.landed) lines.push('In the aircraft.');
   else {
     const terrain = terrainAt(map, unit.q, unit.r);
-    lines.push(`In ${view.place(unit)}${terrain ? ` (${terrain.label.toLowerCase()}, cover ${terrain.cover})` : ''}.`);
+    lines.push(`In ${view.place(unit)}${terrain ? ` (cover ${terrain.cover})` : ''}.`);
     lines.push(`${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders from the leader)` : ''} · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
     const status = conditions(unit);
     if (status.length) lines.push(status.join(' · '));
@@ -116,6 +123,5 @@ function describeUnit(unit, number, state, map, view) {
   for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
     lines.push(`${effect.name} — ${describeEffect(effect)}`);
   }
-  const heading = html('b', null, unit.name);
-  return [heading, `\n${lines.join('\n')}`];
+  return [face(unit.id, 'popup-portrait'), html('b', null, unit.name), `\n${lines.join('\n')}`];
 }
