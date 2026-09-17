@@ -70,6 +70,10 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     outcome: null,
     // What happened at the last turn boundary, for the turn report.
     report: [],
+    // Dialogue being spoken on the board (SPEC.md §5, §11): { unitId, line },
+    // at most one per man. Set when a man lands, places a charge or is wounded;
+    // his line goes when he next spends AP, and all of them at the turn boundary.
+    speech: [],
     selectedUnitId: null,
     selectedHex: null, // hex inspection, from M0; survives alongside unit selection
     hoverHex: null,
@@ -214,7 +218,32 @@ export function jump(state, map, rules) {
   const run = runById(map, state.dropRunId);
   if (!run) return state;
   const landings = scatterStick(map, rules, run, state.units, state.enemies, createRng(state.seed));
-  return landStick(state, landings, map, rules).state;
+  const landed = landStick(state, landings, map, rules);
+  return { ...landed.state, speech: speechFrom(landed.events, landed.state.units) };
+}
+
+/**
+ * The lines said at a turn boundary or a landing: a man coming down says his
+ * onLand line, or his onWounded line if he came down wounded; a man hit says
+ * his onWounded line. The dead say nothing.
+ */
+function speechFrom(events, units) {
+  let speech = [];
+  for (const event of events) {
+    const unit = units.find((u) => u.id === event.unitId);
+    if (!unit || !onBoard(unit)) continue;
+    let line = null;
+    if (event.kind === 'landed') line = event.outcome === 'wounds' ? unit.dialogue?.onWounded : unit.dialogue?.onLand;
+    else if (event.kind === 'wounded') line = unit.dialogue?.onWounded;
+    if (line) speech = say(speech, unit.id, line);
+  }
+  return speech;
+}
+
+/** Give a man a line, replacing any he was already saying; null silences him. */
+function say(speech, unitId, line) {
+  const others = (speech ?? []).filter((s) => s.unitId !== unitId);
+  return line ? [...others, { unitId, line }] : others;
 }
 
 export function selectUnit(state, unitId) {
@@ -251,9 +280,11 @@ export function setHover(state, hex) {
  */
 export function moveUnit(state, unitId, plan, map = null) {
   const destination = plan.path[plan.path.length - 1];
+  const speech = say(state.speech, unitId, null);
   if (map && isExfil(map, destination)) {
     return {
       ...state,
+      speech,
       units: state.units.map((unit) => (
         unit.id === unitId
           ? { ...unit, q: destination.q, r: destination.r, ap: 0, out: true, hidden: false, inContact: false, trail: [] }
@@ -264,6 +295,7 @@ export function moveUnit(state, unitId, plan, map = null) {
   }
   return {
     ...state,
+    speech,
     units: state.units.map((unit) => (
       unit.id === unitId
         ? {
@@ -297,6 +329,7 @@ export function holdUnit(state, unitId) {
 function spend(state, unitId, cost, changes = {}) {
   return {
     ...state,
+    speech: say(state.speech, unitId, null),
     units: state.units.map((u) => (
       u.id === unitId ? { ...u, ap: Math.max(0, u.ap - cost), hidden: false, ...changes } : u
     )),
@@ -379,8 +412,10 @@ export function placeCharge(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
   const check = checkPlaceCharge(state, unit, rules);
   if (!check.ok) return state;
+  const spent = spend(state, unitId, check.cost, { charges: unit.charges - 1 });
   return {
-    ...spend(state, unitId, check.cost, { charges: unit.charges - 1 }),
+    ...spent,
+    speech: say(spent.speech, unitId, unit.dialogue?.onPlaceCharge ?? null),
     charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, unitId }],
   };
 }
@@ -468,6 +503,7 @@ function playOutTurn(state, rules, baseMap, dawn) {
     ...next,
     turn: dawn ? state.turn : state.turn + 1,
     report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events],
+    speech: speechFrom(detected.events, next.units),
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.
     // A turn lost to a bad landing is spent now.
