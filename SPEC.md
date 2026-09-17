@@ -429,6 +429,17 @@ bridge's two fuses together is therefore worth a whole alert step.
 The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
 Blow the bridge last and you may not have turns left to reach exfil.
 
+**Only the primary is needed to win (§10).** The secondaries are worth score and cost
+alert, and nothing else. The panel labels them "optional, +2" so they do not read as a
+checklist.
+
+**To consider at M8 — secondary payoffs.** As written, a secondary makes the mission harder
+and gives nothing back in play, so §8's "choosing which secondary objective is realistic"
+has little pull. Candidates, to be tested in the balance pass rather than built earlier:
+cutting or blowing the exchange delays or cancels the reserve squad (§6); blowing the fuel
+dump takes a patrol off the board (the tank laager crew go to fight the fire). Each would be a
+per-kind entry in `rules.json`, never a code branch for one objective.
+
 ---
 
 ## 8. Routes
@@ -539,9 +550,29 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Units are **counters**: rounded squares, drop shadow, symbol, name strip. They snap down
   with a 2-frame stepped rotation. No smooth easing anywhere — stepped animation reads as
   hand-made.
-- Speech bubbles for dialogue, hand-lettered feel, tail pointing at the counter.
-- Condensed slab display face for headings, system stack fallback.
+- Speech bubbles for dialogue on the board, tail pointing at the man's counter. Dialogue
+  stays on the board, not in the roster rail.
+- **Type is not comic lettering.** The annual look comes from the print, paper and colour.
+  Text on the right page is a typewriter face, a Courier (`Courier 10 Pitch`, then
+  `Courier New`, `Courier`, `monospace`), so it reads as a typed briefing; speech bubbles
+  use it too. A condensed slab may still set big headings. Pin the board's label face
+  rather than leaving it to the browser's default monospace.
+- A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,
+  no new terrain. It is the landmark Vance's landing line refers to, and spires were how
+  real sticks checked they had been dropped in the right place.
 - "CUT OUT AND PLAY" margin note in the outer gutter.
+
+**Right page layout (notes for M7, from the operator's review of M6).** The panel is too
+busy and the roster runs off the bottom at 1280x800. At M7:
+
+- The turn counter, End turn and the selected man's actions stay on the right page, in a
+  fixed strip at its top. They do not move to the left page.
+- The roster rail fits at 1280x800 without scrolling: six compact slots.
+- Detail moves into rollover popups: the drop-run descriptions (on the run's button and
+  its flight line), the keyboard list, the alert thresholds (on the dial), and the terrain
+  legend (on hex hover, folded into the readout). The legend row under the board and the
+  coordinates printed on every hex are build scaffolding and go.
+- The hover readout (§4) stays always visible; it is the risk display, not detail.
 
 **Architecture requirement:** all art is referenced by sprite id through `theme.js`,
 rendered as SVG `<symbol>` / `<use>`. Procedural shapes now, hand-drawn SVG later, swapped
