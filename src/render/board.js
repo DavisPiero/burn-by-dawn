@@ -61,10 +61,11 @@ export function createBoard(svg, map, handlers) {
 
   const terrain = el('g', { 'clip-path': 'url(#board-edge)' });
   // Everything below is overlay: it must never eat a pointer event meant for
-  // the hex underneath it.
-  const vision = el('g', { 'pointer-events': 'none' });
-  const sites = el('g', { 'pointer-events': 'none' });
-  const reachable = el('g', { 'pointer-events': 'none' });
+  // the hex underneath it. Areas drawn over the terrain are clipped to the same
+  // border, so a tint or outline on an edge hex stops flush with it.
+  const vision = el('g', { 'pointer-events': 'none', 'clip-path': 'url(#board-edge)' });
+  const sites = el('g', { 'pointer-events': 'none', 'clip-path': 'url(#board-edge)' });
+  const reachable = el('g', { 'pointer-events': 'none', 'clip-path': 'url(#board-edge)' });
   const routes = el('g', { 'pointer-events': 'none' });
   const path = el('g', { 'pointer-events': 'none' });
   const highlight = el('g', { 'pointer-events': 'none' });
@@ -540,7 +541,9 @@ function drawReachable(layers, reachable) {
 /**
  * One line round the outside of a set of hexes (a Map keyed by hexKey): every
  * hex edge whose neighbour is not in the set, stroked once per [colour, width]
- * pair, widest first, so the line can be cased.
+ * pair, widest first, so the line can be cased. Edges facing off the board are
+ * left open: the border closes the area, and stroking them drew a sawtooth
+ * past it.
  */
 function drawAreaEdge(layers, layer, area, strokes) {
   const { corners, map } = layers;
@@ -549,7 +552,7 @@ function drawAreaEdge(layers, layer, area, strokes) {
   for (const { q, r } of area.values()) {
     const center = axialToPixel(q, r, map.hexSize);
     NEIGHBOR_DIRS.forEach((d, dir) => {
-      if (area.has(hexKey(q + d.q, r + d.r))) return;
+      if (area.has(hexKey(q + d.q, r + d.r)) || !isInPlay(map, q + d.q, r + d.r)) return;
       const [a, b] = edges[dir].map((i) => corners[i]);
       outline += `M${center.x + a.x},${center.y + a.y} L${center.x + b.x},${center.y + b.y} `;
     });
