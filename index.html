@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <title>Night Drop</title>
   <style>
+    /* Type for the right-hand page (DECISIONS.md, 2026-09-17): a typewriter
+       face, so it reads as a typed briefing. The comic-annual look is carried
+       by paper, print and colour, not lettering. Courier 10 Pitch if the
+       machine has it, else the Courier every Mac and Windows box ships. */
+    :root {
+      --typewriter: "Courier 10 Pitch", "Courier New", Courier, monospace;
+    }
     html, body {
       margin: 0;
       height: 100%;
@@ -115,9 +122,10 @@
       gap: 10px;
       min-height: 0;
       overflow-y: auto;
+      font-family: var(--typewriter);
     }
     #turn-counter {
-      font-family: ui-monospace, monospace;
+      font-family: var(--typewriter);
       font-size: 22px;
       font-weight: bold;
       letter-spacing: 1px;
@@ -152,7 +160,7 @@
       height: 104px;
     }
     #alert-caption {
-      font-family: ui-monospace, monospace;
+      font-family: var(--typewriter);
       font-size: 12px;
       line-height: 1.35;
     }
@@ -209,7 +217,7 @@
       opacity: 0.55;
     }
     .roster-key {
-      font-family: ui-monospace, monospace;
+      font-family: var(--typewriter);
       font-weight: bold;
       color: #5c6b4a;
     }
@@ -242,7 +250,7 @@
       cursor: default;
     }
     .roster-status {
-      font-family: ui-monospace, monospace;
+      font-family: var(--typewriter);
       font-size: 10px;
       font-weight: bold;
       letter-spacing: 0.5px;
@@ -284,7 +292,7 @@
       opacity: 0.8;
     }
     .roster-ap {
-      font-family: ui-monospace, monospace;
+      font-family: var(--typewriter);
       font-size: 12px;
       white-space: nowrap;
     }
@@ -332,7 +340,7 @@
     #results ul { margin: 0 0 6px; padding-left: 18px; }
     #results .fate-lost { color: #c1272d; }
     #results table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    #results td:last-child { text-align: right; font-family: ui-monospace, monospace; }
+    #results td:last-child { text-align: right; font-family: var(--typewriter); }
     #results .total td { border-top: 2px solid #1a1a18; font-weight: bold; }
     #results button { font: inherit; font-weight: bold; padding: 4px 10px; cursor: pointer; }
     #keys {
