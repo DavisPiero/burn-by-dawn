@@ -292,7 +292,7 @@ Wounded troopers drop to 1 AP and cannot carry a charge; a charge he was carryin
 on his hex for anyone to pick up (§4 Actions). Another trooper can spend a full turn
 adjacent to stabilise him (§4 Actions). Dead is permanent — there is one mission, and that
 is it. A dead trooper leaves a **body** on his hex, found by enemies the same way as a
-parachute (§9): alert +1, once.
+parachute (§9) — an enemy has to walk onto his hex: alert +1, once.
 
 ### Dialogue
 
@@ -450,8 +450,15 @@ The drop is not a cutscene. It is the first decision, and it is how the player c
 
 Before turn 1, the player picks one of **three drop runs** (north, east, west), drawn as a
 flight line across the map with a wind arrow. The run decides which corridor the stick
-lands nearest. Each trooper then lands with **small seeded scatter**, 1–2 hexes, rarely 3.
-Landing in Wood or Marsh costs that trooper their first turn. Landing in Canal wounds them.
+lands nearest: west on the wood and ridge line, north on the hedgerow lanes, east on the
+canal towpath above the bridge. All three land west of the canal, so nobody starts on the
+wrong side of the chokepoint. The men jump in roster order along the flight line. Each
+trooper then lands with **small seeded scatter**, 1–2 hexes, rarely 3, leaning **downwind**.
+Nobody lands out of play, on the exfil, on impassable ground other than the canal, on
+another man, or within 2 hexes of an enemy.
+Landing in Wood or Marsh costs that trooper their first turn: he has no AP on turn 1.
+Landing in Canal wounds them, and he drags himself out onto the nearest bank, where his
+parachute ends up with him.
 
 Scatter stays small. It is texture, not chaos. The player's plan should survive it.
 
@@ -464,9 +471,10 @@ does about it is the second decision of turn 1.
 
 - A trooper standing on his own parachute can **pack it up for 1 AP**, removing it. Only
   his own, only from that hex. He cannot go back for someone else's.
-- A parachute left behind is found when an enemy moves **onto or adjacent to** it during
-  the enemy phase: alert **+1**, the parachute is removed, and that hex becomes a last
-  known contact (§6). Found once, never again.
+- A parachute left behind is found when an enemy **walks onto its hex** during the enemy
+  phase, passing through or stopping there. Being beside it is not enough. Alert **+1**,
+  the parachute is removed, and that hex becomes a last known contact (§6). Found once,
+  never again. A man standing on his parachute keeps it safe, since no enemy can enter his hex.
 - Patrol routes are drawn, so the player can see which parachutes are actually at risk
   before deciding. This is a visible cost, not a hidden one.
 
