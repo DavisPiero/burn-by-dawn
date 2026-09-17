@@ -22,15 +22,17 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
+import { renderRoster } from './render/roster.js';
+import { applyDocumentTheme } from './render/theme.js';
 import {
-  describeDetection, describePlan, describeRisk, renderActions, renderAlertDial, renderDiversion, renderDropRuns,
-  renderEndTurnButton, renderError, renderLegend, renderMission, renderReadout, renderReport, renderResults,
-  renderRoster, renderSeed, renderTurnCounter,
+  DIVERSION_HELP, attachPopup, describeAlertStates, describeDetection, describePlan, describeRisk, describeRun,
+  hidePopup, placeName, renderActions, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
+  renderEndTurnButton, renderError, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
+  renderResults, renderSeed, renderTurnCounter, showPopup,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
 const readout = document.getElementById('coord-readout');
-const legend = document.getElementById('legend');
 const errorBox = document.getElementById('error');
 const turnCounter = document.getElementById('turn-counter');
 const endTurnButton = document.getElementById('end-turn');
@@ -43,6 +45,10 @@ const diversionButton = document.getElementById('diversion');
 const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
+const dawnStrip = document.getElementById('dawn-strip');
+const gutterNote = document.getElementById('gutter-note');
+const keysTab = document.getElementById('keys-tab');
+const alertBox = document.getElementById('alert');
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -52,6 +58,10 @@ let baseMap = null;
 let map = null;
 let rules = null;
 let layers = null;
+// Interface only, never game state: the hex a hovered report line points at,
+// and the last derived view, for rollovers built when they are shown.
+let highlightHex = null;
+let currentView = null;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -92,8 +102,12 @@ function deriveView() {
   for (const e of state.enemies) if (e.investigating && !e.investigating.searched) searchHexes.set(hexKey(e.investigating.q, e.investigating.r), e.investigating);
   if (state.contact && !state.contact.searched) searchHexes.set(hexKey(state.contact.q, state.contact.r), state.contact);
 
+  const exfil = baseMap.exfil.map(([q, r]) => ({ q, r }));
   const view = {
     traitEffectsById,
+    // Hexes carry no printed coordinates (SPEC.md §11), so text names places.
+    place: (h) => placeName(map, state.objectives, exfil, h),
+    highlightHex,
     visionById: visionById(),
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
@@ -106,6 +120,7 @@ function deriveView() {
       points: state.alert.points,
       quietTurns: state.alert.quietTurns,
       quietTurnsToDecay: rules.alert.quietTurnsToDecay,
+      floor: state.explosions > 0 ? rules.alert.states.find((s) => s.id === rules.explosionFloor)?.label ?? null : null,
     },
     reachable: null,
     plan: null,
@@ -119,7 +134,7 @@ function deriveView() {
     hearsIds: null,
     // SPEC.md §7, §10: the exfil, what the hovered objective needs, and the
     // ground a charge going off this turn would kill a man on.
-    exfil: baseMap.exfil.map(([q, r]) => ({ q, r })),
+    exfil,
     blastArea: areaAround(blastHexesThisTurn(state, rules)),
     hoverObjective: null,
     previewBlastArea: null,
@@ -175,7 +190,7 @@ function deriveView() {
       const shot = unit.inContact && result.spotted && result.firing;
       return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null };
     });
-    view.riskLabel = describeRisk(plan, view.risk);
+    view.riskLabel = describeRisk(plan, view.risk, view.place);
     const end = plan.path[plan.path.length - 1];
     if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
       view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
@@ -207,7 +222,7 @@ function deriveDrop(view, hex) {
     area: selected ? dropArea(map, rules, selected, state.units, state.enemies) : null,
   };
   view.dropRuns = baseMap.dropRuns.map((run, i) => ({
-    id: run.id, key: String(i + 1), label: run.label, description: run.description, selected: run.id === state.dropRunId,
+    id: run.id, key: String(i + 1), label: run.label, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
   }));
   if (!hex) {
     view.dropLabel = selected
@@ -300,8 +315,8 @@ function actionsFor(unit) {
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     { id: 'stone', key: 'T', label: 'Throw stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
     { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
-    { id: 'pack', key: 'U', label: 'Pack parachute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
-    { id: 'pickUp', key: 'P', label: 'Pick up charge', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
+    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
+    { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
@@ -362,7 +377,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const who = hears.length === 0
         ? 'nobody would hear it'
         : hears.map((e) => `${e.label} ${e.speed === 0 ? 'turns' : 'goes to look'}`).join(', ');
-      view.targetLabel = `Throw a stone at (${hex.q}, ${hex.r}) — ${check.cost} AP, alert +${rules.alert.stone}: ${who}. Click to throw.`;
+      view.targetLabel = `Throw a stone into ${view.place(hex)} — ${check.cost} AP, alert +${rules.alert.stone}: ${who}. Click to throw.`;
     } else {
       view.targetLabel = check ? `Throw a stone: ${check.reason}.` : 'Throw a stone: click a hex. Esc to cancel.';
     }
@@ -370,7 +385,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const h of swimTargets(map, state, unit, rules)) add(h);
     const check = hex ? checkSwim(map, state, unit, hex, rules) : null;
     view.targetLabel = check?.ok
-      ? `Swim to (${hex.q}, ${hex.r}) — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
+      ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
       : check ? `Swim: ${check.reason}.` : 'Swim: click the bank straight across the water. Esc to cancel.';
   } else if (kind === 'stabilise') {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);
@@ -387,10 +402,12 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 function render() {
   map = effectiveMap(baseMap, state.objectives, rules);
   const view = deriveView();
+  currentView = view;
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
-  renderReport(reportList, state);
+  renderReport(reportList, state, view.place, locateHex);
   renderTurnCounter(turnCounter, state, rules);
+  renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
   renderRoster(rosterList, state, map, view, handleRosterClick);
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
@@ -399,6 +416,17 @@ function render() {
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome);
+}
+
+/**
+ * A hovered report line rings its hex. Only the board is redrawn, so the line
+ * under the mouse is not rebuilt out from under it.
+ */
+function locateHex(hex) {
+  highlightHex = hex;
+  const view = deriveView();
+  currentView = view;
+  renderPieces(layers, state, view);
 }
 
 /**
@@ -414,6 +442,7 @@ function commit(next) {
 
 function handleHexClick(q, r) {
   if (state.outcome || state.phase === 'drop') return;
+  highlightHex = null;
   if (state.targeting) {
     handleTargetClick(q, r);
     render();
@@ -644,6 +673,7 @@ function handleKey(event) {
 window.dispatchEvent(new Event('night-drop-started'));
 
 try {
+  applyDocumentTheme();
   baseMap = await loadMap();
   map = baseMap;
   rules = await loadJson('data/rules.json');
@@ -663,6 +693,9 @@ try {
     onHexClick: handleHexClick,
     onHexHover: handleHexHover,
     onHexLeave: handleHexLeave,
+    // A drop run's name on the board has the same rollover as its button.
+    onRunHover: (runId, anchor) => showPopup(anchor, describeRun(currentView.dropRuns.find((r) => r.id === runId))),
+    onRunLeave: hidePopup,
   });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of
@@ -676,7 +709,10 @@ try {
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
 
-  renderLegend(legend, map);
+  renderGutter(gutterNote);
+  renderKeys(keysTab);
+  attachPopup(alertBox, () => describeAlertStates(currentView.alert));
+  attachPopup(diversionButton, DIVERSION_HELP);
   render();
 
   // The board is up. The failure reporter in index.html stops attributing
