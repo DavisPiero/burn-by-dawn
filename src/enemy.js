@@ -385,7 +385,7 @@ export function runDetection(state, map, rules) {
  * way his charges leave him — runDetection drops them on his hex — and a
  * wounded man is no longer stabilised, because this is a new wound.
  */
-function applyHit(unit, rules) {
+export function applyHit(unit, rules) {
   const hits = unit.hits + 1;
   const dead = hits >= rules.combat.hitsToKill;
   return {
@@ -497,7 +497,9 @@ function sameHex(a, b) {
  *   Suspicious   walks, but stops and sweeps every `suspiciousPauseEvery`-th turn.
  *   otherwise    walks its route.
  *
- * Any enemy that ends its go on or beside an unfound body finds it (SPEC.md §5).
+ * Any enemy that walks onto an unfound body or a parachute this phase — passing
+ * through or stopping — finds it (SPEC.md §5, §9): alert up, a noise there, and
+ * it is found once. Standing beside one is not finding it.
  * Enemies cannot pass through troopers or each other. Suppression wears off at
  * the end of the phase.
  */
@@ -508,6 +510,7 @@ export function runEnemyPhase(state, map, rules) {
   let reserveDeployed = state.reserveDeployed;
   let alert = state.alert;
   let bodies = state.bodies;
+  let parachutes = state.parachutes ?? [];
   const alertBefore = state.alert.points;
   const noises = [];
   const living = state.units.filter(onBoard);
@@ -533,6 +536,7 @@ export function runEnemyPhase(state, map, rules) {
     const enemy = enemies[i];
     const blocked = blockedFor(living, enemies, enemy.id);
     let moved = enemy;
+    let entered = []; // every hex it walks onto this go
 
     if (enemy.suppressed) {
       moved = { ...enemy, holding: null };
@@ -551,12 +555,15 @@ export function runEnemyPhase(state, map, rules) {
       if (sameHex(enemy, enemy.guard)) {
         moved = enemy;
       } else {
-        moved = walkToward(map, enemy, enemy.guard, blocked, enemy.speed, rules).enemy;
+        const result = walkToward(map, enemy, enemy.guard, blocked, enemy.speed, rules);
+        moved = result.enemy;
+        entered = result.steps;
         if (sameHex(moved, enemy.guard)) moved = { ...moved, facing: moved.homeFacing };
       }
     } else if (hunting) {
       const result = walkToward(map, enemy, contact, blocked, enemy.speed, rules);
       moved = result.enemy;
+      entered = result.steps;
       if (result.arrived || result.stuck) {
         moved = { ...sweep(moved, rules), investigating: null };
         if (!contact.searched) {
@@ -568,6 +575,7 @@ export function runEnemyPhase(state, map, rules) {
       const goal = enemy.investigating;
       const result = walkToward(map, enemy, goal, blocked, enemy.speed, rules);
       moved = result.enemy;
+      entered = result.steps;
       if (result.arrived || result.stuck) {
         moved = { ...sweep(moved, rules), investigating: null };
         // The first to get there reports the search. Anyone else still on the
@@ -585,23 +593,32 @@ export function runEnemyPhase(state, map, rules) {
     } else if (pauses) {
       moved = sweep(enemy, rules);
     } else if (enemy.route) {
-      moved = walkRoute(map, enemy, blocked, rules);
+      ({ enemy: moved, steps: entered } = walkRouteSteps(map, enemy, blocked, rules));
     }
     enemies = enemies.map((e, j) => (j === i ? moved : e));
 
+    const walkedOn = (hex) => entered.some((step) => sameHex(step, hex));
     bodies = bodies.map((body) => {
-      if (body.found || hexDistance(moved, body) > 1) return body;
+      if (body.found || !walkedOn(body)) return body;
       alert = raiseAlert(alert, rules.alert.bodyFound, rules);
       noises.push({ kind: 'found', q: body.q, r: body.r });
       events.push({ kind: 'bodyFound', label: moved.label, name: body.name, q: body.q, r: body.r });
       return { ...body, found: true };
+    });
+    // A found parachute is gone: taken away as evidence (SPEC.md §9).
+    parachutes = parachutes.filter((chute) => {
+      if (!walkedOn(chute)) return true;
+      alert = raiseAlert(alert, rules.alert.parachuteFound, rules);
+      noises.push({ kind: 'found', q: chute.q, r: chute.r });
+      events.push({ kind: 'parachuteFound', label: moved.label, name: chute.name, q: chute.q, r: chute.r });
+      return false;
     });
   }
 
   enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false } : e));
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
-    state: { ...state, enemies, contact, reserveDeployed, alert, bodies, noises },
+    state: { ...state, enemies, contact, reserveDeployed, alert, bodies, parachutes, noises },
     events,
   };
 }
@@ -630,24 +647,26 @@ function sweep(enemy, rules) {
  * occupied it walks up beside it. `minimumStep` applies as it does to
  * troopers: with nothing spent yet, one step is always allowed.
  *
- * Returns { enemy, spent, arrived, stuck }: `arrived` is standing on the goal
- * or beside an occupied one; `stuck` is no route at all.
+ * Returns { enemy, spent, arrived, stuck, steps }: `arrived` is standing on the
+ * goal or beside an occupied one; `stuck` is no route at all; `steps` is every
+ * hex it walked onto, in order.
  */
 export function walkToward(map, enemy, goal, blocked, budget, rules) {
   const goalKey = hexKey(goal.q, goal.r);
   const occupiedGoal = blocked.has(goalKey);
   const arrivedAt = (e) => (e.q === goal.q && e.r === goal.r) || (occupiedGoal && hexDistance(e, goal) === 1);
-  if (arrivedAt(enemy)) return { enemy, spent: 0, arrived: true, stuck: false };
+  if (arrivedAt(enemy)) return { enemy, spent: 0, arrived: true, stuck: false, steps: [] };
 
   // Path as if the goal were free, so an occupied goal still gives a route to
   // walk up to; the walk below stops before any hex that is actually taken.
   const open = new Set(blocked);
   open.delete(goalKey);
   const path = findPath(map, enemy, goal, open);
-  if (!path) return { enemy, spent: 0, arrived: false, stuck: true };
+  if (!path) return { enemy, spent: 0, arrived: false, stuck: true, steps: [] };
 
   let current = enemy;
   let spent = 0;
+  const steps = [];
   for (let i = 1; i < path.length; i++) {
     const next = path[i];
     if (blocked.has(hexKey(next.q, next.r))) break;
@@ -655,16 +674,23 @@ export function walkToward(map, enemy, goal, blocked, budget, rules) {
     const firstStep = spent === 0 && rules.minimumStep;
     if (spent + cost > budget && !firstStep) break;
     current = { ...current, q: next.q, r: next.r, facing: directionOf(current, next) };
+    steps.push({ q: next.q, r: next.r });
     spent += cost;
     if (spent >= budget) break;
   }
-  return { enemy: current, spent, arrived: arrivedAt(current), stuck: false };
+  return { enemy: current, spent, arrived: arrivedAt(current), stuck: false, steps };
 }
 
 /** Walk the route, carrying on past each waypoint while movement is left. */
 export function walkRoute(map, enemy, blocked, rules) {
+  return walkRouteSteps(map, enemy, blocked, rules).enemy;
+}
+
+/** walkRoute, plus every hex it walked onto: { enemy, steps }. */
+function walkRouteSteps(map, enemy, blocked, rules) {
   let current = enemy;
   let budget = enemy.speed;
+  const steps = [];
   // Each pass either reaches a waypoint or stops, so the route length bounds it.
   for (let guard = 0; guard <= current.route.length + 1; guard++) {
     const target = current.route[current.waypoint];
@@ -681,10 +707,11 @@ export function walkRoute(map, enemy, blocked, rules) {
       break;
     }
     current = result.enemy;
+    steps.push(...result.steps);
     budget -= result.spent;
     if (current.q !== target.q || current.r !== target.r) break;
   }
-  return current;
+  return { enemy: current, steps };
 }
 
 function nextWaypoint(enemy) {

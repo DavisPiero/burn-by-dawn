@@ -76,6 +76,24 @@ export function hexDistance(a, b) {
   return (Math.abs(a.q - b.q) + Math.abs(a.q + a.r - b.q - b.r) + Math.abs(a.r - b.r)) / 2;
 }
 
+/**
+ * Every hex at exactly `radius` from `center`, in a fixed order: starting
+ * `radius` steps W of it and walking the ring clockwise (NE, E, SE, SW, W,
+ * NW legs). Radius 0 is the centre alone.
+ */
+export function hexRing(center, radius) {
+  if (radius === 0) return [{ q: center.q, r: center.r }];
+  const out = [];
+  let hex = { q: center.q + NEIGHBOR_DIRS[5].q * radius, r: center.r + NEIGHBOR_DIRS[5].r * radius };
+  for (const leg of [1, 2, 3, 4, 5, 0]) {
+    for (let i = 0; i < radius; i++) {
+      out.push(hex);
+      hex = { q: hex.q + NEIGHBOR_DIRS[leg].q, r: hex.r + NEIGHBOR_DIRS[leg].r };
+    }
+  }
+  return out;
+}
+
 // The six corner points of a pointy-top hex of the given size, centred on
 // the origin. Rotate by -30° per corner starting from the top-right point.
 export function hexCorners(size) {

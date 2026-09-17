@@ -9,8 +9,10 @@ import {
 } from '../src/enemy.js';
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, hexDistance, hexLine, inArc } from '../src/hex.js';
 import { hasLineOfSight, isInPlay, loadJson, loadMap, terrainIdAt } from '../src/map.js';
+import { jumpPoints } from '../src/drop.js';
 import { createInitialState, endTurn, moveUnit } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
+import { landedState } from './fixtures.js';
 import { planMove } from '../src/units.js';
 
 function assert(condition, message) {
@@ -29,7 +31,7 @@ async function loadAll() {
     loadJson('data/roster.json'),
   ]);
   const traits = validateTraits(traitsJson);
-  return { map, rules, traits, roster, state: createInitialState(roster, traits, rules, map) };
+  return { map, rules, traits, roster, state: landedState(roster, traits, rules, map) };
 }
 
 const facing = (name) => DIRECTION_NAMES.indexOf(name);
@@ -127,14 +129,14 @@ export default [
     assert(visibleHexes(map, e, suspicious, rules).has(`${far.q},${far.r}`), 'in range when suspicious');
   }],
 
-  ['nobody is spotted where the six start', async () => {
+  ['no drop run puts a jump point where a man would be spotted', async () => {
     const { map, rules, state } = await loadAll();
-    for (const unit of state.units) {
-      const d = detectionAt(map, rules, state.enemies, 0, unit, unit);
-      assert(!d || !d.spotted, `${unit.id} is spotted on turn 1`);
+    for (const run of map.dropRuns) {
+      for (const [i, point] of jumpPoints(run, state.units.length).entries()) {
+        const d = detectionAt(map, rules, state.enemies, 0, state.units[i], point);
+        assert(!d || !d.spotted, `${run.id} jump point ${i + 1} (${point.q}, ${point.r}) is spotted`);
+      }
     }
-    const { events } = runDetection(state, map, rules);
-    equal(events.length, 0, 'no events');
   }],
 
   ['a trooper who walks through an arc is spotted there, even if he ends out of it', async () => {

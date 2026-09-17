@@ -72,36 +72,6 @@ function validate(map, terrain, mapUrl, terrainUrl) {
       }
     }
   });
-  // After the rows, so a start hex can trust the grid it indexes into.
-  validateStartHexes(map, terrain, mapUrl);
-}
-
-// Deployment hexes are placeholders until the drop phase at M6, but a trooper
-// standing in a canal is a silent bug, so check them now.
-function validateStartHexes(map, terrain, mapUrl) {
-  if (!Array.isArray(map.startHexes)) {
-    throw new Error(`${mapUrl}: "startHexes" must be an array of [q, r] pairs`);
-  }
-  const seen = new Set();
-  map.startHexes.forEach((hex, i) => {
-    if (!Array.isArray(hex) || hex.length !== 2 || !hex.every(Number.isInteger)) {
-      throw new Error(`${mapUrl}: startHexes[${i}] must be a [q, r] pair of integers, got ${JSON.stringify(hex)}`);
-    }
-    const [q, r] = hex;
-    if (!inBounds(map, q, r)) {
-      throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is off the map`);
-    }
-    if (!isInPlay(map, q, r)) {
-      throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is an edge hex that is out of play`);
-    }
-    const id = map.legend[map.rows[r][columnOf(q, r)]];
-    if (terrain.types[id].moveCost === null) {
-      throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is ${id}, which is impassable`);
-    }
-    const key = `${q},${r}`;
-    if (seen.has(key)) throw new Error(`${mapUrl}: startHexes[${i}] (${q}, ${r}) is already used by another trooper`);
-    seen.add(key);
-  });
 }
 
 const ENEMY_TYPE_FIELDS = ['visionRadius', 'arcDegrees', 'detection', 'speed'];
@@ -131,7 +101,7 @@ function validateEnemyTypes(json, url) {
 function validateEnemies(map, types, mapUrl, enemiesUrl) {
   if (!Array.isArray(map.enemies)) throw new Error(`${mapUrl}: "enemies" must be an array`);
   const ids = new Set();
-  const standing = new Map(map.startHexes.map(([q, r], i) => [hexKey(q, r), `startHexes[${i}]`]));
+  const standing = new Map();
 
   const checkHex = (hex, where, needPassable) => {
     if (!Array.isArray(hex) || hex.length !== 2 || !hex.every(Number.isInteger)) {
