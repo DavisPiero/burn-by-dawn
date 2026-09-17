@@ -175,7 +175,7 @@ export function renderPieces(layers, state, view) {
   }
 
   state.units.forEach((unit, i) => {
-    if (unit.dead) return;
+    if (unit.dead || unit.out) return;
     // The number on the counter is the trooper's place in the roster, which is
     // also his 1-6 hotkey and his position in the panel. One ordering, shown
     // in three places.

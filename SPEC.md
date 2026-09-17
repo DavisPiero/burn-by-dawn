@@ -158,7 +158,7 @@ All costs and modifiers below are numbers in `rules.json`.
   he destroys the exchange at once, silently: no alert, no noise (§7).
 - **Swim** (once the rail bridge is destroyed) — a **full turn**. From a hex beside the
   canal, straight across one canal hex, to the bank opposite. A wounded man cannot swim.
-  He comes out in the open and is tested there like any hex he enters. It exists so a man
+  He cannot hide as he comes out, and is tested on the far bank like any hex he enters. It exists so a man
   is never stranded by his own demolition; while the bridge stands it is the only way
   over, so the chokepoint still matters.
 - **RAF diversion** (once per mission, while the leader is alive) — costs **no AP**, called
@@ -488,8 +488,8 @@ Every mission ends in one of three outcomes:
 - **Withdrawn:** the mission can no longer succeed, but the stick is not wiped out —
   fewer than 3 men are still alive or already out, or there are not enough charges left
   anywhere (carried, dropped or set) to finish the primary. Also: nobody is left on the
-  board and the primary is intact. The mission ends at once: any charges still burning go
-  off first, then every man still on the board gets out.
+  board and the primary is intact. The mission ends at once: every man still on the board
+  gets out, then any charges still burning go off (they can still finish an objective).
 - **Failed:** dawn arrives (the end of turn 20) without success, or every man is dead.
   A man still on the board at dawn is left behind and does not count as out.
 

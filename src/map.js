@@ -195,6 +195,12 @@ function validateEnemies(map, types, mapUrl, enemiesUrl) {
     throw new Error(`${where} needs at least one "entryHexes" [q, r]`);
   }
   reserve.entryHexes.forEach((hex, i) => checkHex(hex, `${where} entryHexes[${i}]`, true));
+  // Where it stands watching the exfil once it is on (SPEC.md §6 Exfil watched).
+  checkHex(reserve.guardHex, `${where} guardHex`, true);
+  checkFacing(reserve.guardFacing, `${where} guard`);
+  if (!findPath(map, { q: reserve.entryHexes[0][0], r: reserve.entryHexes[0][1] }, { q: reserve.guardHex[0], r: reserve.guardHex[1] }, null)) {
+    throw new Error(`${where} cannot walk from entryHexes[0] to guardHex`);
+  }
 }
 
 // Column index of an axial coord within its row. Rows are shifted so the

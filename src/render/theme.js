@@ -40,6 +40,7 @@ const TERRAIN_STYLES = {
   emplacement: { fill: '#C1272D', ink: PALETTE.paper },
   bridge: { fill: '#6E6353', ink: PALETTE.paper },
   lock: { fill: '#5B7488', ink: PALETTE.paper },
+  depot: { fill: '#4A4A42', ink: PALETTE.paper },
 };
 
 // A terrain id with no style yet still draws, in a colour that looks wrong on

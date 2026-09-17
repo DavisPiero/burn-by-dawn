@@ -13,7 +13,7 @@ import {
 import { validateTraits } from './traits.js';
 import {
   checkHide, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
-  planMove, reachableFor, traitEffects, unitAt,
+  onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
 import {
@@ -145,7 +145,7 @@ function deriveView() {
 // "ok" means he could take them against something.
 function actionsFor(unit) {
   const patients = state.units.filter((u) => (
-    !u.dead && u.id !== unit.id && hexDistance(u, unit) === 1 && u.hits > 0 && !u.stabilised
+    onBoard(u) && u.id !== unit.id && hexDistance(u, unit) === 1 && u.hits > 0 && !u.stabilised
   ));
   const stabilise = patients.length === 0
     ? { ok: false, cost: unit.apMax, reason: 'no wounded man beside him' }
@@ -329,7 +329,7 @@ function handleKey(event) {
 
   if (key >= '1' && key <= '9') {
     const unit = state.units[Number(key) - 1];
-    if (unit && !unit.dead) {
+    if (unit && onBoard(unit)) {
       state = selectUnit(state, unit.id);
       render();
     }

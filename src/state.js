@@ -3,23 +3,30 @@
 // ever reads (CLAUDE.md hard rule 7).
 //
 // SPEC.md §4 gives a turn five phases: player, detection, enemy, fuse, alert
-// decay. endTurn runs everything after the player phase. The fuse phase
-// arrives with charges at M5b. Save/load arrives when there is a mission worth
-// saving.
+// decay. endTurn runs everything after the player phase, then settleMission
+// asks whether the mission is over (SPEC.md §10). Save/load arrives when there
+// is a mission worth saving.
 //
 // The player-phase actions of SPEC.md §4 are here too. units.js says whether a
 // man can take one; these take it.
 
-import { createAlert, createEnemies, decayAlert, makeNoise, runDetection, runEnemyPhase } from './enemy.js';
+import {
+  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, runDetection, runEnemyPhase,
+} from './enemy.js';
+import {
+  checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
+} from './sabotage.js';
+import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
 import {
   checkHide, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
-  createUnits, fillActionPoints, unitById,
+  createUnits, fillActionPoints, onBoard, unitById,
 } from './units.js';
 
 /** `traits` is the validated table from traits.js validateTraits. */
 export function createInitialState(roster, traits, rules, map) {
   validateRules(rules);
+  validateSabotage(map, rules);
   return {
     turn: 1,
     units: createUnits(roster, traits, rules, map.startHexes),
@@ -34,6 +41,15 @@ export function createInitialState(roster, traits, rules, map) {
     bodies: [],
     droppedCharges: [],
     reserveDeployed: false,
+    // SPEC.md §7: the objectives as they stand, and charges set and burning:
+    // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
+    // explosion floor (§6).
+    objectives: createObjectives(map),
+    charges: [],
+    explosions: 0,
+    diversionUsed: false, // the RAF diversion, once per mission (§4)
+    // Null while the mission is on; set once by settleMission (§10).
+    outcome: null,
     // What happened at the last turn boundary, for the turn report.
     report: [],
     selectedUnitId: null,
@@ -129,6 +145,29 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.actions?.throwStone?.apCost, '"actions.throwStone.apCost"', rulesUrl);
   requireCount(rules.actions.throwStone.range, '"actions.throwStone.range"', rulesUrl);
   requireCount(rules.actions?.pickUpCharge?.apCost, '"actions.pickUpCharge.apCost"', rulesUrl);
+
+  // Sabotage, exfil, the diversion and the score, SPEC.md §4, §7, §10. The
+  // objectives themselves are checked against map.json in sabotage.js.
+  requireCount(rules.noise.explosion, '"noise.explosion"', rulesUrl);
+  for (const key of ['primary', 'secondary', 'perTrooperOut', 'clean']) {
+    requireCount(rules.scoring?.[key], `"scoring.${key}"`, rulesUrl);
+  }
+  if (!Number.isInteger(rules.scoring.turnsPerPoint) || rules.scoring.turnsPerPoint < 1) {
+    throw new Error(`${rulesUrl}: "scoring.turnsPerPoint" must be a positive integer`);
+  }
+  if (!rules.alert.states.some((s) => s.id === rules.scoring.cleanNeverReached)) {
+    throw new Error(`${rulesUrl}: "scoring.cleanNeverReached" must be an alert state id`);
+  }
+  requireCount(rules.mission?.minimumOut, '"mission.minimumOut"', rulesUrl);
+  requireCount(rules.diversion?.uses, '"diversion.uses"', rulesUrl);
+  requireCount(rules.diversion.statesDown, '"diversion.statesDown"', rulesUrl);
+  for (const [id, role] of Object.entries(rules.roles)) {
+    for (const flag of ['suppress', 'cutLine']) {
+      if (role[flag] !== undefined && typeof role[flag] !== 'boolean') {
+        throw new Error(`${rulesUrl}: role "${id}" "${flag}" must be true or false`);
+      }
+    }
+  }
 }
 
 function requireCount(value, what, rulesUrl) {
@@ -138,7 +177,8 @@ function requireCount(value, what, rulesUrl) {
 }
 
 export function selectUnit(state, unitId) {
-  if (unitById(state.units, unitId)?.dead) return state;
+  const unit = unitById(state.units, unitId);
+  if (!unit || !onBoard(unit)) return state;
   return { ...state, selectedUnitId: unitId, selectedHex: null, targeting: null };
 }
 
@@ -163,9 +203,24 @@ export function setHover(state, hex) {
  * A minimum-step move costs more than the unit has, so AP floors at zero
  * rather than going negative. Unused AP is not banked (SPEC.md §4) — the
  * refill at endTurn is unconditional.
+ *
+ * A man who ends his move on an exfil hex is out (SPEC.md §10): off the board
+ * at once, safe, and never tested on the way — he is gone before the
+ * detection phase. `map` may be omitted where exfil does not matter.
  */
-export function moveUnit(state, unitId, plan) {
+export function moveUnit(state, unitId, plan, map = null) {
   const destination = plan.path[plan.path.length - 1];
+  if (map && isExfil(map, destination)) {
+    return {
+      ...state,
+      units: state.units.map((unit) => (
+        unit.id === unitId
+          ? { ...unit, q: destination.q, r: destination.r, ap: 0, out: true, hidden: false, inContact: false, trail: [] }
+          : unit
+      )),
+      selectedUnitId: state.selectedUnitId === unitId ? null : state.selectedUnitId,
+    };
+  }
   return {
     ...state,
     units: state.units.map((unit) => (
@@ -265,6 +320,62 @@ export function pickUpCharge(state, unitId, rules) {
   };
 }
 
+/**
+ * Set a charge on the objective this man is standing beside (SPEC.md §7). The
+ * onPlaceCharge hook sets what it costs him and how long its fuse burns.
+ */
+export function placeCharge(state, unitId, rules) {
+  const unit = unitById(state.units, unitId);
+  const check = checkPlaceCharge(state, unit, rules);
+  if (!check.ok) return state;
+  return {
+    ...spend(state, unitId, check.cost, { charges: unit.charges - 1 }),
+    charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, unitId }],
+  };
+}
+
+/** A scout cuts the exchange line: a full turn, destroyed at once, silently. */
+export function cutLine(state, unitId, rules) {
+  const unit = unitById(state.units, unitId);
+  const check = checkCutLine(state, unit, rules);
+  if (!check.ok) return state;
+  return {
+    ...spend(state, unitId, check.cost),
+    objectives: state.objectives.map((o) => (o.id === check.objective.id ? { ...o, destroyed: true, cut: true } : o)),
+  };
+}
+
+/**
+ * Swim the canal (SPEC.md §4): a full turn, and he comes out on the far bank,
+ * where the detection phase tests him like any hex he entered. `map` is the
+ * effective map, where a blown bridge is water.
+ */
+export function swimAcross(state, unitId, target, map, rules) {
+  const unit = unitById(state.units, unitId);
+  if (!checkSwim(map, state, unit, target, rules).ok) return state;
+  const spent = spend(state, unitId, unit.ap);
+  return {
+    ...spent,
+    units: spent.units.map((u) => (u.id === unitId ? { ...u, q: target.q, r: target.r, trail: [...u.trail, target] } : u)),
+  };
+}
+
+/** Can the RAF diversion be called now (SPEC.md §4)? { ok, reason }. */
+export function checkDiversion(state, rules) {
+  if (state.outcome) return { ok: false, reason: 'the mission is over' };
+  if (state.diversionUsed) return { ok: false, reason: 'already called' };
+  if (rules.diversion.uses < 1) return { ok: false, reason: 'not on this mission' };
+  if (!state.units.some((u) => u.leader && !u.dead)) return { ok: false, reason: 'the leader carried the radio, and he is dead' };
+  return { ok: true, reason: null };
+}
+
+/** Call the RAF diversion: no AP, once, while the leader lives. */
+export function callDiversion(state, rules) {
+  if (!checkDiversion(state, rules).ok) return state;
+  const diverted = divertGarrison(state, rules);
+  return { ...diverted.state, diversionUsed: true, report: [...state.report, ...diverted.events] };
+}
+
 /** Wait for a click on the target of an action; null cancels. */
 export function setTargeting(state, action) {
   return { ...state, targeting: action };
@@ -276,32 +387,74 @@ export function toggleRoutes(state) {
 }
 
 /**
- * End the player phase and run the rest of the turn, in SPEC.md §4's order:
- * detection, enemy phase, (fuses at M5), alert decay. Dawn arrives on turn 20
- * and that is the last playable turn, so the clock stops there. What happens
- * at dawn — win, lose, medal rating — is M5.
+ * End the player phase and run the rest of the turn, then see whether the
+ * mission is over. Turn 20 is the last playable turn: ending it is dawn
+ * (SPEC.md §10), and the clock does not go past it.
  */
 export function endTurn(state, rules, map) {
-  if (isDawn(state, rules)) return state;
+  if (state.outcome) return state;
+  const dawn = isDawn(state, rules);
+  return settleMission(playOutTurn(state, rules, map, dawn), rules, map, { dawn });
+}
 
+/**
+ * The phases after the player phase, in SPEC.md §4's order: detection, enemy
+ * phase, fuses, alert decay. `map` is the loaded map; each phase gets the map
+ * as the demolitions have left it.
+ */
+function playOutTurn(state, rules, baseMap, dawn) {
+  const map = effectiveMap(baseMap, state.objectives, rules);
   const detected = runDetection(state, map, rules);
   const moved = runEnemyPhase(detected.state, map, rules);
   // Detection before the enemy phase, so a man shot and killed is gone before
   // anyone walks up to him — and the enemy beside him then finds the body.
-  const decayed = decayAlert(moved.state, rules);
+  const fused = runFusePhase(moved.state, rules);
+  const decayed = decayAlert(fused.state, rules);
   const next = decayed.state;
 
   return {
     ...next,
-    turn: state.turn + 1,
-    report: [...detected.events, ...moved.events, ...decayed.events],
+    turn: dawn ? state.turn : state.turn + 1,
+    report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events],
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.
     units: fillActionPoints(next.units, rules).map((unit) => ({ ...unit, trail: [] })),
     selectedHex: null,
     targeting: null,
     // A dead man cannot stay selected.
-    selectedUnitId: next.units.find((u) => u.id === state.selectedUnitId)?.dead ? null : state.selectedUnitId,
+    selectedUnitId: next.units.some((u) => u.id === state.selectedUnitId && onBoard(u)) ? state.selectedUnitId : null,
+  };
+}
+
+/**
+ * Is the mission over (scoring.js missionCheck)? If so, settle it: men who
+ * withdraw get out, charges still burning play out turn by turn until they
+ * have all gone off or dawn comes, and the outcome is recorded. Called after
+ * every turn and after every player action — the last man stepping onto the
+ * exfil ends the mission there and then.
+ */
+export function settleMission(state, rules, map, { dawn = false } = {}) {
+  if (state.outcome) return state;
+  const check = missionCheck(state, rules, { dawn });
+  if (!check) return state;
+
+  let next = state;
+  if (check.withdraw) {
+    next = { ...next, units: next.units.map((u) => (onBoard(u) ? { ...u, out: true, withdrew: true } : u)) };
+  }
+  const report = [...next.report];
+  let endedAtDawn = dawn;
+  while (!endedAtDawn && next.charges.length > 0) {
+    endedAtDawn = isDawn(next, rules);
+    next = playOutTurn(next, rules, map, endedAtDawn);
+    report.push(...next.report);
+  }
+  return {
+    ...next,
+    report,
+    outcome: finalOutcome(next, rules, check, next.turn, endedAtDawn),
+    selectedUnitId: null,
+    targeting: null,
   };
 }
 
@@ -319,7 +472,7 @@ export function selectedUnit(state) {
  * falls back to plain order once everyone is spent.
  */
 export function nextUnitId(state) {
-  const units = state.units.filter((u) => !u.dead);
+  const units = state.units.filter(onBoard);
   if (units.length === 0) return null;
   const from = units.findIndex((u) => u.id === state.selectedUnitId);
 

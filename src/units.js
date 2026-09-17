@@ -9,7 +9,8 @@
 // Whether a man can take an action (hide, suppress, throw a stone, stabilise,
 // pick up a charge — SPEC.md §4 Actions) is worked out here, as a check that
 // says why not. Taking it changes more than the man, so the transitions live
-// in state.js. Placing charges and cutting wire arrive at M5b.
+// in state.js. Placing charges, cutting the line and swimming need the
+// objectives, so their checks live in sabotage.js.
 
 import { hexDistance, neighbors } from './hex.js';
 import { enterCost, findPath, hasLineOfSight, hexKey, isInPlay, reachableWithin, terrainAt } from './map.js';
@@ -69,6 +70,7 @@ export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data
       stabilised: false,
       inContact: false,
       pinned: false, // shot at in cover: his next pool is smaller
+      out: false, // reached an exfil hex: off the board, safe (SPEC.md §10)
       hidden: false,
       apBase: role.actionPoints,
       apMax: role.actionPoints,
@@ -100,7 +102,7 @@ export function commandBonus(unit, units, rules) {
   if (unit.leader && !command.leaderReceivesOwnBonus) return 0;
 
   const led = units.some((other) => (
-    other.leader && !other.dead && other.id !== unit.id && hexDistance(other, unit) <= command.radius
+    other.leader && onBoard(other) && other.id !== unit.id && hexDistance(other, unit) <= command.radius
   ));
   return led ? command.bonusActionPoints : 0;
 }
@@ -113,7 +115,7 @@ export function commandBonus(unit, units, rules) {
  */
 export function fillActionPoints(units, rules) {
   return units.map((unit) => {
-    if (unit.dead) return { ...unit, commandBonus: 0, apMax: 0, ap: 0 };
+    if (!onBoard(unit)) return { ...unit, commandBonus: 0, apMax: 0, ap: 0 };
     // A wounded man drops to a flat pool until he is stabilised (SPEC.md §5).
     // Orders do not lift it: the point of the wound is that he is slow.
     if (isWounded(unit)) {
@@ -220,9 +222,9 @@ export function moveCostFor(unit) {
   return (terrainCost) => applyHook(unit, 'onMoveCost', 'moveCost', terrainCost).value;
 }
 
-/** A living trooper on this hex. The dead are off the board. */
+/** A trooper on this hex. The dead and the men already out are off the board. */
 export function unitAt(units, q, r) {
-  return units.find((u) => !u.dead && u.q === q && u.r === r) ?? null;
+  return units.find((u) => onBoard(u) && u.q === q && u.r === r) ?? null;
 }
 
 export function unitById(units, id) {
@@ -239,7 +241,7 @@ export function unitById(units, id) {
 export function occupiedHexes(units, exceptId = null, enemies = []) {
   const blocked = new Set();
   for (const unit of units) {
-    if (unit.id !== exceptId && !unit.dead) blocked.add(hexKey(unit.q, unit.r));
+    if (unit.id !== exceptId && onBoard(unit)) blocked.add(hexKey(unit.q, unit.r));
   }
   for (const enemy of enemies) blocked.add(hexKey(enemy.q, enemy.r));
   return blocked;
@@ -331,6 +333,11 @@ function neighbourPlans(map, blocked, unit, rules) {
 
 // --- condition ------------------------------------------------------------------
 
+/** Still in the field: not dead, and not out at the exfil (SPEC.md §10). */
+export function onBoard(unit) {
+  return !unit.dead && !unit.out;
+}
+
 /** Hit and not yet stabilised: the 1 AP man of SPEC.md §5. */
 export function isWounded(unit) {
   return !unit.dead && unit.hits > 0 && !unit.stabilised;
@@ -353,15 +360,16 @@ export function spotRadiusOf(map, unit, rules) {
 // --- action checks ---------------------------------------------------------------
 //
 // Each returns { ok, cost, reason }. `reason` is a short phrase for the
-// readout when `ok` is false. They only look; state.js does.
+// readout when `ok` is false. They only look; state.js does. canAct and result
+// are shared with the sabotage checks.
 
-function canAct(unit, cost) {
-  if (!unit || unit.dead) return 'not on the board';
+export function canAct(unit, cost) {
+  if (!unit || !onBoard(unit)) return 'not on the board';
   if (unit.ap < cost) return unit.ap === 0 ? 'no AP left this turn' : `needs ${cost} AP, has ${unit.ap}`;
   return null;
 }
 
-function result(cost, reason) {
+export function result(cost, reason) {
   return { ok: reason === null, cost, reason };
 }
 
@@ -404,7 +412,7 @@ export function checkThrowStone(map, unit, hex, rules) {
  */
 export function checkStabilise(unit, patient) {
   const cost = unit ? unit.apMax : 0;
-  if (!unit || unit.dead) return result(cost, 'not on the board');
+  if (!unit || !onBoard(unit)) return result(cost, 'not on the board');
   if (!patient || patient.id === unit.id) return result(cost, 'pick a wounded man beside him');
   if (!isWounded(patient)) return result(cost, `${patient.shortName} is not wounded`);
   if (hexDistance(unit, patient) !== 1) return result(cost, `${patient.shortName} is not beside him`);
