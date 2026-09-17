@@ -91,11 +91,14 @@ function describeEvent(event) {
     case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in cover, not hit.`;
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} at (${event.q}, ${event.r}).`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body at (${event.q}, ${event.r}).`;
+    case 'explosion': return event.destroyed ? `BANG — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BANG — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
+    case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
+    case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
     default: return event.kind;
   }
 }
 
-const NOISE_WORDS = { spotted: 'a sighting', found: 'the shout over a body', stone: 'a noise', gunfire: 'gunfire' };
+const NOISE_WORDS = { spotted: 'a sighting', found: 'the shout over a body', stone: 'a noise', gunfire: 'gunfire', explosion: 'the explosion' };
 
 function listOf(labels) {
   if (!labels || labels.length === 0) return 'someone';
@@ -145,6 +148,11 @@ function describeCost(terrain) {
 
 /** Dawn arrives on turn 20 and that is the clock (SPEC.md §4). */
 export function renderTurnCounter(element, state, rules) {
+  if (state.outcome) {
+    element.textContent = `TURN ${state.turn} / ${rules.turnLimit} — MISSION OVER`;
+    element.classList.add('dawn');
+    return;
+  }
   const dawn = state.turn >= rules.turnLimit;
   element.textContent = dawn
     ? `TURN ${state.turn} / ${rules.turnLimit} — DAWN`
@@ -153,9 +161,79 @@ export function renderTurnCounter(element, state, rules) {
 }
 
 export function renderEndTurnButton(button, state, rules) {
-  const dawn = state.turn >= rules.turnLimit;
-  button.disabled = dawn;
-  button.textContent = dawn ? 'DAWN' : 'END TURN  (space)';
+  button.disabled = Boolean(state.outcome);
+  if (state.outcome) button.textContent = 'MISSION OVER';
+  else if (state.turn >= rules.turnLimit) button.textContent = 'END THE LAST TURN — DAWN  (space)';
+  else button.textContent = 'END TURN  (space)';
+}
+
+/**
+ * The mission at a glance (SPEC.md §7, §10): each objective and how far on it
+ * is, how many men are out of how many needed, and a warning when there are no
+ * longer enough charges for the primary.
+ */
+export function renderMission(element, mission) {
+  element.replaceChildren();
+  for (const o of mission.objectives) {
+    const item = document.createElement('li');
+    if (o.destroyed) item.className = 'done';
+    const name = document.createElement('b');
+    name.textContent = o.primary ? `${o.label} ★` : o.label;
+    item.append(name, ` — ${o.detail}`);
+    element.appendChild(item);
+  }
+  const out = document.createElement('li');
+  out.textContent = `Men out: ${mission.out} of ${mission.minimumOut} needed`;
+  element.appendChild(out);
+}
+
+/** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
+export function renderDiversion(button, check) {
+  button.disabled = !check.ok;
+  button.textContent = check.ok ? 'RAF DIVERSION [D] — once, no AP' : `RAF diversion — ${check.reason}`;
+  button.title = check.ok
+    ? 'The alert drops a state, every search and held contact is dropped, every man is out of contact. Costs the clean-run bonus.'
+    : check.reason;
+}
+
+const OUTCOME_WORDS = { success: 'MISSION ACCOMPLISHED', withdrawn: 'WITHDRAWN', failed: 'MISSION FAILED' };
+const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behind' };
+
+/**
+ * The results (SPEC.md §10): outcome, all six by name and fate, and the score.
+ * Plain for now; M7 prints it as the back page of the annual.
+ */
+export function renderResults(element, outcome) {
+  element.replaceChildren();
+  element.hidden = !outcome;
+  if (!outcome) return;
+  element.className = outcome.kind;
+  const heading = document.createElement('h2');
+  heading.textContent = OUTCOME_WORDS[outcome.kind];
+  const reason = document.createElement('p');
+  reason.textContent = `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}.`;
+  const fates = document.createElement('ul');
+  for (const f of outcome.fates) {
+    const item = document.createElement('li');
+    item.className = f.fate === 'out' ? 'fate-out' : 'fate-lost';
+    item.textContent = `${f.name} — ${FATE_WORDS[f.fate]}`;
+    fates.appendChild(item);
+  }
+  const score = document.createElement('table');
+  for (const line of outcome.score.lines) {
+    const row = score.insertRow();
+    row.insertCell().textContent = line.label;
+    row.insertCell().textContent = `+${line.points}`;
+  }
+  const total = score.insertRow();
+  total.className = 'total';
+  total.insertCell().textContent = 'Score';
+  total.insertCell().textContent = String(outcome.score.total);
+  const again = document.createElement('button');
+  again.type = 'button';
+  again.textContent = 'Play again';
+  again.addEventListener('click', () => window.location.reload());
+  element.append(heading, reason, fates, score, again);
 }
 
 /**
@@ -171,7 +249,7 @@ export function renderRoster(element, state, map, view, onSelect) {
     item.className = 'roster-item';
     if (unit.id === state.selectedUnitId) item.classList.add('selected');
     if (unit.ap === 0) item.classList.add('spent');
-    if (unit.dead) item.classList.add('dead');
+    if (unit.dead || unit.out) item.classList.add('dead');
 
     const key = document.createElement('span');
     key.className = 'roster-key';
@@ -194,7 +272,7 @@ export function renderRoster(element, state, map, view, onSelect) {
 
     const detail = document.createElement('span');
     detail.className = 'roster-detail';
-    if (unit.dead) {
+    if (unit.dead || unit.out) {
       detail.textContent = unit.roleLabel;
       const text = document.createElement('span');
       text.className = 'roster-text';
@@ -242,6 +320,7 @@ export function renderRoster(element, state, map, view, onSelect) {
 /** His condition in a word or two, or null when there is nothing to say. */
 function describeStatus(unit) {
   if (unit.dead) return 'KILLED';
+  if (unit.out) return 'OUT';
   const parts = [];
   if (unit.hits > 0) parts.push(unit.stabilised ? 'DRESSED' : 'WOUNDED');
   if (unit.inContact) parts.push('IN CONTACT');
@@ -356,7 +435,9 @@ export function renderReadout(element, state, map, view) {
   if (terrain.spotBonus) parts.push(`spot ${terrain.spotBonus > 0 ? '+' : ''}${terrain.spotBonus}`);
 
   let line = `(${hex.q}, ${hex.r}) ${terrain.label} — ${parts.join(', ')}`;
+  if (view?.siteLabel) line += `   ▸ ${view.siteLabel}`;
   if (view?.moveLabel) line += `   ▸ ${view.moveLabel}`;
+  if (view?.blastLabel) line += `   ▸ ${view.blastLabel}`;
   if (view?.riskLabel) line += `   ▸ ${view.riskLabel}`;
   if (view?.hideLabel) line += `   ▸ ${view.hideLabel}`;
   element.textContent = line;

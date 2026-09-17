@@ -273,6 +273,53 @@
       font-size: 12px;
       white-space: nowrap;
     }
+    #mission {
+      margin: 0;
+      padding: 6px 8px 6px 22px;
+      background: #2a2a26;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    #mission .done {
+      color: #8fa36f;
+    }
+    #diversion {
+      padding: 6px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      color: #f2e8d5;
+      background: #3d5a73;
+      border: 2px solid #1a1a18;
+      cursor: pointer;
+    }
+    #diversion:disabled {
+      background: #3a3a34;
+      color: #9a9486;
+      cursor: default;
+    }
+    #results {
+      padding: 10px 12px;
+      background: #f2e8d5;
+      color: #1a1a18;
+      border: 3px solid #1a1a18;
+      font-size: 13px;
+    }
+    #results h2 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+    #results.success h2 { color: #5c6b4a; }
+    #results.withdrawn h2 { color: #3d5a73; }
+    #results.failed h2 { color: #c1272d; }
+    #results p { margin: 0 0 6px; }
+    #results ul { margin: 0 0 6px; padding-left: 18px; }
+    #results .fate-lost { color: #c1272d; }
+    #results table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    #results td:last-child { text-align: right; font-family: ui-monospace, monospace; }
+    #results .total td { border-top: 2px solid #1a1a18; font-weight: bold; }
+    #results button { font: inherit; font-weight: bold; padding: 4px 10px; cursor: pointer; }
     #keys {
       font-size: 11px;
       opacity: 0.6;
@@ -282,13 +329,16 @@
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M5a: contact and combat</h1>
+    <h1>NIGHT DROP — M5b: sabotage, exfil and the end of the mission</h1>
     <div id="error" hidden></div>
     <div id="spread">
       <svg id="board"></svg>
       <aside id="panel">
         <div id="turn-counter"></div>
+        <section id="results" hidden></section>
         <button id="end-turn" type="button"></button>
+        <ul id="mission"></ul>
+        <button id="diversion" type="button"></button>
         <div id="alert">
           <svg id="alert-dial" viewBox="0 0 240 240"></svg>
           <div id="alert-caption"></div>
@@ -299,8 +349,9 @@
         <div id="keys">
           1–6 select trooper · Tab cycle · H hold position<br />
           G hide · S suppress · T throw stone · A stabilise · P pick up<br />
+          C place charge · X cut the line · W swim · D RAF diversion<br />
           Space end turn · Esc or right-click cancel<br />
-          R patrol routes · hover an enemy for its arc and route
+          R patrol routes · hover an enemy for its arc and route, an objective for what it needs
         </div>
       </aside>
     </div>

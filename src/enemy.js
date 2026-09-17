@@ -13,6 +13,7 @@
 import { DIRECTION_NAMES, directionOf, facingToward, hexDistance, inArc } from './hex.js';
 import { enterCost, findPath, forEachCell, hasLineOfSight, hexKey, isInPlay, terrainAt } from './map.js';
 import { applyHook } from './traits.js';
+import { onBoard } from './units.js';
 
 const DIRECTIONS = DIRECTION_NAMES.length;
 
@@ -32,8 +33,9 @@ function makeEnemy(placement, type, at) {
     q: at[0],
     r: at[1],
     facing: DIRECTION_NAMES.indexOf(placement.facing),
-    // Where a sentry looks when nothing has turned it (SPEC.md §6 Noise).
-    homeFacing: DIRECTION_NAMES.indexOf(placement.facing),
+    // Where a sentry looks when nothing has turned it (SPEC.md §6 Noise). The
+    // reserve's is the way it faces at its guard post.
+    homeFacing: DIRECTION_NAMES.indexOf(placement.guardFacing ?? placement.facing),
     turned: false,
     route: placement.route ? placement.route.map(([q, r]) => ({ q, r })) : null,
     loop: placement.loop === true,
@@ -49,6 +51,9 @@ function makeEnemy(placement, type, at) {
     holding: null,
     watching: null,
     suppressed: false,
+    // The reserve's post beside the exfil (SPEC.md §6 Exfil watched): it
+    // marches there, then stands as a sentry facing the exfil.
+    guard: placement.guardHex ? { q: placement.guardHex[0], r: placement.guardHex[1] } : null,
   };
 }
 
@@ -62,7 +67,9 @@ export function createEnemies(map) {
 }
 
 export function createAlert() {
-  return { points: 0, quietTurns: 0, raisedThisTurn: false };
+  // `peak` is the highest the points have ever been, for the clean-run score
+  // (SPEC.md §10): a diversion or decay lowers the points, never the peak.
+  return { points: 0, quietTurns: 0, raisedThisTurn: false, peak: 0 };
 }
 
 // --- alert -------------------------------------------------------------------
@@ -88,30 +95,78 @@ export function alertStateOf(points, rules) {
 export function raiseAlert(alert, amount, rules) {
   const states = rules.alert.states;
   const cap = states[states.length - 1].from;
-  return { ...alert, points: Math.min(cap, alert.points + amount), raisedThisTurn: true };
+  const points = Math.min(cap, alert.points + amount);
+  return { ...alert, points, raisedThisTurn: true, peak: Math.max(alert.peak ?? 0, points) };
+}
+
+/**
+ * The explosion floor (SPEC.md §6): once anything has exploded, the points
+ * never fall below the start of rules.explosionFloor. 0 before the first bang.
+ */
+export function alertFloor(state, rules) {
+  if (!state.explosions) return 0;
+  return rules.alert.states.find((s) => s.id === rules.explosionFloor).from;
 }
 
 /**
  * Phase 5 (SPEC.md §4): after `quietTurnsToDecay` turns with no rise, drop to
  * the start of the state below. In Calm, points short of Suspicious fall to 0
- * without an event: the state has not changed. The explosion floor (never
- * below Suspicious once something has gone off) arrives with explosions at M5b.
+ * without an event: the state has not changed. Never below the explosion
+ * floor: at the floor, quiet turns change nothing.
  */
 export function decayAlert(state, rules) {
   const events = [];
   let { points, quietTurns } = state.alert;
   quietTurns = state.alert.raisedThisTurn ? 0 : quietTurns + 1;
-  const index = alertIndex(points, rules);
-  if (quietTurns >= rules.alert.quietTurnsToDecay && index > 0) {
-    const to = rules.alert.states[index - 1];
-    events.push({ kind: 'alertDecay', from: rules.alert.states[index].label, to: to.label });
-    points = to.from;
-    quietTurns = 0;
-  } else if (quietTurns >= rules.alert.quietTurnsToDecay && points > 0) {
-    points = 0;
+  const floor = alertFloor(state, rules);
+  if (quietTurns >= rules.alert.quietTurnsToDecay) {
+    const dropped = Math.max(floor, dropOneState(points, rules));
+    if (dropped < points) {
+      const from = alertIndex(points, rules);
+      const to = alertIndex(dropped, rules);
+      if (from !== to) events.push({ kind: 'alertDecay', from: rules.alert.states[from].label, to: rules.alert.states[to].label });
+      points = dropped;
+    }
     quietTurns = 0;
   }
-  return { state: { ...state, alert: { points, quietTurns, raisedThisTurn: false } }, events };
+  return { state: { ...state, alert: { ...state.alert, points, quietTurns, raisedThisTurn: false } }, events };
+}
+
+/** The start of the state below this one, or 0 from anywhere in Calm. */
+function dropOneState(points, rules) {
+  const index = alertIndex(points, rules);
+  return index > 0 ? rules.alert.states[index - 1].from : 0;
+}
+
+/**
+ * The RAF diversion (SPEC.md §4): the alert drops `diversion.statesDown`
+ * states, never below the explosion floor; every enemy drops its search, its
+ * held contact and any turn toward a noise and goes back to its route or post;
+ * the last known contact and any noise not yet heard are forgotten; every
+ * trooper is out of contact. Wounds, bodies already found and the floor stand.
+ */
+export function divertGarrison(state, rules) {
+  let points = state.alert.points;
+  for (let i = 0; i < rules.diversion.statesDown; i++) points = dropOneState(points, rules);
+  points = Math.max(alertFloor(state, rules), Math.min(points, state.alert.points));
+  const events = [{ kind: 'diversion' }];
+  const from = alertIndex(state.alert.points, rules);
+  const to = alertIndex(points, rules);
+  if (from !== to) events.push({ kind: 'alertDecay', from: rules.alert.states[from].label, to: rules.alert.states[to].label });
+  return {
+    state: {
+      ...state,
+      alert: { ...state.alert, points, quietTurns: 0 },
+      enemies: state.enemies.map((e) => ({
+        ...e, investigating: null, holding: null, watching: null,
+        ...(e.turned ? { facing: e.homeFacing, turned: false } : {}),
+      })),
+      contact: null,
+      noises: [],
+      units: state.units.map((u) => (u.inContact ? { ...u, inContact: false } : u)),
+    },
+    events,
+  };
 }
 
 // --- vision ------------------------------------------------------------------
@@ -257,7 +312,7 @@ export function runDetection(state, map, rules) {
   let best = null;
 
   for (const unit of state.units) {
-    if (unit.dead) continue;
+    if (!onBoard(unit)) continue;
     let seenAt = null;
     const shotResults = [];
     const firers = new Set();
@@ -313,7 +368,7 @@ export function runDetection(state, map, rules) {
   }
 
   // A dead man holds nobody's attention.
-  const living = new Set(units.filter((u) => !u.dead).map((u) => u.id));
+  const living = new Set(units.filter(onBoard).map((u) => u.id));
   enemies = enemies.map((e) => (e.holding && !living.has(e.holding.unitId) ? { ...e, holding: null } : e));
 
   // A repeat is not a new contact (SPEC.md §6).
@@ -405,8 +460,10 @@ function hearNoises(enemies, noises, contact, alertPoints, rules) {
     const labels = [];
     enemies = enemies.map((e) => {
       if (!heard.has(e.id)) return e;
+      // A reserve still marching to its post keeps marching.
+      if (e.guard && !sameHex(e, e.guard)) return e;
       labels.push(e.label);
-      if (e.speed === 0) {
+      if (e.speed === 0 || e.guard) {
         const facing = facingToward(e, noise);
         return facing < 0 ? e : { ...e, facing, turned: true };
       }
@@ -432,6 +489,8 @@ function sameHex(a, b) {
  *   holding      stays put and faces the man it spotted; the player sees who
  *                has him (`watching`) until the next detection check.
  *   sentry       holds its post.
+ *   reserve      marches to its guard hex beside the exfil and stands there
+ *                facing it; it never hunts (SPEC.md §6 Exfil watched).
  *   Alarmed      every moving enemy hunts the last known contact.
  *   investigating walks to the noise it heard, sweeps, and goes back to its
  *                route from the next phase.
@@ -451,7 +510,7 @@ export function runEnemyPhase(state, map, rules) {
   let bodies = state.bodies;
   const alertBefore = state.alert.points;
   const noises = [];
-  const living = state.units.filter((u) => !u.dead);
+  const living = state.units.filter(onBoard);
 
   if (stateId === 'alarmed' && !reserveDeployed) {
     const placed = deployReserve(map, living, enemies);
@@ -488,6 +547,13 @@ export function runEnemyPhase(state, map, rules) {
       };
     } else if (enemy.speed === 0) {
       moved = enemy;
+    } else if (enemy.guard) {
+      if (sameHex(enemy, enemy.guard)) {
+        moved = enemy;
+      } else {
+        moved = walkToward(map, enemy, enemy.guard, blocked, enemy.speed, rules).enemy;
+        if (sameHex(moved, enemy.guard)) moved = { ...moved, facing: moved.homeFacing };
+      }
     } else if (hunting) {
       const result = walkToward(map, enemy, contact, blocked, enemy.speed, rules);
       moved = result.enemy;
@@ -549,7 +615,7 @@ function deployReserve(map, units, enemies) {
 
 /** Hexes this enemy may not enter: every living trooper and every other enemy. */
 function blockedFor(units, enemies, exceptId) {
-  const blocked = new Set(units.filter((u) => !u.dead).map((u) => hexKey(u.q, u.r)));
+  const blocked = new Set(units.filter(onBoard).map((u) => hexKey(u.q, u.r)));
   for (const e of enemies) if (e.id !== exceptId) blocked.add(hexKey(e.q, e.r));
   return blocked;
 }
@@ -608,6 +674,12 @@ export function walkRoute(map, enemy, blocked, rules) {
     }
     if (budget <= 0) break;
     const result = walkToward(map, current, target, blocked, budget, rules);
+    // A waypoint it cannot reach at all — across a blown bridge, say — is
+    // given up: it turns round, or goes on to the next one on a loop.
+    if (result.stuck) {
+      current = nextWaypoint(current.loop ? current : { ...current, routeStep: -current.routeStep });
+      break;
+    }
     current = result.enemy;
     budget -= result.spent;
     if (current.q !== target.q || current.r !== target.r) break;

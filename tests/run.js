@@ -3,9 +3,10 @@
 
 import combatTests from './combat.test.js';
 import enemyTests from './enemy.test.js';
+import sabotageTests from './sabotage.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');

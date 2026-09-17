@@ -96,6 +96,14 @@
       "blocksLOS": false,
       "spotBonus": 0,
       "notes": "canal crossing on foot; same addition as bridge"
+    },
+    "depot": {
+      "label": "Fuel dump",
+      "moveCost": null,
+      "cover": "none",
+      "blocksLOS": true,
+      "spotBonus": 0,
+      "notes": "drums, tanks and tarpaulins; the fuel dump objective stands on it (SPEC.md §7). Not in the §3 table: added at M5b"
     }
   }
 }
