@@ -62,6 +62,10 @@ mud at counter size, so don't try to make one asset do both.
 
 Names: holloway, fitch, vance, barrow, speers, nunn.
 
+A trooper with no portrait of his own is drawn with `portrait-fallback-full` and
+`portrait-fallback-chip`, which live in code and are not to be supplied: they are what
+keeps a seventh man a JSON entry until someone draws him.
+
 ---
 
 ## 3. Counters and symbols — SVG
@@ -98,13 +102,16 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-orchard-01..03.svg` | 80 x 92 | 3 |
 | `terrain-track.svg` | 80 x 92 | 1 + needs 3 rotations, code handles rotation |
 | `terrain-marsh.svg` | 80 x 92 | 1 |
-| `terrain-canal.svg` | 80 x 92 | 1 + edge pieces |
+| `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
+| `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
 | `terrain-ridge.svg` | 80 x 92 | 1 |
 | `terrain-farmhouse.svg` | 80 x 92 | 1 |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
 
-Track and canal need to read as continuous across hexes. Simplest approach: draw the motif
-running edge-to-edge through the hex centre and let code rotate it to match neighbours.
+Track and canal need to read as continuous across hexes. Draw the track running
+edge-to-edge through the hex centre, **east to west**; code turns it to meet each
+neighbouring road, and where a road leaves a hex only one way (a bend, a junction, a dead
+end) it draws that half of the motif only, so one drawing covers every shape of road.
 
 ---
 
@@ -121,7 +128,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
 | `objective-rally-point.svg` | 80 x 92 | the exfil barn or field |
-| `landmark-church.svg` | 80 x 92 | village church with a spire, drawn over one farmhouse hex near the exchange. Art only, no rule (SPEC.md §11). |
+| `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art places this symbol inside itself, beside the building; the church stands whether or not the exchange does. |
 
 ---
 
@@ -148,12 +155,12 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 
 | Asset | viewBox | Notes |
 |---|---|---|
-| `ui-caption-box.svg` | 400 x 120 | comic caption frame. **Must stretch** — supply as 9-slice, i.e. corners and edges as separate paths, or keep the border a simple enough shape that code can redraw it. |
-| `ui-speech-bubble.svg` | 240 x 120 | same stretching requirement, plus a separate tail path so it can point in any direction |
+| `ui-caption-box.svg` | 400 x 120 | comic caption frame. **Must stretch** — supply as 9-slice, i.e. corners and edges as separate paths, or keep the border a simple enough shape that code can redraw it. *Currently redrawn by code: an ink rule and hard offset shadow in CSS.* |
+| `ui-speech-bubble.svg` | 240 x 120 | same stretching requirement, plus a separate tail path so it can point in any direction. *Currently redrawn by code: `speechBubble` in theme.js.* |
 | `ui-alert-dial.svg` | 240 x 240 | face only, with tick marks for Calm / Suspicious / Alert / Alarmed |
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
-| `ui-button.svg` | 160 x 48 | stretchable |
+| `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
 | `ui-gutter-note.svg` | 60 x 900 | the "CUT OUT AND PLAY" margin text, as outlines |
 | `logo-night-drop.svg` | 800 x 300 | masthead for the title and results page |
 
