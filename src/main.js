@@ -3,12 +3,14 @@
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
 import { alertIndex, detectionAt, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
+import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
-import { forEachCell, hexKey, isInPlay, loadMap, loadJson } from './map.js';
+import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
+import { freshSeed, seedFromQuery } from './rng.js';
 import {
-  callDiversion, checkDiversion, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit, moveUnit,
-  nextUnitId, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover, setTargeting,
-  settleMission, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
+  callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
+  jump, moveUnit, nextUnitId, packParachute, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
+  setTargeting, settleMission, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
@@ -16,14 +18,14 @@ import {
 } from './sabotage.js';
 import { validateTraits } from './traits.js';
 import {
-  checkHide, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  checkHide, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
 import {
-  describeDetection, describePlan, describeRisk, renderActions, renderAlertDial, renderDiversion,
+  describeDetection, describePlan, describeRisk, renderActions, renderAlertDial, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderLegend, renderMission, renderReadout, renderReport, renderResults,
-  renderRoster, renderTurnCounter,
+  renderRoster, renderSeed, renderTurnCounter,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -40,6 +42,7 @@ const actionBar = document.getElementById('actions');
 const diversionButton = document.getElementById('diversion');
 const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
+const seedBox = document.getElementById('seed');
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -123,7 +126,12 @@ function deriveView() {
     siteLabel: null,
     blastLabel: null,
     mission: describeMissionState(),
+    drop: null,
+    dropRuns: null,
+    dropLabel: null,
   };
+
+  if (state.phase === 'drop') return deriveDrop(view, hex);
 
   const objective = hex && !hoverEnemy ? objectiveAt(state.objectives, hex) : null;
   if (objective) {
@@ -133,6 +141,10 @@ function deriveView() {
       const radius = kindOf(objective, rules).blastRadius;
       view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius })));
     }
+  } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
+    const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
+    view.siteLabel = `${chute.name}'s PARACHUTE — found if an enemy walks onto this hex: alert +${rules.alert.parachuteFound}. `
+      + `${chute.name} can pack it up standing here: [U] ${rules.actions.packParachute.apCost} AP.`;
   } else if (hex && isExfil(baseMap, hex)) {
     view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn.`;
   }
@@ -175,6 +187,45 @@ function deriveView() {
         : 'hide here [G]: unseen anyway';
     }
   }
+  return view;
+}
+
+/**
+ * The drop phase (SPEC.md §9): every run's line and wind, and for the run being
+ * looked at, the jump points and every hex a man could come down on. Hovering a
+ * hex says what landing there would do. It never shows the roll.
+ */
+function deriveDrop(view, hex) {
+  const selected = runById(baseMap, state.dropRunId);
+  const count = state.units.length;
+  view.drop = {
+    runs: baseMap.dropRuns.map((run) => ({
+      id: run.id, label: run.label, wind: run.wind,
+      from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
+      jumps: jumpPoints(run, count), selected: run.id === state.dropRunId,
+    })),
+    area: selected ? dropArea(map, rules, selected, state.units, state.enemies) : null,
+  };
+  view.dropRuns = baseMap.dropRuns.map((run, i) => ({
+    id: run.id, key: String(i + 1), label: run.label, description: run.description, selected: run.id === state.dropRunId,
+  }));
+  if (!hex) {
+    view.dropLabel = selected
+      ? `${selected.label}: ${selected.description} Wind ${selected.wind}. Space or JUMP to go.`
+      : null;
+    return view;
+  }
+  const terrain = terrainAt(map, hex.q, hex.r);
+  if (!terrain) return view;
+  const inArea = view.drop.area?.has(hexKey(hex.q, hex.r));
+  let landing;
+  if (!canLandOn(map, rules, hex, new Set(), state.enemies)) landing = 'nobody lands here';
+  else if (terrain.landing === 'wounds') landing = 'a man landing here is WOUNDED and drags himself out on the nearest bank';
+  else if (terrain.landing === 'bad') landing = `a bad landing: loses ${rules.landing.badLandingTurnsLost === 1 ? 'his first turn' : `${rules.landing.badLandingTurnsLost} turns`}`;
+  else landing = 'a clean landing';
+  view.dropLabel = selected
+    ? `${inArea ? 'in reach of the ' : 'out of reach of the '}${selected.label.toLowerCase()} — ${landing}`
+    : landing;
   return view;
 }
 
@@ -248,6 +299,7 @@ function actionsFor(unit) {
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     { id: 'stone', key: 'T', label: 'Throw stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
     { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
+    { id: 'pack', key: 'U', label: 'Pack parachute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up charge', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
@@ -340,7 +392,8 @@ function render() {
   renderTurnCounter(turnCounter, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
   renderRoster(rosterList, state, map, view, handleRosterClick);
-  renderActions(actionBar, view.actions, handleAction);
+  if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
+  else renderActions(actionBar, view.actions, handleAction);
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
@@ -359,7 +412,7 @@ function commit(next) {
 // --- input ------------------------------------------------------------------
 
 function handleHexClick(q, r) {
-  if (state.outcome) return;
+  if (state.outcome || state.phase === 'drop') return;
   if (state.targeting) {
     handleTargetClick(q, r);
     render();
@@ -419,6 +472,9 @@ function handleAction(id) {
     case 'pickUp':
       commit(pickUpCharge(state, unit.id, rules));
       break;
+    case 'pack':
+      commit(packParachute(state, unit.id, rules));
+      break;
     case 'charge':
       commit(placeCharge(state, unit.id, rules));
       break;
@@ -457,7 +513,32 @@ function handleRosterClick(unitId) {
 }
 
 function handleEndTurn() {
-  state = endTurn(state, rules, baseMap);
+  state = state.phase === 'drop' ? jump(state, baseMap, rules) : endTurn(state, rules, baseMap);
+  render();
+}
+
+function handleChooseRun(runId) {
+  state = chooseDropRun(state, baseMap, runId);
+  render();
+}
+
+// Before anyone has landed there are only the runs to pick (1–3), the jump
+// (Space), and the route overlay (R).
+function handleDropKey(event) {
+  const key = event.key;
+  const run = key >= '1' && key <= '9' ? baseMap.dropRuns[Number(key) - 1] : null;
+  if (run) {
+    state = chooseDropRun(state, baseMap, run.id);
+  } else if (key === ' ') {
+    event.preventDefault();
+    state = jump(state, baseMap, rules);
+  } else if (key === 'r' || key === 'R') {
+    state = toggleRoutes(state);
+  } else if (key === 'Escape') {
+    state = chooseDropRun(state, baseMap, null);
+  } else {
+    return;
+  }
   render();
 }
 
@@ -466,6 +547,10 @@ function handleEndTurn() {
 // over only R still does anything.
 function handleKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (state.phase === 'drop') {
+    handleDropKey(event);
+    return;
+  }
   if (state.outcome && event.key !== 'r' && event.key !== 'R') return;
   const key = event.key;
 
@@ -516,6 +601,10 @@ function handleKey(event) {
     case 'P':
       handleAction('pickUp');
       return;
+    case 'u':
+    case 'U':
+      handleAction('pack');
+      return;
     case 'c':
     case 'C':
       handleAction('charge');
@@ -560,7 +649,11 @@ try {
   const traits = validateTraits(await loadJson('data/traits.json'));
   const roster = await loadJson('data/roster.json');
 
-  state = createInitialState(roster, traits, rules, baseMap);
+  // SPEC.md §1: a seed reproduces a playthrough. `?seed=N` replays one; with
+  // none, the clock picks a fresh one. It is shown on the page either way.
+  const seed = seedFromQuery(window.location.search) ?? freshSeed(Date.now());
+  state = createInitialState(roster, traits, rules, baseMap, seed);
+  renderSeed(seedBox, seed);
 
   const bounds = boardPixelBounds(map);
   svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);

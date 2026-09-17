@@ -1,6 +1,7 @@
 // Draws the hex grid, the terrain, the counters, the enemies and their vision,
 // patrol routes, the hover path preview with its detection risk pips, and the
-// objectives, charges, blasts and exfil of SPEC.md §7 and §10.
+// objectives, charges, blasts and exfil of SPEC.md §7 and §10, and the drop
+// runs and parachutes of §9.
 // Reads state and map data, never mutates them — CLAUDE.md hard rule 7. It
 // makes no game-state decisions: pointer events are handed straight back to
 // the caller, and the move plan it draws is computed elsewhere and passed in.
@@ -13,10 +14,10 @@
 // it is drawn once; the pieces layer redraws on every state change, including
 // every hover, and is small enough that doing so is free.
 
-import { NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
+import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
 import { forEachCell, hexKey, isInPlay, legendCharAt, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, ENEMY, EXFIL, GRID, MARKER, NOISE, OBJECTIVE, PATH, RISK, ROUTE, SELECTION, TARGET,
+  BLAST, CONTACT, COUNTER, DROP, ENEMY, EXFIL, GRID, MARKER, NOISE, OBJECTIVE, PATH, RISK, ROUTE, SELECTION, TARGET,
   VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId, roleSymbolId, terrainStyle,
 } from './theme.js';
 
@@ -148,6 +149,7 @@ export function renderPieces(layers, state, view) {
 
   drawVision(layers, view.visionById, view.hoverEnemy);
   drawSites(layers, state, view);
+  if (view.drop) drawDrop(layers, view.drop);
 
   if (view.reachable) drawReachable(layers, view.reachable);
 
@@ -161,6 +163,7 @@ export function renderPieces(layers, state, view) {
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
   for (const body of state.bodies) drawOnGround(layers, 'marker-body', body, -1);
+  for (const chute of state.parachutes) drawParachute(layers, chute);
   for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
 
@@ -181,7 +184,7 @@ export function renderPieces(layers, state, view) {
   }
 
   state.units.forEach((unit, i) => {
-    if (unit.dead || unit.out) return;
+    if (!unit.landed || unit.dead || unit.out) return;
     // The number on the counter is the trooper's place in the roster, which is
     // also his 1-6 hotkey and his position in the panel. One ordering, shown
     // in three places.
@@ -247,11 +250,11 @@ function drawSites(layers, state, view) {
   }
 }
 
-function fillArea(layers, area, opacity) {
+function fillArea(layers, area, opacity, fill = BLAST.fill) {
   const { corners, map } = layers;
   for (const { q, r } of area.values()) {
     layers.sites.appendChild(el('polygon', {
-      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners), fill: BLAST.fill, 'fill-opacity': opacity,
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners), fill, 'fill-opacity': opacity,
     }));
   }
 }
@@ -286,6 +289,71 @@ function drawOnGround(layers, id, at, side) {
   layers.highlight.appendChild(el('use', {
     href: `#${id}`, x: p.x + side * 18 - size / 2, y: p.y + 14 - size / 2, width: size, height: size,
   }));
+}
+
+// A parachute (SPEC.md §9) sits on the left edge of its hex, over the counters:
+// the man standing on his own chute is exactly when the player needs to see it.
+function drawParachute(layers, chute) {
+  const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
+  const size = MARKER.size;
+  layers.tokens.appendChild(el('use', {
+    href: '#marker-parachute', x: p.x - COUNTER.size / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
+  }));
+}
+
+// --- the drop (SPEC.md §9) ----------------------------------------------------
+// Every run's flight line and wind arrow, the one being looked at strong and
+// the others faint. For that one, where each man jumps (numbered as on his
+// counter) and every hex he could come down on — the spread, never the roll.
+// `drop` is derived in main.js: { runs: [{ id, label, from, to, wind, jumps,
+// selected }], area }.
+
+function drawDrop(layers, drop) {
+  const { map } = layers;
+  if (drop.area) {
+    fillArea(layers, drop.area, DROP.areaOpacity, DROP.areaFill);
+    drawAreaEdge(layers, layers.sites, drop.area, [[DROP.casing, DROP.areaWidth + 3], [DROP.areaStroke, DROP.areaWidth]]);
+  }
+  for (const run of [...drop.runs].sort((a, b) => Number(a.selected) - Number(b.selected))) {
+    const group = el('g', { opacity: run.selected ? 1 : DROP.idleOpacity });
+    const a = axialToPixel(run.from.q, run.from.r, map.hexSize);
+    const b = axialToPixel(run.to.q, run.to.r, map.hexSize);
+    group.appendChild(polyline([a, b], { stroke: DROP.casing, 'stroke-width': DROP.casingWidth }));
+    group.appendChild(polyline([a, b], { stroke: DROP.stroke, 'stroke-width': DROP.width, 'stroke-dasharray': DROP.dash }));
+    // An arrowhead at the far end says which way the aircraft is flying.
+    group.appendChild(arrow(b, a, DROP.stroke, DROP.width, DROP.windHead));
+
+    // The wind, drawn from the middle of the line.
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const d = NEIGHBOR_DIRS[DIRECTION_NAMES.indexOf(run.wind)];
+    const v = axialToPixel(d.q, d.r, 1);
+    const len = Math.hypot(v.x, v.y);
+    const tip = { x: mid.x + (v.x / len) * DROP.windLength, y: mid.y + (v.y / len) * DROP.windLength };
+    group.appendChild(polyline([mid, tip], { stroke: DROP.casing, 'stroke-width': DROP.windWidth + 4 }));
+    group.appendChild(polyline([mid, tip], { stroke: DROP.windStroke, 'stroke-width': DROP.windWidth }));
+    group.appendChild(arrow(tip, mid, DROP.windStroke, DROP.windWidth, DROP.windHead));
+
+    // The name sits a way along the line, not at its start: the runs begin
+    // close together in the north-west corner and their names would collide.
+    const at = { x: a.x + (b.x - a.x) * DROP.labelAlong, y: a.y + (b.y - a.y) * DROP.labelAlong };
+    group.appendChild(casedText(run.label.toUpperCase(), at.x, at.y - map.hexSize * 0.35, DROP.label));
+
+    if (run.selected) {
+      run.jumps.forEach((j, i) => {
+        const p = axialToPixel(j.q, j.r, map.hexSize);
+        group.appendChild(el('circle', { cx: p.x, cy: p.y, r: DROP.jumpRadius, fill: DROP.jumpFill, stroke: DROP.stroke, 'stroke-width': 2 }));
+        group.appendChild(text(String(i + 1), { x: p.x, y: p.y + 1, 'font-size': 12, 'font-weight': 'bold', fill: DROP.jumpText }));
+      });
+    }
+    layers.routes.appendChild(group);
+  }
+}
+
+/** An open arrowhead at `tip`, pointing away from `from`. */
+function arrow(tip, from, stroke, width, size) {
+  const angle = Math.atan2(tip.y - from.y, tip.x - from.x);
+  const wing = (turn) => ({ x: tip.x - size * Math.cos(angle + turn), y: tip.y - size * Math.sin(angle + turn) });
+  return polyline([wing(0.5), tip, wing(-0.5)], { stroke, 'stroke-width': width });
 }
 
 // SPEC.md §6: an enemy holding contact faces its man, and the board says who

@@ -29,6 +29,15 @@
       font-size: 18px;
       margin: 0;
     }
+    #seed {
+      font-size: 12px;
+      font-weight: normal;
+      margin-left: 12px;
+    }
+    #seed a {
+      color: inherit;
+      opacity: 0.7;
+    }
     #spread {
       display: flex;
       gap: 16px;
@@ -335,7 +344,7 @@
 </head>
 <body>
   <div id="app">
-    <h1>NIGHT DROP — M5b: sabotage, exfil and the end of the mission</h1>
+    <h1>NIGHT DROP — M6: the drop <span id="seed"></span></h1>
     <div id="error" hidden></div>
     <div id="spread">
       <svg id="board"></svg>
@@ -353,8 +362,9 @@
         <div id="actions" hidden></div>
         <ul id="roster"></ul>
         <div id="keys">
+          The drop: 1–3 pick a run · Space jump<br />
           1–6 select trooper · Tab cycle · H hold position<br />
-          G hide · S suppress · T throw stone · A stabilise · P pick up<br />
+          G hide · S suppress · T throw stone · A stabilise · P pick up · U pack parachute<br />
           C place charge · X cut the line · W swim · D RAF diversion<br />
           Space end turn · Esc or right-click cancel<br />
           R patrol routes · hover an enemy for its arc and route, an objective for what it needs
