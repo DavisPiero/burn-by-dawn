@@ -14,6 +14,7 @@ import {
   stabiliseUnit, suppressEnemy, throwStone,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
+import { landedState } from './fixtures.js';
 import {
   checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById,
 } from '../src/units.js';
@@ -34,7 +35,7 @@ async function loadAll() {
     loadJson('data/roster.json'),
   ]);
   const traits = validateTraits(traitsJson);
-  return { map, rules, traits, roster, state: createInitialState(roster, traits, rules, map) };
+  return { map, rules, traits, roster, state: landedState(roster, traits, rules, map) };
 }
 
 const facing = (name) => DIRECTION_NAMES.indexOf(name);
@@ -344,14 +345,27 @@ export default [
     equal(reports, 1, 'searched reported once');
   }],
 
-  ['a body is found by an enemy that ends beside it: alert up, a noise, and only once', async () => {
+  ['a body is found by an enemy on or beside it, standing or walking past: alert up, a noise, and only once', async () => {
     const { map, rules, state } = await loadAll();
-    const row = openRow(map, 5);
-    const body = { unitId: 'x', name: 'X', q: row.q + 1, r: row.r, found: false };
-    const post = enemy(row.q, row.r, 'E', { speed: 0, type: 'sentry' });
-    const s = { ...state, units: state.units.map((u, i) => ({ ...u, q: 200 + i, r: 0 })), enemies: [post], bodies: [body] };
+    const row = openRow(map, 6);
+    const body = { unitId: 'x', name: 'X', q: row.q + 2, r: row.r, found: false };
+    const parked = state.units.map((u, i) => ({ ...u, q: 200 + i, r: 0 }));
+
+    const post = enemy(row.q + 1, row.r, 'E', { speed: 0, type: 'sentry' });
+    const beside = runEnemyPhase({ ...state, units: parked, enemies: [post], bodies: [body] }, map, rules);
+    assert(beside.state.bodies[0].found, 'a sentry beside it finds it');
+    const away = enemy(row.q - 2, row.r, 'E', { speed: 0, type: 'sentry' });
+    const far = runEnemyPhase({ ...state, units: parked, enemies: [away], bodies: [body] }, map, rules);
+    assert(!far.state.bodies[0].found, 'two hexes off, nobody finds it');
+
+    // A patrol that walks past it along the row and ends two hexes beyond it.
+    const lying = { ...body, q: row.q + 1, r: row.r + 1 };
+    const route = [{ q: row.q, r: row.r }, { q: row.q + 5, r: row.r }];
+    const patrol = enemy(row.q, row.r, 'E', { route, waypoint: 1 });
+    const s = { ...state, units: parked, enemies: [patrol], bodies: [lying] };
     const first = runEnemyPhase(s, map, rules);
-    assert(first.state.bodies[0].found, 'found');
+    assert(hexDistance(first.state.enemies[0], lying) > 1, 'the patrol ended past it');
+    assert(first.state.bodies[0].found, 'found on the way past');
     equal(first.state.alert.points, rules.alert.bodyFound, 'alert +bodyFound');
     equal(first.state.noises.at(-1).kind, 'found', 'noise queued');
     const second = runEnemyPhase(first.state, map, rules);

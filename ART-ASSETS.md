@@ -121,6 +121,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
 | `objective-rally-point.svg` | 80 x 92 | the exfil barn or field |
+| `landmark-church.svg` | 80 x 92 | village church with a spire, drawn over one farmhouse hex near the exchange. Art only, no rule (SPEC.md §11). |
 
 ---
 
@@ -160,14 +161,15 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 
 ## 8. Type
 
-Two faces, both self-hosted:
+No comic lettering: the annual look is carried by print, paper and colour (SPEC.md §11).
 
-- **Display / headings:** condensed slab or a heavy comic-annual title face.
-- **Body and captions:** a hand-lettered comic face for speech bubbles, a clean condensed
-  sans for numbers and UI.
+- **Body, captions, speech bubbles, numbers and UI:** a typewriter Courier. `Courier 10
+  Pitch` if supplied, falling back to `Courier New`, `Courier`, `monospace`, which ship on
+  every desktop, so nothing has to be supplied.
+- **Display / headings (optional):** a condensed slab for the masthead and big headings.
 
-Format: **WOFF2**, into `/assets/fonts/`. Check the licence permits web embedding —
-desktop-only licences are the usual trap. Supply a fallback stack for each.
+Any face that is supplied: **WOFF2**, into `/assets/fonts/`. Check the licence permits web
+embedding — desktop-only licences are the usual trap. Supply a fallback stack for each.
 
 Numbers appear constantly (AP, fuse, turn counter). Whatever you pick must have tabular
 figures or the UI will jitter every turn.

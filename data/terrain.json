@@ -1,5 +1,5 @@
 {
-  "_comment": "Terrain rules table, SPEC.md §3. Global, not per-map: map.json references these ids. moveCost null means impassable. cover is none | light | heavy. All balance numbers live here, never in logic (CLAUDE.md rule 5).",
+  "_comment": "Terrain rules table, SPEC.md §3. Global, not per-map: map.json references these ids. moveCost null means impassable. cover is none | light | heavy. landing (SPEC.md §9), when present: bad costs a man landing there his first turn, wounds wounds him and puts him ashore on the nearest bank. All balance numbers live here, never in logic (CLAUDE.md rule 5).",
   "types": {
     "field": {
       "label": "Field",
@@ -31,6 +31,7 @@
       "cover": "heavy",
       "blocksLOS": true,
       "spotBonus": 0,
+      "landing": "bad",
       "notes": "bad landing"
     },
     "orchard": {
@@ -47,6 +48,7 @@
       "cover": "light",
       "blocksLOS": false,
       "spotBonus": 0,
+      "landing": "bad",
       "notes": "bad landing"
     },
     "canal": {
@@ -55,6 +57,7 @@
       "cover": "none",
       "blocksLOS": false,
       "spotBonus": 0,
+      "landing": "wounds",
       "notes": "crossable only at bridge or lock"
     },
     "ridge": {

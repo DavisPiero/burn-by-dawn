@@ -24,28 +24,22 @@ import { applyHook } from './traits.js';
 export const DIALOGUE_KEYS = ['onLand', 'onPlaceCharge', 'onWounded'];
 
 /**
- * Build the starting unit list from the roster, the trait table, the rules
- * table and the map's deployment hexes. Throws if the data does not line up,
- * because a trooper silently missing from the board — or a trait silently
- * never firing — is worse than a loud failure.
+ * Build the stick from the roster, the trait table and the rules table. Nobody
+ * is on the board yet: the drop puts them there (drop.js landStick). Throws if
+ * the data does not line up, because a trait silently never firing is worse
+ * than a loud failure.
  */
-export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data/roster.json') {
+export function createUnits(roster, traits, rules, rosterUrl = 'data/roster.json') {
   const troopers = roster?.troopers;
   if (!Array.isArray(troopers) || troopers.length === 0) {
     throw new Error(`${rosterUrl}: expected a non-empty "troopers" array`);
   }
-  if (startHexes.length < troopers.length) {
-    throw new Error(
-      `data/map.json: ${troopers.length} troopers in ${rosterUrl} but only ${startHexes.length} startHexes`,
-    );
-  }
 
-  const units = troopers.map((trooper, i) => {
+  const units = troopers.map((trooper) => {
     const role = rules.roles?.[trooper.role];
     if (!role) {
       throw new Error(`${rosterUrl}: trooper "${trooper.id}" has role "${trooper.role}", which data/rules.json does not define`);
     }
-    const [q, r] = startHexes[i];
     const unit = {
       id: trooper.id,
       name: trooper.name,
@@ -59,8 +53,11 @@ export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data
       // hook call needs only the unit and state stays plain data.
       traits: resolveTraits(trooper, traits, rosterUrl),
       dialogue: validateDialogue(trooper, rosterUrl),
-      q,
-      r,
+      // Still in the aircraft until the drop lands him (SPEC.md §9).
+      q: null,
+      r: null,
+      landed: false,
+      turnsLost: 0, // turns still to lose to a bad landing, this one included
       trail: [], // hexes entered this turn, for the detection phase
       // SPEC.md §5 Wounds and §6 contact. `inContact`: spotted at the last
       // detection check, so spotted again means shot. `hidden`: gone to
@@ -80,7 +77,6 @@ export function createUnits(roster, traits, rules, startHexes, rosterUrl = 'data
     return { ...unit, charges: chargeCapacity(unit, rules) };
   });
 
-  // Everyone has to be on the board before the command radius can be measured.
   return fillActionPoints(units, rules);
 }
 
@@ -116,6 +112,8 @@ export function commandBonus(unit, units, rules) {
 export function fillActionPoints(units, rules) {
   return units.map((unit) => {
     if (!onBoard(unit)) return { ...unit, commandBonus: 0, apMax: 0, ap: 0 };
+    // A bad landing costs him whole turns (SPEC.md §9): nothing to spend.
+    if (unit.turnsLost > 0) return { ...unit, commandBonus: 0, apMax: 0, ap: 0 };
     // A wounded man drops to a flat pool until he is stabilised (SPEC.md §5).
     // Orders do not lift it: the point of the wound is that he is slow.
     if (isWounded(unit)) {
@@ -258,7 +256,7 @@ export function occupiedHexes(units, exceptId = null, enemies = []) {
 export function affordability(unit, cost, steps, rules) {
   if (steps === 0) return { affordable: false, reason: 'already there' };
   if (cost <= unit.ap) return { affordable: true, minimumStep: false };
-  if (rules.minimumStep && steps === 1 && unit.ap === unit.apMax) {
+  if (rules.minimumStep && steps === 1 && unit.apMax > 0 && unit.ap === unit.apMax) {
     return { affordable: true, minimumStep: true };
   }
   if (unit.ap === 0) return { affordable: false, reason: 'no AP left this turn' };
@@ -312,7 +310,7 @@ function runningCosts(map, path, unit) {
 export function reachableFor(map, units, unit, rules, enemies = []) {
   const blocked = occupiedHexes(units, unit.id, enemies);
   const reachable = reachableWithin(map, unit, unit.ap, blocked, moveCostFor(unit));
-  if (rules.minimumStep && unit.ap === unit.apMax) {
+  if (rules.minimumStep && unit.apMax > 0 && unit.ap === unit.apMax) {
     for (const step of neighbourPlans(map, blocked, unit, rules)) {
       if (!reachable.has(step.key)) reachable.set(step.key, step.entry);
     }
@@ -333,9 +331,9 @@ function neighbourPlans(map, blocked, unit, rules) {
 
 // --- condition ------------------------------------------------------------------
 
-/** Still in the field: not dead, and not out at the exfil (SPEC.md §10). */
+/** Still in the field: landed, not dead, and not out at the exfil (SPEC.md §9, §10). */
 export function onBoard(unit) {
-  return !unit.dead && !unit.out;
+  return unit.landed === true && !unit.dead && !unit.out;
 }
 
 /** Hit and not yet stabilised: the 1 AP man of SPEC.md §5. */
@@ -417,6 +415,20 @@ export function checkStabilise(unit, patient) {
   if (!isWounded(patient)) return result(cost, `${patient.shortName} is not wounded`);
   if (hexDistance(unit, patient) !== 1) return result(cost, `${patient.shortName} is not beside him`);
   if (unit.ap === 0 || unit.ap < unit.apMax) return result(cost, 'takes a full turn — he has already spent AP');
+  return result(cost, null);
+}
+
+/**
+ * Pack up a parachute (SPEC.md §9): 1 AP, only his own, only standing on it.
+ * Returns the usual check plus `parachute` when there is one here to pack.
+ */
+export function checkPackParachute(parachutes, unit, rules) {
+  const cost = rules.actions.packParachute.apCost;
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  const own = parachutes.find((p) => p.unitId === unit.id);
+  if (!own) return result(cost, 'his parachute is gone');
+  if (own.q !== unit.q || own.r !== unit.r) return result(cost, 'his parachute is not on this hex');
   return result(cost, null);
 }
 

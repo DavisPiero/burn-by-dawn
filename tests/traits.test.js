@@ -4,7 +4,8 @@
 // the roster the game actually loads, not on a copy of it.
 
 import { loadJson, loadMap } from '../src/map.js';
-import { createInitialState } from '../src/state.js';
+import { chooseDropRun, createInitialState, jump } from '../src/state.js';
+import { landedState } from './fixtures.js';
 import { applyHook, HOOKS, validateTraits } from '../src/traits.js';
 import { hookBase, planMove, traitEffects, unitById } from '../src/units.js';
 
@@ -56,7 +57,7 @@ export default [
 
   ['every trooper in roster.json has a trait that changes one of his numbers', async () => {
     const { map, rules, traits, roster } = await loadAll();
-    const state = createInitialState(roster, traits, rules, map);
+    const state = landedState(roster, traits, rules, map);
     for (const unit of state.units) {
       const effects = traitEffects(unit, rules);
       assert(effects.length > 0, `${unit.id} has no traits`);
@@ -71,7 +72,7 @@ export default [
 
   ['the six traits do what SPEC.md §5 says', async () => {
     const { map, rules, traits, roster } = await loadAll();
-    const state = createInitialState(roster, traits, rules, map);
+    const state = landedState(roster, traits, rules, map);
     const byTrait = (id) => state.units.find((u) => u.traits.some((t) => t.id === id));
     const fire = (id, hook, stat) => {
       const unit = byTrait(id);
@@ -89,7 +90,7 @@ export default [
 
   ['a trait fires only on its own hook and stat', async () => {
     const { map, rules, traits, roster } = await loadAll();
-    const state = createInitialState(roster, traits, rules, map);
+    const state = landedState(roster, traits, rules, map);
     const holloway = state.units.find((u) => u.traits.some((t) => t.id === 'steady-hands'));
     equal(applyHook(holloway, 'onPlaceCharge', 'apCost', 1).value, 1, 'Steady Hands leaves AP cost alone');
     equal(applyHook(holloway, 'onFire', 'alert', 2).value, 2, 'Steady Hands leaves gunfire alone');
@@ -97,14 +98,14 @@ export default [
 
   ['Ox is in the loadout: a gunner with Ox starts carrying a charge', async () => {
     const { map, rules, traits, roster } = await loadAll();
-    const state = createInitialState(roster, traits, rules, map);
+    const state = landedState(roster, traits, rules, map);
     const ox = state.units.find((u) => u.traits.some((t) => t.id === 'ox'));
     const otherGunner = state.units.find((u) => u.role === ox.role && u.id !== ox.id);
     equal(ox.charges, 1, 'Ox charges carried');
     equal(otherGunner.charges, 0, 'other gunner charges carried');
   }],
 
-  ['a seventh trooper needs data only', async () => {
+  ['a seventh trooper needs data only: he jumps one further along every run', async () => {
     const { map, rules, traits, roster } = await loadAll();
     const seventh = {
       id: 'test-seventh',
@@ -116,44 +117,29 @@ export default [
     };
     const bigger = clone(roster);
     bigger.troopers.push(seventh);
-    // One more start hex: a free, passable, in-play hex next to the last one.
-    const taken = new Set(map.startHexes.map(([q, r]) => `${q},${r}`));
-    let extra = null;
-    for (const [q, r] of map.startHexes) {
-      for (const [dq, dr] of [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]]) {
-        const probe = { ...map, startHexes: [[q + dq, r + dr]] };
-        if (taken.has(`${q + dq},${r + dr}`)) continue;
-        try {
-          createInitialState({ troopers: [seventh] }, traits, rules, probe);
-          extra = [q + dq, r + dr];
-          break;
-        } catch { /* not a usable hex */ }
-      }
-      if (extra) break;
+    for (const run of map.dropRuns) {
+      const start = createInitialState(bigger, traits, rules, map, 7);
+      const state = jump(chooseDropRun(start, map, run.id), map, rules);
+      equal(state.units.length, 7, 'unit count');
+      const unit = unitById(state.units, 'test-seventh');
+      assert(unit.landed, `he landed on the ${run.id} run`);
+      equal(unit.charges, rules.roles.scout.charges + 1, 'his Ox fired');
     }
-    assert(extra, 'no free hex next to the start hexes');
-
-    const state = createInitialState(bigger, traits, rules, { ...map, startHexes: [...map.startHexes, extra] });
-    equal(state.units.length, 7, 'unit count');
-    const unit = unitById(state.units, 'test-seventh');
-    equal(unit.charges, rules.roles.scout.charges + 1, 'his Ox fired');
-    equal(unit.apMax >= rules.roles.scout.actionPoints, true, 'he has a scout AP pool');
   }],
 
-  ['a seventh trooper with no start hex fails loudly', async () => {
+  ['a drop run too short for the stick fails loudly', async () => {
     const { map, rules, traits, roster } = await loadAll();
-    const bigger = clone(roster);
-    bigger.troopers.push({ ...clone(roster.troopers[1]), id: 'extra' });
-    throws(() => createInitialState(bigger, traits, rules, map), /startHexes/, 'missing start hex');
+    const short = { ...map, dropRuns: map.dropRuns.map((run, i) => (i === 0 ? { ...run, jumpAt: 99 } : run)) };
+    throws(() => createInitialState(roster, traits, rules, short), /flight line/, 'run too short');
   }],
 
   ['onActionPoints modifies the pool, and command stacks on top', async () => {
     const { map, rules, traits, roster } = await loadAll();
     const withTrait = { ...traits, 'test-ap': trait('onActionPoints', 'actionPoints', 'add', 2) };
     const edited = clone(roster);
-    const plain = createInitialState(edited, traits, rules, map);
+    const plain = landedState(edited, traits, rules, map);
     edited.troopers[1].traits = ['test-ap'];
-    const state = createInitialState(edited, withTrait, rules, map);
+    const state = landedState(edited, withTrait, rules, map);
     const before = unitById(plain.units, edited.troopers[1].id);
     const after = unitById(state.units, edited.troopers[1].id);
     equal(after.apMax, before.apMax + 2, 'AP pool with +2 trait');
@@ -164,9 +150,9 @@ export default [
     const { map, rules, traits, roster } = await loadAll();
     const withTrait = { ...traits, 'test-slow': trait('onMoveCost', 'moveCost', 'add', 1) };
     const edited = clone(roster);
-    const plainState = createInitialState(edited, traits, rules, map);
+    const plainState = landedState(edited, traits, rules, map);
     edited.troopers[0].traits = ['test-slow'];
-    const slowState = createInitialState(edited, withTrait, rules, map);
+    const slowState = landedState(edited, withTrait, rules, map);
     const id = edited.troopers[0].id;
     const plainUnit = unitById(plainState.units, id);
     const slowUnit = unitById(slowState.units, id);
@@ -231,13 +217,13 @@ export default [
     const { map, rules, traits, roster } = await loadAll();
     const edited = clone(roster);
     edited.troopers[0].traits = ['no-such-trait'];
-    throws(() => createInitialState(edited, traits, rules, map), /"no-such-trait"/, 'missing trait');
+    throws(() => landedState(edited, traits, rules, map), /"no-such-trait"/, 'missing trait');
   }],
 
   ['validation: roster trooper missing a dialogue line', async () => {
     const { map, rules, traits, roster } = await loadAll();
     const edited = clone(roster);
     delete edited.troopers[2].dialogue.onWounded;
-    throws(() => createInitialState(edited, traits, rules, map), /dialogue\.onWounded/, 'missing line');
+    throws(() => landedState(edited, traits, rules, map), /dialogue\.onWounded/, 'missing line');
   }],
 ];

@@ -56,13 +56,14 @@
     "proximity": [0, 2, 1]
   },
 
-  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him, and only when he was not already in contact: a man already counted is not counted again each turn he stays in view. `stone` is a thrown stone and `bodyFound` a body an enemy comes across. Enemy fire at troopers raises nothing: the sighting that caused it already counted. `hearingBonus` is added to every noise radius in that state.",
+  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him, and only when he was not already in contact: a man already counted is not counted again each turn he stays in view. `stone` is a thrown stone, `bodyFound` a body an enemy comes onto or beside and `parachuteFound` an abandoned parachute an enemy comes onto or beside (SPEC.md §9). Enemy fire at troopers raises nothing: the sighting that caused it already counted. `hearingBonus` is added to every noise radius in that state.",
 
   "alert": {
     "gunfire": 2,
     "spotted": 1,
     "stone": 1,
     "bodyFound": 1,
+    "parachuteFound": 1,
     "quietTurnsToDecay": 4,
     "states": [
       { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0, "hearingBonus": 0 },
@@ -79,7 +80,7 @@
     "sweepRotation": 3
   },
 
-  "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body (and a parachute at M6). A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off.",
+  "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body or a parachute an enemy came onto or beside, on its way or where it ended its go. A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off.",
 
   "noise": {
     "found": 3,
@@ -97,18 +98,23 @@
     "woundedActionPoints": 1
   },
 
-  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, only once an objective of kind `requiresDestroyed` is destroyed. A full turn means he has spent no AP yet and it costs his whole pool.",
+  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, only once an objective of kind `requiresDestroyed` is destroyed. A full turn means he has spent no AP yet and it costs his whole pool.",
 
   "actions": {
     "hide": { "apCost": 1, "concealment": 1 },
     "suppress": { "apCost": 2 },
     "throwStone": { "apCost": 1, "range": 3 },
     "pickUpCharge": { "apCost": 1 },
+    "packParachute": { "apCost": 1 },
     "swim": { "requiresDestroyed": "bridge", "across": "canal" }
   },
 
+  "_landing": "SPEC.md §9 the drop. Each man jumps from his point on the run's flight line (data/map.json dropRuns) and scatters. `scatterWeights[d]` is the weight of scattering exactly d hexes: 1 and 2 are common, 3 is rare, 0 never. The onLand hook's scatterDistance modifies the roll. Among the hexes at that distance, `windWeights` weights each by where it lies from the jump point: within 60 degrees of the wind's direction is downwind, within 60 degrees of against it upwind, the rest across. A man never lands out of play, on the exfil, on impassable ground other than water that wounds (data/terrain.json landing), on another man, or within `enemyClearance` hexes of an enemy; if nowhere at the rolled distance will do, the nearest distance that will. `badLandingTurnsLost` is what a bad landing (wood, marsh) costs, through the onLand hook's landingPenalty.",
   "landing": {
-    "badLandingTurnsLost": 1
+    "badLandingTurnsLost": 1,
+    "scatterWeights": [0, 5, 4, 1],
+    "windWeights": { "downwind": 4, "across": 2, "upwind": 1 },
+    "enemyClearance": 2
   },
 
   "_spotRadius": "SPEC.md §5 gives the scout 3 and is silent on the others; 2 was chosen for sappers and gunners. Its one use is the gunner's suppress (SPEC.md §4): the target must be within it, plus any terrain spotBonus where the gunner stands. There is no fog of war (§6).",

@@ -2,6 +2,10 @@
 // returns new state; nothing mutates what it was given, and rendering only
 // ever reads (CLAUDE.md hard rule 7).
 //
+// Before turn 1 comes the drop (SPEC.md §9): `phase` is 'drop' until the
+// player picks a run and jumps, and 'play' after. Nobody is on the board, and
+// no turn can end, until then.
+//
 // SPEC.md §4 gives a turn five phases: player, detection, enemy, fuse, alert
 // decay. endTurn runs everything after the player phase, then settleMission
 // asks whether the mission is over (SPEC.md §10). Save/load arrives when there
@@ -13,23 +17,35 @@
 import {
   createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, runDetection, runEnemyPhase,
 } from './enemy.js';
+import { landStick, runById, scatterStick, validateDrop } from './drop.js';
+import { createRng } from './rng.js';
 import {
   checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
 import {
-  checkHide, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  checkHide, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   createUnits, fillActionPoints, onBoard, unitById,
 } from './units.js';
 
-/** `traits` is the validated table from traits.js validateTraits. */
-export function createInitialState(roster, traits, rules, map) {
+/**
+ * `traits` is the validated table from traits.js validateTraits. `seed` feeds
+ * rng.js; the drop is the only thing that rolls, and the seed alone plus the
+ * run chosen reproduces it.
+ */
+export function createInitialState(roster, traits, rules, map, seed = 0) {
   validateRules(rules);
   validateSabotage(map, rules);
+  const units = createUnits(roster, traits, rules);
+  validateDrop(map, rules, units.length);
   return {
     turn: 1,
-    units: createUnits(roster, traits, rules, map.startHexes),
+    phase: 'drop',
+    seed,
+    // The run the player is looking at before jumping (SPEC.md §9).
+    dropRunId: null,
+    units,
     enemies: createEnemies(map),
     alert: createAlert(),
     // The most recent noise the garrison heard: { q, r, searched }, or null.
@@ -40,6 +56,8 @@ export function createInitialState(roster, traits, rules, map) {
     // SPEC.md §5: the dead leave bodies; the wounded and the dead drop charges.
     bodies: [],
     droppedCharges: [],
+    // SPEC.md §9: { unitId, name, q, r }, one per man until packed or found.
+    parachutes: [],
     reserveDeployed: false,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
     // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
@@ -122,6 +140,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   states.forEach((s, i) => requireCount(s.hearingBonus, `"alert.states[${i}].hearingBonus"`, rulesUrl));
   requireCount(rules.alert.stone, '"alert.stone"', rulesUrl);
   requireCount(rules.alert.bodyFound, '"alert.bodyFound"', rulesUrl);
+  requireCount(rules.alert.parachuteFound, '"alert.parachuteFound"', rulesUrl);
 
   // Noise, contact and wounds, SPEC.md §5 and §6.
   for (const kind of ['found', 'stone', 'gunfire']) {
@@ -145,6 +164,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.actions?.throwStone?.apCost, '"actions.throwStone.apCost"', rulesUrl);
   requireCount(rules.actions.throwStone.range, '"actions.throwStone.range"', rulesUrl);
   requireCount(rules.actions?.pickUpCharge?.apCost, '"actions.pickUpCharge.apCost"', rulesUrl);
+  requireCount(rules.actions?.packParachute?.apCost, '"actions.packParachute.apCost"', rulesUrl);
 
   // Sabotage, exfil, the diversion and the score, SPEC.md §4, §7, §10. The
   // objectives themselves are checked against map.json in sabotage.js.
@@ -174,6 +194,27 @@ function requireCount(value, what, rulesUrl) {
   if (!Number.isInteger(value) || value < 0) {
     throw new Error(`${rulesUrl}: ${what} must be a non-negative integer, got ${JSON.stringify(value)}`);
   }
+}
+
+// --- the drop (SPEC.md §9) -------------------------------------------------------
+
+/** Look at a drop run before committing to it; null looks at none. */
+export function chooseDropRun(state, map, runId) {
+  if (state.phase !== 'drop') return state;
+  if (runId !== null && !runById(map, runId)) return state;
+  return { ...state, dropRunId: runId };
+}
+
+/**
+ * Jump on the chosen run: scatter the stick with the seeded RNG, put everyone
+ * on the ground, and start turn 1. `map` is the loaded map.
+ */
+export function jump(state, map, rules) {
+  if (state.phase !== 'drop') return state;
+  const run = runById(map, state.dropRunId);
+  if (!run) return state;
+  const landings = scatterStick(map, rules, run, state.units, state.enemies, createRng(state.seed));
+  return landStick(state, landings, map, rules).state;
 }
 
 export function selectUnit(state, unitId) {
@@ -308,6 +349,16 @@ export function stabiliseUnit(state, unitId, patientId) {
   };
 }
 
+/** Pack up his own parachute from the hex he stands on (SPEC.md §9). */
+export function packParachute(state, unitId, rules) {
+  const unit = unitById(state.units, unitId);
+  if (!checkPackParachute(state.parachutes, unit, rules).ok) return state;
+  return {
+    ...spend(state, unitId, rules.actions.packParachute.apCost),
+    parachutes: state.parachutes.filter((p) => p.unitId !== unitId),
+  };
+}
+
 /** Pick up one dropped charge from his own hex. */
 export function pickUpCharge(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
@@ -363,6 +414,7 @@ export function swimAcross(state, unitId, target, map, rules) {
 /** Can the RAF diversion be called now (SPEC.md §4)? { ok, reason }. */
 export function checkDiversion(state, rules) {
   if (state.outcome) return { ok: false, reason: 'the mission is over' };
+  if (state.phase === 'drop') return { ok: false, reason: 'not before the drop' };
   if (state.diversionUsed) return { ok: false, reason: 'already called' };
   if (rules.diversion.uses < 1) return { ok: false, reason: 'not on this mission' };
   if (!state.units.some((u) => u.leader && !u.dead)) return { ok: false, reason: 'the leader carried the radio, and he is dead' };
@@ -392,7 +444,7 @@ export function toggleRoutes(state) {
  * (SPEC.md §10), and the clock does not go past it.
  */
 export function endTurn(state, rules, map) {
-  if (state.outcome) return state;
+  if (state.outcome || state.phase !== 'play') return state;
   const dawn = isDawn(state, rules);
   return settleMission(playOutTurn(state, rules, map, dawn), rules, map, { dawn });
 }
@@ -418,12 +470,17 @@ function playOutTurn(state, rules, baseMap, dawn) {
     report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events],
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.
-    units: fillActionPoints(next.units, rules).map((unit) => ({ ...unit, trail: [] })),
+    // A turn lost to a bad landing is spent now.
+    units: fillActionPoints(next.units.map(spendLostTurn), rules).map((unit) => ({ ...unit, trail: [] })),
     selectedHex: null,
     targeting: null,
     // A dead man cannot stay selected.
     selectedUnitId: next.units.some((u) => u.id === state.selectedUnitId && onBoard(u)) ? state.selectedUnitId : null,
   };
+}
+
+function spendLostTurn(unit) {
+  return unit.turnsLost > 0 ? { ...unit, turnsLost: unit.turnsLost - 1 } : unit;
 }
 
 /**
@@ -434,7 +491,7 @@ function playOutTurn(state, rules, baseMap, dawn) {
  * exfil ends the mission there and then.
  */
 export function settleMission(state, rules, map, { dawn = false } = {}) {
-  if (state.outcome) return state;
+  if (state.outcome || state.phase !== 'play') return state;
   const check = missionCheck(state, rules, { dawn });
   if (!check) return state;
 

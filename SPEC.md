@@ -429,6 +429,17 @@ bridge's two fuses together is therefore worth a whole alert step.
 The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
 Blow the bridge last and you may not have turns left to reach exfil.
 
+**Only the primary is needed to win (§10).** The secondaries are worth score and cost
+alert, and nothing else. The panel labels them "optional, +2" so they do not read as a
+checklist.
+
+**To consider at M8 — secondary payoffs.** As written, a secondary makes the mission harder
+and gives nothing back in play, so §8's "choosing which secondary objective is realistic"
+has little pull. Candidates, to be tested in the balance pass rather than built earlier:
+cutting or blowing the exchange delays or cancels the reserve squad (§6); blowing the fuel
+dump takes a patrol off the board (the tank laager crew go to fight the fire). Each would be a
+per-kind entry in `rules.json`, never a code branch for one objective.
+
 ---
 
 ## 8. Routes
@@ -450,8 +461,15 @@ The drop is not a cutscene. It is the first decision, and it is how the player c
 
 Before turn 1, the player picks one of **three drop runs** (north, east, west), drawn as a
 flight line across the map with a wind arrow. The run decides which corridor the stick
-lands nearest. Each trooper then lands with **small seeded scatter**, 1–2 hexes, rarely 3.
-Landing in Wood or Marsh costs that trooper their first turn. Landing in Canal wounds them.
+lands nearest: west on the wood and ridge line, north on the hedgerow lanes, east on the
+canal towpath above the bridge. All three land west of the canal, so nobody starts on the
+wrong side of the chokepoint. The men jump in roster order along the flight line. Each
+trooper then lands with **small seeded scatter**, 1–2 hexes, rarely 3, leaning **downwind**.
+Nobody lands out of play, on the exfil, on impassable ground other than the canal, on
+another man, or within 2 hexes of an enemy.
+Landing in Wood or Marsh costs that trooper their first turn: he has no AP on turn 1.
+Landing in Canal wounds them, and he drags himself out onto the nearest bank, where his
+parachute ends up with him.
 
 Scatter stays small. It is texture, not chaos. The player's plan should survive it.
 
@@ -464,9 +482,10 @@ does about it is the second decision of turn 1.
 
 - A trooper standing on his own parachute can **pack it up for 1 AP**, removing it. Only
   his own, only from that hex. He cannot go back for someone else's.
-- A parachute left behind is found when an enemy moves **onto or adjacent to** it during
-  the enemy phase: alert **+1**, the parachute is removed, and that hex becomes a last
-  known contact (§6). Found once, never again.
+- A parachute left behind is found when an enemy comes **onto or adjacent to** it during
+  the enemy phase — on or beside any hex it walks through, or where it ends its go. Alert **+1**,
+  the parachute is removed, and that hex becomes a last known contact (§6). Found once,
+  never again.
 - Patrol routes are drawn, so the player can see which parachutes are actually at risk
   before deciding. This is a visible cost, not a hidden one.
 
@@ -531,9 +550,29 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Units are **counters**: rounded squares, drop shadow, symbol, name strip. They snap down
   with a 2-frame stepped rotation. No smooth easing anywhere — stepped animation reads as
   hand-made.
-- Speech bubbles for dialogue, hand-lettered feel, tail pointing at the counter.
-- Condensed slab display face for headings, system stack fallback.
+- Speech bubbles for dialogue on the board, tail pointing at the man's counter. Dialogue
+  stays on the board, not in the roster rail.
+- **Type is not comic lettering.** The annual look comes from the print, paper and colour.
+  Text on the right page is a typewriter face, a Courier (`Courier 10 Pitch`, then
+  `Courier New`, `Courier`, `monospace`), so it reads as a typed briefing; speech bubbles
+  use it too. A condensed slab may still set big headings. Pin the board's label face
+  rather than leaving it to the browser's default monospace.
+- A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,
+  no new terrain. It is the landmark Vance's landing line refers to, and spires were how
+  real sticks checked they had been dropped in the right place.
 - "CUT OUT AND PLAY" margin note in the outer gutter.
+
+**Right page layout (notes for M7, from the operator's review of M6).** The panel is too
+busy and the roster runs off the bottom at 1280x800. At M7:
+
+- The turn counter, End turn and the selected man's actions stay on the right page, in a
+  fixed strip at its top. They do not move to the left page.
+- The roster rail fits at 1280x800 without scrolling: six compact slots.
+- Detail moves into rollover popups: the drop-run descriptions (on the run's button and
+  its flight line), the keyboard list, the alert thresholds (on the dial), and the terrain
+  legend (on hex hover, folded into the readout). The legend row under the board and the
+  coordinates printed on every hex are build scaffolding and go.
+- The hover readout (§4) stays always visible; it is the risk display, not detail.
 
 **Architecture requirement:** all art is referenced by sprite id through `theme.js`,
 rendered as SVG `<symbol>` / `<use>`. Procedural shapes now, hand-drawn SVG later, swapped

@@ -2,11 +2,12 @@
 // [name, fn] pairs; fn may be async and throws to fail.
 
 import combatTests from './combat.test.js';
+import dropTests from './drop.test.js';
 import enemyTests from './enemy.test.js';
 import sabotageTests from './sabotage.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');

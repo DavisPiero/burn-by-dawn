@@ -71,7 +71,8 @@ export function renderAlertDial(svg, caption, alert) {
 export function renderReport(element, state) {
   element.replaceChildren();
   const lines = state.report.map(describeEvent);
-  if (lines.length === 0) lines.push(state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.');
+  if (state.phase === 'drop') lines.push('Pick a drop run, then jump. Where each man lands is scattered by the wind.');
+  else if (lines.length === 0) lines.push(state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.');
   for (const line of lines) {
     const item = document.createElement('li');
     item.textContent = line;
@@ -91,6 +92,8 @@ function describeEvent(event) {
     case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in cover, not hit.`;
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} at (${event.q}, ${event.r}).`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body at (${event.q}, ${event.r}).`;
+    case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute at (${event.q}, ${event.r}).`;
+    case 'landed': return describeLanding(event);
     case 'explosion': return event.destroyed ? `BANG — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BANG — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
@@ -98,7 +101,23 @@ function describeEvent(event) {
   }
 }
 
-const NOISE_WORDS = { spotted: 'a sighting', found: 'the shout over a body', stone: 'a noise', gunfire: 'gunfire', explosion: 'the explosion' };
+/** SPEC.md §9: where he came down, how far off his mark, and what it cost him. */
+function describeLanding(event) {
+  const off = event.distance === null ? '' : event.distance === 0 ? ', on his mark' : `, ${event.distance} hex${event.distance === 1 ? '' : 'es'} off`;
+  const where = `(${event.q}, ${event.r})`;
+  if (event.outcome === 'wounds') {
+    return `${event.unitName} comes down in the ${event.terrain.toLowerCase()}${off} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out at ${where}.`;
+  }
+  if (event.outcome === 'bad') {
+    const cost = event.turnsLost > 0
+      ? `loses ${event.turnsLost === 1 ? 'his first turn' : `${event.turnsLost} turns`}`
+      : 'lands clean anyway';
+    return `${event.unitName} lands in ${event.terrain.toLowerCase()} at ${where}${off} — ${cost}.`;
+  }
+  return `${event.unitName} lands in ${event.terrain.toLowerCase()} at ${where}${off}.${event.line ? ` “${event.line}”` : ''}`;
+}
+
+const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', explosion: 'the explosion' };
 
 function listOf(labels) {
   if (!labels || labels.length === 0) return 'someone';
@@ -148,6 +167,11 @@ function describeCost(terrain) {
 
 /** Dawn arrives on turn 20 and that is the clock (SPEC.md §4). */
 export function renderTurnCounter(element, state, rules) {
+  if (state.phase === 'drop') {
+    element.textContent = `THE DROP — before turn 1 of ${rules.turnLimit}`;
+    element.classList.remove('dawn');
+    return;
+  }
   if (state.outcome) {
     element.textContent = `TURN ${state.turn} / ${rules.turnLimit} — MISSION OVER`;
     element.classList.add('dawn');
@@ -161,6 +185,11 @@ export function renderTurnCounter(element, state, rules) {
 }
 
 export function renderEndTurnButton(button, state, rules) {
+  if (state.phase === 'drop') {
+    button.disabled = state.dropRunId === null;
+    button.textContent = state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP  (space)';
+    return;
+  }
   button.disabled = Boolean(state.outcome);
   if (state.outcome) button.textContent = 'MISSION OVER';
   else if (state.turn >= rules.turnLimit) button.textContent = 'END THE LAST TURN — DAWN  (space)';
@@ -168,9 +197,9 @@ export function renderEndTurnButton(button, state, rules) {
 }
 
 /**
- * The mission at a glance (SPEC.md §7, §10): each objective and how far on it
- * is, how many men are out of how many needed, and a warning when there are no
- * longer enough charges for the primary.
+ * The mission at a glance (SPEC.md §7, §10): each objective, whether it is
+ * needed or optional and how far on it is, how many men are out of how many
+ * needed, and a warning when there are no longer enough charges for the primary.
  */
 export function renderMission(element, mission) {
   element.replaceChildren();
@@ -179,7 +208,11 @@ export function renderMission(element, mission) {
     if (o.destroyed) item.className = 'done';
     const name = document.createElement('b');
     name.textContent = o.primary ? `${o.label} ★` : o.label;
-    item.append(name, ` — ${o.detail}`);
+    // SPEC.md §10: only the primary is needed to win. Say so, or the three
+    // read as a checklist.
+    const role = document.createElement('i');
+    role.textContent = o.primary ? ' needed' : ` optional, +${o.points}`;
+    item.append(name, role, ` — ${o.detail}`);
     element.appendChild(item);
   }
   const out = document.createElement('li');
@@ -281,12 +314,24 @@ export function renderRoster(element, state, map, view, onSelect) {
       element.appendChild(item);
       return;
     }
+    if (!unit.landed) {
+      detail.textContent = `${unit.roleLabel} · in the aircraft${unit.leader ? ' · leading' : ''}`;
+      const text = document.createElement('span');
+      text.className = 'roster-text';
+      text.append(who, detail);
+      item.append(key, text);
+      element.appendChild(item);
+      return;
+    }
     const terrain = terrainAt(map, unit.q, unit.r);
     const where = `${unit.roleLabel} · ${terrain ? terrain.label : 'off map'} (${unit.q}, ${unit.r})`;
     // An AP pool that is bigger than the role's own number needs to say why,
     // or the player is left guessing where the extra point came from.
     detail.textContent = unit.leader ? `${where} · leading` : where;
     detail.append(` · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
+    if (state.parachutes.some((p) => p.unitId === unit.id && p.q === unit.q && p.r === unit.r)) {
+      detail.append(' · on his parachute');
+    }
 
     const ap = document.createElement('span');
     ap.className = 'roster-ap';
@@ -326,7 +371,44 @@ function describeStatus(unit) {
   if (unit.inContact) parts.push('IN CONTACT');
   if (unit.pinned) parts.push('PINNED');
   if (unit.hidden) parts.push('HIDDEN');
+  if (unit.turnsLost > 0) parts.push('BAD LANDING');
   return parts.length ? parts.join(' · ') : null;
+}
+
+/**
+ * The drop runs (SPEC.md §9), as buttons with their key, in place of the
+ * actions panel before anyone has landed. `runs` is derived in main.js:
+ * [{ id, key, label, description, selected }].
+ */
+export function renderDropRuns(element, runs, onChoose) {
+  element.replaceChildren();
+  element.hidden = false;
+  for (const run of runs) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'action';
+    if (run.selected) button.classList.add('active');
+    button.title = run.description;
+    const name = document.createElement('span');
+    name.className = 'action-name';
+    name.textContent = `${run.label} [${run.key}]`;
+    const note = document.createElement('span');
+    note.className = 'action-cost';
+    note.textContent = run.description;
+    button.append(name, note);
+    button.addEventListener('click', () => onChoose(run.id));
+    element.appendChild(button);
+  }
+}
+
+/** The seed (SPEC.md §1), with a link that replays the same drop. */
+export function renderSeed(element, seed) {
+  element.replaceChildren();
+  const link = document.createElement('a');
+  link.href = `?seed=${seed}`;
+  link.textContent = `seed ${seed}`;
+  link.title = 'Reload with this seed: the same run lands the same way';
+  element.append(link);
 }
 
 /**
@@ -415,6 +497,10 @@ export function renderReadout(element, state, map, view) {
     return;
   }
   if (!hex) {
+    if (state.phase === 'drop') {
+      element.textContent = view?.dropLabel ?? 'Pick a drop run with 1–3 or its button. Hover the board to see what landing there would mean.';
+      return;
+    }
     element.textContent = state.selectedUnitId
       ? 'Hover a hex to preview the move. Right-click or Esc to cancel.'
       : 'Click a trooper to select him, or a hex to inspect it.';
@@ -437,7 +523,7 @@ export function renderReadout(element, state, map, view) {
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
-  const pieces = [view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', ')];
+  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', ')];
   element.textContent = `(${hex.q}, ${hex.r}) ${terrain.label} — ${pieces.filter(Boolean).join('   ▸ ')}`;
 }
 

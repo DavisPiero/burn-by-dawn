@@ -261,6 +261,32 @@ export const EXFIL = {
   label: PALETTE.green,
 };
 
+// The drop (SPEC.md §9): each run's flight line with a wind arrow, and for the
+// run being looked at, where the men jump and everywhere they could come down.
+export const DROP = {
+  casing: PALETTE.paper,
+  casingWidth: 7,
+  stroke: PALETTE.ink,
+  width: 3,
+  dash: '14 8',
+  // The runs not being looked at stay on the board, faint.
+  idleOpacity: 0.45,
+  label: PALETTE.ink,
+  // How far along the flight line its name is set, 0 to 1.
+  labelAlong: 0.3,
+  windStroke: PALETTE.blue,
+  windWidth: 4,
+  windLength: 60,
+  windHead: 12,
+  jumpRadius: 11,
+  jumpFill: PALETTE.paper,
+  jumpText: PALETTE.ink,
+  areaFill: PALETTE.blue,
+  areaOpacity: 0.22,
+  areaStroke: PALETTE.blue,
+  areaWidth: 3,
+};
+
 // The alert dial's four sectors run clockwise from lower left to lower right,
 // like a gauge. Angles are degrees from straight up.
 // The active state in the list beside the alert dial, keyed by the state ids
@@ -471,6 +497,21 @@ const SPRITES = {
       svg('rect', { x: 7, y: 10, width: 14, height: 3, class: 'ink' }),
       svg('path', { d: 'M6 24 Q14 14 22 24 Z', class: 'green' }),
       svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+
+  // An abandoned parachute (SPEC.md §9): a spent canopy lying crumpled on the
+  // ground with its cords trailing to the harness — kit left behind, not a
+  // chute in the air, so no dome and no man under it.
+  'marker-parachute': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('path', { d: 'M3 16 C4 9 10 6 15 8 C19 5 25 8 25 13 C26 17 22 19 18 18 C14 21 7 21 3 16 Z', class: 'paper' }),
+      svg('path', { d: 'M8 11 C10 14 9 17 7 19 M14 9 C15 13 14 16 13 20 M20 8 C20 12 21 15 19 18', fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2 }),
+      svg('path', { d: 'M3 16 C4 9 10 6 15 8 C19 5 25 8 25 13 C26 17 22 19 18 18 C14 21 7 21 3 16 Z', fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+      svg('path', { d: 'M9 20 L14 25 M14 20 L15 25 M19 18 L16 25', fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2 }),
+      svg('rect', { x: 12, y: 23, width: 6, height: 4, rx: 1, class: 'green' }),
+      svg('rect', { x: 12, y: 23, width: 6, height: 4, rx: 1, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
     ],
   },
 

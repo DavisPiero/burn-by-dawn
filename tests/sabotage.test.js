@@ -19,6 +19,7 @@ import {
 } from '../src/sabotage.js';
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
+import { landedState } from './fixtures.js';
 import { onBoard, planMove, unitById } from '../src/units.js';
 
 function assert(condition, message) {
@@ -34,7 +35,7 @@ async function loadAll() {
     loadMap(), loadJson('data/rules.json'), loadJson('data/traits.json'), loadJson('data/roster.json'),
   ]);
   const traits = validateTraits(traitsJson);
-  return { map, rules, state: createInitialState(roster, traits, rules, map) };
+  return { map, rules, state: landedState(roster, traits, rules, map) };
 }
 
 const unitIn = (state, id) => unitById(state.units, id);
