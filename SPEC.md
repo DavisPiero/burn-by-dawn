@@ -552,8 +552,10 @@ Desktop makes the skeuomorphism work properly, so use the room:
   no easing in or out. A man with no AP left stays fully printed; his counter's edge goes
   grey. Halftone is printed faint, close to the colour beneath it.
 - Speech bubbles for dialogue on the board, tail pointing at the man's counter, shown for
-  the man selected or under the mouse (on the board or in the roster). His latest line
-  lasts until the end of the turn. Dialogue stays on the board, not in the roster rail.
+  the man selected or under the mouse (on the board or in the roster). A line is shown
+  once: when the player moves on from that man it has been heard and goes, and any line
+  never looked at goes at the end of the turn. Dialogue stays on the board, not in the
+  roster rail.
 - **Type is not comic lettering,** except in the speech bubbles. The annual look comes
   from the print, paper and colour. Text on the right page is a typewriter face, a Courier
   (`Courier 10 Pitch`, then `Courier New`, `Courier`, `monospace`), so it reads as a typed

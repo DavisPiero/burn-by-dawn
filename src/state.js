@@ -71,9 +71,10 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     // What happened at the last turn boundary, for the turn report.
     report: [],
     // Dialogue on the board (SPEC.md §5, §11): { unitId, line }, at most one
-    // per man, his latest. Set when a man lands, places a charge or is wounded,
-    // and kept until the turn boundary; the board shows it while he is selected
-    // or under the mouse.
+    // per man, his latest. Set when a man lands, places a charge or is wounded.
+    // The board shows it while he is selected or under the mouse; once the
+    // player has looked away from him it is heard and goes (silenceUnits), and
+    // any left unheard go at the turn boundary.
     speech: [],
     selectedUnitId: null,
     selectedHex: null, // hex inspection, from M0; survives alongside unit selection
@@ -241,10 +242,20 @@ function speechFrom(events, units) {
   return speech;
 }
 
-/** Give a man a line, replacing any he was already saying. */
+/** Give a man a line, replacing any he was already saying; null silences him. */
 function say(speech, unitId, line) {
   const others = (speech ?? []).filter((s) => s.unitId !== unitId);
   return line ? [...others, { unitId, line }] : others;
+}
+
+/**
+ * These men's lines have been heard: the player selected or hovered each of
+ * them and has since moved on, so the lines go and are not shown again.
+ */
+export function silenceUnits(state, unitIds) {
+  const heard = new Set(unitIds);
+  if (!state.speech.some((s) => heard.has(s.unitId))) return state;
+  return { ...state, speech: state.speech.filter((s) => !heard.has(s.unitId)) };
 }
 
 export function selectUnit(state, unitId) {

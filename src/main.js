@@ -10,7 +10,7 @@ import { freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
   jump, moveUnit, nextUnitId, packParachute, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
-  setTargeting, settleMission, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
+  setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
@@ -64,6 +64,9 @@ let highlightHex = null;
 let currentView = null;
 // The man whose roster row is under the mouse: he speaks, like the man selected.
 let hoverUnitId = null;
+// Who was speaking at the last draw. A man who was, and no longer is, has been
+// heard, and his line goes (SPEC.md §11).
+let lastSpeakers = new Set();
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -412,6 +415,7 @@ function render() {
   map = effectiveMap(baseMap, state.objectives, rules);
   const view = deriveView();
   currentView = view;
+  noteHeard(view);
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex);
@@ -426,6 +430,18 @@ function render() {
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome);
   dropStalePopup();
+}
+
+/**
+ * A line is shown once: while its man is selected or under the mouse. When the
+ * player moves on from him, it has been heard and is silenced, so it does not
+ * come back every time he is touched. The view being drawn already leaves him
+ * out, so nothing needs redrawing.
+ */
+function noteHeard(view) {
+  const heard = [...lastSpeakers].filter((id) => !view.speakers.has(id));
+  lastSpeakers = view.speakers;
+  if (heard.length > 0) state = silenceUnits(state, heard);
 }
 
 /**
@@ -446,6 +462,7 @@ function hoverRosterUnit(unitId) {
 function renderBoard() {
   const view = deriveView();
   currentView = view;
+  noteHeard(view);
   renderPieces(layers, state, view);
 }
 

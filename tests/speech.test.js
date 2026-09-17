@@ -3,7 +3,9 @@
 // only draws it.
 
 import { loadJson, loadMap } from '../src/map.js';
-import { chooseDropRun, createInitialState, endTurn, holdUnit, jump, moveUnit, placeCharge } from '../src/state.js';
+import {
+  chooseDropRun, createInitialState, endTurn, holdUnit, jump, moveUnit, placeCharge, silenceUnits,
+} from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { onBoard, planMove, unitById } from '../src/units.js';
 
@@ -53,6 +55,17 @@ export default [
     s = holdUnit(s, s.units.find(onBoard).id);
     s = endTurn(s, rules, map);
     assert(s.speech.every((line) => s.report.some((e) => e.kind === 'wounded' && e.unitId === line.unitId)), 'only the newly wounded speak after the turn');
+  }],
+
+  ['a heard line goes and is not said again; the others keep theirs', async () => {
+    const { map, rules, traits, roster } = await loadAll();
+    const s = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 7), map, 'north'), map, rules);
+    const [first, second] = s.speech;
+    assert(first && second, 'two men speaking');
+    const heard = silenceUnits(s, [first.unitId]);
+    equal(lineOf(heard, first.unitId), null, 'heard: gone');
+    equal(lineOf(heard, second.unitId), second.line, 'not heard: kept');
+    equal(silenceUnits(heard, [first.unitId]), heard, 'silencing a silent man changes nothing');
   }],
 
   ['placing a charge says his onPlaceCharge line', async () => {
