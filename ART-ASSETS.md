@@ -181,7 +181,7 @@ the speech bubbles, which are comic lettering.
   Pitch` if supplied, falling back to `Courier New`, `Courier`, `monospace`, which ship on
   every desktop, so nothing has to be supplied.
 - **Speech bubbles:** comic lettering, set in capitals. Until a face is supplied it falls
-  back to faces desktops ship (`Marker Felt`, `Segoe Print`, `Ink Free`, `Chalkboard SE`).
+  back to faces desktops ship (`Noteworthy` bold, `Segoe Print`, `Ink Free`, `Marker Felt`).
   Never Comic Sans. A supplied lettering face is a WOFF2 in `/assets/fonts/` and goes
   first in `TYPE.lettering` in `src/render/theme.js`, with an `@font-face` for it.
 - **Display / headings (optional):** a condensed slab for the masthead and big headings.

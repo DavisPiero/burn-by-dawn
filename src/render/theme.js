@@ -28,14 +28,14 @@ export const PALETTE = {
 };
 
 // SPEC.md §11: a typewriter Courier for text, a condensed slab for the
-// masthead, and comic lettering for speech bubbles. Nothing is supplied, so
-// these are faces desktops ship: Marker Felt and Chalkboard on a Mac, Segoe
-// Print and Ink Free on Windows. A supplied lettering face goes first in
-// `lettering` (see ART-ASSETS.md §8). Never Comic Sans.
+// masthead, and hand lettering for speech bubbles. Nothing is supplied, so
+// these are faces desktops ship: Noteworthy (set bold) on a Mac, Segoe Print
+// and Ink Free on Windows. A supplied lettering face goes first in `lettering`
+// (see ART-ASSETS.md §8). Never Comic Sans.
 export const TYPE = {
   typewriter: '"Courier 10 Pitch", "Courier New", Courier, monospace',
   slab: '"Rockwell Condensed", "Roboto Slab", Rockwell, "American Typewriter", "Courier New", serif',
-  lettering: '"Marker Felt", "Segoe Print", "Ink Free", "Chalkboard SE", "Bradley Hand", fantasy',
+  lettering: 'Noteworthy, "Segoe Print", "Ink Free", "Marker Felt", "Chalkboard SE", fantasy',
 };
 
 // ---------------------------------------------------------------------------
@@ -441,17 +441,19 @@ export const DROP = {
   areaWidth: 3,
 };
 
-// Speech bubbles on the board (SPEC.md §11): comic lettering in capitals,
+// Speech bubbles on the board (SPEC.md §11): hand lettering in capitals,
 // paper with an ink rule, the tail pointing at the man's counter. Shown for
-// the man selected or under the mouse.
+// the man selected or under the mouse. Smaller than the board's own labels:
+// dialogue is colour, not information.
 export const SPEECH = {
   font: TYPE.lettering,
+  weight: 'bold',
   capitals: true,
-  fontSize: 20,
-  lineHeight: 23,
-  maxWidth: 230, // lines wrap at this width, measured in the face actually used
-  padX: 10,
-  padY: 8,
+  fontSize: 12,
+  lineHeight: 15,
+  maxWidth: 170, // lines wrap at this width, measured in the face actually used
+  padX: 7,
+  padY: 5,
   gap: 38, // from the counter's centre to the near edge of the bubble
   tail: 12, // width of the tail where it meets the bubble
   stroke: 2.5,

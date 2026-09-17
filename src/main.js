@@ -64,9 +64,9 @@ let highlightHex = null;
 let currentView = null;
 // The man whose roster row is under the mouse: he speaks, like the man selected.
 let hoverUnitId = null;
-// Who was speaking at the last draw. A man who was, and no longer is, has been
-// heard, and his line goes (SPEC.md §11).
-let lastSpeakers = new Set();
+// The man selected at the last draw. Once the selection moves off a man, his
+// line has been heard and goes (SPEC.md §11).
+let lastSelectedId = null;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -415,7 +415,7 @@ function render() {
   map = effectiveMap(baseMap, state.objectives, rules);
   const view = deriveView();
   currentView = view;
-  noteHeard(view);
+  noteHeard();
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex);
@@ -433,15 +433,15 @@ function render() {
 }
 
 /**
- * A line is shown once: while its man is selected or under the mouse. When the
- * player moves on from him, it has been heard and is silenced, so it does not
- * come back every time he is touched. The view being drawn already leaves him
- * out, so nothing needs redrawing.
+ * A line is heard once its man has been selected and the selection has moved
+ * off him; it is then silenced, so it does not come back every time he is
+ * touched. Hovering a man shows his line but does not use it up. The view
+ * being drawn already leaves him out, so nothing needs redrawing.
  */
-function noteHeard(view) {
-  const heard = [...lastSpeakers].filter((id) => !view.speakers.has(id));
-  lastSpeakers = view.speakers;
-  if (heard.length > 0) state = silenceUnits(state, heard);
+function noteHeard() {
+  const selected = state.selectedUnitId;
+  if (lastSelectedId !== null && lastSelectedId !== selected) state = silenceUnits(state, [lastSelectedId]);
+  lastSelectedId = selected;
 }
 
 /**
@@ -462,7 +462,7 @@ function hoverRosterUnit(unitId) {
 function renderBoard() {
   const view = deriveView();
   currentView = view;
-  noteHeard(view);
+  noteHeard();
   renderPieces(layers, state, view);
 }
 

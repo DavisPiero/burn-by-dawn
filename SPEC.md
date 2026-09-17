@@ -552,14 +552,15 @@ Desktop makes the skeuomorphism work properly, so use the room:
   no easing in or out. A man with no AP left stays fully printed; his counter's edge goes
   grey. Halftone is printed faint, close to the colour beneath it.
 - Speech bubbles for dialogue on the board, tail pointing at the man's counter, shown for
-  the man selected or under the mouse (on the board or in the roster). A line is shown
-  once: when the player moves on from that man it has been heard and goes, and any line
-  never looked at goes at the end of the turn. Dialogue stays on the board, not in the
+  the man selected or under the mouse (on the board or in the roster). A line is heard
+  once: when the selection moves off that man it goes (hovering shows it without using
+  it up), and any line never heard goes at the end of the turn. Bubbles are set smaller
+  than the board's labels. Dialogue stays on the board, not in the
   roster rail.
 - **Type is not comic lettering,** except in the speech bubbles. The annual look comes
   from the print, paper and colour. Text on the right page is a typewriter face, a Courier
   (`Courier 10 Pitch`, then `Courier New`, `Courier`, `monospace`), so it reads as a typed
-  briefing. Speech bubbles are comic lettering in capitals (never Comic Sans). A condensed
+  briefing. Speech bubbles are hand lettering in capitals (never Comic Sans). A condensed
   slab may still set big headings. Pin the board's label face rather than leaving it to
   the browser's default monospace.
 - A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,

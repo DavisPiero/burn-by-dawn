@@ -359,7 +359,7 @@ function drawSpeech(layers, state, speakers) {
   ];
   const overlaps = (a, b) => !(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);
   const letter = (content, attrs = {}) => text(content, {
-    'text-anchor': 'start', 'font-size': SPEECH.fontSize, 'font-family': SPEECH.font, class: 'ink', ...attrs,
+    'text-anchor': 'start', 'font-size': SPEECH.fontSize, 'font-family': SPEECH.font, 'font-weight': SPEECH.weight, class: 'ink', ...attrs,
   });
   const measure = (content) => {
     const probe = letter(content, { visibility: 'hidden' });
