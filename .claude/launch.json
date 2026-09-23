@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "night-drop",
+      "runtimeExecutable": "./run.sh",
+      "runtimeArgs": [
+        "8001"
+      ],
+      "port": 8001
+    }
+  ]
+}
