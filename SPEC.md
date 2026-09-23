@@ -139,7 +139,19 @@ All costs and modifiers below are numbers in `rules.json`.
   The target must be a **visible enemy: within the gunner's spot radius, with a clear
   line of sight** (troopers have no facing arc). A suppressed enemy **does not fire at the
   next detection check and does not move in the next enemy phase**; it can still spot.
-  Firing is gunfire: +2 alert (§6), and it is heard (§6).
+  Firing is gunfire: +2 alert (§6), and it is heard (§6). A suppressed enemy is open to a
+  **kill** until the end of the next player phase.
+- **Kill** (gunner only) — costs **2 AP**. The target must be visible, exactly as for
+  suppress, and **under suppression**: suppressed this player phase or the one before, so
+  one gunner needs two turns (suppress, then kill) and two gunners can do it in one. From
+  the detection check after that next player phase the enemy is back to normal. A kill is
+  gunfire like suppressing — +2 alert, heard from the gunner's hex — so a kill from cold
+  costs +4 alert in all, a whole state from Calm. The enemy is gone from the board, stops
+  holding anyone in contact, and leaves a **body** (§5 Wounds) that the rest of the garrison
+  finds the same way. There are no dice: a legal kill always kills. An enemy type marked
+  `killable: false` in `enemies.json` cannot be killed (the reserve squad, §6 Exfil
+  watched), though it can be suppressed; it is never outlined as a kill target, and its
+  hover and the Kill button both say so, so no effort is wasted trying.
 - **Stabilise** — another trooper spends a full turn adjacent to a wounded man (§5). The
   wounded man gets his **full AP pool back and can carry a charge again**, but the hit is
   not undone: he is still one hit from death. The wound is dressed, not healed.
@@ -182,7 +194,7 @@ to be casual while still being strategic.
 - **Right-click**: deselect / cancel.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
-  `S` suppress, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
+  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
@@ -270,7 +282,7 @@ redundancy is deliberate — it is what stops a bad drop from being an unwinnabl
 - **Sapper** — 3 AP. Places and sets charges. Carries 1 charge.
 - **Scout** — 4 AP. Spot radius 3. Detection against him reduced one step. No charges.
 - **Gunner** — 3 AP. Can suppress a visible enemy (§4 Actions): it neither fires nor
-  moves on its next go. Firing is loud, +2 alert. No charges (unless Ox).
+  moves on its next go. Can kill an enemy under suppression (§4 Actions). Firing is loud, +2 alert. No charges (unless Ox).
 
 ### Wounds
 
@@ -291,7 +303,7 @@ shot lands on the most exposed of the hexes where he would be shot.
 Wounded troopers drop to 1 AP and cannot carry a charge; a charge he was carrying drops
 on his hex for anyone to pick up (§4 Actions). Another trooper can spend a full turn
 adjacent to stabilise him (§4 Actions). Dead is permanent — there is one mission, and that
-is it. A dead trooper leaves a **body** on his hex, found by enemies the same way as a
+is it. A dead trooper, or a dead enemy (§4 Kill), leaves a **body** on his hex, found by enemies the same way as a
 parachute (§9): alert +1, once.
 
 ### Dialogue
@@ -391,6 +403,10 @@ it would hit or pin him there, so being fired on is never a surprise.
 At Alarmed the reserve squad does not hunt. It enters from the road edge, marches to a
 guard hex set in `map.json` beside the exfil, and stands there as a sentry facing the exfil
 hexes. It is drawn, so the player can see the exit narrowing and route around it.
+The reserve squad **cannot be killed** (`killable: false`): it is a squad, not one man, and
+at Alarmed the alert is already at its cap, so a kill would cost nothing and reopen the
+exfil for free. It can be suppressed for a turn to slip past it. Its counter and hover say
+it cannot be killed.
 
 ---
 
@@ -601,6 +617,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve, RAF diversion | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols; the diversion can be called once, only while the leader lives, and costs the clean-run score |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
-| **M8** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
+| **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is loud and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
+| **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 
 Do not start a milestone before the previous one is merged and playable.
