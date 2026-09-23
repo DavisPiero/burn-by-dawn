@@ -6,7 +6,30 @@ How to actually execute this in Claude Code, in order, with which model at each 
 
 ## Phase 0 — Setup
 
-Two routes. Pick one.
+### Install Claude Code first (desktop)
+
+```
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+No Node.js required. Do not use `npm install -g @anthropic-ai/claude-code` — it's the
+legacy route, needs Node 22+, and fails on permissions constantly.
+
+Two things that look like failures but aren't:
+- The download is ~180MB and the script prints no progress. It can sit silent for several
+  minutes. Don't cancel it.
+- It installs to `~/.local/bin`, so **open a new terminal window** afterwards for your
+  PATH to update.
+
+Verify with `claude --version` and `claude doctor`. If `claude` still isn't found in a
+fresh window:
+
+```
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Then pick one of the two routes below.
 
 ### Route A — local only (desktop, no account needed)
 
@@ -68,12 +91,26 @@ Read SPEC.md and CLAUDE.md in full before writing anything.
 
 Build milestone M<N> only. Do not build ahead.
 
-Work on a new branch named m<N>-<short-name>.
+Work on a new branch named <branch>.
 
 Before you write code, tell me your plan: which files you'll create or
 change, and any place the spec is ambiguous or wrong. Wait for me to
 confirm before implementing.
 ```
+
+Branch names, so you're never guessing:
+
+| Milestone | Branch |
+|---|---|
+| M0 | `m0-hex-grid` |
+| M1 | `m1-terrain` |
+| M2 | `m2-units` |
+| M3 | `m3-traits` |
+| M4 | `m4-enemies` |
+| M5 | `m5-sabotage` |
+| M6 | `m6-drop` |
+| M7 | `m7-art` |
+| M8 | `m8-balance` |
 
 That last paragraph is the important one. Making it plan first, out loud, catches
 misreadings before they become 400 lines you have to unpick.
@@ -86,9 +123,42 @@ misreadings before they become 400 lines you have to unpick.
 
 ### 5. Merge and close
 
-- Merge the branch into `main` from GitHub.
-- Confirm `DECISIONS.md` got a line for anything non-obvious.
-- End the session. Start the next milestone fresh.
+Playtest **before** merging, while still on the branch. Merging is your approval.
+
+Review what changed:
+
+```
+git diff --stat main..m0-hex-grid    # which files, how much
+git diff main..m0-hex-grid           # every line
+```
+
+If a milestone touched far more files than you expected, read the diff properly before
+going further.
+
+Then merge, tag and tidy:
+
+```
+git status
+git checkout main
+git merge --no-ff m0-hex-grid -m "M0: hex grid"
+git tag m0
+git branch -d m0-hex-grid
+```
+
+`--no-ff` forces a real merge commit so `git log --oneline --graph` reads as a list of
+milestones rather than a flat pile of commits. The tag gives you a named point to return
+to: `git checkout m0` to look, `git reset --hard m0` to rewind.
+
+If a merge turns out to be bad: `git revert -m 1 <merge-commit>` to undo it honestly, or
+`git reset --hard m0` to pretend it never happened. The second is fine on a solo repo with
+no remote.
+
+Do this by hand rather than asking the session to do it. Merging is the one moment where
+you're consciously approving the work, and handing that to the thing that produced it
+defeats the point.
+
+Confirm `DECISIONS.md` got a line for anything non-obvious, then end the session. Start
+the next milestone fresh.
 
 ---
 
@@ -131,13 +201,12 @@ enabled.
 You'll want to be at a real machine from M7, and honestly from M4 onward it'll be more
 pleasant.
 
-1. Install Node.js (LTS) from nodejs.org.
-2. `npm install -g @anthropic-ai/claude-code`
-3. `git clone https://github.com/<username>/night-drop.git && cd night-drop`
+1. **Install Claude Code** (see Phase 0 above — native installer, no Node needed).
+2. `git clone https://github.com/<username>/night-drop.git && cd night-drop`
    (or skip this if you went with Route A — you already have the folder)
-4. `claude` to start a session in that directory.
-5. `/model` to pick, `/status` to check what you're on.
-6. In a second terminal tab, `./run.sh`, then leave `localhost:8000` open in a browser.
+3. `claude` to start a session in that directory.
+4. `/model` to pick, `/status` to check what you're on.
+5. In a second terminal tab, `./run.sh`, then leave `localhost:8000` open in a browser.
    Refresh after each change rather than waiting on a Pages redeploy.
 
 To pull a cloud session you started on your phone into your local terminal:

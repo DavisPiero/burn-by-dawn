@@ -1,13 +1,12 @@
-// Panel chrome around the board: turn counter, roster rail, hover readout,
-// terrain legend. Reads state and map data, never mutates them (CLAUDE.md hard
-// rule 7) — clicks are handed straight back to the caller.
-//
-// SPEC.md §11 wants this as the right-hand page of a printed spread, with
-// portraits and an alert dial. That is the art pass at M7. This is the plain
-// version of the same panel.
+// The right-hand page and the captions under the board: the clock, End turn,
+// the actions, the alert dial, the mission briefing, the turn report, the
+// hover readout, the rollover popups and the back-page results. The roster
+// rail is roster.js. Reads state and map data, never mutates them (CLAUDE.md
+// hard rule 7) — clicks are handed straight back to the caller.
 
-import { terrainAt } from '../map.js';
-import { ALERT_STATE, DIAL, PALETTE, terrainStyle } from './theme.js';
+import { hexDistance } from '../hex.js';
+import { columnOf, terrainAt } from '../map.js';
+import { ALERT_STATE, DAWN, DIAL, portraitId } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -17,12 +16,159 @@ function svgEl(name, attrs = {}) {
   return node;
 }
 
+function html(tag, className, content) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (content !== undefined) node.append(...[].concat(content));
+  return node;
+}
+
+// --- rollovers (SPEC.md §11) ---------------------------------------------------
+// Detail lives in popups rather than on the page: the drop runs, the keys, the
+// alert thresholds, each man's particulars. One popup element: for anything on
+// the right page it sits just left of the page, level with what is hovered, so
+// it covers the board rather than the panel; for anything else, below it.
+
+const popupBox = () => document.getElementById('popup');
+let popupAnchor = null;
+
+/** Show `content` (text, or a node) beside `anchor`. */
+export function showPopup(anchor, content) {
+  const box = popupBox();
+  if (!box) return;
+  box.replaceChildren(...[].concat(typeof content === 'function' ? content() : content));
+  box.hidden = false;
+  popupAnchor = anchor;
+  const a = anchor.getBoundingClientRect();
+  const b = box.getBoundingClientRect();
+  const panel = anchor.closest?.('#panel');
+  const onPanel = Boolean(panel);
+  let x = onPanel ? panel.getBoundingClientRect().left - b.width - 6 : a.left;
+  let y = onPanel ? a.top : a.bottom + 8;
+  x = Math.max(8, Math.min(x, window.innerWidth - b.width - 8));
+  if (y + b.height > window.innerHeight - 8) y = onPanel ? window.innerHeight - b.height - 8 : a.top - b.height - 8;
+  box.style.left = `${Math.round(x)}px`;
+  box.style.top = `${Math.round(Math.max(8, y))}px`;
+}
+
+export function hidePopup() {
+  const box = popupBox();
+  if (box) box.hidden = true;
+  popupAnchor = null;
+}
+
+/**
+ * Hide the popup if what it belongs to has been redrawn away — a drop-run tab
+ * clicked, say — since the removed element will never report the mouse leaving.
+ */
+export function dropStalePopup() {
+  if (popupAnchor && !popupAnchor.isConnected) hidePopup();
+}
+
+/** Give an element a rollover. `content` may be a function, so it is built when shown. */
+export function attachPopup(element, content) {
+  element.addEventListener('mouseenter', () => showPopup(element, content));
+  element.addEventListener('mouseleave', hidePopup);
+}
+
+// SPEC.md §4's keys, for the KEYS rollover.
+const KEYS = [
+  'The drop: 1–3 pick a run · Space jump',
+  '1–6 select a man · Tab next · H hold position',
+  'G hide · S suppress · T throw a stone',
+  'A stabilise · P pick up a charge · U pack parachute',
+  'C place a charge · X cut the line · W swim',
+  'D RAF diversion · Space end turn',
+  'Esc or right-click cancel · R patrol routes',
+  '',
+  'Hover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
+].join('\n');
+
+export function renderKeys(button) {
+  attachPopup(button, () => [html('b', null, 'KEYS'), `\n${KEYS}`]);
+}
+
+// --- fitting the spread to the window ---------------------------------------
+// The board is the game, so it takes all the room it can: as tall as the page
+// allows under the captions, or as wide as the page allows beside the right
+// page. The right page's share grows with the window (panelShare of it, from
+// panelMin to panelMax); it takes whatever the board leaves, up to panelMax,
+// and past that the spread is centred on the table. What the left page
+// has spare below a width-limited board goes to the captions. These numbers
+// are index.html's paddings and gaps, which must agree with them.
+
+export const SPREAD = {
+  minWidth: 1280,
+  minHeight: 760,
+  marginX: 8 + 22, // spread padding left and right (index.html #spread)
+  marginY: 8 + 8,
+  leftChromeX: 20 + 4 + 2 + 16, // outer gutter, its gap, left page padding
+  leftChromeY: 10 + 10 + 8, // left page padding, gap above the captions
+  captionMin: 92,
+  captionMax: 170,
+  panelMin: 380,
+  panelMax: 480,
+  panelShare: 0.27,
+};
+
+/** Size the board, captions and right page to the window. `aspect` is the board's width over height. */
+export function fitSpread(aspect, root = document.documentElement) {
+  const width = Math.max(window.innerWidth, SPREAD.minWidth);
+  const height = Math.max(window.innerHeight, SPREAD.minHeight);
+  const across = width - SPREAD.marginX - SPREAD.leftChromeX;
+  const down = height - SPREAD.marginY - SPREAD.leftChromeY;
+  const panelWanted = Math.min(SPREAD.panelMax, Math.max(SPREAD.panelMin, width * SPREAD.panelShare));
+  const boardW = Math.floor(Math.min((down - SPREAD.captionMin) * aspect, across - panelWanted));
+  const boardH = Math.floor(boardW / aspect);
+  const panelW = Math.min(SPREAD.panelMax, across - boardW);
+  const captionH = Math.min(SPREAD.captionMax, down - boardH);
+  root.style.setProperty('--left-w', `${boardW + SPREAD.leftChromeX}px`);
+  root.style.setProperty('--panel-w', `${panelW}px`);
+  root.style.setProperty('--board-h', `${boardH}px`);
+  root.style.setProperty('--caption-h', `${captionH}px`);
+}
+
+/** The cut-out note down the outer margin (ART-ASSETS.md ui-gutter-note). */
+export function renderGutter(svg) {
+  svg.replaceChildren(svgEl('use', { href: '#ui-gutter-note', width: 60, height: 900 }));
+}
+
+// --- places -------------------------------------------------------------------
+// The hexes carry no printed coordinates (SPEC.md §11), so text names a place
+// the way a briefing would: by the objective it is beside, or the part of the
+// map it is in.
+
+/** "the marsh by the rail bridge", "the field in the north-west". */
+export function placeName(map, objectives, exfil, hex) {
+  const terrain = terrainAt(map, hex.q, hex.r);
+  const ground = terrain ? terrain.label.toLowerCase() : 'ground';
+  let near = null;
+  let best = Infinity;
+  const landmarks = [...objectives.map((o) => ({ label: o.label.toLowerCase(), hexes: o.hexes }))];
+  if (exfil.length) landmarks.push({ label: 'exfil', hexes: exfil });
+  for (const mark of landmarks) {
+    for (const h of mark.hexes) {
+      const d = hexDistance(h, hex);
+      if (d < best) { best = d; near = mark; }
+    }
+  }
+  if (near && best === 0) return `the ${near.label}`;
+  if (near && best <= 2) return `the ${ground} by the ${near.label}`;
+  const across = columnOf(hex.q, hex.r) / map.width;
+  const down = hex.r / map.height;
+  const ns = down < 1 / 3 ? 'north' : down >= 2 / 3 ? 'south' : '';
+  const ew = across < 1 / 3 ? 'west' : across >= 2 / 3 ? 'east' : '';
+  const region = [ns, ew].filter(Boolean).join('-');
+  return region ? `the ${ground} in the ${region}` : `the ${ground} mid-map`;
+}
+
+// --- the alert dial -----------------------------------------------------------
+
 /**
  * The garrison alert dial, SPEC.md §6. The face and needle are registry
- * sprites. The state names sit beside it rather than on the face, where they
- * are unreadable at panel size; they come from data/rules.json, so renaming a
- * state is data. `alert` is derived in main.js:
- * { index, states, points, quietTurns, quietTurnsToDecay }.
+ * sprites; the active state is named beside it, and the thresholds are its
+ * rollover (SPEC.md §11). `alert` is derived in main.js:
+ * { index, states, points, quietTurns, quietTurnsToDecay, floor }.
  */
 export function renderAlertDial(svg, caption, alert) {
   svg.replaceChildren();
@@ -34,66 +180,79 @@ export function renderAlertDial(svg, caption, alert) {
     transform: `rotate(${angle} 120 120)`,
   }));
 
-  caption.replaceChildren();
-  const heading = document.createElement('div');
-  heading.className = 'alert-heading';
-  heading.textContent = 'GARRISON ALERT';
-  caption.appendChild(heading);
-  const list = document.createElement('ol');
-  list.className = 'alert-states';
-  alert.states.forEach((s, i) => {
-    const item = document.createElement('li');
-    item.textContent = s.label;
-    if (i === alert.index) {
-      item.className = 'active';
-      item.style.background = ALERT_STATE[s.id];
-      item.style.color = ALERT_STATE.text;
-    }
-    list.appendChild(item);
-  });
-  caption.appendChild(list);
-
   const state = alert.states[alert.index];
-  const note = document.createElement('div');
-  note.className = 'alert-note';
+  const chip = html('span', 'alert-state', state.label.toUpperCase());
+  chip.style.background = ALERT_STATE[state.id];
+  chip.style.color = ALERT_STATE.text;
   // Several events share one state (SPEC.md §6), so the needle alone cannot
   // warn that the next sighting tips the dial; the points to go do.
   const next = alert.states[alert.index + 1];
-  const parts = [`alert ${alert.points}`];
+  const parts = [`${alert.points} pts`];
   if (next) parts.push(`${next.from - alert.points} to ${next.label}`);
-  parts.push(`vision +${state.visionBonus}`);
-  if (alert.points > 0) parts.push(`quiet ${alert.quietTurns}/${alert.quietTurnsToDecay} to ease`);
-  note.textContent = parts.join(' · ');
-  caption.appendChild(note);
+  if (alert.points > 0) parts.push(`quiet ${alert.quietTurns}/${alert.quietTurnsToDecay}`);
+  caption.replaceChildren(
+    html('div', 'alert-heading', 'GARRISON ALERT'),
+    chip,
+    html('div', 'alert-note', parts.join(' · ')),
+  );
 }
 
-/** What happened at the last turn boundary, in words. */
-export function renderReport(element, state) {
+/** The dial's rollover: every state, where it starts, and what it does. */
+export function describeAlertStates(alert) {
+  const lines = alert.states.map((s, i) => {
+    const mark = i === alert.index ? '▶ ' : '  ';
+    return `${mark}${s.label} — from ${s.from} · vision +${s.visionBonus} · hearing +${s.hearingBonus}`;
+  });
+  return [
+    html('b', null, 'GARRISON ALERT'),
+    `\n${lines.join('\n')}\n\nAfter ${alert.quietTurnsToDecay} quiet turns it eases to the start of the state below.`
+      + (alert.floor ? `\nOnce anything has exploded it never eases below ${alert.floor}.` : ''),
+  ];
+}
+
+// --- the turn report ----------------------------------------------------------
+
+/**
+ * What happened at the last turn boundary, in words. A line about a place
+ * rings that hex on the board while it is hovered: `onLocate(hex | null)`.
+ */
+export function renderReport(element, state, place, onLocate) {
   element.replaceChildren();
-  const lines = state.report.map(describeEvent);
-  if (state.phase === 'drop') lines.push('Pick a drop run, then jump. Where each man lands is scattered by the wind.');
-  else if (lines.length === 0) lines.push(state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.');
-  for (const line of lines) {
-    const item = document.createElement('li');
-    item.textContent = line;
+  const events = state.report;
+  if (state.phase === 'drop') {
+    element.appendChild(html('li', null, 'Pick a drop run, then jump. Where each man lands is scattered by the wind.'));
+    return;
+  }
+  if (events.length === 0) {
+    element.appendChild(html('li', null, state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.'));
+    return;
+  }
+  for (const event of events) {
+    const item = html('li', null, describeEvent(event, place));
+    if (Number.isInteger(event.q) && Number.isInteger(event.r)) {
+      item.classList.add('located');
+      item.addEventListener('mouseenter', () => onLocate({ q: event.q, r: event.r }));
+      item.addEventListener('mouseleave', () => onLocate(null));
+    }
     element.appendChild(item);
   }
 }
 
-function describeEvent(event) {
+function describeEvent(event, place) {
+  const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
-    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} at (${event.q}, ${event.r}).`;
+    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}.`;
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
-    case 'reserve': return `${event.label} arrives on the road at (${event.q}, ${event.r}).`;
-    case 'searched': return `${event.label} reaches (${event.q}, ${event.r}) and searches it.`;
-    case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.${event.line ? ` “${event.line}”` : ''}`;
+    case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
+    case 'searched': return `${event.label} reaches ${at()} and searches it.`;
+    case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
     case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in cover, not hit.`;
-    case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} at (${event.q}, ${event.r}).`;
-    case 'bodyFound': return `${event.label} finds ${event.name}'s body at (${event.q}, ${event.r}).`;
-    case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute at (${event.q}, ${event.r}).`;
-    case 'landed': return describeLanding(event);
+    case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} in ${at()}.`;
+    case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
+    case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
+    case 'landed': return describeLanding(event, at());
     case 'explosion': return event.destroyed ? `BANG — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BANG — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
@@ -102,19 +261,18 @@ function describeEvent(event) {
 }
 
 /** SPEC.md §9: where he came down, how far off his mark, and what it cost him. */
-function describeLanding(event) {
+function describeLanding(event, where) {
   const off = event.distance === null ? '' : event.distance === 0 ? ', on his mark' : `, ${event.distance} hex${event.distance === 1 ? '' : 'es'} off`;
-  const where = `(${event.q}, ${event.r})`;
   if (event.outcome === 'wounds') {
-    return `${event.unitName} comes down in the ${event.terrain.toLowerCase()}${off} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out at ${where}.`;
+    return `${event.unitName} comes down in the ${event.terrain.toLowerCase()}${off} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out onto ${where}.`;
   }
   if (event.outcome === 'bad') {
     const cost = event.turnsLost > 0
       ? `loses ${event.turnsLost === 1 ? 'his first turn' : `${event.turnsLost} turns`}`
       : 'lands clean anyway';
-    return `${event.unitName} lands in ${event.terrain.toLowerCase()} at ${where}${off} — ${cost}.`;
+    return `${event.unitName} lands in ${where}${off} — ${cost}.`;
   }
-  return `${event.unitName} lands in ${event.terrain.toLowerCase()} at ${where}${off}.${event.line ? ` “${event.line}”` : ''}`;
+  return `${event.unitName} lands in ${where}${off}.`;
 }
 
 const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', explosion: 'the explosion' };
@@ -124,6 +282,8 @@ function listOf(labels) {
   if (labels.length === 1) return labels[0];
   return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
 }
+
+// --- detection in words -------------------------------------------------------
 
 /**
  * SPEC.md §6's sum in words, one term at a time, so the player can see why:
@@ -137,8 +297,8 @@ export function describeDetection(d) {
   return `${sum} = ${d.score} of ${d.threshold}`;
 }
 
-/** The whole hover path's risk in one phrase. */
-export function describeRisk(plan, risk) {
+/** The whole hover path's risk in one phrase. The pips on the board say which hex. */
+export function describeRisk(plan, risk, place) {
   if (!plan || !risk) return null;
   const tested = plan.steps === 0 ? [0] : plan.path.map((_, i) => i).slice(1);
   const seen = tested.filter((i) => risk[i]);
@@ -146,112 +306,124 @@ export function describeRisk(plan, risk) {
   const spotted = seen.filter((i) => risk[i].spotted);
   const shot = seen.filter((i) => risk[i].shot);
   const worstAt = seen.reduce((a, b) => (risk[b].score > risk[a].score ? b : a));
-  const hex = plan.path[worstAt];
-  const where = `(${hex.q}, ${hex.r})`;
+  const where = place(plan.path[worstAt]);
   if (shot.length > 0) {
     // The shot lands on the most exposed hex he would be shot on (SPEC.md §5).
     const worst = shot.find((i) => risk[i].shotResult === 'hit') ?? shot[0];
-    const at = plan.path[worst];
     const outcome = risk[worst].shotResult === 'hit' ? 'SHOT — HIT in the open' : 'SHOT — PINNED in cover, not hit';
-    return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again at (${at.q}, ${at.r}): ${describeDetection(risk[worst])}`;
+    return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again in ${place(plan.path[worst])}: ${describeDetection(risk[worst])}`;
   }
   if (spotted.length > 0) {
-    return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — at ${where} ${describeDetection(risk[worstAt])}`;
+    return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — worst in ${where}: ${describeDetection(risk[worstAt])}`;
   }
-  return `seen, not spotted — worst ${where} ${describeDetection(risk[worstAt])}`;
+  return `seen, not spotted — worst in ${where}: ${describeDetection(risk[worstAt])}`;
 }
 
 function describeCost(terrain) {
   return terrain.moveCost === null ? 'impassable' : `move ${terrain.moveCost}`;
 }
 
+// --- the clock and End turn ---------------------------------------------------
+
 /** Dawn arrives on turn 20 and that is the clock (SPEC.md §4). */
 export function renderTurnCounter(element, state, rules) {
-  if (state.phase === 'drop') {
-    element.textContent = `THE DROP — before turn 1 of ${rules.turnLimit}`;
-    element.classList.remove('dawn');
-    return;
+  const dawn = state.phase !== 'drop' && (state.outcome || state.turn >= rules.turnLimit);
+  element.classList.toggle('dawn', Boolean(dawn));
+  if (state.phase === 'drop') element.textContent = 'THE DROP';
+  else if (state.outcome) element.textContent = `TURN ${state.turn}/${rules.turnLimit} · OVER`;
+  else if (state.turn >= rules.turnLimit) element.textContent = `TURN ${state.turn}/${rules.turnLimit} · DAWN`;
+  else element.textContent = `TURN ${state.turn} / ${rules.turnLimit}`;
+}
+
+/**
+ * The dawn strip (ART-ASSETS.md ui-dawn-strip): night lightening to dawn, one
+ * cell per turn from rules.json, the turns gone shaded and this one ringed.
+ */
+export function renderDawnStrip(svg, state, rules) {
+  svg.replaceChildren(svgEl('use', { href: '#ui-dawn-strip', width: 600, height: 60 }));
+  const turns = rules.turnLimit;
+  const cell = 600 / turns;
+  const now = state.phase === 'drop' ? 0 : state.turn;
+  if (now > 1) {
+    svg.appendChild(svgEl('rect', { x: 0, y: 0, width: (now - 1) * cell, height: 60, fill: DAWN.burnt, 'fill-opacity': DAWN.burntOpacity }));
   }
-  if (state.outcome) {
-    element.textContent = `TURN ${state.turn} / ${rules.turnLimit} — MISSION OVER`;
-    element.classList.add('dawn');
-    return;
+  for (let i = 1; i < turns; i++) {
+    svg.appendChild(svgEl('line', { x1: i * cell, y1: 48, x2: i * cell, y2: 60, stroke: DAWN.tick, 'stroke-width': 2 }));
   }
-  const dawn = state.turn >= rules.turnLimit;
-  element.textContent = dawn
-    ? `TURN ${state.turn} / ${rules.turnLimit} — DAWN`
-    : `TURN ${state.turn} / ${rules.turnLimit}`;
-  element.classList.toggle('dawn', dawn);
+  if (now > 0) {
+    svg.appendChild(svgEl('rect', {
+      x: (now - 1) * cell + 2, y: 3, width: cell - 4, height: 54, fill: 'none', stroke: DAWN.now, 'stroke-width': 5,
+    }));
+  }
 }
 
 export function renderEndTurnButton(button, state, rules) {
   if (state.phase === 'drop') {
     button.disabled = state.dropRunId === null;
-    button.textContent = state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP  (space)';
+    button.textContent = state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP  [space]';
     return;
   }
   button.disabled = Boolean(state.outcome);
   if (state.outcome) button.textContent = 'MISSION OVER';
-  else if (state.turn >= rules.turnLimit) button.textContent = 'END THE LAST TURN — DAWN  (space)';
-  else button.textContent = 'END TURN  (space)';
+  else if (state.turn >= rules.turnLimit) button.textContent = 'END THE LAST TURN — DAWN  [space]';
+  else button.textContent = 'END TURN  [space]';
 }
+
+// --- the briefing -------------------------------------------------------------
 
 /**
  * The mission at a glance (SPEC.md §7, §10): each objective, whether it is
- * needed or optional and how far on it is, how many men are out of how many
- * needed, and a warning when there are no longer enough charges for the primary.
+ * needed or optional and how far on it is, and how many men are out.
  */
 export function renderMission(element, mission) {
   element.replaceChildren();
   for (const o of mission.objectives) {
-    const item = document.createElement('li');
-    if (o.destroyed) item.className = 'done';
-    const name = document.createElement('b');
-    name.textContent = o.primary ? `${o.label} ★` : o.label;
+    const item = html('li', o.destroyed ? 'done' : null);
+    const name = html('b', null, o.primary ? `${o.label} ★` : o.label);
     // SPEC.md §10: only the primary is needed to win. Say so, or the three
     // read as a checklist.
-    const role = document.createElement('i');
-    role.textContent = o.primary ? ' needed' : ` optional, +${o.points}`;
+    const role = html('i', null, o.primary ? ' needed' : ` optional, +${o.points}`);
     item.append(name, role, ` — ${o.detail}`);
     element.appendChild(item);
   }
-  const out = document.createElement('li');
-  out.textContent = `Men out: ${mission.out} of ${mission.minimumOut} needed`;
-  element.appendChild(out);
+  element.appendChild(html('li', null, `Men out: ${mission.out} of ${mission.minimumOut} needed`));
 }
 
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
   button.textContent = check.ok ? 'RAF DIVERSION [D] — once, no AP' : `RAF diversion — ${check.reason}`;
-  button.title = check.ok
-    ? 'The alert drops a state, every search and held contact is dropped, every man is out of contact. Costs the clean-run bonus.'
-    : check.reason;
 }
+
+export const DIVERSION_HELP = 'The alert drops a state, every search and held contact is dropped, every man is out of contact. Once per mission, while the leader lives. Costs the clean-run bonus.';
+
+// --- the back page ------------------------------------------------------------
 
 const OUTCOME_WORDS = { success: 'MISSION ACCOMPLISHED', withdrawn: 'WITHDRAWN', failed: 'MISSION FAILED' };
 const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behind' };
 
 /**
- * The results (SPEC.md §10): outcome, all six by name and fate, and the score.
- * Plain for now; M7 prints it as the back page of the annual.
+ * The results (SPEC.md §10), printed as the back page of the annual over the
+ * right page: masthead, outcome, all six by name and fate, and the score.
  */
 export function renderResults(element, outcome) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
   element.className = outcome.kind;
-  const heading = document.createElement('h2');
-  heading.textContent = OUTCOME_WORDS[outcome.kind];
-  const reason = document.createElement('p');
-  reason.textContent = `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}.`;
-  const fates = document.createElement('ul');
+
+  const logo = svgEl('svg', { class: 'logo', viewBox: '0 0 800 300', preserveAspectRatio: 'xMidYMid meet' });
+  logo.appendChild(svgEl('use', { href: '#logo-night-drop', width: 800, height: 300 }));
+
+  const fates = html('ul', 'fates');
   for (const f of outcome.fates) {
-    const item = document.createElement('li');
-    item.className = f.fate === 'out' ? 'fate-out' : 'fate-lost';
-    item.textContent = `${f.name} — ${FATE_WORDS[f.fate]}`;
+    const chip = svgEl('svg', { viewBox: '0 0 32 32' });
+    chip.appendChild(svgEl('use', { href: `#${portraitId(f.id, 'chip')}`, width: 32, height: 32 }));
+    const item = html('li', f.fate === 'out' ? 'fate-out' : 'fate-lost');
+    item.append(chip, html('span', null, [`${f.name} — `, html('b', null, FATE_WORDS[f.fate])]));
     fates.appendChild(item);
   }
+
   const score = document.createElement('table');
   for (const line of outcome.score.lines) {
     const row = score.insertRow();
@@ -262,143 +434,48 @@ export function renderResults(element, outcome) {
   total.className = 'total';
   total.insertCell().textContent = 'Score';
   total.insertCell().textContent = String(outcome.score.total);
-  const again = document.createElement('button');
+
+  const again = html('button', 'btn', 'Play again');
   again.type = 'button';
-  again.textContent = 'Play again';
   again.addEventListener('click', () => window.location.reload());
-  element.append(heading, reason, fates, score, again);
+
+  element.append(
+    logo,
+    html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
+    html('h2', null, OUTCOME_WORDS[outcome.kind]),
+    html('p', null, `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}.`),
+    fates,
+    score,
+    again,
+  );
 }
 
-/**
- * The six, always visible, in roster order — the rail of SPEC.md §11 without
- * its portraits. The number in front of each is its `1`–`6` hotkey. Each man's
- * traits are listed with what they do to his numbers, worked out in main.js.
- */
-export function renderRoster(element, state, map, view, onSelect) {
-  element.replaceChildren();
-
-  state.units.forEach((unit, i) => {
-    const item = document.createElement('li');
-    item.className = 'roster-item';
-    if (unit.id === state.selectedUnitId) item.classList.add('selected');
-    if (unit.ap === 0) item.classList.add('spent');
-    if (unit.dead || unit.out) item.classList.add('dead');
-
-    const key = document.createElement('span');
-    key.className = 'roster-key';
-    key.textContent = String(i + 1);
-    // The same colour as his counter's name strip, so the panel and the board
-    // point at the same man.
-    if (unit.leader) key.style.color = PALETTE.leader;
-
-    const who = document.createElement('span');
-    who.className = 'roster-who';
-    who.textContent = unit.name;
-
-    const status = describeStatus(unit);
-    if (status) {
-      const tag = document.createElement('span');
-      tag.className = 'roster-status';
-      tag.textContent = status;
-      who.append(' ', tag);
-    }
-
-    const detail = document.createElement('span');
-    detail.className = 'roster-detail';
-    if (unit.dead || unit.out) {
-      detail.textContent = unit.roleLabel;
-      const text = document.createElement('span');
-      text.className = 'roster-text';
-      text.append(who, detail);
-      item.append(key, text);
-      element.appendChild(item);
-      return;
-    }
-    if (!unit.landed) {
-      detail.textContent = `${unit.roleLabel} · in the aircraft${unit.leader ? ' · leading' : ''}`;
-      const text = document.createElement('span');
-      text.className = 'roster-text';
-      text.append(who, detail);
-      item.append(key, text);
-      element.appendChild(item);
-      return;
-    }
-    const terrain = terrainAt(map, unit.q, unit.r);
-    const where = `${unit.roleLabel} · ${terrain ? terrain.label : 'off map'} (${unit.q}, ${unit.r})`;
-    // An AP pool that is bigger than the role's own number needs to say why,
-    // or the player is left guessing where the extra point came from.
-    detail.textContent = unit.leader ? `${where} · leading` : where;
-    detail.append(` · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
-    if (state.parachutes.some((p) => p.unitId === unit.id && p.q === unit.q && p.r === unit.r)) {
-      detail.append(' · on his parachute');
-    }
-
-    const ap = document.createElement('span');
-    ap.className = 'roster-ap';
-    ap.textContent = `${unit.ap}/${unit.apMax} AP`;
-    if (unit.commandBonus > 0) {
-      const bonus = document.createElement('span');
-      bonus.className = 'roster-bonus';
-      bonus.textContent = `+${unit.commandBonus} orders`;
-      detail.append(' · ', bonus);
-    }
-
-    const text = document.createElement('span');
-    text.className = 'roster-text';
-    text.append(who, detail);
-    for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
-      const trait = document.createElement('span');
-      trait.className = 'roster-trait';
-      trait.title = effect.description ?? '';
-      const name = document.createElement('b');
-      name.textContent = effect.name;
-      trait.append(name, ` — ${describeEffect(effect)}`);
-      text.appendChild(trait);
-    }
-
-    item.append(key, text, ap);
-    item.addEventListener('click', () => onSelect(unit.id));
-    element.appendChild(item);
-  });
-}
-
-/** His condition in a word or two, or null when there is nothing to say. */
-function describeStatus(unit) {
-  if (unit.dead) return 'KILLED';
-  if (unit.out) return 'OUT';
-  const parts = [];
-  if (unit.hits > 0) parts.push(unit.stabilised ? 'DRESSED' : 'WOUNDED');
-  if (unit.inContact) parts.push('IN CONTACT');
-  if (unit.pinned) parts.push('PINNED');
-  if (unit.hidden) parts.push('HIDDEN');
-  if (unit.turnsLost > 0) parts.push('BAD LANDING');
-  return parts.length ? parts.join(' · ') : null;
-}
+// --- the drop runs, the seed, the actions --------------------------------------
 
 /**
  * The drop runs (SPEC.md §9), as buttons with their key, in place of the
- * actions panel before anyone has landed. `runs` is derived in main.js:
- * [{ id, key, label, description, selected }].
+ * actions before anyone has landed; each description is the button's rollover.
+ * `runs` is derived in main.js: [{ id, key, label, description, wind, selected }].
  */
 export function renderDropRuns(element, runs, onChoose) {
   element.replaceChildren();
-  element.hidden = false;
+  element.classList.remove('idle');
   for (const run of runs) {
-    const button = document.createElement('button');
+    const button = html('button', 'action', [
+      html('span', 'action-name', `${run.label} [${run.key}]`),
+      html('span', 'action-cost', `wind ${run.wind}`),
+    ]);
     button.type = 'button';
-    button.className = 'action';
     if (run.selected) button.classList.add('active');
-    button.title = run.description;
-    const name = document.createElement('span');
-    name.className = 'action-name';
-    name.textContent = `${run.label} [${run.key}]`;
-    const note = document.createElement('span');
-    note.className = 'action-cost';
-    note.textContent = run.description;
-    button.append(name, note);
+    attachPopup(button, () => describeRun(run));
     button.addEventListener('click', () => onChoose(run.id));
     element.appendChild(button);
   }
+}
+
+/** A drop run's rollover, on its button and on its tab on the board. */
+export function describeRun(run) {
+  return [html('b', null, run.label.toUpperCase()), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
 }
 
 /** The seed (SPEC.md §1), with a link that replays the same drop. */
@@ -407,40 +484,45 @@ export function renderSeed(element, seed) {
   const link = document.createElement('a');
   link.href = `?seed=${seed}`;
   link.textContent = `seed ${seed}`;
-  link.title = 'Reload with this seed: the same run lands the same way';
+  attachPopup(link, 'Reload with this seed: the same run lands the same way.');
   element.append(link);
 }
 
 /**
  * The selected man's actions (SPEC.md §4), as buttons with their key and cost.
  * `actions` is worked out in main.js: [{ id, key, label, cost, ok, reason,
- * active }]. A button that cannot be used says why on hover and underneath.
+ * help, active }]. What an action does, and why it cannot be taken, are its
+ * rollover.
  */
 export function renderActions(element, actions, onAction) {
   element.replaceChildren();
   if (!actions) {
-    element.hidden = true;
+    element.classList.add('idle');
+    element.textContent = 'Select a man: 1–6, Tab, or click him.';
     return;
   }
-  element.hidden = false;
+  element.classList.remove('idle');
   for (const action of actions) {
-    const button = document.createElement('button');
+    const button = html('button', 'action', [
+      html('span', 'action-name', `[${action.key}] ${action.label}`),
+      html('span', 'action-cost', action.active ? 'click a target' : action.ok ? action.cost : action.reason),
+    ]);
     button.type = 'button';
-    button.className = 'action';
     if (action.active) button.classList.add('active');
     button.disabled = !action.ok && !action.active;
-    button.title = action.ok ? action.help : action.reason;
-    const name = document.createElement('span');
-    name.className = 'action-name';
-    name.textContent = `${action.label} [${action.key}]`;
-    const cost = document.createElement('span');
-    cost.className = 'action-cost';
-    cost.textContent = action.active ? 'click a target · Esc' : action.ok ? action.cost : action.reason;
-    button.append(name, cost);
     button.addEventListener('click', () => onAction(action.id));
-    element.appendChild(button);
+    // A disabled button gets no mouse events in some browsers, and "why not"
+    // is exactly the rollover a disabled one needs, so it goes on a wrapper.
+    const wrap = html('div', 'action-wrap', button);
+    attachPopup(wrap, () => [
+      html('b', null, action.label.toUpperCase()),
+      `\n${action.help}\n${action.ok || action.active ? `Cost: ${action.cost}` : `Not now: ${action.reason}`}`,
+    ]);
+    element.appendChild(wrap);
   }
 }
+
+// --- traits in words (used by roster.js) ----------------------------------------
 
 // How a hook stat reads to a player. A stat missing here still renders, by
 // its id, so a trait on a new stat is ugly rather than invisible.
@@ -475,11 +557,13 @@ export function describeEffect(effect) {
   return `${words.label} ${change}`;
 }
 
+// --- the hover readout ----------------------------------------------------------
+
 /**
- * A fixed-height readout about whatever the mouse is over. With a trooper selected this is
- * the path readout SPEC.md §4 asks for: route, total AP, and why not if not.
- * With it comes the detection risk along that path, and over an enemy, what
- * that enemy is.
+ * A fixed-height readout about whatever the mouse is over. With a trooper
+ * selected this is the path readout SPEC.md §4 asks for: route, total AP, and
+ * why not if not, with the detection risk along the path. Over an enemy, what
+ * that enemy is doing. The terrain legend is folded in here (SPEC.md §11).
  */
 export function renderReadout(element, state, map, view) {
   const hex = state.hoverHex ?? state.selectedHex;
@@ -490,10 +574,10 @@ export function renderReadout(element, state, map, view) {
   if (view?.hoverEnemy) {
     const e = view.hoverEnemy;
     let doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
-    if (e.investigating) doing = `going to look at (${e.investigating.q}, ${e.investigating.r})`;
-    if (e.watching) doing = `has a man in its sights at (${e.watching.q}, ${e.watching.r})`;
+    if (e.investigating) doing = `going to look at ${view.place(e.investigating)}`;
+    if (e.watching) doing = `has a man in its sights in ${view.place(e.watching)}`;
     if (e.suppressed) doing = 'SUPPRESSED — will not fire or move this turn';
-    element.textContent = `(${e.q}, ${e.r}) ${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.`;
+    element.textContent = `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.`;
     return;
   }
   if (!hex) {
@@ -503,13 +587,13 @@ export function renderReadout(element, state, map, view) {
     }
     element.textContent = state.selectedUnitId
       ? 'Hover a hex to preview the move. Right-click or Esc to cancel.'
-      : 'Click a trooper to select him, or a hex to inspect it.';
+      : 'Click a man to select him, or a hex to see what it is.';
     return;
   }
 
   const terrain = terrainAt(map, hex.q, hex.r);
   if (!terrain) {
-    element.textContent = `(${hex.q}, ${hex.r}) — off map`;
+    element.textContent = 'off the map';
     return;
   }
 
@@ -519,12 +603,14 @@ export function renderReadout(element, state, map, view) {
     terrain.blocksLOS ? 'blocks line of sight' : 'no line of sight block',
   ];
   if (terrain.spotBonus) parts.push(`spot ${terrain.spotBonus > 0 ? '+' : ''}${terrain.spotBonus}`);
+  if (terrain.landing === 'bad') parts.push('bad landing');
+  if (terrain.landing === 'wounds') parts.push('landing wounds');
 
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
   const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', ')];
-  element.textContent = `(${hex.q}, ${hex.r}) ${terrain.label} — ${pieces.filter(Boolean).join('   ▸ ')}`;
+  element.textContent = `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`;
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */
@@ -536,35 +622,6 @@ export function describePlan(plan, unit) {
   if (plan.affordable && plan.minimumStep) return `${route} — one step, spends all ${unit.apMax} AP`;
   if (plan.affordable) return `${route} — click to move`;
   return `${route} — ${plan.reason}`;
-}
-
-/**
- * The legend, built entirely from the map's own legend and the terrain table.
- * It lists the character to type in map.json for each terrain, so a new
- * terrain type appears here without touching any code.
- */
-export function renderLegend(element, map) {
-  element.replaceChildren();
-  for (const [char, terrainId] of Object.entries(map.legend)) {
-    const terrain = map.terrain[terrainId];
-    const style = terrainStyle(terrainId);
-
-    const item = document.createElement('li');
-    item.className = 'legend-item';
-
-    const swatch = document.createElement('span');
-    swatch.className = 'legend-swatch';
-    swatch.style.background = style.fill;
-    swatch.style.color = style.ink;
-    swatch.textContent = char;
-    item.appendChild(swatch);
-
-    const label = document.createElement('span');
-    label.textContent = `${terrain.label} (${describeCost(terrain)})`;
-    item.appendChild(label);
-
-    element.appendChild(item);
-  }
 }
 
 /** Data problems have to be loud, or a data-driven map is a guessing game. */

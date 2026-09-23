@@ -4,70 +4,194 @@
   <meta charset="utf-8" />
   <title>Night Drop</title>
   <style>
-    /* Type for the right-hand page (DECISIONS.md, 2026-09-17): a typewriter
-       face, so it reads as a typed briefing. The comic-annual look is carried
-       by paper, print and colour, not lettering. Courier 10 Pitch if the
-       machine has it, else the Courier every Mac and Windows box ships. */
+    /* The game is a double-page spread from an 80s comic annual (SPEC.md §11):
+       the board on the left page, the clock, briefing, dial and roster rail
+       on the right. Colours, paper and type come from src/render/theme.js,
+       which sets the custom properties below at startup; the values here are
+       only what shows before it runs. The sizes in --board-h, --left-w,
+       --panel-w and --caption-h are fitted to the window by ui.js fitSpread:
+       the board takes all the room it can, and the right page what is left.
+       One desktop layout, no breakpoints (CLAUDE.md rule 3). */
     :root {
+      --paper: #F2E8D5;
+      --ink: #1A1A18;
+      --green: #5C6B4A;
+      --red: #C1272D;
+      --blue: #3D5A73;
+      --leader: #2F7BBF;
       --typewriter: "Courier 10 Pitch", "Courier New", Courier, monospace;
+      --slab: "Rockwell Condensed", Rockwell, "Courier New", serif;
+      --paper-fibre: none;
+      --dots-ink: none;
+      --dots-blue: none;
+      --dots-red: none;
+      --dots-green: none;
+      --outer-gutter: 20px;
+      --right-margin: 22px;
+      --left-w: 1fr;
+      --panel-w: 380px;
+      --board-h: 520px;
+      --caption-h: 92px;
+      /* The page's age: browned edges and foxed corners, multiplied over it. */
+      --edge-wear:
+        radial-gradient(ellipse 30% 22% at 0 0, rgba(130, 90, 40, 0.20), transparent),
+        radial-gradient(ellipse 26% 20% at 100% 100%, rgba(130, 90, 40, 0.18), transparent),
+        radial-gradient(ellipse 18% 14% at 100% 0, rgba(130, 90, 40, 0.10), transparent),
+        radial-gradient(circle 60px at 12% 88%, rgba(150, 110, 60, 0.08), transparent);
     }
     html, body {
       margin: 0;
       height: 100%;
-      background: #1a1a18;
-      color: #e8e8e8;
-      font-family: system-ui, sans-serif;
+      /* The table the annual lies open on. */
+      background: #2d2b26;
+      color: var(--ink);
+      font-family: var(--typewriter);
     }
-    /* The whole game fits the window; the board scales to whatever room is
-       left over. Nothing here is a breakpoint or a mobile layout (CLAUDE.md
-       rule 3) — it is one desktop layout that measures the viewport instead of
-       assuming it. The hover readout is the game's risk display (SPEC.md §4)
-       and must never be below the fold. */
-    #app {
+    button { font-family: var(--typewriter); }
+
+    #spread {
+      box-sizing: border-box;
+      height: 100%;
+      min-width: 1280px;
+      min-height: 760px;
+      padding: 8px var(--right-margin) 8px 8px;
+      display: grid;
+      grid-template-columns: var(--left-w) var(--panel-w);
+      justify-content: center;
+    }
+    .page {
+      position: relative;
+      box-sizing: border-box;
+      min-height: 0;
+      min-width: 0;
+      background-color: var(--paper);
+    }
+    .page::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: var(--edge-wear);
+      box-shadow: inset 0 0 36px rgba(110, 80, 40, 0.22);
+      mix-blend-mode: multiply;
+    }
+    /* The centre fold: each page darkens toward the crease, with a thin
+       highlight where the paper rises out of it. */
+    #left-page {
+      display: grid;
+      grid-template-columns: var(--outer-gutter) minmax(0, 1fr);
+      gap: 4px;
+      padding: 10px 16px 10px 2px;
+      background-image:
+        linear-gradient(to right, transparent calc(100% - 22px), rgba(70, 50, 25, 0.10) calc(100% - 10px), rgba(40, 28, 12, 0.42) calc(100% - 1px), rgba(255, 250, 235, 0.5)),
+        var(--paper-fibre);
+      box-shadow: -3px 3px 0 rgba(0, 0, 0, 0.5);
+    }
+    #panel {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      padding: 16px;
-      min-width: 1280px;
-      height: 100%;
-      box-sizing: border-box;
-    }
-    h1 {
-      font-size: 18px;
-      margin: 0;
-    }
-    #seed {
+      padding: 10px 12px 10px 18px;
+      overflow: hidden;
       font-size: 12px;
-      font-weight: normal;
-      margin-left: 12px;
+      background-image:
+        linear-gradient(to left, transparent calc(100% - 22px), rgba(70, 50, 25, 0.10) calc(100% - 10px), rgba(40, 28, 12, 0.36)),
+        var(--paper-fibre);
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
     }
-    #seed a {
-      color: inherit;
-      opacity: 0.7;
-    }
-    #spread {
+
+    /* The outer margin: the cut-out note and the seed (SPEC.md §1). */
+    #outer-gutter {
       display: flex;
-      gap: 16px;
-      align-items: stretch;
-      /* Takes the height the fixed rows above and below do not want, and
-         min-height:0 lets it actually shrink rather than forcing the page
-         taller than the window. */
-      flex: 1 1 auto;
+      flex-direction: column;
+      align-items: center;
       min-height: 0;
     }
-    /* A fixed four lines, whatever the hover says. A readout that grew with
-       its text took height from the board, which rescaled under the mouse on
-       every hover. ui.js renderReadout puts the warnings first, so anything
-       cut off at the bottom is terrain detail, never a risk. */
-    #coord-readout {
+    #gutter-note {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: var(--outer-gutter);
+    }
+    #seed {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 10px;
+      padding: 4px 0;
+    }
+    #seed a { color: inherit; opacity: 0.6; }
+
+    #left-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      min-height: 0;
+    }
+    #board {
       flex: 0 0 auto;
-      font-family: monospace;
+      display: block;
+      width: 100%;
+      height: var(--board-h);
+    }
+
+    /* Comic caption boxes: paper, an ink rule and a hard offset shadow. */
+    .caption {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 5px 9px;
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+    .caption-head {
+      margin: -5px -9px 5px;
+      padding: 2px 9px;
+      font-family: var(--slab);
+      font-weight: bold;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    /* Under the board, side by side: the hover readout, which is the risk
+       display (SPEC.md §4) and always shown, and the turn report. Their
+       height is fixed by fitSpread, never by their text, so the board does
+       not rescale under the mouse; ui.js renderReadout puts warnings first,
+       so anything cut off is terrain detail, never a risk. */
+    #captions {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 10px;
+      height: var(--caption-h);
+      padding: 0 3px 3px 0;
+      box-sizing: border-box;
+    }
+    #coord-readout {
+      flex: 3 1 0;
+      min-width: 0;
       font-size: 13px;
       line-height: 17px;
-      height: 68px;
       overflow: hidden;
     }
+    #report {
+      flex: 2 1 0;
+      min-width: 0;
+      overflow-y: auto;
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    #report li { padding: 0 3px; }
+    #report li + li { margin-top: 2px; }
+    #report li.located { cursor: default; }
+    #report li.located:hover { background: var(--ink); color: var(--paper); }
+
     #error {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
       max-width: 900px;
       padding: 12px 16px;
       border: 2px solid #c1272d;
@@ -77,311 +201,357 @@
       font-size: 13px;
       white-space: pre-wrap;
     }
-    #legend {
+
+    /* The fixed strip at the top of the right page: the clock, End turn and
+       the selected man's actions (SPEC.md §11 layout notes). */
+    #strip {
       flex: 0 0 auto;
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px 18px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      font-size: 13px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 6px;
     }
-    .legend-swatch {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border: 1px solid #1a1a18;
-      font-family: monospace;
-      font-weight: bold;
-      font-size: 13px;
+    #clock {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      height: 30px;
     }
-    /* Sized by both axes, so the SVG's own preserveAspectRatio letterboxes the
-       board to fit rather than dictating the page height. No background: the
-       terrain paints the whole board, so a backdrop would only show as bars
-       down the sides when the fit is width-limited. */
-    #board {
+    #turn-counter {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      background: var(--paper);
+      border: 2px solid var(--ink);
+    }
+    #turn-counter.dawn { color: var(--paper); background: var(--red); }
+    #dawn-strip {
       flex: 1 1 auto;
       min-width: 0;
       height: 100%;
     }
-
-    /* The right-hand page of the spread. Plain for now; SPEC.md §11 dresses
-       it as printed paper at M7. */
-    #panel {
-      flex: 0 0 300px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-height: 0;
-      overflow-y: auto;
-      font-family: var(--typewriter);
-    }
-    #turn-counter {
-      font-family: var(--typewriter);
-      font-size: 22px;
+    #keys-tab {
+      flex: 0 0 auto;
+      padding: 0 6px;
+      font-size: 11px;
       font-weight: bold;
-      letter-spacing: 1px;
-      color: #f2e8d5;
+      color: var(--ink);
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      cursor: help;
     }
-    #turn-counter.dawn {
-      color: #c1272d;
+    .btn, #end-turn, #diversion, .action {
+      font-family: var(--typewriter);
+      color: var(--ink);
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      box-shadow: 2px 2px 0 var(--ink);
+      cursor: pointer;
+    }
+    /* Pressed in one step, no easing. */
+    .btn:active:not(:disabled), #end-turn:active:not(:disabled), #diversion:active:not(:disabled), .action:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: none;
     }
     #end-turn {
-      padding: 10px;
-      font: inherit;
+      padding: 5px;
+      font-size: 14px;
       font-weight: bold;
       letter-spacing: 1px;
-      color: #1a1a18;
-      background: #f2e8d5;
-      border: 2px solid #1a1a18;
-      cursor: pointer;
+      background-image: var(--dots-red);
+      background-color: var(--paper);
     }
-    #end-turn:disabled {
-      background: #6b6b63;
-      color: #2a2a26;
+    #end-turn:disabled, #diversion:disabled, .action:disabled {
+      color: rgba(26, 26, 24, 0.5);
+      background-image: var(--dots-ink);
+      box-shadow: none;
+      border-color: rgba(26, 26, 24, 0.45);
       cursor: default;
-    }
-    #alert {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    #alert-dial {
-      flex: 0 0 104px;
-      width: 104px;
-      height: 104px;
-    }
-    #alert-caption {
-      font-family: var(--typewriter);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-    .alert-heading {
-      font-weight: bold;
-      letter-spacing: 1px;
-      color: #f2e8d5;
-    }
-    .alert-states {
-      margin: 2px 0;
-      padding-left: 18px;
-      opacity: 0.8;
-    }
-    .alert-states .active {
-      font-weight: bold;
-      opacity: 1;
-      padding: 0 6px;
-      margin-left: -6px;
-      border-radius: 3px;
-      width: fit-content;
-    }
-    .alert-note {
-      font-size: 11px;
-      opacity: 0.65;
-    }
-    #report {
-      margin: 0;
-      padding: 6px 8px 6px 22px;
-      background: #2a2a26;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-    #roster {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .roster-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      background: #2a2a26;
-      border: 2px solid transparent;
-      cursor: pointer;
-    }
-    .roster-item.selected {
-      border-color: #c1272d;
-    }
-    .roster-item.spent {
-      opacity: 0.55;
-    }
-    .roster-key {
-      font-family: var(--typewriter);
-      font-weight: bold;
-      color: #5c6b4a;
-    }
-    .roster-text {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-    .roster-who {
-      font-size: 13px;
-    }
-    .roster-detail {
-      font-size: 11px;
-      opacity: 0.65;
-    }
-    .roster-trait {
-      font-size: 11px;
-      color: #c9c2b0;
-    }
-    .roster-trait b {
-      color: #f2e8d5;
-    }
-    .roster-bonus {
-      color: #c1272d;
-      font-weight: bold;
-    }
-    .roster-item.dead {
-      opacity: 0.35;
-      cursor: default;
-    }
-    .roster-status {
-      font-family: var(--typewriter);
-      font-size: 10px;
-      font-weight: bold;
-      letter-spacing: 0.5px;
-      color: #c1272d;
     }
     #actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+      min-height: 94px;
+      align-content: start;
     }
+    #actions.idle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      opacity: 0.6;
+      border: 2px dashed rgba(26, 26, 24, 0.35);
+    }
+    .action-wrap { display: flex; min-width: 0; }
+    .action-wrap .action { flex: 1 1 auto; min-width: 0; }
+    .action:disabled { pointer-events: none; }
     .action {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      padding: 5px 8px;
-      font: inherit;
+      padding: 2px 5px;
       text-align: left;
-      color: #1a1a18;
-      background: #f2e8d5;
-      border: 2px solid #1a1a18;
-      cursor: pointer;
-    }
-    .action:disabled {
-      background: #3a3a34;
-      color: #9a9486;
-      border-color: #3a3a34;
-      cursor: default;
     }
     .action.active {
-      background: #3d5a73;
-      color: #f2e8d5;
+      color: var(--paper);
+      background: var(--blue);
     }
     .action-name {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
     .action-cost {
       font-size: 10px;
-      opacity: 0.8;
-    }
-    .roster-ap {
-      font-family: var(--typewriter);
-      font-size: 12px;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
+
+    #alert {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: help;
+    }
+    #alert-dial {
+      flex: 0 0 70px;
+      width: 70px;
+      height: 70px;
+    }
+    .alert-heading {
+      font-family: var(--slab);
+      font-weight: bold;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+    .alert-state {
+      display: inline-block;
+      margin: 2px 0;
+      padding: 0 6px;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: var(--paper);
+    }
+    .alert-note { font-size: 11px; }
+
+    #mission-box { flex: 0 0 auto; }
     #mission {
-      margin: 0;
-      padding: 6px 8px 6px 22px;
-      background: #2a2a26;
+      margin: 0 0 5px;
+      padding: 0;
+      list-style: none;
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.35;
     }
-    #mission .done {
-      color: #8fa36f;
-    }
+    #mission li::before { content: "▸ "; }
+    #mission .done { text-decoration: line-through; text-decoration-color: var(--red); }
+    #mission i { font-style: normal; opacity: 0.7; }
     #diversion {
-      padding: 6px;
-      font: inherit;
+      width: 100%;
+      padding: 3px;
       font-size: 12px;
       font-weight: bold;
-      color: #f2e8d5;
-      background: #3d5a73;
-      border: 2px solid #1a1a18;
+      color: var(--paper);
+      background: var(--blue);
+    }
+
+    /* The roster rail (SPEC.md §11): all six, always visible, greying out as
+       men are lost. One row each — a small portrait and four lines about the
+       man — sharing whatever height the page has left. The full particulars,
+       with a bigger portrait, are each row's rollover. */
+    #roster {
+      flex: 1 1 auto;
+      min-height: 0;
+      margin: 0;
+      padding: 0 3px 3px 0;
+      list-style: none;
+      display: grid;
+      grid-auto-rows: minmax(0, 1fr);
+      gap: 5px;
+    }
+    .slot {
+      position: relative;
+      display: flex;
+      gap: 7px;
+      min-height: 0;
+      padding: 2px 6px 2px 2px;
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      box-shadow: 2px 2px 0 var(--ink);
       cursor: pointer;
+      overflow: hidden;
     }
-    #diversion:disabled {
-      background: #3a3a34;
-      color: #9a9486;
-      cursor: default;
+    .slot.selected { border-color: var(--red); box-shadow: 2px 2px 0 var(--red); outline: 1px solid var(--red); }
+    .slot-face {
+      position: relative;
+      flex: 0 0 auto;
+      height: 100%;
+      aspect-ratio: 4 / 5;
+      border: 1px solid var(--ink);
+      box-sizing: border-box;
+      overflow: hidden;
     }
+    .slot-face svg { display: block; width: 100%; height: 100%; }
+    .slot.lost { cursor: default; }
+    .slot.lost .slot-face svg { filter: grayscale(1) contrast(0.7); opacity: 0.45; }
+    .slot.lost .slot-text { opacity: 0.55; }
+    .slot-num {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 0 4px;
+      font-weight: bold;
+      font-size: 11px;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    .slot.leader .slot-num { background: var(--leader); }
+    .slot-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-size: 11px;
+      line-height: 13px;
+    }
+    .slot-name {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .slot-name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .slot-name span:last-child { flex: 0 0 auto; }
+    .slot-line {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slot-warn { color: var(--red); font-weight: bold; }
+    .slot-trait { opacity: 0.75; }
+
+    /* The results: the back page of the annual (SPEC.md §10), printed over
+       the right page, the board still open beside it. */
     #results {
-      padding: 10px 12px;
-      background: #f2e8d5;
-      color: #1a1a18;
-      border: 3px solid #1a1a18;
-      font-size: 13px;
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      padding: 12px 14px 12px 22px;
+      overflow-y: auto;
+      background-color: var(--paper);
+      background-image: var(--paper-fibre);
+      font-size: 12px;
+    }
+    #results .logo { display: block; width: 100%; height: 110px; }
+    #results .kicker {
+      font-family: var(--slab);
+      font-weight: bold;
+      letter-spacing: 3px;
+      font-size: 11px;
+      text-align: center;
+      border-top: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      margin: 4px 0 8px;
     }
     #results h2 {
       margin: 0 0 4px;
-      font-size: 20px;
+      font-family: var(--slab);
+      font-size: 24px;
       letter-spacing: 1px;
     }
-    #results.success h2 { color: #5c6b4a; }
-    #results.withdrawn h2 { color: #3d5a73; }
-    #results.failed h2 { color: #c1272d; }
-    #results p { margin: 0 0 6px; }
-    #results ul { margin: 0 0 6px; padding-left: 18px; }
-    #results .fate-lost { color: #c1272d; }
-    #results table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    #results td:last-child { text-align: right; font-family: var(--typewriter); }
-    #results .total td { border-top: 2px solid #1a1a18; font-weight: bold; }
-    #results button { font: inherit; font-weight: bold; padding: 4px 10px; cursor: pointer; }
-    #keys {
-      font-size: 11px;
-      opacity: 0.6;
-      line-height: 1.5;
+    #results.success h2 { color: var(--green); }
+    #results.withdrawn h2 { color: var(--blue); }
+    #results.failed h2 { color: var(--red); }
+    #results p { margin: 0 0 8px; }
+    #results .fates { list-style: none; margin: 0 0 8px; padding: 0; }
+    #results .fates li { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    #results .fates svg { width: 22px; height: 22px; flex: 0 0 22px; }
+    #results .fate-lost svg { filter: grayscale(1); opacity: 0.5; }
+    #results .fate-lost b { color: var(--red); }
+    #results table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    #results td:last-child { text-align: right; }
+    #results .total td { border-top: 2px solid var(--ink); font-weight: bold; font-size: 14px; }
+    #results button { padding: 4px 12px; font-size: 13px; font-weight: bold; }
+
+    /* Rollovers (SPEC.md §11): detail kept off the page until asked for. */
+    #popup {
+      position: fixed;
+      z-index: 20;
+      max-width: 340px;
+      padding: 6px 9px;
+      font-family: var(--typewriter);
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--ink);
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      box-shadow: 3px 3px 0 var(--ink);
+      pointer-events: none;
+      white-space: pre-line;
+    }
+    #popup b { font-size: 13px; }
+    #popup .popup-portrait {
+      float: left;
+      width: 96px;
+      height: 120px;
+      margin: 2px 9px 2px 0;
+      border: 2px solid var(--ink);
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <h1>NIGHT DROP — M6: the drop <span id="seed"></span></h1>
-    <div id="error" hidden></div>
-    <div id="spread">
-      <svg id="board"></svg>
-      <aside id="panel">
-        <div id="turn-counter"></div>
-        <section id="results" hidden></section>
+  <main id="spread">
+    <section id="left-page" class="page">
+      <div id="outer-gutter">
+        <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="seed"></div>
+      </div>
+      <div id="left-content">
+        <svg id="board"></svg>
+        <div id="captions">
+          <div id="coord-readout" class="caption">Loading map…</div>
+          <ul id="report" class="caption"></ul>
+        </div>
+      </div>
+    </section>
+    <aside id="panel" class="page">
+      <div id="strip">
+        <div id="clock">
+          <div id="turn-counter"></div>
+          <svg id="dawn-strip" viewBox="0 0 600 60" preserveAspectRatio="none"></svg>
+          <button id="keys-tab" type="button">KEYS</button>
+        </div>
         <button id="end-turn" type="button"></button>
+        <div id="actions"></div>
+      </div>
+      <div id="alert">
+        <svg id="alert-dial" viewBox="0 0 240 240"></svg>
+        <div id="alert-caption"></div>
+      </div>
+      <div id="mission-box" class="caption">
+        <div class="caption-head">MISSION BRIEFING</div>
         <ul id="mission"></ul>
         <button id="diversion" type="button"></button>
-        <div id="alert">
-          <svg id="alert-dial" viewBox="0 0 240 240"></svg>
-          <div id="alert-caption"></div>
-        </div>
-        <ul id="report"></ul>
-        <div id="actions" hidden></div>
-        <ul id="roster"></ul>
-        <div id="keys">
-          The drop: 1–3 pick a run · Space jump<br />
-          1–6 select trooper · Tab cycle · H hold position<br />
-          G hide · S suppress · T throw stone · A stabilise · P pick up · U pack parachute<br />
-          C place charge · X cut the line · W swim · D RAF diversion<br />
-          Space end turn · Esc or right-click cancel<br />
-          R patrol routes · hover an enemy for its arc and route, an objective for what it needs
-        </div>
-      </aside>
-    </div>
-    <div id="coord-readout">Loading map…</div>
-    <ul id="legend"></ul>
-  </div>
+      </div>
+      <ul id="roster"></ul>
+      <section id="results" hidden></section>
+    </aside>
+  </main>
+  <div id="error" hidden></div>
+  <div id="popup" hidden></div>
   <!--
     Failure reporting. This is a classic script, not a module, and it runs
     before the game does, so it still works when the module itself is what

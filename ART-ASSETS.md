@@ -50,17 +50,27 @@ procedural SVG pattern. Supply at 2x and it will be used as a pattern fill.
 
 ---
 
-## 2. The six — SVG
+## 2. The six — PNG
 
-Each character needs **two** drawings. A portrait drawn for the roster rail will turn to
+Each character needs **two** pictures. A portrait made for the roster rail will turn to
 mud at counter size, so don't try to make one asset do both.
 
-| Asset | viewBox | Notes |
-|---|---|---|
-| `portrait-<name>-full.svg` x6 | 240 x 300 | roster rail. Head and shoulders, pulp comic linework. Needs a greyed-out state — supply as one file, code handles desaturation. |
-| `portrait-<name>-chip.svg` x6 | 32 x 32 | on the counter. Silhouette-level simplicity. Helmet shape, one distinguishing feature. Must read at 32px on a busy map. |
+Portraits are the one place painted or photographic-style art is welcome, so they are
+**PNG**, not SVG, and the universal SVG rules above do not apply to them. Drop them into
+`/assets/portraits/` with exactly these names; the game picks them up on load, with no
+code change, and uses its own drawn portrait for any file that is missing.
 
-Names: holloway, fitch, vance, barrow, speers, nunn.
+| Asset | Size | Notes |
+|---|---|---|
+| `portrait-<name>-full.png` x6 | **4:5**, 960 x 1200 px (no smaller than 480 x 600) | Head and shoulders. 8-bit sRGB, opaque, a plain or simple background, no border and no text (code draws the frame, number and name). The roster rail crops to the middle — keep the face and helmet inside the central **80% of the width** and between **12% and 92% of the height**; eyes about 40% down. Shown at roughly 55 x 70 in the rail and 96 x 120 in the rollover, so it must read small: strong silhouette, clear light and dark. Code greys it out when the man is killed. |
+| `portrait-<name>-chip.png` x6 | **1:1**, 128 x 128 px | Optional. On the counter, about 15 px on screen. Helmet and face only, filling the frame, transparent background. Silhouette-level simplicity, one distinguishing feature. Without it the drawn chip is used, which will not match painted portraits. |
+
+Names: holloway, fitch, vance, barrow, speers, nunn — the trooper's `id` in
+`data/roster.json`, so a seventh man's portrait is named after his id.
+
+A trooper with no portrait of his own is drawn with `portrait-fallback-full` and
+`portrait-fallback-chip`, which live in code and are not to be supplied: they are what
+keeps a seventh man a JSON entry until someone draws him.
 
 ---
 
@@ -98,13 +108,16 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-orchard-01..03.svg` | 80 x 92 | 3 |
 | `terrain-track.svg` | 80 x 92 | 1 + needs 3 rotations, code handles rotation |
 | `terrain-marsh.svg` | 80 x 92 | 1 |
-| `terrain-canal.svg` | 80 x 92 | 1 + edge pieces |
+| `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
+| `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
 | `terrain-ridge.svg` | 80 x 92 | 1 |
 | `terrain-farmhouse.svg` | 80 x 92 | 1 |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
 
-Track and canal need to read as continuous across hexes. Simplest approach: draw the motif
-running edge-to-edge through the hex centre and let code rotate it to match neighbours.
+Track and canal need to read as continuous across hexes. Draw the track running
+edge-to-edge through the hex centre, **east to west**; code turns it to meet each
+neighbouring road, and where a road leaves a hex only one way (a bend, a junction, a dead
+end) it draws that half of the motif only, so one drawing covers every shape of road.
 
 ---
 
@@ -121,7 +134,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
 | `objective-rally-point.svg` | 80 x 92 | the exfil barn or field |
-| `landmark-church.svg` | 80 x 92 | village church with a spire, drawn over one farmhouse hex near the exchange. Art only, no rule (SPEC.md §11). |
+| `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art places this symbol inside itself, beside the building; the church stands whether or not the exchange does. |
 
 ---
 
@@ -148,12 +161,12 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 
 | Asset | viewBox | Notes |
 |---|---|---|
-| `ui-caption-box.svg` | 400 x 120 | comic caption frame. **Must stretch** — supply as 9-slice, i.e. corners and edges as separate paths, or keep the border a simple enough shape that code can redraw it. |
-| `ui-speech-bubble.svg` | 240 x 120 | same stretching requirement, plus a separate tail path so it can point in any direction |
+| `ui-caption-box.svg` | 400 x 120 | comic caption frame. **Must stretch** — supply as 9-slice, i.e. corners and edges as separate paths, or keep the border a simple enough shape that code can redraw it. *Currently redrawn by code: an ink rule and hard offset shadow in CSS.* |
+| `ui-speech-bubble.svg` | 240 x 120 | same stretching requirement, plus a separate tail path so it can point in any direction. *Currently redrawn by code: `speechBubble` in theme.js.* |
 | `ui-alert-dial.svg` | 240 x 240 | face only, with tick marks for Calm / Suspicious / Alert / Alarmed |
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
-| `ui-button.svg` | 160 x 48 | stretchable |
+| `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
 | `ui-gutter-note.svg` | 60 x 900 | the "CUT OUT AND PLAY" margin text, as outlines |
 | `logo-night-drop.svg` | 800 x 300 | masthead for the title and results page |
 
@@ -161,11 +174,16 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 
 ## 8. Type
 
-No comic lettering: the annual look is carried by print, paper and colour (SPEC.md §11).
+The annual look is carried by print, paper and colour (SPEC.md §11); the one exception is
+the speech bubbles, which are comic lettering.
 
-- **Body, captions, speech bubbles, numbers and UI:** a typewriter Courier. `Courier 10
+- **Body, captions, numbers and UI:** a typewriter Courier. `Courier 10
   Pitch` if supplied, falling back to `Courier New`, `Courier`, `monospace`, which ship on
   every desktop, so nothing has to be supplied.
+- **Speech bubbles:** comic lettering, set in capitals. Until a face is supplied it falls
+  back to faces desktops ship (`Noteworthy` bold, `Segoe Print`, `Ink Free`, `Marker Felt`).
+  Never Comic Sans. A supplied lettering face is a WOFF2 in `/assets/fonts/` and goes
+  first in `TYPE.lettering` in `src/render/theme.js`, with an `@font-face` for it.
 - **Display / headings (optional):** a condensed slab for the masthead and big headings.
 
 Any face that is supplied: **WOFF2**, into `/assets/fonts/`. Check the licence permits web

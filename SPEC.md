@@ -547,16 +547,22 @@ Desktop makes the skeuomorphism work properly, so use the room:
   the ranking man (his counter's name strip and rank flash, his number on the roster).
   Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
-- Units are **counters**: rounded squares, drop shadow, symbol, name strip. They snap down
-  with a 2-frame stepped rotation. No smooth easing anywhere — stepped animation reads as
-  hand-made.
-- Speech bubbles for dialogue on the board, tail pointing at the man's counter. Dialogue
-  stays on the board, not in the roster rail.
-- **Type is not comic lettering.** The annual look comes from the print, paper and colour.
-  Text on the right page is a typewriter face, a Courier (`Courier 10 Pitch`, then
-  `Courier New`, `Courier`, `monospace`), so it reads as a typed briefing; speech bubbles
-  use it too. A condensed slab may still set big headings. Pin the board's label face
-  rather than leaving it to the browser's default monospace.
+- Units are **counters**: rounded squares, drop shadow, symbol, name strip. A man who
+  moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
+  no easing in or out. A man with no AP left stays fully printed; his counter's edge goes
+  grey. Halftone is printed faint, close to the colour beneath it.
+- Speech bubbles for dialogue on the board, tail pointing at the man's counter, shown for
+  the man selected or under the mouse (on the board or in the roster). A line is heard
+  once: when the selection moves off that man it goes (hovering shows it without using
+  it up), and any line never heard goes at the end of the turn. Bubbles are set smaller
+  than the board's labels. Dialogue stays on the board, not in the
+  roster rail.
+- **Type is not comic lettering,** except in the speech bubbles. The annual look comes
+  from the print, paper and colour. Text on the right page is a typewriter face, a Courier
+  (`Courier 10 Pitch`, then `Courier New`, `Courier`, `monospace`), so it reads as a typed
+  briefing. Speech bubbles are hand lettering in capitals (never Comic Sans). A condensed
+  slab may still set big headings. Pin the board's label face rather than leaving it to
+  the browser's default monospace.
 - A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,
   no new terrain. It is the landmark Vance's landing line refers to, and spires were how
   real sticks checked they had been dropped in the right place.
