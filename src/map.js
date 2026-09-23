@@ -87,6 +87,7 @@ function validateEnemyTypes(json, url) {
         throw new Error(`${url}: type "${id}" "${field}" must be a non-negative integer, got ${JSON.stringify(type[field])}`);
       }
     }
+    if (typeof type.killable !== 'boolean') throw new Error(`${url}: type "${id}" "killable" must be true or false`);
   }
 }
 

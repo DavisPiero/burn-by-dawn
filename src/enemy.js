@@ -30,6 +30,7 @@ function makeEnemy(placement, type, at) {
     arcDegrees: type.arcDegrees,
     detection: type.detection,
     speed: type.speed,
+    killable: type.killable,
     q: at[0],
     r: at[1],
     facing: DIRECTION_NAMES.indexOf(placement.facing),
@@ -46,11 +47,14 @@ function makeEnemy(placement, type, at) {
     // SPEC.md §6. `investigating` is a noise it is walking to; `holding` is the
     // trooper it spotted at the detection check, and `watching` is the same
     // man through the player phase that follows, so the board can show who
-    // has him. `suppressed` is a gunner's fire, for one go (SPEC.md §4).
+    // has him. `suppressed` is a gunner's fire, for one go (SPEC.md §4), and
+    // `openToKill` is the player phase after it, when a gunner can still
+    // finish him (§4 Kill).
     investigating: null,
     holding: null,
     watching: null,
     suppressed: false,
+    openToKill: false,
     // The reserve's post beside the exfil (SPEC.md §6 Exfil watched): it
     // marches there, then stands as a sentry facing the exfil.
     guard: placement.guardHex ? { q: placement.guardHex[0], r: placement.guardHex[1] } : null,
@@ -304,7 +308,8 @@ export function runDetection(state, map, rules) {
   const events = [];
   let alert = state.alert;
   let contact = state.contact;
-  let enemies = state.enemies.map((e) => ({ ...e, holding: null, watching: null }));
+  // The player phase after a suppression is over: nobody is open to a kill now.
+  let enemies = state.enemies.map((e) => ({ ...e, holding: null, watching: null, openToKill: false }));
   // Pinned lasts one pool; the pool has been filled since, so it is spent.
   let units = state.units.map((u) => (u.pinned ? { ...u, pinned: false } : u));
   let bodies = state.bodies;
@@ -501,7 +506,8 @@ function sameHex(a, b) {
  * finds it (SPEC.md §5, §9): on or beside any hex it walks through, or the hex
  * it ends on, whether it moved or not. Alert up, a noise there, found once.
  * Enemies cannot pass through troopers or each other. Suppression wears off at
- * the end of the phase.
+ * the end of the phase, leaving the enemy open to a kill through the player
+ * phase that follows (SPEC.md §4 Kill).
  */
 export function runEnemyPhase(state, map, rules) {
   const events = [];
@@ -617,7 +623,7 @@ export function runEnemyPhase(state, map, rules) {
     });
   }
 
-  enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false } : e));
+  enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false, openToKill: true } : e));
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
     state: { ...state, enemies, contact, reserveDeployed, alert, bodies, parachutes, noises },

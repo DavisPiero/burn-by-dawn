@@ -152,6 +152,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-spotted.svg` | 28 x 28 |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
 | `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
+| `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
+| `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
 | `stamp-destroyed.svg` | 200 x 80 (red rubber stamp, rotated in code) |
 

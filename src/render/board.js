@@ -228,7 +228,7 @@ export function renderPieces(layers, state, view) {
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
-  for (const body of state.bodies) drawOnGround(layers, 'marker-body', body, -1);
+  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1);
   for (const chute of state.parachutes) drawParachute(layers, chute);
   for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
@@ -246,7 +246,10 @@ export function renderPieces(layers, state, view) {
   for (const enemy of state.enemies) {
     const hovered = enemy.id === view.hoverEnemy?.id;
     const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id));
-    if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
+    // Suppressed, or still open to a kill after it (SPEC.md §4): both are
+    // under the gunner's fire, and the hover says which.
+    if (enemy.suppressed || enemy.openToKill) counter.appendChild(marker('marker-suppressed', 38, -12));
+    if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
     layers.counters.appendChild(counter);
   }
 

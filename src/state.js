@@ -25,7 +25,7 @@ import {
 import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
 import {
-  checkHide, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   createUnits, fillActionPoints, onBoard, unitById,
 } from './units.js';
 
@@ -167,6 +167,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.actions?.hide?.apCost, '"actions.hide.apCost"', rulesUrl);
   requireCount(rules.actions.hide.concealment, '"actions.hide.concealment"', rulesUrl);
   requireCount(rules.actions?.suppress?.apCost, '"actions.suppress.apCost"', rulesUrl);
+  requireCount(rules.actions?.kill?.apCost, '"actions.kill.apCost"', rulesUrl);
   requireCount(rules.actions?.throwStone?.apCost, '"actions.throwStone.apCost"', rulesUrl);
   requireCount(rules.actions.throwStone.range, '"actions.throwStone.range"', rulesUrl);
   requireCount(rules.actions?.pickUpCharge?.apCost, '"actions.pickUpCharge.apCost"', rulesUrl);
@@ -188,7 +189,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.diversion?.uses, '"diversion.uses"', rulesUrl);
   requireCount(rules.diversion.statesDown, '"diversion.statesDown"', rulesUrl);
   for (const [id, role] of Object.entries(rules.roles)) {
-    for (const flag of ['suppress', 'cutLine']) {
+    for (const flag of ['suppress', 'kill', 'cutLine']) {
       if (role[flag] !== undefined && typeof role[flag] !== 'boolean') {
         throw new Error(`${rulesUrl}: role "${id}" "${flag}" must be true or false`);
       }
@@ -365,6 +366,25 @@ export function suppressEnemy(state, unitId, enemyId, map, rules) {
   const fired = {
     ...spend(state, unitId, check.cost),
     enemies: state.enemies.map((e) => (e.id === enemyId ? { ...e, suppressed: true } : e)),
+  };
+  return makeNoise(fired, 'gunfire', unit, alert, rules).state;
+}
+
+/**
+ * A gunner kills an enemy under suppression (SPEC.md §4 Kill). It is gone from
+ * the board, and whoever it had in its sights is free of it; its body is left
+ * where it fell for the rest of the garrison to find. Gunfire, as suppressing.
+ */
+export function killEnemy(state, unitId, enemyId, map, rules) {
+  const unit = unitById(state.units, unitId);
+  const enemy = state.enemies.find((e) => e.id === enemyId);
+  const check = checkKill(map, unit, enemy, rules);
+  if (!check.ok) return state;
+  const alert = applyHook(unit, 'onFire', 'alert', rules.alert.gunfire).value;
+  const fired = {
+    ...spend(state, unitId, check.cost),
+    enemies: state.enemies.filter((e) => e.id !== enemyId),
+    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
   };
   return makeNoise(fired, 'gunfire', unit, alert, rules).state;
 }

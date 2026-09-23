@@ -392,6 +392,25 @@ export function checkSuppress(map, unit, enemy, rules) {
   return result(cost, null);
 }
 
+/**
+ * Kill (SPEC.md §4): gunners only, the same visible target as suppress, which
+ * must be of a killable type and still under suppression — suppressed this
+ * player phase, or open to a kill from the one before.
+ */
+export function checkKill(map, unit, enemy, rules) {
+  const cost = rules.actions.kill.apCost;
+  if (!unit || !rules.roles[unit.role].kill) return result(cost, `a ${unit ? unit.roleLabel.toLowerCase() : 'trooper'} cannot kill`);
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  if (!enemy) return result(cost, 'pick an enemy');
+  if (!enemy.killable) return result(cost, `the ${enemy.label.toLowerCase()} cannot be killed — suppress it to get past`);
+  if (!enemy.suppressed && !enemy.openToKill) return result(cost, `suppress the ${enemy.label.toLowerCase()} first`);
+  const radius = spotRadiusOf(map, unit, rules);
+  if (hexDistance(unit, enemy) > radius) return result(cost, `out of range — he sees ${radius} hex${radius === 1 ? '' : 'es'}`);
+  if (!hasLineOfSight(map, unit, enemy)) return result(cost, 'no clear line of sight');
+  return result(cost, null);
+}
+
 /** Throw a stone (SPEC.md §4): any hex up to `range` away, no line of sight needed. */
 export function checkThrowStone(map, unit, hex, rules) {
   const { apCost: cost, range } = rules.actions.throwStone;
