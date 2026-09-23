@@ -275,7 +275,7 @@ function describeLanding(event, where) {
   return `${event.unitName} lands in ${where}${off}.`;
 }
 
-const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', explosion: 'the explosion' };
+const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', explosion: 'the explosion' };
 
 function listOf(labels) {
   if (!labels || labels.length === 0) return 'someone';

@@ -60,6 +60,7 @@
 
   "alert": {
     "gunfire": 2,
+    "silenced": 1,
     "spotted": 1,
     "stone": 1,
     "bodyFound": 1,
@@ -86,6 +87,7 @@
     "found": 3,
     "stone": 3,
     "gunfire": 5,
+    "silenced": 2,
     "explosion": 7
   },
 
@@ -98,7 +100,7 @@
     "woundedActionPoints": 1
   },
 
-  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go, and is open to a kill until the end of the next player phase. kill: gunners only (roles[].kill), the same visible target as suppress, which must be under suppression and of a killable type (data/enemies.json); gunfire like suppress, and it leaves a body. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, only once an objective of kind `requiresDestroyed` is destroyed. A full turn means he has spent no AP yet and it costs his whole pool.",
+  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go, and is open to a kill until the end of the next player phase. kill: gunners only (roles[].kill), the same visible target as suppress, which must be under suppression and of a killable type (data/enemies.json); one aimed shot from a silenced Sten, raising alert.silenced and heard as noise.silenced (the onFire hook applies, as to gunfire), and it leaves a body. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, only once an objective of kind `requiresDestroyed` is destroyed. A full turn means he has spent no AP yet and it costs his whole pool.",
 
   "actions": {
     "hide": { "apCost": 1, "concealment": 1 },

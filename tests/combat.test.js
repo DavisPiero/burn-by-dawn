@@ -77,10 +77,10 @@ function scenario(state, role, at, enemies, changes = {}) {
 
 const unitIn = (state, id) => unitById(state.units, id);
 
-/** The alert one burst from this gunner raises, through his onFire trait if he has one. */
-function gunfireOf(unit, rules) {
+/** The alert one shot from this gunner raises, through his onFire trait if he has one. */
+function gunfireOf(unit, rules, base = rules.alert.gunfire) {
   const trait = unit.traits.find((t) => t.hook === 'onFire');
-  return rules.alert.gunfire + (trait ? trait.modifier.value : 0);
+  return Math.max(0, base + (trait ? trait.modifier.value : 0));
 }
 
 /** Both gunners on one field row, `gap` apart, and only `enemies` on the board. */
@@ -447,9 +447,9 @@ export default [
     const killed = killEnemy(suppressed, second, target.id, map, rules);
     equal(killed.enemies.length, 0, 'gone from the board');
     equal(unitIn(killed, second).ap, unitIn(suppressed, second).ap - rules.actions.kill.apCost, 'AP spent');
-    equal(killed.alert.points, gunfireOf(unitIn(s, first), rules) + gunfireOf(unitIn(s, second), rules), 'loud twice');
+    equal(killed.alert.points, gunfireOf(unitIn(s, first), rules) + gunfireOf(unitIn(s, second), rules, rules.alert.silenced), 'a loud burst, then a silenced shot');
     const noise = killed.noises.at(-1);
-    equal(`${noise.kind} ${noise.q},${noise.r}`, `gunfire ${row.q + 1},${row.r}`, 'heard from the gunner');
+    equal(`${noise.kind} ${noise.q},${noise.r}`, `silenced ${row.q + 1},${row.r}`, 'a muffled shot, heard from the gunner');
     const body = killed.bodies.at(-1);
     equal(`${body.enemyId} ${body.q},${body.r} ${body.found}`, `${target.id} ${target.q},${target.r} false`, 'a body where it fell');
   }],

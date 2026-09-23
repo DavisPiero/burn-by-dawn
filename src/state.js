@@ -109,6 +109,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.charges?.placeApCost, '"charges.placeApCost"', rulesUrl);
   requireCount(rules.charges?.fuseTurns, '"charges.fuseTurns"', rulesUrl);
   requireCount(rules.alert?.gunfire, '"alert.gunfire"', rulesUrl);
+  requireCount(rules.alert?.silenced, '"alert.silenced"', rulesUrl);
   requireCount(rules.landing?.badLandingTurnsLost, '"landing.badLandingTurnsLost"', rulesUrl);
   for (const id of Object.keys(rules.roles)) {
     requireCount(rules.roles[id].concealment, `role "${id}" "concealment"`, rulesUrl);
@@ -149,7 +150,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.alert.parachuteFound, '"alert.parachuteFound"', rulesUrl);
 
   // Noise, contact and wounds, SPEC.md §5 and §6.
-  for (const kind of ['found', 'stone', 'gunfire']) {
+  for (const kind of ['found', 'stone', 'gunfire', 'silenced']) {
     requireCount(rules.noise?.[kind], `"noise.${kind}"`, rulesUrl);
   }
   if (!Number.isInteger(rules.combat?.hitsToKill) || rules.combat.hitsToKill < 1) {
@@ -373,20 +374,22 @@ export function suppressEnemy(state, unitId, enemyId, map, rules) {
 /**
  * A gunner kills an enemy under suppression (SPEC.md §4 Kill). It is gone from
  * the board, and whoever it had in its sights is free of it; its body is left
- * where it fell for the rest of the garrison to find. Gunfire, as suppressing.
+ * where it fell for the rest of the garrison to find. One aimed shot from a
+ * silenced Sten: quieter than the suppressing burst, through the same onFire
+ * hook.
  */
 export function killEnemy(state, unitId, enemyId, map, rules) {
   const unit = unitById(state.units, unitId);
   const enemy = state.enemies.find((e) => e.id === enemyId);
   const check = checkKill(map, unit, enemy, rules);
   if (!check.ok) return state;
-  const alert = applyHook(unit, 'onFire', 'alert', rules.alert.gunfire).value;
+  const alert = applyHook(unit, 'onFire', 'alert', rules.alert.silenced).value;
   const fired = {
     ...spend(state, unitId, check.cost),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
   };
-  return makeNoise(fired, 'gunfire', unit, alert, rules).state;
+  return makeNoise(fired, 'silenced', unit, alert, rules).state;
 }
 
 /** Throw a stone: a noise on that hex for the next enemy phase. */

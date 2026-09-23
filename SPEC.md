@@ -145,8 +145,10 @@ All costs and modifiers below are numbers in `rules.json`.
   suppress, and **under suppression**: suppressed this player phase or the one before, so
   one gunner needs two turns (suppress, then kill) and two gunners can do it in one. From
   the detection check after that next player phase the enemy is back to normal. A kill is
-  gunfire like suppressing — +2 alert, heard from the gunner's hex — so a kill from cold
-  costs +4 alert in all, a whole state from Calm. The enemy is gone from the board, stops
+  **one aimed shot from a silenced Sten**: quieter than the suppressing burst, **+1 alert,
+  heard 2 hexes** from the gunner's hex (its own numbers in `rules.json`; Cool Head's
+  onFire trait applies to it as to gunfire). So a kill from cold costs +3 alert, leaving the
+  garrison Suspicious; the body, once found, is the step to Alert. The enemy is gone from the board, stops
   holding anyone in contact, and leaves a **body** (§5 Wounds) that the rest of the garrison
   finds the same way. There are no dice: a legal kill always kills. An enemy type marked
   `killable: false` in `enemies.json` cannot be killed (the reserve squad, §6 Exfil
@@ -341,7 +343,8 @@ cap at Alarmed. One event is not a whole state: a single sighting leaves the gar
 Calm, a second makes it Suspicious.
 
 Raised by: being spotted (+1, and only when he was not already in contact — a man already
-counted is not counted again each turn he stays in view), gunfire (+2), an explosion (+3), the fuel dump exploding
+counted is not counted again each turn he stays in view), gunfire (+2), a silenced kill
+shot (+1), an explosion (+3), the fuel dump exploding
 (+4, instead of +3), a body found (+1), an abandoned parachute found (+1, see §9), a
 thrown stone (+1, §4 Actions).
 Enemy fire at troopers raises nothing extra — the sighting that caused it already counted.
@@ -358,7 +361,8 @@ plus a silently cut telephone line still does; the bridge plus the fuel dump is 
 ### Noise: the dial is global, the reaction is local
 
 Every **noise** happens at a hex and is **heard within a radius** set in `rules.json`
-(starting numbers: parachute or body found 3, thrown stone 3, gunfire 5, explosion 7),
+(starting numbers: parachute or body found 3, thrown stone 3, gunfire 5, silenced shot 2,
+explosion 7),
 plus the current state's hearing bonus. **A sighting is not a noise**: the enemies that
 spot a man hold and face him (below), but nobody else comes running unless something is
 heard. Hearing is distance
@@ -617,7 +621,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve, RAF diversion | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols; the diversion can be called once, only while the leader lives, and costs the clean-run score |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
-| **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is loud and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
+| **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is a silenced shot, quieter than suppressing, and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
 | **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 
 Do not start a milestone before the previous one is merged and playable.
