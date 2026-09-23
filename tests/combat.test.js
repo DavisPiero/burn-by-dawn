@@ -11,12 +11,12 @@ import { DIRECTION_NAMES, facingToward, hexDistance } from '../src/hex.js';
 import { isInPlay, loadJson, loadMap, terrainIdAt } from '../src/map.js';
 import {
   createInitialState, deselect, endTurn, hideUnit, moveUnit, pickUpCharge, setTargeting,
-  stabiliseUnit, suppressEnemy, throwStone,
+  killEnemy, stabiliseUnit, suppressEnemy, throwStone,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
 import {
-  checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById,
+  checkKill, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById,
 } from '../src/units.js';
 
 function assert(condition, message) {
@@ -46,7 +46,7 @@ function enemy(q, r, facingName, extra = {}) {
     visionRadius: 3, arcDegrees: 120, detection: 3, speed: 3,
     q, r, facing: facing(facingName), homeFacing: facing(facingName), turned: false,
     route: null, loop: false, waypoint: 0, routeStep: 1,
-    investigating: null, holding: null, watching: null, suppressed: false,
+    investigating: null, holding: null, watching: null, suppressed: false, openToKill: false, killable: true,
     ...extra,
   };
 }
@@ -76,6 +76,22 @@ function scenario(state, role, at, enemies, changes = {}) {
 }
 
 const unitIn = (state, id) => unitById(state.units, id);
+
+/** The alert one burst from this gunner raises, through his onFire trait if he has one. */
+function gunfireOf(unit, rules) {
+  const trait = unit.traits.find((t) => t.hook === 'onFire');
+  return rules.alert.gunfire + (trait ? trait.modifier.value : 0);
+}
+
+/** Both gunners on one field row, `gap` apart, and only `enemies` on the board. */
+function twoGunners(state, row, enemies) {
+  const gunners = state.units.filter((u) => u.role === 'gunner');
+  const units = state.units.map((u, i) => {
+    const g = gunners.indexOf(u);
+    return g >= 0 ? { ...u, q: row.q + g, r: row.r, trail: [] } : { ...u, q: 200 + i, r: 0 };
+  });
+  return { state: { ...state, units, enemies }, ids: gunners.map((g) => g.id) };
+}
 
 export default [
   ['spotted once is a warning: in contact, alert up, no hit, contact where he was seen, no noise', async () => {
@@ -411,6 +427,75 @@ export default [
     equal(unitIn(picked, sapper.id).ap, sapper.ap - rules.actions.pickUpCharge.apCost, 'AP spent');
     equal(pickUpCharge(place({ charges: sapper.charges }), sapper.id, rules).droppedCharges.length, 1, 'full: stays on the ground');
     equal(pickUpCharge(place({ charges: 0, hits: 1 }), sapper.id, rules).droppedCharges.length, 1, 'wounded: stays on the ground');
+  }],
+
+  ['kill: only a gunner, only an enemy under suppression; two gunners can do it in one turn, and it leaves a body', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const target = enemy(row.q + 2, row.r, 'W');
+    const { state: s, ids: [first, second] } = twoGunners(state, row, [target]);
+    assert(!checkKill(map, unitIn(s, first), target, rules).ok, 'not before it is suppressed');
+    equal(checkKill(map, unitIn(s, first), target, rules).reason, 'suppress the test ' + `${target.q},${target.r}` + ' first', 'says why');
+
+    const suppressed = suppressEnemy(s, first, target.id, map, rules);
+    const shaken = suppressed.enemies[0];
+    assert(!checkKill(map, unitIn(suppressed, first), shaken, rules).ok, 'the same gunner has too little AP left this turn');
+    const other = state.units.find((u) => u.role !== 'gunner');
+    assert(!checkKill(map, { ...other, q: row.q + 1, r: row.r }, shaken, rules).ok, `a ${other.role} cannot kill`);
+    assert(checkKill(map, unitIn(suppressed, second), shaken, rules).ok, 'the other gunner can');
+
+    const killed = killEnemy(suppressed, second, target.id, map, rules);
+    equal(killed.enemies.length, 0, 'gone from the board');
+    equal(unitIn(killed, second).ap, unitIn(suppressed, second).ap - rules.actions.kill.apCost, 'AP spent');
+    equal(killed.alert.points, gunfireOf(unitIn(s, first), rules) + gunfireOf(unitIn(s, second), rules), 'loud twice');
+    const noise = killed.noises.at(-1);
+    equal(`${noise.kind} ${noise.q},${noise.r}`, `gunfire ${row.q + 1},${row.r}`, 'heard from the gunner');
+    const body = killed.bodies.at(-1);
+    equal(`${body.enemyId} ${body.q},${body.r} ${body.found}`, `${target.id} ${target.q},${target.r} false`, 'a body where it fell');
+  }],
+
+  ['a suppressed enemy stays open to a kill through the next player phase, then is back to normal', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const target = enemy(row.q + 2, row.r, 'E'); // facing away, so nobody is spotted
+    const { state: s, ids: [gunnerId] } = twoGunners(state, row, [target]);
+    const suppressed = suppressEnemy(s, gunnerId, target.id, map, rules);
+    const detected = runDetection(suppressed, map, rules).state;
+    assert(detected.enemies[0].suppressed, 'still suppressed at its detection check');
+    const after = runEnemyPhase(detected, map, rules).state;
+    const shaken = after.enemies[0];
+    assert(!shaken.suppressed && shaken.openToKill, 'suppression over, open to a kill');
+    const refilled = { ...after, units: after.units.map((u) => ({ ...u, ap: u.apMax })) };
+    assert(checkKill(map, unitIn(refilled, gunnerId), shaken, rules).ok, 'next turn the same gunner can kill');
+    const recovered = runDetection(refilled, map, rules).state.enemies[0];
+    assert(!recovered.openToKill, 'recovered at the next detection check');
+    assert(!checkKill(map, unitIn(refilled, gunnerId), recovered, rules).ok, 'too late to kill');
+  }],
+
+  ['the reserve squad cannot be killed but can be suppressed, and the data says so', async () => {
+    const { map, rules, state } = await loadAll();
+    equal(map.enemyTypes.reserve.killable, false, 'reserve not killable');
+    assert(map.enemyTypes.sentry.killable && map.enemyTypes.patrol.killable, 'sentries and patrols are');
+    const row = openRow(map, 5);
+    const squad = enemy(row.q + 2, row.r, 'E', { label: 'Reserve squad', killable: false });
+    const { state: s, ids: [first, second] } = twoGunners(state, row, [squad]);
+    assert(checkSuppress(map, unitIn(s, first), squad, rules).ok, 'can be suppressed');
+    const suppressed = suppressEnemy(s, first, squad.id, map, rules);
+    const check = checkKill(map, unitIn(suppressed, second), suppressed.enemies[0], rules);
+    assert(!check.ok && check.reason.includes('cannot be killed'), `says it cannot be killed: ${check.reason}`);
+    equal(killEnemy(suppressed, second, squad.id, map, rules), suppressed, 'nothing happens');
+  }],
+
+  ['a killed enemy\'s body is found by the rest of the garrison like a para\'s', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const finder = enemy(row.q + 3, row.r, 'W');
+    const { state: s } = twoGunners(state, { q: row.q - 100, r: row.r }, [finder]);
+    const withBody = { ...s, bodies: [{ enemyId: 'dead', name: 'the bridge post', q: row.q + 2, r: row.r, found: false }] };
+    const { state: after, events } = runEnemyPhase(withBody, map, rules);
+    assert(after.bodies[0].found, 'found');
+    equal(after.alert.points, rules.alert.bodyFound, 'alert up');
+    assert(events.some((e) => e.kind === 'bodyFound' && e.name === 'the bridge post'), 'reported');
   }],
 
   ['Esc backs out of targeting before it drops the selection', async () => {

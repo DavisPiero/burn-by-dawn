@@ -560,9 +560,13 @@ function alliedFrame(stripClass, extras = []) {
 const ENEMY_OUTLINE = 'M9 1 H45 L53 9 V45 L45 53 H9 L1 45 V9 Z';
 
 // A coal-scuttle helmet, the one shape that says German at counter size.
-function helmet(x, y, scale) {
+function helmetPath(x, y, scale) {
   const t = (px, py) => `${x + px * scale} ${y + py * scale}`;
-  const d = `M${t(0, 12)} C${t(0, 4)} ${t(5, 0)} ${t(11, 0)} C${t(17, 0)} ${t(22, 4)} ${t(22, 10)} L${t(25, 13)} L${t(24, 15)} L${t(0, 15)} Z`;
+  return `M${t(0, 12)} C${t(0, 4)} ${t(5, 0)} ${t(11, 0)} C${t(17, 0)} ${t(22, 4)} ${t(22, 10)} L${t(25, 13)} L${t(24, 15)} L${t(0, 15)} Z`;
+}
+
+function helmet(x, y, scale) {
+  const d = helmetPath(x, y, scale);
   return [fill(d, 'paper'), fill(d, toneClass('ink', 20))];
 }
 
@@ -1133,6 +1137,29 @@ const SPRITES = {
       svg('rect', { x: 7, y: 10, width: 14, height: 3, class: 'ink' }),
       fill('M6 24 Q14 14 22 24 Z', 'green'),
       svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+  // A fallen enemy (SPEC.md §4 Kill): his helmet tipped over on red ground —
+  // the enemy's colour, so it never reads as one of ours.
+  'marker-body-enemy': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, class: 'paper' }),
+      fill('M4 24 Q14 15 24 24 Z', 'red'),
+      fill(helmetPath(0, 0, 0.64), 'ink', { transform: 'translate(14 14) rotate(-24) translate(-8 -5)' }),
+      svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
+    ],
+  },
+  // On the counter of an enemy that cannot be killed (SPEC.md §4 Kill, §6
+  // Exfil watched): a gunsight struck through.
+  'marker-no-kill': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'paper'),
+      ring(14, 14, 6.5),
+      line('M14 4 V10 M14 18 V24 M4 14 H10 M18 14 H24', 2),
+      line('M6.5 6.5 L21.5 21.5', 3.2, 'stroke-red'),
+      ring(14, 14, 12),
     ],
   },
   // A spent canopy crumpled on the ground, cords to the harness — kit left

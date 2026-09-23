@@ -75,7 +75,7 @@ export function attachPopup(element, content) {
 const KEYS = [
   'The drop: 1–3 pick a run · Space jump',
   '1–6 select a man · Tab next · H hold position',
-  'G hide · S suppress · T throw a stone',
+  'G hide · S suppress · K kill · T throw a stone',
   'A stabilise · P pick up a charge · U pack parachute',
   'C place a charge · X cut the line · W swim',
   'D RAF diversion · Space end turn',
@@ -576,8 +576,10 @@ export function renderReadout(element, state, map, view) {
     let doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
     if (e.investigating) doing = `going to look at ${view.place(e.investigating)}`;
     if (e.watching) doing = `has a man in its sights in ${view.place(e.watching)}`;
-    if (e.suppressed) doing = 'SUPPRESSED — will not fire or move this turn';
-    element.textContent = `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.`;
+    if (e.suppressed) doing = `SUPPRESSED — will not fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
+    else if (e.openToKill && e.killable) doing = `${doing}; still shaken — a gunner can kill it this turn`;
+    const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
+    element.textContent = `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}`;
     return;
   }
   if (!hex) {
