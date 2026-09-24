@@ -474,6 +474,24 @@ export const DROP = {
   areaWidth: 3,
 };
 
+// The drop shown (SPEC.md §11): a Dakota flies the chosen run's line and each
+// man's canopy opens where he jumps, drifts to where the rules put him, and
+// collapses into his parachute marker as his counter appears. Display only;
+// every landing is decided before it starts. Times in ms.
+export const DROP_SHOW = {
+  flightMs: 2800,
+  runIn: 2.5, // hexes the aircraft flies before the first waypoint and after the last
+  aircraftSize: 170,
+  aircraftShadow: { x: 34, y: 44, opacity: 0.16 },
+  canopySize: 38,
+  openMs: 220,
+  driftMs: 1300,
+  collapseMs: 220,
+  shadowStart: 18, // the canopy's shadow starts this far down-right and closes in as it lands
+  appearMs: 120,
+  tailMs: 350,
+};
+
 // Speech bubbles on the board (SPEC.md §11): hand lettering in capitals,
 // paper with an ink rule, the tail pointing at the man's counter. Shown for
 // the man selected or under the mouse. Smaller than the board's own labels:
@@ -1127,6 +1145,71 @@ const SPRITES = {
     ],
   },
   'landmark-church': { viewBox: '0 0 80 92', draw: () => [svg('g', { transform: 'translate(2 8)' }, church())] },
+
+  // --- the drop shown (ART-ASSETS.md §6) ---
+  // A C-47 Dakota from above, nose to the east (+x): board.js turns it to the
+  // run's heading. Olive drab with the invasion stripes on the wings and
+  // fuselage, which is what says June 1944 at a glance.
+  'aircraft-dakota': {
+    viewBox: '0 0 120 120',
+    draw: () => {
+      const wings = 'M50 60 L56 6 Q60 2 64 6 L70 58 L70 62 L64 114 Q60 118 56 114 L50 62 Z';
+      const body = 'M14 56 Q12 60 14 64 L96 64 Q112 62 114 60 Q112 58 96 56 Z';
+      const tail = 'M18 60 L10 42 Q13 38 17 42 L26 58 L26 62 L17 78 Q13 82 10 78 Z';
+      const stripes = svg('clipPath', { id: 'aircraft-dakota-wing-clip' }, [fill(wings, 'ink')]);
+      const fuselageStripes = svg('clipPath', { id: 'aircraft-dakota-body-clip' }, [fill(body, 'ink')]);
+      return [
+        stripes, fuselageStripes,
+        ...inked(tail, 'green', 2),
+        fill(wings, 'green'),
+        svg('g', { 'clip-path': 'url(#aircraft-dakota-wing-clip)' }, [
+          svg('rect', { x: 48, y: 0, width: 26, height: 120, class: 'paper' }),
+          svg('rect', { x: 52, y: 0, width: 4, height: 120, class: 'ink' }),
+          svg('rect', { x: 60, y: 0, width: 4, height: 120, class: 'ink' }),
+          svg('rect', { x: 68, y: 0, width: 4, height: 120, class: 'ink' }),
+        ]),
+        line(wings, 2.2),
+        fill(body, 'green'),
+        svg('g', { 'clip-path': 'url(#aircraft-dakota-body-clip)' }, [
+          svg('rect', { x: 30, y: 50, width: 16, height: 20, class: 'paper' }),
+          svg('rect', { x: 33, y: 50, width: 3, height: 20, class: 'ink' }),
+          svg('rect', { x: 40, y: 50, width: 3, height: 20, class: 'ink' }),
+        ]),
+        line(body, 2.2),
+        // Engines on the wings, the cockpit glazing.
+        ...inked('M66 36 h16 q3 0 3 3 v2 q0 3 -3 3 h-16 Z', 'green', 2),
+        ...inked('M66 76 h16 q3 0 3 3 v2 q0 3 -3 3 h-16 Z', 'green', 2),
+        line('M86 36 V44 M86 76 V84', 2.6),
+        fill('M100 57.5 Q108 58 110 60 Q108 62 100 62.5 Z', 'blue'),
+      ];
+    },
+  },
+  // The aircraft's and a canopy's shadows on the ground: flat ink silhouettes,
+  // printed faint by board.js.
+  'aircraft-dakota-shadow': {
+    viewBox: '0 0 120 120',
+    draw: () => [fill('M50 60 L56 6 Q60 2 64 6 L70 58 L70 62 L64 114 Q60 118 56 114 L50 62 Z M14 56 Q12 60 14 64 L96 64 Q112 62 114 60 Q112 58 96 56 Z M18 60 L10 42 Q13 38 17 42 L26 58 L26 62 L17 78 Q13 82 10 78 Z', 'ink')],
+  },
+  'parachute-canopy-shadow': { viewBox: '0 0 40 40', draw: () => [circle(20, 20, 18, 'ink')] },
+  // An open canopy seen from above: eight gores, alternate ones printed in
+  // green, round a vent. The man is under it and out of sight.
+  'parachute-canopy': {
+    viewBox: '0 0 40 40',
+    draw: () => {
+      const parts = [circle(20, 20, 18, 'paper')];
+      for (let i = 0; i < 8; i += 2) {
+        const a1 = (i / 8) * Math.PI * 2, a2 = ((i + 1) / 8) * Math.PI * 2;
+        parts.push(fill(`M20 20 L${(20 + Math.cos(a1) * 18).toFixed(2)} ${(20 + Math.sin(a1) * 18).toFixed(2)} A18 18 0 0 1 ${(20 + Math.cos(a2) * 18).toFixed(2)} ${(20 + Math.sin(a2) * 18).toFixed(2)} Z`, 'green'));
+      }
+      let gores = '';
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        gores += `M20 20 L${(20 + Math.cos(a) * 18).toFixed(2)} ${(20 + Math.sin(a) * 18).toFixed(2)} `;
+      }
+      parts.push(line(gores, 1.2), ring(20, 20, 18, 2), circle(20, 20, 3, 'paper'), ring(20, 20, 3, 1.2));
+      return parts;
+    },
+  },
 
   // --- markers (ART-ASSETS.md §6) ---
   'marker-spotted': {

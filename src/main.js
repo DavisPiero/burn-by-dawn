@@ -21,7 +21,7 @@ import {
   chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
+import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
 import { applyDocumentTheme, loadSuppliedPortraits } from './render/theme.js';
 import {
@@ -67,6 +67,11 @@ let hoverUnitId = null;
 // The man selected at the last draw. Once the selection moves off a man, his
 // line has been heard and goes (SPEC.md §11).
 let lastSelectedId = null;
+// The drop being shown (SPEC.md §11): the run's line and where each man jumped
+// and came down, and when. Display only: state already has them landed. Any
+// key or click skips to the end.
+let dropShow = null;
+let dropShowTimer = null;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -156,6 +161,7 @@ function deriveView() {
     drop: null,
     dropRuns: null,
     dropLabel: null,
+    dropShow,
   };
 
   if (state.phase === 'drop') return deriveDrop(view, hex);
@@ -500,6 +506,7 @@ function commit(next) {
 // --- input ------------------------------------------------------------------
 
 function handleHexClick(q, r) {
+  if (dropShow) return endDropShow();
   if (state.outcome || state.phase === 'drop') return;
   highlightHex = null;
   if (state.targeting) {
@@ -600,13 +607,43 @@ function handleHexLeave() {
 }
 
 function handleRosterClick(unitId) {
+  if (dropShow) return endDropShow();
   if (state.outcome) return;
   state = selectUnit(state, unitId);
   render();
 }
 
 function handleEndTurn() {
-  state = state.phase === 'drop' ? jump(state, baseMap, rules) : endTurn(state, rules, baseMap);
+  if (dropShow) return endDropShow();
+  if (state.phase === 'drop') return jumpNow();
+  state = endTurn(state, rules, baseMap);
+  render();
+}
+
+/** Jump, and show the stick going out and coming down. */
+function jumpNow() {
+  const run = runById(baseMap, state.dropRunId);
+  if (!run) return;
+  const jumps = jumpPoints(run, state.units.length);
+  const order = state.units.map((u) => u.id);
+  state = jump(state, baseMap, rules);
+  const landed = state.report.filter((e) => e.kind === 'landed');
+  if (landed.length) {
+    dropShow = {
+      since: performance.now(),
+      from: { q: run.from[0], r: run.from[1] },
+      to: { q: run.to[0], r: run.to[1] },
+      jumps: landed.map((e) => ({ unitId: e.unitId, jump: jumps[order.indexOf(e.unitId)], land: { q: e.q, r: e.r } })),
+    };
+    clearTimeout(dropShowTimer);
+    dropShowTimer = setTimeout(endDropShow, dropTimeline(baseMap, dropShow).length);
+  }
+  render();
+}
+
+function endDropShow() {
+  clearTimeout(dropShowTimer);
+  dropShow = null;
   render();
 }
 
@@ -624,7 +661,8 @@ function handleDropKey(event) {
     state = chooseDropRun(state, baseMap, run.id);
   } else if (key === ' ') {
     event.preventDefault();
-    state = jump(state, baseMap, rules);
+    jumpNow();
+    return;
   } else if (key === 'r' || key === 'R') {
     state = toggleRoutes(state);
   } else if (key === 'Escape') {
@@ -640,6 +678,11 @@ function handleDropKey(event) {
 // over only R still does anything.
 function handleKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (dropShow) {
+    event.preventDefault();
+    endDropShow();
+    return;
+  }
   if (state.phase === 'drop') {
     handleDropKey(event);
     return;

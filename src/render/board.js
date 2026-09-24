@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass,
 } from './theme.js';
@@ -289,7 +289,9 @@ export function renderPieces(layers, state, view) {
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
   for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1);
-  for (const chute of state.parachutes) drawParachute(layers, chute);
+  const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
+  const elapsed = show ? now - view.dropShow.since : 0;
+  for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
   for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
 
@@ -330,10 +332,111 @@ export function renderPieces(layers, state, view) {
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
     travel(layers, mover, unit, now);
+    appear(counter, show?.byUnit.get(unit.id), elapsed);
   });
 
   drawBlasts(layers, state, now);
-  drawSpeech(layers, state, view.speakers ?? new Set());
+  if (show) drawDropShow(layers, view.dropShow, show, elapsed);
+  // Nobody speaks until the stick is down.
+  else drawSpeech(layers, state, view.speakers ?? new Set());
+}
+
+// --- the drop shown (SPEC.md §11) ----------------------------------------------
+// Display only: the rules have already put every man down, and this plays the
+// aircraft's pass and the canopies coming down to where they are. Like a
+// move, it is drawing memory: redrawn mid-way (the mouse moving), each piece
+// carries on from where it was, by `elapsed` since the jump.
+
+/**
+ * When everything in the drop happens, from where the aircraft crosses each
+ * man's jump point. `show` is { from, to, jumps: [{ unitId, jump, land }] }
+ * in hexes. Exported so main.js knows when it is over.
+ */
+export function dropTimeline(map, show) {
+  const px = (h) => axialToPixel(h.q, h.r, map.hexSize);
+  const a = px(show.from), b = px(show.to);
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const ux = (b.x - a.x) / len, uy = (b.y - a.y) / len;
+  const runIn = DROP_SHOW.runIn * map.hexSize * Math.sqrt(3);
+  const start = { x: a.x - ux * runIn, y: a.y - uy * runIn };
+  const end = { x: b.x + ux * runIn, y: b.y + uy * runIn };
+  const total = len + runIn * 2;
+  const byUnit = new Map();
+  let last = DROP_SHOW.flightMs;
+  for (const j of show.jumps) {
+    const p = px(j.jump);
+    const along = (p.x - start.x) * ux + (p.y - start.y) * uy;
+    const jumpAt = Math.max(0, (along / total) * DROP_SHOW.flightMs);
+    const landAt = jumpAt + DROP_SHOW.openMs + DROP_SHOW.driftMs;
+    byUnit.set(j.unitId, { jumpAt, landAt, from: p, to: px(j.land) });
+    last = Math.max(last, landAt + DROP_SHOW.collapseMs);
+  }
+  return { start, end, angle: (Math.atan2(uy, ux) * 180) / Math.PI, byUnit, length: last + DROP_SHOW.tailMs };
+}
+
+/** Hide something until its man is down, then show it at once. */
+function appear(node, timing, elapsed) {
+  if (!timing || elapsed >= timing.landAt || typeof node.animate !== 'function') return;
+  const animation = node.animate([{ opacity: 0 }, { opacity: 1 }], {
+    delay: timing.landAt, duration: DROP_SHOW.appearMs, fill: 'both', easing: 'linear',
+  });
+  animation.currentTime = elapsed;
+}
+
+/** Run `frames` on `node` as if it had started `elapsed` ago. */
+function playFrom(node, frames, options, elapsed) {
+  if (typeof node.animate !== 'function') return;
+  const animation = node.animate(frames, { fill: 'both', easing: 'linear', ...options });
+  animation.currentTime = elapsed;
+}
+
+function drawDropShow(layers, show, timeline, elapsed) {
+  const { start, end, angle } = timeline;
+  const size = DROP_SHOW.aircraftSize;
+  const at = (p, extra = '') => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)${extra}`;
+
+  // Each canopy, and its shadow on the ground closing in as it comes down.
+  const canopy = DROP_SHOW.canopySize;
+  const open = DROP_SHOW.openMs, drift = DROP_SHOW.driftMs, collapse = DROP_SHOW.collapseMs;
+  const whole = open + drift + collapse;
+  for (const t of timeline.byUnit.values()) {
+    if (elapsed >= t.landAt + collapse) continue;
+    const move = (p, scale, opacity) => ({ transform: `translate(${p.x}px, ${p.y}px) scale(${scale})`, opacity });
+    const shadow = el('g', {});
+    shadow.appendChild(el('use', { href: '#parachute-canopy-shadow', x: -canopy / 2, y: -canopy / 2, width: canopy, height: canopy, opacity: 0.18 }));
+    const off = DROP_SHOW.shadowStart;
+    const shifted = (p, d) => ({ x: p.x + d, y: p.y + d });
+    playFrom(shadow, [
+      { ...move(shifted(t.from, off), 0.3, 0), offset: 0 },
+      { ...move(shifted(t.from, off), 0.9, 1), offset: open / whole },
+      { ...move(shifted(t.to, 2), 0.8, 1), offset: (open + drift) / whole },
+      { ...move(shifted(t.to, 2), 0.4, 0), offset: 1 },
+    ], { delay: t.jumpAt, duration: whole }, elapsed);
+    const body = el('g', {});
+    body.appendChild(el('use', { href: '#parachute-canopy', x: -canopy / 2, y: -canopy / 2, width: canopy, height: canopy }));
+    playFrom(body, [
+      { ...move(t.from, 0.3, 0), offset: 0 },
+      { ...move(t.from, 1, 1), offset: open / whole },
+      { ...move(t.to, 0.8, 1), offset: (open + drift) / whole },
+      { ...move(t.to, 0.4, 0), offset: 1 },
+    ], { delay: t.jumpAt, duration: whole }, elapsed);
+    layers.effects.append(shadow, body);
+  }
+
+  // The aircraft over everything, its shadow far below it.
+  if (elapsed < DROP_SHOW.flightMs) {
+    const s = DROP_SHOW.aircraftShadow;
+    const shadow = el('g', {});
+    shadow.appendChild(el('use', { href: '#aircraft-dakota-shadow', x: -size / 2, y: -size / 2, width: size, height: size, opacity: s.opacity }));
+    playFrom(shadow, [
+      { transform: at({ x: start.x + s.x, y: start.y + s.y }) },
+      { transform: at({ x: end.x + s.x, y: end.y + s.y }) },
+    ], { duration: DROP_SHOW.flightMs }, elapsed);
+    const plane = el('g', {});
+    plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
+    playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
+    layers.effects.append(shadow, plane);
+  }
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
@@ -596,9 +699,11 @@ function drawOnGround(layers, id, at, side) {
 function drawParachute(layers, chute) {
   const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
   const size = MARKER.size;
-  layers.tokens.appendChild(el('use', {
+  const marker = el('use', {
     href: '#marker-parachute', x: p.x - COUNTER.drawn / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
-  }));
+  });
+  layers.tokens.appendChild(marker);
+  return marker;
 }
 
 // The hex a hovered line of the turn report is about.
