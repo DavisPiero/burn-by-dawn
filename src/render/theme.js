@@ -798,27 +798,32 @@ const CHIPS = {
   nunn: 'broad',
 };
 
+// Printed flat, not screened (M7b): each tone is its spot colour at an
+// opacity, lit from the left by the moon, with a heavy ink line round it.
 function portrait(id, f = {}) {
   const cx = 120;
   const faceW = f.faceW ?? 44, jawW = f.jawW ?? 32, chinY = 214, neck = f.neck ?? 22;
+  const shade = (d) => fill(d, 'ink', { 'fill-opacity': 0.16 + (f.shade ?? 0) / 200 });
   const parts = [
-    svg('rect', { x: 0, y: 0, width: 240, height: 300, class: 'paper' }),
-    svg('rect', { x: 0, y: 0, width: 240, height: 300, class: toneClass('blue', 35) }),
+    svg('rect', { x: 0, y: 0, width: 240, height: 300, class: 'blue' }),
+    // Moonlight behind his head, so the silhouette reads at thumbnail size.
+    circle(104, 128, 104, 'paper', { 'fill-opacity': 0.22 }),
   ];
-  // Shoulders in a Denison smock, camouflage as halftone blotches.
-  const smock = 'M14 300 C18 248 58 226 98 220 L142 220 C182 226 222 248 226 300 Z';
+  // Shoulders in a Denison smock, its camouflage in flat brush patches.
+  const smock = 'M10 300 C14 246 56 224 98 218 L142 218 C184 224 226 246 230 300 Z';
   parts.push(fill(smock, 'green'));
-  parts.push(fill('M40 262 Q60 240 88 250 Q92 270 66 280 Q44 284 40 262 Z M150 248 Q180 236 196 260 Q190 280 164 274 Q146 266 150 248 Z M100 280 Q120 266 140 284 L136 300 H104 Z', toneClass('ink', 50)));
-  parts.push(line(smock, 3));
+  parts.push(fill('M40 262 Q60 240 88 250 Q92 270 66 280 Q44 284 40 262 Z M150 248 Q180 236 196 260 Q190 280 164 274 Q146 266 150 248 Z M100 280 Q120 266 140 284 L136 300 H104 Z', 'ink', { 'fill-opacity': 0.3 }));
+  parts.push(fill('M150 222 C190 232 222 252 230 300 H160 Z', 'ink', { 'fill-opacity': 0.18 }));
+  parts.push(line(smock, 4));
   if (f.chevrons) {
-    for (let i = 0; i < 3; i++) parts.push(line(`M36 ${258 + i * 11} L50 ${248 + i * 11} L64 ${258 + i * 11}`, 5, 'stroke-leader'));
+    for (let i = 0; i < 3; i++) parts.push(line(`M34 ${258 + i * 11} L48 ${248 + i * 11} L62 ${258 + i * 11}`, 5.5, 'stroke-leader'));
   }
-  if (f.scarf) parts.push(...inked(`M${cx - neck - 16} 226 Q${cx} 250 ${cx + neck + 16} 226 L${cx + neck + 10} 244 Q${cx} 262 ${cx - neck - 10} 244 Z`, 'blue', 2.5));
+  if (f.scarf) parts.push(...inked(`M${cx - neck - 16} 224 Q${cx} 250 ${cx + neck + 16} 224 L${cx + neck + 10} 244 Q${cx} 262 ${cx - neck - 10} 244 Z`, 'blue', 3));
   // Neck.
-  parts.push(...inked(`M${cx - neck} 196 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 196 Z`, 'paper', 3));
-  parts.push(fill(`M${cx - neck} 200 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 214 Z`, toneClass('ink', 20)));
+  parts.push(...inked(`M${cx - neck} 196 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 196 Z`, 'paper', 3.5));
+  parts.push(shade(`M${cx - neck} 200 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 214 Z`));
   if (f.binoculars) {
-    parts.push(line(`M${cx - neck} 228 L${cx - 18} 250 M${cx + neck} 228 L${cx + 18} 250`, 2.5));
+    parts.push(line(`M${cx - neck} 228 L${cx - 18} 250 M${cx + neck} 228 L${cx + 18} 250`, 3));
     parts.push(...inked('M92 248 h24 v34 h-24 Z', 'ink', 2), ...inked('M124 248 h24 v34 h-24 Z', 'ink', 2));
     parts.push(svg('rect', { x: 114, y: 256, width: 12, height: 8, class: 'ink' }));
   }
@@ -826,23 +831,32 @@ function portrait(id, f = {}) {
   const earR = f.ears ?? 7;
   for (const side of [-1, 1]) {
     const x = cx + side * (faceW + 2);
-    parts.push(svg('ellipse', { cx: x, cy: 148, rx: earR, ry: 13, class: 'paper' }));
-    parts.push(svg('ellipse', { cx: x, cy: 148, rx: earR, ry: 13, fill: 'none', class: 'stroke-ink', 'stroke-width': 3 }));
+    parts.push(svg('ellipse', { cx: x, cy: 150, rx: earR, ry: 13, class: 'paper' }));
+    parts.push(svg('ellipse', { cx: x, cy: 150, rx: earR, ry: 13, fill: 'none', class: 'stroke-ink', 'stroke-width': 3.5 }));
   }
-  // Face.
+  // Face: paper warmed a touch, the right side in shadow, and burnt cork
+  // smudged across the cheeks for the night.
   const face = `M${cx - faceW} 112 C${cx - faceW} 180 ${cx - jawW} ${chinY - 12} ${cx} ${chinY} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`;
   parts.push(fill(face, 'paper'));
-  parts.push(fill(`M${cx + 6} 112 C${cx + 10} 150 ${cx + 2} 190 ${cx + 8} ${chinY - 2} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`, toneClass('ink', f.shade ?? 10)));
-  parts.push(fill(face, toneClass('red', 10)));
-  if (f.stubble) parts.push(fill(`M${cx - jawW - 6} 176 C${cx - jawW} 200 ${cx - 10} ${chinY} ${cx} ${chinY} C${cx + 10} ${chinY} ${cx + jawW} 200 ${cx + jawW + 6} 176 Q${cx} 196 ${cx - jawW - 6} 176 Z`, toneClass('ink', 35)));
-  parts.push(line(face, 3));
+  parts.push(fill(face, 'red', { 'fill-opacity': 0.1 }));
+  parts.push(shade(`M${cx + 8} 112 C${cx + 14} 150 ${cx + 4} 190 ${cx + 8} ${chinY - 2} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`));
+  parts.push(fill(`M${cx - faceW + 6} 166 Q${cx - 24} 158 ${cx - 12} 170 Q${cx - 26} 176 ${cx - faceW + 8} 178 Z M${cx + faceW - 6} 166 Q${cx + 24} 158 ${cx + 12} 170 Q${cx + 26} 176 ${cx + faceW - 8} 178 Z`, 'ink', { 'fill-opacity': 0.13 }));
+  if (f.stubble) parts.push(fill(`M${cx - jawW - 6} 176 C${cx - jawW} 200 ${cx - 10} ${chinY} ${cx} ${chinY} C${cx + 10} ${chinY} ${cx + jawW} 200 ${cx + jawW + 6} 176 Q${cx} 196 ${cx - jawW - 6} 176 Z`, 'ink', { 'fill-opacity': 0.3 }));
+  parts.push(line(face, 3.5));
   // Eyes and brows.
-  const browW = f.brows ?? 4;
-  parts.push(line(`M${cx - 32} 142 L${cx - 10} 139 M${cx + 10} 139 L${cx + 32} 142`, browW));
-  if (f.eyes === 'squint') parts.push(line(`M${cx - 28} 154 L${cx - 12} 153 M${cx + 12} 153 L${cx + 28} 154`, 3));
-  else parts.push(svg('ellipse', { cx: cx - 19, cy: 154, rx: 4.5, ry: 3, class: 'ink' }), svg('ellipse', { cx: cx + 19, cy: 154, rx: 4.5, ry: 3, class: 'ink' }));
+  const browW = f.brows ?? 4.5;
+  parts.push(line(`M${cx - 33} 141 Q${cx - 22} 136 ${cx - 10} 139 M${cx + 10} 139 Q${cx + 22} 136 ${cx + 33} 141`, browW));
+  if (f.eyes === 'squint') parts.push(line(`M${cx - 29} 154 L${cx - 11} 152 M${cx + 11} 152 L${cx + 29} 154`, 3.5));
+  else {
+    for (const side of [-1, 1]) {
+      const x = cx + side * 19;
+      parts.push(svg('ellipse', { cx: x, cy: 154, rx: 7, ry: 4, class: 'paper' }));
+      parts.push(circle(x + 1, 154, 3, 'ink'));
+      parts.push(line(`M${x - 8} 153 Q${x} 147 ${x + 8} 153`, 3));
+    }
+  }
   // Nose.
-  parts.push(line(f.nose === 'broken' ? `M${cx} 150 L${cx + 7} 164 L${cx - 6} 182 L${cx + 6} 185` : `M${cx + 2} 150 L${cx - 6} 181 L${cx + 6} 184`, 3));
+  parts.push(line(f.nose === 'broken' ? `M${cx} 150 L${cx + 7} 164 L${cx - 6} 182 L${cx + 6} 185` : `M${cx + 2} 150 L${cx - 6} 181 L${cx + 6} 184`, 3.5));
   // Mouth, and what is around it.
   if (f.moustache) parts.push(fill(`M${cx - 28} 198 Q${cx - 18} 180 ${cx} 186 Q${cx + 18} 180 ${cx + 28} 198 Q${cx + 12} 192 ${cx} 197 Q${cx - 12} 192 ${cx - 28} 198 Z`, 'ink'));
   const mouth = {
@@ -850,30 +864,31 @@ function portrait(id, f = {}) {
     grin: `M${cx - 18} 194 Q${cx} 212 ${cx + 18} 194`,
     open: `M${cx - 9} 197 Q${cx} 208 ${cx + 9} 197 Z`,
   }[f.mouth ?? 'set'];
-  parts.push(line(mouth, 3));
-  if (f.cigarette) parts.push(line(`M${cx + 14} 200 L${cx + 36} 208`, 5, 'stroke-paper'), line(`M${cx + 14} 197.5 L${cx + 36} 205.5 M${cx + 14} 202.5 L${cx + 35} 210.5`, 1.2), circle(cx + 37, 208, 2.6, 'red'));
-  if (f.freckles) for (const [x, y] of [[-24, 170], [-18, 176], [-28, 177], [22, 172], [28, 177], [18, 178]]) parts.push(circle(cx + x, y, 1.6, 'ink'));
-  if (f.scar) parts.push(line(`M${cx + 26} 160 L${cx + 34} 186`, 2, 'stroke-red'));
-  // The para helmet, rimless, and its chin strap.
-  const hw = faceW + 12;
-  const helm = `M${cx - hw} 130 C${cx - hw - 4} 56 ${cx + hw + 4} 56 ${cx + hw} 130 Q${cx} 116 ${cx - hw} 130 Z`;
-  parts.push(fill(helm, 'green'), fill(helm, toneClass('ink', 35)));
+  parts.push(line(mouth, 3.5));
+  if (f.cigarette) parts.push(line(`M${cx + 14} 200 L${cx + 38} 209`, 6, 'stroke-ink'), line(`M${cx + 14} 200 L${cx + 38} 209`, 3.5, 'stroke-paper'), circle(cx + 39, 209.5, 3, 'red'));
+  if (f.freckles) for (const [x, y] of [[-24, 170], [-18, 176], [-28, 177], [22, 172], [28, 177], [18, 178]]) parts.push(circle(cx + x, y, 1.8, 'ink'));
+  if (f.scar) parts.push(line(`M${cx + 26} 158 L${cx + 34} 188`, 2.6, 'stroke-red'));
+  // The para helmet, rimless, shaded on the right, and its chin strap.
+  const hw = faceW + 13;
+  const helm = `M${cx - hw} 132 C${cx - hw - 4} 52 ${cx + hw + 4} 52 ${cx + hw} 132 Q${cx} 116 ${cx - hw} 132 Z`;
+  parts.push(fill(helm, 'green'));
+  parts.push(fill(`M${cx + 10} 58 C${cx + hw} 60 ${cx + hw + 4} 100 ${cx + hw} 132 Q${cx + 30} 122 ${cx + 12} 121 Z`, 'ink', { 'fill-opacity': 0.25 }));
   if (f.net) {
     let net = '';
-    for (let i = -6; i <= 6; i++) net += `M${cx + i * 12 - 30} 60 L${cx + i * 12 + 30} 132 M${cx + i * 12 + 30} 60 L${cx + i * 12 - 30} 132 `;
+    for (let i = -6; i <= 6; i++) net += `M${cx + i * 12 - 30} 56 L${cx + i * 12 + 30} 134 M${cx + i * 12 + 30} 56 L${cx + i * 12 - 30} 134 `;
     const clipId = `${id}-helmet-clip`;
     parts.push(svg('clipPath', { id: clipId }, [fill(helm, 'ink')]));
-    parts.push(line(net, 1.6, 'stroke-ink', { 'clip-path': `url(#${clipId})` }));
+    parts.push(line(net, 1.8, 'stroke-ink', { 'clip-path': `url(#${clipId})` }));
   }
-  parts.push(line(`M${cx - hw + 18} 80 Q${cx - 20} 64 ${cx + 6} 66`, 4, 'stroke-paper', { opacity: 0.55 }));
-  parts.push(line(helm, 3));
-  parts.push(line(`M${cx - faceW + 4} 126 L${cx - jawW + 2} ${chinY - 14} Q${cx} ${chinY + 6} ${cx + jawW - 2} ${chinY - 14} L${cx + faceW - 4} 126`, 2.2, 'stroke-ink', { opacity: 0.8 }));
+  parts.push(line(`M${cx - hw + 16} 84 Q${cx - 22} 62 ${cx + 2} 64`, 5, 'stroke-paper', { opacity: 0.6 }));
+  parts.push(line(helm, 4));
+  parts.push(line(`M${cx - faceW + 4} 128 L${cx - jawW + 2} ${chinY - 14} Q${cx} ${chinY + 6} ${cx + jawW - 2} ${chinY - 14} L${cx + faceW - 4} 128`, 2.6, 'stroke-ink', { opacity: 0.85 }));
   if (f.twig) {
-    parts.push(line(`M${cx + 20} 78 L${cx + 44} 22 M${cx + 34} 46 L${cx + 58} 34 M${cx + 38} 36 L${cx + 26} 20`, 3.5));
-    for (const [x, y] of [[44, 18], [60, 30], [24, 16], [52, 44]]) {
+    parts.push(line(`M${cx + 20} 76 L${cx + 44} 20 M${cx + 34} 44 L${cx + 58} 32 M${cx + 38} 34 L${cx + 26} 18`, 4));
+    for (const [x, y] of [[44, 16], [60, 28], [24, 14], [52, 42]]) {
       parts.push(svg('g', { transform: `rotate(-30 ${cx + x} ${y})` }, [
-        svg('ellipse', { cx: cx + x, cy: y, rx: 7, ry: 4, class: 'green' }),
-        svg('ellipse', { cx: cx + x, cy: y, rx: 7, ry: 4, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
+        svg('ellipse', { cx: cx + x, cy: y, rx: 8, ry: 4.5, class: 'green' }),
+        svg('ellipse', { cx: cx + x, cy: y, rx: 8, ry: 4.5, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
       ]));
     }
   }
