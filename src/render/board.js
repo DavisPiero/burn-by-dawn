@@ -1281,7 +1281,7 @@ function polyline(points, attrs) {
 }
 
 // --- counters ---------------------------------------------------------------
-// All art is <use> of a registry symbol (CLAUDE.md rule 8). The AP pips and
+// All art is <use> of a registry symbol (CLAUDE.md rule 8). The AP figure and
 // the selection ring are drawn here as geometry: they are readouts of state,
 // not artwork, and they have no asset id.
 
@@ -1335,18 +1335,10 @@ function drawCounter(unit, number, map, isSelected) {
     'font-weight': 'bold', fill: COUNTER.nameFill,
   }));
 
-  for (let i = 0; i < unit.apMax; i++) {
-    const spent = i >= unit.ap;
-    body.appendChild(el('circle', {
-      cx: 27 - ((unit.apMax - 1) * 8) / 2 + i * 8,
-      cy: 6.5,
-      r: COUNTER.pipRadius,
-      fill: spent ? 'none' : COUNTER.pipFill,
-      stroke: COUNTER.pipFill,
-      'stroke-width': 1,
-      'stroke-opacity': spent ? 0.5 : 1,
-    }));
-  }
+  body.appendChild(text(String(unit.ap), {
+    x: COUNTER.apAt.x, y: COUNTER.apAt.y, 'font-size': COUNTER.apSize, 'font-weight': 'bold',
+    fill: COUNTER.apFill, opacity: unit.ap > 0 ? 1 : COUNTER.apSpentOpacity,
+  }));
 
   if (isSelected) {
     body.appendChild(el('rect', {

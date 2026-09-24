@@ -283,13 +283,17 @@ export const COUNTER = {
   // Glyphs are never stretched to fill the strip — a long name scales down as
   // whole type instead. Roughly the width of one character at font-size 1.
   nameAspect: 0.62,
-  numberFill: PALETTE.ink,
-  numberText: PALETTE.paper,
-  pipFill: PALETTE.ink,
-  pipRadius: 2.6,
-  // The man's own face, and his role as a small badge beside it.
-  chip: { x: 17, y: 11, size: 26 },
-  role: { x: 2, y: 13, size: 14 },
+  numberFill: PALETTE.paper,
+  numberText: PALETTE.ink,
+  // AP left, one big figure top right, as a wargame counter prints its
+  // factors; greyed back when he has none.
+  apFill: PALETTE.paper,
+  apSize: 16,
+  apAt: { x: 47.5, y: 12 },
+  apSpentOpacity: 0.4,
+  // The man's own face, and his role in the roundel top left.
+  chip: { x: 14, y: 6, size: 29 },
+  role: { x: 3.5, y: 4, size: 12 },
 };
 
 // SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
@@ -642,16 +646,26 @@ function label(content, attrs) {
 
 // Both allied frames are the same die-cut silhouette so the six read as one
 // set of chits; only the name strip's colour and the rank flash differ. The
-// shadow is not part of the frame: it is counter-shadow, drawn under it.
+// chit is printed solid army green, so our side reads off the map at a glance
+// as the enemy's black does (M7b), with a paper roundel for the role symbol.
+// Under it, a sliver of the card's cut edge shows down-right. The soft shadow
+// is not part of the frame: it is counter-shadow, drawn under it.
+function cardEdge(d) {
+  return [fill(d, 'paper', { transform: 'translate(1.8 1.8)' }), line(d, 0.8, 'stroke-ink', { transform: 'translate(1.8 1.8)', opacity: 0.7 })];
+}
+
+const ALLIED_OUTLINE = 'M6 1 H48 A5 5 0 0 1 53 6 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 V6 A5 5 0 0 1 6 1 Z';
+
 function alliedFrame(stripClass, extras = []) {
   return [
-    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, class: 'paper' }),
+    ...cardEdge(ALLIED_OUTLINE),
+    fill(ALLIED_OUTLINE, 'green'),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', stripClass),
-    fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', toneClass('ink', 20)),
+    circle(9.5, 10, 7.5, 'paper'), ring(9.5, 10, 7.5, 1.2),
     ...extras,
     // The die-cut edge takes its colour from --counter-edge, so board.js can
     // grey a spent man's edge without a second frame.
-    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, fill: 'none', class: 'counter-edge', 'stroke-width': 2 }),
+    svg('path', { d: ALLIED_OUTLINE, fill: 'none', class: 'counter-edge', 'stroke-width': 2 }),
   ];
 }
 
@@ -1016,15 +1030,16 @@ function starburst(cx, cy, points, outer, inner, cls, extra = {}) {
 
 const SPRITES = {
   // --- counters and symbols (ART-ASSETS.md §3) ---
-  'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('green') },
+  'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('ink') },
 
   // The ranking man: leader-blue name strip, plus a sergeant's three chevrons
-  // in the right-hand margin, clear of his face and the AP pips.
+  // down the left margin under his role, clear of his face and his AP.
   'counter-frame-allied-leader': {
     viewBox: '0 0 56 56',
-    draw: () => alliedFrame('leader', [
-      line('M44 16 L47.5 12.5 L51 16 M44 22 L47.5 18.5 L51 22 M44 28 L47.5 24.5 L51 28', 1.8, 'stroke-leader'),
-    ]),
+    draw: () => {
+      const chevrons = 'M5.5 23 L9.5 19.5 L13.5 23 M5.5 28.5 L9.5 25 L13.5 28.5 M5.5 34 L9.5 30.5 L13.5 34';
+      return alliedFrame('leader', [line(chevrons, 3.6, 'stroke-paper'), line(chevrons, 1.8, 'stroke-leader')]);
+    },
   },
 
   // A soft shadow under every counter, down-right, as if the chit is lifted
@@ -1072,6 +1087,7 @@ const SPRITES = {
   'counter-frame-enemy': {
     viewBox: '0 0 56 56',
     draw: () => [
+      ...cardEdge(ENEMY_OUTLINE),
       fill(ENEMY_OUTLINE, 'ink'),
       fill('M1 38 H53 V45 L45 53 H9 L1 45 Z', 'red'),
       fill('M1 38 H53 V45 L45 53 H9 L1 45 Z', toneClass('ink', 20)),
