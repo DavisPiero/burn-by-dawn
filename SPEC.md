@@ -595,8 +595,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
   put him, lands and collapses into his parachute marker. It is display only: every
   landing is decided before it starts. A click or Space skips it.
 - **Terrain motifs are few and bold.** One clear shape per hex at most. A field is plain,
-  with a small mark on a minority of hexes. An enemy's vision is outlined at rest and
-  filled only when that enemy is hovered or selected.
+  with a small mark on a minority of hexes. An enemy's vision stays a faint flat tint at
+  rest (it is the risk map, and there is no fog of war) and is filled strongly and
+  outlined when that enemy is hovered.
 - **Type is set for reading.** The right page is set at 13–15px at 1280x800, never below
   12. It carries only what the player needs every turn: detail goes into rollovers.
 

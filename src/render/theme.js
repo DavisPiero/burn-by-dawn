@@ -128,6 +128,20 @@ export function applyDocumentTheme(root = document.documentElement) {
   for (const [id, colour] of Object.entries(ALERT_STATE)) root.style.setProperty(`--alert-${id}`, colour);
 }
 
+// A supplied paper texture (ART-ASSETS.md §1, ART-PROMPTS.md): a PNG at
+// PAPER_FILE replaces the drawn fibre tile once it loads, shown at half its
+// pixel size for retina. A missing file is fine: the drawn tile stays.
+export const PAPER_FILE = { url: 'assets/paper/paper-fibre.png', tile: 1024 };
+
+export function loadSuppliedPaper(root = document.documentElement) {
+  const probe = new Image();
+  probe.onload = () => {
+    root.style.setProperty('--paper-fibre', `url("${PAPER_FILE.url}")`);
+    root.style.setProperty('--paper-fibre-size', `${PAPER_FILE.tile}px`);
+  };
+  probe.src = PAPER_FILE.url;
+}
+
 // ---------------------------------------------------------------------------
 // Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, an optional
 // flat tint of one spot colour over it (a printer's tint, at an opacity), an

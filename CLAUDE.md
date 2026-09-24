@@ -9,6 +9,8 @@ with SPEC.md, say so before writing code.
 - `SPEC.md` — the design and technical spec. Authoritative.
 - `ART-ASSETS.md` — the art asset manifest. **Read it at milestone M7**, and whenever you
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
+- `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.
+  Keep its "what Claude is drawing in code" list true when sprites change.
 - `DECISIONS.md` — append-only log. See below.
 - `docs/BUILD-RUNBOOK.md` — **for the human operator only. Do not read or act on it.**
   It describes how sessions are run, not how the game is built.

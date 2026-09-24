@@ -23,7 +23,7 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
-import { applyDocumentTheme, loadSuppliedPortraits } from './render/theme.js';
+import { applyDocumentTheme, loadSuppliedPaper, loadSuppliedPortraits } from './render/theme.js';
 import {
   DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   hidePopup, placeName, renderActions, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
@@ -784,6 +784,7 @@ window.dispatchEvent(new Event('night-drop-started'));
 
 try {
   applyDocumentTheme();
+  loadSuppliedPaper();
   baseMap = await loadMap();
   map = baseMap;
   rules = await loadJson('data/rules.json');

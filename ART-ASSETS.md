@@ -1,5 +1,8 @@
 # NIGHT DROP — Art asset manifest
 
+What to make next, in priority order and with image-generator prompts, is
+`ART-PROMPTS.md`. This file is the full manifest and rules on formats.
+
 Everything you need to supply, and the format it must be in. Procedural placeholders exist
 from M0; these replace them at M7 without touching game logic.
 
@@ -40,7 +43,7 @@ Read these before drawing anything. They are what make the swap painless.
 
 | Asset | Size | Notes |
 |---|---|---|
-| `paper-fibre.png` | 2048x2048, seamless tile | greyscale + alpha, low contrast. The base grain under everything. |
+| `paper-fibre.png` | 2048x2048, seamless tile | greyscale + alpha, low contrast. The base grain under everything. Drop into `/assets/paper/`; the game picks it up on load, shown at 1024px a tile. |
 | `paper-crease.png` | 400x1800, alpha | vertical centre-fold shadow and highlight for the gutter |
 | `paper-edge-wear.png` | 2560x1600, alpha | corner foxing, edge browning, one overlay across the whole spread |
 | `paper-marks-01..03.png` | 300x300, alpha | optional: coffee ring, thumbprint, biro doodle. Three is plenty. |
@@ -89,9 +92,10 @@ keeps a seventh man a JSON entry until someone draws him.
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
 | `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |
 
-Counters are 56px inside an 80px hex, so the hex edge stays visible underneath. Design the
-drop shadow as part of the frame, angled consistently (I'd suggest down-right, 2px, hard
-edged — a cardboard chit, not a soft UI shadow).
+Counters are drawn in a 56px viewBox and printed at 64px inside an 80px hex (M7b, so the
+name strip reads at board scale); the hex edge stays visible underneath. **Do not draw a
+shadow into the frame.** The shadow is its own sprite, `counter-shadow` (56 x 56), a soft
+shadow down-right drawn under every counter, allied and enemy (SPEC.md §11).
 
 ---
 
@@ -106,7 +110,6 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-hedgerow-01..03.svg` | 80 x 92 | 3 |
 | `terrain-wood-01..03.svg` | 80 x 92 | 3 |
 | `terrain-orchard-01..03.svg` | 80 x 92 | 3 |
-| `terrain-track.svg` | 80 x 92 | 1 + needs 3 rotations, code handles rotation |
 | `terrain-marsh.svg` | 80 x 92 | 1 |
 | `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
 | `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
@@ -114,10 +117,15 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-farmhouse.svg` | 80 x 92 | 1 |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
 
-Track and canal need to read as continuous across hexes. Draw the track running
-edge-to-edge through the hex centre, **east to west**; code turns it to meet each
-neighbouring road, and where a road leaves a hex only one way (a bend, a junction, a dead
-end) it draws that half of the motif only, so one drawing covers every shape of road.
+**Roads and the railway are not motifs** (M7b). Code draws each road as one continuous
+line through its hexes' centres, and the railway (art only, `railway` in `data/map.json`)
+as rails and sleepers across the board; their colours and widths are `ROAD` and `RAIL` in
+`src/render/theme.js`. Nothing to supply.
+
+Keep motifs few and bold (SPEC.md §11): one clear shape per hex, no shadows, no screen.
+Fields are mostly bare paper; code puts a field motif on only about one hex in five.
+
+The canal needs to read as continuous across hexes.
 
 ---
 
@@ -156,6 +164,11 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
 | `stamp-destroyed.svg` | 200 x 80 (red rubber stamp, rotated in code) |
+| `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
+| `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11) |
+| `aircraft-dakota-shadow.svg` | 120 x 120 (the same silhouette, one flat fill; printed faint on the ground below it) |
+| `parachute-canopy.svg` | 40 x 40 (an open canopy from above, in the air — distinct from `marker-parachute`, which is spent on the ground) |
+| `parachute-canopy-shadow.svg` | 40 x 40 (its silhouette, one flat fill) |
 
 ---
 
