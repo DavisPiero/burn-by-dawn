@@ -207,6 +207,7 @@ export function visibleHexes(map, enemy, alertPoints, rules) {
  * with every term of SPEC.md §6's sum kept so the readout can show the maths:
  *
  *   base(enemy) - cover(terrain) - concealment(trooper) - hidden + proximity
+ *     + alert (the alert state's detectionBonus)
  *
  * then the onDetectionCheck hook. `hidden` is the hide action's concealment,
  * and only counts on the hex he is hiding on (SPEC.md §4): hexes he walked
@@ -222,7 +223,8 @@ export function detectionScore(map, rules, enemy, alertPoints, unit, hex) {
   const concealment = rules.roles[unit.role].concealment;
   const hidden = unit.hidden && unit.q === hex.q && unit.r === hex.r ? rules.actions.hide.concealment : 0;
   const proximity = rules.detection.proximity[distance] ?? 0;
-  const raw = enemy.detection - cover - concealment - hidden + proximity;
+  const alert = alertStateOf(alertPoints, rules).detectionBonus;
+  const raw = enemy.detection - cover - concealment - hidden + proximity + alert;
   const hooked = applyHook(unit, 'onDetectionCheck', 'detection', raw);
   const threshold = rules.detection.threshold;
 
@@ -237,6 +239,7 @@ export function detectionScore(map, rules, enemy, alertPoints, unit, hex) {
     concealment,
     hidden,
     proximity,
+    alert,
     trait: hooked.value - raw,
     score: hooked.value,
     threshold,

@@ -743,7 +743,7 @@ function drawRisk(layers, plan, risk) {
       'stroke-width': result.spotted ? 2.5 : 1.2,
     }));
     if (result.shot) {
-      // What the shot does there: HIT in the open, PINNED in cover (SPEC.md §5).
+      // What the shot does there, by the cover (SPEC.md §5): HIT, or PINNED.
       const label = result.shotResult === 'hit' ? 'HIT' : 'PINNED';
       const tagWidth = label.length * 6.6 + 8;
       layers.risk.appendChild(el('rect', {

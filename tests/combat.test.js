@@ -498,6 +498,20 @@ export default [
     assert(events.some((e) => e.kind === 'bodyFound' && e.name === 'the bridge post'), 'reported');
   }],
 
+  ['a roused garrison looks harder: each alert state adds its detectionBonus to the sum', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const e = enemy(row.q, row.r, 'E');
+    const { state: s, unitId } = scenario(state, 'sapper', { q: row.q + 3, r: row.r }, [e]);
+    const unit = unitIn(s, unitId);
+    for (const st of rules.alert.states) {
+      const d = detectionAt(map, rules, [e], st.from, unit, unit);
+      equal(d.alert, st.detectionBonus, `${st.id} term`);
+      const calm = detectionAt(map, rules, [e], 0, unit, unit);
+      equal(d.score - calm.score, st.detectionBonus - rules.alert.states[0].detectionBonus, `${st.id} score`);
+    }
+  }],
+
   ['Esc backs out of targeting before it drops the selection', async () => {
     const { state } = await loadAll();
     const selected = { ...state, selectedUnitId: state.units[0].id };

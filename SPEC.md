@@ -293,13 +293,14 @@ he is shot on (`combat.shotResult` in `rules.json`):
 
 | Cover where he is shot | Result |
 |---|---|
-| none (field, track, bridge) | **Hit** |
-| light or heavy | **Pinned** — no hit, but his next turn's pool is 1 AP smaller (never below 1), and he stays in contact |
+| none or light (field, track, bridge; marsh, orchard, ridge, lock) | **Hit** |
+| heavy (hedgerow, wood, farmhouse) | **Pinned** — no hit, but his next turn's pool is 1 AP smaller (never below 1), and he stays in contact |
 
 A trooper has **two hits** (`hitsToKill`): the first **wounds** him, the second **kills**
 him. A trooper is shot **at most once per turn**, however many enemies fire, so there are
 always at least two turns between being first spotted and dying — and a man who keeps to
-cover is never hit at all, only pinned. If he was seen on several hexes in one move, the
+heavy cover is never hit at all, only pinned. Light cover hides a man but does not stop a
+bullet (M8b balance: with light cover pinning, nobody ever died and every run was won). If he was seen on several hexes in one move, the
 shot lands on the most exposed of the hexes where he would be shot.
 
 Wounded troopers drop to 1 AP and cannot carry a charge; a charge he was carrying drops
@@ -324,6 +325,7 @@ Each enemy has a vision radius and a facing arc (120°). A trooper inside it is 
 
 ```
 detection = base(enemy) - cover(terrain) - concealment(trooper) + proximity bonus
+            + alert bonus (the state's detectionBonus in rules.json: +1 at Alert and Alarmed)
 ```
 
 Compare against a threshold in `rules.json`. Surface this maths in the hover readout as
@@ -335,8 +337,8 @@ pips. The player must see risk before committing.
 |---|---|---|
 | **Calm** | 0 | Patrols walk fixed routes. |
 | **Suspicious** | 2 | Patrols pause and sweep. Vision radius +1. |
-| **Alert** | 4 | Vision +1. Hearing +1: noise draws enemies from further away. |
-| **Alarmed** | 7 | All patrols hunt last known contact. A reserve squad enters from the road edge and watches exfil. |
+| **Alert** | 4 | Vision +1. **Detection +1**: the garrison looks harder, so light cover no longer hides a man in the open arc. Hearing +1: noise draws enemies from further away. |
+| **Alarmed** | 7 | As Alert, and all patrols hunt last known contact. A reserve squad enters from the road edge and watches exfil. |
 
 The alert level is a **points total**; "From" is the points at which each state begins, and points
 cap at Alarmed. One event is not a whole state: a single sighting leaves the garrison

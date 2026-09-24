@@ -136,6 +136,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   states.forEach((s, i) => {
     requireCount(s.from, `"alert.states[${i}].from"`, rulesUrl);
     requireCount(s.visionBonus, `"alert.states[${i}].visionBonus"`, rulesUrl);
+    requireCount(s.detectionBonus, `"alert.states[${i}].detectionBonus"`, rulesUrl);
     if (i === 0 ? s.from !== 0 : s.from <= states[i - 1].from) {
       throw new Error(`${rulesUrl}: "alert.states" must start from 0 and rise, got ${states.map((x) => x.from).join(', ')}`);
     }

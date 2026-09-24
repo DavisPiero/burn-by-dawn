@@ -56,7 +56,7 @@
     "proximity": [0, 2, 1]
   },
 
-  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state. `spotted` is per trooper spotted in a turn, however many enemies saw him, and only when he was not already in contact: a man already counted is not counted again each turn he stays in view. `stone` is a thrown stone, `bodyFound` a body an enemy comes onto or beside and `parachuteFound` an abandoned parachute an enemy comes onto or beside (SPEC.md §9). Enemy fire at troopers raises nothing: the sighting that caused it already counted. `hearingBonus` is added to every noise radius in that state.",
+  "_alert": "SPEC.md §6. Alert is a points total; `states` are the four dial positions and `from` is the points at which each begins, lowest first. At 0/2/4/7 (SPEC.md §6) one event is not a whole state: one sighting leaves the garrison Calm, and the bridge alone (one explosion, +3) leaves it Suspicious. Points are capped at the last state's `from`. `quietTurnsToDecay` turns with no alert raised drop it to the start of the state below, or to 0 in Calm. `visionBonus` is added to every enemy's vision radius in that state, and `detectionBonus` to every enemy's detection sum: a roused garrison looks harder, not only further. `spotted` is per trooper spotted in a turn, however many enemies saw him, and only when he was not already in contact: a man already counted is not counted again each turn he stays in view. `stone` is a thrown stone, `bodyFound` a body an enemy comes onto or beside and `parachuteFound` an abandoned parachute an enemy comes onto or beside (SPEC.md §9). Enemy fire at troopers raises nothing: the sighting that caused it already counted. `hearingBonus` is added to every noise radius in that state.",
 
   "alert": {
     "gunfire": 2,
@@ -67,10 +67,10 @@
     "parachuteFound": 1,
     "quietTurnsToDecay": 4,
     "states": [
-      { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0, "hearingBonus": 0 },
-      { "id": "suspicious", "label": "Suspicious", "from": 2, "visionBonus": 1, "hearingBonus": 0 },
-      { "id": "alert", "label": "Alert", "from": 4, "visionBonus": 1, "hearingBonus": 1 },
-      { "id": "alarmed", "label": "Alarmed", "from": 7, "visionBonus": 1, "hearingBonus": 1 }
+      { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0, "detectionBonus": 0, "hearingBonus": 0 },
+      { "id": "suspicious", "label": "Suspicious", "from": 2, "visionBonus": 1, "detectionBonus": 0, "hearingBonus": 0 },
+      { "id": "alert", "label": "Alert", "from": 4, "visionBonus": 1, "detectionBonus": 1, "hearingBonus": 1 },
+      { "id": "alarmed", "label": "Alarmed", "from": 7, "visionBonus": 1, "detectionBonus": 1, "hearingBonus": 1 }
     ]
   },
 
@@ -91,10 +91,10 @@
     "explosion": 7
   },
 
-  "_combat": "SPEC.md §5 Wounds and §6 contact. A trooper spotted at one detection check and spotted again at the next is shot, at most once per turn. `shotResult` says what a shot does by the cover of the hex he is shot on: `hit` counts toward `hitsToKill` (the first wounds, the last kills); `pinned` does no harm but takes `pinnedApLoss` off his next pool, never below 1. No dice: the readout shows which it will be. A wounded man's pool is `woundedActionPoints`, with no orders bonus, until he is stabilised; his charges drop on his hex, and a dead man's do too.",
+  "_combat": "SPEC.md §5 Wounds and §6 contact. A trooper spotted at one detection check and spotted again at the next is shot, at most once per turn. `shotResult` says what a shot does by the cover of the hex he is shot on (light cover hides but does not stop a bullet, M8b): `hit` counts toward `hitsToKill` (the first wounds, the last kills); `pinned` does no harm but takes `pinnedApLoss` off his next pool, never below 1. No dice: the readout shows which it will be. A wounded man's pool is `woundedActionPoints`, with no orders bonus, until he is stabilised; his charges drop on his hex, and a dead man's do too.",
 
   "combat": {
-    "shotResult": { "none": "hit", "light": "pinned", "heavy": "pinned" },
+    "shotResult": { "none": "hit", "light": "hit", "heavy": "pinned" },
     "pinnedApLoss": 1,
     "hitsToKill": 2,
     "woundedActionPoints": 1
