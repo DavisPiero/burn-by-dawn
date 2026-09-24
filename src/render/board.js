@@ -18,10 +18,10 @@
 // and a blast play out once rather than again on every hover. That is drawing
 // memory, not game state.
 
-import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
+import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RISK, ROUTE,
+  BLAST, CONTACT, COUNTER, DROP, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass,
 } from './theme.js';
@@ -69,11 +69,6 @@ export function createBoard(svg, map, handlers) {
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
   }));
   defs.appendChild(clip);
-  // Half of a hex, toward its east edge: a road that leaves a hex only one way
-  // is its edge-to-edge motif cut here, then turned.
-  const half = el('clipPath', { id: 'board-half-hex' });
-  half.appendChild(el('rect', { x: 38, y: -10, width: 50, height: 112 }));
-  defs.appendChild(half);
   svg.appendChild(defs);
 
   const terrain = el('g', { 'clip-path': 'url(#board-edge)' });
@@ -107,16 +102,14 @@ export function createBoard(svg, map, handlers) {
     const hex = el('g', { 'data-q': q, 'data-r': r });
     if (!inPlay) hex.setAttribute('opacity', GRID.outOfPlayOpacity);
 
-    // Printed in plates: the flat base, the halftone screen over it (off
-    // register, through its class), the motif, then the grid rule in ink.
+    // Printed in plates: the flat base, a flat tint and a halftone screen over
+    // it where the terrain has them, the motif, then the grid rule in ink.
     hex.appendChild(el('polygon', { points, fill: style.fill }));
+    if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
     if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
     if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
-    if (style.connects) drawConnected(hex, map, q, r, center, style);
-    else {
-      const motif = terrainMotifId(style, q, r);
-      if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
-    }
+    const motif = terrainMotifId(style, q, r);
+    if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
     hex.appendChild(el('polygon', {
       points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
     }));
@@ -133,6 +126,12 @@ export function createBoard(svg, map, handlers) {
     terrain.appendChild(hex);
   });
 
+  const lines = el('g', { 'pointer-events': 'none' });
+  const railway = railwayHexes(map);
+  drawRoads(lines, map, edge, railway);
+  drawRailway(lines, map, edge);
+  terrain.appendChild(lines);
+
   terrain.appendChild(el('rect', {
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
     fill: 'none', stroke: GRID.border, 'stroke-width': GRID.borderWidth, 'pointer-events': 'none',
@@ -148,30 +147,91 @@ export function createBoard(svg, map, handlers) {
   };
 }
 
-/**
- * A road runs edge to edge: its motif is turned to meet every neighbouring
- * hex it connects to. Two opposite connections are one straight motif; any
- * other set is drawn as a half motif toward each. A road that runs off the
- * board keeps going off it.
- */
-function drawConnected(hex, map, q, r, center, style) {
-  const links = [];
-  NEIGHBOR_DIRS.forEach((d, dir) => {
-    if (style.connects.includes(terrainIdAt(map, q + d.q, r + d.r))) links.push(dir);
-  });
-  if (links.length === 1) {
-    const away = (links[0] + 3) % 6;
-    const d = NEIGHBOR_DIRS[away];
-    if (!inBounds(map, q + d.q, r + d.r)) links.push(away);
+// --- roads and the railway (SPEC.md §11) ---------------------------------------
+// Drawn once, over the terrain, as continuous lines: a road is one smooth line
+// through its hexes, never a motif stamped per hex, so a road running down the
+// board's offset rows waves gently instead of zigzagging.
+
+/** Every hex the railway's line passes through, keyed by hexKey. */
+function railwayHexes(map) {
+  const hexes = new Map();
+  const points = (map.railway ?? []).map(([q, r]) => ({ q, r }));
+  for (let i = 1; i < points.length; i++) {
+    for (const h of hexLine(points[i - 1], points[i])) hexes.set(hexKey(h.q, h.r), h);
   }
-  const place = (dir, halfOnly) => {
-    const g = el('g', { transform: `translate(${center.x - 40} ${center.y - 46}) rotate(${directionAngle(dir)} 40 46)` });
-    g.appendChild(el('use', { href: `#${style.motif}`, width: 80, height: 92, ...(halfOnly ? { 'clip-path': 'url(#board-half-hex)' } : {}) }));
-    hex.appendChild(g);
+  return hexes;
+}
+
+/** The point halfway from a hex's centre to its neighbour's: the middle of their shared edge. */
+function edgeMiddle(map, q, r, dir) {
+  const d = NEIGHBOR_DIRS[dir];
+  const a = axialToPixel(q, r, map.hexSize), b = axialToPixel(q + d.q, r + d.r, map.hexSize);
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+/**
+ * Each road hex joins the middles of the edges its road leaves by: through its
+ * centre as one curve when it leaves by two, as spokes from the centre at a
+ * junction or an end. Neighbouring hexes meet at the same edge middle heading
+ * the same way, so the lines join smoothly. A road that runs to the edge of
+ * the map keeps going off it. Under the railway a road hex is drawn as the
+ * railway; a road that meets the line runs straight up to it, a crossing.
+ */
+function drawRoads(layer, map, edge, railway) {
+  const isRoad = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).road);
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  forEachCell(map, (q, r) => {
+    // A road hex under the railway is drawn as the railway.
+    if (!isRoad(q, r) || railway.has(hexKey(q, r))) return;
+    const links = [];
+    let crossing = null;
+    NEIGHBOR_DIRS.forEach((n, dir) => {
+      if (!isRoad(q + n.q, r + n.r)) return;
+      // A road meets the railway once, at one crossing, however many of the
+      // line's hexes it touches.
+      if (railway.has(hexKey(q + n.q, r + n.r))) {
+        if (crossing !== null) return;
+        crossing = dir;
+      }
+      links.push(dir);
+    });
+    if (links.length === 1) {
+      const away = (links[0] + 3) % 6;
+      const n = NEIGHBOR_DIRS[away];
+      if (!inBounds(map, q + n.q, r + n.r)) links.push(away);
+    }
+    const c = axialToPixel(q, r, map.hexSize);
+    const mids = links.map((dir) => edgeMiddle(map, q, r, dir));
+    if (mids.length === 2) d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
+    else for (const m of mids) d += `M${f(m)} L${f(c)} `;
+    if (crossing !== null) {
+      const n = NEIGHBOR_DIRS[crossing];
+      d += `M${f(edgeMiddle(map, q, r, crossing))} L${f(axialToPixel(q + n.q, r + n.r, map.hexSize))} `;
+    }
+  });
+  if (!d) return;
+  layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.edge, 'stroke-width': ROAD.edgeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.fill, 'stroke-width': ROAD.fillWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+}
+
+/**
+ * The railway: straight through its waypoints' centres, carried on past the
+ * first and last to the board's edge, as a bed, two rails and the sleepers across them.
+ */
+function drawRailway(layer, map, edge) {
+  const points = (map.railway ?? []).map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  if (points.length < 2) return;
+  const reach = (edge.right - edge.left) + (edge.bottom - edge.top);
+  const extend = (from, to) => {
+    const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    return { x: to.x + ((to.x - from.x) / len) * reach, y: to.y + ((to.y - from.y) / len) * reach };
   };
-  if (links.length === 0) place(0, false);
-  else if (links.length === 2 && links[1] === (links[0] + 3) % 6) place(links[0], false);
-  else for (const dir of links) place(dir, true);
+  const line = [extend(points[1], points[0]), ...points, extend(points.at(-2), points.at(-1))];
+  layer.appendChild(polyline(line, { stroke: RAIL.bed, 'stroke-width': RAIL.bedWidth, 'stroke-opacity': RAIL.bedOpacity, 'stroke-linecap': 'butt' }));
+  layer.appendChild(polyline(line, { stroke: RAIL.rail, 'stroke-width': RAIL.railWidth, 'stroke-linecap': 'butt' }));
+  layer.appendChild(polyline(line, { stroke: RAIL.gauge, 'stroke-width': RAIL.gaugeWidth, 'stroke-linecap': 'butt' }));
+  layer.appendChild(polyline(line, { stroke: RAIL.sleeper, 'stroke-width': RAIL.sleeperWidth, 'stroke-dasharray': RAIL.sleeperDash, 'stroke-linecap': 'butt' }));
 }
 
 /** Water gets a bank on every edge that faces dry land on the board. */

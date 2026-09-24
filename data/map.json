@@ -45,6 +45,9 @@
   "_exfil": "SPEC.md §10. A trooper who ends a move on one of these is out. The south end of the canal towpath, also reachable from the hedgerow lanes, away from all three drop runs.",
   "exfil": [[3, 12], [4, 12], [5, 12]],
 
+  "_railway": "SPEC.md \u00a711. Art only, like the church: no rule, no terrain, no cost. Waypoints the line is drawn through, straight between them, carried on past the first and last to the board's edge. It runs over the rail bridge, which is why the bridge is there. A track hex under it is drawn as the railway, with a level crossing where a road meets it.",
+  "railway": [[-3, 6], [14, 6]],
+
   "legend": {
     "F": "field",
     "T": "track",

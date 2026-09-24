@@ -55,7 +55,7 @@ export const HALFTONE = {
 
 // Every colour fill is printed a hair off its ink outline. In the units of
 // whatever it is drawn in; at board scale this is about half a screen pixel.
-export const MISREGISTER = { x: 0.6, y: 0.45 };
+export const MISREGISTER = { x: 0.4, y: 0.3 };
 
 /** The halftone class for a colour at a density, rounded to the nearest screen we print. */
 export function toneClass(colour, density) {
@@ -129,27 +129,31 @@ export function applyDocumentTheme(root = document.documentElement) {
 }
 
 // ---------------------------------------------------------------------------
-// Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, a halftone
-// screen over it, a motif, and the grid line. `variants` motifs are picked per
-// hex from its coordinates, so the same hex always looks the same. `connects`
-// motifs (the track) run edge to edge and are turned to meet their neighbours;
-// `banks` terrain (the canal) gets a bank on every edge that faces dry land.
+// Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, an optional
+// flat tint of one spot colour over it (a printer's tint, at an opacity), an
+// optional halftone screen, a motif, and the grid line. The board has to read
+// at a glance (SPEC.md §11, M7b): open ground is flat colour, and the screen
+// is kept for wood alone. `variants` motifs are picked per hex from its
+// coordinates, so the same hex always looks the same; `sparse` is the share
+// of hexes that get a motif at all. Roads are not a motif: board.js draws each
+// one as a single continuous line through its hexes (`road`). `banks` terrain
+// (the canal) gets a bank on every edge that faces dry land.
 
 const TERRAIN_ART = {
-  field: { base: 'paper', tone: ['green', 10], motif: 'terrain-field', variants: 3 },
-  track: { base: 'paper', tone: ['ink', 10], motif: 'terrain-track', connects: ['track', 'bridge'] },
-  hedgerow: { base: 'paper', tone: ['green', 35], motif: 'terrain-hedgerow', variants: 3 },
-  wood: { base: 'green', tone: ['ink', 35], motif: 'terrain-wood', variants: 3 },
-  orchard: { base: 'paper', tone: ['green', 20], motif: 'terrain-orchard', variants: 3 },
-  marsh: { base: 'paper', tone: ['blue', 20], motif: 'terrain-marsh' },
-  canal: { base: 'blue', tone: ['ink', 20], motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  lock: { base: 'blue', tone: ['ink', 20], motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  ridge: { base: 'paper', tone: ['ink', 20], motif: 'terrain-ridge' },
-  farmhouse: { base: 'paper', tone: ['red', 10], motif: 'terrain-farmhouse' },
-  emplacement: { base: 'paper', tone: ['red', 20], motif: 'terrain-emplacement' },
+  field: { base: 'paper', motif: 'terrain-field', variants: 3, sparse: 0.22 },
+  track: { base: 'paper', motif: null, road: true },
+  hedgerow: { base: 'paper', tint: ['green', 0.16], motif: 'terrain-hedgerow', variants: 3 },
+  wood: { base: 'green', tone: ['ink', 20], motif: 'terrain-wood', variants: 3 },
+  orchard: { base: 'paper', tint: ['green', 0.1], motif: 'terrain-orchard', variants: 3 },
+  marsh: { base: 'paper', tint: ['blue', 0.14], motif: 'terrain-marsh' },
+  canal: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
+  lock: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
+  ridge: { base: 'paper', tint: ['ink', 0.07], motif: 'terrain-ridge' },
+  farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse' },
+  emplacement: { base: 'paper', tint: ['red', 0.1], motif: 'terrain-emplacement' },
   // The bridge and the dump are drawn by their objective art, over the hexes.
-  bridge: { base: 'paper', tone: ['ink', 10], motif: null },
-  depot: { base: 'paper', tone: ['ink', 20], motif: null },
+  bridge: { base: 'paper', motif: null, road: true },
+  depot: { base: 'paper', tint: ['ink', 0.07], motif: null },
 };
 
 // A terrain id with no art yet still draws, in a colour that looks wrong on
@@ -159,23 +163,47 @@ const UNKNOWN_TERRAIN = { base: null, fill: '#FF00FF', tone: null, motif: null }
 export function terrainArt(terrainId) {
   const art = TERRAIN_ART[terrainId];
   if (!art) return UNKNOWN_TERRAIN;
-  return { ...art, fill: PALETTE[art.base] };
+  return { ...art, fill: PALETTE[art.base], tintFill: art.tint ? PALETTE[art.tint[0]] : null };
 }
 
-/** Which variant of a motif a hex gets: fixed by its coordinates, not rolled. */
+/** Which variant of a motif a hex gets, or none: fixed by its coordinates, not rolled. */
 export function terrainMotifId(art, q, r) {
   if (!art.motif) return null;
-  if (!art.variants) return art.motif;
   const rng = createRng(((q + 64) * 73856093) ^ ((r + 64) * 19349663));
   rng.next();
-  const n = 1 + Math.floor(rng.next() * art.variants);
-  return `${art.motif}-0${n}`;
+  const pick = rng.next();
+  if (art.sparse !== undefined && rng.next() > art.sparse) return null;
+  if (!art.variants) return art.motif;
+  return `${art.motif}-0${1 + Math.floor(pick * art.variants)}`;
 }
+
+// Roads and the railway are drawn as continuous lines over the terrain, not
+// stamped per hex (SPEC.md §11, M7b). A road is a paper lane between two ink
+// edges; the railway is the map-maker's rails-and-sleepers, on a faint bed.
+export const ROAD = {
+  edge: PALETTE.ink,
+  edgeWidth: 12,
+  fill: PALETTE.paper,
+  fillWidth: 8.5,
+};
+
+export const RAIL = {
+  bed: PALETTE.ink,
+  bedWidth: 20,
+  bedOpacity: 0.08,
+  sleeper: PALETTE.ink,
+  sleeperWidth: 13,
+  sleeperDash: '2.2 6',
+  rail: PALETTE.ink,
+  railWidth: 6.5,
+  gauge: PALETTE.paper,
+  gaugeWidth: 3.5,
+};
 
 export const GRID = {
   stroke: PALETTE.ink,
   strokeWidth: 1,
-  strokeOpacity: 0.3,
+  strokeOpacity: 0.16,
   // The clipped half-hexes past the straight border. Drawn, so the border
   // reads as a printed crop rather than a void, but visibly dead.
   outOfPlayOpacity: 0.35,
@@ -264,7 +292,7 @@ export const ENEMY = {
 
 export const VISION = {
   fill: PALETTE.red,
-  opacity: 0.16,
+  opacity: 0.13,
   hoverOpacity: 0.3,
   edgeCasing: PALETTE.paper,
   edgeCasingWidth: 7,
@@ -592,7 +620,7 @@ function tuft(x, y, s = 1) {
 
 function bush(x, y, r) {
   const d = `M${x - r} ${y + r * 0.4} C${x - r * 1.2} ${y - r * 0.6} ${x - r * 0.3} ${y - r * 1.2} ${x + r * 0.1} ${y - r * 0.8} C${x + r * 0.7} ${y - r * 1.3} ${x + r * 1.4} ${y - r * 0.2} ${x + r} ${y + r * 0.4} C${x + r * 0.6} ${y + r} ${x - r * 0.6} ${y + r} ${x - r} ${y + r * 0.4} Z`;
-  return [fill(d, 'green'), fill(d, toneClass('ink', 20)), line(d, 1.4)];
+  return [fill(d, 'green'), line(d, 1.6)];
 }
 
 function treeCrown(x, y, r) {
@@ -608,93 +636,61 @@ function treeCrown(x, y, r) {
     }
   }
   return [
-    fill(d, 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
-    fill(d, 'green'), fill(d, toneClass('ink', 35)), line(d, 1.4),
-    line(`M${x - r * 0.4} ${y - r * 0.2} Q${x - r * 0.1} ${y - r * 0.55} ${x + r * 0.3} ${y - r * 0.45}`, 1.2, 'stroke-paper', { opacity: 0.6 }),
+    fill(d, 'green'), fill(d, toneClass('ink', 50)), line(d, 1.6),
+    line(`M${x - r * 0.4} ${y - r * 0.2} Q${x - r * 0.1} ${y - r * 0.55} ${x + r * 0.3} ${y - r * 0.45}`, 1.4, 'stroke-paper', { opacity: 0.4 }),
   ];
 }
 
 function appleTree(x, y) {
-  return [
-    circle(x + 1.5, y + 1.5, 6, 'ink', { 'fill-opacity': 0.45 }),
-    circle(x, y, 6, 'green'), circle(x, y, 6, toneClass('ink', 20)), ring(x, y, 6, 1.2),
-    circle(x - 2, y - 1, 1.2, 'red'), circle(x + 2, y + 2, 1.2, 'red'),
-  ];
+  return [circle(x, y, 7, 'green'), ring(x, y, 7, 1.4)];
 }
 
 function reeds(x, y) {
-  return line(`M${x} ${y} L${x - 4} ${y - 9} M${x} ${y} L${x} ${y - 11} M${x} ${y} L${x + 4} ${y - 9}`, 1.2, 'stroke-green');
+  return line(`M${x} ${y} L${x - 4} ${y - 9} M${x} ${y} L${x} ${y - 11} M${x} ${y} L${x + 4} ${y - 9}`, 1.4, 'stroke-green');
 }
 
+// Few and bold (SPEC.md §11, M7b): one clear shape per hex at most, no shadows,
+// no screens. A field is mostly bare paper: only some hexes get a mark at all.
 const TERRAIN_SPRITES = {
-  'terrain-field-01': () => [
-    line('M14 30 Q40 26 66 30 M10 42 Q40 38 70 42 M10 54 Q40 50 70 54 M14 66 Q40 62 66 66', 1, 'stroke-ink', { opacity: 0.35 }),
-  ],
-  'terrain-field-02': () => [
-    line('M18 24 L62 68 M10 36 L50 76 M30 18 L70 58', 1, 'stroke-ink', { opacity: 0.3 }),
-    tuft(52, 34, 0.8), tuft(28, 64, 0.8),
-  ],
-  'terrain-field-03': () => [tuft(24, 34), tuft(54, 30), tuft(38, 58), tuft(58, 66, 0.8), tuft(20, 62, 0.7)],
+  'terrain-field-01': () => [line('M26 40 Q40 37 54 40 M22 50 Q40 47 58 50', 1.2, 'stroke-ink', { opacity: 0.22 })],
+  'terrain-field-02': () => [tuft(36, 50, 0.9), tuft(48, 56, 0.7)].map((t) => { t.setAttribute('opacity', 0.35); return t; }),
+  'terrain-field-03': () => [line('M30 38 L50 58 M40 34 L56 50', 1.2, 'stroke-ink', { opacity: 0.18 })],
 
-  'terrain-hedgerow-01': () => [
-    ...bush(8, 40, 7), ...bush(22, 38, 8), ...bush(38, 41, 7), ...bush(53, 38, 8), ...bush(70, 40, 7),
-    line('M4 54 L76 54', 1, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '3 4' }),
-  ],
-  'terrain-hedgerow-02': () => [
-    ...bush(20, 18, 7), ...bush(26, 32, 8), ...bush(34, 46, 7), ...bush(42, 60, 8), ...bush(50, 74, 7),
-    line('M44 20 L64 58', 1, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '3 4' }),
-  ],
-  'terrain-hedgerow-03': () => [
-    ...bush(14, 58, 7), ...bush(28, 48, 8), ...bush(42, 42, 7), ...bush(56, 34, 8), ...bush(66, 24, 6),
-    tuft(30, 70, 0.8),
-  ],
+  'terrain-hedgerow-01': () => [...bush(12, 46, 8), ...bush(30, 44, 9), ...bush(50, 46, 9), ...bush(68, 44, 8)],
+  'terrain-hedgerow-02': () => [...bush(24, 20, 8), ...bush(32, 38, 9), ...bush(42, 56, 9), ...bush(52, 74, 8)],
+  'terrain-hedgerow-03': () => [...bush(16, 62, 8), ...bush(32, 50, 9), ...bush(48, 40, 9), ...bush(64, 28, 8)],
 
-  'terrain-wood-01': () => [...treeCrown(28, 34, 13), ...treeCrown(52, 40, 14), ...treeCrown(36, 60, 13)],
-  'terrain-wood-02': () => [...treeCrown(40, 30, 14), ...treeCrown(24, 54, 12), ...treeCrown(56, 60, 13)],
-  'terrain-wood-03': () => [...treeCrown(22, 38, 11), ...treeCrown(44, 28, 11), ...treeCrown(58, 50, 12), ...treeCrown(34, 62, 12)],
+  'terrain-wood-01': () => [...treeCrown(30, 36, 14), ...treeCrown(52, 52, 15)],
+  'terrain-wood-02': () => [...treeCrown(42, 32, 15), ...treeCrown(30, 58, 13), ...treeCrown(56, 60, 12)],
+  'terrain-wood-03': () => [...treeCrown(28, 44, 13), ...treeCrown(50, 34, 13), ...treeCrown(46, 62, 13)],
 
-  'terrain-orchard-01': () => [[20, 30], [40, 30], [60, 30], [30, 50], [50, 50], [20, 70], [40, 70], [60, 70]]
-    .flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-02': () => [[26, 26], [46, 26], [16, 46], [36, 46], [56, 46], [26, 66], [46, 66]]
-    .flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-03': () => [[22, 34], [42, 28], [62, 34], [32, 54], [52, 52], [42, 72]]
-    .flatMap(([x, y]) => appleTree(x, y)),
-
-  // Edge to edge, east to west through the centre; board.js turns it to meet
-  // each neighbouring road and clips it to half where the road only leaves one way.
-  'terrain-track': () => [
-    fill('M0 39 H80 V53 H0 Z', 'paper'),
-    fill('M0 39 H80 V53 H0 Z', toneClass('ink', 20)),
-    line('M0 39 H80 M0 53 H80', 1.4),
-    line('M0 44 H80 M0 48 H80', 1, 'stroke-ink', { opacity: 0.4, 'stroke-dasharray': '5 4' }),
-  ],
+  'terrain-orchard-01': () => [[28, 34], [52, 34], [28, 58], [52, 58]].flatMap(([x, y]) => appleTree(x, y)),
+  'terrain-orchard-02': () => [[40, 30], [24, 50], [56, 50], [40, 68]].flatMap(([x, y]) => appleTree(x, y)),
+  'terrain-orchard-03': () => [[32, 32], [54, 40], [26, 56], [48, 64]].flatMap(([x, y]) => appleTree(x, y)),
 
   'terrain-marsh': () => [
-    line('M14 34 H30 M44 28 H62 M20 58 H38 M48 64 H66 M28 76 H40', 1.4, 'stroke-blue'),
-    reeds(22, 32), reeds(56, 26), reeds(30, 56), reeds(60, 62), reeds(40, 44),
+    line('M18 40 H32 M46 56 H62 M24 68 H38', 1.4, 'stroke-blue', { opacity: 0.8 }),
+    reeds(26, 38), reeds(54, 54), reeds(32, 66),
   ],
 
-  // Ripples; the water itself is the hex's base colour.
+  // One ripple; the water itself is the hex's base colour.
   'terrain-canal': () => [
-    line('M18 32 Q24 28 30 32 Q36 36 42 32 M40 52 Q46 48 52 52 Q58 56 64 52 M16 66 Q22 62 28 66', 1.4, 'stroke-paper', { opacity: 0.7 }),
+    line('M28 44 Q34 40 40 44 Q46 48 52 44', 1.4, 'stroke-paper', { opacity: 0.5 }),
   ],
   // The bank along the east edge of the hex; board.js turns it to every edge
   // that faces dry land.
   'terrain-canal-edge': () => [
-    fill('M79.8 23 L73 26 L73 66 L79.8 69 Z', 'paper'),
-    fill('M79.8 23 L73 26 L73 66 L79.8 69 Z', toneClass('green', 35)),
-    line('M73 26 L73 66', 1.6),
-    line('M74 32 L70 30 M74 42 L69 41 M74 52 L70 52 M74 62 L69 63', 1, 'stroke-green'),
+    fill('M79.8 23 L74 26 L74 66 L79.8 69 Z', 'paper'),
+    line('M74 26 L74 66', 1.8),
   ],
 
+  // High ground as the map-maker's hill: two rounded crests, no hachures.
   'terrain-ridge': () => [
-    line('M8 52 Q24 30 40 34 Q58 38 72 26', 2.2),
-    line('M14 46 L12 54 M22 38 L21 47 M31 34 L31 43 M40 34 L41 43 M50 36 L51 45 M60 34 L62 42 M68 29 L71 37', 1.2),
-    line('M12 70 Q34 58 52 66 Q62 70 70 62', 1, 'stroke-ink', { opacity: 0.4 }),
+    line('M12 58 Q27 32 42 58', 2),
+    line('M36 48 Q52 24 68 48', 2),
   ],
 
   'terrain-farmhouse': () => [
-    fill('M24 44 H58 V68 H24 Z', 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
     ...inked('M24 44 H58 V68 H24 Z', 'paper', 1.6),
     ...inked('M20 46 L41 28 L62 46 Z', 'red', 1.6),
     fill('M20 46 L41 28 L62 46 Z', toneClass('ink', 20)),
