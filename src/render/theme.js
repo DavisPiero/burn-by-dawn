@@ -219,6 +219,18 @@ export const ROAD = {
   fillWidth: 8.5,
 };
 
+// A hedgerow is a line: neighbouring hedgerow hexes are joined into one hedge,
+// drawn as a lumpy green stroke with an ink edge (the lumps are a dotted
+// stroke with round caps). A hedgerow hex with no hedgerow beside it keeps
+// its motif.
+export const HEDGE = {
+  edgeWidth: 9.5,
+  lumpEdgeWidth: 16.5,
+  width: 6.5,
+  lumpWidth: 13.5,
+  lumpSpacing: '0 10.5',
+};
+
 export const RAIL = {
   bed: PALETTE.ink,
   bedWidth: 20,

@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -109,7 +109,7 @@ export function createBoard(svg, map, handlers) {
       if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
       if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
       if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
-      const motif = terrainMotifId(style, q, r);
+      const motif = style.hedge && hedgeLinks(map, q, r).length > 0 ? null : terrainMotifId(style, q, r);
       if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
     }
 
@@ -143,6 +143,7 @@ export function createBoard(svg, map, handlers) {
 
   const lines = el('g', { 'pointer-events': 'none' });
   const railway = railwayHexes(map);
+  drawHedges(lines, map);
   drawRoads(lines, map, edge, railway);
   drawRailway(lines, map, edge);
   terrain.appendChild(lines);
@@ -339,6 +340,77 @@ function drawRoads(layer, map, edge, railway) {
   if (!d) return;
   layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.edge, 'stroke-width': ROAD.edgeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
   layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.fill, 'stroke-width': ROAD.fillWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+}
+
+/**
+ * Which hedgerow hexes are joined by a hedge: a spanning tree of each run of
+ * neighbouring hedgerow hexes, found breadth first in a fixed order, so a
+ * clump of three touching hexes draws as a bend, never a little triangle.
+ * Keyed by hexKey, each a list of directions.
+ */
+function hedgeTree(map) {
+  const isHedge = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).hedge);
+  const links = new Map();
+  const seen = new Set();
+  const join = (a, dir) => {
+    const k = hexKey(a.q, a.r);
+    if (!links.has(k)) links.set(k, []);
+    links.get(k).push(dir);
+  };
+  forEachCell(map, (q0, r0) => {
+    if (!isHedge(q0, r0) || seen.has(hexKey(q0, r0))) return;
+    seen.add(hexKey(q0, r0));
+    const queue = [{ q: q0, r: r0 }];
+    while (queue.length) {
+      const h = queue.shift();
+      NEIGHBOR_DIRS.forEach((n, dir) => {
+        const next = { q: h.q + n.q, r: h.r + n.r };
+        if (!isHedge(next.q, next.r) || seen.has(hexKey(next.q, next.r))) return;
+        seen.add(hexKey(next.q, next.r));
+        join(h, dir);
+        join(next, (dir + 3) % 6);
+        queue.push(next);
+      });
+    }
+  });
+  return links;
+}
+
+/** The directions from a hedgerow hex to the hedgerow hexes its hedge joins. */
+// Worked out once per map: drawing memory, never written onto the map itself.
+const hedgeTrees = new WeakMap();
+
+function hedgeLinks(map, q, r) {
+  if (!hedgeTrees.has(map)) hedgeTrees.set(map, hedgeTree(map));
+  return [...(hedgeTrees.get(map).get(hexKey(q, r)) ?? [])];
+}
+
+/**
+ * Hedgerows as hedges: each hedgerow hex joins the middles of the edges its
+ * hedge leaves by, like a road. A hedge that ends in a hex runs on through it
+ * to the far edge, so it never stops short in the middle of a field.
+ */
+function drawHedges(layer, map) {
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  forEachCell(map, (q, r) => {
+    if (!terrainArt(terrainIdAt(map, q, r)).hedge) return;
+    const links = hedgeLinks(map, q, r);
+    if (links.length === 0) return;
+    if (links.length === 1) links.push((links[0] + 3) % 6);
+    const c = axialToPixel(q, r, map.hexSize);
+    const mids = links.map((dir) => edgeMiddle(map, q, r, dir));
+    if (mids.length === 2) d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
+    else for (const m of mids) d += `M${f(m)} L${f(c)} `;
+  });
+  if (!d) return;
+  const stroke = (cls, width, extra = {}) => el('path', {
+    d, fill: 'none', class: cls, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', ...extra,
+  });
+  layer.appendChild(stroke('stroke-ink', HEDGE.edgeWidth));
+  layer.appendChild(stroke('stroke-ink', HEDGE.lumpEdgeWidth, { 'stroke-dasharray': HEDGE.lumpSpacing }));
+  layer.appendChild(stroke('stroke-green', HEDGE.width));
+  layer.appendChild(stroke('stroke-green', HEDGE.lumpWidth, { 'stroke-dasharray': HEDGE.lumpSpacing }));
 }
 
 /**
