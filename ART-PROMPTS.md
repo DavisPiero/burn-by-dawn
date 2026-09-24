@@ -205,7 +205,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The C-47 Dakota silhouette for the drop fly-by, and the opening, drifting and
   collapsing parachute canopies.
 - The soft drop shadow under counters.
-- Continuous roads and the railway line.
-- Simplified terrain motifs: flatter fields, bolder woods, hedgerows and orchards.
+- Continuous roads, hedges and the railway line.
+- Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs.
+- Place names on the map (they are type, set from `data/map.json`).
+- The green counter frames, their AP figure and card edge.
 - Redrawn fuel dump, telephone exchange and rail bridge, at the new, lower level of detail.
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.

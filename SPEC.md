@@ -598,6 +598,22 @@ Desktop makes the skeuomorphism work properly, so use the room:
   with a small mark on a minority of hexes. An enemy's vision stays a faint flat tint at
   rest (it is the risk map, and there is no fog of war) and is filled strongly and
   outlined when that enemy is hovered.
+- **The board is printed as a map, not as tiles** (M7b, after cardboard wargame maps).
+  Woods, orchards, marsh and the ridge are each one shape across their run of hexes,
+  with a rounded, slightly irregular edge, and the hex grid is printed over them. The
+  ridge is tonal bands: dark crest, pale fall, a contour at its foot. Neighbouring
+  hedgerow hexes are joined into hedges, drawn like roads. All of it is ink only: every
+  rule still reads the hex.
+- **Place names** are printed on the map, art only, from `data/map.json`: the village in
+  spaced capitals, water in italic on the water, the rest in italic. The turn report uses
+  them ("the field by Ferme Lebrun"). Map names may be set in a serif italic; they are
+  the one type on the board that is neither typewriter nor lettering.
+- **The move path counts.** Each step on the hover path shows the AP spent by the time he
+  gets there, grey past what he has. A hex on the path where he would be spotted is
+  crossed out in red, marker-pen style, over the risk pips.
+- **Our counters are printed solid army green** with a dark name strip (leader blue for
+  the ranking man), AP left as one large figure top right, the role in a paper roundel,
+  and a sliver of the card's cut edge showing down-right under the soft shadow.
 - **Type is set for reading.** The right page is set at 13–15px at 1280x800, never below
   12. It carries only what the player needs every turn: detail goes into rollovers.
 

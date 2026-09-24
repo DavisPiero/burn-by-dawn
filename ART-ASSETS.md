@@ -81,7 +81,7 @@ keeps a seventh man a JSON entry until someone draws him.
 
 | Asset | viewBox | Notes |
 |---|---|---|
-| `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square, name strip along the bottom |
+| `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square printed solid `.green`, a dark name strip along the bottom, a paper roundel top left for the role symbol, AP figure top right is drawn by code, and a sliver of card edge down-right (M7b) |
 | `counter-frame-allied-leader.svg` | 56 x 56 | the ranking man. Same die-cut silhouette as above so the two read as one set — distinguish it by the name strip and a rank flash, not by a different shape. Strip and rank flash use `.leader` |
 | `counter-frame-enemy.svg` | 56 x 56 | visually distinct at a glance, not just recoloured |
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
@@ -113,7 +113,7 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-marsh.svg` | 80 x 92 | 1 |
 | `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
 | `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
-| `terrain-ridge.svg` | 80 x 92 | 1 |
+| `terrain-ridge.svg` | 80 x 92 | 1 — not used since M7b: the ridge is drawn as tonal bands |
 | `terrain-farmhouse.svg` | 80 x 92 | 1 |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
 
@@ -124,6 +124,13 @@ as rails and sleepers across the board; their colours and widths are `ROAD` and 
 
 Keep motifs few and bold (SPEC.md §11): one clear shape per hex, no shadows, no screen.
 Fields are mostly bare paper; code puts a field motif on only about one hex in five.
+
+**Woods, orchards, marsh and the ridge are areas** (M7b): code draws one shape over each
+run of neighbouring hexes, fills and outlines it (`TERRAIN_ART` `area`, `AREA` in
+theme.js), and scatters the motif hex by hex over it. So their motifs are drawn with a
+transparent background and should read as a scatter of trees or reeds, not a tile. The
+ridge has no motif: it is tonal bands. **Hedgerows are lines** like the roads (`HEDGE`);
+`terrain-hedgerow-01..03` are used only for a hedgerow hex with no hedgerow beside it.
 
 The canal needs to read as continuous across hexes.
 
