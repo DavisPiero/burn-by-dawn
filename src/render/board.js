@@ -23,7 +23,7 @@ import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js'
 import {
   BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass,
+  AREA, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -100,19 +100,18 @@ export function createBoard(svg, map, handlers) {
     const points = cornersToPoints(center, corners);
 
     const hex = el('g', { 'data-q': q, 'data-r': r });
-    if (!inPlay) hex.setAttribute('opacity', GRID.outOfPlayOpacity);
 
     // Printed in plates: the flat base, a flat tint and a halftone screen over
-    // it where the terrain has them, the motif, then the grid rule in ink.
+    // it where the terrain has them, and the motif. Area terrain is printed
+    // over all the hexes at once, below; the grid rule goes over everything.
     hex.appendChild(el('polygon', { points, fill: style.fill }));
-    if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
-    if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
-    if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
-    const motif = terrainMotifId(style, q, r);
-    if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
-    hex.appendChild(el('polygon', {
-      points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
-    }));
+    if (!style.area) {
+      if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
+      if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
+      if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
+      const motif = terrainMotifId(style, q, r);
+      if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
+    }
 
     // The half-hexes past the border get no pointer events, so they cannot be
     // hovered, selected or moved to.
@@ -125,6 +124,22 @@ export function createBoard(svg, map, handlers) {
     hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
     terrain.appendChild(hex);
   });
+
+  // Over the hexes and under the grid, none of it taking the mouse: area
+  // terrain, the grid rule, the dead wash over the half-hexes past the border,
+  // then roads and the railway.
+  const areas = el('g', { 'pointer-events': 'none' });
+  drawAreas(areas, defs, map, corners);
+  terrain.appendChild(areas);
+  const grid = el('g', { 'pointer-events': 'none' });
+  forEachCell(map, (q, r) => {
+    const points = cornersToPoints(axialToPixel(q, r, map.hexSize), corners);
+    grid.appendChild(el('polygon', {
+      points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
+    }));
+    if (!isInPlay(map, q, r)) grid.appendChild(el('polygon', { points, fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity }));
+  });
+  terrain.appendChild(grid);
 
   const lines = el('g', { 'pointer-events': 'none' });
   const railway = railwayHexes(map);
@@ -145,6 +160,117 @@ export function createBoard(svg, map, handlers) {
     motion: new Map(),
     blasts: { report: null, list: [] },
   };
+}
+
+// --- area terrain (SPEC.md §11) --------------------------------------------------
+// Woods, orchards, marsh and the ridge are printed as one shape over each run
+// of neighbouring hexes of the same terrain, the way a map draws a wood, not
+// as a tile per hex. The rules still read each hex; the shape is only ink.
+
+/**
+ * Every run of neighbouring hexes of each area terrain, drawn as its outline
+ * (see AREA in theme.js) filled with the terrain's colour, with the terrain's
+ * motif scattered over it hex by hex.
+ */
+function drawAreas(layer, defs, map, corners) {
+  const edges = edgeCorners(corners, map.hexSize);
+  const seen = new Set();
+  let clips = 0;
+  const motifs = [];
+  forEachCell(map, (q0, r0) => {
+    const id = terrainIdAt(map, q0, r0);
+    const style = terrainArt(id);
+    if (!style.area || seen.has(hexKey(q0, r0))) return;
+    // The run of hexes, and each edge of it that faces something else, in
+    // the hexes' own corner order so every loop goes the same way round.
+    const run = [];
+    const stack = [{ q: q0, r: r0 }];
+    seen.add(hexKey(q0, r0));
+    while (stack.length) {
+      const h = stack.pop();
+      run.push(h);
+      for (const d of NEIGHBOR_DIRS) {
+        const n = { q: h.q + d.q, r: h.r + d.r };
+        if (seen.has(hexKey(n.q, n.r)) || terrainIdAt(map, n.q, n.r) !== id) continue;
+        seen.add(hexKey(n.q, n.r));
+        stack.push(n);
+      }
+    }
+    const segments = [];
+    for (const h of run) {
+      const c = axialToPixel(h.q, h.r, map.hexSize);
+      NEIGHBOR_DIRS.forEach((d, dir) => {
+        if (terrainIdAt(map, h.q + d.q, h.r + d.r) === id) return;
+        let [i, j] = edges[dir];
+        if (j !== (i + 1) % 6) [i, j] = [j, i];
+        segments.push({ a: { x: c.x + corners[i].x, y: c.y + corners[i].y }, b: { x: c.x + corners[j].x, y: c.y + corners[j].y } });
+      });
+      const motif = terrainMotifId(style, h.q, h.r);
+      if (motif) motifs.push(el('use', { href: `#${motif}`, x: c.x - 40, y: c.y - 46, width: 80, height: 92 }));
+    }
+    const d = areaOutline(segments);
+    const area = style.area;
+    if (area.fill) {
+      layer.appendChild(el('path', { d, class: area.fill, 'fill-rule': 'evenodd' }));
+      if (area.tone) layer.appendChild(el('path', { d, class: toneClass(...area.tone), 'fill-rule': 'evenodd' }));
+    }
+    if (area.tint) layer.appendChild(el('path', { d, fill: area.tintFill, 'fill-opacity': area.tint[1], 'fill-rule': 'evenodd' }));
+    if (area.rim) {
+      const clipId = `area-clip-${clips++}`;
+      const clip = el('clipPath', { id: clipId });
+      clip.appendChild(el('path', { d, 'fill-rule': 'evenodd' }));
+      defs.appendChild(clip);
+      layer.appendChild(el('path', {
+        d, fill: 'none', class: 'stroke-paper', 'stroke-width': area.rim.width, 'stroke-opacity': area.rim.opacity,
+        'stroke-linejoin': 'round', 'clip-path': `url(#${clipId})`,
+      }));
+    }
+    if (area.outline) {
+      layer.appendChild(el('path', {
+        d, fill: 'none', class: area.outlineClass ?? 'stroke-ink', 'stroke-width': area.outline,
+        'stroke-linejoin': 'round', 'stroke-opacity': area.outlineOpacity ?? 1, ...(area.dash ? { 'stroke-dasharray': area.dash } : {}),
+      }));
+    }
+  });
+  for (const motif of motifs) layer.appendChild(motif);
+}
+
+/**
+ * Chain boundary edges into closed loops and draw each as a rounded, wobbled
+ * outline: through the middle of every edge, pushed along its normal, curving
+ * round each corner.
+ */
+function areaOutline(segments) {
+  const key = (p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  const from = new Map();
+  for (const s of segments) {
+    const k = key(s.a);
+    if (!from.has(k)) from.set(k, []);
+    from.get(k).push(s);
+  }
+  const used = new Set();
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  for (const start of segments) {
+    if (used.has(start)) continue;
+    const loop = [];
+    let s = start;
+    while (s && !used.has(s)) {
+      used.add(s);
+      loop.push(s);
+      s = (from.get(key(s.b)) ?? []).find((n) => !used.has(n));
+    }
+    const mids = loop.map(({ a, b }) => {
+      const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const push = wobbleAt(m.x, m.y) * AREA.wobble;
+      return { x: m.x - ((b.y - a.y) / len) * push, y: m.y + ((b.x - a.x) / len) * push };
+    });
+    d += `M${f(mids[mids.length - 1])} `;
+    loop.forEach((seg, i) => { d += `Q${f(seg.a)} ${f(mids[i])} `; });
+    d += 'Z ';
+  }
+  return d;
 }
 
 // --- roads and the railway (SPEC.md §11) ---------------------------------------

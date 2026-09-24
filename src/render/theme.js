@@ -156,19 +156,36 @@ export function loadSuppliedPaper(root = document.documentElement) {
 const TERRAIN_ART = {
   field: { base: 'paper', motif: 'terrain-field', variants: 3, sparse: 0.22 },
   track: { base: 'paper', motif: null, road: true },
-  hedgerow: { base: 'paper', tint: ['green', 0.16], motif: 'terrain-hedgerow', variants: 3 },
-  wood: { base: 'green', tone: ['ink', 20], motif: 'terrain-wood', variants: 3 },
-  orchard: { base: 'paper', tint: ['green', 0.1], motif: 'terrain-orchard', variants: 3 },
-  marsh: { base: 'paper', tint: ['blue', 0.14], motif: 'terrain-marsh' },
+  hedgerow: { base: 'paper', tint: ['green', 0.12], motif: 'terrain-hedgerow', variants: 3, hedge: true },
+  // `area` terrain is printed as one shape across every run of neighbouring
+  // hexes of it (see AREA), with its motif scattered over the shape.
+  wood: { base: 'paper', area: { fill: 'green', tone: ['ink', 20], outline: 1.8 }, motif: 'terrain-wood', variants: 3 },
+  orchard: { base: 'paper', area: { tint: ['green', 0.13], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-orchard', variants: 3 },
+  marsh: { base: 'paper', area: { tint: ['blue', 0.16] }, motif: 'terrain-marsh' },
+  // High ground in tonal bands: darker at the crest, a paler band round the
+  // edge where it falls away, a contour at its foot, and no symbol.
+  ridge: { base: 'paper', area: { tint: ['ink', 0.13], rim: { width: 26, opacity: 0.5 }, outline: 1.2, outlineOpacity: 0.45, dash: '8 3' }, motif: null },
   canal: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
   lock: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  ridge: { base: 'paper', tint: ['ink', 0.07], motif: 'terrain-ridge' },
   farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse' },
   emplacement: { base: 'paper', tint: ['red', 0.1], motif: 'terrain-emplacement' },
   // The bridge and the dump are drawn by their objective art, over the hexes.
   bridge: { base: 'paper', motif: null, road: true },
   depot: { base: 'paper', tint: ['ink', 0.07], motif: null },
 };
+
+// Area terrain's outline: it follows the hexes' edges, rounded off at every
+// corner and pushed in and out by up to `wobble` at each edge's middle, so it
+// reads as a wood on a map rather than a patch of hexes. The push is fixed by
+// where the edge is, never rolled, so the map is the same every time.
+export const AREA = { wobble: 6 };
+
+/** A fixed push, -1 to 1, for the point (x, y). */
+export function wobbleAt(x, y) {
+  const rng = createRng((Math.round(x * 10) * 73856093) ^ (Math.round(y * 10) * 19349663));
+  rng.next();
+  return rng.next() * 2 - 1;
+}
 
 // A terrain id with no art yet still draws, in a colour that looks wrong on
 // purpose, rather than vanishing.
@@ -177,7 +194,8 @@ const UNKNOWN_TERRAIN = { base: null, fill: '#FF00FF', tone: null, motif: null }
 export function terrainArt(terrainId) {
   const art = TERRAIN_ART[terrainId];
   if (!art) return UNKNOWN_TERRAIN;
-  return { ...art, fill: PALETTE[art.base], tintFill: art.tint ? PALETTE[art.tint[0]] : null };
+  const area = art.area ? { ...art.area, tintFill: art.area.tint ? PALETTE[art.area.tint[0]] : null } : null;
+  return { ...art, area, fill: PALETTE[art.base], tintFill: art.tint ? PALETTE[art.tint[0]] : null };
 }
 
 /** Which variant of a motif a hex gets, or none: fixed by its coordinates, not rolled. */
@@ -221,6 +239,7 @@ export const GRID = {
   // The clipped half-hexes past the straight border. Drawn, so the border
   // reads as a printed crop rather than a void, but visibly dead.
   outOfPlayOpacity: 0.35,
+  deadWash: PALETTE.paper,
   border: PALETTE.ink,
   borderWidth: 4,
 };
