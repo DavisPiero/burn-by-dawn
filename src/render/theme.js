@@ -244,6 +244,19 @@ export const RAIL = {
   gaugeWidth: 3.5,
 };
 
+// Place names printed on the map (SPEC.md §11), set as a map-maker sets them:
+// the village in spaced capitals, water in paper italic on the water, everything else in
+// italic, all with a paper halo so they read over any ground. A kind with no
+// entry is set as `other`.
+export const PLACE = {
+  font: 'Georgia, "Times New Roman", Times, serif',
+  halo: PALETTE.paper,
+  haloWidth: 4.5,
+  village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink },
+  water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, halo: false },
+  other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink },
+};
+
 export const GRID = {
   stroke: PALETTE.ink,
   strokeWidth: 1,

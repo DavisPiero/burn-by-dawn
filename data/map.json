@@ -48,6 +48,16 @@
   "_railway": "SPEC.md \u00a711. Art only, like the church: no rule, no terrain, no cost. Waypoints the line is drawn through, straight between them, carried on past the first and last to the board's edge. It runs over the rail bridge, which is why the bridge is there. A track hex under it is drawn as the railway, with a level crossing where a road meets it.",
   "railway": [[-3, 6], [14, 6]],
 
+  "_places": "SPEC.md \u00a711. Names printed on the map, art only like the railway: no rule. `at` is the hex the name is centred on; `kind` picks how it is set (village in capitals, water in paper italic on the water, anything else in italic); `angle` turns it, in degrees, to lie along what it names; `dy` nudges it down in hex radii. The turn report names a place a man is on or near by these, as it does the objectives.",
+  "places": [
+    { "name": "Bellecour", "kind": "village", "at": [14, 4], "dy": 0.3 },
+    { "name": "Bois des Moines", "kind": "wood", "at": [1, 1] },
+    { "name": "La Butte", "kind": "high", "at": [1, 4], "dy": 0.25 },
+    { "name": "Ferme Lebrun", "kind": "farm", "at": [2, 8], "dy": 0.62 },
+    { "name": "Les Marais", "kind": "marsh", "at": [7, 9] },
+    { "name": "Canal St-R\u00e9my", "kind": "water", "at": [8, 10], "angle": 62 }
+  ],
+
   "legend": {
     "F": "field",
     "T": "track",

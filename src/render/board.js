@@ -23,7 +23,7 @@ import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js'
 import {
   BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -146,6 +146,7 @@ export function createBoard(svg, map, handlers) {
   drawHedges(lines, map);
   drawRoads(lines, map, edge, railway);
   drawRailway(lines, map, edge);
+  drawPlaces(lines, map);
   terrain.appendChild(lines);
 
   terrain.appendChild(el('rect', {
@@ -374,6 +375,25 @@ function hedgeTree(map) {
     }
   });
   return links;
+}
+
+/** Place names, printed on the map under everything that moves. */
+function drawPlaces(layer, map) {
+  for (const place of map.places ?? []) {
+    const style = PLACE[place.kind] ?? PLACE.other;
+    const c = axialToPixel(place.at[0], place.at[1], map.hexSize);
+    const y = c.y + (place.dy ?? 0) * map.hexSize;
+    const attrs = {
+      x: c.x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
+      'font-style': style.italic ? 'italic' : 'normal', 'letter-spacing': style.spacing,
+      ...(place.angle ? { transform: `rotate(${place.angle} ${c.x} ${y})` } : {}),
+    };
+    const name = style.capitals ? place.name.toUpperCase() : place.name;
+    if (style.halo !== false) {
+      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': 0.85 }));
+    }
+    layer.appendChild(text(name, { ...attrs, fill: style.fill }));
+  }
 }
 
 /** The directions from a hedgerow hex to the hedgerow hexes its hedge joins. */

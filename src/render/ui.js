@@ -138,7 +138,7 @@ export function renderGutter(svg) {
 // the way a briefing would: by the objective it is beside, or the part of the
 // map it is in.
 
-/** "the marsh by the rail bridge", "the field in the north-west". */
+/** "the marsh by the rail bridge", "the field by Ferme Lebrun", "the field in the north-west". */
 export function placeName(map, objectives, exfil, hex) {
   const terrain = terrainAt(map, hex.q, hex.r);
   const ground = terrain ? terrain.label.toLowerCase() : 'ground';
@@ -146,14 +146,18 @@ export function placeName(map, objectives, exfil, hex) {
   let best = Infinity;
   const landmarks = [...objectives.map((o) => ({ label: o.label.toLowerCase(), hexes: o.hexes }))];
   if (exfil.length) landmarks.push({ label: 'exfil', hexes: exfil });
+  // Named places are proper names: no "the", and their own case. An
+  // objective or the exfil wins a tie, being listed first.
+  for (const place of map.places ?? []) landmarks.push({ label: place.name, proper: true, hexes: [{ q: place.at[0], r: place.at[1] }] });
   for (const mark of landmarks) {
     for (const h of mark.hexes) {
       const d = hexDistance(h, hex);
       if (d < best) { best = d; near = mark; }
     }
   }
-  if (near && best === 0) return `the ${near.label}`;
-  if (near && best <= 2) return `the ${ground} by the ${near.label}`;
+  const named = near && (near.proper ? near.label : `the ${near.label}`);
+  if (near && best === 0) return near.proper ? `the ${ground} at ${named}` : named;
+  if (near && best <= 2) return `the ${ground} by ${named}`;
   const across = columnOf(hex.q, hex.r) / map.width;
   const down = hex.r / map.height;
   const ns = down < 1 / 3 ? 'north' : down >= 2 / 3 ? 'south' : '';
