@@ -520,7 +520,7 @@ function drawSites(layers, state, view) {
     layers.sites.appendChild(outline);
     const at = labelPoint(map, objective.hexes);
     const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
-    layers.sites.appendChild(casedText(name, at.x, at.top - map.hexSize * 0.75, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    layers.sites.appendChild(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
