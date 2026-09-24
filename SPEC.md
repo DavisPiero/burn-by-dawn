@@ -557,13 +557,16 @@ Desktop makes the skeuomorphism work properly, so use the room:
   the mission briefing in caption boxes, the alert dial, the turn counter, and the
   **roster rail: all six portraits, always visible**, greying out as men are lost.
 - Paper cream ground, fibre texture, centre-fold crease and gutter shadow between pages.
-- Ben-Day halftone dots for all tonal fill, as SVG `<pattern>` defs.
+- Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, on
+  objectives, on the enemy's vision and in the chrome. Open ground is flat spot colour.
+  Clarity beats texture: the board must read at a glance, as the flat-colour prototype
+  did (M7b).
 - Palette: paper `#F2E8D5`, ink `#1A1A18`, army green `#5C6B4A`, danger red `#C1272D`,
   cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
   the ranking man (his counter's name strip and rank flash, his number on the roster).
   Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
-- Units are **counters**: rounded squares, drop shadow, symbol, name strip. A man who
+- Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
   no easing in or out. A man with no AP left stays fully printed; his counter's edge goes
   grey. Halftone is printed faint, close to the colour beneath it.
@@ -583,6 +586,19 @@ Desktop makes the skeuomorphism work properly, so use the room:
   no new terrain. It is the landmark Vance's landing line refers to, and spires were how
   real sticks checked they had been dropped in the right place.
 - "CUT OUT AND PLAY" margin note in the outer gutter.
+- **Roads and the railway read as continuous lines.** A track is drawn as one smooth road
+  through its hexes' centres, not a motif stamped per hex. A **railway** runs east–west
+  across the board and over the rail bridge, as art only, like the church: no rule, no
+  terrain, no cost. It is why the bridge is there.
+- **The drop is shown.** When the player jumps, a Dakota flies the chosen run's line, and
+  each man's canopy opens where he jumps, drifts downwind to where the rules have already
+  put him, lands and collapses into his parachute marker. It is display only: every
+  landing is decided before it starts. A click or Space skips it.
+- **Terrain motifs are few and bold.** One clear shape per hex at most. A field is plain,
+  with a small mark on a minority of hexes. An enemy's vision is outlined at rest and
+  filled only when that enemy is hovered or selected.
+- **Type is set for reading.** The right page is set at 13–15px at 1280x800, never below
+  12. It carries only what the player needs every turn: detail goes into rollovers.
 
 **Right page layout (notes for M7, from the operator's review of M6).** The panel is too
 busy and the roster runs off the bottom at 1280x800. At M7:
@@ -617,6 +633,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve, RAF diversion | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols; the diversion can be called once, only while the leader lives, and costs the clean-run score |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
+| **M7b** | Visual clean-up: less noise, bigger type, continuous roads and railway, soft counter shadows, the drop shown, redrawn objectives and portraits | The board reads at a glance at 1280x800; no text on the right page is below 12px; the right page has no empty gaps; the drop plays and can be skipped; no rules change |
 | **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is loud and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
 | **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 
