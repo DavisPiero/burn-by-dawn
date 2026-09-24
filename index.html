@@ -93,7 +93,7 @@
       gap: 8px;
       padding: 10px 12px 10px 18px;
       overflow: hidden;
-      font-size: 12px;
+      font-size: 14px;
       background-image:
         linear-gradient(to left, transparent calc(100% - 22px), rgba(70, 50, 25, 0.10) calc(100% - 10px), rgba(40, 28, 12, 0.36)),
         var(--paper-fibre);
@@ -115,7 +115,7 @@
     #seed {
       writing-mode: vertical-rl;
       transform: rotate(180deg);
-      font-size: 10px;
+      font-size: 11px;
       padding: 4px 0;
     }
     #seed a { color: inherit; opacity: 0.6; }
@@ -148,7 +148,7 @@
       padding: 2px 9px;
       font-family: var(--slab);
       font-weight: bold;
-      font-size: 13px;
+      font-size: 15px;
       letter-spacing: 2px;
       color: var(--paper);
       background: var(--ink);
@@ -169,8 +169,8 @@
     #coord-readout {
       flex: 3 1 0;
       min-width: 0;
-      font-size: 13px;
-      line-height: 17px;
+      font-size: 15px;
+      line-height: 20px;
       overflow: hidden;
     }
     #report {
@@ -178,7 +178,7 @@
       min-width: 0;
       overflow-y: auto;
       list-style: none;
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.35;
     }
     #report li { padding: 0 3px; }
@@ -214,14 +214,14 @@
       display: flex;
       align-items: stretch;
       gap: 6px;
-      height: 30px;
+      height: 32px;
     }
     #turn-counter {
       flex: 0 0 auto;
       display: flex;
       align-items: center;
       padding: 0 8px;
-      font-size: 15px;
+      font-size: 17px;
       font-weight: bold;
       letter-spacing: 1px;
       white-space: nowrap;
@@ -236,8 +236,8 @@
     }
     #keys-tab {
       flex: 0 0 auto;
-      padding: 0 6px;
-      font-size: 11px;
+      padding: 0 7px;
+      font-size: 13px;
       font-weight: bold;
       color: var(--ink);
       background: var(--paper);
@@ -259,7 +259,7 @@
     }
     #end-turn {
       padding: 5px;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: bold;
       letter-spacing: 1px;
       background-image: var(--dots-red);
@@ -272,18 +272,22 @@
       border-color: rgba(26, 26, 24, 0.45);
       cursor: default;
     }
+    /* Room for three rows of buttons, the most any man has, so selecting a
+       man never shifts the page. The drop's three runs are one row, and the
+       page closes up under them rather than leaving the rest empty. */
     #actions {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 5px;
-      min-height: 94px;
+      gap: 6px;
+      min-height: 98px;
       align-content: start;
     }
+    #actions.runs { min-height: 0; }
     #actions.idle {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 14px;
       opacity: 0.6;
       border: 2px dashed rgba(26, 26, 24, 0.35);
     }
@@ -292,79 +296,100 @@
     .action:disabled { pointer-events: none; }
     .action {
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      padding: 2px 5px;
+      align-items: center;
+      height: 29px;
+      padding: 0 4px;
       text-align: left;
     }
     .action.active {
       color: var(--paper);
       background: var(--blue);
     }
+    .action-key {
+      flex: 0 0 auto;
+      min-width: 11px;
+      margin-right: 5px;
+      padding: 0 3px;
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 17px;
+      text-align: center;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    .action:disabled .action-key { background: rgba(26, 26, 24, 0.45); }
+    .action.active .action-key { color: var(--blue); background: var(--paper); }
     .action-name {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: bold;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
     }
-    .action-cost {
-      font-size: 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
 
-    #alert {
+    /* The dial, its state, and beside them the one thing that moves the dial
+       down: the RAF diversion. */
+    #alert-row {
       flex: 0 0 auto;
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+    }
+    #alert {
+      flex: 1 1 auto;
+      min-width: 0;
       display: flex;
       align-items: center;
       gap: 10px;
       cursor: help;
     }
     #alert-dial {
-      flex: 0 0 70px;
-      width: 70px;
-      height: 70px;
+      flex: 0 0 76px;
+      width: 76px;
+      height: 76px;
     }
     .alert-heading {
       font-family: var(--slab);
       font-weight: bold;
-      font-size: 13px;
-      letter-spacing: 2px;
+      font-size: 14px;
+      letter-spacing: 1px;
+      white-space: nowrap;
     }
     .alert-state {
       display: inline-block;
       margin: 2px 0;
       padding: 0 6px;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: bold;
       letter-spacing: 1px;
       color: var(--paper);
     }
-    .alert-note { font-size: 11px; }
+    .alert-note { font-size: 13px; }
 
     #mission-box { flex: 0 0 auto; }
     #mission {
-      margin: 0 0 5px;
+      margin: 0;
       padding: 0;
       list-style: none;
-      font-size: 12px;
-      line-height: 1.35;
+      font-size: 14px;
+      line-height: 1.45;
     }
-    #mission li::before { content: "▸ "; }
-    #mission .done { text-decoration: line-through; text-decoration-color: var(--red); }
-    #mission i { font-style: normal; opacity: 0.7; }
+    #mission li { display: flex; gap: 6px; }
+    #mission li span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #mission li span:last-child { flex: 0 0 auto; }
+    #mission .done span:first-child { text-decoration: line-through; text-decoration-color: var(--red); }
+    #mission i { font-style: normal; opacity: 0.65; }
     #diversion {
-      width: 100%;
-      padding: 3px;
-      font-size: 12px;
+      flex: 0 0 104px;
+      padding: 4px 5px;
+      font-size: 13px;
       font-weight: bold;
+      line-height: 1.25;
       color: var(--paper);
       background: var(--blue);
     }
+    #diversion small { display: block; font-size: 12px; font-weight: normal; }
 
     /* The roster rail (SPEC.md §11): all six, always visible, greying out as
        men are lost. One row each — a small portrait and four lines about the
@@ -383,7 +408,7 @@
     .slot {
       position: relative;
       display: flex;
-      gap: 7px;
+      gap: 9px;
       min-height: 0;
       padding: 2px 6px 2px 2px;
       background: var(--paper);
@@ -410,9 +435,9 @@
       position: absolute;
       top: 0;
       left: 0;
-      padding: 0 4px;
+      padding: 0 5px;
       font-weight: bold;
-      font-size: 11px;
+      font-size: 13px;
       color: var(--paper);
       background: var(--ink);
     }
@@ -423,14 +448,15 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      font-size: 11px;
-      line-height: 13px;
+      gap: 2px;
+      font-size: 13px;
+      line-height: 16px;
     }
     .slot-name {
       display: flex;
       justify-content: space-between;
       gap: 6px;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: bold;
     }
     .slot-name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -441,7 +467,7 @@
       text-overflow: ellipsis;
     }
     .slot-warn { color: var(--red); font-weight: bold; }
-    .slot-trait { opacity: 0.75; }
+    .slot-trait { opacity: 0.7; }
 
     /* The results: the back page of the annual (SPEC.md §10), printed over
        the right page, the board still open beside it. */
@@ -493,7 +519,7 @@
       max-width: 340px;
       padding: 6px 9px;
       font-family: var(--typewriter);
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.4;
       color: var(--ink);
       background: var(--paper);
@@ -502,7 +528,7 @@
       pointer-events: none;
       white-space: pre-line;
     }
-    #popup b { font-size: 13px; }
+    #popup b { font-size: 15px; }
     #popup .popup-portrait {
       float: left;
       width: 96px;
@@ -537,14 +563,16 @@
         <button id="end-turn" type="button"></button>
         <div id="actions"></div>
       </div>
-      <div id="alert">
-        <svg id="alert-dial" viewBox="0 0 240 240"></svg>
-        <div id="alert-caption"></div>
+      <div id="alert-row">
+        <div id="alert">
+          <svg id="alert-dial" viewBox="0 0 240 240"></svg>
+          <div id="alert-caption"></div>
+        </div>
+        <button id="diversion" type="button"></button>
       </div>
       <div id="mission-box" class="caption">
         <div class="caption-head">MISSION BRIEFING</div>
         <ul id="mission"></ul>
-        <button id="diversion" type="button"></button>
       </div>
       <ul id="roster"></ul>
       <section id="results" hidden></section>

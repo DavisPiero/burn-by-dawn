@@ -216,10 +216,13 @@ export const SELECTION = {
   strokeWidth: 4,
 };
 
-// Counters are 56px inside an 80px hex so the hex edge stays visible under
-// them — ART-ASSETS.md §3.
+// Counters are drawn in a 56px sprite space (ART-ASSETS.md §3) and printed at
+// `drawn` inside an 80px hex, so the hex edge stays visible under them.
 export const COUNTER = {
   size: 56,
+  // Printed a little larger than the sprite, so the name strip reads at the
+  // size the board is shown at; the hex edge still shows round it (M7b).
+  drawn: 64,
   // The name strip is 52 wide with the roster number boxed off at its left,
   // so this is what is left for the name itself.
   nameBoxLeft: 14,
@@ -231,7 +234,7 @@ export const COUNTER = {
   edge: PALETTE.ink,
   spentEdge: '#A39E90',
   nameFill: PALETTE.paper,
-  nameSize: 9,
+  nameSize: 10.5,
   // Glyphs are never stretched to fill the strip — a long name scales down as
   // whole type instead. Roughly the width of one character at font-size 1.
   nameAspect: 0.62,
@@ -280,7 +283,7 @@ export const PATH = {
 
 export const ENEMY = {
   labelFill: PALETTE.paper,
-  labelSize: 8.5,
+  labelSize: 10,
   labelBoxLeft: 4,
   labelBoxRight: 52,
   // The small wedge outside the counter that says which way it is looking.
@@ -384,6 +387,7 @@ export const OBJECTIVE = {
   label: PALETTE.ink,
   labelCasing: PALETTE.paper,
   primaryLabel: PALETTE.red,
+  labelSize: 16,
   ringRadius: 17,
   ringStroke: PALETTE.ink,
   ringDash: '4 3',
@@ -567,13 +571,10 @@ function label(content, attrs) {
 
 // Both allied frames are the same die-cut silhouette so the six read as one
 // set of chits; only the name strip's colour and the rank flash differ. The
-// drop shadow is part of the frame, down-right 2px and hard edged: a cardboard
-// chit, not a soft UI shadow (ART-ASSETS.md §3).
+// shadow is not part of the frame: it is counter-shadow, drawn under it.
 function alliedFrame(stripClass, extras = []) {
   return [
-    svg('rect', { x: 3, y: 3, width: 52, height: 52, rx: 5, class: 'ink', 'fill-opacity': 0.6 }),
     svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, class: 'paper' }),
-    svg('rect', { x: 1, y: 1, width: 52, height: 37, rx: 5, class: toneClass('green', 10) }),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', stripClass),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', toneClass('ink', 20)),
     ...extras,
@@ -933,6 +934,20 @@ const SPRITES = {
     ]),
   },
 
+  // A soft shadow under every counter, down-right, as if the chit is lifted
+  // off the page (SPEC.md §11, M7b). Soft without an SVG filter: a stack of
+  // faint rounded squares, each a little bigger than the last.
+  'counter-shadow': {
+    viewBox: '0 0 56 56',
+    draw: () => Array.from({ length: 6 }, (_, i) => {
+      const grow = i * 1.6;
+      return svg('rect', {
+        x: 5 - grow, y: 6 - grow, width: 50 + grow * 2, height: 50 + grow * 2, rx: 6 + grow,
+        class: 'ink', 'fill-opacity': 0.11,
+      });
+    }),
+  },
+
   'symbol-sapper': {
     viewBox: '0 0 24 24',
     draw: () => [
@@ -964,7 +979,6 @@ const SPRITES = {
   'counter-frame-enemy': {
     viewBox: '0 0 56 56',
     draw: () => [
-      fill(ENEMY_OUTLINE, 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.6 }),
       fill(ENEMY_OUTLINE, 'ink'),
       fill('M1 38 H53 V45 L45 53 H9 L1 45 Z', 'red'),
       fill('M1 38 H53 V45 L45 53 H9 L1 45 Z', toneClass('ink', 20)),

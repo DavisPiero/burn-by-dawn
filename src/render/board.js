@@ -411,10 +411,10 @@ function drawBlasts(layers, state, now) {
 function drawSpeech(layers, state, speakers) {
   const { map } = layers;
   const edge = boardEdges(map);
-  const half = COUNTER.size / 2;
+  const half = COUNTER.drawn / 2;
   const counterBox = (at) => {
     const c = axialToPixel(at.q, at.r, map.hexSize);
-    return { x: c.x - half - 4, y: c.y - half - 4, width: COUNTER.size + 8, height: COUNTER.size + 8 };
+    return { x: c.x - half - 4, y: c.y - half - 4, width: COUNTER.drawn + 8, height: COUNTER.drawn + 8 };
   };
   const taken = [
     ...state.units.filter((u) => u.landed && !u.dead && !u.out).map(counterBox),
@@ -571,7 +571,7 @@ function labelPoint(map, hexes) {
 
 function casedText(content, x, y, fill) {
   const g = el('g', {});
-  const attrs = { x, y, 'font-size': 14, 'font-weight': 'bold', 'letter-spacing': 1 };
+  const attrs = { x, y, 'font-size': OBJECTIVE.labelSize, 'font-weight': 'bold', 'letter-spacing': 1 };
   g.appendChild(text(content, { ...attrs, fill: 'none', stroke: OBJECTIVE.labelCasing, 'stroke-width': 5, 'stroke-linejoin': 'round' }));
   g.appendChild(text(content, { ...attrs, fill }));
   return g;
@@ -597,7 +597,7 @@ function drawParachute(layers, chute) {
   const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
   const size = MARKER.size;
   layers.tokens.appendChild(el('use', {
-    href: '#marker-parachute', x: p.x - COUNTER.size / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
+    href: '#marker-parachute', x: p.x - COUNTER.drawn / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
   }));
 }
 
@@ -972,11 +972,20 @@ function polyline(points, attrs) {
 // the selection ring are drawn here as geometry: they are readouts of state,
 // not artwork, and they have no asset id.
 
+/**
+ * Counters are drawn in their 56-unit sprite space (ART-ASSETS.md §3) and
+ * printed at COUNTER.drawn on the board, centred on the hex.
+ */
+function counterPlace(center) {
+  const half = COUNTER.drawn / 2;
+  return `translate(${center.x - half}, ${center.y - half}) scale(${COUNTER.drawn / COUNTER.size})`;
+}
+
 function drawCounter(unit, number, map, isSelected) {
   const center = axialToPixel(unit.q, unit.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', {
-    transform: `translate(${center.x - size / 2}, ${center.y - size / 2})`,
+    transform: counterPlace(center),
     opacity: unit.hidden ? MARKER.hiddenOpacity : 1,
   });
   // A man with no AP left is done for the turn: his die-cut edge goes grey.
@@ -984,6 +993,7 @@ function drawCounter(unit, number, map, isSelected) {
   const body = el('g', {});
   group.appendChild(body);
 
+  group.insertBefore(el('use', { href: '#counter-shadow', width: size, height: size }), body);
   body.appendChild(el('use', { href: `#${counterFrameId(unit)}`, width: size, height: size }));
   body.appendChild(el('use', {
     href: `#${portraitId(unit.id, 'chip')}`, x: COUNTER.chip.x, y: COUNTER.chip.y, width: COUNTER.chip.size, height: COUNTER.chip.size,
@@ -1042,7 +1052,7 @@ function drawCounter(unit, number, map, isSelected) {
 function drawEnemy(enemy, map, isHovered, hears) {
   const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
   const size = COUNTER.size;
-  const group = el('g', { transform: `translate(${center.x - size / 2}, ${center.y - size / 2})` });
+  const group = el('g', { transform: counterPlace(center) });
 
   const d = NEIGHBOR_DIRS[enemy.facing];
   const toward = axialToPixel(d.q, d.r, 1);
@@ -1058,6 +1068,7 @@ function drawEnemy(enemy, map, isHovered, hears) {
 
   const body = el('g', {});
   group.appendChild(body);
+  group.insertBefore(el('use', { href: '#counter-shadow', width: size, height: size }), body);
   body.appendChild(el('use', { href: '#counter-frame-enemy', width: size, height: size }));
   body.appendChild(el('use', { href: `#${enemySymbolId(enemy.type)}`, width: size, height: size }));
 

@@ -379,20 +379,25 @@ export function renderMission(element, mission) {
   element.replaceChildren();
   for (const o of mission.objectives) {
     const item = html('li', o.destroyed ? 'done' : null);
-    const name = html('b', null, o.primary ? `${o.label} ★` : o.label);
-    // SPEC.md §10: only the primary is needed to win. Say so, or the three
-    // read as a checklist.
-    const role = html('i', null, o.primary ? ' needed' : ` optional, +${o.points}`);
-    item.append(name, role, ` — ${o.detail}`);
+    // SPEC.md §10: only the primary is needed to win. The star says so, and
+    // the optional ones carry their score, or the three read as a checklist.
+    const name = html('span', null, [html('b', null, o.primary ? `★ ${o.label}` : o.label), html('i', null, o.primary ? ' needed' : ` +${o.points}`)]);
+    item.append(name, html('span', null, o.progress));
+    attachPopup(item, () => [
+      html('b', null, o.label.toUpperCase()),
+      `\n${o.primary ? 'Primary: needed to win.' : `Optional: +${o.points} score.`}\n${o.detail}.`,
+    ]);
     element.appendChild(item);
   }
-  element.appendChild(html('li', null, `Men out: ${mission.out} of ${mission.minimumOut} needed`));
+  const out = html('li', null, [html('span', null, 'Men out at the exfil'), html('span', null, `${mission.out}/${mission.minimumOut}`)]);
+  attachPopup(out, [html('b', null, 'MEN OUT'), `\nAt least ${mission.minimumOut} must reach the exfil for the mission to count.`]);
+  element.appendChild(out);
 }
 
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
-  button.textContent = check.ok ? 'RAF DIVERSION [D] — once, no AP' : `RAF diversion — ${check.reason}`;
+  button.replaceChildren('RAF DIVERSION', html('small', null, check.ok ? '[D] once, no AP' : check.reason));
 }
 
 export const DIVERSION_HELP = 'The alert drops a state, every search and held contact is dropped, every man is out of contact. Once per mission, while the leader lives. Costs the clean-run bonus.';
@@ -460,11 +465,9 @@ export function renderResults(element, outcome) {
 export function renderDropRuns(element, runs, onChoose) {
   element.replaceChildren();
   element.classList.remove('idle');
+  element.classList.add('runs');
   for (const run of runs) {
-    const button = html('button', 'action', [
-      html('span', 'action-name', `${run.label} [${run.key}]`),
-      html('span', 'action-cost', `wind ${run.wind}`),
-    ]);
+    const button = html('button', 'action', [html('span', 'action-key', run.key), html('span', 'action-name', run.label)]);
     button.type = 'button';
     if (run.selected) button.classList.add('active');
     attachPopup(button, () => describeRun(run));
@@ -489,13 +492,14 @@ export function renderSeed(element, seed) {
 }
 
 /**
- * The selected man's actions (SPEC.md §4), as buttons with their key and cost.
+ * The selected man's actions (SPEC.md §4), as buttons with their key and name.
  * `actions` is worked out in main.js: [{ id, key, label, cost, ok, reason,
  * help, active }]. What an action does, and why it cannot be taken, are its
  * rollover.
  */
 export function renderActions(element, actions, onAction) {
   element.replaceChildren();
+  element.classList.remove('runs');
   if (!actions) {
     element.classList.add('idle');
     element.textContent = 'Select a man: 1–6, Tab, or click him.';
@@ -503,10 +507,9 @@ export function renderActions(element, actions, onAction) {
   }
   element.classList.remove('idle');
   for (const action of actions) {
-    const button = html('button', 'action', [
-      html('span', 'action-name', `[${action.key}] ${action.label}`),
-      html('span', 'action-cost', action.active ? 'click a target' : action.ok ? action.cost : action.reason),
-    ]);
+    // Key and verb only; the cost, and why not, are the rollover, which has
+    // the full name where the button has a short one.
+    const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-name', action.short ?? action.label)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
     button.disabled = !action.ok && !action.active;

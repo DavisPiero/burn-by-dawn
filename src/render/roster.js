@@ -1,8 +1,9 @@
 // The roster rail (SPEC.md §11): the six, always visible, in roster order,
-// greying out as men are lost. One row each: a small portrait and four lines —
-// name and AP, condition or loadout, where he is, his trait — with the full
-// particulars and a bigger portrait as the row's rollover. Reads state, never
-// mutates it (CLAUDE.md rule 7); clicks and hovers are handed back to the caller.
+// greying out as men are lost. One row each: a portrait and three short lines —
+// name and AP, condition or loadout, the name of his trait — with the full
+// particulars (where he is, what the trait does) and a bigger portrait as the
+// row's rollover. Reads state, never mutates it (CLAUDE.md rule 7); clicks and
+// hovers are handed back to the caller.
 
 import { terrainAt } from '../map.js';
 import { portraitId } from './theme.js';
@@ -56,8 +57,7 @@ export function renderRoster(element, state, map, view, handlers) {
     const text = html('div', 'slot-text', [
       html('div', 'slot-name', [html('span', null, unit.name), html('span', null, apText(unit))]),
       conditionLine(unit),
-      html('div', 'slot-line', whereLine(unit, view)),
-      html('div', 'slot-line slot-trait', effects.map((e) => `${e.name}: ${describeEffect(e)}`).join(' · ') || ' '),
+      html('div', 'slot-line slot-trait', effects.map((e) => e.name).join(' · ') || ' '),
     ]);
     slot.append(portrait, text);
 
@@ -85,13 +85,6 @@ function conditionLine(unit) {
   if (unit.commandBonus > 0) bits.push(`+${unit.commandBonus} orders`);
   if (unit.leader) bits.push('leading');
   return html('div', 'slot-line', bits.join(' · '));
-}
-
-function whereLine(unit, view) {
-  if (unit.dead) return 'left where he fell';
-  if (unit.out) return 'at the exfil';
-  if (!unit.landed) return 'in the aircraft';
-  return view.place(unit);
 }
 
 function conditions(unit) {
