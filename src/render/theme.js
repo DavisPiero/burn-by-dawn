@@ -317,7 +317,9 @@ export const PATH = {
   overspendStroke: PALETTE.ink,
   overspendOpacity: 0.45,
   overspendDash: '6 7',
-  stepRadius: 7,
+  stepRadius: 10,
+  stepFill: PALETTE.paper,
+  stepFontSize: 13,
   badgeFill: PALETTE.ink,
   badgeText: PALETTE.paper,
   blockedStroke: PALETTE.red,
@@ -417,6 +419,11 @@ export const RISK = {
   shotFill: PALETTE.red,
   pinnedFill: PALETTE.ink,
   shotText: PALETTE.paper,
+  // The cross over a hex on the path where he would be spotted.
+  crossStroke: PALETTE.red,
+  crossCasing: PALETTE.paper,
+  crossWidth: 5,
+  crossSize: 22,
 };
 
 // SPEC.md §7, §10: objectives, their charge hexes, charges burning, blasts

@@ -1094,6 +1094,13 @@ function drawRisk(layers, plan, risk) {
     const result = risk[i];
     if (!result) return;
     const at = axialToPixel(hex.q, hex.r, map.hexSize);
+    // Spotted there: a marker-pen cross over the hex, under the step count.
+    if (result.spotted) {
+      const s = RISK.crossSize;
+      const d = `M${at.x - s} ${at.y - s} Q${at.x - 2} ${at.y + 3} ${at.x + s} ${at.y + s} M${at.x + s} ${at.y - s} Q${at.x + 3} ${at.y - 1} ${at.x - s} ${at.y + s}`;
+      layers.reachable.appendChild(el('path', { d, fill: 'none', stroke: RISK.crossCasing, 'stroke-width': RISK.crossWidth + 4, 'stroke-linecap': 'round' }));
+      layers.reachable.appendChild(el('path', { d, fill: 'none', stroke: RISK.crossStroke, 'stroke-width': RISK.crossWidth, 'stroke-linecap': 'round' }));
+    }
     const count = result.threshold;
     const filled = Math.max(0, Math.min(count, result.score));
     const width = count * RISK.pipGap + 6;
@@ -1224,24 +1231,27 @@ function drawPlan(layers, plan) {
     }));
   }
 
+  // Each step carries the AP spent by the time he gets there, as a wargame
+  // map's movement count along a road: past what he has, it goes grey.
   points.forEach((point, i) => {
     if (i === 0) return;
     const withinReach = i <= split;
-    layers.path.appendChild(el('circle', {
-      cx: point.x,
-      cy: point.y,
-      r: PATH.stepRadius,
-      fill: withinReach ? PATH.lineStroke : 'none',
-      stroke: withinReach ? PATH.lineStroke : PATH.overspendStroke,
-      'stroke-opacity': withinReach ? 1 : PATH.overspendOpacity,
-      'stroke-width': 2,
+    const colour = withinReach ? PATH.lineStroke : PATH.overspendStroke;
+    const step = el('g', { opacity: withinReach ? 1 : PATH.overspendOpacity + 0.2 });
+    step.appendChild(el('circle', {
+      cx: point.x, cy: point.y, r: PATH.stepRadius, fill: PATH.stepFill, stroke: colour, 'stroke-width': 2.5,
+      ...(withinReach ? {} : { 'stroke-dasharray': '3 2.5' }),
     }));
+    step.appendChild(text(String(plan.costs?.[i] ?? i), {
+      x: point.x, y: point.y + 1, 'font-size': PATH.stepFontSize, 'font-weight': 'bold', fill: colour,
+    }));
+    layers.path.appendChild(step);
   });
 
-  // Hovering his own hex is not a move: no badge. It would sit under his
-  // counter, and "0 AP" says nothing. The risk pips for standing still stay.
+  // The count says the cost; the badge is kept only for the one move the
+  // numbers cannot explain, a single step that spends his whole pool.
   const end = points[points.length - 1];
-  if (end && plan.steps > 0) drawCostBadge(layers.path, end, plan);
+  if (end && plan.steps > 0 && plan.minimumStep) drawCostBadge(layers.path, end, plan);
 }
 
 function drawCostBadge(layer, at, plan) {
