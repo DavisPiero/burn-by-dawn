@@ -97,7 +97,7 @@ accepted, so they match.
 | Size | **1:1, 128 × 128 px** |
 | Format | PNG, 8-bit sRGB, **transparent background** |
 | Framing | Helmet and face only, **filling the frame** |
-| Shown at | About **15 px**. This is an icon, not a portrait. |
+| Shown at | About **25 px**, on a solid green counter. This is an icon, not a portrait. |
 
 ### Prompt
 
@@ -107,10 +107,12 @@ input:
 > Icon of the same soldier: helmet and face only, filling the square frame, front view.
 > Extreme simplification: thick black ink outline, three flat colours, no halftone, no
 > shading detail. His one distinguishing feature, [THE FEATURE], drawn oversized so it
-> reads at 16 pixels. Transparent background. [STYLE BLOCK]
+> reads at 25 pixels. Transparent background. [STYLE BLOCK]
 
 **Tip:** it's often quicker to make these by hand from the portrait than to generate
-them. Crop, posterise to 4 colours, redraw the outline thicker. Check them at 16 px.
+them. Crop, posterise to 4 colours, redraw the outline thicker. Check them at 25 px.
+The counter behind them is army green, so give the helmet a clear ink outline or it will
+melt into it.
 
 ---
 
@@ -124,7 +126,7 @@ very low risk: it sits under everything at low opacity.
 | File | `assets/paper/paper-fibre.png` |
 | Size | **2048 × 2048 px**, must tile seamlessly |
 | Format | PNG, 8-bit **greyscale + alpha**, very low contrast |
-| Code does | Multiplies it over the cream at low opacity. The colour comes from code. |
+| Code does | Lays it over the cream, tiled at 1024 px. The colour comes from code, so all the texture must be in the alpha. |
 
 ### Prompt
 
