@@ -33,7 +33,7 @@ import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup,
+  renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -936,6 +936,29 @@ function describeDiversionCard(before) {
   };
 }
 
+/** A marker on a man's counter, in words — [heading, text]: what it means and what to do about it. */
+function describeMarker(id, unit) {
+  const name = unit.shortName;
+  if (id === 'marker-spotted') {
+    return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
+      + 'If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover.\n'
+      + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [G], or have a gunner suppress it [S].'];
+  }
+  if (id === 'marker-wounded') {
+    const left = rules.combat.hitsToKill - unit.hits;
+    return ['WOUNDED', `${name} is down to ${rules.combat.woundedActionPoints} AP and cannot carry a charge. ${left === 1 ? 'One more hit kills him' : `${left} more hits kill him`}. `
+      + 'A man beside him can stabilise him [A]: a full turn, and he gets his full AP back.'];
+  }
+  if (id === 'marker-hidden') {
+    return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP. Hold [H] to stay down.`];
+  }
+  if (id === 'marker-orders') {
+    const leader = state.units.find((u) => u.leader);
+    return ['ORDERS', `${name} started this turn within ${rules.command.radius} hexes of ${leader?.shortName ?? 'the leader'}: +${unit.commandBonus} AP this turn.`];
+  }
+  return ['', ''];
+}
+
 /** Jump, and show the stick going out and coming down. */
 function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
@@ -1156,6 +1179,8 @@ try {
     onRunHover: (runId, anchor) => showPopup(anchor, describeRun(currentView.dropRuns.find((r) => r.id === runId))),
     onRunLeave: hidePopup,
     onRunChoose: handleChooseRun,
+    onMarkerHover: (id, unitId, anchor) => showPopup(anchor, titled(...describeMarker(id, state.units.find((u) => u.id === unitId)))),
+    onMarkerLeave: hidePopup,
   });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of

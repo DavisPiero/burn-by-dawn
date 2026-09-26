@@ -66,6 +66,11 @@ export function dropStalePopup() {
   if (popupAnchor && !popupAnchor.isConnected) hidePopup();
 }
 
+/** A rollover's usual content: a bold heading, then the text under it. */
+export function titled(heading, body) {
+  return [html('b', null, heading), `\n${body}`];
+}
+
 /** Give an element a rollover. `content` may be a function, so it is built when shown. */
 export function attachPopup(element, content) {
   element.addEventListener('mouseenter', () => showPopup(element, content));

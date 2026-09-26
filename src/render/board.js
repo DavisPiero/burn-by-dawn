@@ -560,9 +560,10 @@ export function renderPieces(layers, state, view) {
     // in three places.
     const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
     // In contact top right, where the eye goes first; his condition top left.
-    if (unit.inContact) counter.appendChild(marker('marker-spotted', 38, -12));
-    if (unit.hits > 0 && !unit.stabilised) counter.appendChild(marker('marker-wounded', -6, -12));
-    if (unit.hidden) counter.appendChild(marker('marker-hidden', 38, 38));
+    // Each marker has a rollover saying what it means (M11).
+    if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
+    if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
+    if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -994,6 +995,20 @@ function casedText(content, x, y, fill) {
 
 function marker(id, x, y) {
   return el('use', { href: `#${id}`, x, y, width: MARKER.size, height: MARKER.size });
+}
+
+/**
+ * A marker on one of our counters that takes the mouse, for its rollover: the
+ * handlers given to createBoard say what it means. A click on it is a click on
+ * his hex, as if the marker were not there.
+ */
+function hoverMarker(layers, id, x, y, unit) {
+  const node = marker(id, x, y);
+  node.setAttribute('pointer-events', 'all');
+  node.addEventListener('mouseenter', () => layers.handlers.onMarkerHover?.(id, unit.id, node));
+  node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
+  node.addEventListener('click', () => layers.handlers.onHexClick(unit.q, unit.r));
+  return node;
 }
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
