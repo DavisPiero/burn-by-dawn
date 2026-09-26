@@ -264,16 +264,22 @@ export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
   let worst = null;
   const spotters = [];
   let firing = false;
+  // How close the nearest enemy is that would fire on him here (M13b: a
+  // shot from far off pins rather than hits).
+  let firingDistance = null;
   for (const enemy of enemies) {
     const result = detectionScore(map, rules, enemy, alertPoints, unit, hex);
     if (!result) continue;
     if (result.spotted) {
       spotters.push(enemy.id);
-      if (!result.suppressed) firing = true;
+      if (!result.suppressed) {
+        firing = true;
+        firingDistance = Math.min(firingDistance ?? Infinity, result.distance);
+      }
     }
     if (!worst || result.score > worst.score) worst = result;
   }
-  return worst ? { ...worst, spotters, firing } : null;
+  return worst ? { ...worst, spotters, firing, firingDistance } : null;
 }
 
 /**
@@ -288,11 +294,16 @@ export function testedHexes(unit) {
 
 /**
  * What a shot does to a man standing on this detection result's hex: 'hit' or
- * 'pinned', by the cover there (SPEC.md §5 Wounds). No dice, so the hover
- * readout and the detection phase always agree.
+ * 'pinned', by the cover there (SPEC.md §5 Wounds) — and since M13b by range:
+ * if every enemy that would fire is more than `combat.hitRange` hexes off, a
+ * shot that would hit only pins. No dice, so the hover readout and the
+ * detection phase always agree.
  */
 export function shotResultOf(result, rules) {
-  return rules.combat.shotResult[result.coverLabel];
+  const byCover = rules.combat.shotResult[result.coverLabel];
+  const range = rules.combat.hitRange;
+  if (byCover === 'hit' && range != null && result.firingDistance != null && result.firingDistance > range) return 'pinned';
+  return byCover;
 }
 
 /**
@@ -455,6 +466,26 @@ export function makeNoise(state, kind, hex, alertAmount, rules) {
 }
 
 /**
+ * A thrown stone turns the sentries in earshot at once, in the player phase
+ * (M13b): each faces the stone, and holds it through the detection check;
+ * `turned` sends it back to its post at the start of the enemy phase. Patrols
+ * are left to walk over in the enemy phase, as before. Returns the enemies and
+ * the ids it turned, which that noise then does not turn again.
+ */
+export function turnSentriesNow(enemies, kind, hex, alertPoints, rules) {
+  const turned = [];
+  const next = enemies.map((e) => {
+    const sentry = e.speed === 0 || (e.guard && sameHex(e, e.guard));
+    if (!sentry || e.holding || e.suppressed || hexDistance(e, hex) > hearingRadius(kind, alertPoints, rules)) return e;
+    const facing = facingToward(e, hex);
+    if (facing < 0) return e;
+    turned.push(e.id);
+    return { ...e, facing, turned: true };
+  });
+  return { enemies: next, turned };
+}
+
+/**
  * Hand the queued noises out to the enemies that hear them (SPEC.md §6
  * "Noise"). Each noise in turn becomes the last known contact — unless it is
  * a repeat: a noise on a hex enemies are already heading to or searching
@@ -469,8 +500,10 @@ function hearNoises(enemies, noises, contact, alertPoints, rules) {
     if (repeat) continue;
     contact = { q: noise.q, r: noise.r, searched: false };
 
+    // Sentries a stone already turned in the player phase are not turned again.
     const heard = new Set(
-      listeners(enemies, noise.kind, noise, alertPoints, rules).filter((e) => !e.holding).map((e) => e.id),
+      listeners(enemies, noise.kind, noise, alertPoints, rules)
+        .filter((e) => !e.holding && !(noise.turnedNow ?? []).includes(e.id)).map((e) => e.id),
     );
     if (heard.size === 0) continue;
     const labels = [];

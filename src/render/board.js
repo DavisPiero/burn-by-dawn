@@ -541,6 +541,12 @@ export function renderPieces(layers, state, view) {
 
   drawArt(layers, state, view);
   drawVision(layers, view.visionById, view.hoverEnemy);
+  // What the hovered enemy will see next turn, if the turn ended now (M13b):
+  // a dashed outline only, so it never reads as this turn's risk.
+  if (view.hoverEnemyNextArea) {
+    drawAreaEdge(layers, layers.vision, view.hoverEnemyNextArea, [[VISION.edgeCasing, VISION.edgeCasingWidth]]);
+    drawAreaEdge(layers, layers.vision, view.hoverEnemyNextArea, [[VISION.nextEdge, VISION.nextEdgeWidth]], { 'stroke-dasharray': VISION.nextDash });
+  }
   drawSites(layers, state, view);
   if (view.drop) drawDrop(layers, view.drop);
 
@@ -586,7 +592,7 @@ export function renderPieces(layers, state, view) {
 
   for (const enemy of state.enemies) {
     const hovered = enemy.id === view.hoverEnemy?.id;
-    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id));
+    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id), view.nextFacing?.get(enemy.id));
     // Suppressed, or still open to a kill after it (SPEC.md §4): both are
     // under the gunner's fire, and the hover says which.
     if (enemy.suppressed || enemy.openToKill) counter.appendChild(marker('marker-suppressed', 38, -12));
@@ -1780,22 +1786,27 @@ function drawCounter(unit, number, map, isSelected) {
 
 // Enemy counters: frame, type, a strip naming the type, and a wedge outside
 // the counter pointing the way it faces.
-function drawEnemy(enemy, map, isHovered, hears) {
+function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
   const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', { transform: counterPlace(center) });
 
-  const d = NEIGHBOR_DIRS[enemy.facing];
-  const toward = axialToPixel(d.q, d.r, 1);
-  const len = Math.hypot(toward.x, toward.y);
-  const ux = toward.x / len, uy = toward.y / len;
-  const tip = { x: size / 2 + ux * (ENEMY.facingDistance + ENEMY.facingSize), y: size / 2 + uy * (ENEMY.facingDistance + ENEMY.facingSize) };
-  const base = { x: size / 2 + ux * ENEMY.facingDistance, y: size / 2 + uy * ENEMY.facingDistance };
-  const w = ENEMY.facingSize;
-  group.appendChild(el('polygon', {
-    points: `${tip.x},${tip.y} ${base.x - uy * w},${base.y + ux * w} ${base.x + uy * w},${base.y - ux * w}`,
-    fill: ENEMY.facingFill, stroke: ENEMY.facingStroke, 'stroke-width': 1.5,
-  }));
+  const wedge = (facing, attrs) => {
+    const d = NEIGHBOR_DIRS[facing];
+    const toward = axialToPixel(d.q, d.r, 1);
+    const len = Math.hypot(toward.x, toward.y);
+    const ux = toward.x / len, uy = toward.y / len;
+    const tip = { x: size / 2 + ux * (ENEMY.facingDistance + ENEMY.facingSize), y: size / 2 + uy * (ENEMY.facingDistance + ENEMY.facingSize) };
+    const base = { x: size / 2 + ux * ENEMY.facingDistance, y: size / 2 + uy * ENEMY.facingDistance };
+    const w = ENEMY.facingSize;
+    return el('polygon', { points: `${tip.x},${tip.y} ${base.x - uy * w},${base.y + ux * w} ${base.x + uy * w},${base.y - ux * w}`, ...attrs });
+  };
+  // Which way it will face next turn, if that is not the way it faces now
+  // (M13b): a hollow dashed wedge beside the solid one.
+  if (nextFacing != null && nextFacing !== enemy.facing) {
+    group.appendChild(wedge(nextFacing, { fill: ENEMY.nextFill, stroke: ENEMY.facingFill, 'stroke-width': 1.5, 'stroke-dasharray': '2.5 1.5' }));
+  }
+  group.appendChild(wedge(enemy.facing, { fill: ENEMY.facingFill, stroke: ENEMY.facingStroke, 'stroke-width': 1.5 }));
 
   const body = el('g', {});
   group.appendChild(body);

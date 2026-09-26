@@ -485,9 +485,15 @@ export const ENEMY = {
   facingStroke: PALETTE.ink,
   facingDistance: 33,
   facingSize: 7,
+  // Next turn's facing, when it differs (M13b): hollow, dashed in red.
+  nextFill: PALETTE.paper,
 };
 
 export const VISION = {
+  // The hovered enemy's next-turn view (M13b): a dashed ink outline.
+  nextEdge: PALETTE.ink,
+  nextEdgeWidth: 2.5,
+  nextDash: '6 5',
   fill: PALETTE.red,
   opacity: 0.13,
   hoverOpacity: 0.3,

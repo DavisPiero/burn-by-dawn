@@ -424,7 +424,7 @@ export function describeEvent(event, place) {
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
-    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in heavy cover, not hit.`;
+    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned, not hit (heavy cover, or too far off to hit him).`;
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} in ${at()}.`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
@@ -914,7 +914,10 @@ export function renderReadout(element, state, map, view) {
     if (e.suppressed) doing = `SUPPRESSED — will not fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
     else if (e.openToKill && e.killable) doing = `${doing}; still shaken — a gunner can kill it this turn`;
     const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
-    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}`);
+    // What it will do if the turn ended now (M13b), which the dashed outline shows.
+    const n = view.hoverEnemyNext;
+    const next = !n ? '' : `${READOUT_GAP}Next turn, as things stand: ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).`;
+    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}${next}`);
     return;
   }
   if (!hex) {

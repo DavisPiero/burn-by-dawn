@@ -2,7 +2,9 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
-import { alertIndex, decayTarget, detectionAt, hearingRadius, listeners, routePath, shotResultOf, testedHexes, visibleHexes, visionRadiusOf } from './enemy.js';
+import {
+  alertIndex, decayTarget, detectionAt, hearingRadius, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
+} from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
@@ -138,6 +140,24 @@ function visionById() {
   return visionCache.byId;
 }
 
+// Where each enemy will be and which way it will face after the coming
+// detection check and enemy phase, if the turn ended now (M13b: players found
+// the garrison turned "unpredictably"). The rules are pure, so this is the
+// same sum the turn will do; it changes as the men move, so it is worked out
+// again only when the enemies, the men, the noises or the alert do.
+let forecastCache = { keys: null, byId: null };
+
+function forecast() {
+  if (state.phase === 'drop' || state.outcome) return null;
+  const keys = [state.enemies, state.units, state.noises, state.alert, map];
+  if (forecastCache.keys && keys.every((k, i) => k === forecastCache.keys[i])) return forecastCache.byId;
+  const detected = runDetection(state, map, rules).state;
+  const after = runEnemyPhase(detected, map, rules).state;
+  const byId = new Map(after.enemies.map((e) => [e.id, e]));
+  forecastCache = { keys, byId };
+  return byId;
+}
+
 /**
  * Everything the renderers need that is derived rather than stored: where the
  * selected trooper can go, what the hovered move would cost and how likely it
@@ -178,6 +198,11 @@ function deriveView() {
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
     hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
+    // Next turn's facing for every enemy, and for the one hovered what it
+    // will see from where it will stand (M13b).
+    nextFacing: null,
+    hoverEnemyNext: null,
+    hoverEnemyNextArea: null,
     routes,
     searchHexes: [...searchHexes.values()],
     alert: {
@@ -236,6 +261,16 @@ function deriveView() {
 
   if (state.phase === 'drop') return deriveDrop(view, hex);
 
+  const next = forecast();
+  if (next) {
+    view.nextFacing = new Map([...next].map(([id, e]) => [id, e.facing]));
+    const ahead = hoverEnemy && next.get(hoverEnemy.id);
+    if (ahead) {
+      view.hoverEnemyNext = { q: ahead.q, r: ahead.r, facing: DIRECTION_NAMES[ahead.facing], moves: ahead.q !== hoverEnemy.q || ahead.r !== hoverEnemy.r };
+      view.hoverEnemyNextArea = visibleHexes(map, ahead, state.alert.points, rules);
+    }
+  }
+
   const objective = hex && !hoverEnemy ? objectiveAt(state.objectives, hex) : null;
   if (objective) {
     view.hoverObjective = objective;
@@ -257,7 +292,8 @@ function deriveView() {
     view.siteLabel = `${chute.name}'s PARACHUTE — found if an enemy comes onto or beside this hex: alert +${rules.alert.parachuteFound}. `
       + `${chute.name} can pack it up standing here: [U] ${rules.actions.packParachute.apCost} AP.`;
   } else if (hex && isExfil(baseMap, hex)) {
-    view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn.`;
+    view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn. `
+      + 'A man carrying a charge leaves it on the hex he steps off from, for another man to pick up [P].';
   }
 
   const unit = selectedUnit(state);
@@ -534,7 +570,7 @@ function actionsFor(unit) {
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
-      help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Patrols in earshot walk over to look and sentries turn to face it — use it to pull a patrol off your path or turn a sentry's back. Alert +${rules.alert.stone}. Press T, then click where it lands`,
+      help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
@@ -670,7 +706,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       view.throwPreview = { from: { q: unit.q, r: unit.r }, to: { q: hex.q, r: hex.r }, earshot };
       const who = hears.length === 0
         ? 'nobody is in earshot, so it only costs alert'
-        : hears.map((e) => `the ${e.label.toLowerCase()} ${e.speed === 0 ? 'turns to face it' : 'walks over to look'}`).join(', ');
+        : hears.map((e) => `the ${e.label.toLowerCase()} ${e.speed === 0 ? 'turns to face it at once, until the garrison next moves' : 'walks over to look in the enemy phase'}`).join(', ');
       view.targetLabel = `${unit.shortName} stays put and lobs a stone into ${view.place(hex)} — ${check.cost} AP, alert +${rules.alert.stone}. `
         + `Heard ${heard} hexes round (shaded): ${who}. Click to throw.`;
     } else {
@@ -1209,7 +1245,8 @@ function describeMarker(id, unit) {
   const name = unit.shortName;
   if (id === 'marker-spotted') {
     return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
-      + 'If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover.\n'
+      + `If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover — `
+      + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away.\n`
       + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or have a gunner suppress it [S].'];
   }
   if (id === 'marker-wounded') {

@@ -279,6 +279,11 @@ export default [
     assert(out.out && !onBoard(out), 'out');
     equal(out.trail.length, 0, 'nothing left to test');
     equal(settleMission(moved, rules, map).outcome, null, 'others still in the field, mission goes on');
+    // M13b: his charge stays behind, on the hex he stepped off from.
+    const carried = unitIn(s, unit.id).charges;
+    assert(carried > 0, 'he was carrying one');
+    equal(out.charges, 0, 'he takes none out');
+    equal(moved.droppedCharges.filter((c) => c.q === eq && c.r === er - 1).length, carried, 'left where he stepped off');
   }],
 
   ['at Alarmed the reserve marches to its guard hex and stands facing the exfil, not hunting', async () => {

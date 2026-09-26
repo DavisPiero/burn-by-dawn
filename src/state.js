@@ -15,7 +15,7 @@
 // man can take one; these take it.
 
 import {
-  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, runDetection, runEnemyPhase,
+  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, runDetection, runEnemyPhase, turnSentriesNow,
 } from './enemy.js';
 import { landStick, runById, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
@@ -296,13 +296,20 @@ export function setHover(state, hex) {
 export function moveUnit(state, unitId, plan, map = null) {
   const destination = plan.path[plan.path.length - 1];
   if (map && isExfil(map, destination)) {
+    // Charges do not leave with him (M13b): he sets them down on the hex he
+    // stepped off from, where another man can pick them up — on the exfil
+    // itself nobody could stand to take one without going out too.
+    const mover = unitById(state.units, unitId);
+    const left = plan.path.length > 1 ? plan.path[plan.path.length - 2] : destination;
+    const dropped = Array.from({ length: mover.charges }, () => ({ q: left.q, r: left.r }));
     return {
       ...state,
       units: state.units.map((unit) => (
         unit.id === unitId
-          ? { ...unit, q: destination.q, r: destination.r, ap: 0, out: true, hidden: false, inContact: false, trail: [] }
+          ? { ...unit, q: destination.q, r: destination.r, ap: 0, out: true, hidden: false, inContact: false, trail: [], charges: 0 }
           : unit
       )),
+      droppedCharges: [...state.droppedCharges, ...dropped],
       selectedUnitId: state.selectedUnitId === unitId ? null : state.selectedUnitId,
     };
   }
@@ -415,7 +422,11 @@ export function throwStone(state, unitId, hex, map, rules) {
   const unit = unitById(state.units, unitId);
   const check = checkThrowStone(map, unit, hex, rules);
   if (!check.ok) return state;
-  return makeNoise(spend(state, unitId, check.cost), 'stone', hex, rules.alert.stone, rules).state;
+  const thrown = makeNoise(spend(state, unitId, check.cost), 'stone', hex, rules.alert.stone, rules).state;
+  // The sentries in earshot turn to it now (M13b), not in the enemy phase.
+  const { enemies, turned } = turnSentriesNow(thrown.enemies, 'stone', hex, thrown.alert.points, rules);
+  const noises = thrown.noises.map((n, i) => (i === thrown.noises.length - 1 ? { ...n, turnedNow: turned } : n));
+  return { ...thrown, enemies, noises };
 }
 
 /** Spend a full turn dressing a wound: his pool and his charges come back next turn. */
