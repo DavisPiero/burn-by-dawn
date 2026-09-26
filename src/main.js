@@ -14,7 +14,7 @@ import {
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
-  objectiveAt, primaryShortfall, swimTargets,
+  objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
 import { validateTraits } from './traits.js';
 import {
@@ -170,6 +170,9 @@ function deriveView() {
   if (objective) {
     view.hoverObjective = objective;
     view.siteLabel = describeObjective(objective);
+    if (!objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective) {
+      view.siteLabel = `CHARGE POINT for the ${objective.label} — a man carrying a charge stands here and places it [C]. ${view.siteLabel}`;
+    }
     if (!objective.destroyed) {
       const radius = kindOf(objective, rules).blastRadius;
       view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius })));

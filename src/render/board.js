@@ -845,6 +845,7 @@ function drawSites(layers, state, view) {
     drawAreaEdge(layers, layers.sites, view.blastArea, [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
   }
 
+  const labels = [];
   for (const objective of state.objectives) {
     const hovered = objective.id === view.hoverObjective?.id;
     const outline = el('g', { opacity: hovered ? 1 : OBJECTIVE.outlineOpacity });
@@ -854,7 +855,8 @@ function drawSites(layers, state, view) {
     layers.sites.appendChild(outline);
     const at = labelPoint(map, objective.hexes);
     const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
-    layers.sites.appendChild(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    // Names go on last, over the charge points around them.
+    labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
@@ -866,14 +868,19 @@ function drawSites(layers, state, view) {
     }
     for (const h of objective.chargeHexes) {
       const p = axialToPixel(h.q, h.r, map.hexSize);
-      for (const [stroke, width] of [[OBJECTIVE.casing, OBJECTIVE.ringWidth + 3], [OBJECTIVE.ringStroke, OBJECTIVE.ringWidth]]) {
-        layers.sites.appendChild(el('circle', {
-          cx: p.x, cy: p.y, r: OBJECTIVE.ringRadius, fill: 'none', stroke, 'stroke-width': width,
-          'stroke-dasharray': OBJECTIVE.ringDash, opacity: hovered ? OBJECTIVE.ringHoverOpacity : OBJECTIVE.ringOpacity,
-        }));
-      }
+      const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
+      const point = el('g', { opacity: hovered ? OBJECTIVE.pointHoverOpacity : OBJECTIVE.pointOpacity });
+      point.appendChild(el('polygon', { points: inset, fill: 'none', stroke: OBJECTIVE.casing, 'stroke-width': OBJECTIVE.pointCasingWidth, 'stroke-linejoin': 'round' }));
+      point.appendChild(el('polygon', {
+        points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth,
+        'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
+      }));
+      const size = OBJECTIVE.pointIconSize;
+      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size }));
+      layers.sites.appendChild(point);
     }
   }
+  for (const label of labels) layers.sites.appendChild(label);
 
   // A charge set and burning: the satchel, and a token with the turns left.
   for (const charge of state.charges) {

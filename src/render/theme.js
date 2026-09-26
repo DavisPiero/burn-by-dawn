@@ -448,24 +448,29 @@ export const RISK = {
 // SPEC.md §7, §10: objectives, their charge hexes, charges burning, blasts
 // about to happen, and the exfil.
 export const OBJECTIVE = {
-  // The footprint outline is faint: the art says where the objective is, the
-  // outline only says which hexes count as it.
+  // The footprint: which hexes are the target, in a firm ink line cased in
+  // paper, so the art and its hexes read as one thing (M7b).
   stroke: PALETTE.ink,
   casing: PALETTE.paper,
-  width: 2,
-  casingWidth: 5,
-  outlineOpacity: 0.35,
+  width: 3,
+  casingWidth: 7,
+  outlineOpacity: 0.85,
   label: PALETTE.ink,
   labelCasing: PALETTE.paper,
   primaryLabel: PALETTE.red,
   labelSize: 16,
   labelLift: 1.02, // hex radii above the top row's centre, clear of the bridge's girders
-  ringRadius: 17,
-  ringStroke: PALETTE.ink,
-  ringDash: '4 3',
-  ringOpacity: 0.55,
-  ringHoverOpacity: 1,
-  ringWidth: 2,
+  // A charge point, where a man stands to place a charge: a red dashed hex
+  // just inside the hex's own edge, so it shows round a counter standing on
+  // it, and an empty satchel in it — "put one here", not a target.
+  pointInset: 0.84,
+  pointStroke: PALETTE.red,
+  pointDash: '7 4',
+  pointWidth: 2.8,
+  pointCasingWidth: 6.5,
+  pointOpacity: 0.8,
+  pointHoverOpacity: 1,
+  pointIconSize: 34,
   stampWidth: 110,
   stampHeight: 44,
   stampRotate: -12,
@@ -1192,18 +1197,16 @@ const SPRITES = {
   'objective-fuel-dump': {
     viewBox: '0 0 240 184',
     draw: () => [
-      fill('M28 62 L134 50 L148 150 L40 160 Z', 'green', { 'fill-opacity': 0.3 }),
-      ...[[48, 74], [66, 72], [84, 70], [102, 68], [120, 66],
-        [50, 94], [68, 92], [86, 90], [104, 88], [122, 86],
-        [52, 114], [70, 112], [88, 110], [106, 108], [124, 106],
-        [54, 134], [72, 132], [90, 130], [108, 128], [126, 126]]
-        .flatMap(([x, y], i) => drum(x, y, i % 7 === 3 ? 'red' : 'green')),
-      line('M28 62 L134 50 L148 150 L40 160 Z', 2, 'stroke-ink', { 'stroke-dasharray': '6 4' }),
+      // Kept inside its three hexes, so the art, the outline and the label
+      // all sit on the same ground.
+      fill('M56 48 L142 42 L148 134 L62 140 Z', 'green', { 'fill-opacity': 0.3 }),
+      ...[68, 86, 104, 122].flatMap((x, i) => [60, 78, 96, 114].map((y, j) => [x + j, y - i])).map(([x, y], k) => drum(x + 2, y + 6, k % 5 === 2 ? 'red' : 'green')).flat(),
+      line('M56 48 L142 42 L148 134 L62 140 Z', 2, 'stroke-ink', { 'stroke-dasharray': '6 4' }),
       // The bowser: cab and tank, nose to the road.
-      ...inked('M166 72 H194 V150 H166 Z', 'green', 2.4),
-      ...inked('M168 150 H192 V168 H168 Z', 'green', 2.4),
-      ...inked('M171 154 H189 V160 H171 Z', 'blue', 1.4),
-      line('M166 96 H194 M166 124 H194', 1.6),
+      ...inked('M158 58 H182 V124 H158 Z', 'green', 2.4),
+      ...inked('M160 124 H180 V140 H160 Z', 'green', 2.4),
+      ...inked('M163 128 H177 V133 H163 Z', 'blue', 1.4),
+      line('M158 80 H182 M158 102 H182', 1.6),
     ],
   },
   'objective-fuel-destroyed': {
@@ -1379,6 +1382,18 @@ const SPRITES = {
         svg('rect', { x: 12, y: 23, width: 6, height: 4, rx: 1, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
       ];
     },
+  },
+  // A charge point (SPEC.md §7): an empty satchel with its fuse, and a red
+  // plus — where a charge goes, not a charge.
+  'marker-charge-point': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('rect', { x: 4, y: 10, width: 18, height: 13, rx: 2, class: 'paper' }),
+      svg('rect', { x: 4, y: 10, width: 18, height: 13, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.8, 'stroke-dasharray': '3 2' }),
+      line('M13 10 C13 5 17 6 18 3', 1.8),
+      circle(21.5, 21.5, 6, 'red'), ring(21.5, 21.5, 6, 1.4),
+      line('M21.5 18.5 V24.5 M18.5 21.5 H24.5', 1.8, 'stroke-paper'),
+    ],
   },
   'marker-charge': {
     viewBox: '0 0 28 28',

@@ -50,7 +50,7 @@
 
   "_places": "SPEC.md \u00a711. Names printed on the map, art only like the railway: no rule. `at` is the hex the name is centred on; `kind` picks how it is set (village in capitals, water in paper italic on the water, anything else in italic); `angle` turns it, in degrees, to lie along what it names; `dy` nudges it down in hex radii. The turn report names a place a man is on or near by these, as it does the objectives.",
   "places": [
-    { "name": "Bellecour", "kind": "village", "at": [15, 4], "dy": 0.1 },
+    { "name": "Bellecour", "kind": "village", "at": [15, 0], "dy": 0.1 },
     { "name": "Bois des Moines", "kind": "wood", "at": [1, 1] },
     { "name": "La Butte", "kind": "high", "at": [1, 4], "dy": 0.25 },
     { "name": "Ferme Lebrun", "kind": "farm", "at": [2, 8], "dy": 0.62 },
