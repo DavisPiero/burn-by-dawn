@@ -1,4 +1,4 @@
-# NIGHT DROP — Art to generate next
+# BURN BY DAWN — Art to generate next
 
 A shopping list for an image generator, in priority order. Each entry has the file it
 becomes, the exact size and format, where it shows in the game, and a prompt.
@@ -120,6 +120,34 @@ melt into it.
 
 ---
 
+## Priority 2b — the title card
+
+**Why:** it is the first thing a player sees. It sits across the top of the orders card
+when the game opens, with BURN BY DAWN set over it by code.
+
+| | |
+|---|---|
+| File | `assets/title/title-card.jpg` |
+| Size | **4:1, 2400 × 600 px** (never below 1200 × 300) |
+| Format | **JPEG**, sRGB, quality about 85, opaque |
+| Shown at | 600 × 150 px across the top of the orders card. Another shape is cropped from its middle. |
+| Composition | The title goes **across the middle**: keep the central 60% of the width and height open and fairly dark — night sky. Aircraft and canopies toward the left and right; fields, hedges and the skyline along the bottom fifth. |
+| Code does | The title lettering, the frame, and a soft dark scrim behind the title. Don't put any text in the picture. |
+
+### Prompt (add the style block)
+
+> Wide panoramic night scene, 1944: a stick of British paratroopers coming down under
+> round canopies over moonlit French farmland, a C-47 Dakota with black and white
+> invasion stripes flying away, a low horizon of hedgerows and a village church spire in
+> silhouette, a full moon. The centre of the picture is open dark night sky; the
+> parachutes and the aircraft are grouped toward the left and right edges. Deep slate-blue
+> and ink night palette with cream moonlight on the canopies.
+
+Generate wide, then crop to 4:1 yourself, keeping the empty sky in the middle. Drop the
+file in and reload: the title should read clearly without squinting.
+
+---
+
 ## Priority 3 — the paper
 
 **Why:** ART-ASSETS.md rates this as the single biggest change to the feel. It's also
@@ -199,7 +227,7 @@ Not worth making yet. The map and layout will still change.
 |---|---|---|
 | `paper-crease.png` | 400 × 1800, alpha | *Vertical centre-fold crease of an open comic annual, soft shadow and highlight, isolated on transparency.* |
 | `paper-edge-wear.png` | 2560 × 1600, alpha | *Overlay of aged paper edge browning and corner foxing on transparency, centre fully clear.* |
-| `logo-night-drop.svg` | 800 × 300, SVG | Generate a raster rough to trace: *Masthead lettering "NIGHT DROP" in the style of a 1980s British war comic title, bold condensed slab capitals with a hard offset shadow, parachute silhouette.* This is the one prompt where text is the point. Expect to redraw the letters by hand. |
+| `logo-burn-by-dawn.svg` | 800 × 300, SVG | Generate a raster rough to trace: *Masthead lettering "BURN BY DAWN" in the style of a 1980s British war comic title, bold condensed slab capitals with a hard offset shadow, parachute silhouette.* This is the one prompt where text is the point. Expect to redraw the letters by hand. |
 | Audio | see ART-ASSETS.md §9 | — |
 
 ---
@@ -217,3 +245,7 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The green counter frames, their AP figure and card edge.
 - Redrawn fuel dump, telephone exchange and rail bridge, at the new, lower level of detail.
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.
+- A plain night scene for the title card (moon, Dakota, canopies, skyline): the fallback
+  until `assets/title/title-card.jpg` is supplied. The title lettering over it is always
+  type, never art.
+- The results masthead, BURN BY DAWN in slab capitals.

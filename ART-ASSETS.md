@@ -1,4 +1,4 @@
-# NIGHT DROP — Art asset manifest
+# BURN BY DAWN — Art asset manifest
 
 What to make next, in priority order and with image-generator prompts, is
 `ART-PROMPTS.md`. This file is the full manifest and rules on formats.
@@ -191,7 +191,19 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
 | `ui-gutter-note.svg` | 60 x 900 | the "CUT OUT AND PLAY" margin text, as outlines |
-| `logo-night-drop.svg` | 800 x 300 | masthead for the title and results page |
+| `logo-burn-by-dawn.svg` | 800 x 300 | masthead for the results page. *Currently drawn by code: slab capitals with a red offset.* |
+| `title-card.jpg` | 4:1, **2400 x 600** px (no smaller than 1200 x 300) | **JPEG**, not SVG or PNG — see below. The painted picture across the top of the orders card, under the title. Drop into `/assets/title/`. |
+
+**The title card** is the one painted picture outside the portraits, so like them it is
+raster and the SVG rules above do not apply. It is JPEG rather than PNG because it is a
+full-colour painting with no transparency, and a PNG that size would weigh several MB
+for a page shared over the web. 8-bit sRGB, quality about 85, opaque, **no text** (code
+sets BURN BY DAWN over it, with a soft dark scrim behind the letters). Shown at 600 x 150
+across the card; a picture of another shape is cropped from its middle. Keep the middle
+of the picture — roughly the central 60% of the width and height — open and dark (night
+sky), since the title sits there; put the aircraft and canopies toward the left and right
+and the ground along the bottom fifth. Without the file, code draws its own night scene
+(`title-card` in `src/render/theme.js`).
 
 ---
 
