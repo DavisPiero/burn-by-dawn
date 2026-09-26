@@ -229,8 +229,10 @@ export function jump(state, map, rules) {
 
 /**
  * The lines said at a turn boundary or a landing: a man coming down says his
- * onLand line, or his onWounded line if he came down wounded; a man hit says
- * his onWounded line. The dead say nothing.
+ * onLand line, or his wounded line if he came down wounded; a man hit says
+ * his wounded line (units.js woundedLine: onWoundedCarrying if he still had a
+ * charge and has that line). The event carries the line, chosen when it
+ * happened, as by now his charge is already on the ground. The dead say nothing.
  */
 function speechFrom(events, units) {
   let speech = [];
@@ -238,8 +240,7 @@ function speechFrom(events, units) {
     const unit = units.find((u) => u.id === event.unitId);
     if (!unit || !onBoard(unit)) continue;
     let line = null;
-    if (event.kind === 'landed') line = event.outcome === 'wounds' ? unit.dialogue?.onWounded : unit.dialogue?.onLand;
-    else if (event.kind === 'wounded') line = unit.dialogue?.onWounded;
+    if (event.kind === 'landed' || event.kind === 'wounded') line = event.line;
     if (line) speech = say(speech, unit.id, line);
   }
   return speech;

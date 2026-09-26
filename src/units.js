@@ -24,6 +24,19 @@ import { applyHook } from './traits.js';
 export const DIALOGUE_KEYS = ['onLand', 'onPlaceCharge', 'onWounded'];
 
 /**
+ * Lines a trooper may have but need not. onWoundedCarrying is said in place of
+ * onWounded when he is hit still carrying a charge, which drops on his hex:
+ * so a line about the charge is only ever said when there is one to fetch.
+ */
+export const OPTIONAL_DIALOGUE_KEYS = ['onWoundedCarrying'];
+
+/** What a man says when he is wounded; `unit` as he was just before the hit. */
+export function woundedLine(unit) {
+  const dialogue = unit.dialogue ?? {};
+  return (unit.charges > 0 && dialogue.onWoundedCarrying) || dialogue.onWounded || null;
+}
+
+/**
  * Build the stick from the roster, the trait table and the rules table. Nobody
  * is on the board yet: the drop puts them there (drop.js landStick). Throws if
  * the data does not line up, because a trait silently never firing is worse
@@ -155,8 +168,11 @@ function validateDialogue(trooper, rosterUrl) {
     }
   }
   for (const key of Object.keys(dialogue)) {
-    if (!DIALOGUE_KEYS.includes(key)) {
-      throw new Error(`${rosterUrl}: trooper "${trooper.id}" has dialogue key "${key}"; the keys are ${DIALOGUE_KEYS.join(', ')}`);
+    if (!DIALOGUE_KEYS.includes(key) && !OPTIONAL_DIALOGUE_KEYS.includes(key)) {
+      throw new Error(`${rosterUrl}: trooper "${trooper.id}" has dialogue key "${key}"; the keys are ${[...DIALOGUE_KEYS, ...OPTIONAL_DIALOGUE_KEYS].join(', ')}`);
+    }
+    if (typeof dialogue[key] !== 'string' || dialogue[key] === '') {
+      throw new Error(`${rosterUrl}: trooper "${trooper.id}" has an empty "dialogue.${key}" line`);
     }
   }
   return { ...dialogue };

@@ -326,7 +326,9 @@ parachute (§9): alert +1, once.
 ### Dialogue
 
 Each character has 3 lines in `roster.json`, keyed to `onLand`, `onPlaceCharge`,
-`onWounded`. They render as comic speech bubbles on the board (§11). This is data and
+`onWounded`, and may have a fourth, `onWoundedCarrying` (M9b), said instead of
+`onWounded` when he is hit still carrying a charge — so a line about the charge he drops
+is only said when there is one to pick up. They render as comic speech bubbles on the board (§11). This is data and
 costs nothing mechanically, and it is most of what makes the six feel like six people.
 
 ---
