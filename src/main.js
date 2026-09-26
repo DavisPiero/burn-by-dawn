@@ -24,6 +24,7 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
+import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
   applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
@@ -32,7 +33,7 @@ import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderResults, renderSeed, renderTurnCounter, showPopup,
+  renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -50,6 +51,7 @@ const diversionButton = document.getElementById('diversion');
 const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
+const soundToggle = document.getElementById('sound-toggle');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
@@ -105,6 +107,8 @@ let briefingsOn = true;
 // never re-roll anything.
 let undoState = null;
 let briefingAfterDrop = false;
+// Which card or page was last on show, so each one rustles once as it opens.
+let cardShown = null;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -563,6 +567,10 @@ function render() {
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE });
   renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
   dropStalePopup();
+  // A card laid down, or the back page turned over, rustles once.
+  const shown = state.outcome ? 'results' : briefing?.kind ?? null;
+  if (shown && shown !== cardShown) playCue('card');
+  cardShown = shown;
 }
 
 /**
@@ -602,12 +610,26 @@ function renderBoard() {
 /**
  * Take a player action's result and see whether it ended the mission — the
  * last man stepping onto the exfil, say, or a charge set on a secondary that
- * leaves the primary short (SPEC.md §10).
+ * leaves the primary short (SPEC.md §10). `cue` is the sound it makes
+ * (render/sound.js), or null for none.
  */
-function commit(next) {
+function commit(next, cue = 'action') {
   if (next === state) return;
   undoState = state;
   state = settleMission(next, rules, baseMap);
+  if (cue) playCue(cue);
+}
+
+/** Sound on or off (M, or the word in the margin). Not remembered: the game stores nothing (CLAUDE.md rule 9). */
+function toggleSound() {
+  setMuted(!isMuted());
+  renderSoundToggle(soundToggle, isMuted());
+}
+
+/** The sounds of a turn's report: a crump for any bang, a dog when the garrison stirs. */
+function cueReport(report) {
+  if (report.some((e) => e.kind === 'explosion')) playCue('explosion');
+  if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
 }
 
 /** Take back the last move or action, once, keeping where the mouse is. */
@@ -615,6 +637,7 @@ function undoLast() {
   if (!undoState || state.outcome || briefing || dropShow) return;
   const previous = undoState;
   undoState = null;
+  playCue('move');
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
   render();
 }
@@ -639,7 +662,7 @@ function handleHexClick(q, r) {
     // An unaffordable target does nothing rather than moving part of the way:
     // a half-finished move the player did not ask for is worse than no move.
     if (plan && plan.affordable) {
-      commit(moveUnit(state, mover.id, plan, baseMap));
+      commit(moveUnit(state, mover.id, plan, baseMap), 'move');
     } else if (!mover) {
       state = selectHex(state, q, r);
     }
@@ -684,7 +707,7 @@ function handleAction(id) {
   if (state.outcome) return;
   if (id === 'diversion') {
     const before = state;
-    commit(callDiversion(state, rules));
+    commit(callDiversion(state, rules), 'diversion');
     // Said on a card, so a call can never pass unnoticed and be made twice.
     if (state !== before) briefing = { kind: 'diversion', before };
     render();
@@ -751,6 +774,7 @@ function handleEndTurn() {
 function endTurnNow() {
   undoState = null;
   state = endTurn(state, rules, baseMap);
+  cueReport(state.report);
   if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
   render();
 }
@@ -946,6 +970,11 @@ function handleDropKey(event) {
 // R toggle the patrol-route overlay, and the action keys. Once the mission is
 // over only R still does anything.
 function handleKey(event) {
+  unlockSound();
+  if ((event.key === 'm' || event.key === 'M') && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    toggleSound();
+    return;
+  }
   // Cmd-Z or Ctrl-Z undoes, as everywhere else; so does Z on its own.
   if ((event.metaKey || event.ctrlKey) && !event.altKey && (event.key === 'z' || event.key === 'Z') && !briefing && !dropShow) {
     event.preventDefault();
@@ -1050,7 +1079,7 @@ function handleKey(event) {
     case 'H': {
       const unit = selectedUnit(state);
       if (!unit) return;
-      commit(holdUnit(state, unit.id));
+      commit(holdUnit(state, unit.id), null);
       const next = nextUnitId(state);
       if (next) state = selectUnit(state, next);
       break;
@@ -1112,6 +1141,15 @@ try {
   attachPopup(undoButton, UNDO_HELP);
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
+  // Browsers keep sound off until the page has been pressed or clicked.
+  window.addEventListener('pointerdown', unlockSound);
+  soundToggle.addEventListener('click', () => {
+    soundToggle.blur();
+    toggleSound();
+  });
+  renderSoundToggle(soundToggle, isMuted());
+  // Sound files dropped into assets/audio replace the placeholders (ART-ASSETS.md §9).
+  loadSuppliedSounds();
 
   // Portrait art dropped into assets/portraits replaces the drawn portraits
   // as each file arrives (ART-ASSETS.md §2).

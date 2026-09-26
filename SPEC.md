@@ -209,7 +209,7 @@ to be casual while still being strategic.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
   `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
-  charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo. An action
+  charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
 ---
@@ -710,6 +710,15 @@ busy and the roster runs off the bottom at 1280x800. At M7:
 rendered as SVG `<symbol>` / `<use>`. Procedural shapes now, hand-drawn SVG later, swapped
 by changing one registry file and nothing else. No inline path data in game logic.
 
+**Sound** (M10). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
+counter snapped down when a man moves or a move is undone, a pencil for every other
+action, a card's rustle when a briefing card or the back page opens, a dog a long way off
+when the alert rises, a muffled crump for each turn with a bang, and three far-off crumps
+for the RAF diversion. Made in code (`src/render/sound.js`, Web Audio) until files are
+supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
+player first presses a key or clicks, as browsers require; `M` or the word under the seed
+turns it off for the session (nothing is stored, CLAUDE.md rule 9).
+
 ---
 
 ## 12. Milestones
@@ -736,5 +745,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M9** | Difficulty levels: Easy, Normal, Hard (§10) | The orders offer the three levels and still fit at 1280x800; each level's numbers show in the orders, the rings and the panel; the level is beside the seed and on the back page; it cannot change after the jump; the balance bot wins clearly more on Easy and clearly less on Hard |
 | **M9b** | Operator review: one-step undo, the RAF diversion's card, aiming lets go of a clicked man, the title card and strapline on the orders and the back page, back page tidied | Undo takes back the last action only; calling the diversion opens a card saying what it did and what calls are left; clicking another man while aiming selects him; the orders still fit at 1280x800 |
 | **M9c** | Drop runs: the east run clear of the bridge patrol, the base patrol off the ridge, each run labelled for what it is good for | No run is much the hardest for a first-timer by accident; each run shows its word (QUIET, STEADY, FAST) on its button, its tab and its rollover |
+| **M10** | Sound: the five table sounds of ART-ASSETS.md §9, made in code, each replaceable by a supplied file (§11) | A move snaps, an action scratches, a card rustles, a rising alert brings a distant dog, a bang is a crump; nothing sounds before the first key or click; `M` mutes; a supplied MP3 replaces its placeholder with no code change |
 
 Do not start a milestone before the previous one is merged and playable.

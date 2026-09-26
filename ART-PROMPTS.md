@@ -347,6 +347,23 @@ board.
 
 ---
 
+## Priority 11 — the sounds (find, don't generate)
+
+**Why:** since M10 the game has sound, but all five are made in code and sound like it:
+the paper and pencil are passable, the dog is a placeholder, and the crump wants a real
+recording. Real ones are found, not generated.
+
+| | |
+|---|---|
+| Files | `assets/audio/paper-rustle.mp3`, `pencil-scratch.mp3`, `counter-snap.mp3`, `dog-distant.mp3`, `crump.mp3` — exactly these names; each replaces its placeholder on reload |
+| Format | **MP3**, mono, 44.1 kHz, under 200 KB, trimmed with no silence at the start |
+| Where | freesound.org with the **CC0** licence filter, or Pixabay's sound effects: both free to use with no credit needed |
+| Feel | The table, not the battlefield (ART-ASSETS.md §9): a card counter put down on a wooden table, a page turned, a pencil note, a dog barking far across fields at night, a distant muffled explosion |
+
+Lengths and when each is heard are in ART-ASSETS.md §9. Loudness is balanced in code.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
@@ -355,7 +372,6 @@ Not worth making yet. The map and layout will still change.
 |---|---|---|
 | `paper-crease.png` | 400 × 1800, alpha | *Vertical centre-fold crease of an open comic annual, soft shadow and highlight, isolated on transparency.* |
 | `paper-edge-wear.png` | 2560 × 1600, alpha | *Overlay of aged paper edge browning and corner foxing on transparency, centre fully clear.* |
-| Audio | see ART-ASSETS.md §9 | — |
 
 ---
 
@@ -377,6 +393,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
   exchange.
+- The five sounds (M10), made with Web Audio in `src/render/sound.js` until the MP3s of
+  priority 11 are supplied.
 - The parachutes: the canopy opening and drifting in the air and the spent one on the
   ground are the same green-and-cream cloth (M8e). Not worth a bitmap: they print at about
   20 px, where a painting would just be a blur, and the drawn ones now match each other.
