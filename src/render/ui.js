@@ -718,7 +718,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
 
   element.append(
     titleBanner(banner),
-    html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
+    html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR SQUAD DO?'),
     html('h2', null, OUTCOME_WORDS[outcome.kind]),
     // The turn and level on a line of their own (M13).
     html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),

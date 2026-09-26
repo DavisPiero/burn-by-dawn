@@ -41,19 +41,21 @@ export default [
     equal(new Set(landed.speech.map((s) => s.unitId)).size, landed.speech.length, 'one line per man');
   }],
 
-  ['a man keeps his line through the turn, and lines are replaced at the turn boundary', async () => {
+  ['his line goes when he moves off the hex, the others keep theirs, and lines are replaced at the turn boundary (M14)', async () => {
     const { map, rules, traits, roster } = await loadAll();
     let s = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 7), map, 'north'), map, rules);
     const mover = s.units.find((u) => onBoard(u) && u.ap > 0 && lineOf(s, u.id));
     assert(mover, 'someone can move');
-    const said = lineOf(s, mover.id);
+    const others = s.speech.filter((l) => l.unitId !== mover.id).length;
+    assert(others > 0, 'someone else has a line');
     const target = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]]
       .map(([dq, dr]) => ({ q: mover.q + dq, r: mover.r + dr }))
       .map((h) => planMove(map, s.units, mover, h, rules, s.enemies))
       .find((p) => p && p.affordable);
     assert(target, 'a step he can afford');
     s = moveUnit(s, mover.id, target, map);
-    equal(lineOf(s, mover.id), said, 'moved: still his line');
+    equal(lineOf(s, mover.id), null, 'moved off his hex: his line goes');
+    equal(s.speech.length, others, 'the others keep theirs');
     s = holdUnit(s, s.units.find(onBoard).id);
     s = endTurn(s, rules, map);
     assert(s.speech.every((line) => s.report.some((e) => e.kind === 'wounded' && e.unitId === line.unitId)), 'only the newly wounded speak after the turn');
