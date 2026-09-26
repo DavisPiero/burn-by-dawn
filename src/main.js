@@ -162,6 +162,7 @@ function deriveView() {
     dropRuns: null,
     dropLabel: null,
     dropShow,
+    targetRings: null,
   };
 
   if (state.phase === 'drop') return deriveDrop(view, hex);
@@ -242,6 +243,17 @@ function deriveDrop(view, hex) {
     })),
     area: selected ? dropArea(map, rules, selected, state.units, state.enemies) : null,
   };
+  // Before a run is picked, the targets and the exfil are ringed in marker pen
+  // (SPEC.md §11), so the first thing the player sees is where to go.
+  if (!selected) {
+    view.targetRings = [
+      ...state.objectives.map((o) => ({
+        hexes: o.hexes, primary: o.primary, colour: 'red',
+        note: o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`,
+      })),
+      { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
+    ];
+  }
   view.dropRuns = baseMap.dropRuns.map((run, i) => ({
     id: run.id, key: String(i + 1), label: run.label, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
   }));

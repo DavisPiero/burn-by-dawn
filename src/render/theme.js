@@ -568,6 +568,22 @@ export const DROP_SHOW = {
   tailMs: 350,
 };
 
+// The marker-pen rings round the targets before the drop (SPEC.md §11): a
+// loop that overshoots where it started, twice round the primary, drawn on
+// once and then left; a note beside each in the lettering.
+export const RINGS = {
+  red: PALETTE.red,
+  green: PALETTE.green,
+  width: 4.5,
+  margin: 14, // beyond the footprint's hexes
+  overshoot: 0.14, // of a turn past the start
+  wobble: 0.05, // of the radius
+  drawMs: 650,
+  staggerMs: 180,
+  noteSize: 17,
+  halo: PALETTE.paper,
+};
+
 // Speech bubbles on the board (SPEC.md §11): hand lettering in capitals,
 // paper with an ink rule, the tail pointing at the man's counter. Shown for
 // the man selected or under the mouse. Smaller than the board's own labels:

@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -567,9 +567,70 @@ export function renderPieces(layers, state, view) {
   });
 
   drawBlasts(layers, state, now);
+  drawTargetRings(layers, view.targetRings, now);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
+}
+
+// --- target rings (SPEC.md §11) --------------------------------------------------
+
+/**
+ * Marker-pen rings round the targets and the exfil, before a drop run is
+ * picked. Each is drawn on once, in turn; a redraw part-way carries on. When
+ * they go, the drawing memory goes with them, so they draw on again if the
+ * player goes back to no run.
+ */
+function drawTargetRings(layers, rings, now) {
+  if (!rings) {
+    layers.ringsSince = null;
+    return;
+  }
+  layers.ringsSince ??= now;
+  const elapsed = now - layers.ringsSince;
+  const { map } = layers;
+  const edge = boardEdges(map);
+  const midX = (edge.left + edge.right) / 2;
+  rings.forEach((ring, i) => {
+    const points = ring.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+    const half = { x: map.hexSize * Math.sqrt(3) / 2, y: map.hexSize };
+    const left = Math.min(...points.map((p) => p.x)) - half.x, right = Math.max(...points.map((p) => p.x)) + half.x;
+    const top = Math.min(...points.map((p) => p.y)) - half.y, bottom = Math.max(...points.map((p) => p.y)) + half.y;
+    const c = { x: (left + right) / 2, y: (top + bottom) / 2 };
+    const rx = (right - left) / 2 + RINGS.margin, ry = (bottom - top) / 2 + RINGS.margin;
+    const colour = RINGS[ring.colour] ?? RINGS.red;
+    const loops = ring.primary ? 2 : 1;
+    for (let loop = 0; loop < loops; loop++) {
+      const start = -2.2 + loop * 0.9 + wobbleAt(c.x, c.y);
+      const phase = (wobbleAt(c.y + loop, c.x) + 1) * Math.PI;
+      const turns = 1 + RINGS.overshoot;
+      let d = '';
+      const steps = 64;
+      for (let k = 0; k <= steps; k++) {
+        const t = start + (k / steps) * turns * Math.PI * 2;
+        // The pen drifts outward as it goes round, so the ends pass each other.
+        // A hand's sway, not pen noise: two slow waves, phased by where it is.
+        const sway = Math.sin(2 * t + phase) * 0.6 + Math.sin(3 * t + phase * 2) * 0.4;
+        const grow = 1 + (k / steps) * 0.07 + loop * 0.05 + sway * RINGS.wobble;
+        const x = c.x + Math.cos(t) * rx * grow, y = c.y + Math.sin(t) * ry * grow;
+        d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
+      }
+      const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: 0.9 });
+      layers.effects.appendChild(path);
+      playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
+        delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
+      }, elapsed);
+    }
+    // The note, on the side of the ring toward the middle of the board.
+    const east = c.x < midX;
+    const x = east ? c.x + rx * 0.75 : c.x - rx * 0.75;
+    const note = text(ring.note, {
+      x, y: c.y - ry - 8, 'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
+      'font-size': RINGS.noteSize, fill: colour, stroke: RINGS.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+    });
+    layers.effects.appendChild(note);
+    playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
+  });
 }
 
 // --- the drop shown (SPEC.md §11) ----------------------------------------------
