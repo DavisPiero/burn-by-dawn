@@ -6,6 +6,7 @@
 
 import { alertIndex } from './enemy.js';
 import { onBoard } from './units.js';
+import { hexDistance, inArc } from './hex.js';
 
 const plural = (n, one, many) => (n === 1 ? one : many);
 
@@ -15,6 +16,18 @@ const names = (units) => {
   const list = units.map((u) => u.shortName);
   return list.length <= 1 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
 };
+
+/**
+ * The leader's orders in words, from rules.json `command` (SPEC.md §5, M12):
+ * "+2 AP beside him, +1 AP within 2 hexes of him".
+ */
+export function ordersWords(command) {
+  const hexes = (n) => `${n} ${n === 1 ? 'hex' : 'hexes'}`;
+  const far = `+${command.bonusActionPoints} AP within ${hexes(command.radius)} of him`;
+  if (command.closeRadius == null) return far;
+  const close = command.closeRadius === 1 ? 'beside him' : `within ${hexes(command.closeRadius)}`;
+  return `+${command.closeBonusActionPoints} AP ${close}, ${far}`;
+}
 
 /** "one call left", "2 calls left": what is left of the RAF diversion. */
 export function callsLeft(state, rules) {
@@ -68,6 +81,16 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and the ${primary.label.toLowerCase()} still stands.`);
   }
 
+  // A man behind an enemy (M12b): the knife is there to be used.
+  for (const man of men) {
+    if (man.inContact || man.ap < rules.actions.knife.apCost) continue;
+    const back = state.enemies.find((e) => e.killable && hexDistance(e, man) === 1 && !inArc(e, e.facing, man, e.arcDegrees));
+    if (back) {
+      hints.push(`${man.shortName} is right behind the ${back.label.toLowerCase()}, and it cannot see him: he can knife it [N], silently. It leaves a body.`);
+      break;
+    }
+  }
+
   const alert = alertIndex(state.alert.points, rules);
   if (alert >= 2 && diversionOk && leader) {
     const label = rules.alert.states[alert].label;
@@ -82,7 +105,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   }
 
   if (state.turn === 1 && leader) {
-    hints.push(`Regroup: at the start of each turn, every man within ${rules.command.radius} ${plural(rules.command.radius, 'hex', 'hexes')} of ${leader.shortName} gets +${rules.command.bonusActionPoints} AP.`);
+    hints.push(`Regroup: ${leader.shortName}'s orders, at the start of each turn: ${ordersWords(rules.command)}.`);
   }
 
   if (state.turn <= 2) {

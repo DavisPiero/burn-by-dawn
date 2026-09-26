@@ -444,6 +444,7 @@ export const COMMAND = {
   width: 3,
   casingWidth: 7,
   dash: '10 6',
+  closeDash: '4 5', // the inner band, where the orders are strongest (M12)
 };
 
 // ---------------------------------------------------------------------------
@@ -616,6 +617,11 @@ const OBJECTIVE_ART = {
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: true },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
 };
+
+/** The orders chevrons for a man's bonus from the leader: one, or two for more than one AP (M12). */
+export function ordersMarkerId(bonus) {
+  return bonus > 1 ? 'marker-orders-2' : 'marker-orders';
+}
 
 /** { id, width, height } for an objective as it stands, or null. */
 export function objectiveArt(objective) {
@@ -1677,7 +1683,17 @@ const SPRITES = {
   },
   // On a man who has the leader's orders this turn (SPEC.md §5 Command, M11):
   // a sergeant's chevron in the leader's blue, the one colour kept for him.
+  // The leader's orders on a man's counter (SPEC.md §5 Command): one chevron
+  // for the ordinary bonus, two for the strongest, beside him (M12).
   'marker-orders': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'leader'),
+      line('M7 16.5 L14 10.5 L21 16.5', 2.8, 'stroke-paper', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+      ring(14, 14, 12),
+    ],
+  },
+  'marker-orders-2': {
     viewBox: '0 0 28 28',
     draw: () => [
       circle(14, 14, 12, 'leader'),

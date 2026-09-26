@@ -10,17 +10,17 @@ import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './m
 import { freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
-  jump, killEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
+  jump, killEnemy, knifeEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
   setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
-import { hintsFor } from './hints.js';
+import { hintsFor, ordersWords } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
-  chargeCapacity, checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
@@ -190,6 +190,7 @@ function deriveView() {
     },
     reachable: null,
     commandArea: null,
+    commandCloseArea: null,
     commandLabel: null,
     plan: null,
     moveLabel: null,
@@ -265,7 +266,9 @@ function deriveView() {
       if (isInPlay(map, q, r) && hexDistance(leader, { q, r }) <= rules.command.radius) hexes.set(hexKey(q, r), { q, r });
     });
     view.commandArea = hexes;
-    if (unit?.leader) view.commandLabel = `dashed blue: ${ordersWords(unit)}`;
+    const { closeRadius } = rules.command;
+    if (closeRadius != null) view.commandCloseArea = new Map([...hexes].filter(([, h]) => hexDistance(leader, h) <= closeRadius));
+    if (unit?.leader) view.commandLabel = `dashed blue: ${leaderOrdersWords(unit)}`;
   }
   if (!unit) return view;
 
@@ -502,6 +505,11 @@ function actionsFor(unit) {
   const suppress = canSuppress.find((c) => c.ok) ?? checkSuppress(map, unit, null, rules);
   const kill = state.enemies.map((e) => checkKill(map, unit, e, rules)).find((c) => c.ok)
     ?? checkKill(map, unit, null, rules);
+  // The knife: ok if any enemy beside him could be knifed; otherwise the
+  // reason for the nearest one beside him, or that there is none.
+  const beside = state.enemies.filter((e) => hexDistance(e, unit) === 1);
+  const knife = beside.map((e) => checkKnife(unit, e, rules)).find((c) => c.ok)
+    ?? (beside.length ? checkKnife(unit, beside[0], rules) : checkKnife(unit, null, rules));
   // Every man has somewhere in range to throw, so only his AP can stop him.
   const stoneCheck = checkThrowStone(map, unit, nearestInPlay(unit), rules);
   const ap = (n) => `${n} AP`;
@@ -512,6 +520,11 @@ function actionsFor(unit) {
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
+    {
+      id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
+      help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
+        + 'but it leaves a body, and it ends his turn. Not while he is spotted. The reserve squad cannot be killed. Press N, then click the enemy',
+    },
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
@@ -628,6 +641,16 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
         : `Kill: ${check.reason}.`;
     } else {
       view.targetLabel = `Kill: click a suppressed enemy inside ${unit.shortName}'s spot radius with a clear line. Esc to cancel.`;
+    }
+  } else if (kind === 'knife') {
+    for (const e of state.enemies) if (checkKnife(unit, e, rules).ok) add(e);
+    if (hoverEnemy) {
+      const check = checkKnife(unit, hoverEnemy, rules);
+      view.targetLabel = check.ok
+        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP and the rest of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
+        : `Knife: ${check.reason}.`;
+    } else {
+      view.targetLabel = `Knife: click an enemy beside ${unit.shortName} that is looking the other way. Esc to cancel.`;
     }
   } else if (kind === 'stone') {
     forEachCell(map, (q, r) => { if (checkThrowStone(map, unit, { q, r }, rules).ok) add({ q, r }); });
@@ -825,6 +848,9 @@ function handleTargetClick(q, r) {
   } else if (state.targeting === 'kill') {
     const enemy = state.enemies.find((e) => e.q === q && e.r === r);
     if (enemy) next = killEnemy(state, mover.id, enemy.id, map, rules);
+  } else if (state.targeting === 'knife') {
+    const enemy = state.enemies.find((e) => e.q === q && e.r === r);
+    if (enemy) next = knifeEnemy(state, mover.id, enemy.id, rules);
   } else if (state.targeting === 'stone') {
     next = throwStone(state, mover.id, { q, r }, map, rules);
   } else if (state.targeting === 'stabilise') {
@@ -878,6 +904,7 @@ function handleAction(id) {
       break;
     case 'suppress':
     case 'kill':
+    case 'knife':
     case 'stone':
     case 'swim':
     case 'pass':
@@ -1161,7 +1188,11 @@ function describeMarker(id, unit) {
   }
   if (id === 'marker-orders') {
     const leader = state.units.find((u) => u.leader);
-    return ['ORDERS', `${name} started this turn within ${rules.command.radius} hexes of ${leader?.shortName ?? 'the leader'}: +${unit.commandBonus} AP this turn.`];
+    const where = rules.command.closeRadius != null && unit.commandBonus === rules.command.closeBonusActionPoints
+      ? (rules.command.closeRadius === 1 ? 'beside' : `within ${rules.command.closeRadius} hexes of`)
+      : `within ${rules.command.radius} hexes of`;
+    return ['ORDERS', `${name} started this turn ${where} ${leader?.shortName ?? 'the leader'}: +${unit.commandBonus} AP this turn. `
+      + `The orders give ${ordersWords(rules.command)}.`];
   }
   return ['', ''];
 }
@@ -1172,16 +1203,17 @@ function leaderAt(hex) {
   return state.units.find((u) => u.leader && onBoard(u) && u.q === hex.q && u.r === hex.r) ?? null;
 }
 
-/** "Dutch's orders — a man inside it at the start of a turn gets +1 AP". */
-function ordersWords(leader) {
-  return `${leader.shortName}'s orders — a man inside it at the start of a turn gets +${rules.command.bonusActionPoints} AP`;
+/** "Dutch's orders — at the start of a turn, +2 AP beside him, +1 AP within 2 hexes of him". */
+function leaderOrdersWords(leader) {
+  return `${leader.shortName}'s orders — at the start of a turn, ${ordersWords(rules.command)}`;
 }
 
 /** The leader's rollover on the board: his orders, and who has them this turn. */
 function describeLeaderHover(leader) {
   const led = state.units.filter((u) => onBoard(u) && u.commandBonus > 0).length;
+  const inner = rules.command.closeRadius != null ? ' (the finer dash is the inner ring)' : '';
   return titled(`${leader.shortName.toUpperCase()}'S ORDERS`,
-    `The dashed blue ring: a man inside it at the start of a turn gets +${rules.command.bonusActionPoints} AP. `
+    `The dashed blue rings${inner}: a man inside them at the start of a turn gets ${ordersWords(rules.command)}. `
     + `${led === 0 ? 'Nobody has' : led === 1 ? '1 man has' : `${led} men have`} them this turn.`);
 }
 
@@ -1339,6 +1371,10 @@ function handleKey(event) {
     case 'k':
     case 'K':
       handleAction('kill');
+      return;
+    case 'n':
+    case 'N':
+      handleAction('knife');
       return;
     case 't':
     case 'T':

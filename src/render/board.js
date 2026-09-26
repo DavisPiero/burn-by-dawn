@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -546,6 +546,8 @@ export function renderPieces(layers, state, view) {
 
   if (view.reachable) drawReachable(layers, view.reachable);
   if (view.commandArea) drawCommand(layers, view.commandArea);
+  // The inner band, where his orders are strongest (M12), in a finer dash.
+  if (view.commandCloseArea) drawCommand(layers, view.commandCloseArea, COMMAND.closeDash);
 
   for (const route of view.routes) drawRoute(layers, route);
 
@@ -599,7 +601,8 @@ export function renderPieces(layers, state, view) {
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
-    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, 'marker-orders', 38, 13, unit));
+    // One chevron for the ordinary orders, two for the strongest, beside him.
+    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 38, 13, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -1561,9 +1564,9 @@ function drawAreaEdge(layers, layer, area, strokes, extra = {}) {
  * dashed line in his blue round every hex within it. What it means is in the
  * readout; a label on the board sat on the counters inside it.
  */
-function drawCommand(layers, hexes) {
+function drawCommand(layers, hexes, dash = COMMAND.dash) {
   drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.casing, COMMAND.casingWidth]]);
-  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': COMMAND.dash });
+  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': dash });
 }
 
 // --- hover path preview -----------------------------------------------------

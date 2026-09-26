@@ -13,7 +13,7 @@ import {
   chooseDropRun, createInitialState, endTurn, jump, moveUnit, packParachute,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
-import { checkPackParachute, isWounded, planMove, unitById } from '../src/units.js';
+import { checkPackParachute, commandBonus, isWounded, planMove, unitById } from '../src/units.js';
 import { landedState } from './fixtures.js';
 
 function assert(condition, message) {
@@ -258,13 +258,27 @@ export default [
     throw new Error('no run has a first jump point anyone could land on');
   }],
 
+  ['the orders are strongest beside the leader: +2 beside him, +1 two hexes off, nothing further (M12)', async () => {
+    const { rules } = await loadAll();
+    const man = (id, q, leader = false) => ({ id, q, r: 0, leader, landed: true });
+    const leader = man('leader', 0, true);
+    const at = (q) => commandBonus(man('x', q), [leader, man('x', q)], rules);
+    equal(at(1), rules.command.closeBonusActionPoints, 'beside him');
+    equal(at(rules.command.radius), rules.command.bonusActionPoints, 'at the edge of his radius');
+    equal(at(rules.command.radius + 1), 0, 'past it');
+    equal(commandBonus(leader, [leader], rules), 0, 'never himself');
+    equal(commandBonus(man('x', 1), [{ ...leader, dead: true }, man('x', 1)], rules), 0, 'not from a dead leader');
+  }],
+
   ['the command radius is measured where they land', async () => {
     const env = await loadAll();
     const { map, rules, traits, roster } = env;
     const s = landedState(roster, traits, rules, map);
     for (const unit of s.units) {
-      const led = s.units.some((o) => o.leader && o.id !== unit.id && hexDistance(o, unit) <= rules.command.radius);
-      equal(unit.commandBonus, led && !unit.leader && !unit.hits ? rules.command.bonusActionPoints : 0, `${unit.id} orders`);
+      const d = Math.min(Infinity, ...s.units.filter((o) => o.leader && o.id !== unit.id).map((o) => hexDistance(o, unit)));
+      // Strongest beside him (M12), then the ordinary band.
+      const bonus = d <= rules.command.closeRadius ? rules.command.closeBonusActionPoints : d <= rules.command.radius ? rules.command.bonusActionPoints : 0;
+      equal(unit.commandBonus, !unit.leader && !unit.hits ? bonus : 0, `${unit.id} orders`);
     }
   }],
 

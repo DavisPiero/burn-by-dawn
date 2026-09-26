@@ -60,6 +60,13 @@
       grid-template-columns: var(--left-w) var(--panel-w);
       justify-content: center;
     }
+    /* A window smaller than the spread (1280x760) gets the same spread zoomed
+       down to fit, by ui.js fitSpread (M12b) — no second layout. */
+    html.scaled #spread {
+      zoom: var(--spread-zoom);
+      width: var(--spread-w);
+      height: var(--spread-h);
+    }
     .page {
       position: relative;
       box-sizing: border-box;
@@ -331,7 +338,8 @@
     #actions.four { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
     #actions.four .action-key { margin-right: 2px; padding: 0 2px; }
     #actions.four .action { padding: 0 2px; }
-    #actions.four .action-name { font-size: 12px; }
+    /* Four across, a two-word name goes onto two lines rather than being cut ("Pack chute", M12b). */
+    #actions.four .action-name { font-size: 12px; white-space: normal; line-height: 1.05; }
     #actions.idle {
       display: flex;
       align-items: center;

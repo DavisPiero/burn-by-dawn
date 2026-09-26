@@ -20,6 +20,9 @@
 // DIFFICULTY=<id> plays at a level from data/difficulty.json, as the game
 // does: its patches over the files (and over any *_PATCH above).
 //
+// KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
+// bot never goes looking for one. Without it the bot never uses the knife.
+//
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -73,6 +76,7 @@ const OPTS = {
   naivefight: { fight: true, secondaries: true, naive: true },
 }[STRATEGY];
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
+const KNIFE = process.env.KNIFE === '1';
 
 function distanceField(map, goals) {
   // Cost to walk from any hex to the nearest goal (entering-cost of hexes on the way).
@@ -175,6 +179,11 @@ function actFor(state, unit, map) {
     for (const e of state.enemies) {
       if (e.watching && U.checkSuppress(map, unit, e, rules).ok) return S.suppressEnemy(state, unit.id, e.id, map, rules);
     }
+  }
+  // KNIFE=1 (M12b): any man beside an enemy that cannot see him knifes it,
+  // as a player would who noticed. The bot never goes looking for one.
+  if (KNIFE) {
+    for (const e of state.enemies) if (U.checkKnife(unit, e, rules).ok) return S.knifeEnemy(state, unit.id, e.id, rules);
   }
   if (unit.ap <= 0) return null;
 

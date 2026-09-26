@@ -12,7 +12,7 @@
 // in state.js. Placing charges, cutting the line and swimming need the
 // objectives, so their checks live in sabotage.js.
 
-import { hexDistance, neighbors } from './hex.js';
+import { hexDistance, inArc, neighbors } from './hex.js';
 import { enterCost, findPath, hasLineOfSight, hexKey, isInPlay, reachableWithin, terrainAt } from './map.js';
 import { applyHook } from './traits.js';
 
@@ -99,7 +99,8 @@ export function createUnits(roster, traits, rules, rosterUrl = 'data/roster.json
 /**
  * The leader's command radius: a trooper within `command.radius` hexes of a
  * trooper flagged `leader` has been given his orders and gets
- * `command.bonusActionPoints` for the turn.
+ * `command.bonusActionPoints` for the turn, or `command.closeBonusActionPoints`
+ * within `command.closeRadius` (M12: strongest beside him).
  *
  * This is a rule in data/rules.json rather than a trait, and deliberately so.
  * Every hook in SPEC.md §5 modifies the trooper who owns the trait; this
@@ -113,10 +114,15 @@ export function commandBonus(unit, units, rules) {
   if (!command?.bonusActionPoints) return 0;
   if (unit.leader && !command.leaderReceivesOwnBonus) return 0;
 
-  const led = units.some((other) => (
-    other.leader && onBoard(other) && other.id !== unit.id && hexDistance(other, unit) <= command.radius
-  ));
-  return led ? command.bonusActionPoints : 0;
+  // The nearest leader on the board, if any; his orders are strongest close
+  // to him (M12): `closeBonusActionPoints` within `closeRadius`.
+  const distances = units
+    .filter((other) => other.leader && onBoard(other) && other.id !== unit.id)
+    .map((other) => hexDistance(other, unit));
+  if (distances.length === 0) return 0;
+  const nearest = Math.min(...distances);
+  if (command.closeRadius != null && nearest <= command.closeRadius) return command.closeBonusActionPoints;
+  return nearest <= command.radius ? command.bonusActionPoints : 0;
 }
 
 /**
@@ -395,6 +401,24 @@ export function checkHide(unit, rules) {
   const cost = rules.actions.hide.apCost;
   if (unit?.hidden) return result(cost, 'already hidden');
   return result(cost, canAct(unit, cost));
+}
+
+/**
+ * The knife (SPEC.md §4, M12b): any trooper, not in contact, an enemy beside
+ * him that cannot see him — he is outside its arc (beside it, the range and
+ * the line are never the question) — and of a type that can be killed.
+ */
+export function checkKnife(unit, enemy, rules) {
+  const cost = rules.actions.knife.apCost;
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  if (unit.inContact) return result(cost, 'he has been seen — an enemy has him in its sights');
+  if (!enemy) return result(cost, 'pick an enemy beside him');
+  const name = `the ${enemy.label.toLowerCase()}`;
+  if (!enemy.killable) return result(cost, `${name} cannot be killed — suppress it to get past`);
+  if (hexDistance(unit, enemy) !== 1) return result(cost, `${name} is not beside him`);
+  if (inArc(enemy, enemy.facing, unit, enemy.arcDegrees)) return result(cost, `${name} is looking his way — get behind it`);
+  return result(cost, null);
 }
 
 /** Suppress (SPEC.md §4): gunners only, a visible enemy — in spot radius, clear line. */

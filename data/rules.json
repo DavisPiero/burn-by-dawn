@@ -11,9 +11,11 @@
   "command": {
     "radius": 2,
     "bonusActionPoints": 1,
+    "closeRadius": 1,
+    "closeBonusActionPoints": 2,
     "leaderReceivesOwnBonus": false
   },
-  "_command": "The leader's command radius. At the start of each turn a trooper within `radius` hexes of a trooper flagged `leader` in roster.json gets `bonusActionPoints` added to his pool for that turn — he has been given orders. Measured at the moment the pool is filled, so moving next to the leader mid-turn pays off on the following turn. This is a rule, not a trait: it modifies other troopers, and SPEC.md §5's hooks only ever modify their own owner.",
+  "_command": "The leader's command radius. At the start of each turn a trooper within `radius` hexes of a trooper flagged `leader` in roster.json gets `bonusActionPoints` added to his pool for that turn — he has been given orders. Measured at the moment the pool is filled, so moving next to the leader mid-turn pays off on the following turn. This is a rule, not a trait: it modifies other troopers, and SPEC.md §5's hooks only ever modify their own owner. M12: the orders are strongest closest to him — a trooper within `closeRadius` hexes gets `closeBonusActionPoints` instead (beside him, +2); null `closeRadius` leaves one band.",
 
   "_bases": "The base values the trait hooks modify (SPEC.md §5, §7, §9). They landed at M3 so every trait can be shown firing against a real number; the systems that act on them — charges and fuses at M5, gunfire at M4/M5, the drop at M6, trooper vision at M4 — arrive later and must read them from here.",
 
@@ -104,12 +106,13 @@
     "woundedActionPoints": 1
   },
 
-  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go, and is open to a kill until the end of the next player phase. kill: gunners only (roles[].kill), the same visible target as suppress, which must be under suppression and of a killable type (data/enemies.json); one aimed shot from a silenced Sten, raising alert.silenced and heard as noise.silenced (the onFire hook applies, as to gunfire), and it leaves a body. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, and, if `requiresDestroyed` names an objective kind, only once one is destroyed; null lets him swim from the start (M11b: while the bridge stood nobody could reach the telephone exchange but over the watched deck, so nobody went for it). A full turn means he has spent no AP yet and it costs his whole pool. passCharge (M11b): hand one charge to a man beside him who can carry it; the giver pays `apCost`, a lot of a 3 AP sapper's turn, the man taking it pays nothing.",
+  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go, and is open to a kill until the end of the next player phase. kill: gunners only (roles[].kill), the same visible target as suppress, which must be under suppression and of a killable type (data/enemies.json); one aimed shot from a silenced Sten, raising alert.silenced and heard as noise.silenced (the onFire hook applies, as to gunfire), and it leaves a body. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, and, if `requiresDestroyed` names an objective kind, only once one is destroyed; null lets him swim from the start (M11b: while the bridge stood nobody could reach the telephone exchange but over the watched deck, so nobody went for it). A full turn means he has spent no AP yet and it costs his whole pool. passCharge (M11b): hand one charge to a man beside him who can carry it; the giver pays `apCost`, a lot of a 3 AP sapper's turn, the man taking it pays nothing. knife (M12b, the playtesters' \"they should all be armed\"): any trooper, not in contact, kills an enemy beside him that cannot see him — he is outside its arc — for `apCost`, and it ends his turn; silent, no alert and no noise, but it leaves a body; an enemy of a type that cannot be killed cannot be knifed either.",
 
   "actions": {
     "hide": { "apCost": 1, "concealment": 1 },
     "suppress": { "apCost": 2 },
     "kill": { "apCost": 2 },
+    "knife": { "apCost": 2 },
     "throwStone": { "apCost": 1, "range": 3 },
     "pickUpCharge": { "apCost": 1 },
     "passCharge": { "apCost": 2 },

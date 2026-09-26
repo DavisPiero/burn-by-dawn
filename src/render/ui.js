@@ -84,7 +84,7 @@ export function attachPopup(element, content) {
 const KEYS = [
   [['1–3', 'pick a drop run'], ['Space', 'jump']],
   [['1–6', 'select a man'], ['Tab', 'next man'], ['Esc', 'deselect']],
-  [['H', 'hold'], ['G', 'hide'], ['S', 'suppress'], ['K', 'kill']],
+  [['H', 'hold'], ['G', 'hide'], ['N', 'knife'], ['S', 'suppress'], ['K', 'kill']],
   [['T', 'throw a stone'], ['A', 'stabilise'], ['U', 'pack chute']],
   [['P', 'pick up a charge'], ['C', 'place a charge']],
   [['E', 'pass a charge'], ['X', 'cut the line'], ['W', 'swim']],
@@ -113,6 +113,7 @@ export function renderKeys(button) {
 export const SPREAD = {
   minWidth: 1280,
   minHeight: 760,
+  minScale: 0.75, // the most the spread is zoomed down to fit a small window (M12b)
   marginX: 8 + 22, // spread padding left and right (index.html #spread)
   marginY: 8 + 8,
   leftChromeX: 20 + 4 + 2 + 16, // outer gutter, its gap, left page padding
@@ -126,8 +127,16 @@ export const SPREAD = {
 
 /** Size the board, captions and right page to the window. `aspect` is the board's width over height. */
 export function fitSpread(aspect, root = document.documentElement) {
-  const width = Math.max(window.innerWidth, SPREAD.minWidth);
-  const height = Math.max(window.innerHeight, SPREAD.minHeight);
+  // A window smaller than the spread's minimum (a Chromebook's 1200 across,
+  // M12b) shows the same spread zoomed down to fit, never a different layout;
+  // below SPREAD.minScale it stops shrinking and the page scrolls instead.
+  const scale = Math.max(SPREAD.minScale, Math.min(1, window.innerWidth / SPREAD.minWidth, window.innerHeight / SPREAD.minHeight));
+  const width = Math.max(window.innerWidth / scale, SPREAD.minWidth);
+  const height = Math.max(window.innerHeight / scale, SPREAD.minHeight);
+  root.classList.toggle('scaled', scale < 1);
+  root.style.setProperty('--spread-zoom', String(scale));
+  root.style.setProperty('--spread-w', `${Math.floor(width)}px`);
+  root.style.setProperty('--spread-h', `${Math.floor(height)}px`);
   const across = width - SPREAD.marginX - SPREAD.leftChromeX;
   const down = height - SPREAD.marginY - SPREAD.leftChromeY;
   const panelWanted = Math.min(SPREAD.panelMax, Math.max(SPREAD.panelMin, width * SPREAD.panelShare));
