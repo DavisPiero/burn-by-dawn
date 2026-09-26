@@ -122,6 +122,20 @@
       padding: 4px 0;
     }
     #seed a { color: inherit; opacity: 0.6; }
+    /* Sound on or off, under the seed and set the same way. */
+    #sound-toggle {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 4px 0;
+      font: inherit;
+      font-size: 11px;
+      color: inherit;
+      opacity: 0.6;
+      background: none;
+      border: 0;
+      text-decoration: underline;
+      cursor: pointer;
+    }
     /* The difficulty beside the seed: text, not a button to look at, but a
        click on it before the jump opens the orders where it is chosen. */
     #seed .seed-level {
@@ -760,6 +774,7 @@
       <div id="outer-gutter">
         <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
         <div id="seed"></div>
+        <button id="sound-toggle" type="button" title="Sound on or off [M]"></button>
       </div>
       <div id="briefing-backdrop" hidden><section id="briefing" role="dialog" aria-modal="true"></section></div>
       <div id="left-content">

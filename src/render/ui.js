@@ -80,7 +80,7 @@ const KEYS = [
   'A stabilise · P pick up a charge · U pack parachute',
   'C place a charge · X cut the line · W swim',
   'D RAF diversion · Space end turn · Z undo',
-  'Esc or right-click cancel · R patrol routes',
+  'Esc or right-click cancel · R patrol routes · M sound',
   '',
   'Hover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
 ].join('\n');
@@ -595,6 +595,12 @@ export function renderDropRuns(element, runs, onChoose) {
 /** A drop run's rollover, on its button and on its tab on the board. */
 export function describeRun(run) {
   return [html('b', null, `${run.label.toUpperCase()} · ${run.tag.toUpperCase()}`), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
+}
+
+/** Sound on or off, in the margin under the seed. */
+export function renderSoundToggle(button, muted) {
+  button.textContent = muted ? 'sound off' : 'sound on';
+  button.setAttribute('aria-pressed', String(!muted));
 }
 
 /**
