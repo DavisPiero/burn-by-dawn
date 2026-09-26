@@ -28,15 +28,16 @@
     {
       "id": "hard",
       "label": "Hard",
-      "summary": "Four men must get out, and every sentry and patrol sees a hex further.",
+      "summary": "Four men must get out, every sentry and patrol sees a hex further and wider, and their shots hit from 3 hexes off.",
       "rules": {
-        "mission": { "minimumOut": 4 }
+        "mission": { "minimumOut": 4 },
+        "combat": { "hitRange": 3 }
       },
       "enemies": {
         "types": {
-          "sentry": { "visionRadius": 4 },
-          "patrol": { "visionRadius": 4 },
-          "reserve": { "visionRadius": 4 }
+          "sentry": { "visionRadius": 4, "arcDegrees": 120 },
+          "patrol": { "visionRadius": 4, "arcDegrees": 120 },
+          "reserve": { "visionRadius": 4, "arcDegrees": 120 }
         }
       }
     }
