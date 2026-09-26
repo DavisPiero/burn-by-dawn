@@ -422,3 +422,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-09-26 | M12 | The back page: 20 px above the kicker and 22 px above the result, and Play again set in the stencil at 22 px, 34 px under the score
 2026-09-26 | M12 | The turn counter is set in the stencil at 22 px (was the typewriter at 17)
 2026-09-26 | M12 | "Pack chute" is the U button's full label (the short "Pack" is gone)
+2026-09-26 | M12 | Balance bot after M12 (300 seeds): naive Easy 97/98/93 (was 98/97/91), Hard 55/42/22 (56/48/28); naivegreedy Normal 79/53/33 (78/56/34) — the bridge post's move costs the north and east runs a few points, most on Hard's east run, where the post now also sees the fields north-west of the bridge; not tuned, since the bot never throws the stone the move is for
