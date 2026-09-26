@@ -165,7 +165,7 @@ export default [
     equal(unit.charges, 0, 'charge gone');
     equal(result.state.droppedCharges.filter((c) => c.q === at.q && c.r === at.r).length, before.charges, 'charge on his hex');
     const wound = result.events.find((ev) => ev.kind === 'wounded');
-    equal(wound.line, before.dialogue.onWounded, 'onWounded line');
+    equal(wound.line, before.dialogue.onWoundedCarrying ?? before.dialogue.onWounded, 'carrying a charge: his carrying line if he has one');
     const refilled = fillActionPoints(result.state.units, rules);
     equal(unitIn({ units: refilled }, unitId).apMax, rules.combat.woundedActionPoints, 'wounded pool');
   }],

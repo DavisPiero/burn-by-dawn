@@ -17,7 +17,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexDistance, hexLine, hex
 import { hexKey, inBounds, isInPlay, isPassable, terrainAt } from './map.js';
 import { isExfil } from './sabotage.js';
 import { applyHook } from './traits.js';
-import { fillActionPoints } from './units.js';
+import { fillActionPoints, woundedLine } from './units.js';
 
 const LANDING_KINDS = ['bad', 'wounds'];
 
@@ -244,6 +244,7 @@ export function landStick(state, landings, map, rules) {
       event.turnsLost = lost;
     } else if (settled.kind === 'wounds') {
       const hit = applyHit(unit, rules);
+      event.line = woundedLine(unit);
       if (unit.charges > 0) {
         droppedCharges = [...droppedCharges, ...Array.from({ length: unit.charges }, () => ({ q: settled.q, r: settled.r }))];
       }

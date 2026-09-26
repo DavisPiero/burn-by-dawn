@@ -7,7 +7,7 @@ import {
   chooseDropRun, createInitialState, endTurn, holdUnit, jump, moveUnit, placeCharge, silenceUnits,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
-import { onBoard, planMove, unitById } from '../src/units.js';
+import { onBoard, planMove, unitById, woundedLine } from '../src/units.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -34,7 +34,9 @@ export default [
     const landed = jump(chooseDropRun(start, map, 'north'), map, rules);
     for (const unit of landed.units.filter(onBoard)) {
       const wet = landed.report.some((e) => e.kind === 'landed' && e.unitId === unit.id && e.outcome === 'wounds');
-      equal(lineOf(landed, unit.id), wet ? unit.dialogue.onWounded : unit.dialogue.onLand, `${unit.shortName}'s line`);
+      const carrying = start.units.find((u) => u.id === unit.id).charges > 0;
+      const woundedLine = (carrying && unit.dialogue.onWoundedCarrying) || unit.dialogue.onWounded;
+      equal(lineOf(landed, unit.id), wet ? woundedLine : unit.dialogue.onLand, `${unit.shortName}'s line`);
     }
     equal(new Set(landed.speech.map((s) => s.unitId)).size, landed.speech.length, 'one line per man');
   }],
@@ -80,5 +82,19 @@ export default [
     const placed = placeCharge({ ...base, units, enemies: [] }, sapper.id, rules);
     equal(placed.charges.length, 1, 'charge set');
     equal(lineOf(placed, sapper.id), unitById(placed.units, sapper.id).dialogue.onPlaceCharge, 'his line');
+  }],
+
+  ['a man hit still carrying a charge says his carrying line if he has one; without a charge, his plain wounded line', async () => {
+    const { map, rules, traits, roster } = await loadAll();
+    const start = createInitialState(roster, traits, rules, map, 1);
+    const carriers = start.units.filter((u) => u.dialogue.onWoundedCarrying);
+    assert(carriers.length > 0, 'the roster has carrying lines');
+    for (const u of carriers) {
+      assert(u.charges > 0, `${u.shortName} starts with a charge to talk about`);
+      equal(woundedLine(u), u.dialogue.onWoundedCarrying, `${u.shortName} carrying`);
+      equal(woundedLine({ ...u, charges: 0 }), u.dialogue.onWounded, `${u.shortName} with his charge gone`);
+    }
+    const plain = start.units.find((u) => !u.dialogue.onWoundedCarrying);
+    equal(woundedLine({ ...plain, charges: 1 }), plain.dialogue.onWounded, 'no carrying line: the plain one, charge or not');
   }],
 ];

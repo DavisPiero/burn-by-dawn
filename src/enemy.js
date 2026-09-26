@@ -13,7 +13,7 @@
 import { DIRECTION_NAMES, directionOf, facingToward, hexDistance, inArc } from './hex.js';
 import { enterCost, findPath, forEachCell, hasLineOfSight, hexKey, isInPlay, terrainAt } from './map.js';
 import { applyHook } from './traits.js';
-import { onBoard } from './units.js';
+import { onBoard, woundedLine } from './units.js';
 
 const DIRECTIONS = DIRECTION_NAMES.length;
 
@@ -366,7 +366,7 @@ export function runDetection(state, map, rules) {
     const shot = applyHit(unit, rules);
     events.push({
       kind: shot.dead ? 'killed' : 'wounded', unitId: unit.id, unitName: unit.shortName,
-      by, line: shot.dead ? null : unit.dialogue?.onWounded ?? null,
+      by, line: shot.dead ? null : woundedLine(unit),
     });
     if (unit.charges > 0) {
       droppedCharges = [...droppedCharges, ...Array.from({ length: unit.charges }, () => ({ q: unit.q, r: unit.r }))];

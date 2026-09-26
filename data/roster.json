@@ -5,7 +5,7 @@
 
   "_shortName": "What fits on the counter's name strip. It is not required to be the surname: Holloway goes by his nickname.",
 
-  "_dialogue": "Three lines each, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5). Every key is required, even for a man who will never place a charge. These are PLACEHOLDER lines, written to be replaced. They are data only until the speech bubbles at M7.",
+  "_dialogue": "Three lines each, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5). Every key is required, even for a man who will never place a charge. onWoundedCarrying is optional: said instead of onWounded when he is hit still carrying a charge, which then drops on his hex, so a line about the charge is only said when there is one to fetch. Give it to the men who start with charges; onWounded must then not mention one. These are PLACEHOLDER lines, written to be replaced.",
 
   "troopers": [
     {
@@ -14,7 +14,8 @@
       "dialogue": {
         "onLand": "Right. Nobody wanders off till I've found the rest of you.",
         "onPlaceCharge": "Set. Walk away from it — then run.",
-        "onWounded": "Only a scratch. Keep the lads moving."
+        "onWounded": "Only a scratch. Keep the lads moving.",
+        "onWoundedCarrying": "Charge is by my boots. Somebody fetch it — I'll catch you up."
       }
     },
     {
@@ -23,7 +24,8 @@
       "dialogue": {
         "onLand": "Down soft as you like. Whose cabbages are these?",
         "onPlaceCharge": "Done. You'd not have got the wrapper off.",
-        "onWounded": "Oh, that's torn it."
+        "onWounded": "Oh, that's torn it.",
+        "onWoundedCarrying": "Oh, that's torn it. Charge is on the deck — mind how you lift it."
       }
     },
     {
@@ -59,7 +61,8 @@
       "dialogue": {
         "onLand": "Carried the spare all the way down, Sarge.",
         "onPlaceCharge": "Heavy old thing. Glad to be shot of it.",
-        "onWounded": "Somebody take the charge off me."
+        "onWounded": "Takes more than that to put an ox down.",
+        "onWoundedCarrying": "Somebody take the charge off me."
       }
     }
   ]

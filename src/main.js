@@ -57,9 +57,10 @@ const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
 
-// The game's title, set over the title card on the orders. The results
-// masthead is the logo sprite in theme.js, which spells it too.
+// The game's title, set over the title card on the orders and the back page.
 const GAME_TITLE = 'BURN BY DAWN';
+// Its strapline, along the foot of the title card on the orders and the back page.
+const GAME_TAGLINE = 'SIX MEN · ONE BRIDGE · DAWN AT TWENTY';
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -97,11 +98,12 @@ let dropShowTimer = null;
 // to finish being shown. Interface only, never game state.
 let briefing = null;
 let briefingsOn = true;
-// Undo (SPEC.md §4): the state before each move or action this player phase,
-// newest last. Emptied when the turn ends or the stick jumps, so it can never
-// take back what the garrison has seen — and the player phase rolls no dice,
-// so taking a move back can never re-roll anything.
-let undoStack = [];
+// Undo (SPEC.md §4): the state before the last move or action, and only the
+// last — one step, a mis-click net. Cleared when it is used, when the turn
+// ends and when the stick jumps, so it can never take back what the garrison
+// has seen — and the player phase rolls no dice, so taking a move back can
+// never re-roll anything.
+let undoState = null;
 let briefingAfterDrop = false;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
@@ -551,14 +553,14 @@ function render() {
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
-  renderUndoButton(undoButton, state, undoStack.length);
+  renderUndoButton(undoButton, state, Boolean(undoState));
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
-  renderResults(resultsBox, state.outcome, level.label);
+  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE });
   renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
   dropStalePopup();
 }
@@ -604,14 +606,15 @@ function renderBoard() {
  */
 function commit(next) {
   if (next === state) return;
-  undoStack.push(state);
+  undoState = state;
   state = settleMission(next, rules, baseMap);
 }
 
-/** Take back the last move or action this turn, keeping where the mouse is. */
+/** Take back the last move or action, once, keeping where the mouse is. */
 function undoLast() {
-  if (undoStack.length === 0 || state.outcome || briefing || dropShow) return;
-  const previous = undoStack.pop();
+  if (!undoState || state.outcome || briefing || dropShow) return;
+  const previous = undoState;
+  undoState = null;
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
   render();
 }
@@ -644,11 +647,19 @@ function handleHexClick(q, r) {
   render();
 }
 
-// A click while aiming either takes the action or does nothing: a miss leaves
-// the player aiming, and the readout already says why it would not work.
+// A click while aiming on another of the stick stops aiming and selects him,
+// as it would anywhere else — a stone is never thrown at one of our own — but
+// for stabilise, whose target is one of the stick, which selects him only if
+// it cannot be done. Any other click takes the action if it can; a miss
+// leaves the player aiming, and the readout already says why it would not work.
 function handleTargetClick(q, r) {
   const mover = selectedUnit(state);
   if (!mover) return;
+  const other = unitAt(state.units, q, r);
+  if (other && other.id !== mover.id && state.targeting !== 'stabilise') {
+    state = selectUnit(state, other.id);
+    return;
+  }
   let next = state;
   if (state.targeting === 'suppress') {
     const enemy = state.enemies.find((e) => e.q === q && e.r === r);
@@ -665,13 +676,17 @@ function handleTargetClick(q, r) {
     next = swimAcross(state, mover.id, { q, r }, map, rules);
   }
   if (next !== state) commit(setTargeting(next, null));
+  else if (other && other.id !== mover.id) state = selectUnit(state, other.id);
 }
 
 /** An action button or its key. Aimed actions start aiming; the rest happen. */
 function handleAction(id) {
   if (state.outcome) return;
   if (id === 'diversion') {
+    const before = state;
     commit(callDiversion(state, rules));
+    // Said on a card, so a call can never pass unnoticed and be made twice.
+    if (state !== before) briefing = { kind: 'diversion', before };
     render();
     return;
   }
@@ -734,7 +749,7 @@ function handleEndTurn() {
 }
 
 function endTurnNow() {
-  undoStack = [];
+  undoState = null;
   state = endTurn(state, rules, baseMap);
   if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
   render();
@@ -755,7 +770,7 @@ function startMission(nextLevel, seed) {
   ({ rules, map: baseMap } = applyDifficulty(level, rawRules, rawMap));
   map = baseMap;
   state = createInitialState(roster, traits, rules, baseMap, seed);
-  undoStack = [];
+  undoState = null;
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 
@@ -797,7 +812,7 @@ function describeBriefing(which, view) {
     }).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     return {
-      banner: { title: GAME_TITLE },
+      banner: { title: GAME_TITLE, tagline: GAME_TAGLINE },
       title: 'ORDERS',
       kicker: 'BEFORE THE DROP',
       paragraphs: [
@@ -822,6 +837,7 @@ function describeBriefing(which, view) {
       },
     };
   }
+  if (which.kind === 'diversion') return describeDiversionCard(which.before);
   const lines = rankedReport(state.report, view.place);
   const shown = 6;
   const alert = rules.alert.states[alertIndex(state.alert.points, rules)];
@@ -840,13 +856,40 @@ function describeBriefing(which, view) {
   };
 }
 
+/** The card when the RAF diversion is called: what it did, and what is left. */
+function describeDiversionCard(before) {
+  const label = (points) => rules.alert.states[alertIndex(points, rules)].label;
+  const from = label(before.alert.points);
+  const to = label(state.alert.points);
+  const searches = before.enemies.filter((e) => e.investigating || e.holding).length + (before.contact ? 1 : 0);
+  const freed = before.units.filter((u) => u.inContact).length;
+  const left = rules.diversion.uses - state.diversionsCalled;
+  const lines = [
+    from !== to
+      ? `The alert drops: ${from} → ${to}.`
+      : `The alert stays ${to}${state.explosions ? ': after an explosion it never drops lower' : ''}.`,
+  ];
+  if (searches) lines.push(`${searches} ${searches === 1 ? 'search is' : 'searches are'} called off.`);
+  if (freed) lines.push(`${freed} ${freed === 1 ? 'man is' : 'men are'} out of contact.`);
+  lines.push('The clean-run bonus is gone.');
+  return {
+    title: 'RAF DIVERSION',
+    kicker: 'BOMBERS OVER THE TOWN',
+    paragraphs: ['The radio worked. The garrison looks the other way.'],
+    sections: [
+      { heading: 'WHAT IT DID', lines },
+      { heading: 'THE RADIO', lines: [left > 0 ? `${left === 1 ? 'One more call' : `${left} more calls`} left, while the leader lives.` : 'No more calls this mission.'] },
+    ],
+  };
+}
+
 /** Jump, and show the stick going out and coming down. */
 function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
   if (!run) return;
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
-  undoStack = [];
+  undoState = null;
   state = jump(state, baseMap, rules);
   const landed = state.report.filter((e) => e.kind === 'landed');
   if (landed.length) {
