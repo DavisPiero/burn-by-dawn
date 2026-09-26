@@ -24,7 +24,9 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
-import { applyDocumentTheme, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard } from './render/theme.js';
+import {
+  applyDocumentTheme, loadSuppliedAircraft, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+} from './render/theme.js';
 import {
   DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
@@ -314,9 +316,13 @@ function primaryLabel() {
   return state.objectives.find((o) => o.primary).label.toLowerCase();
 }
 
-/** "1 CHARGE", "2 CHARGES": the marker-pen count on a target ring. */
+/**
+ * "USE ONE CHARGE", "USE TWO CHARGES": the marker-pen count on a target ring,
+ * in words, since a lettered 1 is too easily read as I.
+ */
 function chargeCount(n) {
-  return `${n} CHARGE${n === 1 ? '' : 'S'}`;
+  const words = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
+  return `USE ${words[n] ?? n} CHARGE${n === 1 ? '' : 'S'}`;
 }
 
 /** Charges an objective still wants: what it needs, less those gone off or burning. */
@@ -725,7 +731,7 @@ function describeBriefing(which, view) {
           'Pick a drop run with the 1–3 keys, or click its name on the map. Hover the map to see where you might come down.',
           'Hit the SPACE key to initiate the drop. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Hit SPACE to end a turn.',
           'Red rings mark your targets. The red dashed hexes around each are its charge points, where explosives go: stand a man carrying a charge on one and press C.',
-          `You do not fill every point. Charges needed: ${needs}. The stick carries ${carried} in all.`,
+          `You do not fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`,
           'Hover anything for detail. KEYS, top right, lists every key.',
         ],
       }],
@@ -925,6 +931,7 @@ window.dispatchEvent(new Event('night-drop-started'));
 try {
   applyDocumentTheme();
   loadSuppliedPaper();
+  const fontsLoaded = loadSuppliedFonts();
   baseMap = await loadMap();
   map = baseMap;
   rules = await loadJson('data/rules.json');
@@ -968,8 +975,10 @@ try {
   // Portrait art dropped into assets/portraits replaces the drawn portraits
   // as each file arrives (ART-ASSETS.md §2).
   loadSuppliedPortraits(state.units.map((u) => u.id), () => render());
-  // So is a painted title card in assets/title (ART-ASSETS.md §7).
+  // So are a painted title card in assets/title (ART-ASSETS.md §7) and a
+  // painted aircraft in assets/aircraft (§6).
   loadSuppliedTitleCard();
+  loadSuppliedAircraft();
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
@@ -977,6 +986,8 @@ try {
   // The orders open over the board before anything else (SPEC.md §11).
   briefing = { kind: 'orders' };
   briefingBackdrop.addEventListener('click', () => closeBriefing());
+  // Speech bubbles are measured in the face they are set in: wait for it.
+  await fontsLoaded;
   render();
 
   // The board is up. The failure reporter in index.html stops attributing

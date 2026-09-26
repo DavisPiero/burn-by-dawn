@@ -20,7 +20,7 @@
       --blue: #3D5A73;
       --leader: #2F7BBF;
       --typewriter: "Courier 10 Pitch", "Courier New", Courier, monospace;
-      --slab: "Rockwell Condensed", Rockwell, "Courier New", serif;
+      --slab: "Stardos Stencil", "Rockwell Condensed", Rockwell, "Courier New", serif;
       --paper-fibre: none;
       --paper-fibre-size: auto;
       --dots-ink: none;
@@ -584,6 +584,12 @@
       text-shadow: 4px 4px 0 var(--red);
       background: radial-gradient(ellipse 48% 34% at 50% 50%, rgba(26, 26, 24, 0.45), rgba(26, 26, 24, 0));
     }
+    /* A supplied title card with the title painted in: the typed title stays
+       for screen readers but is not drawn over it (theme.js TITLE_CARD). */
+    .title-card-lettered #briefing .brief-banner-title {
+      clip-path: inset(50%);
+      background: none;
+    }
     #briefing .brief-head {
       display: flex;
       justify-content: space-between;
@@ -609,7 +615,7 @@
     /* A clear line between the orders' prose and the section under it. */
     #briefing p + h3 { margin-top: 22px; }
     #briefing ul { margin: 0; padding: 0; list-style: none; }
-    #briefing li { position: relative; padding-left: 16px; margin-bottom: 4px; }
+    #briefing li { position: relative; padding-left: 16px; margin-bottom: 3px; }
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
     #briefing .brief-hints li::before { content: "→"; color: var(--red); font-weight: bold; }
     #briefing .brief-more { opacity: 0.65; }
