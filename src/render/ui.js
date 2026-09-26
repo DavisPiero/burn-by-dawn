@@ -83,7 +83,7 @@ const KEYS = [
   '1–6 select a man · Esc deselect · Tab next · H hold',
   'G hide · S suppress · K kill · T throw a stone',
   'A stabilise · P pick up a charge · U pack parachute',
-  'C place a charge · X cut the line · W swim',
+  'C place a charge · E pass a charge · X cut the line · W swim',
   'D RAF diversion · Space end turn · Z undo',
   'Esc or right-click also backs out of aiming an action',
   'R patrol routes · M sound',
@@ -242,7 +242,7 @@ export function describeAlertStates(alert) {
 // How much a line of the turn report matters, lowest first: the card puts the
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
-  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, enemyBlastKilled: 1, reserve: 2, spotted: 2, diversion: 2,
+  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reserve: 2, spotted: 2, diversion: 2,
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
@@ -378,6 +378,10 @@ export function describeEvent(event, place) {
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
+    case 'noReserve': return event.deployed
+      ? `With the ${event.label.toLowerCase()} gone, the garrison can call up nobody more — but the reserve is already out.`
+      : `With the ${event.label.toLowerCase()} gone, the garrison cannot call up its reserve squad.`;
+    case 'withdrawn': return `The ${event.enemyLabel.toLowerCase()} leaves the field to deal with the ${event.label.toLowerCase()}.`;
     default: return event.kind;
   }
 }
@@ -526,7 +530,15 @@ export function renderEndTurnButton(button, state, rules) {
   else button.textContent = 'END TURN  [space]';
 }
 
-export const UNDO_HELP = 'Take back the last move or action you made. Only that one: undo cannot be repeated to go further back, and once you end the turn, what happened stands.';
+/** Undo's rollover, for how many steps the level allows (rules.json `undo.steps`; null is the whole turn). */
+export function describeUndo(steps) {
+  const reach = steps === null
+    ? 'Press it again to go further back, as far as the start of this turn.'
+    : steps === 1
+      ? 'Only that one: undo cannot be repeated to go further back.'
+      : `Up to ${steps} steps back, never past the start of this turn.`;
+  return `Take back the last move or action you made. ${reach} Once you end the turn, what happened stands.`;
+}
 
 /** Undo, beside End turn: live while there is something this turn to take back. */
 export function renderUndoButton(button, state, canUndo) {
@@ -695,6 +707,9 @@ export function renderActions(element, actions, onAction) {
     return;
   }
   element.classList.remove('idle');
+  // Three rows at most (index.html): a man with more than nine actions — a
+  // gunner who also carries a charge — gets a fourth column instead.
+  element.classList.toggle('four', actions.length > 9);
   for (const action of actions) {
     // Key and verb only; the cost, and why not, are the rollover, which has
     // the full name where the button has a short one.

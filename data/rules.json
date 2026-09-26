@@ -22,22 +22,22 @@
     "fuseTurns": 3
   },
 
-  "_objectives": "SPEC.md §7, by kind; data/map.json places them. `chargesNeeded` charges must go off on it to destroy it, in one fuse phase or several. `blastRadius` is in hexes from each charge that goes off: a trooper inside it dies. `alert` is what one explosion on it raises (charges on one objective going off in the same fuse phase are one explosion), heard as noise.explosion. `cutLine`: a scout may destroy it silently instead (actions.cutLine). `destroyedTerrain`: what its hexes become once destroyed, or null to leave them.",
+  "_objectives": "SPEC.md §7, by kind; data/map.json places them. `chargesNeeded` charges must go off on it to destroy it, in one fuse phase or several. `blastRadius` is in hexes from each charge that goes off: a trooper inside it dies. `alert` is what one explosion on it raises (charges on one objective going off in the same fuse phase are one explosion), heard as noise.explosion. `cutLine`: a scout may destroy it silently instead (actions.cutLine). `destroyedTerrain`: what its hexes become once destroyed, or null to leave them. `payoff` (M11b, SPEC.md §7): what destroying it does for the stick, so a bonus target pays back in play and not only in score. `noReserve`: the reserve squad is never called up after it (if it is already out, it stays). `withdrawPatrols`: that many patrols, the nearest to it, leave the board to deal with it.",
   "objectives": {
-    "bridge": { "label": "Rail bridge", "chargesNeeded": 2, "blastRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "canal" },
-    "exchange": { "label": "Telephone exchange", "chargesNeeded": 1, "blastRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null },
-    "fuelDump": { "label": "Fuel dump", "chargesNeeded": 1, "blastRadius": 2, "alert": 4, "cutLine": false, "destroyedTerrain": null }
+    "bridge": { "label": "Rail bridge", "chargesNeeded": 2, "blastRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "canal", "payoff": { "noReserve": false, "withdrawPatrols": 0 } },
+    "exchange": { "label": "Telephone exchange", "chargesNeeded": 1, "blastRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 } },
+    "fuelDump": { "label": "Fuel dump", "chargesNeeded": 1, "blastRadius": 2, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 1 } }
   },
 
   "_explosionFloor": "SPEC.md §6: once anything has exploded, the alert never decays below this state. A cut line is not an explosion.",
   "explosionFloor": "suspicious",
 
-  "_scoring": "SPEC.md §10. `turnsPerPoint`: one point per this many turns left when the mission ends. `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion.",
+  "_scoring": "SPEC.md §10. `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion.",
   "scoring": {
     "primary": 3,
     "secondary": 2,
     "perTrooperOut": 1,
-    "turnsPerPoint": 2,
+    "perTrooperUnseen": 1,
     "clean": 3,
     "cleanNeverReached": "alarmed"
   },
@@ -45,6 +45,10 @@
   "_mission": "SPEC.md §10. Success needs the primary destroyed and at least `minimumOut` troopers out by the end of the last turn.",
   "mission": { "minimumOut": 3 },
 
+  "_undo": "SPEC.md §4 Undo. How many moves or actions of this player phase can be taken back, most recent first; null is every one of them. Never further than the start of the turn, and never across the jump, so nothing the garrison has done is undone. Normal and Hard keep one step, a mis-click net; Easy lets a new player walk the whole turn back (M11b, data/difficulty.json).",
+  "undo": {
+    "steps": 1
+  },
   "_diversion": "SPEC.md §4 RAF diversion: once per mission, no AP, while the trooper flagged leader is alive. The alert drops `statesDown` states (never below the explosion floor), every search and held contact is dropped, every trooper is out of contact.",
   "diversion": { "uses": 1, "statesDown": 1 },
 
@@ -100,7 +104,7 @@
     "woundedActionPoints": 1
   },
 
-  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go, and is open to a kill until the end of the next player phase. kill: gunners only (roles[].kill), the same visible target as suppress, which must be under suppression and of a killable type (data/enemies.json); one aimed shot from a silenced Sten, raising alert.silenced and heard as noise.silenced (the onFire hook applies, as to gunfire), and it leaves a body. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, only once an objective of kind `requiresDestroyed` is destroyed. A full turn means he has spent no AP yet and it costs his whole pool.",
+  "_actions": "SPEC.md §4 Actions. hide: ends the turn and adds `concealment` on the hex he stops on, until he next spends AP. suppress: gunners only (roles[].suppress), target within his spot radius with a clear line of sight; the target neither fires nor moves on its next go, and is open to a kill until the end of the next player phase. kill: gunners only (roles[].kill), the same visible target as suppress, which must be under suppression and of a killable type (data/enemies.json); one aimed shot from a silenced Sten, raising alert.silenced and heard as noise.silenced (the onFire hook applies, as to gunfire), and it leaves a body. throwStone: a hex up to `range` away, no line of sight needed. stabilise: a full turn, so the helper must not have spent any AP this turn and it costs his whole pool. pickUpCharge: from the hex he stands on. packParachute: his own parachute, from the hex he stands on (SPEC.md §9). placeCharge costs charges.placeApCost through the onPlaceCharge hook. cutLine: scouts only (roles[].cutLine), a full turn on a charge hex of an objective whose kind allows it. swim: a full turn straight across one hex of `across` terrain, not wounded, and, if `requiresDestroyed` names an objective kind, only once one is destroyed; null lets him swim from the start (M11b: while the bridge stood nobody could reach the telephone exchange but over the watched deck, so nobody went for it). A full turn means he has spent no AP yet and it costs his whole pool. passCharge (M11b): hand one charge to a man beside him who can carry it; the giver pays `apCost`, a lot of a 3 AP sapper's turn, the man taking it pays nothing.",
 
   "actions": {
     "hide": { "apCost": 1, "concealment": 1 },
@@ -108,8 +112,9 @@
     "kill": { "apCost": 2 },
     "throwStone": { "apCost": 1, "range": 3 },
     "pickUpCharge": { "apCost": 1 },
+    "passCharge": { "apCost": 2 },
     "packParachute": { "apCost": 1 },
-    "swim": { "requiresDestroyed": "bridge", "across": "canal" }
+    "swim": { "requiresDestroyed": null, "across": "canal" }
   },
 
   "_landing": "SPEC.md §9 the drop. Each man jumps from his point on the run's flight line (data/map.json dropRuns) and scatters. `scatterWeights[d]` is the weight of scattering exactly d hexes: 1 and 2 are common, 3 is rare, 0 never. The onLand hook's scatterDistance modifies the roll. Among the hexes at that distance, `windWeights` weights each by where it lies from the jump point: within 60 degrees of the wind's direction is downwind, within 60 degrees of against it upwind, the rest across. A man never lands out of play, on the exfil, on impassable ground other than water that wounds (data/terrain.json landing), on another man, or within `enemyClearance` hexes of an enemy; if nowhere at the rolled distance will do, the nearest distance that will. `badLandingTurnsLost` is what a bad landing (wood, marsh) costs, through the onLand hook's landingPenalty.",

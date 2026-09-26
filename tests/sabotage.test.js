@@ -10,7 +10,7 @@ import { alertIndex, runEnemyPhase } from '../src/enemy.js';
 import { hexDistance } from '../src/hex.js';
 import { findPath, isPassable, loadJson, loadMap, terrainAt, terrainIdAt } from '../src/map.js';
 import {
-  callDiversion, checkDiversion, createInitialState, cutLine, endTurn, moveUnit, placeCharge, settleMission,
+  callDiversion, checkDiversion, createInitialState, cutLine, endTurn, moveUnit, passCharge, placeCharge, settleMission,
   swimAcross,
 } from '../src/state.js';
 import {
@@ -20,7 +20,7 @@ import {
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
-import { onBoard, planMove, unitById } from '../src/units.js';
+import { checkPassCharge, onBoard, planMove, unitById } from '../src/units.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -160,7 +160,7 @@ export default [
     equal(result.state.alert.points, rules.objectives.fuelDump.alert, 'fuel dump alert');
   }],
 
-  ['a destroyed bridge is canal: nobody walks over it, patrols turn back, and only then can a man swim', async () => {
+  ['a destroyed bridge is canal: nobody walks over it, and patrols turn back; swimming is gated only if the rules say so', async () => {
     const { map, rules, state } = await loadAll();
     const primary = primaryOf(state);
     const deck = primary.hexes;
@@ -171,7 +171,11 @@ export default [
     const vance = state.units.find((u) => u.role === 'scout');
     const bank = primary.chargeHexes[0];
     const intact = scenario(state, { [vance.id]: bank });
-    assert(!checkSwim(map, intact, unitIn(intact, vance.id), null, rules).ok, 'no swimming while the bridge stands');
+    // M11b: with no objective named, a man may swim with the bridge standing;
+    // naming one gates it, as it was before.
+    assert(checkSwim(map, intact, unitIn(intact, vance.id), null, rules).ok === (rules.actions.swim.requiresDestroyed === null), 'swim gate as rules.json says');
+    const gated = { ...rules, actions: { ...rules.actions, swim: { ...rules.actions.swim, requiresDestroyed: primary.kind } } };
+    assert(!checkSwim(map, intact, unitIn(intact, vance.id), null, gated).ok, 'no swimming while the bridge stands when gated on it');
 
     const blown = { ...intact, objectives: state.objectives.map((o) => (o.primary ? { ...o, destroyed: true } : o)) };
     const live = effectiveMap(map, blown.objectives, rules);
@@ -233,6 +237,35 @@ export default [
     equal(unitIn(cut, scout.id).ap, 0, 'his whole turn');
   }],
 
+  ['bonus payoffs (M11b): the exchange, cut or blown, keeps the reserve away; the fuel dump draws the nearest patrol off', async () => {
+    const { map, rules, state } = await loadAll();
+    const exchange = state.objectives.find((o) => rules.objectives[o.kind].payoff.noReserve);
+    const scout = state.units.find((u) => rules.roles[u.role].cutLine);
+    const cut = cutLine(scenario(state, { [scout.id]: exchange.chargeHexes[0] }), scout.id, rules);
+    assert(cut.reserveCancelled, 'reserve cancelled by the cut');
+    assert(cut.report.some((e) => e.kind === 'noReserve'), 'said in the report at once');
+    const alarmed = rules.alert.states[rules.alert.states.length - 1].from;
+    const after = runEnemyPhase({ ...cut, alert: { ...cut.alert, points: alarmed } }, map, rules).state;
+    assert(!after.enemies.some((e) => e.id === map.reserve.id), 'no reserve at Alarmed');
+
+    const dump = state.objectives.find((o) => rules.objectives[o.kind].payoff.withdrawPatrols > 0);
+    const hex = dump.chargeHexes[0];
+    const far = rules.objectives[dump.kind].blastRadius + 2;
+    const s = {
+      ...scenario(state, {}),
+      charges: [{ objectiveId: dump.id, q: hex.q, r: hex.r, fuse: 1, unitId: null }],
+      enemies: [
+        { id: 'near', label: 'Near patrol', killable: true, speed: 3, q: hex.q + far, r: hex.r, facing: 0 },
+        { id: 'further', label: 'Far patrol', killable: true, speed: 3, q: hex.q + far + 3, r: hex.r, facing: 0 },
+        { id: 'post', label: 'Sentry', killable: true, speed: 0, q: hex.q, r: hex.r + far, facing: 0 },
+        { id: 'reserve', label: 'Reserve squad', killable: false, speed: 4, q: hex.q, r: hex.r - far, facing: 0 },
+      ],
+    };
+    const blown = runFusePhase(s, rules);
+    equal(blown.state.enemies.map((e) => e.id).sort().join(), 'further,post,reserve', 'the nearest patrol leaves; sentries and the reserve stay');
+    equal(blown.events.filter((e) => e.kind === 'withdrawn').length, rules.objectives[dump.kind].payoff.withdrawPatrols, 'reported');
+  }],
+
   ['ending a move on an exfil hex takes him off the board, untested', async () => {
     const { map, rules, state } = await loadAll();
     const [eq, er] = map.exfil[0];
@@ -259,6 +292,28 @@ export default [
     equal(reserve.facing, reserve.homeFacing, 'facing its guard facing');
   }],
 
+  ['passing a charge: to a man beside him who can carry it, for the giver\'s AP only (M11b)', async () => {
+    const { rules, state } = await loadAll();
+    const [a, b] = state.units.filter((u) => u.role === 'sapper');
+    const scout = state.units.find((u) => u.role === 'scout');
+    const cost = rules.actions.passCharge.apCost;
+    // b has set his charge already, so he has room for one.
+    let s = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 4, r: 3, changes: { charges: 0 } }, [scout.id]: { q: 3, r: 4 } });
+    const giver = unitIn(s, a.id);
+    assert(checkPassCharge(giver, unitIn(s, b.id), rules).ok, 'to a sapper beside him');
+    assert(!checkPassCharge(giver, unitIn(s, scout.id), rules).ok, 'a scout carries no charges');
+    s = passCharge(s, a.id, b.id, rules);
+    equal(unitIn(s, a.id).charges, giver.charges - 1, 'one fewer');
+    equal(unitIn(s, b.id).charges, 1, 'one more');
+    equal(unitIn(s, a.id).ap, giver.ap - cost, 'the giver pays');
+    equal(unitIn(s, b.id).ap, unitIn(state, b.id).ap, 'the taker does not');
+    assert(!checkPassCharge(unitIn(s, a.id), unitIn(s, b.id), rules).ok, 'nothing left to pass');
+    const apart = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 6, r: 3, changes: { charges: 0 } } });
+    assert(!checkPassCharge(unitIn(apart, a.id), unitIn(apart, b.id), rules).ok, 'not beside him');
+    const wounded = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 4, r: 3, changes: { charges: 0, hits: 1 } } });
+    assert(!checkPassCharge(unitIn(wounded, a.id), unitIn(wounded, b.id), rules).ok, 'not to a wounded man');
+  }],
+
   ['the RAF diversion: once, only while the leader lives, drops a state, clears contact, forfeits the clean score', async () => {
     const { map, rules, state } = await loadAll();
     const alert = rules.alert.states[2].from;
@@ -272,7 +327,7 @@ export default [
       enemies: state.enemies.map((e, i) => (i === 0 ? { ...e, investigating: { q: 1, r: 1 } } : e)),
       units: state.units.map((u) => (u.id === other.id ? { ...u, inContact: true } : u)),
     };
-    const before = scoreOf(s, rules, s.turn).total;
+    const before = scoreOf(s, rules).total;
     const called = callDiversion(s, rules);
     equal(alertIndex(called.alert.points, rules), 1, 'down one state');
     equal(called.alert.points, rules.alert.states[1].from, 'to its start');
@@ -285,7 +340,7 @@ export default [
     const twice = { ...rules, diversion: { ...rules.diversion, uses: 2 } };
     assert(checkDiversion(called, twice).ok, 'a second call when the level allows two');
     assert(!checkDiversion(callDiversion(called, twice), twice).ok, 'and no third');
-    equal(scoreOf(called, rules, s.turn).total, before - rules.scoring.clean, 'clean bonus gone');
+    equal(scoreOf(called, rules).total, before - rules.scoring.clean, 'clean bonus gone');
 
     const floored = callDiversion({ ...s, explosions: 1, alert: { ...s.alert, points: rules.alert.states[1].from } }, rules);
     equal(floored.alert.points, rules.alert.states[1].from, 'never below the explosion floor');
@@ -331,7 +386,10 @@ export default [
     equal(settled.charges.length, 0, 'every fuse played out');
     equal(settled.outcome.turn, 12, 'two turns of fuses');
     const lines = settled.outcome.score.lines.map((l) => l.label).join('; ');
+    // Three out and never seen: each pays twice (M11b), and no turns-left points.
     equal(settled.outcome.score.total, rules.scoring.primary + 3 * rules.scoring.perTrooperOut
-      + Math.floor((rules.turnLimit - 12) / rules.scoring.turnsPerPoint) + rules.scoring.clean, `score (${lines})`);
+      + 3 * rules.scoring.perTrooperUnseen + rules.scoring.clean, `score (${lines})`);
+    const seen = settleMission({ ...s, units: s.units.map((u) => (u.out ? { ...u, everSpotted: true } : u)) }, rules, map);
+    equal(seen.outcome.score.total, settled.outcome.score.total - 3 * rules.scoring.perTrooperUnseen, 'seen men pay once');
   }],
 ];

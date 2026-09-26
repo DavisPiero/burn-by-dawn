@@ -110,6 +110,8 @@ function describeUnit(unit, number, state, map, view) {
     lines.push(`${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders from the leader)` : ''} · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
     const status = conditions(unit);
     if (status.length) lines.push(status.join(' · '));
+    if (!unit.everSpotted) lines.push(`Never seen yet: +${view.unseenPoints} score if he gets out unseen.`);
+    else lines.push('Seen by the garrison: no stealth bonus for him.');
     if (unit.inContact) lines.push('In contact: if he is seen again at the end of this turn, he is fired on. Break contact: out of sight, hide, or suppress.');
     if (state.parachutes.some((p) => p.unitId === unit.id && p.q === unit.q && p.r === unit.r)) {
       lines.push('Standing on his parachute: [U] to pack it.');

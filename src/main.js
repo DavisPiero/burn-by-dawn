@@ -10,7 +10,7 @@ import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './m
 import { freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
-  jump, killEnemy, moveUnit, nextUnitId, packParachute, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
+  jump, killEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
   setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
@@ -20,7 +20,7 @@ import {
 import { hintsFor } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
-  chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  chargeCapacity, checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces } from './render/board.js';
@@ -32,7 +32,7 @@ import {
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
-  renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
+  renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
 } from './render/ui.js';
 
@@ -107,12 +107,12 @@ let bangTimer = null;
 // to finish being shown. Interface only, never game state.
 let briefing = null;
 let briefingsOn = true;
-// Undo (SPEC.md §4): the state before the last move or action, and only the
-// last — one step, a mis-click net. Cleared when it is used, when the turn
-// ends and when the stick jumps, so it can never take back what the garrison
-// has seen — and the player phase rolls no dice, so taking a move back can
-// never re-roll anything.
-let undoState = null;
+// Undo (SPEC.md §4): the states before this turn's moves and actions, most
+// recent last, kept to rules.json `undo.steps` (one on Normal, the whole turn
+// on Easy). Emptied when the turn ends and when the stick jumps, so it can
+// never take back what the garrison has seen — and the player phase rolls no
+// dice, so taking a move back can never re-roll anything.
+let undoStack = [];
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
@@ -212,6 +212,8 @@ function deriveView() {
     // The leader's orders, for his rollover in the roster (SPEC.md §5 Command).
     command: rules.command,
     diversionUses: rules.diversion.uses,
+    // The stealth score (SPEC.md §10, M11b), for each man's roster rollover.
+    unseenPoints: rules.scoring.perTrooperUnseen,
     hoverObjective: null,
     previewBlastArea: null,
     siteLabel: null,
@@ -327,7 +329,7 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         hexes: o.hexes, primary: o.primary, colour: 'red',
         // The charges it takes, so three dashed points never read as three charges.
-        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, chargeCount(kindOf(o, rules).chargesNeeded)],
+        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, payoffNote(kindOf(o, rules)), chargeCount(kindOf(o, rules).chargesNeeded)].filter(Boolean),
       })),
       { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
     ];
@@ -419,7 +421,26 @@ function describeObjective(o) {
     `alert +${kind.alert}`,
   ];
   if (kind.cutLine) parts.push('or a scout can cut the line: a full turn, silent');
+  const payoff = payoffWords(kind);
+  if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
+}
+
+/** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */
+function payoffWords(kind) {
+  const { noReserve, withdrawPatrols } = kind.payoff;
+  const words = [];
+  if (noReserve) words.push('keeps the reserve squad from being called up');
+  if (withdrawPatrols > 0) words.push(`draws the nearest ${withdrawPatrols === 1 ? 'patrol' : `${withdrawPatrols} patrols`} off the board`);
+  return words.length ? words.join(' and ') : null;
+}
+
+/** The same, lettered on its target ring before the drop: "STOPS THE RESERVE", "A PATROL LEAVES". */
+function payoffNote(kind) {
+  const { noReserve, withdrawPatrols } = kind.payoff;
+  if (noReserve) return 'STOPS THE RESERVE';
+  if (withdrawPatrols > 0) return withdrawPatrols === 1 ? 'A PATROL LEAVES' : `${withdrawPatrols} PATROLS LEAVE`;
+  return null;
 }
 
 /** The mission at a glance for the panel: objectives, men out, the diversion. */
@@ -432,7 +453,8 @@ function describeMissionState() {
       return {
         label: o.label, primary: o.primary, destroyed: o.destroyed, cut: o.cut,
         points: o.primary ? rules.scoring.primary : rules.scoring.secondary,
-        detail: o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`,
+        detail: (o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`)
+          + (payoffWords(kind) ? `. Destroying it ${payoffWords(kind)}` : ''),
         progress: o.destroyed ? (o.cut ? 'cut' : 'done') : `${o.detonated + set}/${kind.chargesNeeded}${set ? ' ●' : ''}`,
       };
     }),
@@ -453,7 +475,7 @@ function actionsFor(unit) {
     ...(role.suppress ? [] : ['suppress']),
     ...(role.kill ? [] : ['kill']),
     ...(role.cutLine ? [] : ['cut']),
-    ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge']),
+    ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge', 'pass']),
   ]);
   const patients = state.units.filter((u) => (
     onBoard(u) && u.id !== unit.id && hexDistance(u, unit) === 1 && u.hits > 0 && !u.stabilised
@@ -480,9 +502,10 @@ function actionsFor(unit) {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Patrols in earshot walk over to look and sentries turn to face it — use it to pull a patrol off your path or turn a sentry's back. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
-    { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
+    { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', short: 'Pack', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
+    passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
@@ -511,6 +534,19 @@ function hideEffect(unit) {
   }
   if (open?.spotted) return `NOT spotted once hidden — hiding here ${unit.inContact ? 'breaks contact' : 'keeps him out of sight'} (${describeDetection(hidden)}).`;
   return `not spotted either way (${describeDetection(hidden)}).`;
+}
+
+// Pass a charge to a man beside him (M11b): ok if there is anyone he could
+// hand one to; the reason otherwise is the first man's, or why he cannot at all.
+function passChargeAction(unit) {
+  const beside = state.units.filter((u) => u.id !== unit.id && onBoard(u) && hexDistance(u, unit) === 1);
+  const checks = beside.map((u) => checkPassCharge(unit, u, rules));
+  const check = checks.find((c) => c.ok) ?? checks[0] ?? checkPassCharge(unit, null, rules);
+  const reason = check.reason === 'pick a man beside him' ? 'nobody beside him' : check.reason;
+  return {
+    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`,
+    help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing. Press E, then click the man.`,
+  };
 }
 
 // Place a charge, with its fuse — and a warning if setting it on a secondary
@@ -595,6 +631,13 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     view.targetLabel = check?.ok
       ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
       : check ? `Swim: ${check.reason}.` : 'Swim: click the bank straight across the water. Esc to cancel.';
+  } else if (kind === 'pass') {
+    for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
+    const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
+    const check = taker && taker.id !== unit.id ? checkPassCharge(unit, taker, rules) : null;
+    view.targetLabel = check?.ok
+      ? `Pass a charge to ${taker.shortName} — ${check.cost} AP of ${unit.shortName}'s. Click to hand it over.`
+      : check ? `Pass a charge: ${check.reason}.` : 'Pass a charge: click a man beside him who can carry one. Esc to cancel.';
   } else if (kind === 'stabilise') {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);
     const patient = hex ? unitAt(state.units, hex.q, hex.r) : null;
@@ -618,7 +661,7 @@ function render() {
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
-  renderUndoButton(undoButton, state, Boolean(undoState));
+  renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
@@ -678,7 +721,9 @@ function renderBoard() {
  */
 function commit(next, cue = 'action') {
   if (next === state) return;
-  undoState = state;
+  undoStack.push(state);
+  const { steps } = rules.undo;
+  if (steps !== null && undoStack.length > steps) undoStack = undoStack.slice(-steps);
   state = settleMission(next, rules, baseMap);
   if (cue) playCue(cue);
 }
@@ -695,11 +740,10 @@ function cueReport(report) {
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
 }
 
-/** Take back the last move or action, once, keeping where the mouse is. */
+/** Take back the last move or action, keeping where the mouse is. */
 function undoLast() {
-  if (!undoState || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
-  const previous = undoState;
-  undoState = null;
+  if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
+  const previous = undoStack.pop();
   playCue('move');
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
   render();
@@ -744,7 +788,7 @@ function handleTargetClick(q, r) {
   const mover = selectedUnit(state);
   if (!mover) return;
   const other = unitAt(state.units, q, r);
-  if (other && other.id !== mover.id && state.targeting !== 'stabilise') {
+  if (other && other.id !== mover.id && state.targeting !== 'stabilise' && state.targeting !== 'pass') {
     state = selectUnit(state, other.id);
     return;
   }
@@ -762,6 +806,9 @@ function handleTargetClick(q, r) {
     if (patient) next = stabiliseUnit(state, mover.id, patient.id);
   } else if (state.targeting === 'swim') {
     next = swimAcross(state, mover.id, { q, r }, map, rules);
+  } else if (state.targeting === 'pass') {
+    const taker = unitAt(state.units, q, r);
+    if (taker) next = passCharge(state, mover.id, taker.id, rules);
   }
   if (next !== state) commit(setTargeting(next, null));
   else if (other && other.id !== mover.id) state = selectUnit(state, other.id);
@@ -807,10 +854,12 @@ function handleAction(id) {
     case 'kill':
     case 'stone':
     case 'swim':
+    case 'pass':
     case 'stabilise': {
+      // An action his role can never take is not in his list: its key does nothing.
       const action = actionsFor(unit).find((a) => a.id === id);
       if (state.targeting === id) state = setTargeting(state, null);
-      else if (action.ok) state = setTargeting(state, id);
+      else if (action?.ok) state = setTargeting(state, id);
       break;
     }
     default:
@@ -848,7 +897,7 @@ function handleEndTurn() {
 }
 
 function endTurnNow() {
-  undoState = null;
+  undoStack = [];
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
   if (!state.outcome && briefingsOn) {
@@ -884,7 +933,7 @@ function startMission(nextLevel, seed) {
   ({ rules, map: baseMap } = applyDifficulty(level, rawRules, rawMap));
   map = baseMap;
   state = createInitialState(roster, traits, rules, baseMap, seed);
-  undoState = null;
+  undoStack = [];
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 
@@ -1028,7 +1077,7 @@ function jumpNow() {
   if (!run) return;
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
-  undoState = null;
+  undoStack = [];
   state = jump(state, baseMap, rules);
   const landed = state.report.filter((e) => e.kind === 'landed');
   if (landed.length) {
@@ -1203,6 +1252,10 @@ function handleKey(event) {
     case 'W':
       handleAction('swim');
       return;
+    case 'e':
+    case 'E':
+      handleAction('pass');
+      return;
     case 'd':
     case 'D':
       handleAction('diversion');
@@ -1272,7 +1325,7 @@ try {
   });
   endTurnButton.addEventListener('click', handleEndTurn);
   undoButton.addEventListener('click', undoLast);
-  attachPopup(undoButton, UNDO_HELP);
+  attachPopup(undoButton, () => describeUndo(rules.undo.steps));
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
   // Browsers keep sound off until the page has been pressed or clicked.

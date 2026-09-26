@@ -20,12 +20,12 @@ import {
 import { landStick, runById, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
 import {
-  checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
+  applyPayoff, checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
 import {
-  checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   createUnits, fillActionPoints, onBoard, unitById,
 } from './units.js';
 
@@ -59,6 +59,8 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     // SPEC.md §9: { unitId, name, q, r }, one per man until packed or found.
     parachutes: [],
     reserveDeployed: false,
+    // A bonus target's payoff has kept the reserve away (SPEC.md §7, M11b).
+    reserveCancelled: false,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
     // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
     // explosion floor (§6).
@@ -178,11 +180,8 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   // Sabotage, exfil, the diversion and the score, SPEC.md §4, §7, §10. The
   // objectives themselves are checked against map.json in sabotage.js.
   requireCount(rules.noise.explosion, '"noise.explosion"', rulesUrl);
-  for (const key of ['primary', 'secondary', 'perTrooperOut', 'clean']) {
+  for (const key of ['primary', 'secondary', 'perTrooperOut', 'perTrooperUnseen', 'clean']) {
     requireCount(rules.scoring?.[key], `"scoring.${key}"`, rulesUrl);
-  }
-  if (!Number.isInteger(rules.scoring.turnsPerPoint) || rules.scoring.turnsPerPoint < 1) {
-    throw new Error(`${rulesUrl}: "scoring.turnsPerPoint" must be a positive integer`);
   }
   if (!rules.alert.states.some((s) => s.id === rules.scoring.cleanNeverReached)) {
     throw new Error(`${rulesUrl}: "scoring.cleanNeverReached" must be an alert state id`);
@@ -437,6 +436,16 @@ export function pickUpCharge(state, unitId, rules) {
   };
 }
 
+/** Hand one charge to the man beside him (SPEC.md §4, M11b): the giver pays, the taker does not. */
+export function passCharge(state, giverId, receiverId, rules) {
+  const giver = unitById(state.units, giverId);
+  const receiver = unitById(state.units, receiverId);
+  const check = checkPassCharge(giver, receiver, rules);
+  if (!check.ok) return state;
+  const next = spend(state, giverId, check.cost, { charges: giver.charges - 1 });
+  return { ...next, units: next.units.map((u) => (u.id === receiverId ? { ...u, charges: u.charges + 1 } : u)) };
+}
+
 /**
  * Set a charge on the objective this man is standing beside (SPEC.md §7). The
  * onPlaceCharge hook sets what it costs him and how long its fuse burns.
@@ -458,10 +467,14 @@ export function cutLine(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
   const check = checkCutLine(state, unit, rules);
   if (!check.ok) return state;
-  return {
+  const cut = {
     ...spend(state, unitId, check.cost),
     objectives: state.objectives.map((o) => (o.id === check.objective.id ? { ...o, destroyed: true, cut: true } : o)),
   };
+  // Destroyed silently, but it pays back all the same (SPEC.md §7), said in
+  // the report at once, as the RAF diversion is.
+  const paid = applyPayoff(cut, check.objective, rules);
+  return { ...paid.state, report: [...state.report, ...paid.events] };
 }
 
 /**

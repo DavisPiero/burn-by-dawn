@@ -76,26 +76,25 @@ export function finalOutcome(state, rules, check, turn, dawn) {
     name: u.name,
     fate: u.dead ? 'killed' : u.out ? 'out' : 'left behind',
   }));
-  return { kind, reason, turn, fates, score: scoreOf(state, rules, turn, dawn) };
+  return { kind, reason, turn, fates, score: scoreOf(state, rules) };
 }
 
 /**
- * SPEC.md §10: primary 3, each secondary 2, 1 per man out, 1 per 2 turns left,
- * and 3 for a clean run — never reached Alarmed and never called the RAF
- * diversion. Turns left are counted from the turn the mission ended on; at
- * dawn there are none.
+ * SPEC.md §10: primary 3, each secondary 2, 1 per man out, 1 more for each of
+ * them never spotted all mission, and 3 for a clean run — never reached
+ * Alarmed and never called the RAF diversion. Stealth is paid for, not speed
+ * (M11b): a point per turn to spare paid players to rush.
  */
-export function scoreOf(state, rules, turn, dawn = false) {
+export function scoreOf(state, rules) {
   const s = rules.scoring;
   const lines = [];
   for (const o of state.objectives) {
     if (o.destroyed) lines.push({ label: `${o.label} destroyed${o.cut ? ' (line cut)' : ''}`, points: o.primary ? s.primary : s.secondary });
   }
-  const out = state.units.filter((u) => u.out).length;
-  if (out > 0) lines.push({ label: `${out} m${out === 1 ? 'a' : 'e'}n out`, points: out * s.perTrooperOut });
-  const turnsLeft = dawn ? 0 : Math.max(0, rules.turnLimit - turn);
-  const turnPoints = Math.floor(turnsLeft / s.turnsPerPoint);
-  if (turnPoints > 0) lines.push({ label: `${turnsLeft} turns to spare`, points: turnPoints });
+  const out = state.units.filter((u) => u.out);
+  if (out.length > 0) lines.push({ label: `${out.length} m${out.length === 1 ? 'a' : 'e'}n out`, points: out.length * s.perTrooperOut });
+  const unseen = out.filter((u) => !u.everSpotted).length;
+  if (unseen > 0) lines.push({ label: `${unseen} of them never seen`, points: unseen * s.perTrooperUnseen });
   const clean = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
   if ((state.alert.peak ?? 0) < clean.from && state.diversionsCalled === 0) {
     lines.push({ label: `never ${clean.label}, no diversion`, points: s.clean });

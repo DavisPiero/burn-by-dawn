@@ -170,17 +170,25 @@ All costs and modifiers below are numbers in `rules.json`.
   **A throw is not a move:** he stays on his hex. While it is aimed the board draws the lob
   as a dashed arc from him to the hovered hex and shades the ground in earshot, and the
   readout says he stays put, so it never reads as a path.
+- **Pass a charge** (M11b, from playtesting) — costs the giver **2 AP** (`passCharge` in
+  `rules.json`); the man taking it pays nothing. He hands one of his charges to a man
+  **beside him** who can carry it: not wounded, and with room under his capacity (a scout
+  carries none). Aimed like stabilise: press it, then click the man.
 - **Place a charge** (anyone carrying one) — costs **1 AP** (the `onPlaceCharge` hook may
   change it), standing on a charge hex of an objective that still needs charges (§7). One
   charge per charge hex.
 - **Cut the line** (scout only) — a **full turn**, like stabilise: he must not have spent
   any AP yet, and it costs his whole pool. Standing on a telephone exchange charge hex,
   he destroys the exchange at once, silently: no alert, no noise (§7).
-- **Swim** (once the rail bridge is destroyed) — a **full turn**. From a hex beside the
-  canal, straight across one canal hex, to the bank opposite. A wounded man cannot swim.
-  He cannot hide as he comes out, and is tested on the far bank like any hex he enters. It exists so a man
-  is never stranded by his own demolition; while the bridge stands it is the only way
-  over, so the chokepoint still matters.
+- **Swim** — a **full turn**. From a hex beside the canal, straight across one canal
+  hex, to the bank opposite. A wounded man cannot swim. He cannot hide as he comes out,
+  and is tested on the far bank like any hex he enters. It exists so a man is never
+  stranded by his own demolition. Until M11b it was allowed only once the bridge was
+  down; playtesting showed that left the telephone exchange reachable only over the
+  watched deck, so nobody went for it. The bridge's charges go on from the west bank and
+  the exfil is on the west side, so the canal only has to be crossed for the exchange: the
+  bridge guards the bonus, never the mission. `requiresDestroyed` in `rules.json` can
+  still gate it on an objective.
 - **RAF diversion** (once per mission, while the leader is alive) — costs **no AP**, called
   at any point in the player phase. A diversionary raid on the town pulls the garrison's
   attention: the **alert drops one state** (to the start of the state below), **every
@@ -203,15 +211,16 @@ to be casual while still being strategic.
 - **Hover an enemy**: highlight its vision arc and its patrol route.
 - **Hover an objective**: show what it needs (charges, fuse, blast radius).
 - **Right-click**: deselect / cancel.
-- **Undo** (M8e, one step since M9b): the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z`
-  takes back the last move or action, and only that one: it cannot be pressed again to go
-  further back. It is forgotten when the turn ends or the stick jumps, so nothing the
+- **Undo** (M8e, one step since M9b, by level since M11b): the button beside End turn,
+  `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last move or action. How many steps back it can
+  go is `undo.steps` in `rules.json`: one on Normal and Hard, so it cannot be pressed again
+  to go further back, and on Easy every step back to the start of the turn. It is forgotten when the turn ends or the stick jumps, so nothing the
   garrison has done is ever undone. The player phase rolls no dice (only the drop does,
   §9), so undoing can never re-roll anything; it is a mis-click safety net, not a scouting
   tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
-  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
+  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
@@ -486,12 +495,17 @@ Blow the bridge last and you may not have turns left to reach exfil.
 alert, and nothing else. The panel labels them "optional, +2" so they do not read as a
 checklist.
 
-**To consider at M8 — secondary payoffs.** As written, a secondary makes the mission harder
-and gives nothing back in play, so §8's "choosing which secondary objective is realistic"
-has little pull. Candidates, to be tested in the balance pass rather than built earlier:
-cutting or blowing the exchange delays or cancels the reserve squad (§6); blowing the fuel
-dump takes a patrol off the board (the tank laager crew go to fight the fire). Each would be a
-per-kind entry in `rules.json`, never a code branch for one objective.
+**Secondary payoffs** (M11b; considered since M8, built after playtesters said beating
+a bonus target should be worth more). A secondary pays back in play, not only in score:
+- **The telephone exchange**, cut or blown: the garrison can no longer call up its
+  **reserve squad** (§6 Exfil watched). If the reserve is already out, it stays.
+- **The fuel dump**, blown: the **nearest patrol leaves the board** to deal with it (the
+  tank laager crew go to fight the fire), on top of any the blast itself kills.
+
+Each is a per-kind `payoff` in `rules.json` (`noReserve`, `withdrawPatrols`), never a
+code branch for one objective. The target rings, the objective hovers and the mission
+panel say what each pays before the player commits, and the turn report says when it
+happens.
 
 ---
 
@@ -588,7 +602,10 @@ Results page, styled as the back page of the annual, listing all six by name and
 
 - Objectives destroyed (primary 3, each secondary 2)
 - Troopers exfiltrated (1 each)
-- Turns remaining (1 per 2 turns)
+- Troopers exfiltrated who were never spotted all mission (1 more each; M11b replaced
+  "turns remaining, 1 per 2 turns", which paid players to rush — playtesters did, and
+  either made chaos or finished early). A man's roster rollover says whether he is
+  still unseen.
 - Never reached Alarmed and never called the RAF diversion (+3)
 
 The page also says which difficulty the mission was played at.
@@ -601,7 +618,7 @@ as `?seed=` picks the seed.
 
 | Level | Changes from Normal |
 |---|---|
-| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes |
+| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b) |
 | **Normal** | The mission as above |
 | **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3 |
 

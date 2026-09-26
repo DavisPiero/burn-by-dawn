@@ -72,9 +72,16 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
   if (map.objectives.filter((o) => o.primary).length !== 1) throw new Error(`${mapUrl}: exactly one objective must be "primary"`);
   hexList(map.exfil, `${mapUrl}: exfil`, true);
 
+  for (const [id, kind] of Object.entries(kinds)) {
+    const payoff = kind.payoff;
+    if (!payoff || typeof payoff.noReserve !== 'boolean' || !Number.isInteger(payoff.withdrawPatrols) || payoff.withdrawPatrols < 0) {
+      throw new Error(`${rulesUrl}: objectives.${id}.payoff needs "noReserve" (true or false) and "withdrawPatrols" (a whole number, 0 for none)`);
+    }
+  }
+
   const swim = rules.actions?.swim;
-  if (!swim || !kinds[swim.requiresDestroyed] || !map.terrain[swim.across]) {
-    throw new Error(`${rulesUrl}: actions.swim needs "requiresDestroyed" (an objective kind) and "across" (a terrain id)`);
+  if (!swim || !(swim.requiresDestroyed === null || kinds[swim.requiresDestroyed]) || !map.terrain[swim.across]) {
+    throw new Error(`${rulesUrl}: actions.swim needs "requiresDestroyed" (an objective kind, or null for none) and "across" (a terrain id)`);
   }
   if (!rules.alert.states.some((s) => s.id === rules.explosionFloor)) {
     throw new Error(`${rulesUrl}: "explosionFloor" must be an alert state id`);
@@ -215,11 +222,11 @@ export function swimTargets(map, state, unit, rules) {
   return targets;
 }
 
-/** Swim (SPEC.md §4): only once the bridge is down, a full turn, not wounded. */
+/** Swim (SPEC.md §4): a full turn, not wounded, and only once `requiresDestroyed` is down if it names one. */
 export function checkSwim(map, state, unit, target, rules) {
   const cost = unit ? unit.apMax : 0;
   const needed = rules.actions.swim.requiresDestroyed;
-  if (!state.objectives.some((o) => o.kind === needed && o.destroyed)) {
+  if (needed && !state.objectives.some((o) => o.kind === needed && o.destroyed)) {
     return result(cost, `only once the ${rules.objectives[needed].label.toLowerCase()} is down`);
   }
   const busy = fullTurn(unit);
@@ -298,6 +305,40 @@ export function runFusePhase(state, rules) {
     if (caught.length > 0) {
       next = { ...next, enemies: next.enemies.filter((e) => !caught.includes(e)) };
       for (const e of caught) events.push({ kind: 'enemyBlastKilled', enemyId: e.id, enemyLabel: e.label, label: objective.label, q: e.q, r: e.r });
+    }
+    if (destroyed) {
+      const paid = applyPayoff(next, objective, rules);
+      next = paid.state;
+      events.push(...paid.events);
+    }
+  }
+  return { state: next, events };
+}
+
+/**
+ * What destroying a bonus target does for the stick (SPEC.md §7, M11b), by
+ * its kind's `payoff` in rules.json — never a branch for one objective. Called
+ * once, when it is destroyed, whether blown or cut. `noReserve`: the reserve
+ * is never called up (one already out stays). `withdrawPatrols`: that many
+ * patrols, nearest the objective first, leave the board.
+ */
+export function applyPayoff(state, objective, rules) {
+  const { noReserve, withdrawPatrols } = kindOf(objective, rules).payoff;
+  const events = [];
+  let next = state;
+  const centre = objective.hexes[Math.floor(objective.hexes.length / 2)];
+  if (noReserve && !next.reserveCancelled) {
+    next = { ...next, reserveCancelled: true };
+    events.push({ kind: 'noReserve', label: objective.label, deployed: next.reserveDeployed, q: centre.q, r: centre.r });
+  }
+  if (withdrawPatrols > 0) {
+    const leaving = next.enemies
+      .filter((e) => e.speed > 0 && e.killable)
+      .sort((a, b) => hexDistance(a, centre) - hexDistance(b, centre))
+      .slice(0, withdrawPatrols);
+    if (leaving.length) {
+      next = { ...next, enemies: next.enemies.filter((e) => !leaving.includes(e)) };
+      for (const e of leaving) events.push({ kind: 'withdrawn', enemyId: e.id, enemyLabel: e.label, label: objective.label, q: e.q, r: e.r });
     }
   }
   return { state: next, events };
