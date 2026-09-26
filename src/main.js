@@ -23,7 +23,7 @@ import {
   chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
+import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
@@ -95,6 +95,10 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
+// The RAF flyover (M11): the Dakota over the garrison when the diversion is
+// called, before its card. Display only; any key or click skips it.
+let flyShow = null;
+let flyShowTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -212,6 +216,7 @@ function deriveView() {
     dropRuns: null,
     dropLabel: null,
     dropShow,
+    flyShow,
     targetRings: null,
   };
 
@@ -677,7 +682,7 @@ function cueReport(report) {
 
 /** Take back the last move or action, once, keeping where the mouse is. */
 function undoLast() {
-  if (!undoState || state.outcome || briefing || dropShow) return;
+  if (!undoState || state.outcome || briefing || dropShow || flyShow) return;
   const previous = undoState;
   undoState = null;
   playCue('move');
@@ -689,6 +694,7 @@ function undoLast() {
 
 function handleHexClick(q, r) {
   if (dropShow) return endDropShow();
+  if (flyShow) return endFlyShow();
   if (state.outcome || state.phase === 'drop') return;
   highlightHex = null;
   if (state.targeting) {
@@ -749,10 +755,16 @@ function handleTargetClick(q, r) {
 function handleAction(id) {
   if (state.outcome) return;
   if (id === 'diversion') {
+    if (flyShow) return;
     const before = state;
     commit(callDiversion(state, rules), 'diversion');
-    // Said on a card, so a call can never pass unnoticed and be made twice.
-    if (state !== before) briefing = { kind: 'diversion', before };
+    // The Dakota flies over the garrison, then the call is said on a card, so
+    // it can never pass unnoticed and be made twice.
+    if (state !== before) {
+      flyShow = { since: performance.now(), before, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
+      clearTimeout(flyShowTimer);
+      flyShowTimer = setTimeout(endFlyShow, flyoverTimeline(baseMap, flyShow.points).length);
+    }
     render();
     return;
   }
@@ -802,6 +814,7 @@ function handleHexLeave() {
 
 function handleRosterClick(unitId) {
   if (dropShow) return endDropShow();
+  if (flyShow) return endFlyShow();
   if (state.outcome) return;
   state = selectUnit(state, unitId);
   render();
@@ -810,6 +823,7 @@ function handleRosterClick(unitId) {
 function handleEndTurn() {
   if (briefing) return closeBriefing();
   if (dropShow) return endDropShow();
+  if (flyShow) return endFlyShow();
   if (state.phase === 'drop') return jumpNow();
   endTurnNow();
 }
@@ -942,6 +956,8 @@ function describeDiversionCard(before) {
   return {
     title: 'RAF DIVERSION',
     kicker: 'BOMBERS OVER THE TOWN',
+    // Headed in the diversion's own blue, as its button is (M11).
+    tone: 'raf',
     paragraphs: ['The radio worked. The garrison looks the other way.'],
     sections: [
       { heading: 'WHAT IT DID', lines },
@@ -1006,6 +1022,13 @@ function endDropShow() {
   render();
 }
 
+function endFlyShow() {
+  clearTimeout(flyShowTimer);
+  if (flyShow) briefing = { kind: 'diversion', before: flyShow.before };
+  flyShow = null;
+  render();
+}
+
 function handleChooseRun(runId) {
   state = chooseDropRun(state, baseMap, runId);
   render();
@@ -1042,7 +1065,7 @@ function handleKey(event) {
     return;
   }
   // Cmd-Z or Ctrl-Z undoes, as everywhere else; so does Z on its own.
-  if ((event.metaKey || event.ctrlKey) && !event.altKey && (event.key === 'z' || event.key === 'Z') && !briefing && !dropShow) {
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && (event.key === 'z' || event.key === 'Z') && !briefing && !dropShow && !flyShow) {
     event.preventDefault();
     undoLast();
     return;
@@ -1057,6 +1080,11 @@ function handleKey(event) {
   if (dropShow) {
     event.preventDefault();
     endDropShow();
+    return;
+  }
+  if (flyShow) {
+    event.preventDefault();
+    endFlyShow();
     return;
   }
   if (state.phase === 'drop') {

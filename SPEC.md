@@ -189,6 +189,9 @@ All costs and modifiers below are numbers in `rules.json`.
   found, or the explosion floor (§6). The leader carries the radio, so it is gone if he
   is dead; that is a rule keyed to the `leader` flag, not a trait (§5 Command). Calling it
   forfeits the "never reached Alarmed" score (§10): a clean run still scores highest.
+  When it is called the Dakota flies across the board over the garrison (display only,
+  skipped by any key or click), then a card headed in the diversion's blue says what it
+  did (M11).
 
 ### Desktop interaction (this matters more than it sounds)
 

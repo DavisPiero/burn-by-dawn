@@ -277,6 +277,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
   if (!briefing) return;
   card.replaceChildren();
+  card.className = briefing.tone ? `tone-${briefing.tone}` : '';
   // The title card, over the orders only: the `title-card` sprite, drawn or
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));

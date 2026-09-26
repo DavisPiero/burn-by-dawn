@@ -573,6 +573,7 @@ export function renderPieces(layers, state, view) {
 
   drawBlasts(layers, state, now);
   drawTargetRings(layers, view.targetRings, now);
+  if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points), now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
@@ -695,10 +696,6 @@ function playFrom(node, frames, options, elapsed) {
 }
 
 function drawDropShow(layers, show, timeline, elapsed) {
-  const { start, end, angle } = timeline;
-  const size = DROP_SHOW.aircraftSize;
-  const at = (p, extra = '') => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)${extra}`;
-
   // Each canopy, and its shadow on the ground closing in as it comes down.
   const canopy = DROP_SHOW.canopySize;
   const open = DROP_SHOW.openMs, drift = DROP_SHOW.driftMs, collapse = DROP_SHOW.collapseMs;
@@ -727,20 +724,68 @@ function drawDropShow(layers, show, timeline, elapsed) {
     layers.effects.append(shadow, body);
   }
 
-  // The aircraft over everything, its shadow far below it.
-  if (elapsed < DROP_SHOW.flightMs) {
-    const s = DROP_SHOW.aircraftShadow;
-    const shadow = el('g', {});
-    shadow.appendChild(el('use', { href: '#aircraft-dakota-shadow', x: -size / 2, y: -size / 2, width: size, height: size, opacity: s.opacity }));
-    playFrom(shadow, [
-      { transform: at({ x: start.x + s.x, y: start.y + s.y }) },
-      { transform: at({ x: end.x + s.x, y: end.y + s.y }) },
-    ], { duration: DROP_SHOW.flightMs }, elapsed);
-    const plane = el('g', {});
-    plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
-    playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
-    layers.effects.append(shadow, plane);
-  }
+  drawAircraft(layers, timeline, elapsed);
+}
+
+// The aircraft over everything, its shadow far below it, flying from the
+// timeline's start to its end.
+function drawAircraft(layers, timeline, elapsed) {
+  const { start, end, angle } = timeline;
+  const size = DROP_SHOW.aircraftSize;
+  const at = (p) => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)`;
+  if (elapsed >= DROP_SHOW.flightMs) return;
+  const s = DROP_SHOW.aircraftShadow;
+  const shadow = el('g', {});
+  shadow.appendChild(el('use', { href: '#aircraft-dakota-shadow', x: -size / 2, y: -size / 2, width: size, height: size, opacity: s.opacity }));
+  playFrom(shadow, [
+    { transform: at({ x: start.x + s.x, y: start.y + s.y }) },
+    { transform: at({ x: end.x + s.x, y: end.y + s.y }) },
+  ], { duration: DROP_SHOW.flightMs }, elapsed);
+  const plane = el('g', {});
+  plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
+  playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
+  layers.effects.append(shadow, plane);
+}
+
+// --- the RAF flyover (M11) --------------------------------------------------------
+// Display only, like the drop: when the diversion is called the Dakota crosses
+// the board over the garrison, on the straight line that best fits where the
+// enemies stand, from edge to edge. Then the diversion's card opens.
+
+/**
+ * The flyover's line and length. `points` are the enemies' hexes as they
+ * stood when the call was made. Exported so main.js knows when it is over.
+ */
+export function flyoverTimeline(map, points) {
+  const px = points.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+  const edge = boardEdges(map);
+  const n = px.length || 1;
+  const c = px.length
+    ? { x: px.reduce((a, p) => a + p.x, 0) / n, y: px.reduce((a, p) => a + p.y, 0) / n }
+    : { x: (edge.left + edge.right) / 2, y: (edge.top + edge.bottom) / 2 };
+  // The line of best fit through them: the direction they are most spread along.
+  let sxx = 0, syy = 0, sxy = 0;
+  for (const p of px) { sxx += (p.x - c.x) ** 2; syy += (p.y - c.y) ** 2; sxy += (p.x - c.x) * (p.y - c.y); }
+  let theta = px.length > 1 ? 0.5 * Math.atan2(2 * sxy, sxx - syy) : 0;
+  // Always from the west, the way the bombers come in.
+  let ux = Math.cos(theta), uy = Math.sin(theta);
+  if (ux < 0) { ux = -ux; uy = -uy; }
+  // From where the line leaves the board behind it to where it leaves ahead,
+  // plus the aircraft's own length, so it flies in and out of sight.
+  const margin = DROP_SHOW.aircraftSize;
+  const box = { left: edge.left - margin, right: edge.right + margin, top: edge.top - margin, bottom: edge.bottom + margin };
+  const ts = [];
+  if (Math.abs(ux) > 1e-6) ts.push((box.left - c.x) / ux, (box.right - c.x) / ux);
+  if (Math.abs(uy) > 1e-6) ts.push((box.top - c.y) / uy, (box.bottom - c.y) / uy);
+  const before = Math.max(...ts.filter((t) => t <= 0));
+  const after = Math.min(...ts.filter((t) => t >= 0));
+  theta = Math.atan2(uy, ux);
+  return {
+    start: { x: c.x + ux * before, y: c.y + uy * before },
+    end: { x: c.x + ux * after, y: c.y + uy * after },
+    angle: (theta * 180) / Math.PI,
+    length: DROP_SHOW.flightMs + DROP_SHOW.tailMs,
+  };
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
