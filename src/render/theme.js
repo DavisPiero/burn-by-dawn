@@ -27,16 +27,39 @@ export const PALETTE = {
   leader: '#2F7BBF',
 };
 
-// SPEC.md §11: a typewriter Courier for text, a condensed slab for the
-// masthead, and hand lettering for speech bubbles. Nothing is supplied, so
-// these are faces desktops ship: Noteworthy (set bold) on a Mac, Segoe Print
-// and Ink Free on Windows. A supplied lettering face goes first in `lettering`
-// (see ART-ASSETS.md §8). Never Comic Sans.
+// SPEC.md §11: a typewriter Courier for text, a display face for the masthead
+// and headings, and hand lettering for speech bubbles and the marker-pen notes.
+// The supplied faces are FONTS below, first in their stacks; the rest are
+// faces desktops ship, used until a supplied one loads or if its file is gone.
+// Never Comic Sans.
 export const TYPE = {
   typewriter: '"Courier 10 Pitch", "Courier New", Courier, monospace',
-  slab: '"Rockwell Condensed", "Roboto Slab", Rockwell, "American Typewriter", "Courier New", serif',
-  lettering: 'Noteworthy, "Segoe Print", "Ink Free", "Marker Felt", "Chalkboard SE", fantasy',
+  // Stardos Stencil: the stencil the title card is lettered in, so headings match it.
+  slab: '"Stardos Stencil", "Rockwell Condensed", Rockwell, "American Typewriter", "Courier New", serif',
+  // Manly Men BB: comic lettering, whose 1 is flagged and never reads as I.
+  lettering: '"Manly Men BB", Noteworthy, "Segoe Print", "Ink Free", "Marker Felt", "Chalkboard SE", fantasy',
 };
+
+// Supplied faces (ART-ASSETS.md §8), WOFF2 in assets/fonts. Only these are
+// loaded; the other files in that folder are options not taken.
+export const FONTS = [
+  { family: 'Manly Men BB', weight: 400, url: 'assets/fonts/ManlyMenBB.woff2' },
+  { family: 'Manly Men BB', weight: 700, url: 'assets/fonts/ManlyMenBB_bold.woff2' },
+  { family: 'Stardos Stencil', weight: 700, url: 'assets/fonts/StardosStencil-Bold.woff2' },
+];
+
+/**
+ * Load the supplied faces. Resolves once each has loaded or failed, so the
+ * first draw can wait for them: speech bubbles are measured in the face
+ * actually used. A missing file just leaves the desktop fallback.
+ */
+export function loadSuppliedFonts() {
+  return Promise.allSettled(FONTS.map(({ family, weight, url }) => {
+    const face = new FontFace(family, `url("${url}")`, { weight: String(weight) });
+    document.fonts.add(face);
+    return face.load();
+  }));
+}
 
 // ---------------------------------------------------------------------------
 // Print: halftone, misregistration, paper.
@@ -142,10 +165,32 @@ export function loadSuppliedPaper(root = document.documentElement) {
   probe.src = PAPER_FILE.url;
 }
 
+// A supplied aircraft (ART-ASSETS.md §6, ART-PROMPTS.md): a painted PNG at
+// AIRCRAFT_FILE.url, seen from above, nose to the east, on transparency,
+// replaces the drawn Dakota once it loads. Its shadow on the ground is the
+// same picture printed flat black (board.js prints it faint), so the two can
+// never disagree. A missing file is fine: the drawn Dakota stays.
+export const AIRCRAFT_FILE = { url: 'assets/aircraft/aircraft-dakota.png', size: 120 };
+
+export function loadSuppliedAircraft() {
+  const probe = new Image();
+  probe.onload = () => {
+    const image = (extra = {}) => svg('image', {
+      href: AIRCRAFT_FILE.url, x: 0, y: 0, width: AIRCRAFT_FILE.size, height: AIRCRAFT_FILE.size, ...extra,
+    });
+    document.getElementById('aircraft-dakota')?.replaceChildren(image());
+    // One element, shown for a few seconds: a CSS filter is cheap enough here.
+    document.getElementById('aircraft-dakota-shadow')?.replaceChildren(image({ style: 'filter: brightness(0)' }));
+  };
+  probe.src = AIRCRAFT_FILE.url;
+}
+
 // A supplied title card (ART-ASSETS.md §7, ART-PROMPTS.md): a painted JPEG at
 // TITLE_CARD.url replaces the drawn `title-card` sprite once it loads, cropped
 // to the sprite's 4:1 from the middle. A missing file is fine: the drawn one stays.
-export const TITLE_CARD = { url: 'assets/title/title-card.jpg', width: 600, height: 150 };
+// `lettered` says the picture has the title painted in, so the typed title is
+// hidden over it; set it false for a picture without (title-card_original.jpg).
+export const TITLE_CARD = { url: 'assets/title/title-card.jpg', width: 600, height: 150, lettered: true };
 
 export function loadSuppliedTitleCard() {
   const probe = new Image();
@@ -156,6 +201,7 @@ export function loadSuppliedTitleCard() {
     symbol.replaceChildren(svg('image', {
       href: TITLE_CARD.url, x: 0, y: 0, width: TITLE_CARD.width, height: TITLE_CARD.height, preserveAspectRatio: 'xMidYMid slice',
     }));
+    document.documentElement.classList.toggle('title-card-lettered', TITLE_CARD.lettered);
   };
   probe.src = TITLE_CARD.url;
 }
@@ -868,48 +914,177 @@ function flame(x, y, s) {
   return [...inked(d, 'red', 1.4), fill(`M${x - 4 * s} ${y} Q${x - 4 * s} ${y - 8 * s} ${x} ${y - 12 * s} Q${x + 5 * s} ${y - 6 * s} ${x + 4 * s} ${y} Z`, 'paper')];
 }
 
-// A fuel drum seen from above: a disc and its filler cap.
+// A fuel drum seen from above: a disc, its rim and its filler cap.
 function drum(x, y, cls = 'green') {
-  return [circle(x, y, 7, cls), ring(x, y, 7, 1.6), circle(x + 2.5, y - 2.5, 1.4, 'ink')];
+  return [circle(x, y, 5.6, cls), ring(x, y, 5.6, 1.3), ring(x, y, 3.4, 0.7), circle(x + 2, y - 2, 1.1, 'ink')];
 }
 
-function pole(x, y, h) {
-  return [line(`M${x} ${y} V${y - h} M${x - 7} ${y - h + 4} H${x + 7}`, 2.4)];
-}
+// The dump's trodden ground, inside its three hexes.
+const FUEL_GROUND = 'M46 40 Q120 30 198 38 L200 104 Q176 110 160 112 L158 164 Q120 176 84 166 L80 112 Q60 108 44 104 Z';
 
-// A telephone exchange building, front on, used intact and gutted: white
-// walls, a slate roof, two rows of windows and the PTT board over the door.
-function exchangeBuilding(gutted) {
-  const walls = 'M46 84 H138 V150 H46 Z';
-  const parts = [...inked(walls, 'paper', 2.4)];
-  if (gutted) {
-    parts.push(fill(walls, 'ink', { 'fill-opacity': 0.35 }));
-    parts.push(line('M46 84 L62 74 L74 86 L92 66 L106 84 L122 70 L138 84', 2.4));
-  } else {
-    parts.push(...inked('M40 86 L92 58 L144 86 Z', 'blue', 2.4));
-    parts.push(...inked('M112 70 V58 H120 V74', 'paper', 2));
-  }
-  for (const x of [58, 86, 114]) {
-    for (const y of [96, 120]) parts.push(...inked(`M${x} ${y} h12 v14 h-12 Z`, gutted ? 'ink' : 'blue', 1.6));
-  }
-  parts.push(...inked('M84 134 h16 v16 h-16 Z', 'ink', 1.6));
-  if (!gutted) {
-    parts.push(...inked('M70 88 H114 V94 H70 Z', 'paper', 1.2));
-    parts.push(label('PTT', { x: 92, y: 91.2, 'font-size': 6.5, class: 'ink' }));
+// Ten rows of four, the east half about to go under the net.
+function drumPark() {
+  const parts = [];
+  for (let col = 0; col < 10; col++) {
+    for (let row = 0; row < 4; row++) parts.push(...drum(60 + col * 13.5, 48 + row * 13.5, (col * 4 + row) % 7 === 3 ? 'red' : 'green'));
   }
   return parts;
 }
 
-// The village church, the landmark Vance's landing line refers to (SPEC.md §11).
-function church() {
+// A camouflage net over the east drums: printed green with ink and paper
+// mottling, so the drums show faintly through, pegged out at its corners.
+function camouflageNet() {
+  const net = 'M122 38 Q156 34 190 38 Q194 68 190 98 Q168 104 146 102 Q138 72 122 38 Z';
+  const mottle = 'M140 46 q8 -4 12 3 q-4 7 -12 -3 Z M168 42 q9 2 8 9 q-9 1 -8 -9 Z M150 66 q10 -3 13 5 q-7 6 -13 -5 Z M176 64 q8 1 9 8 q-8 3 -9 -8 Z M158 88 q9 -2 11 5 q-8 5 -11 -5 Z M182 90 q6 -3 8 4 q-6 4 -8 -4 Z M136 60 q5 -1 6 5 q-5 2 -6 -5 Z';
+  const light = 'M156 52 q6 -2 8 3 q-5 4 -8 -3 Z M166 78 q6 -1 7 4 q-5 3 -7 -4 Z M186 50 q5 0 5 5 q-4 2 -5 -5 Z';
   return [
-    ...inked('M18 50 H58 V80 H18 Z', 'paper', 2),
-    ...inked('M14 52 L38 40 L62 52 Z', 'red', 2),
-    ...inked('M20 26 H32 V80 H20 Z', 'paper', 2),
-    ...inked('M18 28 L26 2 L34 28 Z', 'blue', 2),
-    line('M26 2 V-6 M22 -3 H30', 1.8),
-    ...inked('M23 60 a3 3 0 0 1 6 0 v8 h-6 Z', 'ink', 1),
-    ...inked('M40 60 a3 3 0 0 1 6 0 v8 h-6 Z', 'blue', 1.2),
+    line('M122 38 L116 32 M190 38 L196 32 M190 98 L196 102 M146 102 L140 108', 1.1, 'stroke-ink', { opacity: 0.7 }),
+    ...[[116, 32], [196, 32], [196, 102], [140, 108]].map(([x, y]) => circle(x, y, 1.6, 'ink')),
+    fill(net, 'green', { 'fill-opacity': 0.85 }),
+    fill(mottle, 'ink', { 'fill-opacity': 0.4 }),
+    fill(light, 'paper', { 'fill-opacity': 0.35 }),
+    line(net, 1.6, 'stroke-ink', { 'stroke-dasharray': '5 2.5' }),
+  ];
+}
+
+// The bowser, nose east: a tanker on a lorry, its hatches along the top.
+function bowser(burnt) {
+  const tank = 'M92 124 H136 V144 H92 Q86 144 86 134 Q86 124 92 124 Z';
+  const cab = 'M136 125 H148 Q154 125 154 131 V137 Q154 143 148 143 H136 Z';
+  const cls = burnt ? 'ink' : 'green';
+  const parts = [...inked(tank, cls, 2), ...inked(cab, cls, 2)];
+  if (burnt) return [...parts, fill(tank, 'ink', { 'fill-opacity': 0.5 }), line('M100 124 L96 116 M126 144 L130 150', 1.6)];
+  return [
+    ...parts,
+    line('M90 134 H134', 1, 'stroke-ink', { opacity: 0.5 }),
+    circle(102, 134, 3.2, 'paper'), ring(102, 134, 3.2, 1.2), circle(122, 134, 3.2, 'paper'), ring(122, 134, 3.2, 1.2),
+    ...inked('M146 127 H150 V141 H146 Z', 'blue', 1),
+  ];
+}
+
+// A gun pit: a ring of sandbags round a dark hole, the gun laid over them.
+function gunPit(x, y) {
+  const bags = [];
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    const bx = x + Math.cos(a) * 11, by = y + Math.sin(a) * 9;
+    const turn = (a * 180) / Math.PI + 90;
+    bags.push(svg('g', { transform: `translate(${bx.toFixed(1)} ${by.toFixed(1)}) rotate(${turn.toFixed(0)})` }, [
+      svg('ellipse', { cx: 0, cy: 0, rx: 4.4, ry: 2.8, class: 'paper' }),
+      svg('ellipse', { cx: 0, cy: 0, rx: 4.4, ry: 2.8, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.1 }),
+    ]));
+  }
+  return [svg('ellipse', { cx: x, cy: y, rx: 8, ry: 6.5, class: 'ink', 'fill-opacity': 0.8 }), ...bags, line(`M${x} ${y} L${x - 10} ${y - 13}`, 2.4)];
+}
+
+// A telephone pole: the post, a crossarm and its insulators.
+function pole(x, y, h, lean = 0) {
+  const top = { x: x + lean, y: y - h };
+  return [
+    line(`M${x} ${y} L${top.x} ${top.y}`, 2.4),
+    line(`M${top.x - 8} ${top.y + 4} H${top.x + 8}`, 2),
+    ...[-6, 0, 6].flatMap((dx) => [circle(top.x + dx, top.y + 2.4, 1.4, 'paper'), ring(top.x + dx, top.y + 2.4, 1.4, 0.8)]),
+  ];
+}
+
+// Stone coursing over a rectangle: rows of blocks, joints staggered, printed faint.
+function stonework(x0, y0, x1, y1, row = 6, block = 10, opacity = 0.4) {
+  let d = '';
+  for (let y = y0 + row; y < y1 - 0.5; y += row) d += `M${x0} ${y} H${x1} `;
+  for (let y = y0, k = 0; y < y1 - 0.5; y += row, k++) {
+    for (let x = x0 + (k % 2 ? block / 2 : block); x < x1 - 1; x += block) d += `M${x} ${y} V${Math.min(y + row, y1)} `;
+  }
+  return line(d, 0.8, 'stroke-ink', { opacity });
+}
+
+// The village's gravel square in front of the exchange.
+function gravelYard() {
+  const yard = 'M38 140 Q42 126 60 132 L126 132 Q152 128 158 142 Q154 162 112 164 Q70 168 46 158 Q34 150 38 140 Z';
+  const stones = [];
+  for (let i = 0; i < 46; i++) stones.push(`M${(44 + ((i * 37) % 108)).toFixed(1)} ${(136 + ((i * 23) % 26)).toFixed(1)} h1.2`);
+  return [fill(yard, 'ink', { 'fill-opacity': 0.08 }), line(stones.join(' '), 1.3, 'stroke-ink', { opacity: 0.45 })];
+}
+
+// The exchange house from the south-west: the front wall, the east gable in
+// shadow, the slate roof's front slope with two chimneys, used intact and gutted.
+function exchangeBuilding(gutted) {
+  const front = 'M58 88 H122 V134 H58 Z';
+  const gable = 'M122 134 V88 L131 58 L140 77 V123 Z';
+  const roof = 'M55 89 H124 L132 57 H64 Z';
+  const parts = [
+    ...inked(front, 'paper', 2.4), stonework(58, 88, 122, 134, 5.5, 9, 0.3),
+    ...inked(gable, 'paper', 2.4), fill(gable, 'ink', { 'fill-opacity': 0.22 }),
+  ];
+  if (gutted) {
+    // Roof gone: charred rafters over a black shell, the walls still up.
+    parts.push(fill('M58 88 H122 L130 60 H66 Z', 'ink', { 'fill-opacity': 0.75 }));
+    parts.push(line('M58 88 L70 70 L80 82 L92 62 L104 80 L116 64 L122 88 M72 62 L84 88 M96 60 L102 88', 2));
+  } else {
+    parts.push(...inked(roof, 'blue', 2.4));
+    // Slate courses, parallel to the eaves.
+    let slates = '';
+    for (const t of [0.22, 0.44, 0.66, 0.86]) slates += `M${55 + 9 * t} ${89 - 32 * t} H${124 + 8 * t} `;
+    parts.push(line(slates, 0.9, 'stroke-ink', { opacity: 0.55 }));
+    for (const x of [68, 118]) {
+      parts.push(...inked(`M${x} 46 h8 v14 h-8 Z`, 'paper', 1.4), stonework(x, 46, x + 8, 60, 4.5, 8, 0.35));
+      parts.push(svg('rect', { x: x + 1.5, y: 42, width: 2, height: 4, class: 'ink' }), svg('rect', { x: x + 4.5, y: 42, width: 2, height: 4, class: 'ink' }));
+    }
+  }
+  // The PTT board, the windows and the door.
+  if (!gutted) {
+    parts.push(...inked('M70 91 H110 V100 H70 Z', 'blue', 1.4));
+    parts.push(label('PTT', { x: 90, y: 95.8, 'font-size': 8, class: 'paper', 'letter-spacing': 1.5 }));
+  }
+  for (const [x, y] of [[62, 103], [85, 103], [108, 103], [62, 118], [108, 118]]) {
+    parts.push(...inked(`M${x} ${y} h10 v10 h-10 Z`, gutted ? 'ink' : 'blue', 1.4));
+    if (!gutted) parts.push(line(`M${x + 5} ${y} v10 M${x} ${y + 5} h10`, 0.8, 'stroke-paper'));
+  }
+  parts.push(...inked('M85 118 h10 v16 h-10 Z', gutted ? 'ink' : 'green', 1.4));
+  // A window in the gable end.
+  parts.push(...inked('M127 98 L134 94 V104 L127 108 Z', gutted ? 'ink' : 'blue', 1.2));
+  return parts;
+}
+
+// The line: poles along the square and the wires to the house and away east,
+// off the edge of the art. Blown, the east pole leans and its wires hang.
+function exchangeWires(gutted) {
+  const parts = [...pole(150, 152, 62, gutted ? 10 : 0), ...pole(152, 72, 42)];
+  if (gutted) {
+    parts.push(line('M152 32 Q164 40 188 34 M152 32 Q146 44 140 58 M160 90 Q150 112 142 124', 1.2));
+    return parts;
+  }
+  parts.push(line([
+    'M144 90 Q142 96 136 100', // into the gable, under the eaves
+    'M144 90 Q166 98 186 92 M156 90 Q172 96 190 90', // away east
+    'M146 32 Q164 40 186 34 M158 32 Q172 38 190 32',
+    'M146 32 Q138 40 124 44', // down to the roof
+    'M144 90 Q146 60 146 32 M156 90 Q158 60 158 32', // pole to pole
+  ].join(' '), 1.1));
+  return parts;
+}
+
+// The village church, the landmark Vance's landing line refers to (SPEC.md §11),
+// seen from the south-west like the exchange: a stone tower and spire, and the
+// nave behind it with its own slate roof.
+function church() {
+  const naveFront = 'M30 52 H62 V84 H30 Z';
+  const naveGable = 'M62 84 V52 L66 38 L70 47 V79 Z';
+  const naveRoof = 'M28 53 H63 L67 37 H33 Z';
+  const tower = 'M14 28 H30 V84 H14 Z';
+  const towerSide = 'M30 84 V28 L38 23 V79 Z';
+  return [
+    ...inked(naveFront, 'paper', 2), stonework(30, 52, 62, 84, 5, 8, 0.3),
+    ...inked(naveGable, 'paper', 2), fill(naveGable, 'ink', { 'fill-opacity': 0.22 }),
+    ...inked(naveRoof, 'blue', 2),
+    ...inked('M42 62 a4 4 0 0 1 8 0 v14 h-8 Z', 'blue', 1.2),
+    ...inked(tower, 'paper', 2), stonework(14, 28, 30, 84, 5, 8, 0.3),
+    ...inked(towerSide, 'paper', 2), fill(towerSide, 'ink', { 'fill-opacity': 0.22 }),
+    ...inked('M18 38 a2.5 2.5 0 0 1 5 0 v7 h-5 Z M24 38 a2.5 2.5 0 0 1 5 0 v7 h-5 Z', 'ink', 0.8),
+    ...inked('M18 70 a4 4 0 0 1 8 0 v14 h-8 Z', 'ink', 1),
+    // The spire: two faces of a pyramid, the east one in shadow.
+    ...inked('M13 29 H31 L26 -6 Z', 'blue', 2),
+    fill('M31 29 L39 24 L26 -6 Z', 'blue'), fill('M31 29 L39 24 L26 -6 Z', 'ink', { 'fill-opacity': 0.35 }), line('M31 29 L39 24 L26 -6 Z', 2),
+    line('M26 -6 V-15 M22 -11.5 H30', 1.8),
   ];
 }
 
@@ -1058,13 +1233,34 @@ function fallbackPortrait() {
 
 // --- chrome -------------------------------------------------------------------
 
-// The bridge's stone abutments on either bank, and the track across its
-// deck, drawn to match the railway either side (RAIL, board.js).
+// The bridge's stone abutments on either bank, each with wing walls splayed
+// back along the towpath, and the track across its deck, drawn to match the
+// railway either side (RAIL, board.js). The east side is the west mirrored.
 function bridgeAbutments() {
-  return [84, 180].flatMap((x) => [
-    ...inked(`M${x} 30 h16 v36 h-16 Z`, 'paper', 2.2),
-    line(`M${x} 42 h16 M${x} 54 h16 M${x + 8} 30 v12 M${x + 5} 42 v12 M${x + 11} 54 v12`, 1.2),
-  ]);
+  const west = [
+    ...inked('M104 24 L94 24 L84 2 L94 2 Z', 'paper', 2), ...inked('M104 72 L94 72 L84 94 L94 94 Z', 'paper', 2),
+    line('M89.5 8 H97 M92 16 H100.5 M89.5 88 H97 M92 80 H100.5', 0.8, 'stroke-ink', { opacity: 0.5 }),
+    ...inked('M78 24 H104 V72 H78 Z', 'paper', 2.2), stonework(78, 24, 104, 72, 6, 9, 0.45),
+  ];
+  return [...west, svg('g', { transform: 'translate(280 0) scale(-1 1)' }, west.map((node) => node.cloneNode(true)))];
+}
+
+// A plate girder along each side of the deck: the north one seen from above,
+// the south one showing its face and the stiffeners down it.
+function plateGirders(from, to) {
+  let stiffeners = '';
+  for (let x = from + 6; x < to - 2; x += 12) stiffeners += `M${x} 61 V70 M${x} 31 V36 `;
+  return [
+    fill(`M${from} 30 H${to} V36 H${from} Z`, 'ink', { 'fill-opacity': 0.55 }), line(`M${from} 30 H${to} V36 H${from} Z`, 1.8),
+    fill(`M${from} 60 H${to} V70 H${from} Z`, 'ink', { 'fill-opacity': 0.45 }), line(`M${from} 60 H${to} V70 H${from} Z`, 1.8),
+    line(`M${from} 62 H${to}`, 1.4),
+    line(stiffeners, 1, 'stroke-paper', { opacity: 0.7 }),
+  ];
+}
+
+// Mooring bollards on the towpath by the bridge.
+function bollards(points) {
+  return points.flatMap(([x, y]) => [circle(x, y, 2.8, 'ink'), circle(x - 0.8, y - 0.8, 1, 'paper', { opacity: 0.6 })]);
 }
 
 function bridgeTrack(from, to) {
@@ -1176,21 +1372,24 @@ const SPRITES = {
   ...Object.fromEntries(Object.entries(TERRAIN_SPRITES).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
 
   // --- objectives (ART-ASSETS.md §5) ---
-  // Three hexes wide across the canal: water under the middle, a girder span
-  // on stone abutments.
-  // The girder span over the canal, on stone abutments, carrying the railway
-  // (drawn by board.js either side of it) on its deck.
+  // --- objectives (after the operator's reference art, assets/reference/) ---
+  // Bold shapes first: at 1280x800 each of these prints 80 to 150 pixels
+  // across, so the references' texture is suggested, never copied.
+
+  // The plate-girder span over the canal on stone abutments with splayed wing
+  // walls, carrying the railway (drawn by board.js either side) on its deck.
+  // Seen from above, the south girder's face showing and its shadow on the water.
   'objective-rail-bridge': {
     viewBox: '0 0 280 92',
     draw: () => [
       fill('M100 0 H180 V92 H100 Z', 'blue'),
       line('M100 0 V92 M180 0 V92', 2),
+      fill('M104 66 H180 V76 H104 Z', 'ink', { 'fill-opacity': 0.3 }),
       ...bridgeAbutments(),
-      ...inked('M52 38 H228 V58 H52 Z', 'paper', 2.6),
+      ...inked('M64 36 H216 V60 H64 Z', 'paper', 2.4),
       ...bridgeTrack(52, 228),
-      // The girders, side on: a heavy top chord and the Warren web under it.
-      line('M60 38 L78 12 H202 L220 38', 4),
-      line('M78 12 L98 38 L118 12 L138 38 L158 12 L178 38 L198 12 L220 38 M60 38 L78 12', 2.4),
+      ...plateGirders(64, 216),
+      ...bollards([[90, 84], [190, 8], [190, 84]]),
     ],
   },
   'objective-bridge-destroyed': {
@@ -1199,59 +1398,74 @@ const SPRITES = {
       fill('M100 0 H180 V92 H100 Z', 'blue'),
       line('M100 0 V92 M180 0 V92', 2),
       ...bridgeAbutments(),
-      ...inked('M52 38 H104 L112 50 L100 58 H52 Z', 'paper', 2.6),
-      ...inked('M228 38 H178 L168 46 L180 58 H228 Z', 'paper', 2.6),
-      ...bridgeTrack(52, 100),
-      ...bridgeTrack(182, 228),
-      // The fallen span, half in the water.
-      ...inked('M116 40 L166 66 L158 78 L108 52 Z', 'ink', 2),
-      line('M100 40 L122 14 M176 44 L156 18', 3),
-      ...smoke(140, 24, 1.2),
+      // The deck broken off short at both piers, rails and all.
+      ...inked('M64 36 H108 L114 44 L106 50 L112 60 H64 Z', 'paper', 2.4),
+      ...inked('M216 36 H172 L166 42 L174 50 L168 60 H216 Z', 'paper', 2.4),
+      ...bridgeTrack(52, 104),
+      ...bridgeTrack(176, 228),
+      ...plateGirders(64, 106), ...plateGirders(174, 216),
+      // The fallen span, nose down in the canal, and the wreckage round it.
+      fill('M112 50 L170 70 L164 84 L106 64 Z', 'ink', { 'fill-opacity': 0.6 }),
+      line('M112 50 L170 70 L164 84 L106 64 Z M122 56 L116 70 M134 60 L128 74 M146 64 L140 78 M158 68 L152 82', 1.6),
+      fill('M104 68 Q136 86 172 80 L174 90 Q136 94 102 80 Z', 'blue', { 'fill-opacity': 0.6 }),
+      line('M110 88 Q124 84 138 88 M148 90 Q160 86 172 90', 1.2, 'stroke-paper', { opacity: 0.7 }),
+      svg('rect', { x: 150, y: 44, width: 5, height: 4, class: 'ink' }), svg('rect', { x: 126, y: 40, width: 4, height: 3, class: 'ink' }),
+      ...smoke(140, 26, 1.2),
     ],
   },
+
+  // The PTT exchange in the village, as the reference has it: a stone house
+  // under a slate roof, seen from the south-west so the front and the east
+  // gable both show, the PTT board over the door, a gravel yard, and the
+  // poles and wires the scouts can cut running away east. The church beside it.
   'objective-exchange': {
     viewBox: '0 0 160 184',
     draw: () => [
+      ...gravelYard(),
+      svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(false),
-      svg('g', { transform: 'translate(-2 72) scale(0.9)' }, church()),
-      ...pole(150, 150, 58), ...pole(150, 72, 40),
-      // Wires away east, off the edge of the art: the line the scouts can cut.
-      line('M143 96 Q152 104 172 100 M157 96 Q166 102 186 96 M143 36 Q156 44 176 40 M157 36 Q168 42 188 36', 1.3),
+      ...exchangeWires(false),
     ],
   },
   'objective-exchange-destroyed': {
     viewBox: '0 0 160 184',
     draw: () => [
+      ...gravelYard(),
+      svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(true),
-      svg('g', { transform: 'translate(-2 72) scale(0.9)' }, church()),
-      line('M146 150 L120 116 M140 124 L156 112', 2.4),
-      ...smoke(96, 58, 1.2), ...flame(112, 80, 0.8),
+      ...exchangeWires(true),
+      ...smoke(96, 46, 1.2), ...flame(84, 86, 0.8), ...flame(108, 80, 0.7),
     ],
   },
-  // Drums in rows under a camouflage net, seen from above, and a bowser beside.
+
+  // The fuel dump from above, after the reference: rows of drums on trodden
+  // ground, the east end under a camouflage net pegged at its corners, a
+  // bowser with its hose run out to the drums, and a sandbagged gun pit.
+  // Kept inside its three hexes, so the art, the outline and the label all
+  // sit on the same ground.
   'objective-fuel-dump': {
     viewBox: '0 0 240 184',
     draw: () => [
-      // Kept inside its three hexes, so the art, the outline and the label
-      // all sit on the same ground.
-      fill('M56 48 L142 42 L148 134 L62 140 Z', 'green', { 'fill-opacity': 0.3 }),
-      ...[68, 86, 104, 122].flatMap((x, i) => [60, 78, 96, 114].map((y, j) => [x + j, y - i])).map(([x, y], k) => drum(x + 2, y + 6, k % 5 === 2 ? 'red' : 'green')).flat(),
-      line('M56 48 L142 42 L148 134 L62 140 Z', 2, 'stroke-ink', { 'stroke-dasharray': '6 4' }),
-      // The bowser: cab and tank, nose to the road.
-      ...inked('M158 58 H182 V124 H158 Z', 'green', 2.4),
-      ...inked('M160 124 H180 V140 H160 Z', 'green', 2.4),
-      ...inked('M163 128 H177 V133 H163 Z', 'blue', 1.4),
-      line('M158 80 H182 M158 102 H182', 1.6),
+      fill(FUEL_GROUND, 'green', { 'fill-opacity': 0.3 }),
+      ...drumPark(),
+      ...camouflageNet(),
+      line('M92 136 Q70 132 74 112', 1.6),
+      ...bowser(false),
+      ...gunPit(112, 162),
     ],
   },
   'objective-fuel-destroyed': {
     viewBox: '0 0 240 184',
     draw: () => [
-      fill('M24 150 Q60 50 140 64 Q200 70 214 156 Z', 'ink', { 'fill-opacity': 0.35 }),
-      ...[[60, 120], [92, 132], [124, 116], [74, 146]].flatMap(([x, y]) => drum(x, y, 'ink')),
-      ...inked('M166 96 H194 V160 H166 Z', 'ink', 2.4),
-      ...flame(70, 110, 1.4), ...flame(108, 100, 1.1), ...flame(150, 118, 1.1),
-      ...smoke(90, 56, 1.6), ...smoke(146, 46, 1.3),
+      fill(FUEL_GROUND, 'ink', { 'fill-opacity': 0.35 }),
+      fill('M40 110 Q60 30 140 40 Q210 44 204 112 Q180 150 120 150 Q60 150 40 110 Z', 'ink', { 'fill-opacity': 0.3 }),
+      // Drums blown about, some on their sides.
+      ...[[66, 60], [96, 52], [150, 58], [178, 82], [58, 92]].flatMap(([x, y]) => drum(x, y, 'ink')),
+      ...inked('M118 84 h14 v8 h-14 Z', 'ink', 1.2), ...inked('M84 80 h8 v14 h-8 Z', 'ink', 1.2),
+      ...bowser(true),
+      ...gunPit(112, 162),
+      ...flame(76, 76, 1.4), ...flame(126, 66, 1.2), ...flame(166, 72, 1.1), ...flame(116, 132, 0.9),
+      ...smoke(96, 30, 1.6), ...smoke(150, 22, 1.3),
     ],
   },
   // The exfil barn at the edge of the fields.
