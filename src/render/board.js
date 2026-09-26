@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -598,7 +598,26 @@ export function renderPieces(layers, state, view) {
     if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
     else if (enemy.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
     if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
-    layers.counters.appendChild(counter);
+    // The garrison's turn (M15): a red "!" pops on each enemy that spotted a
+    // man or found something, once it has got there.
+    const alarm = view.garrisonShow?.alarmed.get(enemy.id);
+    if (alarm !== undefined) {
+      const elapsed = now - view.garrisonShow.since;
+      if (elapsed < view.garrisonShow.length + GARRISON_SHOW.alarmLingerMs) {
+        const pop = marker('marker-spotted', (COUNTER.size - GARRISON_SHOW.alarmSize) / 2 - 2, -GARRISON_SHOW.alarmSize - 2, GARRISON_SHOW.alarmSize);
+        pop.style.transformBox = 'fill-box';
+        pop.style.transformOrigin = '50% 100%';
+        playFrom(pop, [
+          { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
+        ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
+        counter.appendChild(pop);
+      }
+    }
+    // Walked its steps this enemy phase, like a man his path (M15).
+    const mover = el('g', {});
+    mover.appendChild(counter);
+    layers.counters.appendChild(mover);
+    travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, GARRISON_SHOW.msPerHex);
   }
   // The enemy being aimed at (M15), over its counter.
   if (view.aim) {
@@ -634,11 +653,12 @@ export function renderPieces(layers, state, view) {
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
-    travel(layers, mover, unit, now);
+    travel(layers, mover, unit, now, `unit:${unit.id}`, unit.trail, MOTION.travelMsPerHex);
     appear(counter, show?.byUnit.get(unit.id), elapsed);
   });
 
   drawBlasts(layers, state, now);
+  if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
@@ -922,8 +942,7 @@ function drawShot(layers, shot, now) {
  * part-way through carries the journey on from where it was. A man appearing
  * for the first time (the drop) simply appears.
  */
-function travel(layers, mover, unit, now) {
-  const key = `unit:${unit.id}`;
+function travel(layers, mover, unit, now, key, trailOf, msPerHex) {
   const where = hexKey(unit.q, unit.r);
   const last = layers.motion.get(key);
   if (!last) {
@@ -931,7 +950,7 @@ function travel(layers, mover, unit, now) {
     return;
   }
   if (last.where !== where) {
-    const trail = unit.trail ?? [];
+    const trail = trailOf ?? [];
     const from = trail.map((h) => hexKey(h.q, h.r)).lastIndexOf(last.where);
     let steps = trail.slice(from + 1);
     if (steps.length === 0 || hexKey(steps.at(-1).q, steps.at(-1).r) !== where) steps = [{ q: unit.q, r: unit.r }];
@@ -940,7 +959,7 @@ function travel(layers, mover, unit, now) {
   layers.motion.get(key).at = { q: unit.q, r: unit.r };
 
   const journey = layers.motion.get(key);
-  const duration = (journey.path.length - 1) * MOTION.travelMsPerHex;
+  const duration = (journey.path.length - 1) * msPerHex;
   const elapsed = now - journey.since;
   if (!(duration > 0) || elapsed >= duration || typeof mover.animate !== 'function') return;
   const end = axialToPixel(unit.q, unit.r, layers.map.hexSize);
@@ -950,6 +969,25 @@ function travel(layers, mover, unit, now) {
   });
   const animation = mover.animate(frames, { duration, easing: 'linear' });
   animation.currentTime = elapsed;
+}
+
+// The garrison's turn (M15): a ripple out from each noise it heard, twice,
+// as the enemies set off toward it.
+function drawHeard(layers, show, now) {
+  const elapsed = now - show.since;
+  if (elapsed >= GARRISON_SHOW.rippleMs * 2) return;
+  const reach = layers.map.hexSize * GARRISON_SHOW.rippleHexes * Math.sqrt(3);
+  for (const hex of show.heard) {
+    const p = axialToPixel(hex.q, hex.r, layers.map.hexSize);
+    for (const delay of [0, GARRISON_SHOW.rippleMs * 0.6]) {
+      const ring = el('circle', { cx: p.x, cy: p.y, r: reach, fill: 'none', stroke: GARRISON_SHOW.rippleStroke, 'stroke-width': 3, opacity: 0 });
+      ring.style.transformOrigin = `${p.x}px ${p.y}px`;
+      playFrom(ring, [
+        { transform: 'scale(0.15)', opacity: 0.8 }, { transform: 'scale(1)', opacity: 0 },
+      ], { delay, duration: GARRISON_SHOW.rippleMs, easing: 'steps(6, end)' }, elapsed);
+      layers.effects.appendChild(ring);
+    }
+  }
 }
 
 // Each charge that went off: the page flashes and the board jolts once, then

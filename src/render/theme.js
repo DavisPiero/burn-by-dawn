@@ -435,6 +435,20 @@ export const MOTION = {
   blastMs: 1500,
 };
 
+// The garrison's turn shown before its card (M15): each enemy walks its steps,
+// a "!" pops on each that spotted a man or found something, and a ripple runs
+// out from each noise it heard. Display only.
+export const GARRISON_SHOW = {
+  msPerHex: 240, // slower than our men, so the whole garrison can be watched at once
+  tailMs: 500, // a beat after the last step before the card
+  popMs: 300,
+  alarmSize: 24,
+  alarmLingerMs: 1800, // the "!" stays this long after the show
+  rippleMs: 900,
+  rippleHexes: 2.5,
+  rippleStroke: PALETTE.ink,
+};
+
 // Hover path preview. The affordable part of a path and the part beyond this
 // turn's AP have to be told apart at a glance — that readout is the whole
 // point of hover (SPEC.md §4).

@@ -29,7 +29,7 @@ import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPie
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, GARRISON_SHOW, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -109,6 +109,9 @@ let flyShowTimer = null;
 // A turn that ended with a bang (M11): its card waits until the explosion has
 // been seen, instead of covering it at once. Any key or click brings it now.
 let bangTimer = null;
+// The garrison's turn shown on the board before its card (M15): who walked,
+// who raised the alarm, what was heard. Display only.
+let garrisonShow = null;
 // Shots fired (M13): the flash and tracer of a suppress or a kill, display
 // only, cleared once it has played.
 let shotShow = null;
@@ -202,6 +205,7 @@ function deriveView() {
       hex ? unitAt(state.units, hex.q, hex.r)?.id : null,
     ].filter(Boolean)),
     visionById: visionById(),
+    garrisonShow,
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
     hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
@@ -1071,15 +1075,40 @@ function endTurnNow() {
   undoStack = [];
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
+  garrisonShow = describeGarrisonShow(state);
+  // The card waits for the garrison's moves and any bang to be seen (M11, M15);
+  // any key or click brings it at once.
+  const hold = Math.max(garrisonShow.length, state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0);
   if (!state.outcome && briefingsOn) {
-    if (state.report.some((e) => e.kind === 'explosion')) {
+    if (hold > 0) {
       clearTimeout(bangTimer);
-      bangTimer = setTimeout(endBangHold, BLAST.holdMs);
+      bangTimer = setTimeout(endBangHold, hold);
     } else {
       briefing = { kind: 'turn' };
     }
   }
   render();
+}
+
+/**
+ * What the board shows of the garrison's turn (M15): each enemy walks its
+ * `walked` steps; a "!" pops on each that spotted a man (at once) or found a
+ * body or parachute (once it has walked there); a ripple runs out from each
+ * noise heard. `length` is how long the walking takes, with a beat after.
+ */
+function describeGarrisonShow(after) {
+  const steps = Math.max(0, ...after.enemies.map((e) => e.walked?.length ?? 0));
+  const alarmed = new Map();
+  for (const e of after.report) {
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
+    if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
+      const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
+      alarmed.set(e.enemyId, walked * GARRISON_SHOW.msPerHex);
+    }
+  }
+  const heard = after.report.filter((e) => e.kind === 'heard').map((e) => ({ q: e.q, r: e.r }));
+  const busy = steps > 0 || alarmed.size > 0 || heard.length > 0;
+  return { since: performance.now(), alarmed, heard, length: busy ? steps * GARRISON_SHOW.msPerHex + GARRISON_SHOW.tailMs : 0 };
 }
 
 function endBangHold() {
@@ -1103,6 +1132,7 @@ function restartMission() {
   dropShow = null;
   flyShow = null;
   bangTimer = null;
+  garrisonShow = null;
   briefingAfterDrop = false;
   highlightHex = null;
   hoverUnitId = null;

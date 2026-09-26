@@ -107,6 +107,8 @@ export default [
     equal(result.state.enemies[0].holding.unitId, unitId, 'the spotter holds him');
     equal(`${result.state.contact.q},${result.state.contact.r}`, `${row.q + 2},${row.r}`, 'last known contact');
     equal(result.state.noises.length, 0, 'a sighting is not a noise');
+    // Who saw him, for the "!" on its counter in the garrison's turn (M15).
+    equal(result.events.find((ev) => ev.kind === 'spotted').enemyIds.join(), e.id, 'names its spotter');
   }],
 
   ['a man already in contact is not counted again when he is seen again', async () => {
