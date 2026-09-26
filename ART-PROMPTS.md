@@ -258,7 +258,7 @@ cut it out (Photoshop's Remove Background, or Preview's Instant Alpha) before sa
 
 ---
 
-## Priority 7 — the enemy counters
+## Priority 7 — the enemy counters ✅ done (2026-09-27)
 
 **Why:** our six are painted; the garrison is still drawn helmets. The two sides should
 look like they came from the same box. The slot is wired: drop a file in and reload.

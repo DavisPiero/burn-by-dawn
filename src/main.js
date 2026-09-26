@@ -172,7 +172,9 @@ function deriveView() {
   const traitEffectsById = new Map(state.units.map((u) => [u.id, traitEffects(u, rules)]));
 
   const hex = state.hoverHex;
-  const hoverEnemy = hex ? state.enemies.find((e) => e.q === hex.q && e.r === hex.r) ?? null : null;
+  const enemyUnderMouse = hex ? state.enemies.find((e) => e.q === hex.q && e.r === hex.r) ?? null : null;
+  // Aiming at an enemy shows a crosshair on it, not its route and view (M15).
+  const hoverEnemy = AIMED.has(state.targeting) ? null : enemyUnderMouse;
   const routes = (state.showRoutes ? state.enemies : hoverEnemy ? [hoverEnemy] : [])
     .map((e) => routePath(map, e))
     .filter(Boolean);
@@ -315,7 +317,7 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
-  if (state.targeting) return deriveTargeting(view, unit, hex, hoverEnemy);
+  if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
   if (!hex || hoverEnemy) return view;
@@ -675,6 +677,9 @@ function nearestInPlay(unit) {
  * would do. For a stone, ring the enemies that would hear it (SPEC.md §4: the
  * readout shows who would hear it before the player commits).
  */
+// The actions aimed at an enemy (M15: a crosshair while aiming).
+const AIMED = new Set(['suppress', 'kill', 'knife']);
+
 function deriveTargeting(view, unit, hex, hoverEnemy) {
   const targets = new Map();
   const add = (h) => targets.set(hexKey(h.q, h.r), { q: h.q, r: h.r });
@@ -684,6 +689,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const e of state.enemies) if (checkSuppress(map, unit, e, rules).ok) add(e);
     if (hoverEnemy) {
       const check = checkSuppress(map, unit, hoverEnemy, rules);
+      view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
         ? `Suppress ${hoverEnemy.label} — ${check.cost} AP, gunfire: alert rises and it is heard. Click to fire.`
         : `Suppress ${hoverEnemy.label}: ${check.reason}.`;
@@ -694,6 +700,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const e of state.enemies) if (checkKill(map, unit, e, rules).ok) add(e);
     if (hoverEnemy) {
       const check = checkKill(map, unit, hoverEnemy, rules);
+      view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
         ? `Kill the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP, one silenced shot: alert +${applyHook(unit, 'onFire', 'alert', rules.alert.silenced).value}, heard ${hearingRadius('silenced', state.alert.points, rules)} hexes off. Leaves a body. Click to fire.`
         : `Kill: ${check.reason}.`;
@@ -704,6 +711,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const e of state.enemies) if (checkKnife(unit, e, rules).ok) add(e);
     if (hoverEnemy) {
       const check = checkKnife(unit, hoverEnemy, rules);
+      view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
         ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP and the rest of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
         : `Knife: ${check.reason}.`;

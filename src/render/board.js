@@ -573,7 +573,7 @@ export function renderPieces(layers, state, view) {
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
-  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1);
+  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize);
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
@@ -593,11 +593,20 @@ export function renderPieces(layers, state, view) {
   for (const enemy of state.enemies) {
     const hovered = enemy.id === view.hoverEnemy?.id;
     const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id), view.nextFacing?.get(enemy.id));
-    // Suppressed, or still open to a kill after it (SPEC.md §4): both are
-    // under the gunner's fire, and the hover says which.
-    if (enemy.suppressed || enemy.openToKill) counter.appendChild(marker('marker-suppressed', 38, -12));
+    // Suppressed, or the turn after, when it sees and fires again but a
+    // gunner can still kill it (SPEC.md §4): two markers, since M15.
+    if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
+    else if (enemy.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
     if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
     layers.counters.appendChild(counter);
+  }
+  // The enemy being aimed at (M15), over its counter.
+  if (view.aim) {
+    const p = axialToPixel(view.aim.q, view.aim.r, map.hexSize);
+    const size = map.hexSize * MARKER.aimScale;
+    layers.tokens.appendChild(el('use', {
+      href: view.aim.ok ? '#marker-aim' : '#marker-aim-no', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size, 'pointer-events': 'none',
+    }));
   }
 
   state.units.forEach((unit, i) => {
@@ -616,7 +625,12 @@ export function renderPieces(layers, state, view) {
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 40, unit));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
     // One chevron for the ordinary orders, two for the strongest, beside him.
-    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 40, 20, unit));
+    // Smaller since M14's blue AP dots say the same (M15: it outshone Dutch's own rank flash),
+    // centred where it was.
+    if (unit.commandBonus > 0) {
+      const size = MARKER.size * MARKER.ordersScale;
+      counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 51 - size / 2, 31 - size / 2, unit, size));
+    }
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -1267,8 +1281,8 @@ function casedText(content, x, y, fill) {
   return g;
 }
 
-function marker(id, x, y) {
-  return el('use', { href: `#${id}`, x, y, width: MARKER.size, height: MARKER.size });
+function marker(id, x, y, size = MARKER.size) {
+  return el('use', { href: `#${id}`, x, y, width: size, height: size });
 }
 
 /**
@@ -1276,8 +1290,8 @@ function marker(id, x, y) {
  * handlers given to createBoard say what it means. A click on it is a click on
  * his hex, as if the marker were not there.
  */
-function hoverMarker(layers, id, x, y, unit) {
-  const node = marker(id, x, y);
+function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
+  const node = marker(id, x, y, size);
   node.setAttribute('pointer-events', 'all');
   node.addEventListener('mouseenter', () => layers.handlers.onMarkerHover?.(id, unit.id, node));
   node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
@@ -1287,9 +1301,8 @@ function hoverMarker(layers, id, x, y, unit) {
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
 // side and dropped charges to the other, so both show when they share it.
-function drawOnGround(layers, id, at, side) {
+function drawOnGround(layers, id, at, side, size = MARKER.groundSize) {
   const p = axialToPixel(at.q, at.r, layers.map.hexSize);
-  const size = MARKER.groundSize;
   layers.highlight.appendChild(el('use', {
     href: `#${id}`, x: p.x + side * 18 - size / 2, y: p.y + 14 - size / 2, width: size, height: size,
   }));
@@ -1768,6 +1781,16 @@ function drawCounter(unit, number, map, isSelected) {
     'font-size': Math.min(COUNTER.nameSize, fitted).toFixed(2),
     'font-weight': 'bold', fill: COUNTER.nameFill,
   }));
+
+  // A charge he carries (M15): an orange dot each, down the left under his
+  // role, in the colour of what it does, ringed in paper to stand off the
+  // green. The leader's rank flash has that column, so his sit beside it.
+  const dots = COUNTER.chargeDots;
+  for (let i = 0; i < unit.charges; i++) {
+    const at = { cx: unit.leader ? dots.leaderX : dots.x, cy: dots.y + i * dots.pitch };
+    body.appendChild(el('circle', { ...at, r: dots.radius + 1.1, fill: COUNTER.apFill }));
+    body.appendChild(el('circle', { ...at, r: dots.radius, fill: dots.fill, stroke: COUNTER.apDots.stroke, 'stroke-width': 0.8 }));
+  }
 
   // AP as dots top right (M13): one per point of this turn's pool, filled for
   // what he has left, hollow for what he has spent — the number by his name is

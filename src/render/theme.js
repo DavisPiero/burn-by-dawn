@@ -398,6 +398,8 @@ export const COUNTER = {
   // The man's own face, and his role in the roundel top left.
   chip: { x: 14, y: 6, size: 29 },
   role: { x: 3.5, y: 4, size: 12 },
+  // One orange dot per charge carried, under the role (M15).
+  chargeDots: { x: 9.5, leaderX: 18, y: 22, pitch: 7.4, radius: 2.7, fill: PALETTE.fire },
 };
 
 // SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
@@ -579,6 +581,9 @@ export const MARKER = {
   size: 22,
   hiddenOpacity: 0.6,
   groundSize: 26,
+  ordersScale: 0.6, // the orders chevrons on a counter, against MARKER.size (M15)
+  bodySize: 39, // half as big again as groundSize since M15, the operator's: bodies were easy to miss
+  aimScale: 1.35, // the crosshair while aiming at an enemy, in hex radii across (M15)
   chuteReach: 0.72, // hex radii from the centre into a corner, clear of most of a counter (M13)
 };
 
@@ -1762,6 +1767,34 @@ const SPRITES = {
       ring(14, 14, 12),
     ],
   },
+  // The turn after suppression (M15): no longer suppressed — it sees and fires
+  // again — but a gunner can still kill it. The suppressed marker stayed on
+  // it and read as still suppressed.
+  'marker-open-kill': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'paper'),
+      ring(14, 14, 6.5, 2.2, 'stroke-red'),
+      line('M14 3 V9 M14 19 V25 M3 14 H9 M19 14 H25', 2.2, 'stroke-red'),
+      ring(14, 14, 12),
+    ],
+  },
+  // Aiming a suppress, kill or knife (M15): a crosshair over the enemy under
+  // the mouse, red if it can be done, grey if not, in place of its route and
+  // view, which aiming does not need.
+  ...Object.fromEntries([['marker-aim', 'red'], ['marker-aim-no', 'ink']].map(([id, colour]) => [id, {
+    viewBox: '0 0 100 100',
+    draw: () => {
+      const ticks = 'M50 3 V28 M50 72 V97 M3 50 H28 M72 50 H97';
+      return [
+        svg('g', { opacity: colour === 'ink' ? 0.55 : 1 }, [
+          ring(50, 50, 36, 10, 'stroke-paper'), line(ticks, 10, 'stroke-paper'),
+          ring(50, 50, 36, 4.5, `stroke-${colour}`), line(ticks, 4.5, `stroke-${colour}`),
+          circle(50, 50, 4.5, colour),
+        ]),
+      ];
+    },
+  }])),
   'marker-suppressed': {
     viewBox: '0 0 28 28',
     draw: () => [
