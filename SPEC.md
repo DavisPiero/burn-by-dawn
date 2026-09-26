@@ -694,8 +694,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Palette: paper `#F2E8D5`, ink `#1A1A18`, army green `#5C6B4A`, danger red `#C1272D`,
   cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
   the ranking man (his counter's name strip and rank flash, his number on the roster) and
-  his orders (their radius and chevron, §5 Command).
-  Nothing else.
+  his orders (their radius, chevron and AP dots, §5 Command), and one for fire, a soft
+  printed orange `#C98249` (M14, the operator's), used only for flames and the blast's
+  fireball. Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,

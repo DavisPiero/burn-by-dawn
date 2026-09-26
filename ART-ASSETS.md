@@ -18,7 +18,8 @@ Read these before drawing anything. They are what make the swap painless.
 **SVG (default for everything that is a shape)**
 - Export with a `viewBox`, and **strip `width`/`height` attributes**. The game scales them.
 - **No hardcoded colours.** Use CSS classes only: `.ink`, `.paper`, `.green`, `.red`,
-  `.blue`, and `.leader` for the ranking man's marks only (see the leader counter below).
+  `.blue`, `.leader` for the ranking man's marks only (see the leader counter below), and
+  `.fire` (a soft printed orange, M14) for flames and the blast's fireball only.
   The palette lives in `theme.js` and must stay tunable.
 - **Do not bake in the halftone.** Fills get the halftone `<pattern>` applied in code so
   density can be tuned per element.
@@ -171,7 +172,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
-| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
+| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
 | `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs the wires from its crossarm to the building, M12) |

@@ -25,6 +25,9 @@ export const PALETTE = {
   // than cold blue so he stands out, and kept apart from it so the canal and
   // the move range do not light up too (SPEC.md §11).
   leader: '#2F7BBF',
+  // The seventh, for fire only (M14, the operator's): a printed orange, kept
+  // soft so it sits with the rest — flames, the blast's fireball.
+  fire: '#C98249',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -1038,9 +1041,30 @@ function smoke(x, y, s) {
   return [circle(x, y, 9 * s, toneClass('ink', 35)), circle(x + 8 * s, y - 7 * s, 7 * s, toneClass('ink', 20)), circle(x - 6 * s, y - 12 * s, 6 * s, toneClass('ink', 10))];
 }
 
+// One tongue of flame standing on (x, y): w half its width at the root, h its
+// height, its tip leaning `lean` to one side, the root rounded under.
+function tongue(x, y, w, h, lean = 0) {
+  return `M${x - w} ${y} C${x - w * 1.25} ${y - h * 0.45} ${x - w * 0.2 + lean * 0.5} ${y - h * 0.62} ${x + lean} ${y - h} `
+    + `C${x + w * 0.45 + lean * 0.3} ${y - h * 0.6} ${x + w * 1.2} ${y - h * 0.42} ${x + w} ${y} Q${x} ${y + w * 0.45} ${x - w} ${y} Z`;
+}
+
+// A fire (M14, the operator's: the old flame was one red blob): a warm glow
+// on the ground, three red tongues edged in ink, orange inside them, a paper
+// core in the tallest, and embers going up.
 function flame(x, y, s) {
-  const d = `M${x - 8 * s} ${y} Q${x - 10 * s} ${y - 14 * s} ${x - 2 * s} ${y - 24 * s} Q${x} ${y - 14 * s} ${x + 4 * s} ${y - 18 * s} Q${x + 12 * s} ${y - 8 * s} ${x + 8 * s} ${y} Z`;
-  return [...inked(d, 'red', 1.4), fill(`M${x - 4 * s} ${y} Q${x - 4 * s} ${y - 8 * s} ${x} ${y - 12 * s} Q${x + 5 * s} ${y - 6 * s} ${x + 4 * s} ${y} Z`, 'paper')];
+  const tongues = (k) => [
+    tongue(x - 7 * s, y, 6 * k * s, 20 * k * s, -4 * s),
+    tongue(x + 7 * s, y, 6 * k * s, 23 * k * s, 4 * s),
+    tongue(x, y, 9 * k * s, 32 * k * s, 1.5 * s),
+  ];
+  return [
+    svg('ellipse', { cx: x, cy: y - 2 * s, rx: 18 * s, ry: 7 * s, class: toneClass('fire', 50) }),
+    ...tongues(1).map((d) => fill(d, 'red')),
+    ...tongues(1).map((d) => line(d, 1.3)),
+    ...tongues(0.68).map((d) => fill(d, 'fire')),
+    fill(tongue(x + 0.5 * s, y, 3.6 * s, 14 * s, 1 * s), 'paper'),
+    circle(x - 9 * s, y - 29 * s, 1.5 * s, 'fire'), circle(x + 8 * s, y - 33 * s, 1.2 * s, 'red'), circle(x + 2 * s, y - 40 * s, 1 * s, 'fire'),
+  ];
 }
 
 // A fuel drum seen from above: a disc, its rim and its filler cap.
@@ -1528,6 +1552,7 @@ const SPRITES = {
       fill('M104 68 Q136 86 172 80 L174 90 Q136 94 102 80 Z', 'blue', { 'fill-opacity': 0.6 }),
       line('M110 88 Q124 84 138 88 M148 90 Q160 86 172 90', 1.2, 'stroke-paper', { opacity: 0.7 }),
       svg('rect', { x: 150, y: 44, width: 5, height: 4, class: 'ink' }), svg('rect', { x: 126, y: 40, width: 4, height: 3, class: 'ink' }),
+      ...flame(118, 58, 0.55),
       ...smoke(140, 26, 1.2),
     ],
   },
@@ -1580,7 +1605,7 @@ const SPRITES = {
       // Drums blown about.
       ...[[70, 62], [100, 54], [160, 62], [62, 94]].flatMap(([x, y]) => drum(x, y, 'ink')),
       ...bowser(true),
-      ...flame(90, 80, 1.4), ...flame(150, 74, 1.2),
+      ...flame(90, 80, 1.4), ...flame(150, 74, 1.2), ...flame(124, 112, 1.05),
       ...smoke(120, 34, 1.5),
     ],
   },
@@ -1855,6 +1880,8 @@ const SPRITES = {
       starburst(100, 100, 12, 96, 58, 'red'),
       starburst(100, 100, 12, 96, 58, toneClass('ink', 10)),
       line(starburst(100, 100, 12, 96, 58, 'red').getAttribute('d'), 3),
+      // The fireball inside the burst (M14): orange, then the paper core.
+      starburst(100, 100, 11, 78, 48, 'fire'),
       starburst(100, 100, 10, 62, 36, 'paper'),
       label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
     ],
