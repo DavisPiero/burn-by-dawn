@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Night Drop</title>
+  <title>Burn by Dawn</title>
   <style>
     /* The game is a double-page spread from an 80s comic annual (SPEC.md §11):
        the board on the left page, the clock, briefing, dial and roster rail
@@ -539,7 +539,7 @@
     #briefing {
       box-sizing: border-box;
       width: min(600px, 80%);
-      max-height: 86%;
+      max-height: 96%;
       overflow: hidden;
       padding: 0 18px 12px;
       font-size: 15px;
@@ -550,6 +550,39 @@
       border: 3px solid var(--ink);
       box-shadow: 6px 6px 0 var(--ink);
       cursor: default;
+    }
+    /* The title card over the orders: 4:1 art, the title set over it. The
+       scrim under the title keeps it legible over whatever is painted there. */
+    #briefing .brief-banner {
+      position: relative;
+      margin: 0 -18px;
+      aspect-ratio: 4 / 1;
+      overflow: hidden;
+      border-bottom: 3px solid var(--ink);
+      background: var(--blue);
+    }
+    #briefing .brief-banner-art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #briefing .brief-banner-title {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      white-space: nowrap;
+      font-family: var(--slab);
+      font-size: 46px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: var(--paper);
+      -webkit-text-stroke: 1.5px var(--ink);
+      text-shadow: 4px 4px 0 var(--red);
+      background: radial-gradient(ellipse 48% 34% at 50% 50%, rgba(26, 26, 24, 0.45), rgba(26, 26, 24, 0));
     }
     #briefing .brief-head {
       display: flex;

@@ -142,6 +142,24 @@ export function loadSuppliedPaper(root = document.documentElement) {
   probe.src = PAPER_FILE.url;
 }
 
+// A supplied title card (ART-ASSETS.md §7, ART-PROMPTS.md): a painted JPEG at
+// TITLE_CARD.url replaces the drawn `title-card` sprite once it loads, cropped
+// to the sprite's 4:1 from the middle. A missing file is fine: the drawn one stays.
+export const TITLE_CARD = { url: 'assets/title/title-card.jpg', width: 600, height: 150 };
+
+export function loadSuppliedTitleCard() {
+  const probe = new Image();
+  probe.onload = () => {
+    const symbol = document.getElementById('title-card');
+    if (!symbol) return;
+    symbol.setAttribute('overflow', 'hidden');
+    symbol.replaceChildren(svg('image', {
+      href: TITLE_CARD.url, x: 0, y: 0, width: TITLE_CARD.width, height: TITLE_CARD.height, preserveAspectRatio: 'xMidYMid slice',
+    }));
+  };
+  probe.src = TITLE_CARD.url;
+}
+
 // ---------------------------------------------------------------------------
 // Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, an optional
 // flat tint of one spot colour over it (a printer's tint, at an opacity), an
@@ -581,6 +599,7 @@ export const RINGS = {
   drawMs: 650,
   staggerMs: 180,
   noteSize: 17,
+  noteLeading: 1.05, // of noteSize, between a note's lines
   halo: PALETTE.paper,
 };
 
@@ -1519,7 +1538,36 @@ const SPRITES = {
       label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 450) rotate(-90)', opacity: 0.75 }),
     ],
   },
-  'logo-night-drop': {
+  // The title card over the orders (SPEC.md §11): drawn here until a painting
+  // is supplied at TITLE_CARD.url, which replaces it on load. A moonlit sky,
+  // the Dakota and a stick of canopies to either side, the village on the
+  // skyline. The middle is left quiet: the title is set over it by ui.js.
+  'title-card': {
+    viewBox: '0 0 600 150',
+    draw: () => {
+      // A canopy seen from the side, its rigging lines, and the man under it.
+      const canopy = (x, y, s) => svg('g', { transform: `translate(${x} ${y}) scale(${s})` }, [
+        fill('M-14 0 Q-12 -16 0 -17 Q12 -16 14 0 Q7 -4 0 -2 Q-7 -4 -14 0 Z', 'paper', { opacity: 0.92 }),
+        line('M-14 0 L0 22 M0 -2 L0 22 M14 0 L0 22', 0.8, 'stroke-paper', { opacity: 0.7 }),
+        fill('M-2 21 h4 v8 h-4 Z', 'ink'),
+      ]);
+      const dakota = 'M0 0 Q3 -5 14 -5 L50 -4 L58 -13 L62 -13 L61 -3 Q63 0 59 1 L14 3 Q3 3 0 0 Z M20 -1 L42 -1 L36 4 L25 4 Z';
+      const skyline = 'M0 150 V128 Q20 120 38 126 Q52 116 70 124 L96 122 Q112 112 130 122 L190 124 Q206 118 222 125 L300 126 '
+        + 'L330 126 V110 L336 110 L340 80 L344 110 L350 110 V118 L366 118 V112 L380 112 V126 Q400 120 420 127 L470 124 '
+        + 'Q488 114 506 124 Q526 118 544 126 Q570 118 600 125 V150 Z';
+      return [
+        svg('rect', { x: 0, y: 0, width: 600, height: 150, class: 'blue' }),
+        svg('rect', { x: 0, y: 0, width: 600, height: 64, class: 'ink', opacity: 0.35 }),
+        svg('rect', { x: 0, y: 0, width: 600, height: 28, class: 'ink', opacity: 0.3 }),
+        circle(528, 34, 17, 'paper', { opacity: 0.9 }),
+        svg('g', { transform: 'translate(424 24)' }, [fill(dakota, 'ink', { opacity: 0.9 })]),
+        canopy(472, 52, 0.75), canopy(506, 74, 0.85), canopy(548, 88, 0.95), canopy(578, 62, 0.7),
+        canopy(40, 40, 0.7), canopy(78, 66, 0.85), canopy(118, 88, 0.95),
+        fill(skyline, 'ink'),
+      ];
+    },
+  },
+  'logo-burn-by-dawn': {
     viewBox: '0 0 800 300',
     draw: () => [
       svg('rect', { x: 0, y: 60, width: 800, height: 180, class: toneClass('blue', 35) }),
@@ -1530,10 +1578,10 @@ const SPRITES = {
       fill('M630 146 h20 v24 h-20 Z M634 170 l-6 26 M646 170 l6 26', 'ink'),
       line('M634 170 l-6 26 M646 170 l6 26', 5),
       circle(640, 138, 9, 'green'), ring(640, 138, 9, 2),
-      svg('g', { transform: 'translate(5 4)' }, [label('NIGHT', { x: 290, y: 132, 'font-size': 124, 'font-family': TYPE.slab, class: 'red', 'letter-spacing': 4 })]),
-      label('NIGHT', { x: 290, y: 132, 'font-size': 124, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 4 }),
-      svg('g', { transform: 'translate(5 4)' }, [label('DROP', { x: 400, y: 244, 'font-size': 124, 'font-family': TYPE.slab, class: 'red', 'letter-spacing': 4 })]),
-      label('DROP', { x: 400, y: 244, 'font-size': 124, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 4 }),
+      svg('g', { transform: 'translate(5 4)' }, [label('BURN', { x: 290, y: 132, 'font-size': 124, 'font-family': TYPE.slab, class: 'red', 'letter-spacing': 4 })]),
+      label('BURN', { x: 290, y: 132, 'font-size': 124, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 4 }),
+      svg('g', { transform: 'translate(5 4)' }, [label('BY DAWN', { x: 400, y: 244, 'font-size': 124, 'font-family': TYPE.slab, class: 'red', 'letter-spacing': 4 })]),
+      label('BY DAWN', { x: 400, y: 244, 'font-size': 124, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 4 }),
       label('SIX MEN · ONE BRIDGE · DAWN AT TWENTY', { x: 400, y: 288, 'font-size': 20, class: 'ink', 'letter-spacing': 3 }),
     ],
   },

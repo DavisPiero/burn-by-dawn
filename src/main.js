@@ -24,7 +24,7 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
-import { applyDocumentTheme, loadSuppliedPaper, loadSuppliedPortraits } from './render/theme.js';
+import { applyDocumentTheme, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard } from './render/theme.js';
 import {
   DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
@@ -52,6 +52,10 @@ const keysTab = document.getElementById('keys-tab');
 const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
+
+// The game's title, set over the title card on the orders. The results
+// masthead is the logo sprite in theme.js, which spells it too.
+const GAME_TITLE = 'BURN BY DAWN';
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -162,6 +166,11 @@ function deriveView() {
     // ground a charge going off this turn would kill a man on.
     exfil,
     blastArea: areaAround(blastHexesThisTurn(state, rules)),
+    // An objective with every charge it needs set takes no more, so its empty
+    // charge points are no longer drawn: "put one here" would be a lie.
+    chargedObjectiveIds: new Set(state.objectives.filter((o) => !o.destroyed && chargesWanted(o) === 0).map((o) => o.id)),
+    // The leader's orders, for his rollover in the roster (SPEC.md §5 Command).
+    command: rules.command,
     hoverObjective: null,
     previewBlastArea: null,
     siteLabel: null,
@@ -181,7 +190,12 @@ function deriveView() {
     view.hoverObjective = objective;
     view.siteLabel = describeObjective(objective);
     if (!objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective) {
-      view.siteLabel = `CHARGE POINT for the ${objective.label} — a man carrying a charge stands here and places it [C]. ${view.siteLabel}`;
+      const wanted = chargesWanted(objective);
+      const points = objective.chargeHexes.length;
+      view.siteLabel = wanted > 0
+        ? `CHARGE POINT for the ${objective.label}, one of ${points} — a man carrying a charge stands here and places it [C]. `
+          + `It needs ${wanted} more charge${wanted === 1 ? '' : 's'}${wanted === 1 && points > 1 ? ': any one of its points will do' : ''}. ${view.siteLabel}`
+        : `The ${objective.label} has all the charges it needs. ${view.siteLabel}`;
     }
     if (!objective.destroyed) {
       const radius = kindOf(objective, rules).blastRadius;
@@ -258,7 +272,8 @@ function deriveDrop(view, hex) {
     view.targetRings = [
       ...state.objectives.map((o) => ({
         hexes: o.hexes, primary: o.primary, colour: 'red',
-        note: o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`,
+        // The charges it takes, so three dashed points never read as three charges.
+        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, chargeCount(kindOf(o, rules).chargesNeeded)],
       })),
       { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
     ];
@@ -299,6 +314,31 @@ function primaryLabel() {
   return state.objectives.find((o) => o.primary).label.toLowerCase();
 }
 
+/** "1 CHARGE", "2 CHARGES": the marker-pen count on a target ring. */
+function chargeCount(n) {
+  return `${n} CHARGE${n === 1 ? '' : 'S'}`;
+}
+
+/** Charges an objective still wants: what it needs, less those gone off or burning. */
+function chargesWanted(o) {
+  const set = state.charges.filter((c) => c.objectiveId === o.id).length;
+  return Math.max(0, kindOf(o, rules).chargesNeeded - o.detonated - set);
+}
+
+/**
+ * What an objective needs, against its charge points: "1 charge, on any one
+ * of its 3 charge points", "2 charges, one on each of its 2 charge points".
+ * There are more points than charges on purpose, so the player must be told
+ * he does not have to fill them all.
+ */
+function chargesOnPoints(o) {
+  const needed = kindOf(o, rules).chargesNeeded;
+  const points = o.chargeHexes.length;
+  const charges = `${needed} charge${needed === 1 ? '' : 's'}`;
+  if (needed === points) return needed === 1 ? `${charges}, on its charge point` : `${charges}, one on each of its ${points} charge points`;
+  return `${charges}, on any ${needed === 1 ? 'one' : needed} of its ${points} charge points`;
+}
+
 /** SPEC.md §4: hovering an objective shows what it needs. */
 function describeObjective(o) {
   const kind = kindOf(o, rules);
@@ -307,7 +347,7 @@ function describeObjective(o) {
   const set = state.charges.filter((c) => c.objectiveId === o.id);
   const burning = set.length ? `, ${set.length} set (fuse ${set.map((c) => c.fuse).join(', ')})` : '';
   const parts = [
-    `needs ${kind.chargesNeeded} charge${kind.chargesNeeded === 1 ? '' : 's'} on separate ringed hexes`,
+    `needs ${chargesOnPoints(o)}`,
     `${o.detonated} gone off${burning}`,
     `fuse ${rules.charges.fuseTurns} turns`,
     `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge`,
@@ -662,7 +702,17 @@ function describeBriefing(which, view) {
   if (which.kind === 'orders') {
     const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toLowerCase()}`);
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
+    // Each target's charges against its points, and what the stick carries
+    // between them, so a target with three points is not read as three charges.
+    const needs = state.objectives.map((o) => {
+      const needed = kindOf(o, rules).chargesNeeded;
+      const points = o.chargeHexes.length;
+      const where = needed === points ? (needed === 1 ? 'on its point' : 'one on each point') : `on any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
+      return `the ${o.label.toLowerCase()} ${needed}, ${where}`;
+    }).join('; ');
+    const carried = state.units.reduce((n, u) => n + u.charges, 0);
     return {
+      banner: { title: GAME_TITLE },
       title: 'ORDERS',
       kicker: 'BEFORE THE DROP',
       paragraphs: [
@@ -674,7 +724,8 @@ function describeBriefing(which, view) {
         lines: [
           'Pick a drop run with the 1–3 keys, or click its name on the map. Hover the map to see where you might come down.',
           'Hit the SPACE key to initiate the drop. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Hit SPACE to end a turn.',
-          'Red rings mark your targets. The red dashed hexes are where you need to place explosive charges: stand a man carrying a charge there and press C.',
+          'Red rings mark your targets. The red dashed hexes around each are its charge points, where explosives go: stand a man carrying a charge on one and press C.',
+          `You do not fill every point. Charges needed: ${needs}. The stick carries ${carried} in all.`,
           'Hover anything for detail. KEYS, top right, lists every key.',
         ],
       }],
@@ -917,6 +968,8 @@ try {
   // Portrait art dropped into assets/portraits replaces the drawn portraits
   // as each file arrives (ART-ASSETS.md §2).
   loadSuppliedPortraits(state.units.map((u) => u.id), () => render());
+  // So is a painted title card in assets/title (ART-ASSETS.md §7).
+  loadSuppliedTitleCard();
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
