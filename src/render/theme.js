@@ -416,7 +416,13 @@ export const PATH = {
   reachableEdgeCasingWidth: 12,
   reachableEdge: PALETTE.blue,
   reachableEdgeWidth: 6,
-  lineStroke: PALETTE.red,
+  // The move line is cold blue, cased in paper so it reads over the blue of
+  // the move range, and turns red from the first hex where he would be
+  // spotted: red on the path means trouble, and only then (M11).
+  lineStroke: PALETTE.blue,
+  lineCasing: PALETTE.paper,
+  lineCasingWidth: 9,
+  spottedStroke: PALETTE.red,
   lineWidth: 5,
   overspendStroke: PALETTE.ink,
   overspendOpacity: 0.45,

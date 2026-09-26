@@ -518,7 +518,7 @@ export function renderPieces(layers, state, view) {
   if (view.targets) drawTargets(layers, view.targets);
   if (view.throwPreview) drawThrow(layers, view.throwPreview);
 
-  if (view.plan) drawPlan(layers, view.plan);
+  if (view.plan) drawPlan(layers, view.plan, view.risk);
   if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
@@ -1340,16 +1340,22 @@ function drawAreaEdge(layers, layer, area, strokes) {
 // SPEC.md §4: hovering a hex with a trooper selected draws the path and shows
 // the total AP cost. The risk pips for the same path are drawRisk, above.
 
-function drawPlan(layers, plan) {
+function drawPlan(layers, plan, risk) {
   const { map } = layers;
   const points = plan.path.map((hex) => axialToPixel(hex.q, hex.r, map.hexSize));
   const split = plan.affordableUpTo;
+  // The first step on which he would be spotted: the line is red into it and
+  // on from it, blue before it.
+  const found = plan.path.findIndex((_, i) => i > 0 && risk?.[i]?.spotted);
+  const spottedFrom = found === -1 ? Infinity : found;
+  const colourAt = (i) => (i >= spottedFrom ? PATH.spottedStroke : PATH.lineStroke);
 
   if (split > 0) {
-    layers.path.appendChild(polyline(points.slice(0, split + 1), {
-      stroke: PATH.lineStroke,
-      'stroke-width': PATH.lineWidth,
-    }));
+    const reach = points.slice(0, split + 1);
+    layers.path.appendChild(polyline(reach, { stroke: PATH.lineCasing, 'stroke-width': PATH.lineCasingWidth }));
+    const turn = Math.min(spottedFrom, split + 1);
+    if (turn > 1) layers.path.appendChild(polyline(points.slice(0, turn), { stroke: PATH.lineStroke, 'stroke-width': PATH.lineWidth }));
+    if (turn <= split) layers.path.appendChild(polyline(points.slice(turn - 1, split + 1), { stroke: PATH.spottedStroke, 'stroke-width': PATH.lineWidth }));
   }
   if (split < points.length - 1) {
     layers.path.appendChild(polyline(points.slice(split), {
@@ -1365,7 +1371,7 @@ function drawPlan(layers, plan) {
   points.forEach((point, i) => {
     if (i === 0) return;
     const withinReach = i <= split;
-    const colour = withinReach ? PATH.lineStroke : PATH.overspendStroke;
+    const colour = withinReach ? colourAt(i) : PATH.overspendStroke;
     const step = el('g', { opacity: withinReach ? 1 : PATH.overspendOpacity + 0.2 });
     step.appendChild(el('circle', {
       cx: point.x, cy: point.y, r: PATH.stepRadius, fill: PATH.stepFill, stroke: colour, 'stroke-width': 2.5,

@@ -670,7 +670,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   lettering: they are the player's own pen, not print.
 - **The move path counts.** Each step on the hover path shows the AP spent by the time he
   gets there, grey past what he has. A hex on the path where he would be spotted is
-  crossed out in red, marker-pen style, over the risk pips.
+  crossed out in red, marker-pen style, over the risk pips. The line is cold blue, and
+  red from the first hex where he would be spotted (M11), so red means trouble.
 - **Our counters are printed solid army green** with a dark name strip (leader blue for
   the ranking man), AP left as one large figure top right, the role in a paper roundel,
   and a sliver of the card's cut edge showing down-right under the soft shadow.
