@@ -201,7 +201,10 @@ export function checkCutLine(state, unit, rules) {
   const cost = unit ? unit.apMax : 0;
   if (!unit || !rules.roles[unit.role].cutLine) return result(cost, `a ${unit ? unit.roleLabel.toLowerCase() : 'trooper'} cannot cut the line`);
   const objective = objectiveForChargeHex(state.objectives, unit);
-  if (!objective || !kindOf(objective, rules).cutLine) return result(cost, 'not beside a line he can cut');
+  if (!objective || !kindOf(objective, rules).cutLine) {
+    const cuttable = state.objectives.find((o) => kindOf(o, rules).cutLine);
+    return result(cost, `not on a charge point of ${cuttable ? `the ${cuttable.label.toLowerCase()}` : 'anything he can cut'}`);
+  }
   if (objective.destroyed) return result(cost, `${objective.label} is already destroyed`);
   if (state.charges.some((c) => c.objectiveId === objective.id)) return result(cost, 'a charge is already set on it');
   return { ...result(cost, fullTurn(unit)), objective };
