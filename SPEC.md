@@ -691,5 +691,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is a silenced shot, quieter than suppressing, and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
 | **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 | **M8c** | Operator review: title card, charge counts, the leader's rollover, ready to host | The orders open under the title card and fit at 1280x800; the orders, rings and hovers say how many charges each target takes; Holloway's rollover explains his orders and radio; the game runs from GitHub Pages; no rules change |
+| **M8d** | Supplied art in: portraits, chips, paper, title card, fonts; objectives redrawn after the reference art; a slot for a painted aircraft; published | The supplied files load with no console errors but the optional aircraft; the orders fit at 1280x800; the game plays from its GitHub Pages address; no rules change |
 
 Do not start a milestone before the previous one is merged and playable.
