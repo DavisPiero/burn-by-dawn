@@ -783,6 +783,22 @@
       color: var(--paper);
       background: var(--ink);
     }
+    /* The orders (M15): the level in the black bar, the head under it in ink. */
+    #briefing .brief-top.bar {
+      margin: 0 -18px 6px;
+      padding: 6px 18px;
+      border-bottom: 0;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    #briefing .brief-top.bar .btn { box-shadow: none; }
+    #briefing .brief-head.plain {
+      margin: 0 0 9px;
+      padding: 0 0 3px;
+      color: var(--ink);
+      background: none;
+      border-bottom: 2px solid var(--ink);
+    }
     #briefing.tone-raf .brief-head { background: var(--blue); }
     /* The exfil's are-you-sure (M14): headed in danger red. */
     #briefing.tone-warn .brief-head { background: var(--red); }

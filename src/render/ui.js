@@ -331,8 +331,11 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // The title card, over the orders only: the `title-card` sprite, drawn or
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
-  card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  if (briefing.choice?.top) card.appendChild(html('div', 'brief-top', briefChoice(briefing.choice)));
+  // On the orders the level comes first, in the black bar, and the card's own
+  // head goes under it in ink on the paper (M15, the operator's).
+  const top = Boolean(briefing.choice?.top);
+  if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
+  card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
   // A paragraph may be several lines, each on its own line (M13).
   for (const text of briefing.paragraphs ?? []) {
     const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
