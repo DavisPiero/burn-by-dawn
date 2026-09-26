@@ -258,7 +258,6 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     if (section.more) list.appendChild(html('li', 'brief-more', section.more));
     card.appendChild(list);
   }
-  if (briefing.choice) card.appendChild(briefChoice(briefing.choice));
   const foot = html('div', 'brief-foot');
   if (briefing.toggle) {
     const box = html('input');
@@ -269,6 +268,8 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     const label = html('label', null, [box, ' Brief me at the start of every turn']);
     label.addEventListener('click', (event) => event.stopPropagation());
     foot.appendChild(label);
+  } else if (briefing.choice) {
+    foot.appendChild(briefChoice(briefing.choice));
   } else {
     foot.appendChild(html('span'));
   }
@@ -277,24 +278,23 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
 }
 
 /**
- * A row of buttons on the card, one picked, with the picked one's summary
- * beside them. A click picks and does not put the card away, as every other
- * click on the card does.
+ * A row of buttons in the card's foot, one picked; what each changes is its
+ * rollover, as the orders have no room for another line at 1280x800. A click
+ * picks and does not put the card away, as every other click on the card does.
  */
 function briefChoice(choice) {
-  const picked = choice.options.find((o) => o.selected);
   const row = html('div', 'brief-choice', [html('span', 'brief-choice-head', choice.heading)]);
   for (const option of choice.options) {
     const button = html('button', option.selected ? 'btn active' : 'btn', option.label.toUpperCase());
     button.type = 'button';
     button.setAttribute('aria-pressed', String(option.selected));
+    attachPopup(button, [html('b', null, option.label.toUpperCase()), `\n${option.summary}${option.selected ? '' : '\nClick to play at this level.'}`]);
     button.addEventListener('click', (event) => {
       event.stopPropagation();
       choice.onChoose(option.id);
     });
     row.appendChild(button);
   }
-  row.appendChild(html('span', 'brief-choice-note', picked?.summary ?? ''));
   row.addEventListener('click', (event) => event.stopPropagation());
   return row;
 }

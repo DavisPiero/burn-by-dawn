@@ -641,16 +641,13 @@
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
     #briefing .brief-hints li::before { content: "→"; color: var(--red); font-weight: bold; }
     #briefing .brief-more { opacity: 0.65; }
-    /* The difficulty on the orders (SPEC.md §10): the levels as buttons,
-       the picked one inked in, and what it changes on the line under them. */
+    /* The difficulty on the orders (SPEC.md §10), in the foot where the
+       turn cards keep their checkbox: the levels as buttons, the picked one
+       inked in. What each changes is its rollover. */
     #briefing .brief-choice {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 6px 8px;
-      margin-top: 12px;
-      padding-top: 8px;
-      border-top: 2px solid var(--ink);
+      gap: 6px;
     }
     #briefing .brief-choice-head {
       margin-right: 4px;
@@ -660,19 +657,14 @@
       letter-spacing: 2px;
     }
     #briefing .brief-choice .btn {
-      padding: 3px 10px;
-      font-size: 13px;
+      padding: 1px 8px;
+      font-size: 12px;
       font-weight: bold;
       letter-spacing: 1px;
     }
     #briefing .brief-choice .btn.active {
       color: var(--paper);
       background: var(--blue);
-    }
-    #briefing .brief-choice-note {
-      flex: 1 0 100%;
-      font-size: 13px;
-      line-height: 1.35;
     }
     #briefing .brief-foot {
       display: flex;
