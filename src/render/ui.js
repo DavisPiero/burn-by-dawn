@@ -196,15 +196,30 @@ export function renderAlertDial(svg, caption, alert) {
   chip.style.background = ALERT_STATE[state.id];
   chip.style.color = ALERT_STATE.text;
   // Several events share one state (SPEC.md §6), so the needle alone cannot
-  // warn that the next sighting tips the dial; the points to go do.
+  // warn that the next sighting tips the dial. A pip per point, grouped by the
+  // state each point is in and printed in its colour, says how close the next
+  // state is without a number to decode (M11: players could not read "0 pts").
+  const pips = html('div', 'alert-pips');
+  const top = alert.states.at(-1).from;
+  for (let p = 1; p <= top; p++) {
+    const at = alert.states.findLastIndex((st) => st.from <= p);
+    const pip = html('span', alert.states[at].from === p && p > 1 ? 'pip gap' : 'pip');
+    if (p <= alert.points) pip.style.background = ALERT_STATE[alert.states[at].id];
+    pips.appendChild(pip);
+  }
   const next = alert.states[alert.index + 1];
-  const parts = [`${alert.points} pts`];
-  if (next) parts.push(`${next.from - alert.points} to ${next.label}`);
-  if (alert.points > 0) parts.push(`quiet ${alert.quietTurns}/${alert.quietTurnsToDecay}`);
+  const parts = [];
+  if (next) parts.push(`${next.label} in ${next.from - alert.points} pip${next.from - alert.points === 1 ? '' : 's'}`);
+  if (alert.canEase) {
+    const left = alert.quietTurnsToDecay - alert.quietTurns;
+    parts.push(`${left} quiet turn${left === 1 ? '' : 's'} to ease`);
+  } else if (alert.points > 0 && alert.floor) {
+    parts.push('held up by the bang');
+  }
   caption.replaceChildren(
     html('div', 'alert-heading', 'GARRISON ALERT'),
-    chip,
-    html('div', 'alert-note', parts.join(' · ')),
+    html('div', 'alert-level', [chip, pips]),
+    ...parts.map((part) => html('div', 'alert-note', part)),
   );
 }
 
@@ -212,11 +227,12 @@ export function renderAlertDial(svg, caption, alert) {
 export function describeAlertStates(alert) {
   const lines = alert.states.map((s, i) => {
     const mark = i === alert.index ? '▶ ' : '  ';
-    return `${mark}${s.label} — from ${s.from} · vision +${s.visionBonus} · looks harder +${s.detectionBonus} · hearing +${s.hearingBonus}`;
+    return `${mark}${s.label} — from ${s.from} pip${s.from === 1 ? '' : 's'} · vision +${s.visionBonus} · looks harder +${s.detectionBonus} · hearing +${s.hearingBonus}`;
   });
   return [
     html('b', null, 'GARRISON ALERT'),
-    `\n${lines.join('\n')}\n\nAfter ${alert.quietTurnsToDecay} quiet turns it eases to the start of the state below.`
+    `\n${lines.join('\n')}\n\nEach pip is a point: ${alert.sources.join(', ')}.`
+      + `\nAfter ${alert.quietTurnsToDecay} quiet turns (nothing raised, nobody seen) it eases to the start of the state below.`
       + (alert.floor ? `\nOnce anything has exploded it never eases below ${alert.floor}.` : ''),
   ];
 }

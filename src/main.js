@@ -2,7 +2,7 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
-import { alertIndex, detectionAt, hearingRadius, listeners, routePath, shotResultOf, testedHexes, visibleHexes, visionRadiusOf } from './enemy.js';
+import { alertIndex, decayTarget, detectionAt, hearingRadius, listeners, routePath, shotResultOf, testedHexes, visibleHexes, visionRadiusOf } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
@@ -175,6 +175,10 @@ function deriveView() {
       quietTurns: state.alert.quietTurns,
       quietTurnsToDecay: rules.alert.quietTurnsToDecay,
       floor: state.explosions > 0 ? rules.alert.states.find((s) => s.id === rules.explosionFloor)?.label ?? null : null,
+      // Whether quiet turns can still bring it down (not at 0, not held by the explosion floor).
+      canEase: decayTarget(state, rules) < state.alert.points,
+      // What puts points on, for the dial's rollover, from rules.json.
+      sources: alertSources(),
     },
     reachable: null,
     plan: null,
@@ -335,6 +339,16 @@ function areaAround(blasts) {
     if (isInPlay(map, q, r) && inBlast(blasts, { q, r })) area.set(hexKey(q, r), { q, r });
   });
   return area;
+}
+
+/** What raises the alert, and by how much, in words, from rules.json (SPEC.md §6). */
+function alertSources() {
+  const a = rules.alert;
+  const bangs = [...new Set(Object.values(rules.objectives).map((k) => k.alert))].sort((x, y) => x - y);
+  return [
+    `seen +${a.spotted}`, `stone +${a.stone}`, `parachute or body found +${a.parachuteFound}`,
+    `silenced shot +${a.silenced}`, `gunfire +${a.gunfire}`, `a bang +${bangs.join(' or +')}`,
+  ];
 }
 
 function primaryLabel() {
