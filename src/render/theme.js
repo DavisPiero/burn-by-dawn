@@ -388,6 +388,8 @@ export const COUNTER = {
   // AP as dots top right since M13 (was one big figure): two across, filled
   // for AP left, hollow and faint for AP spent.
   apFill: PALETTE.paper,
+  // AP from the leader's orders (SPEC.md §5 Command), in his blue (M14).
+  apOrdersFill: PALETTE.leader,
   apDots: { x: 46, y: 6.5, pitch: 5.6, columns: 2, radius: 2.2, stroke: PALETTE.ink },
   apSpentOpacity: 0.45,
   // The man's own face, and his role in the roundel top left.

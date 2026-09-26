@@ -1766,13 +1766,17 @@ function drawCounter(unit, number, map, isSelected) {
   // AP as dots top right (M13): one per point of this turn's pool, filled for
   // what he has left, hollow for what he has spent — the number by his name is
   // his roster number, and two numbers on one counter confused players.
+  // The leader's orders are the last dots, in leader blue (M14), so they are
+  // the first spent.
   const pool = Math.max(unit.apMax, unit.ap);
+  const orders = pool - (unit.commandBonus ?? 0);
   for (let i = 0; i < pool; i++) {
     const col = i % COUNTER.apDots.columns, row = Math.floor(i / COUNTER.apDots.columns);
     const left = i < unit.ap;
+    const fill = i >= orders ? COUNTER.apOrdersFill : COUNTER.apFill;
     body.appendChild(el('circle', {
       cx: COUNTER.apDots.x + col * COUNTER.apDots.pitch, cy: COUNTER.apDots.y + row * COUNTER.apDots.pitch, r: COUNTER.apDots.radius,
-      fill: left ? COUNTER.apFill : 'none', stroke: left ? COUNTER.apDots.stroke : COUNTER.apFill,
+      fill: left ? fill : 'none', stroke: left ? COUNTER.apDots.stroke : fill,
       'stroke-width': left ? 0.8 : 1, opacity: left ? 1 : COUNTER.apSpentOpacity,
     }));
   }
