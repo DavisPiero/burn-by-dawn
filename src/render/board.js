@@ -598,7 +598,8 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
-    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, 'marker-orders', -12, 13, unit));
+    // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
+    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, 'marker-orders', 38, 13, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);

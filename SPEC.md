@@ -305,9 +305,11 @@ and must not be extended to cover. The leader is a `leader` flag on a roster ent
 promoting a different trooper is a one-line data change and no code knows anyone's name.
 His roster rollover says what he gives the stick: the orders (radius and bonus, from
 `rules.json`), how many men have them this turn, and the radio for the RAF diversion (§4).
-While he is selected his radius is outlined on the board, dashed in leader blue, and a man
-who has his orders this turn wears a leader-blue chevron on his counter (M11), so the
-bonus can be seen, not just read about.
+While he is selected, or the mouse is on him (M12), his radius is outlined on the board,
+dashed in leader blue, and a man who has his orders this turn wears a leader-blue chevron
+on the right of his counter, beside the AP it adds to (M11; moved right in M12, clear of
+the leader's rank flash), so the bonus can be seen, not just read about. Hovering the
+leader's counter says what the ring is and how many men have his orders this turn (M12).
 
 What it buys the design: the command radius rewards moving as a group, and §6 punishes
 moving as a group, because more men sit inside one vision arc. Speed against stealth,
@@ -714,13 +716,27 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **Objectives say where to go.** Each objective's hexes are outlined firmly, its art sits
   inside them, and its name above them. Each charge point is a red dashed hex with an empty
   satchel in it: where a man stands to place a charge. Hovering one says so.
-- **Targets are ringed before the drop.** Until a drop run is picked, each objective is
+- **Targets are ringed before the drop.** (M12: each ring takes in the objective's printed
+  name, and is drawn under the names, charge points and counters, as a pen mark on the
+  map would be, so the print reads over it; the exchange's note says a scout can cut its
+  lines instead.) Until a drop run is picked, each objective is
   circled in red marker pen, the primary twice, with a hand-lettered note beside it, and
   the exfil in green. Picking a run clears them.
 - **The title card.** The orders open under a painted picture of the drop across the top
   of the card with the title, BURN BY DAWN, lettered in stencil (a supplied
   `assets/title/title-card.jpg`, ART-ASSETS.md §7; drawn in code, with the title in type,
   if the file is missing).
+- **The exchange has wires** (M12, art only): a telegraph pole on each of its charge points
+  and a line from each to the building, hanging snapped once the exchange is cut or blown,
+  so "cut the line" has a line to cut. A charge point's satchel sits a third of the way
+  toward the target it serves.
+- **The orders are the first thing seen** (M12): while they are up the whole spread is put
+  in shade under a coarse halftone, and the card stands off it on a deep soft shadow.
+  Picking a run then jumping needs **Space**, or a second click on the same run.
+- **Keys are set in bold** wherever the game's text names one (M12).
+- **Starting again.** A restart in the outer margin (a first click arms it, a second
+  starts a new game on a fresh seed at the same level), and Play again on the back page,
+  start a new mission without reloading the page; the orders open again (M12).
 - **Briefings.** A briefing card opens over the board: the orders before the drop, and at
   the start of every turn (turn 1 after the drop has been shown) an update: what happened
   at the turn boundary, most important first, and up to three hints about what to do
@@ -747,7 +763,9 @@ busy and the roster runs off the bottom at 1280x800. At M7:
 rendered as SVG `<symbol>` / `<use>`. Procedural shapes now, hand-drawn SVG later, swapped
 by changing one registry file and nothing else. No inline path data in game logic.
 
-**Sound** (M10). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
+**Sound** (M10). The back page has its own since M12: the village church's bells for a
+mission accomplished, and a single bell tolling with a siren far off for a mission
+withdrawn or failed (`church-bells`, `bell-toll`). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
 counter snapped down when a man moves or a move is undone, a pencil for every other
 action, a card's rustle when a briefing card or the back page opens, a dog a long way off
 when the alert rises, and three far-off crumps for the RAF diversion. The one exception
@@ -790,5 +808,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M12** | Second operator playtest review: the bridge post a stone can turn, the orders and ring wording, keys in bold, restart, the leader's rollover, bells on the back page, the exchange's wires, rings clear of the names, a shaded spread under the orders, the run tabs on their lines, hedges that meet in a T | A stone thrown north of the bridge post turns it off both piers; the orders fit at 1280x800 and name the places in capitals; every key in the game's text is bold; a second click on a run jumps; restart and Play again start a new seed without a reload; hovering the leader shows his orders; the back page rings bells or tolls; the balance bot is re-run (Normal 81/75/65, from 81/78/69) |
 
 Do not start a milestone before the previous one is merged and playable.

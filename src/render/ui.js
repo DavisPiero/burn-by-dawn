@@ -745,7 +745,8 @@ export function renderActions(element, actions, onAction) {
   element.classList.remove('runs');
   if (!actions) {
     element.classList.add('idle');
-    setText(element, 'Select a man: 1–6, Tab, or click him.');
+    // One span: the strip is a flex box, which would space out each bold key.
+    element.replaceChildren(html('span', null, boldKeys('Select a man: 1–6, Tab, or click him.')));
     return;
   }
   element.classList.remove('idle');
