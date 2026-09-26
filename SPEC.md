@@ -176,11 +176,15 @@ All costs and modifiers below are numbers in `rules.json`.
 - **Cut the line** (scout only) — a **full turn**, like stabilise: he must not have spent
   any AP yet, and it costs his whole pool. Standing on a telephone exchange charge hex,
   he destroys the exchange at once, silently: no alert, no noise (§7).
-- **Swim** (once the rail bridge is destroyed) — a **full turn**. From a hex beside the
-  canal, straight across one canal hex, to the bank opposite. A wounded man cannot swim.
-  He cannot hide as he comes out, and is tested on the far bank like any hex he enters. It exists so a man
-  is never stranded by his own demolition; while the bridge stands it is the only way
-  over, so the chokepoint still matters.
+- **Swim** — a **full turn**. From a hex beside the canal, straight across one canal
+  hex, to the bank opposite. A wounded man cannot swim. He cannot hide as he comes out,
+  and is tested on the far bank like any hex he enters. It exists so a man is never
+  stranded by his own demolition. Until M11b it was allowed only once the bridge was
+  down; playtesting showed that left the telephone exchange reachable only over the
+  watched deck, so nobody went for it. The bridge's charges go on from the west bank and
+  the exfil is on the west side, so the canal only has to be crossed for the exchange: the
+  bridge guards the bonus, never the mission. `requiresDestroyed` in `rules.json` can
+  still gate it on an objective.
 - **RAF diversion** (once per mission, while the leader is alive) — costs **no AP**, called
   at any point in the player phase. A diversionary raid on the town pulls the garrison's
   attention: the **alert drops one state** (to the start of the state below), **every

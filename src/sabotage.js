@@ -73,8 +73,8 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
   hexList(map.exfil, `${mapUrl}: exfil`, true);
 
   const swim = rules.actions?.swim;
-  if (!swim || !kinds[swim.requiresDestroyed] || !map.terrain[swim.across]) {
-    throw new Error(`${rulesUrl}: actions.swim needs "requiresDestroyed" (an objective kind) and "across" (a terrain id)`);
+  if (!swim || !(swim.requiresDestroyed === null || kinds[swim.requiresDestroyed]) || !map.terrain[swim.across]) {
+    throw new Error(`${rulesUrl}: actions.swim needs "requiresDestroyed" (an objective kind, or null for none) and "across" (a terrain id)`);
   }
   if (!rules.alert.states.some((s) => s.id === rules.explosionFloor)) {
     throw new Error(`${rulesUrl}: "explosionFloor" must be an alert state id`);
@@ -215,11 +215,11 @@ export function swimTargets(map, state, unit, rules) {
   return targets;
 }
 
-/** Swim (SPEC.md §4): only once the bridge is down, a full turn, not wounded. */
+/** Swim (SPEC.md §4): a full turn, not wounded, and only once `requiresDestroyed` is down if it names one. */
 export function checkSwim(map, state, unit, target, rules) {
   const cost = unit ? unit.apMax : 0;
   const needed = rules.actions.swim.requiresDestroyed;
-  if (!state.objectives.some((o) => o.kind === needed && o.destroyed)) {
+  if (needed && !state.objectives.some((o) => o.kind === needed && o.destroyed)) {
     return result(cost, `only once the ${rules.objectives[needed].label.toLowerCase()} is down`);
   }
   const busy = fullTurn(unit);

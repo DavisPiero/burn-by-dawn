@@ -160,7 +160,7 @@ export default [
     equal(result.state.alert.points, rules.objectives.fuelDump.alert, 'fuel dump alert');
   }],
 
-  ['a destroyed bridge is canal: nobody walks over it, patrols turn back, and only then can a man swim', async () => {
+  ['a destroyed bridge is canal: nobody walks over it, and patrols turn back; swimming is gated only if the rules say so', async () => {
     const { map, rules, state } = await loadAll();
     const primary = primaryOf(state);
     const deck = primary.hexes;
@@ -171,7 +171,11 @@ export default [
     const vance = state.units.find((u) => u.role === 'scout');
     const bank = primary.chargeHexes[0];
     const intact = scenario(state, { [vance.id]: bank });
-    assert(!checkSwim(map, intact, unitIn(intact, vance.id), null, rules).ok, 'no swimming while the bridge stands');
+    // M11b: with no objective named, a man may swim with the bridge standing;
+    // naming one gates it, as it was before.
+    assert(checkSwim(map, intact, unitIn(intact, vance.id), null, rules).ok === (rules.actions.swim.requiresDestroyed === null), 'swim gate as rules.json says');
+    const gated = { ...rules, actions: { ...rules.actions, swim: { ...rules.actions.swim, requiresDestroyed: primary.kind } } };
+    assert(!checkSwim(map, intact, unitIn(intact, vance.id), null, gated).ok, 'no swimming while the bridge stands when gated on it');
 
     const blown = { ...intact, objectives: state.objectives.map((o) => (o.primary ? { ...o, destroyed: true } : o)) };
     const live = effectiveMap(map, blown.objectives, rules);
