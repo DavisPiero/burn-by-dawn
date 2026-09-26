@@ -78,7 +78,7 @@ const KEYS = [
   'G hide · S suppress · K kill · T throw a stone',
   'A stabilise · P pick up a charge · U pack parachute',
   'C place a charge · X cut the line · W swim',
-  'D RAF diversion · Space end turn',
+  'D RAF diversion · Space end turn · Z undo',
   'Esc or right-click cancel · R patrol routes',
   '',
   'Hover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
@@ -219,7 +219,7 @@ export function describeAlertStates(alert) {
 // How much a line of the turn report matters, lowest first: the card puts the
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
-  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, reserve: 2, spotted: 2, diversion: 2,
+  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, enemyBlastKilled: 1, reserve: 2, spotted: 2, diversion: 2,
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
@@ -316,8 +316,9 @@ export function describeEvent(event, place) {
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
     case 'landed': return describeLanding(event, at());
-    case 'explosion': return event.destroyed ? `BANG — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BANG — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
+    case 'explosion': return event.destroyed ? `BOOM — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
+    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
     default: return event.kind;
   }
@@ -434,6 +435,15 @@ export function renderEndTurnButton(button, state, rules) {
   if (state.outcome) button.textContent = 'MISSION OVER';
   else if (state.turn >= rules.turnLimit) button.textContent = 'END THE LAST TURN — DAWN  [space]';
   else button.textContent = 'END TURN  [space]';
+}
+
+export const UNDO_HELP = 'Take back the last move or action this turn, one at a time. Only this turn: once you end it, what happened stands.';
+
+/** Undo, beside End turn: live while there is something this turn to take back. */
+export function renderUndoButton(button, state, steps) {
+  button.hidden = state.phase === 'drop';
+  button.disabled = steps === 0 || Boolean(state.outcome);
+  button.textContent = steps > 1 ? `UNDO ×${steps}  [Z]` : 'UNDO  [Z]';
 }
 
 // --- the briefing -------------------------------------------------------------
