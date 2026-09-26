@@ -28,7 +28,9 @@ without warning. The player should always be able to see the risk before committ
   Nothing may require a bundler, a package manager, or a Node process.
 - **Target: desktop, mouse and keyboard, 1280x800 minimum.** Do not build a mobile layout.
   It only needs to *load* on a phone so progress can be glanced at; it does not need to be
-  playable there.
+  playable there. A window smaller than 1280x760 (a Chromebook reports 1200 across) gets
+  the same spread zoomed down to fit, to no less than 75%, rather than a sideways scroll
+  (M12b); it is one layout scaled, never a second one.
 - Deployed via GitHub Pages.
 - All randomness through one seeded RNG (`rng.js`). A seed reproduces a playthrough
   exactly. Seed is visible in the UI for debugging.
@@ -144,6 +146,15 @@ All costs and modifiers below are numbers in `rules.json`.
   next detection check and does not move in the next enemy phase**; it can still spot.
   Firing is gunfire: +2 alert (§6), and it is heard (§6). A suppressed enemy is open to a
   **kill** until the end of the next player phase.
+- **Knife** (any trooper, M12b; a playtester: "I snuck up behind a patrol before
+  realising my guy could only throw stones") — costs **2 AP and ends his turn**. The
+  target must be **beside him** and **unable to see him**: he is outside its arc (beside
+  it, range and line of sight are never the question). He must **not be in contact**. It
+  is silent — **no alert, no noise** — but it leaves a **body**, found like any other
+  (+1). The reserve squad cannot be knifed any more than shot (`killable: false`). The
+  turn card hints at it when a man starts his turn behind an enemy. `knife.fullTurn` in
+  `rules.json` makes it a full turn instead (he must not have spent AP), a lever if it
+  proves too strong.
 - **Kill** (gunner only) — costs **2 AP**. The target must be visible, exactly as for
   suppress, and **under suppression**: suppressed this player phase or the one before, so
   one gunner needs two turns (suppress, then kill) and two gunners can do it in one. From
@@ -220,7 +231,7 @@ to be casual while still being strategic.
   tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
-  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
+  `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
@@ -293,7 +304,10 @@ Names are placeholders and will be replaced.
 
 Holloway is the ranking man, and that is a mechanic. At the start of each turn, every
 trooper within **2 hexes** of the leader gets **+1 AP** for that turn: he has been given
-his orders. The leader does not give the bonus to himself.
+his orders — and a trooper **beside him** gets **+2 AP** instead (M12b, from playtesting:
+the orders are strongest closest to him; `closeRadius` and `closeBonusActionPoints` in
+`rules.json`). A man with +1 wears one chevron, a man with +2 two. The leader does not
+give the bonus to himself.
 
 It is measured when pools are filled, so walking into the leader's radius mid-turn pays
 off on the following turn, not the current one.
@@ -808,6 +822,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M12b** | The approved playtest rules: the leader's orders strongest beside him, the knife, the spread zoomed to fit a small window | A man beside the leader gets +2 AP and two chevrons, within 2 hexes +1 and one; any man behind an enemy beside him, not in contact, can knife it for 2 AP and his turn, silently, leaving a body; a 1200-wide window shows the whole spread with no sideways scroll; the balance bot is re-run with and without the knife |
 | **M12** | Second operator playtest review: the bridge post a stone can turn, the orders and ring wording, keys in bold, restart, the leader's rollover, bells on the back page, the exchange's wires, rings clear of the names, a shaded spread under the orders, the run tabs on their lines, hedges that meet in a T | A stone thrown north of the bridge post turns it off both piers; the orders fit at 1280x800 and name the places in capitals; every key in the game's text is bold; a second click on a run jumps; restart and Play again start a new seed without a reload; hovering the leader shows his orders; the back page rings bells or tolls; the balance bot is re-run (Normal 81/75/65, from 81/78/69) |
 
 Do not start a milestone before the previous one is merged and playable.

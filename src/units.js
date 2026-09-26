@@ -412,6 +412,7 @@ export function checkKnife(unit, enemy, rules) {
   const cost = rules.actions.knife.apCost;
   const busy = canAct(unit, cost);
   if (busy) return result(cost, busy);
+  if (rules.actions.knife.fullTurn && unit.ap < unit.apMax) return result(cost, 'takes a full turn — he has already spent AP');
   if (unit.inContact) return result(cost, 'he has been seen — an enemy has him in its sights');
   if (!enemy) return result(cost, 'pick an enemy beside him');
   const name = `the ${enemy.label.toLowerCase()}`;

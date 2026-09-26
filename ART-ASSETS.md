@@ -166,7 +166,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-suppressed.svg` | 28 x 28 |
 | `marker-spotted.svg` | 28 x 28 |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
-| `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +AP, SPEC.md §5 Command: a chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used) |
+| `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
+| `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
 | `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
