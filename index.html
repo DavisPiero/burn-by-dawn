@@ -122,6 +122,18 @@
       padding: 4px 0;
     }
     #seed a { color: inherit; opacity: 0.6; }
+    /* The difficulty beside the seed: text, not a button to look at, but a
+       click on it before the jump opens the orders where it is chosen. */
+    #seed .seed-level {
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      opacity: 0.6;
+      background: none;
+      border: 0;
+      text-decoration: underline;
+      cursor: pointer;
+    }
 
     #left-content {
       display: flex;
@@ -629,6 +641,31 @@
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
     #briefing .brief-hints li::before { content: "→"; color: var(--red); font-weight: bold; }
     #briefing .brief-more { opacity: 0.65; }
+    /* The difficulty on the orders (SPEC.md §10), in the foot where the
+       turn cards keep their checkbox: the levels as buttons, the picked one
+       inked in. What each changes is its rollover. */
+    #briefing .brief-choice {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #briefing .brief-choice-head {
+      margin-right: 4px;
+      font-family: var(--slab);
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    #briefing .brief-choice .btn {
+      padding: 1px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    #briefing .brief-choice .btn.active {
+      color: var(--paper);
+      background: var(--blue);
+    }
     #briefing .brief-foot {
       display: flex;
       justify-content: space-between;

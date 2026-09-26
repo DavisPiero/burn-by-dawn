@@ -97,7 +97,7 @@ export function scoreOf(state, rules, turn, dawn = false) {
   const turnPoints = Math.floor(turnsLeft / s.turnsPerPoint);
   if (turnPoints > 0) lines.push({ label: `${turnsLeft} turns to spare`, points: turnPoints });
   const clean = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
-  if ((state.alert.peak ?? 0) < clean.from && !state.diversionUsed) {
+  if ((state.alert.peak ?? 0) < clean.from && state.diversionsCalled === 0) {
     lines.push({ label: `never ${clean.label}, no diversion`, points: s.clean });
   }
   return { lines, total: lines.reduce((n, l) => n + l.points, 0) };

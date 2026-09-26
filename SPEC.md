@@ -573,6 +573,22 @@ Results page, styled as the back page of the annual, listing all six by name and
 - Turns remaining (1 per 2 turns)
 - Never reached Alarmed and never called the RAF diversion (+3)
 
+The page also says which difficulty the mission was played at.
+
+**Difficulty** (M9). Three levels, chosen on the orders before the drop and fixed once
+the stick jumps. The numbers above are Normal's. A level is data only: a patch over
+`rules.json` and `enemies.json` in `data/difficulty.json`, and no code asks which level
+is on. It is shown beside the seed, and `?difficulty=easy|hard` in the address picks it
+as `?seed=` picks the seed.
+
+| Level | Changes from Normal |
+|---|---|
+| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes |
+| **Normal** | The mission as above |
+| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3 |
+
+The score is the same sum at every level.
+
 ---
 
 ## 11. Art direction
@@ -705,5 +721,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M8c** | Operator review: title card, charge counts, the leader's rollover, ready to host | The orders open under the title card and fit at 1280x800; the orders, rings and hovers say how many charges each target takes; Holloway's rollover explains his orders and radio; the game runs from GitHub Pages; no rules change |
 | **M8d** | Supplied art in: portraits, chips, paper, title card, fonts; objectives redrawn after the reference art; a slot for a painted aircraft; published | The supplied files load with no console errors but the optional aircraft; the orders fit at 1280x800; the game plays from its GitHub Pages address; no rules change |
 | **M8e** | Operator review: undo, blasts kill enemies, the stone throw shown as a throw, the exfil barn, lighter paper | Undo takes back any move or action this turn and no further; an enemy in a blast dies unless it is the reserve, leaving no body; aiming a stone draws the lob and the earshot; the painted aircraft flies the drop |
+| **M9** | Difficulty levels: Easy, Normal, Hard (§10) | The orders offer the three levels and still fit at 1280x800; each level's numbers show in the orders, the rings and the panel; the level is beside the seed and on the back page; it cannot change after the jump; the balance bot wins clearly more on Easy and clearly less on Hard |
 
 Do not start a milestone before the previous one is merged and playable.

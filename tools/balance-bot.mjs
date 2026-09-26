@@ -15,6 +15,9 @@
 // MAP_PATCH take JSON deep-merged over that file (arrays are replaced whole),
 // e.g. RULES_PATCH='{"turnLimit":16}' node tools/balance-bot.mjs 200 naive
 //
+// DIFFICULTY=<id> plays at a level from data/difficulty.json, as the game
+// does: its patches over the files (and over any *_PATCH above).
+//
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -44,9 +47,13 @@ const E = await mod('src/enemy.js');
 const M = await mod('src/map.js');
 const SB = await mod('src/sabotage.js');
 const T = await mod('src/traits.js');
+const D = await mod('src/difficulty.js');
 
-const map0 = await M.loadMap();
-const rules = await M.loadJson('data/rules.json');
+const loadedMap = await M.loadMap();
+const loadedRules = await M.loadJson('data/rules.json');
+const difficulty = D.validateDifficulty(await M.loadJson('data/difficulty.json'), loadedRules, { types: loadedMap.enemyTypes });
+if (process.env.DIFFICULTY && !difficulty.levels.some((l) => l.id === process.env.DIFFICULTY)) throw new Error(`unknown difficulty "${process.env.DIFFICULTY}"`);
+const { rules, map: map0 } = D.applyDifficulty(D.levelById(difficulty, process.env.DIFFICULTY ?? null), loadedRules, loadedMap);
 const traits = T.validateTraits(await M.loadJson('data/traits.json'));
 const roster = await M.loadJson('data/roster.json');
 

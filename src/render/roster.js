@@ -5,6 +5,7 @@
 // row's rollover. Reads state, never mutates it (CLAUDE.md rule 7); clicks and
 // hovers are handed back to the caller.
 
+import { timesWord } from '../hints.js';
 import { terrainAt } from '../map.js';
 import { portraitId } from './theme.js';
 import { attachPopup, describeEffect } from './ui.js';
@@ -116,16 +117,16 @@ function describeUnit(unit, number, state, map, view) {
   for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
     lines.push(`${effect.name} — ${describeEffect(effect)}`);
   }
-  if (unit.leader) lines.push(...leaderLines(unit, state, view.command));
+  if (unit.leader) lines.push(...leaderLines(unit, state, view.command, view.diversionUses));
   return [face(unit.id, 'popup-portrait'), html('b', null, unit.name), `\n${lines.join('\n')}`];
 }
 
 /**
  * What the ranking man gives the stick (SPEC.md §5 Command, §4 RAF diversion):
  * his orders, and the radio. Keyed to the `leader` flag, never a name
- * (CLAUDE.md rule 6); the numbers are rules.json's `command`.
+ * (CLAUDE.md rule 6); the numbers are rules.json's `command` and `diversion.uses`.
  */
-function leaderLines(unit, state, command) {
+function leaderLines(unit, state, command, uses) {
   if (unit.dead) return ['He led the stick. His orders and the radio went with him.'];
   const hexes = `${command.radius} hex${command.radius === 1 ? '' : 'es'}`;
   const lines = [
@@ -136,6 +137,8 @@ function leaderLines(unit, state, command) {
     const led = state.units.filter((u) => u.commandBonus > 0).length;
     lines.push(`${led} ${led === 1 ? 'man has' : 'men have'} his orders this turn.`);
   }
-  lines.push(`Radio — he can call the RAF diversion [D]: once per mission, only while he lives.${state.diversionUsed ? ' Already called.' : ''}`);
+  const called = state.diversionsCalled;
+  const calledText = !called ? '' : called >= uses ? ' Already called.' : ` Called ${timesWord(called)}.`;
+  lines.push(`Radio — he can call the RAF diversion [D]: ${timesWord(uses)} per mission, only while he lives.${calledText}`);
   return lines;
 }

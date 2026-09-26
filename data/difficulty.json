@@ -1,0 +1,42 @@
+{
+  "_comment": "Difficulty levels (SPEC.md §10, M9). Each level is a patch deep-merged over data/rules.json (`rules`) and data/enemies.json (`enemies`) when the mission starts: an object merges key by key, anything else replaces. Every key a patch names must already exist in that file, so a typo fails loudly rather than doing nothing. No code asks which level is on (CLAUDE.md rule 5): a level is only different numbers. Chosen on the orders before the drop, fixed once the stick jumps; `?difficulty=<id>` in the address picks one, as `?seed=` picks a seed. `default` is the level when none is asked for.",
+
+  "_tuning": "Balance-bot win % (node tools/balance-bot.mjs 100 naive, DIFFICULTY=<id>), west / north / east run, at M9: see DECISIONS.md for the numbers. The bot never calls the diversion, so the second diversion on Easy helps a person more than the bot shows.",
+
+  "default": "normal",
+
+  "levels": [
+    {
+      "id": "easy",
+      "label": "Easy",
+      "summary": "The bridge takes one charge, two men out will do, the RAF can be called twice, and orders reach 3 hexes.",
+      "rules": {
+        "objectives": { "bridge": { "chargesNeeded": 1 } },
+        "mission": { "minimumOut": 2 },
+        "diversion": { "uses": 2 },
+        "command": { "radius": 3 }
+      }
+    },
+    {
+      "id": "normal",
+      "label": "Normal",
+      "summary": "The mission as planned.",
+      "rules": {}
+    },
+    {
+      "id": "hard",
+      "label": "Hard",
+      "summary": "Four men must get out, and every sentry and patrol sees a hex further.",
+      "rules": {
+        "mission": { "minimumOut": 4 }
+      },
+      "enemies": {
+        "types": {
+          "sentry": { "visionRadius": 4 },
+          "patrol": { "visionRadius": 4 },
+          "reserve": { "visionRadius": 4 }
+        }
+      }
+    }
+  ]
+}
