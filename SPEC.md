@@ -138,7 +138,7 @@ All costs and modifiers below are numbers in `rules.json`.
   lost. He gets **+1 concealment** on the hex he is on — a hiding man is as hard to see as
   a scout, a hiding scout harder still. It protects only the hex he stops on: hexes he
   walked through earlier that turn are tested without it. It lasts until he next spends
-  AP, so a man who stays down (`H`) stays hidden for free. A hidden trooper is marked on
+  AP, so a man left where he is stays hidden for free. A hidden trooper is marked on
   his counter.
 - **Suppress** (gunner only) — costs **2 AP**, leaving one step to get back into cover.
   The target must be a **visible enemy: within the gunner's spot radius, with a clear
@@ -230,7 +230,8 @@ to be casual while still being strategic.
   §9), so undoing can never re-roll anything; it is a mis-click safety net, not a scouting
   tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
-  `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
+  `R` toggle patrol-route overlay. Actions: `H` hide (go to ground; M13 — it was `G`, and
+  `H` held a man's position, which nothing needed: Tab moves on, End turn ends it),
   `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
@@ -611,7 +612,8 @@ Every mission ends in one of three outcomes:
 - **Success:** primary destroyed AND at least 3 troopers reach an exfil hex by turn 20.
 - **Withdrawn:** the mission can no longer succeed, but the stick is not wiped out —
   fewer than 3 men are still alive or already out, or there are not enough charges left
-  anywhere (carried, dropped or set) to finish the primary. Also: nobody is left on the
+  anywhere (carried, dropped or set) to finish the primary — a dropped charge counts only
+  while a man still on the board could carry it (M13). Also: nobody is left on the
   board and the primary is intact. The mission ends at once: every man still on the board
   gets out, then any charges still burning go off (they can still finish an objective).
 - **Failed:** dawn arrives (the end of turn 20) without success, or every man is dead.
@@ -725,7 +727,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   crossed out in red, marker-pen style, over the risk pips. The line is cold blue, and
   red from the first hex where he would be spotted (M11), so red means trouble.
 - **Our counters are printed solid army green** with a dark name strip (leader blue for
-  the ranking man), AP left as one large figure top right, the role in a paper roundel,
+  the ranking man), AP left as dots top right (M13, was one large figure: two numbers on
+  a counter confused players), filled for AP left and hollow for AP spent, the role in a paper roundel,
   and a sliver of the card's cut edge showing down-right under the soft shadow.
 - **Objectives say where to go.** Each objective's hexes are outlined firmly, its art sits
   inside them, and its name above them. Each charge point is a red dashed hex with an empty
@@ -748,6 +751,16 @@ Desktop makes the skeuomorphism work properly, so use the room:
   in shade under a coarse halftone, and the card stands off it on a deep soft shadow.
   Picking a run then jumping needs **Space**, or a second click on the same run.
 - **Keys are set in bold** wherever the game's text names one (M12).
+- **The turn cards sit in the bottom right of the map** (M13), narrower and with nothing
+  darkened, so what they report can be seen beside them; the orders stay in the middle,
+  wider, with the difficulty at the top because it changes the numbers written below it.
+- **Shots are seen and heard** (M13): suppressing fires a burst — flashes at the gunner,
+  red tracer to the enemy, its counter flashing, and a burst of gunfire — and a kill is
+  one dim shot and a muffled cough. A suppressed enemy's counter is printed faint with a
+  red SUPPRESSED band across it.
+- **The turn report** keeps each man's lines together, his death always last, and sets
+  "killed" in bold red (M13).
+- **Parachutes** lie inside their hex, in one of its corners, the same one all game (M13).
 - **Starting again.** A restart in the outer margin (a first click arms it, a second
   starts a new game on a fresh seed at the same level), and Play again on the back page,
   start a new mission without reloading the page; the orders open again (M12).
@@ -822,6 +835,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M13** | Third operator playtest review, no rules change but one bug: the orders reworked (level on top, wider, more air), Hide on H and Hold gone, turn cards docked bottom right, keys one to a line, shots and a suppressed band, AP as dots, new gunner and scout symbols, report grouped by man, the mission ended when no one can carry the charges left | The orders fit at 1280x800 with the difficulty first; H hides; a turn card leaves the left of the map clear; a suppress is seen and heard; with every man who could carry a charge dead the mission is withdrawn at once |
 | **M12b** | The approved playtest rules: the leader's orders strongest beside him, the knife, the spread zoomed to fit a small window | A man beside the leader gets +2 AP and two chevrons, within 2 hexes +1 and one; any man behind an enemy beside him, not in contact, can knife it for 2 AP and his turn, silently, leaving a body; a 1200-wide window shows the whole spread with no sideways scroll; the balance bot is re-run with and without the knife |
 | **M12** | Second operator playtest review: the bridge post a stone can turn, the orders and ring wording, keys in bold, restart, the leader's rollover, bells on the back page, the exchange's wires, rings clear of the names, a shaded spread under the orders, the run tabs on their lines, hedges that meet in a T | A stone thrown north of the bridge post turns it off both piers; the orders fit at 1280x800 and name the places in capitals; every key in the game's text is bold; a second click on a run jumps; restart and Play again start a new seed without a reload; hovering the leader shows his orders; the back page rings bells or tolls; the balance bot is re-run (Normal 81/75/65, from 81/78/69) |
 
