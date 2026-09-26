@@ -712,6 +712,7 @@ export const RINGS = {
   width: 4.5,
   margin: 14, // beyond the footprint's hexes
   overshoot: 0.14, // of a turn past the start
+  opacity: 0.8, // a touch under full, so what it crosses still shows (M12)
   wobble: 0.05, // of the radius
   drawMs: 650,
   staggerMs: 180,

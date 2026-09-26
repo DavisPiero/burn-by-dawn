@@ -319,7 +319,7 @@ function deriveDrop(view, hex) {
   if (briefing?.kind === 'orders') return view;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
-      id: run.id, label: run.label, tag: run.tag, wind: run.wind,
+      id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, windAlong: run.windAlong ?? null,
       from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
       jumps: jumpPoints(run, count), selected: run.id === state.dropRunId,
     })),
@@ -1058,8 +1058,8 @@ function describeBriefing(which, view) {
     const needs = state.objectives.map((o) => {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
-      const where = needed === points ? (needed === 1 ? 'on its point' : 'one on each point') : `on any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
-      return `the ${o.label.toLowerCase()} ${needed}, ${where}`;
+      const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
+      return `${o.label.toLowerCase()} ${needed}, ${where}`;
     }).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
@@ -1081,9 +1081,9 @@ function describeBriefing(which, view) {
           `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
           'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
           'Red rings mark your targets. The red dashed hexes are their charge points: stand a man with a charge on one and press C.',
-          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`
+          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, silent.` : ''),
-          'Hover anything for detail. KEYBOARD, top right, lists every key.',
+          'Hover anything for detail; KEYBOARD lists every key.',
         ],
       }],
       // SPEC.md §10: the level, chosen here and fixed once the stick jumps.

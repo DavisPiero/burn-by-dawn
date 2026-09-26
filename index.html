@@ -628,6 +628,22 @@
       cursor: pointer;
     }
     #briefing-backdrop[hidden] { display: none; }
+    /* Under the orders the whole spread is put in shade, with a coarse
+       halftone over it like a cheap print's shadow, and the card stands off
+       it on a deep soft shadow (M12). A click anywhere on it carries on. */
+    #briefing-backdrop.orders { background: none; }
+    #briefing-backdrop.orders::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-color: rgba(26, 22, 16, 0.42);
+      background-image: radial-gradient(circle, rgba(10, 8, 5, 0.38) 0.9px, transparent 1.5px);
+      background-size: 5px 5px;
+    }
+    #briefing-backdrop.orders #briefing {
+      position: relative;
+      box-shadow: 6px 6px 0 var(--ink), 0 16px 70px 12px rgba(0, 0, 0, 0.6);
+    }
     #briefing {
       box-sizing: border-box;
       width: min(600px, 80%);
@@ -724,7 +740,7 @@
     }
     #briefing p { margin: 0 0 8px; }
     /* A clear line between the orders' prose and the section under it. */
-    #briefing p + h3 { margin-top: 22px; }
+    #briefing p + h3 { margin-top: 14px; }
     #briefing ul { margin: 0; padding: 0; list-style: none; }
     #briefing li { position: relative; padding-left: 16px; margin-bottom: 3px; }
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
@@ -739,6 +755,9 @@
       gap: 6px;
     }
     #briefing .brief-choice-head {
+      /* The stencil sits high in its line: down onto the buttons' middle (M12). */
+      position: relative;
+      top: 3px;
       margin-right: 4px;
       font-family: var(--slab);
       font-size: 14px;

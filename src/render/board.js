@@ -614,7 +614,10 @@ function drawTargetRings(layers, rings, now) {
     const points = ring.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
     const half = { x: map.hexSize * Math.sqrt(3) / 2, y: map.hexSize };
     const left = Math.min(...points.map((p) => p.x)) - half.x, right = Math.max(...points.map((p) => p.x)) + half.x;
-    const top = Math.min(...points.map((p) => p.y)) - half.y, bottom = Math.max(...points.map((p) => p.y)) + half.y;
+    // The ring takes in the name printed over the hexes, so the pen never
+    // runs through the words (M12: it crossed RAIL BRIDGE).
+    const labelTop = Math.min(...points.map((p) => p.y)) - map.hexSize * OBJECTIVE.labelLift - OBJECTIVE.labelSize;
+    const top = Math.min(Math.min(...points.map((p) => p.y)) - half.y, labelTop), bottom = Math.max(...points.map((p) => p.y)) + half.y;
     const c = { x: (left + right) / 2, y: (top + bottom) / 2 };
     const rx = (right - left) / 2 + RINGS.margin, ry = (bottom - top) / 2 + RINGS.margin;
     const colour = RINGS[ring.colour] ?? RINGS.red;
@@ -634,8 +637,11 @@ function drawTargetRings(layers, rings, now) {
         const x = c.x + Math.cos(t) * rx * grow, y = c.y + Math.sin(t) * ry * grow;
         d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
       }
-      const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: 0.9 });
-      layers.effects.appendChild(path);
+      const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: RINGS.opacity });
+      // Under the objectives' names, charge points and counters, as a pen
+      // mark on the map would be, so where it crosses one the print still
+      // reads over it (M12); the notes stay on top.
+      layers.sites.insertBefore(path, layers.sites.firstChild);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
         delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
       }, elapsed);
@@ -649,8 +655,13 @@ function drawTargetRings(layers, rings, now) {
       'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
       'font-size': RINGS.noteSize, fill: colour, stroke: RINGS.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
     });
+    // Above the ring, or under it if the lines would run off the top of the
+    // board (M12: the exchange's four lines did).
+    const lead = RINGS.noteSize * RINGS.noteLeading;
+    const above = c.y - ry - 8 - (lines.length - 1) * lead - RINGS.noteSize / 2 >= edge.top;
     lines.forEach((words, k) => {
-      const span = el('tspan', { x, y: c.y - ry - 8 - (lines.length - 1 - k) * RINGS.noteSize * RINGS.noteLeading });
+      const y = above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead;
+      const span = el('tspan', { x, y });
       span.textContent = words;
       note.appendChild(span);
     });
@@ -1167,7 +1178,10 @@ function drawDrop(layers, drop) {
     group.appendChild(polyline([a, b], { stroke: DROP.stroke, 'stroke-width': DROP.width, 'stroke-dasharray': DROP.dash }));
     group.appendChild(arrow(b, a, DROP.stroke, DROP.width, DROP.windHead));
 
-    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    // The wind arrow sits halfway along unless the run says where (M12: the
+    // east run's met the north run's name).
+    const windAlong = run.windAlong ?? 0.5;
+    const mid = { x: a.x + (b.x - a.x) * windAlong, y: a.y + (b.y - a.y) * windAlong };
     const d = NEIGHBOR_DIRS[DIRECTION_NAMES.indexOf(run.wind)];
     const v = axialToPixel(d.q, d.r, 1);
     const len = Math.hypot(v.x, v.y);
@@ -1178,7 +1192,10 @@ function drawDrop(layers, drop) {
 
     // The name sits a way along the line, not at its start: the runs begin
     // close together in the north-west corner and their names would collide.
-    const at = { x: a.x + (b.x - a.x) * DROP.labelAlong, y: a.y + (b.y - a.y) * DROP.labelAlong - map.hexSize * 0.35 };
+    // Centred on the line, so the line runs through its middle (M12); a run
+    // may set how far along (`labelAlong` in map.json).
+    const along = run.labelAlong ?? DROP.labelAlong;
+    const at = { x: a.x + (b.x - a.x) * along, y: a.y + (b.y - a.y) * along };
     tabs.push(runTab(layers, run, at));
 
     if (run.selected) {

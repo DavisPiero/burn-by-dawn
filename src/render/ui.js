@@ -281,6 +281,7 @@ function titleBanner({ title, tagline }) {
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
+  backdrop.classList.toggle('orders', Boolean(briefing?.banner));
   if (!briefing) return;
   card.replaceChildren();
   card.className = briefing.tone ? `tone-${briefing.tone}` : '';
