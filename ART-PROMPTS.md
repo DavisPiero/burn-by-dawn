@@ -356,7 +356,7 @@ found, not generated.
 
 | | |
 |---|---|
-| Files | `assets/audio/paper-rustle.mp3`, `pencil-scratch.mp3`, `counter-snap.mp3`, `dog-distant.mp3`, `crump.mp3`, `explosion.mp3`, `church-bells.mp3`, `bell-toll.mp3`, `gunfire.mp3`, `silenced-shot.mp3` — exactly these names; each replaces its placeholder on reload |
+| Files | `assets/audio/paper-rustle.mp3`, `pencil-scratch.mp3`, `counter-snap.mp3`, `dog-distant.mp3`, `crump.mp3`, `explosion.mp3`, `church-bells.mp3`, `bell-toll.mp3`, `gunfire.mp3`, `silenced-shot.mp3`, `aircraft.mp3` (M15) — exactly these names; each replaces its placeholder on reload |
 | Format | **MP3**, mono, 44.1 kHz, under 200 KB, trimmed with no silence at the start |
 | Where | freesound.org with the **CC0** licence filter, or Pixabay's sound effects: both free to use with no credit needed |
 | Feel | The table, not the battlefield (ART-ASSETS.md §9): a card counter put down on a wooden table, a page turned, a pencil note, a dog barking far across fields at night, a distant muffled explosion (the RAF's bombs) — and one from the battlefield, a demolition charge going off close by, big, with debris falling after (`explosion.mp3`, ~2 s). For the back page (M12): a village church's bells ringing a peal across the fields at dawn (`church-bells.mp3`, ~4–5 s, search "church bells peal distant"), and one low bell tolling slowly with an air-raid siren far off under it (`bell-toll.mp3`, ~5–6 s; if no single recording has both, a slow toll alone is fine) |
@@ -397,7 +397,7 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
   exchange.
-- The ten sounds (M10, the explosion M11, the back page's bells M12, the gunfire M13), made with Web Audio in `src/render/sound.js` until the MP3s of
+- The eleven sounds (M10, the explosion M11, the back page's bells M12, the gunfire M13, the Dakota M15), made with Web Audio in `src/render/sound.js` until the MP3s of
   priority 11 are supplied.
 - The role symbols on the counters (redrawn bolder M13), the AP dots (the leader's orders in blue, M14), the shots' flash and
   tracer, and the suppressed band.

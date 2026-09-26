@@ -265,7 +265,8 @@ MP3, and a second would double the requests for files that are not there.
 | `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
 | `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
 | `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |
-| `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12) | ~4–5 s |
+| `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12), rising to the top bell (M15) | ~4–7 s |
+| `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.

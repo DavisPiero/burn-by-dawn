@@ -98,6 +98,8 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
+// The Dakota's drone over the drop (M15), cut short if the show is skipped.
+let dropSound = null;
 // The RAF flyover (M11): the Dakota over the garrison when the diversion is
 // called, before its card. Display only; any key or click skips it.
 let flyShow = null;
@@ -1082,6 +1084,8 @@ function endBangHold() {
  */
 function restartMission() {
   clearTimeout(dropShowTimer);
+  dropSound?.stop();
+  dropSound = null;
   clearTimeout(flyShowTimer);
   clearTimeout(bangTimer);
   dropShow = null;
@@ -1346,6 +1350,7 @@ function jumpNow() {
     };
     clearTimeout(dropShowTimer);
     dropShowTimer = setTimeout(endDropShow, dropTimeline(baseMap, dropShow).length);
+    dropSound = playCue('drop');
     briefingAfterDrop = briefingsOn;
   } else if (state.phase !== 'drop' && briefingsOn) {
     briefing = { kind: 'turn' };
@@ -1355,6 +1360,8 @@ function jumpNow() {
 
 function endDropShow() {
   clearTimeout(dropShowTimer);
+  dropSound?.stop();
+  dropSound = null;
   dropShow = null;
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
