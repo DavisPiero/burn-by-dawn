@@ -701,6 +701,7 @@ function render() {
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
   if (shown && shown !== cardShown) playCue('card');
+  if (shown === 'results' && cardShown !== 'results') playCue(state.outcome.kind === 'success' ? 'victory' : 'defeat');
   cardShown = shown;
 }
 
