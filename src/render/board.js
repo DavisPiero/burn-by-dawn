@@ -621,12 +621,19 @@ function drawTargetRings(layers, rings, now) {
         delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
       }, elapsed);
     }
-    // The note, on the side of the ring toward the middle of the board.
+    // The note, on the side of the ring toward the middle of the board. It may
+    // be several lines; the last sits just above the ring.
     const east = c.x < midX;
     const x = east ? c.x + rx * 0.75 : c.x - rx * 0.75;
-    const note = text(ring.note, {
-      x, y: c.y - ry - 8, 'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
+    const lines = [].concat(ring.note);
+    const note = text('', {
+      'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
       'font-size': RINGS.noteSize, fill: colour, stroke: RINGS.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+    });
+    lines.forEach((words, k) => {
+      const span = el('tspan', { x, y: c.y - ry - 8 - (lines.length - 1 - k) * RINGS.noteSize * RINGS.noteLeading });
+      span.textContent = words;
+      note.appendChild(span);
     });
     layers.effects.appendChild(note);
     playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
@@ -927,6 +934,8 @@ function drawSites(layers, state, view) {
       }));
       continue;
     }
+    // Every charge it needs is set: nowhere left to put one.
+    if (view.chargedObjectiveIds.has(objective.id)) continue;
     for (const h of objective.chargeHexes) {
       const p = axialToPixel(h.q, h.r, map.hexSize);
       const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');

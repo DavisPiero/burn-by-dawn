@@ -1,4 +1,7 @@
-# NIGHT DROP — Specification
+# BURN BY DAWN — Specification
+
+The game is called **Burn by Dawn**. *Night Drop* was its working title, and the repo,
+branch history and some internal ids (`night-drop-ready`) keep that name.
 
 A single-level, turn-based, hex tactical game. Six named British paratroopers land in
 occupied France and sabotage German infrastructure before dawn.
@@ -271,6 +274,8 @@ in the table above modifies the trooper who owns the trait. Command modifies *ot
 troopers, conditional on their distance from him, which the hook system cannot express
 and must not be extended to cover. The leader is a `leader` flag on a roster entry, so
 promoting a different trooper is a one-line data change and no code knows anyone's name.
+His roster rollover says what he gives the stick: the orders (radius and bonus, from
+`rules.json`), how many men have them this turn, and the radio for the RAF diversion (§4).
 
 What it buys the design: the command radius rewards moving as a group, and §6 punishes
 moving as a group, because more men sit inside one vision arc. Speed against stealth,
@@ -434,6 +439,12 @@ Three objectives, each on a different approach:
 Every objective lists its **charge hexes** in `map.json`: the hexes a trooper must stand
 on to place a charge on it. Hovering an objective highlights them (§4). Charges needed,
 blast radius and alert are per kind of objective in `rules.json`.
+
+An objective may list **more charge points than it needs charges** (the exchange has three
+points and needs one): the points are a choice of where to stand, not a count. The game
+must say so wherever a player counts them — the orders, the target rings, the objective
+and charge-point hovers — or three dashed hexes read as three charges. Once an objective
+has every charge it needs set, its empty charge points are no longer drawn.
 
 Placing a charge costs 1 AP and sets a 3-turn fuse by default. The fuse burns down in
 every fuse phase, including the one at the end of the turn it was placed, and the charge
@@ -628,6 +639,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **Targets are ringed before the drop.** Until a drop run is picked, each objective is
   circled in red marker pen, the primary twice, with a hand-lettered note beside it, and
   the exfil in green. Picking a run clears them.
+- **The title card.** The orders open under a painted picture of the drop across the top
+  of the card, with the title, BURN BY DAWN, set over it in type (a supplied
+  `assets/title/title-card.jpg`, ART-ASSETS.md §7; drawn in code until then).
 - **Briefings.** A briefing card opens over the board: the orders before the drop, and at
   the start of every turn (turn 1 after the drop has been shown) an update: what happened
   at the turn boundary, most important first, and up to three hints about what to do
@@ -674,5 +688,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M7b** | Visual clean-up: less noise, bigger type, continuous roads and railway, soft counter shadows, the drop shown, redrawn objectives and portraits | The board reads at a glance at 1280x800; no text on the right page is below 12px; the right page has no empty gaps; the drop plays and can be skipped; no rules change |
 | **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is a silenced shot, quieter than suppressing, and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
 | **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
+| **M8c** | Operator review: title card, charge counts, the leader's rollover, ready to host | The orders open under the title card and fit at 1280x800; the orders, rings and hovers say how many charges each target takes; Holloway's rollover explains his orders and radio; the game runs from GitHub Pages; no rules change |
 
 Do not start a milestone before the previous one is merged and playable.

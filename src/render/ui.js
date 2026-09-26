@@ -233,13 +233,21 @@ export function rankedReport(events, place) {
 
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
- * { title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ * { banner?: { title }, title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on } } — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
   if (!briefing) return;
-  card.replaceChildren(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
+  card.replaceChildren();
+  // The title card, over the orders only: the `title-card` sprite, drawn or
+  // painted (theme.js TITLE_CARD), with the title set over it in type.
+  if (briefing.banner) {
+    const art = svgEl('svg', { class: 'brief-banner-art', viewBox: '0 0 600 150', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' });
+    art.appendChild(svgEl('use', { href: '#title-card', width: 600, height: 150 }));
+    card.appendChild(html('div', 'brief-banner', [art, html('h1', 'brief-banner-title', briefing.banner.title)]));
+  }
+  card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
   for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, text));
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
@@ -477,7 +485,7 @@ export function renderResults(element, outcome) {
   element.className = outcome.kind;
 
   const logo = svgEl('svg', { class: 'logo', viewBox: '0 0 800 300', preserveAspectRatio: 'xMidYMid meet' });
-  logo.appendChild(svgEl('use', { href: '#logo-night-drop', width: 800, height: 300 }));
+  logo.appendChild(svgEl('use', { href: '#logo-burn-by-dawn', width: 800, height: 300 }));
 
   const fates = html('ul', 'fates');
   for (const f of outcome.fates) {

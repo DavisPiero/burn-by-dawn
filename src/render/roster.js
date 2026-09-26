@@ -116,5 +116,26 @@ function describeUnit(unit, number, state, map, view) {
   for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
     lines.push(`${effect.name} — ${describeEffect(effect)}`);
   }
+  if (unit.leader) lines.push(...leaderLines(unit, state, view.command));
   return [face(unit.id, 'popup-portrait'), html('b', null, unit.name), `\n${lines.join('\n')}`];
+}
+
+/**
+ * What the ranking man gives the stick (SPEC.md §5 Command, §4 RAF diversion):
+ * his orders, and the radio. Keyed to the `leader` flag, never a name
+ * (CLAUDE.md rule 6); the numbers are rules.json's `command`.
+ */
+function leaderLines(unit, state, command) {
+  if (unit.dead) return ['He led the stick. His orders and the radio went with him.'];
+  const hexes = `${command.radius} hex${command.radius === 1 ? '' : 'es'}`;
+  const lines = [
+    `Orders — at the start of each turn, every ${command.leaderReceivesOwnBonus ? '' : 'other '}man within ${hexes} of him`
+      + ` gets +${command.bonusActionPoints} AP. Keep the stick close to move faster.`,
+  ];
+  if (unit.landed && !unit.out) {
+    const led = state.units.filter((u) => u.commandBonus > 0).length;
+    lines.push(`${led} ${led === 1 ? 'man has' : 'men have'} his orders this turn.`);
+  }
+  lines.push(`Radio — he can call the RAF diversion [D]: once per mission, only while he lives.${state.diversionUsed ? ' Already called.' : ''}`);
+  return lines;
 }
