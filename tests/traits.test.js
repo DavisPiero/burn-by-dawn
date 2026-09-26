@@ -62,10 +62,12 @@ export default [
       const effects = traitEffects(unit, rules);
       assert(effects.length > 0, `${unit.id} has no traits`);
       for (const effect of effects) {
-        assert(effect.base !== null, `${unit.id} ${effect.id}: no base value to fire against`);
-        assert(effect.value !== effect.base, `${unit.id} ${effect.id}: ${effect.hook}.${effect.stat} stayed at ${effect.base}`);
-        const plain = applyHook(untraited(unit), effect.hook, effect.stat, effect.base).value;
-        equal(plain, effect.base, `${unit.id} without traits`);
+        // A situational stat (a detection score) has no base of its own: fire it against a sample one.
+        const base = effect.base ?? 3;
+        const value = applyHook(unit, effect.hook, effect.stat, base).value;
+        assert(value !== base, `${unit.id} ${effect.id}: ${effect.hook}.${effect.stat} stayed at ${base}`);
+        const plain = applyHook(untraited(unit), effect.hook, effect.stat, base).value;
+        equal(plain, base, `${unit.id} without traits`);
       }
     }
   }],
@@ -82,7 +84,8 @@ export default [
 
     equal(fire('steady-hands', 'onPlaceCharge', 'fuse').value, rules.charges.fuseTurns - 1, 'Steady Hands fuse');
     equal(fire('quick-work', 'onPlaceCharge', 'apCost').value, 0, 'Quick Work AP cost');
-    equal(fire('cats-eyes', 'onSpotRadius', 'spotRadius').value, rules.roles.scout.spotRadius + 1, "Cat's Eyes spot radius");
+    // M11d: Cat's Eyes was +1 spot radius, which only a gunner's suppress and kill read, so on a scout it did nothing.
+    equal(applyHook(byTrait('cats-eyes'), 'onDetectionCheck', 'detection', 3).value, 2, "Cat's Eyes: one harder to spot");
     equal(fire('treetops', 'onLand', 'landingPenalty').value, 0, 'Treetops landing penalty');
     equal(fire('cool-head', 'onFire', 'alert').value, rules.alert.gunfire - 1, 'Cool Head gunfire alert');
     equal(fire('ox', 'onChargeCapacity', 'charges').value, rules.roles.gunner.charges + 1, 'Ox charges');
