@@ -88,7 +88,7 @@ keeps a seventh man a JSON entry until someone draws him.
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
 | `symbol-scout.svg` | 24 x 24 | binoculars, from the front: two big lenses and a bridge (redrawn bolder M13) |
 | `symbol-gunner.svg` | 24 x 24 | Bren, a solid side silhouette: curved magazine up, stock, bipod (redrawn bolder M13) |
-| `counter-enemy-sentry.svg` | 56 x 56 | static post. **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
+| `counter-enemy-sentry.svg` | 56 x 56 | static post: one man, helmet over greatcoat shoulders with a slung rifle slanting behind (M14; the upright rifle read as a T). **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
 | `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |

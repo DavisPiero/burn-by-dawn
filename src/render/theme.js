@@ -1483,13 +1483,22 @@ const SPRITES = {
     ],
   },
 
+  // One man at his post (M14: the helmet beside an upright rifle read as a
+  // helmet and a letter T): helmet over greatcoat shoulders, the collar
+  // turned up, and a slung rifle's barrel slanting up behind his shoulder.
   'counter-enemy-sentry': {
     viewBox: '0 0 56 56',
-    draw: () => [
-      ...helmet(12, 13, 1.1),
-      svg('rect', { x: 40, y: 10, width: 4, height: 24, class: 'paper' }),
-      svg('rect', { x: 36, y: 10, width: 12, height: 4, class: 'paper' }),
-    ],
+    draw: () => {
+      // The coat starts below the brim, leaving the face dark between them.
+      const coat = 'M9 37 C10 32 16 29.5 22 29.5 H34 C40 29.5 46 32 47 37 Z';
+      return [
+        line('M38 34 L47 5', 3, 'stroke-paper'),
+        svg('rect', { x: 44.6, y: 3.5, width: 3.4, height: 3, class: 'paper', transform: 'rotate(20 46.3 5)' }),
+        fill(coat, 'paper'), fill(coat, toneClass('ink', 20)),
+        line('M22 29.5 L28 34.5 L34 29.5', 1.4),
+        ...helmet(14.5, 8, 1.1),
+      ];
+    },
   },
   'counter-enemy-patrol': { viewBox: '0 0 56 56', draw: () => [...helmet(6, 11, 0.85), ...helmet(26, 19, 0.85)] },
   'counter-enemy-reserve': { viewBox: '0 0 56 56', draw: () => [...helmet(4, 8, 0.7), ...helmet(29, 8, 0.7), ...helmet(16, 22, 0.7)] },
