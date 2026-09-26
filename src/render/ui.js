@@ -357,10 +357,20 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     foot.appendChild(label);
   } else if (briefing.choice && !briefing.choice.top) {
     foot.appendChild(briefChoice(briefing.choice));
+  } else if (briefing.confirm) {
+    // The one card with a choice to make (M14, the exfil): its button acts,
+    // any other key or click backs out.
+    const button = html('button', 'btn', boldKeys(briefing.confirm.label));
+    button.type = 'button';
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.confirm.onConfirm();
+    });
+    foot.appendChild(button);
   } else {
     foot.appendChild(html('span'));
   }
-  foot.appendChild(html('span', 'brief-go', 'CARRY ON — any key or click'));
+  foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
   card.appendChild(foot);
 }
 

@@ -629,6 +629,18 @@ export function settleMission(state, rules, map, { dawn = false } = {}) {
   };
 }
 
+/**
+ * A move onto the exfil that would end the mission short of success (M14, from
+ * playtesting: a man walked out and the mission was lost): the outcome it
+ * would settle on, or null. The same move and settleMission a click makes, so
+ * charges still burning, which may yet finish the job, are counted.
+ */
+export function exfilWouldFail(state, unitId, plan, rules, map) {
+  if (!isExfil(map, plan.path[plan.path.length - 1])) return null;
+  const { outcome } = settleMission(moveUnit(state, unitId, plan, map), rules, map);
+  return outcome && outcome.kind !== 'success' ? outcome : null;
+}
+
 export function isDawn(state, rules) {
   return state.turn >= rules.turnLimit;
 }
