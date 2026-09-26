@@ -581,7 +581,9 @@ export function renderDropRuns(element, runs, onChoose) {
   element.classList.remove('idle');
   element.classList.add('runs');
   for (const run of runs) {
-    const button = html('button', 'action', [html('span', 'action-key', run.key), html('span', 'action-name', run.label)]);
+    // The name with the run's word under it: the three have the row to themselves.
+    const words = html('span', 'action-words', [html('span', 'action-name', run.label), html('span', 'action-tag', run.tag.toUpperCase())]);
+    const button = html('button', 'action', [html('span', 'action-key', run.key), words]);
     button.type = 'button';
     if (run.selected) button.classList.add('active');
     attachPopup(button, () => describeRun(run));
@@ -592,7 +594,7 @@ export function renderDropRuns(element, runs, onChoose) {
 
 /** A drop run's rollover, on its button and on its tab on the board. */
 export function describeRun(run) {
-  return [html('b', null, run.label.toUpperCase()), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
+  return [html('b', null, `${run.label.toUpperCase()} · ${run.tag.toUpperCase()}`), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
 }
 
 /**

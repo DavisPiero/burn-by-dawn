@@ -54,7 +54,7 @@ export function validateDrop(map, rules, count, mapUrl = 'data/map.json', rulesU
     const where = `${mapUrl}: dropRuns[${i}]`;
     if (typeof run.id !== 'string' || run.id === '' || ids.has(run.id)) throw new Error(`${where} needs a unique "id"`);
     ids.add(run.id);
-    for (const key of ['label', 'description']) {
+    for (const key of ['label', 'tag', 'description']) {
       if (typeof run[key] !== 'string' || run[key] === '') throw new Error(`${where} needs a "${key}"`);
     }
     for (const key of ['from', 'to']) {

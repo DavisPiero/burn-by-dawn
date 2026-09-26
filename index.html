@@ -344,6 +344,17 @@
     }
     .action:disabled .action-key { background: rgba(26, 26, 24, 0.45); }
     .action.active .action-key { color: var(--blue); background: var(--paper); }
+    /* A drop run's button: its name, and under it its word (data/map.json
+       tag) in red. Taller than an action's, as the runs have the row alone. */
+    #actions.runs .action { height: auto; padding: 3px 4px; }
+    .action-words { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+    .action-tag {
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: var(--red);
+    }
+    .action.active .action-tag { color: var(--paper); }
     .action-name {
       font-size: 13px;
       font-weight: bold;

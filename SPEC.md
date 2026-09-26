@@ -500,6 +500,14 @@ The map must support **three genuinely viable approaches**, each with a distinct
 No route reaches all three objectives efficiently. Choosing one is choosing which
 secondary objective is realistic.
 
+*Since M9c:* the balance bot found the fuel dump equally reachable from every drop run —
+what a bonus target costs is the garrison it rouses, not the walk — so the drop runs are
+told apart by what they are good for instead, one word each, shown with the run's name
+(`tag` in `map.json`): **West · QUIET** (under cover the whole way, the fewest sightings,
+the longest walk), **North · STEADY** (soft landings, the most reliable), **East · FAST**
+(down closest to the bridge). The base patrol walks the fields south of the fuel dump, not
+up onto the ridge, so the wood and ridge line is the quiet one.
+
 ---
 
 ## 9. The drop
@@ -726,5 +734,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M8e** | Operator review: undo, blasts kill enemies, the stone throw shown as a throw, the exfil barn, lighter paper | Undo takes back any move or action this turn and no further; an enemy in a blast dies unless it is the reserve, leaving no body; aiming a stone draws the lob and the earshot; the painted aircraft flies the drop |
 | **M9** | Difficulty levels: Easy, Normal, Hard (§10) | The orders offer the three levels and still fit at 1280x800; each level's numbers show in the orders, the rings and the panel; the level is beside the seed and on the back page; it cannot change after the jump; the balance bot wins clearly more on Easy and clearly less on Hard |
 | **M9b** | Operator review: one-step undo, the RAF diversion's card, aiming lets go of a clicked man, the title card and strapline on the orders and the back page, back page tidied | Undo takes back the last action only; calling the diversion opens a card saying what it did and what calls are left; clicking another man while aiming selects him; the orders still fit at 1280x800 |
+| **M9c** | Drop runs: the east run clear of the bridge patrol, the base patrol off the ridge, each run labelled for what it is good for | No run is much the hardest for a first-timer by accident; each run shows its word (QUIET, STEADY, FAST) on its button, its tab and its rollover |
 
 Do not start a milestone before the previous one is merged and playable.

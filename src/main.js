@@ -284,7 +284,7 @@ function deriveDrop(view, hex) {
   const count = state.units.length;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
-      id: run.id, label: run.label, wind: run.wind,
+      id: run.id, label: run.label, tag: run.tag, wind: run.wind,
       from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
       jumps: jumpPoints(run, count), selected: run.id === state.dropRunId,
     })),
@@ -303,11 +303,11 @@ function deriveDrop(view, hex) {
     ];
   }
   view.dropRuns = baseMap.dropRuns.map((run, i) => ({
-    id: run.id, key: String(i + 1), label: run.label, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
+    id: run.id, key: String(i + 1), label: run.label, tag: run.tag, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
   }));
   if (!hex) {
     view.dropLabel = selected
-      ? `${selected.label}: ${selected.description} Wind ${selected.wind}. Space or JUMP to go.`
+      ? `${selected.label}, ${selected.tag.toUpperCase()}: ${selected.description} Wind ${selected.wind}. Space or JUMP to go.`
       : null;
     return view;
   }
