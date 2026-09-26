@@ -95,6 +95,9 @@ export function createBoard(svg, map, handlers) {
   // An objective's own art stands in for the terrain motif on its footprint:
   // the exchange's farmhouse hexes would otherwise print a cottage under it.
   const underArt = new Set((map.objectives ?? []).flatMap((o) => o.hexes.map((h) => (Array.isArray(h) ? hexKey(h[0], h[1]) : hexKey(h.q, h.r)))));
+  // Each in-play hex's node, which lasts the whole game: a rollover about what
+  // stands on a hex anchors to it, as the counters are redrawn every frame.
+  const hexNodes = new Map();
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
     const terrainId = terrainIdAt(map, q, r);
@@ -125,6 +128,7 @@ export function createBoard(svg, map, handlers) {
     hex.style.cursor = 'pointer';
     hex.addEventListener('click', () => handlers.onHexClick(q, r));
     hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
+    hexNodes.set(hexKey(q, r), hex);
     terrain.appendChild(hex);
   });
 
@@ -160,11 +164,18 @@ export function createBoard(svg, map, handlers) {
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
   return {
-    svg, map, corners, handlers, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
+    svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
     blasts: { report: null, list: [] },
   };
+}
+
+/** Forget what was last drawn where, for a new game on the same board (M12 restart). */
+export function resetBoardMemory(layers) {
+  layers.motion = new Map();
+  layers.blasts = { report: null, list: [] };
+  layers.ringsSince = null;
 }
 
 // --- area terrain (SPEC.md §11) --------------------------------------------------

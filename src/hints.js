@@ -71,7 +71,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   const alert = alertIndex(state.alert.points, rules);
   if (alert >= 2 && diversionOk && leader) {
     const label = rules.alert.states[alert].label;
-    hints.push(`The garrison is ${label}. The RAF diversion [D] knocks it down a state: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
+    hints.push(`The garrison is ${label.toUpperCase()}. The RAF diversion [D] can reduce it by one level: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
   }
 
   const chutes = state.parachutes.length;
