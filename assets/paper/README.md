@@ -7,4 +7,4 @@ up on load, tiled at 1024 px.
 
 `paper-fibre_original.png` is the grey scan it was made from (opaque, which would have
 turned the pages grey). It is kept as the source and is not loaded. To remake the game's
-file from a new scan: alpha = (232 − grey) × 0.8, ink colour 26, alpha in steps of 2.
+file from a new scan: alpha = (232 − grey) × 0.6, ink colour 26, alpha in steps of 2.

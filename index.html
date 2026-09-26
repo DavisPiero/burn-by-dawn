@@ -247,7 +247,17 @@
       border: 2px solid var(--ink);
       cursor: help;
     }
-    .btn, #end-turn, #diversion, .action {
+    /* End turn and Undo side by side; Undo takes only the room it needs. */
+    #turn-row { display: flex; gap: 6px; }
+    #turn-row #end-turn { flex: 1 1 auto; }
+    #undo {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    #undo[hidden] { display: none; }
+    .btn, #end-turn, #diversion, .action, #undo {
       font-family: var(--typewriter);
       color: var(--ink);
       background: var(--paper);
@@ -256,7 +266,7 @@
       cursor: pointer;
     }
     /* Pressed in one step, no easing. */
-    .btn:active:not(:disabled), #end-turn:active:not(:disabled), #diversion:active:not(:disabled), .action:active:not(:disabled) {
+    .btn:active:not(:disabled), #end-turn:active:not(:disabled), #undo:active:not(:disabled), #diversion:active:not(:disabled), .action:active:not(:disabled) {
       transform: translate(2px, 2px);
       box-shadow: none;
     }
@@ -268,7 +278,7 @@
       background-image: var(--dots-red);
       background-color: var(--paper);
     }
-    #end-turn:disabled, #diversion:disabled, .action:disabled {
+    #end-turn:disabled, #diversion:disabled, .action:disabled, #undo:disabled {
       color: rgba(26, 26, 24, 0.5);
       background-image: var(--dots-ink);
       box-shadow: none;
@@ -626,7 +636,10 @@
       margin-top: 12px;
       font-size: 13px;
     }
-    #briefing .brief-foot label { cursor: pointer; }
+    /* The box sits on the line's middle, so the label's words line up with
+       CARRY ON beside it rather than dropping below it. */
+    #briefing .brief-foot label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    #briefing .brief-foot input { margin: 0; }
     #briefing .brief-go {
       font-weight: bold;
       letter-spacing: 1px;
@@ -681,7 +694,10 @@
           <svg id="dawn-strip" viewBox="0 0 600 60" preserveAspectRatio="none"></svg>
           <button id="keys-tab" type="button">KEYS</button>
         </div>
-        <button id="end-turn" type="button"></button>
+        <div id="turn-row">
+          <button id="end-turn" type="button"></button>
+          <button id="undo" type="button"></button>
+        </div>
         <div id="actions"></div>
       </div>
       <div id="alert-row">

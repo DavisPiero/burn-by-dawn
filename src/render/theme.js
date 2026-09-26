@@ -185,6 +185,27 @@ export function loadSuppliedAircraft() {
   probe.src = AIRCRAFT_FILE.url;
 }
 
+// Supplied enemy chips (ART-ASSETS.md §3, ART-PROMPTS.md): a painted PNG per
+// enemy type, assets/enemies/counter-enemy-<type>.png, 128 x 128 on
+// transparency, replaces the drawn helmets on that type's counter. It sits in
+// the dark frame above the name strip, which code still prints. A missing file
+// is fine: the drawn symbol stays. Types are enemies.json's, so a new type
+// needs only its picture.
+export const ENEMY_CHIP_FILES = { dir: 'assets/enemies', box: { x: 11, y: 3, size: 34 } };
+
+export function loadSuppliedEnemyChips(types) {
+  for (const type of types) {
+    const id = enemySymbolId(type);
+    const url = `${ENEMY_CHIP_FILES.dir}/${id}.png`;
+    const probe = new Image();
+    probe.onload = () => {
+      const { x, y, size } = ENEMY_CHIP_FILES.box;
+      document.getElementById(id)?.replaceChildren(svg('image', { href: url, x, y, width: size, height: size }));
+    };
+    probe.src = url;
+  }
+}
+
 // A supplied title card (ART-ASSETS.md §7, ART-PROMPTS.md): a painted JPEG at
 // TITLE_CARD.url replaces the drawn `title-card` sprite once it loads, cropped
 // to the sprite's 4:1 from the middle. A missing file is fine: the drawn one stays.
@@ -474,6 +495,21 @@ export const TARGET = {
   casingWidth: 8,
   hearsStroke: PALETTE.red,
   hearsWidth: 3,
+};
+
+// A stone being aimed (SPEC.md §4): the lob drawn as a dashed arc from the man,
+// the stone where it lands, and the ground in earshot tinted — a throw, not a move.
+export const THROW = {
+  arc: PALETTE.ink,
+  arcWidth: 4,
+  arcDash: '10 7',
+  casing: PALETTE.paper,
+  casingWidth: 9,
+  rise: 0.45, // of the throw's length, how high the arc bows
+  stone: 8,
+  earshot: PALETTE.red,
+  earshotOpacity: 0.1,
+  earshotEdge: 2,
 };
 
 // A hex the turn report is pointing at, while its line is hovered.
@@ -1468,16 +1504,36 @@ const SPRITES = {
       ...smoke(96, 30, 1.6), ...smoke(150, 22, 1.3),
     ],
   },
-  // The exfil barn at the edge of the fields.
+  // The exfil barn at the edge of the fields, seen from the south-west like the
+  // exchange: a timber gable with its double doors and hayloft, a dark roof,
+  // cart ruts out of the doors, and the hooded green lamp the pick-up party
+  // shows — the one friendly light on the map.
   'objective-rally-point': {
     viewBox: '0 0 80 92',
-    draw: () => [
-      fill('M20 42 H62 V70 H20 Z', 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
-      ...inked('M20 42 H62 V70 H20 Z', 'paper', 1.6), fill('M20 42 H62 V70 H20 Z', toneClass('red', 20)),
-      ...inked('M16 44 L41 26 L66 44 Z', 'ink', 1.6),
-      ...inked('M33 52 H49 V70 H33 Z', 'green', 1.4),
-      line('M33 52 L49 70 M49 52 L33 70', 1.2),
-    ],
+    draw: () => {
+      const gable = 'M14 74 V46 L32 30 L50 46 V74 Z';
+      const side = 'M50 74 V46 L66 38 V66 Z';
+      const roof = 'M31 29 L51 47 L67 38 L47 20 Z';
+      let planks = '';
+      for (let x = 18; x < 50; x += 4) planks += `M${x} ${x < 32 ? 46 - (x - 14) * (16 / 18) : 30 + (x - 32) * (16 / 18)} V74 `;
+      let slats = '';
+      for (const t of [0.25, 0.5, 0.75]) slats += `M${31 + 16 * t} ${29 - 9 * t} L${51 + 16 * t} ${47 - 9 * t} `;
+      return [
+        line('M26 76 Q24 84 20 92 M38 76 Q40 84 44 92', 2.2, 'stroke-ink', { opacity: 0.3 }),
+        ...inked(side, 'paper', 1.8), fill(side, 'red', { 'fill-opacity': 0.35 }), fill(side, 'ink', { 'fill-opacity': 0.25 }),
+        ...inked(gable, 'paper', 1.8), fill(gable, 'red', { 'fill-opacity': 0.35 }),
+        line(planks, 0.8, 'stroke-ink', { opacity: 0.4 }),
+        ...inked(roof, 'ink', 1.8), line(slats, 0.8, 'stroke-paper', { opacity: 0.4 }),
+        line('M12 48 L32 28 L52 48', 2.6),
+        ...inked('M28 38 H36 V46 H28 Z', 'ink', 1.2),
+        ...inked('M22 56 H42 V74 H22 Z', 'green', 1.6),
+        line('M32 56 V74 M22 56 L32 74 M32 56 L22 74 M32 56 L42 74 M42 56 L32 74', 1),
+        // The lamp, hooded, showing green.
+        circle(68, 80, 8, 'green', { 'fill-opacity': 0.25 }),
+        circle(68, 80, 3.5, 'green'), ring(68, 80, 3.5, 1.4),
+        line('M64 77 Q68 72 72 77', 1.8),
+      ];
+    },
   },
   'landmark-church': { viewBox: '0 0 80 92', draw: () => [svg('g', { transform: 'translate(2 8)' }, church())] },
 
@@ -1618,17 +1674,31 @@ const SPRITES = {
   },
   // A spent canopy crumpled on the ground, cords to the harness — kit left
   // behind, not a chute in the air.
+  // A spent canopy on the ground: the same cloth as parachute-canopy in the
+  // air — green and cream gores round a vent — lying bunched in a fan, its
+  // rigging lines run back to the pack. Spent kit, not a chute still flying.
   'marker-parachute': {
     viewBox: '0 0 28 28',
     draw: () => {
-      const canopy = 'M3 16 C4 9 10 6 15 8 C19 5 25 8 25 13 C26 17 22 19 18 18 C14 21 7 21 3 16 Z';
+      const cx = 14, cy = 17;
+      const at = (deg, r) => [cx + Math.cos((deg * Math.PI) / 180) * r, cy + Math.sin((deg * Math.PI) / 180) * r].map((n) => n.toFixed(2)).join(' ');
+      const gores = [];
+      let edge = '';
+      for (let i = 0; i < 6; i++) {
+        const a1 = -170 + i * 26.7, a2 = a1 + 26.7;
+        const out = 11.5 + (i % 2 ? 1.2 : -0.4); // bunched, so the hem rises and falls
+        gores.push(fill(`M${at(a1, 3)} L${at(a1, out)} L${at(a2, out)} L${at(a2, 3)} Z`, i % 2 ? 'paper' : 'green'));
+        edge += `${i === 0 ? 'M' : 'L'}${at(a1, out)} L${at(a2, out)} `;
+      }
+      let seams = '';
+      for (let i = 0; i <= 6; i++) seams += `M${at(-170 + i * 26.7, 3)} L${at(-170 + i * 26.7, 12)} `;
       return [
-        fill(canopy, 'paper'), fill(canopy, toneClass('green', 20)),
-        line('M8 11 C10 14 9 17 7 19 M14 9 C15 13 14 16 13 20 M20 8 C20 12 21 15 19 18', 1.2),
-        line(canopy, 2),
-        line('M9 20 L14 25 M14 20 L15 25 M19 18 L16 25', 1.2),
-        svg('rect', { x: 12, y: 23, width: 6, height: 4, rx: 1, class: 'green' }),
-        svg('rect', { x: 12, y: 23, width: 6, height: 4, rx: 1, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
+        ...gores,
+        line(seams, 1),
+        line(`${edge} L${at(10, 3)} L${at(-170, 3)} Z`, 1.8),
+        line('M5 18 L13 24 M23 18 L15 24 M14 20 L14 24', 1),
+        svg('rect', { x: 11, y: 22.5, width: 6, height: 4.5, rx: 1, class: 'green' }),
+        svg('rect', { x: 11, y: 22.5, width: 6, height: 4.5, rx: 1, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
       ];
     },
   },
@@ -1673,7 +1743,7 @@ const SPRITES = {
       starburst(100, 100, 12, 96, 58, toneClass('ink', 10)),
       line(starburst(100, 100, 12, 96, 58, 'red').getAttribute('d'), 3),
       starburst(100, 100, 10, 62, 36, 'paper'),
-      label('BANG', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
+      label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
     ],
   },
   'stamp-destroyed': {
@@ -1681,7 +1751,8 @@ const SPRITES = {
     draw: () => [
       svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, class: 'paper', 'fill-opacity': 0.85 }),
       svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, fill: 'none', class: 'stroke-red', 'stroke-width': 6 }),
-      label('DESTROYED', { x: 100, y: 42, 'font-size': 32, 'letter-spacing': 3, class: 'red' }),
+      // Fitted to the stamp's width whatever face is used, so it never runs off the edge.
+      label('DESTROYED', { x: 100, y: 43, 'font-size': 34, 'font-family': TYPE.slab, textLength: 164, lengthAdjust: 'spacingAndGlyphs', class: 'red' }),
     ],
   },
 

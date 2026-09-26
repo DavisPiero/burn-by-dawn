@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -92,6 +92,9 @@ export function createBoard(svg, map, handlers) {
   const layerList = [terrain, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech];
   for (const layer of layerList) svg.appendChild(layer);
 
+  // An objective's own art stands in for the terrain motif on its footprint:
+  // the exchange's farmhouse hexes would otherwise print a cottage under it.
+  const underArt = new Set((map.objectives ?? []).flatMap((o) => o.hexes.map((h) => (Array.isArray(h) ? hexKey(h[0], h[1]) : hexKey(h.q, h.r)))));
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
     const terrainId = terrainIdAt(map, q, r);
@@ -109,7 +112,7 @@ export function createBoard(svg, map, handlers) {
       if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
       if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
       if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
-      const motif = style.hedge && hedgeLinks(map, q, r).length > 0 ? null : terrainMotifId(style, q, r);
+      const motif = underArt.has(hexKey(q, r)) || (style.hedge && hedgeLinks(map, q, r).length > 0) ? null : terrainMotifId(style, q, r);
       if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
     }
 
@@ -513,6 +516,7 @@ export function renderPieces(layers, state, view) {
   for (const route of view.routes) drawRoute(layers, route);
 
   if (view.targets) drawTargets(layers, view.targets);
+  if (view.throwPreview) drawThrow(layers, view.throwPreview);
 
   if (view.plan) drawPlan(layers, view.plan);
   if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
@@ -1124,6 +1128,21 @@ function drawNoise(layers, noise) {
   layers.highlight.appendChild(text('!', {
     x: p.x, y: p.y - NOISE.radius - 2, 'font-size': 18, 'font-weight': 'bold', fill: NOISE.text,
   }));
+}
+
+// A stone being aimed: earshot tinted and edged, then the lob as an arc bowed
+// up the page from the man to where it lands, and the stone.
+function drawThrow(layers, preview) {
+  const { map } = layers;
+  fillArea(layers, preview.earshot, THROW.earshotOpacity, THROW.earshot);
+  drawAreaEdge(layers, layers.path, preview.earshot, [[THROW.earshot, THROW.earshotEdge]]);
+  const a = axialToPixel(preview.from.q, preview.from.r, map.hexSize);
+  const b = axialToPixel(preview.to.q, preview.to.r, map.hexSize);
+  const lift = Math.hypot(b.x - a.x, b.y - a.y) * THROW.rise;
+  const d = `M${a.x} ${a.y} Q${(a.x + b.x) / 2} ${(a.y + b.y) / 2 - lift} ${b.x} ${b.y}`;
+  layers.path.appendChild(el('path', { d, fill: 'none', stroke: THROW.casing, 'stroke-width': THROW.casingWidth, 'stroke-linecap': 'round' }));
+  layers.path.appendChild(el('path', { d, fill: 'none', stroke: THROW.arc, 'stroke-width': THROW.arcWidth, 'stroke-dasharray': THROW.arcDash, 'stroke-linecap': 'round' }));
+  layers.path.appendChild(el('circle', { cx: b.x, cy: b.y, r: THROW.stone, fill: THROW.arc, stroke: THROW.casing, 'stroke-width': 2 }));
 }
 
 // Where the action being aimed can go.

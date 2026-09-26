@@ -25,12 +25,12 @@ import {
 import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
 import {
-  applyDocumentTheme, loadSuppliedAircraft, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
-  renderEndTurnButton, renderError, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
+  renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderTurnCounter, showPopup,
 } from './render/ui.js';
 
@@ -39,6 +39,7 @@ const readout = document.getElementById('coord-readout');
 const errorBox = document.getElementById('error');
 const turnCounter = document.getElementById('turn-counter');
 const endTurnButton = document.getElementById('end-turn');
+const undoButton = document.getElementById('undo');
 const rosterList = document.getElementById('roster');
 const alertDial = document.getElementById('alert-dial');
 const alertCaption = document.getElementById('alert-caption');
@@ -86,6 +87,11 @@ let dropShowTimer = null;
 // to finish being shown. Interface only, never game state.
 let briefing = null;
 let briefingsOn = true;
+// Undo (SPEC.md §4): the state before each move or action this player phase,
+// newest last. Emptied when the turn ends or the stick jumps, so it can never
+// take back what the garrison has seen — and the player phase rolls no dice,
+// so taking a move back can never re-roll anything.
+let undoStack = [];
 let briefingAfterDrop = false;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
@@ -164,6 +170,9 @@ function deriveView() {
     targets: null,
     targetLabel: null,
     hearsIds: null,
+    // Aiming a stone: the lob from the man to the hex, and the ground in
+    // earshot of where it lands (SPEC.md §4), so it never reads as a move.
+    throwPreview: null,
     // SPEC.md §7, §10: the exfil, what the hovered objective needs, and the
     // ground a charge going off this turn would kill a man on.
     exfil,
@@ -356,7 +365,7 @@ function describeObjective(o) {
     `needs ${chargesOnPoints(o)}`,
     `${o.detonated} gone off${burning}`,
     `fuse ${rules.charges.fuseTurns} turns`,
-    `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge`,
+    `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge, killing anyone in it, ours or theirs`,
     `alert +${kind.alert}`,
   ];
   if (kind.cutLine) parts.push('or a scout can cut the line: a full turn, silent');
@@ -413,7 +422,10 @@ function actionsFor(unit) {
     { id: 'hide', key: 'G', label: 'Hide', help: 'Go to ground: +concealment on this hex, ends his turn', ...withCost(checkHide(unit, rules), ap) },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
-    { id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
+    {
+      id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
+      help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Patrols in earshot walk over to look and sentries turn to face it — use it to pull a patrol off your path or turn a sentry's back. Alert +${rules.alert.stone}. Press T, then click where it lands`,
+    },
     { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', short: 'Pack', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
@@ -484,12 +496,20 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     if (check?.ok) {
       const hears = listeners(state.enemies, 'stone', hex, state.alert.points, rules);
       view.hearsIds = new Set(hears.map((e) => e.id));
+      const earshot = new Map();
+      const heard = hearingRadius('stone', state.alert.points, rules);
+      forEachCell(map, (q, r) => { if (isInPlay(map, q, r) && hexDistance({ q, r }, hex) <= heard) earshot.set(hexKey(q, r), { q, r }); });
+      view.throwPreview = { from: { q: unit.q, r: unit.r }, to: { q: hex.q, r: hex.r }, earshot };
       const who = hears.length === 0
-        ? 'nobody would hear it'
-        : hears.map((e) => `${e.label} ${e.speed === 0 ? 'turns' : 'goes to look'}`).join(', ');
-      view.targetLabel = `Throw a stone into ${view.place(hex)} — ${check.cost} AP, alert +${rules.alert.stone}: ${who}. Click to throw.`;
+        ? 'nobody is in earshot, so it only costs alert'
+        : hears.map((e) => `the ${e.label.toLowerCase()} ${e.speed === 0 ? 'turns to face it' : 'walks over to look'}`).join(', ');
+      view.targetLabel = `${unit.shortName} stays put and lobs a stone into ${view.place(hex)} — ${check.cost} AP, alert +${rules.alert.stone}. `
+        + `Heard ${heard} hexes round (shaded): ${who}. Click to throw.`;
     } else {
-      view.targetLabel = check ? `Throw a stone: ${check.reason}.` : 'Throw a stone: click a hex. Esc to cancel.';
+      view.targetLabel = check
+        ? `Throw a stone: ${check.reason}.`
+        : `THROW A STONE — ${unit.shortName} stays where he is and lobs it onto any outlined hex, up to ${rules.actions.throwStone.range} away; `
+          + 'no line of sight needed. The noise draws patrols to it and turns sentries toward it. Hover a hex to see who would hear. Esc to cancel.';
     }
   } else if (kind === 'swim') {
     for (const h of swimTargets(map, state, unit, rules)) add(h);
@@ -520,6 +540,7 @@ function render() {
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
+  renderUndoButton(undoButton, state, undoStack.length);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
@@ -571,7 +592,17 @@ function renderBoard() {
  * leaves the primary short (SPEC.md §10).
  */
 function commit(next) {
-  state = next === state ? state : settleMission(next, rules, baseMap);
+  if (next === state) return;
+  undoStack.push(state);
+  state = settleMission(next, rules, baseMap);
+}
+
+/** Take back the last move or action this turn, keeping where the mouse is. */
+function undoLast() {
+  if (undoStack.length === 0 || state.outcome || briefing || dropShow) return;
+  const previous = undoStack.pop();
+  state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
+  render();
 }
 
 // --- input ------------------------------------------------------------------
@@ -692,6 +723,7 @@ function handleEndTurn() {
 }
 
 function endTurnNow() {
+  undoStack = [];
   state = endTurn(state, rules, baseMap);
   if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
   render();
@@ -761,6 +793,7 @@ function jumpNow() {
   if (!run) return;
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
+  undoStack = [];
   state = jump(state, baseMap, rules);
   const landed = state.report.filter((e) => e.kind === 'landed');
   if (landed.length) {
@@ -817,6 +850,12 @@ function handleDropKey(event) {
 // R toggle the patrol-route overlay, and the action keys. Once the mission is
 // over only R still does anything.
 function handleKey(event) {
+  // Cmd-Z or Ctrl-Z undoes, as everywhere else; so does Z on its own.
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && (event.key === 'z' || event.key === 'Z') && !briefing && !dropShow) {
+    event.preventDefault();
+    undoLast();
+    return;
+  }
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   // Any key puts the briefing away, and does nothing else.
   if (briefing) {
@@ -878,6 +917,10 @@ function handleKey(event) {
     case 't':
     case 'T':
       handleAction('stone');
+      return;
+    case 'z':
+    case 'Z':
+      undoLast();
       return;
     case 'a':
     case 'A':
@@ -969,6 +1012,8 @@ try {
     render();
   });
   endTurnButton.addEventListener('click', handleEndTurn);
+  undoButton.addEventListener('click', undoLast);
+  attachPopup(undoButton, UNDO_HELP);
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
 
@@ -979,6 +1024,7 @@ try {
   // painted aircraft in assets/aircraft (§6).
   loadSuppliedTitleCard();
   loadSuppliedAircraft();
+  loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes));
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));

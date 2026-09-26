@@ -134,7 +134,7 @@ export default [
     equal(second.state.alert.points, 2 * rules.objectives.bridge.alert, 'alert raised twice');
   }],
 
-  ['a blast kills any trooper in its radius, wounded or not, leaves a body, and spares enemies', async () => {
+  ['a blast kills anyone in its radius: a trooper leaves a body, a killable enemy leaves none, the reserve is spared', async () => {
     const { rules, state } = await loadAll();
     const dump = state.objectives.find((o) => o.kind === 'fuelDump');
     const hex = dump.chargeHexes[0];
@@ -143,14 +143,19 @@ export default [
     const s = {
       ...scenario(state, { [inside.id]: { q: hex.q, r: hex.r + radius }, [outside.id]: { q: hex.q, r: hex.r + radius + 1 } }),
       charges: [{ objectiveId: dump.id, q: hex.q, r: hex.r, fuse: 1, unitId: null }],
-      enemies: [{ id: 'e', label: 'E', q: hex.q + 1, r: hex.r, facing: 0 }],
+      enemies: [
+        { id: 'near', label: 'Patrol', killable: true, q: hex.q + 1, r: hex.r, facing: 0 },
+        { id: 'reserve', label: 'Reserve squad', killable: false, q: hex.q, r: hex.r + 1, facing: 0 },
+        { id: 'far', label: 'Sentry', killable: true, q: hex.q + radius + 1, r: hex.r, facing: 0 },
+      ],
     };
     equal(blastHexesThisTurn(s, rules).length, 1, 'the readout knows it goes off this turn');
     const result = runFusePhase(s, rules);
     assert(unitIn(result.state, inside.id).dead, 'inside the radius dies');
     assert(!unitIn(result.state, outside.id).dead, 'outside lives');
-    equal(result.state.bodies.length, 1, 'a body');
-    equal(result.state.enemies.length, 1, 'the enemy is untouched');
+    equal(result.state.bodies.length, 1, 'one body: the trooper\'s, none for the enemy');
+    equal(result.state.enemies.map((e) => e.id).sort().join(), 'far,reserve', 'the patrol in the blast dies; the reserve and the sentry outside live');
+    equal(result.events.filter((e) => e.kind === 'enemyBlastKilled').length, 1, 'reported once');
     assert(objectiveIn(result.state, dump.id).destroyed, 'dump destroyed');
     equal(result.state.alert.points, rules.objectives.fuelDump.alert, 'fuel dump alert');
   }],
