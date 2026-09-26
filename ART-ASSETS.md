@@ -87,7 +87,7 @@ keeps a seventh man a JSON entry until someone draws him.
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
 | `symbol-scout.svg` | 24 x 24 | binoculars |
 | `symbol-gunner.svg` | 24 x 24 | Bren |
-| `counter-enemy-sentry.svg` | 56 x 56 | static post |
+| `counter-enemy-sentry.svg` | 56 x 56 | static post. **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
 | `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |
@@ -148,7 +148,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-exchange-destroyed.svg` | 160 x 184 | |
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
-| `objective-rally-point.svg` | 80 x 92 | the exfil barn or field |
+| `objective-rally-point.svg` | 80 x 92 | the exfil barn, from the south-west like the exchange, with the pick-up party's hooded green lamp. *Drawn by code (M8e).* |
 | `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art places this symbol inside itself, beside the building; the church stands whether or not the exchange does. |
 
 ---

@@ -167,6 +167,9 @@ All costs and modifiers below are numbers in `rules.json`.
   enemies in earshot react to it — patrols go and look, sentries turn to face it. The
   trade is deliberate: you choose where they look, and you pay a sighting's worth of alert
   for it. The hover readout shows which enemies would hear it before the player commits.
+  **A throw is not a move:** he stays on his hex. While it is aimed the board draws the lob
+  as a dashed arc from him to the hovered hex and shades the ground in earshot, and the
+  readout says he stays put, so it never reads as a path.
 - **Place a charge** (anyone carrying one) — costs **1 AP** (the `onPlaceCharge` hook may
   change it), standing on a charge hex of an objective that still needs charges (§7). One
   charge per charge hex.
@@ -197,10 +200,16 @@ to be casual while still being strategic.
 - **Hover an enemy**: highlight its vision arc and its patrol route.
 - **Hover an objective**: show what it needs (charges, fuse, blast radius).
 - **Right-click**: deselect / cancel.
+- **Undo** (M8e): the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last
+  move or action of this player phase, one step at a time, as far back as the start of the
+  turn. The steps are forgotten when the turn ends or the stick jumps, so nothing the
+  garrison has done is ever undone. The player phase rolls no dice (only the drop does,
+  §9), so undoing can never re-roll anything; it is a mis-click safety net, not a scouting
+  tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
   `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
-  charge, `X` cut the line, `W` swim, `D` RAF diversion. An action
+  charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
 ---
@@ -452,7 +461,10 @@ goes off when it reaches 0: a 3-turn charge placed on turn N goes off at the end
 N+2. Charges can be placed and left. An objective is destroyed once as many of its charges
 have gone off as it needs, in the same turn or not. A trooper inside the blast radius of a
 charge at detonation dies, wounded or not — hits (§5) do not apply — and the hover path
-warns of it. Enemies are not harmed by blasts: nothing in the game kills an enemy.
+warns of it. **An enemy inside the blast radius dies too** (M8e, operator's call), unless
+its type cannot be killed (`killable: false`: the reserve squad, §6). It leaves no body:
+the explosion itself is what the garrison hears, and a body found after it would count
+the same event twice. Like a gunner's kill (§4), it stops holding anyone in contact.
 
 **One objective, one explosion:** charges on the same objective that detonate in the same
 fuse phase are one explosion — the alert rises once and the noise is heard once. Charges
@@ -692,5 +704,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 | **M8c** | Operator review: title card, charge counts, the leader's rollover, ready to host | The orders open under the title card and fit at 1280x800; the orders, rings and hovers say how many charges each target takes; Holloway's rollover explains his orders and radio; the game runs from GitHub Pages; no rules change |
 | **M8d** | Supplied art in: portraits, chips, paper, title card, fonts; objectives redrawn after the reference art; a slot for a painted aircraft; published | The supplied files load with no console errors but the optional aircraft; the orders fit at 1280x800; the game plays from its GitHub Pages address; no rules change |
+| **M8e** | Operator review: undo, blasts kill enemies, the stone throw shown as a throw, the exfil barn, lighter paper | Undo takes back any move or action this turn and no further; an enemy in a blast dies unless it is the reserve, leaving no body; aiming a stone draws the lob and the earshot; the painted aircraft flies the drop |
 
 Do not start a milestone before the previous one is merged and playable.

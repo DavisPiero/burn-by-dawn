@@ -230,7 +230,7 @@ redraws these in M7b regardless, so this only raises the ceiling.
 
 ---
 
-## Priority 6 — the aircraft
+## Priority 6 — the aircraft ✅ done (2026-09-26)
 
 **Why:** the drop is the first thing that moves. The drawn Dakota is a flat icon; a
 painted one matches the portraits and the title card. A bitmap is the right format here:
@@ -255,6 +255,92 @@ about 95 px wide an SVG's crispness buys nothing.
 
 Most generators can't make transparency: generate it on flat white or flat magenta, then
 cut it out (Photoshop's Remove Background, or Preview's Instant Alpha) before saving.
+
+---
+
+## Priority 7 — the enemy counters
+
+**Why:** our six are painted; the garrison is still drawn helmets. The two sides should
+look like they came from the same box. The slot is wired: drop a file in and reload.
+
+| | |
+|---|---|
+| Files | `assets/enemies/counter-enemy-sentry.png`, `counter-enemy-patrol.png`, `counter-enemy-reserve.png` |
+| Size | **1:1, 128 × 128 px** |
+| Format | PNG, 8-bit sRGB, **transparent background** |
+| Shown at | About **20 px**, inside the black clipped-corner counter, above the red name strip (code prints SENTRY / PATROL / RESERVE SQUAD). Silhouette-level: it must read at a glance as *German* and as *which kind*. |
+| Tell them apart | Sentry: **one** man in a coal-scuttle helmet and greatcoat collar, rifle muzzle over the shoulder. Patrol: **two** helmets side by side. Reserve squad: **three** helmets and an MG42 barrel — the one you cannot kill. |
+| Code does | The frame, the red strip and its name, the facing arrow, the suppressed and no-kill markers. |
+
+### Prompt (add the style block)
+
+> Counter icon for a board game, head and shoulders of a WW2 German soldier in a Stahlhelm
+> coal-scuttle helmet, seen from the front, grim, shadowed eyes under the rim, feldgrau
+> greatcoat collar, simple bold shapes that read at thumbnail size, isolated on a plain
+> transparent background, no text, no insignia, no symbols.
+
+For the patrol and the reserve, ask for *two* / *three soldiers' helmeted heads close
+together, overlapping*, and for the reserve add *an MG42 machine-gun barrel across the
+front*. Keep all three the same painter, the same light and the same scale of head.
+**No swastikas or eagle insignia**: they would not read at 20 px, and they are best left
+out of a game like this anyway.
+
+---
+
+## Priority 8 — the results masthead
+
+**Why:** the last page of every game still has the drawn BURN BY DAWN lettering, while the
+title card has your stencil. This one is quick: you already have the lettering.
+
+| | |
+|---|---|
+| File | `assets/title/logo-burn-by-dawn.png` (needs a small code hook, like the title card) |
+| Size | **8:3, 1600 × 600 px** |
+| Format | PNG, **transparent background** — it sits on the cream results page |
+| Content | The same BURN BY DAWN stencil as the title card, in **ink black** on transparency (or ink with a thin red offset shadow, like the annual's mastheads), on two lines: BURN / BY DAWN. A small parachute silhouette is welcome, no picture behind. |
+
+---
+
+## Priority 9 — reference art for the hedgerows, woods and orchards (for Claude to redraw)
+
+**Why:** after the objectives, the hedges are the next-biggest thing on the map, and they
+are drawn as lumpy lines in code because they have to follow whatever route the hedgerow
+hexes take. A bitmap cannot bend to follow them, so these are **references, like the
+objectives were** — the look to match — and the code is redrawn to them. Save them to
+`assets/reference/` (the game never loads them).
+
+- **Hedgerows (bocage):**
+  > Top-down view from directly above of Normandy bocage: dense hedgerows on earth banks
+  > dividing small fields, clumps of bushes and a few trees along each hedge, a sunken lane
+  > between two hedges. Simple bold shapes, like a symbol on a wargame map.
+- **Woods:**
+  > Top-down view from directly above of a small deciduous wood, tree crowns as rounded
+  > clumps with a dark shadow side, a ragged edge where it meets the fields. Simple bold
+  > shapes, like a symbol on a wargame map.
+- **Orchard:**
+  > Top-down view from directly above of an apple orchard in neat rows, round tree crowns
+  > with small shadows, grass between. Simple bold shapes, like a symbol on a wargame map.
+
+What helps most is a look to copy: how chunky the bushes are, how the shadow falls, how
+dark the green is against the cream.
+
+---
+
+## Priority 10 — the explosion
+
+**Why:** the BOOM starburst is the game's big moment, and it is the flattest drawing on the
+board.
+
+| | |
+|---|---|
+| File | `assets/markers/marker-blast.png` (needs a small code hook) |
+| Size | **1:1, 512 × 512 px**, PNG, **transparent background** |
+| Shown at | About 110 px, stepped in over three frames, then gone (code does the timing). |
+| Content | A comic-book explosion starburst, jagged spikes, red and yellow-cream with black ink outline and Ben-Day dots. **Leave the middle empty**: code sets BOOM over it in the stencil face. |
+
+> Comic-book explosion starburst, jagged irregular spikes, bright red outer burst with a
+> cream-yellow core, thick black ink outline, Ben-Day halftone dots, 1980s British war
+> comic style, isolated on a transparent background, no text, empty centre.
 
 ---
 
@@ -287,4 +373,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.
 - A plain night scene for the title card (moon, Dakota, canopies, skyline), with the title
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
-- The results masthead, BURN BY DAWN in slab capitals.
+- The results masthead, BURN BY DAWN in slab capitals (until priority 8 is supplied).
+- The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
+  exchange.
+- The parachutes: the canopy opening and drifting in the air and the spent one on the
+  ground are the same green-and-cream cloth (M8e). Not worth a bitmap: they print at about
+  20 px, where a painting would just be a blur, and the drawn ones now match each other.
