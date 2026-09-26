@@ -516,6 +516,74 @@
     #results .total td { border-top: 2px solid var(--ink); font-weight: bold; font-size: 14px; }
     #results button { padding: 4px 12px; font-size: 13px; font-weight: bold; }
 
+    /* The briefing card (SPEC.md §11): the orders before the drop and an update
+       at the start of each turn, over the board. Any key or click puts it away. */
+    #briefing-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(26, 26, 24, 0.28);
+      cursor: pointer;
+    }
+    #briefing-backdrop[hidden] { display: none; }
+    #briefing {
+      box-sizing: border-box;
+      width: min(600px, 80%);
+      max-height: 86%;
+      overflow: hidden;
+      padding: 0 18px 12px;
+      font-size: 15px;
+      line-height: 1.45;
+      background-color: var(--paper);
+      background-image: var(--paper-fibre);
+      background-size: var(--paper-fibre-size);
+      border: 3px solid var(--ink);
+      box-shadow: 6px 6px 0 var(--ink);
+      cursor: default;
+    }
+    #briefing .brief-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 0 -18px 10px;
+      padding: 5px 18px;
+      font-family: var(--slab);
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    #briefing .brief-title { font-size: 22px; }
+    #briefing .brief-kicker { font-size: 13px; opacity: 0.8; }
+    #briefing h3 {
+      margin: 10px 0 4px;
+      font-family: var(--slab);
+      font-size: 14px;
+      letter-spacing: 2px;
+      border-bottom: 2px solid var(--ink);
+    }
+    #briefing p { margin: 0 0 8px; }
+    #briefing ul { margin: 0; padding: 0; list-style: none; }
+    #briefing li { position: relative; padding-left: 16px; margin-bottom: 4px; }
+    #briefing li::before { content: "▸"; position: absolute; left: 0; }
+    #briefing .brief-hints li::before { content: "→"; color: var(--red); font-weight: bold; }
+    #briefing .brief-more { opacity: 0.65; }
+    #briefing .brief-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    #briefing .brief-foot label { cursor: pointer; }
+    #briefing .brief-go {
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
     /* Rollovers (SPEC.md §11): detail kept off the page until asked for. */
     #popup {
       position: fixed;
@@ -549,6 +617,7 @@
         <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
         <div id="seed"></div>
       </div>
+      <div id="briefing-backdrop" hidden><section id="briefing" role="dialog" aria-modal="true"></section></div>
       <div id="left-content">
         <svg id="board"></svg>
         <div id="captions">

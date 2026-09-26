@@ -214,6 +214,57 @@ export function describeAlertStates(alert) {
   ];
 }
 
+// --- the briefing card (SPEC.md §11) ---------------------------------------------
+
+// How much a line of the turn report matters, lowest first: the card puts the
+// worst news at the top and cuts from the bottom.
+const EVENT_WEIGHT = {
+  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, reserve: 2, spotted: 2, diversion: 2,
+  pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
+};
+
+/** The report's lines, most important first, as the card shows them. */
+export function rankedReport(events, place) {
+  return events
+    .map((event, i) => ({ event, i, weight: EVENT_WEIGHT[event.kind] ?? 4 }))
+    .sort((a, b) => a.weight - b.weight || a.i - b.i)
+    .map(({ event }) => describeEvent(event, place));
+}
+
+/**
+ * Show the briefing card, or hide it when `briefing` is null. `briefing` is
+ * { title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ *   toggle?: { on } } — worded in main.js. `onToggle(on)` is the turn-update box.
+ */
+export function renderBriefing(backdrop, card, briefing, onToggle) {
+  backdrop.hidden = !briefing;
+  if (!briefing) return;
+  card.replaceChildren(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
+  for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, text));
+  for (const section of briefing.sections) {
+    if (!section.lines.length) continue;
+    card.appendChild(html('h3', null, section.heading));
+    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, line)));
+    if (section.more) list.appendChild(html('li', 'brief-more', section.more));
+    card.appendChild(list);
+  }
+  const foot = html('div', 'brief-foot');
+  if (briefing.toggle) {
+    const box = html('input');
+    box.type = 'checkbox';
+    box.checked = briefing.toggle.on;
+    box.addEventListener('click', (event) => event.stopPropagation());
+    box.addEventListener('change', () => onToggle(box.checked));
+    const label = html('label', null, [box, ' Brief me at the start of every turn']);
+    label.addEventListener('click', (event) => event.stopPropagation());
+    foot.appendChild(label);
+  } else {
+    foot.appendChild(html('span'));
+  }
+  foot.appendChild(html('span', 'brief-go', 'CARRY ON — any key or click'));
+  card.appendChild(foot);
+}
+
 // --- the turn report ----------------------------------------------------------
 
 /**
@@ -242,7 +293,7 @@ export function renderReport(element, state, place, onLocate) {
   }
 }
 
-function describeEvent(event, place) {
+export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
     case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}.`;

@@ -16,6 +16,7 @@ import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
+import { hintsFor } from './hints.js';
 import { validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
@@ -26,7 +27,7 @@ import { renderRoster } from './render/roster.js';
 import { applyDocumentTheme, loadSuppliedPaper, loadSuppliedPortraits } from './render/theme.js';
 import {
   DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
-  hidePopup, placeName, renderActions, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
+  hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderTurnCounter, showPopup,
 } from './render/ui.js';
@@ -49,6 +50,8 @@ const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
 const alertBox = document.getElementById('alert');
+const briefingBackdrop = document.getElementById('briefing-backdrop');
+const briefingCard = document.getElementById('briefing');
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -72,6 +75,12 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
+// The briefing card (SPEC.md §11): which one is open, if any, whether turn
+// updates are wanted this session, and whether one is waiting for the drop
+// to finish being shown. Interface only, never game state.
+let briefing = null;
+let briefingsOn = true;
+let briefingAfterDrop = false;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -472,6 +481,7 @@ function render() {
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome);
+  renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
   dropStalePopup();
 }
 
@@ -629,10 +639,63 @@ function handleRosterClick(unitId) {
 }
 
 function handleEndTurn() {
+  if (briefing) return closeBriefing();
   if (dropShow) return endDropShow();
   if (state.phase === 'drop') return jumpNow();
+  endTurnNow();
+}
+
+function endTurnNow() {
   state = endTurn(state, rules, baseMap);
+  if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
   render();
+}
+
+function closeBriefing() {
+  briefing = null;
+  render();
+}
+
+/** The card's words: the orders before the drop, or this turn's update. */
+function describeBriefing(which, view) {
+  const primary = state.objectives.find((o) => o.primary);
+  if (which.kind === 'orders') {
+    const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toLowerCase()}`);
+    const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
+    return {
+      title: 'ORDERS',
+      kicker: 'BEFORE THE DROP',
+      paragraphs: [
+        `Tonight six men drop behind the lines. Blow the ${primary.label.toLowerCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the exfil. Dawn comes at the end of turn ${rules.turnLimit}.`,
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so the order you blow things in is the plan.`] : []),
+      ],
+      sections: [{
+        heading: 'HOW TO PLAY',
+        lines: [
+          'Pick a drop run with 1–3, or click its name on the map. Hover the map to see where you might come down.',
+          'Space jumps. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Space ends the turn.',
+          'Red rings mark your targets. The red dashed hexes round them are charge points: stand a man carrying a charge there and press C.',
+          'Hover anything for detail. KEYS, top right, lists every key.',
+        ],
+      }],
+    };
+  }
+  const lines = rankedReport(state.report, view.place);
+  const shown = 6;
+  const alert = rules.alert.states[alertIndex(state.alert.points, rules)];
+  return {
+    title: `TURN ${state.turn} OF ${rules.turnLimit}`,
+    kicker: `GARRISON ${alert.label.toUpperCase()}`,
+    sections: [
+      {
+        heading: state.turn === 1 ? 'THE DROP' : 'SINCE LAST TURN',
+        lines: lines.length ? lines.slice(0, shown) : ['A quiet night. Nothing seen.'],
+        more: lines.length > shown ? `…and ${lines.length - shown} more in the report under the map.` : null,
+      },
+      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok }) },
+    ],
+    toggle: { on: briefingsOn },
+  };
 }
 
 /** Jump, and show the stick going out and coming down. */
@@ -652,6 +715,9 @@ function jumpNow() {
     };
     clearTimeout(dropShowTimer);
     dropShowTimer = setTimeout(endDropShow, dropTimeline(baseMap, dropShow).length);
+    briefingAfterDrop = briefingsOn;
+  } else if (state.phase !== 'drop' && briefingsOn) {
+    briefing = { kind: 'turn' };
   }
   render();
 }
@@ -659,6 +725,8 @@ function jumpNow() {
 function endDropShow() {
   clearTimeout(dropShowTimer);
   dropShow = null;
+  if (briefingAfterDrop) briefing = { kind: 'turn' };
+  briefingAfterDrop = false;
   render();
 }
 
@@ -693,6 +761,12 @@ function handleDropKey(event) {
 // over only R still does anything.
 function handleKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+  // Any key puts the briefing away, and does nothing else.
+  if (briefing) {
+    event.preventDefault();
+    closeBriefing();
+    return;
+  }
   if (dropShow) {
     event.preventDefault();
     endDropShow();
@@ -723,8 +797,8 @@ function handleKey(event) {
     }
     case ' ':
       event.preventDefault();
-      state = endTurn(state, rules, baseMap);
-      break;
+      endTurnNow();
+      return;
     case 'r':
     case 'R':
       state = toggleRoutes(state);
@@ -847,6 +921,9 @@ try {
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, DIVERSION_HELP);
+  // The orders open over the board before anything else (SPEC.md §11).
+  briefing = { kind: 'orders' };
+  briefingBackdrop.addEventListener('click', () => closeBriefing());
   render();
 
   // The board is up. The failure reporter in index.html stops attributing
