@@ -41,7 +41,7 @@ and that's fine. The game tints nothing in a portrait.
 
 ---
 
-## Priority 1 — the six full portraits
+## Priority 1 — the six full portraits ✅ done (2026-09-26)
 
 **Why first:** the roster rail shows all six all the time. They're the emotional payload
 of the design (SPEC.md §11), and today they're the weakest drawn art in the game.
@@ -85,7 +85,11 @@ it is? If not, push the one feature harder and simplify the background.
 
 ---
 
-## Priority 2 — the six counter chips
+## Priority 2 — the six counter chips ✅ done (2026-09-26)
+
+Made from the painted portraits by `tools/make-chips.js` (paste it into the browser
+console on the running game). If a portrait is regenerated, retune that man's crop in its
+`CROPS` table and run it again; there is no need to generate chips separately.
 
 **Why:** if you supply painted portraits but no chips, the counters on the board show
 drawn faces that won't match the portraits. Make the chips from the portraits you
