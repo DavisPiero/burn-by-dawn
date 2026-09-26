@@ -856,9 +856,10 @@ function handleAction(id) {
     case 'swim':
     case 'pass':
     case 'stabilise': {
+      // An action his role can never take is not in his list: its key does nothing.
       const action = actionsFor(unit).find((a) => a.id === id);
       if (state.targeting === id) state = setTargeting(state, null);
-      else if (action.ok) state = setTargeting(state, id);
+      else if (action?.ok) state = setTargeting(state, id);
       break;
     }
     default:
