@@ -721,8 +721,11 @@ by changing one registry file and nothing else. No inline path data in game logi
 **Sound** (M10). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
 counter snapped down when a man moves or a move is undone, a pencil for every other
 action, a card's rustle when a briefing card or the back page opens, a dog a long way off
-when the alert rises, a muffled crump for each turn with a bang, and three far-off crumps
-for the RAF diversion. Made in code (`src/render/sound.js`, Web Audio) until files are
+when the alert rises, and three far-off crumps for the RAF diversion. The one exception
+(M11, from playtesting): a turn with a bang plays a real explosion, close and loud, and
+the board shows it — the page flashes, the board jolts, a shock ring runs out to the edge
+of the blast under the starburst, and smoke rolls up — before that turn's card is laid
+over it. It is the payoff of the plan, and it should land. Made in code (`src/render/sound.js`, Web Audio) until files are
 supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
 turns it off for the session (nothing is stored, CLAUDE.md rule 9).

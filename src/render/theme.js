@@ -628,8 +628,26 @@ export const BLAST = {
   width: 3,
   casingWidth: 6,
   previewOpacity: 0.08,
-  // The starburst drawn where a charge went off, for a moment after the turn.
+  // The starburst drawn where a charge went off, for a moment after the turn,
+  // half as big again when it brings the target down.
   artSize: 150,
+  destroyedScale: 1.5,
+  // Around it (M11, to make a bang land): the page flashes, the board jolts,
+  // a shock ring runs out to the edge of the blast, and smoke rolls up and
+  // thins. The turn's card waits `holdMs` so all of it is seen.
+  flash: PALETTE.paper,
+  flashOpacity: 0.85,
+  flashMs: 260,
+  shakeMs: 480,
+  shakePx: 7,
+  ringStroke: PALETTE.ink,
+  ringWidth: 7,
+  ringMs: 520,
+  smoke: PALETTE.ink,
+  smokeOpacity: 0.3,
+  smokePuffs: 7,
+  smokeMs: 2300,
+  holdMs: 1900,
 };
 
 // The drop (SPEC.md §9).

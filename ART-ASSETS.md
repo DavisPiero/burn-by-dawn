@@ -240,7 +240,9 @@ figures or the UI will jitter every turn.
 ## 9. Audio
 
 Keep it diegetic to the *table*, not the battlefield — you are playing a paper game, not
-standing in Normandy. Since M10 all five are made in code (`src/render/sound.js`) as
+standing in Normandy — with one exception since M11: a charge going off is a real
+explosion, close and loud, because it is the payoff of the whole plan. Since M10 all of
+them are made in code (`src/render/sound.js`) as
 placeholders; a file dropped into `/assets/audio/` with the name below replaces its
 placeholder on the next reload, with no code change. A missing file is fine.
 
@@ -254,7 +256,8 @@ MP3, and a second would double the requests for files that are not there.
 | `pencil-scratch.mp3` | any action but a move: hide, a charge, a stone, suppress… | ~0.3 s |
 | `counter-snap.mp3` | a man moves, or a move is undone | ~0.1 s |
 | `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
-| `crump.mp3` | a turn with an explosion; three quieter ones for the RAF diversion | ~1.2 s |
+| `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
+| `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.
 

@@ -829,26 +829,72 @@ function travel(layers, mover, unit, now) {
   animation.currentTime = elapsed;
 }
 
-// A starburst where each charge went off, revealed in steps and then gone.
+// Each charge that went off: the page flashes and the board jolts once, then
+// at each charge a shock ring runs out to the edge of its blast, the
+// starburst is revealed in steps, and smoke rolls up and thins (M11). Drawing
+// memory like a move: redrawn part-way, it carries on from where it was.
 function drawBlasts(layers, state, now) {
   if (layers.blasts.report !== state.report) {
-    layers.blasts = {
-      report: state.report,
-      list: state.report.filter((e) => e.kind === 'explosion').map((e) => ({ q: e.q, r: e.r, since: now })),
-    };
+    const list = state.report.filter((e) => e.kind === 'explosion').flatMap((e) => (
+      (e.at ?? [{ q: e.q, r: e.r }]).map((h) => ({ q: h.q, r: h.r, destroyed: e.destroyed, radius: e.blastRadius ?? 1 }))
+    ));
+    layers.blasts = { report: state.report, since: now, list };
+    if (list.length && typeof layers.svg.animate === 'function') {
+      const d = BLAST.shakePx;
+      layers.svg.animate([
+        { transform: 'translate(0, 0)' }, { transform: `translate(${-d}px, ${d * 0.6}px)` }, { transform: `translate(${d * 0.8}px, ${-d * 0.5}px)` },
+        { transform: `translate(${-d * 0.5}px, ${-d * 0.4}px)` }, { transform: `translate(${d * 0.3}px, ${d * 0.3}px)` }, { transform: 'translate(0, 0)' },
+      ], { duration: BLAST.shakeMs, easing: 'linear' });
+    }
   }
-  for (const blast of layers.blasts.list) {
-    const elapsed = now - blast.since;
-    if (elapsed >= MOTION.blastMs) continue;
-    const p = axialToPixel(blast.q, blast.r, layers.map.hexSize);
-    const size = BLAST.artSize;
+  const { list, since } = layers.blasts;
+  const elapsed = now - since;
+  if (list.length === 0 || elapsed >= Math.max(BLAST.smokeMs + 600, MOTION.blastMs)) return;
+  const { map } = layers;
+
+  const edge = boardEdges(map);
+  const flash = el('rect', {
+    x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top, fill: BLAST.flash,
+  });
+  playFrom(flash, [{ opacity: BLAST.flashOpacity }, { opacity: 0 }], { duration: BLAST.flashMs }, elapsed);
+  layers.effects.appendChild(flash);
+
+  list.forEach((blast, n) => {
+    const p = axialToPixel(blast.q, blast.r, map.hexSize);
+    const reach = (blast.radius + 0.5) * map.hexSize * Math.sqrt(3);
+    const ring = el('circle', { cx: p.x, cy: p.y, r: reach, fill: 'none', stroke: BLAST.ringStroke, 'stroke-width': BLAST.ringWidth });
+    ring.style.transformOrigin = `${p.x}px ${p.y}px`;
+    playFrom(ring, [
+      { transform: 'scale(0.1)', opacity: 0.9, strokeWidth: BLAST.ringWidth * 2 },
+      { transform: 'scale(1)', opacity: 0, strokeWidth: 1 },
+    ], { duration: BLAST.ringMs, easing: 'ease-out' }, elapsed);
+    layers.effects.appendChild(ring);
+
+    for (let i = 0; i < BLAST.smokePuffs; i++) {
+      // Spread round the blast by index, not rolled: display never uses the game's dice.
+      const a = ((i * 137.5 + n * 53) % 360) * (Math.PI / 180);
+      const spread = map.hexSize * (0.25 + (i % 3) * 0.22);
+      const x = p.x + Math.cos(a) * spread, y = p.y + Math.sin(a) * spread * 0.6;
+      const puff = el('circle', { cx: x, cy: y, r: map.hexSize * (0.35 + (i % 2) * 0.15), fill: BLAST.smoke });
+      puff.style.transformOrigin = `${x}px ${y}px`;
+      const rise = map.hexSize * (1 + (i % 4) * 0.35);
+      playFrom(puff, [
+        { transform: 'translate(0, 0) scale(0.4)', opacity: 0 },
+        { transform: `translate(0, ${-rise * 0.3}px) scale(1)`, opacity: BLAST.smokeOpacity, offset: 0.2 },
+        { transform: `translate(${(i % 2 ? 1 : -1) * 6}px, ${-rise}px) scale(1.8)`, opacity: 0 },
+      ], { delay: 120 + i * 70, duration: BLAST.smokeMs, easing: 'ease-out' }, elapsed);
+      layers.effects.appendChild(puff);
+    }
+
+    if (elapsed >= MOTION.blastMs) return;
+    const size = BLAST.artSize * (blast.destroyed ? BLAST.destroyedScale : 1);
     const outer = el('g', { transform: `translate(${p.x - size / 2} ${p.y - size / 2})` });
     const inner = el('g', { class: 'nd-blast' });
     inner.style.animationDelay = `${-Math.round(elapsed)}ms`;
     inner.appendChild(el('use', { href: '#marker-blast', width: size, height: size }));
     outer.appendChild(inner);
     layers.effects.appendChild(outer);
-  }
+  });
 }
 
 // --- speech bubbles (SPEC.md §5 Dialogue, §11) ---------------------------------

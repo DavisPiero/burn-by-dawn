@@ -27,7 +27,7 @@ import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPie
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -99,6 +99,9 @@ let dropShowTimer = null;
 // called, before its card. Display only; any key or click skips it.
 let flyShow = null;
 let flyShowTimer = null;
+// A turn that ended with a bang (M11): its card waits until the explosion has
+// been seen, instead of covering it at once. Any key or click brings it now.
+let bangTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -694,7 +697,7 @@ function cueReport(report) {
 
 /** Take back the last move or action, once, keeping where the mouse is. */
 function undoLast() {
-  if (!undoState || state.outcome || briefing || dropShow || flyShow) return;
+  if (!undoState || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
   const previous = undoState;
   undoState = null;
   playCue('move');
@@ -707,6 +710,7 @@ function undoLast() {
 function handleHexClick(q, r) {
   if (dropShow) return endDropShow();
   if (flyShow) return endFlyShow();
+  if (bangTimer) return endBangHold();
   if (state.outcome || state.phase === 'drop') return;
   highlightHex = null;
   if (state.targeting) {
@@ -765,6 +769,7 @@ function handleTargetClick(q, r) {
 
 /** An action button or its key. Aimed actions start aiming; the rest happen. */
 function handleAction(id) {
+  if (bangTimer) return endBangHold();
   if (state.outcome) return;
   if (id === 'diversion') {
     if (flyShow) return;
@@ -827,6 +832,7 @@ function handleHexLeave() {
 function handleRosterClick(unitId) {
   if (dropShow) return endDropShow();
   if (flyShow) return endFlyShow();
+  if (bangTimer) return endBangHold();
   if (state.outcome) return;
   state = selectUnit(state, unitId);
   render();
@@ -836,6 +842,7 @@ function handleEndTurn() {
   if (briefing) return closeBriefing();
   if (dropShow) return endDropShow();
   if (flyShow) return endFlyShow();
+  if (bangTimer) return endBangHold();
   if (state.phase === 'drop') return jumpNow();
   endTurnNow();
 }
@@ -844,7 +851,21 @@ function endTurnNow() {
   undoState = null;
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
-  if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
+  if (!state.outcome && briefingsOn) {
+    if (state.report.some((e) => e.kind === 'explosion')) {
+      clearTimeout(bangTimer);
+      bangTimer = setTimeout(endBangHold, BLAST.holdMs);
+    } else {
+      briefing = { kind: 'turn' };
+    }
+  }
+  render();
+}
+
+function endBangHold() {
+  clearTimeout(bangTimer);
+  bangTimer = null;
+  briefing = { kind: 'turn' };
   render();
 }
 
@@ -1097,6 +1118,11 @@ function handleKey(event) {
   if (flyShow) {
     event.preventDefault();
     endFlyShow();
+    return;
+  }
+  if (bangTimer) {
+    event.preventDefault();
+    endBangHold();
     return;
   }
   if (state.phase === 'drop') {
