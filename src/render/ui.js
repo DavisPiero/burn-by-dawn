@@ -357,10 +357,20 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     foot.appendChild(label);
   } else if (briefing.choice && !briefing.choice.top) {
     foot.appendChild(briefChoice(briefing.choice));
+  } else if (briefing.confirm) {
+    // The one card with a choice to make (M14, the exfil): its button acts,
+    // any other key or click backs out.
+    const button = html('button', 'btn', boldKeys(briefing.confirm.label));
+    button.type = 'button';
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.confirm.onConfirm();
+    });
+    foot.appendChild(button);
   } else {
     foot.appendChild(html('span'));
   }
-  foot.appendChild(html('span', 'brief-go', 'CARRY ON — any key or click'));
+  foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
   card.appendChild(foot);
 }
 
@@ -718,7 +728,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
 
   element.append(
     titleBanner(banner),
-    html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
+    html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR SQUAD DO?'),
     html('h2', null, OUTCOME_WORDS[outcome.kind]),
     // The turn and level on a line of their own (M13).
     html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),

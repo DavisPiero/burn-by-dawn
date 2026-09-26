@@ -18,7 +18,8 @@ Read these before drawing anything. They are what make the swap painless.
 **SVG (default for everything that is a shape)**
 - Export with a `viewBox`, and **strip `width`/`height` attributes**. The game scales them.
 - **No hardcoded colours.** Use CSS classes only: `.ink`, `.paper`, `.green`, `.red`,
-  `.blue`, and `.leader` for the ranking man's marks only (see the leader counter below).
+  `.blue`, `.leader` for the ranking man's marks only (see the leader counter below), and
+  `.fire` (a soft printed orange, M14) for flames and the blast's fireball only.
   The palette lives in `theme.js` and must stay tunable.
 - **Do not bake in the halftone.** Fills get the halftone `<pattern>` applied in code so
   density can be tuned per element.
@@ -87,7 +88,7 @@ keeps a seventh man a JSON entry until someone draws him.
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
 | `symbol-scout.svg` | 24 x 24 | binoculars, from the front: two big lenses and a bridge (redrawn bolder M13) |
 | `symbol-gunner.svg` | 24 x 24 | Bren, a solid side silhouette: curved magazine up, stock, bipod (redrawn bolder M13) |
-| `counter-enemy-sentry.svg` | 56 x 56 | static post. **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
+| `counter-enemy-sentry.svg` | 56 x 56 | static post: one man, helmet over greatcoat shoulders with a slung rifle slanting behind (M14; the upright rifle read as a T). **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
 | `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |
@@ -114,7 +115,7 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
 | `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
 | `terrain-ridge.svg` | 80 x 92 | 1 — not used since M7b: the ridge is drawn as tonal bands |
-| `terrain-farmhouse.svg` | 80 x 92 | 1 |
+| `terrain-farmhouse.svg` | 80 x 92 | 1: Ferme Lebrun, the one farmhouse hex not under an objective — a farm round its yard after `assets/reference/Farmhouse_Reference_01.jpeg` (M14): half-timbered house under red tiles, stone barn under slate with an arched door, haystack, yard wall with a gate gap. *Drawn by code.* |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
 
 **Roads and the railway are not motifs** (M7b). Code draws each road as one continuous
@@ -144,7 +145,7 @@ These span several hexes and sit as overlays above the terrain layer.
 |---|---|---|
 | `objective-rail-bridge.svg` | 280 x 92 | 3 hexes wide, spanning the canal |
 | `objective-bridge-destroyed.svg` | 280 x 92 | collapsed span, same footprint |
-| `objective-exchange.svg` | 160 x 184 | 2x2 hex village building, telephone poles |
+| `objective-exchange.svg` | 160 x 184 | 2x2 hex village building with a roof standard on its ridge (a short post and crossarm at 100, 42 in these units, where the code's wires end; the poles beside the house went in M14) |
 | `objective-exchange-destroyed.svg` | 160 x 184 | |
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
@@ -171,10 +172,10 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
-| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
+| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
-| `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs the wires from its crossarm to the building, M12) |
+| `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs one long sagging wire from its crossarm to the exchange's roof standard, M12; M14) |
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
 | `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11). **Or a painted PNG**, `/assets/aircraft/aircraft-dakota.png`, 512 x 512, transparent, the same view — it replaces the drawn one on load, and its shadow is made from it (see ART-PROMPTS.md) |
 | `aircraft-dakota-shadow.svg` | 120 x 120 (the same silhouette, one flat fill; printed faint on the ground below it) |
@@ -193,7 +194,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
-| `ui-gutter-note.svg` | 60 x 900 | the "CUT OUT AND PLAY" margin text, as outlines |
+| `ui-gutter-note.svg` | 60 x 900 | the margin note, hung from the top of the margin: BURN BY DAWN in the stencil, pale (ink at 30%), then scissors, the dashed cut line and "CUT OUT AND PLAY", as outlines (M14) |
 | `logo-burn-by-dawn.svg` | 800 x 300 | *Not used since M9b: the results page is headed by the title card. The drawn sprite is kept in theme.js.* |
 | `title-card.jpg` | 4:1, **2400 x 600** px (no smaller than 1200 x 300) | **JPEG**, not SVG or PNG — see below. The painted picture across the top of the orders card, under the title, and smaller across the top of the results page. Drop into `/assets/title/`. |
 

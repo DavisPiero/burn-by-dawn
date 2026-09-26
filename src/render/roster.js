@@ -82,9 +82,15 @@ function conditionLine(unit) {
   if (unit.dead) return html('div', 'slot-line slot-warn', `${unit.roleLabel} · KILLED`);
   if (unit.out) return html('div', 'slot-line', `${unit.roleLabel} · OUT — safe`);
   const status = conditions(unit);
-  if (unit.landed && status.length) return html('div', 'slot-line slot-warn', status.join(' · '));
+  const carrying = unit.charges > 0 ? `${unit.charges} charge${unit.charges === 1 ? '' : 's'}` : null;
+  // His condition in red, but never at the cost of the charge he carries (M14
+  // bug: a hidden man handed a charge still read "HIDDEN", as taking one
+  // costs him no AP and so leaves him hidden).
+  if (unit.landed && status.length) {
+    return html('div', 'slot-line', [html('span', 'slot-warn', status.join(' · ')), ...(carrying ? [` · ${carrying}`] : [])]);
+  }
   const bits = [unit.roleLabel];
-  if (unit.charges > 0) bits.push(`${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
+  if (carrying) bits.push(carrying);
   if (unit.commandBonus > 0) bits.push(`+${unit.commandBonus} orders`);
   if (unit.leader) bits.push('leading');
   return html('div', 'slot-line', bits.join(' · '));

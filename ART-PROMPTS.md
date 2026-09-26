@@ -391,6 +391,7 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The green counter frames, their AP figure and card edge.
 - The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the
   reference art, intact and destroyed.
+- Ferme Lebrun's farm (M14), after the operator's reference: the farmhouse hex.
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.
 - A plain night scene for the title card (moon, Dakota, canopies, skyline), with the title
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
@@ -398,10 +399,13 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   exchange.
 - The ten sounds (M10, the explosion M11, the back page's bells M12, the gunfire M13), made with Web Audio in `src/render/sound.js` until the MP3s of
   priority 11 are supplied.
-- The role symbols on the counters (redrawn bolder M13), the AP dots, the shots' flash and
+- The role symbols on the counters (redrawn bolder M13), the AP dots (the leader's orders in blue, M14), the shots' flash and
   tracer, and the suppressed band.
-- The telephone exchange's wires (M12): a telegraph pole on each of its charge points and
-  a line from each to the building, hanging snapped once it is cut or blown.
+- The telephone exchange's wires (M12; M14): a telegraph pole on each of its charge points
+  and one long line from each to the roof standard on the exchange, hanging snapped once
+  it is cut or blown.
+- Fire (M14): the flames on a destroyed target and the blast's fireball, in the soft fire
+  orange added to the palette for them.
 - The parachutes: the canopy opening and drifting in the air and the spent one on the
   ground are the same green-and-cream cloth (M8e). Not worth a bitmap: they print at about
   20 px, where a painting would just be a blur, and the drawn ones now match each other.

@@ -10,7 +10,7 @@ import { alertIndex, runEnemyPhase } from '../src/enemy.js';
 import { hexDistance } from '../src/hex.js';
 import { findPath, isPassable, loadJson, loadMap, terrainAt, terrainIdAt } from '../src/map.js';
 import {
-  callDiversion, checkDiversion, createInitialState, cutLine, endTurn, moveUnit, passCharge, placeCharge, settleMission,
+  callDiversion, checkDiversion, createInitialState, cutLine, endTurn, exfilWouldFail, moveUnit, passCharge, placeCharge, settleMission,
   swimAcross,
 } from '../src/state.js';
 import {
@@ -284,6 +284,28 @@ export default [
     assert(carried > 0, 'he was carrying one');
     equal(out.charges, 0, 'he takes none out');
     equal(moved.droppedCharges.filter((c) => c.q === eq && c.r === er - 1).length, carried, 'left where he stepped off');
+  }],
+
+  ['an exfil that would lose the mission is caught before it is made; one that leaves a carrier behind is not (M14)', async () => {
+    const { map, rules, state } = await loadAll();
+    const [eq, er] = map.exfil[0];
+    const leaving = state.units.find((u) => u.charges > 0);
+    const scout = state.units.find((u) => u.role === 'scout');
+    const sapper = state.units.find((u) => u.charges > 0 && u.id !== leaving.id);
+    // Everyone else is already out, so only the charges can end it.
+    const setUp = (stays) => scenario(state, Object.fromEntries(state.units.map((u) => [u.id,
+      u.id === leaving.id ? { q: eq, r: er - 1 } : u.id === stays.id ? { q: 0, r: 0 } : { q: eq, r: er, changes: { out: true, charges: 0 } }])));
+    const plan = (s) => planMove(map, s.units, unitIn(s, leaving.id), { q: eq, r: er }, rules, s.enemies);
+
+    const withScout = setUp(scout);
+    const failure = exfilWouldFail(withScout, leaving.id, plan(withScout), rules, map);
+    equal(failure?.kind, 'withdrawn', 'only a scout left, who cannot carry the charge he leaves');
+    assert(failure.reason.includes('charges'), `says why: ${failure.reason}`);
+
+    const withSapper = setUp(sapper);
+    equal(exfilWouldFail(withSapper, leaving.id, plan(withSapper), rules, map), null, 'a sapper stays to pick it up');
+    const notOut = { path: [{ q: eq, r: er - 1 }, { q: eq + 1, r: er - 1 }] };
+    equal(exfilWouldFail(withScout, leaving.id, notOut, rules, map), null, 'not onto the exfil: never asked');
   }],
 
   ['at Alarmed the reserve marches to its guard hex and stands facing the exfil, not hunting', async () => {

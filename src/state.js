@@ -311,10 +311,13 @@ export function moveUnit(state, unitId, plan, map = null) {
       )),
       droppedCharges: [...state.droppedCharges, ...dropped],
       selectedUnitId: state.selectedUnitId === unitId ? null : state.selectedUnitId,
+      speech: say(state.speech, unitId, null),
     };
   }
   return {
     ...state,
+    // A line is said where he stands: once he moves off, it goes (M14).
+    speech: say(state.speech, unitId, null),
     units: state.units.map((unit) => (
       unit.id === unitId
         ? {
@@ -516,6 +519,7 @@ export function swimAcross(state, unitId, target, map, rules) {
   const spent = spend(state, unitId, unit.ap);
   return {
     ...spent,
+    speech: say(spent.speech, unitId, null),
     units: spent.units.map((u) => (u.id === unitId ? { ...u, q: target.q, r: target.r, trail: [...u.trail, target] } : u)),
   };
 }
@@ -623,6 +627,18 @@ export function settleMission(state, rules, map, { dawn = false } = {}) {
     selectedUnitId: null,
     targeting: null,
   };
+}
+
+/**
+ * A move onto the exfil that would end the mission short of success (M14, from
+ * playtesting: a man walked out and the mission was lost): the outcome it
+ * would settle on, or null. The same move and settleMission a click makes, so
+ * charges still burning, which may yet finish the job, are counted.
+ */
+export function exfilWouldFail(state, unitId, plan, rules, map) {
+  if (!isExfil(map, plan.path[plan.path.length - 1])) return null;
+  const { outcome } = settleMission(moveUnit(state, unitId, plan, map), rules, map);
+  return outcome && outcome.kind !== 'success' ? outcome : null;
 }
 
 export function isDawn(state, rules) {

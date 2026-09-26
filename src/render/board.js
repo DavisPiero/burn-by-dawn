@@ -167,14 +167,14 @@ export function createBoard(svg, map, handlers) {
     svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
-    blasts: { report: null, list: [] },
+    blasts: { bangs: null, list: [] },
   };
 }
 
 /** Forget what was last drawn where, for a new game on the same board (M12 restart). */
 export function resetBoardMemory(layers) {
   layers.motion = new Map();
-  layers.blasts = { report: null, list: [] };
+  layers.blasts = { bangs: null, list: [] };
   layers.ringsSince = null;
 }
 
@@ -943,11 +943,16 @@ function travel(layers, mover, unit, now) {
 // starburst is revealed in steps, and smoke rolls up and thins (M11). Drawing
 // memory like a move: redrawn part-way, it carries on from where it was.
 function drawBlasts(layers, state, now) {
-  if (layers.blasts.report !== state.report) {
-    const list = state.report.filter((e) => e.kind === 'explosion').flatMap((e) => (
+  // Keyed on the explosion events themselves, not the report: cutting the line
+  // or calling the RAF adds to the turn's report mid-turn, and that must not
+  // set off last turn's bang again (M14 bug).
+  const bangs = state.report.filter((e) => e.kind === 'explosion');
+  const known = layers.blasts.bangs;
+  if (!known || bangs.length !== known.length || bangs.some((e, i) => e !== known[i])) {
+    const list = bangs.flatMap((e) => (
       (e.at ?? [{ q: e.q, r: e.r }]).map((h) => ({ q: h.q, r: h.r, destroyed: e.destroyed, radius: e.blastRadius ?? 1 }))
     ));
-    layers.blasts = { report: state.report, since: now, list };
+    layers.blasts = { bangs, since: now, list };
     if (list.length && typeof layers.svg.animate === 'function') {
       const d = BLAST.shakePx;
       layers.svg.animate([
@@ -1159,7 +1164,10 @@ function drawSites(layers, state, view) {
       const size = OBJECTIVE.pointIconSize;
       const v = towardObjective(map, h, objective);
       const shift = map.hexSize * OBJECTIVE.pointIconShift;
-      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x + v.x * shift - size / 2, y: p.y + v.y * shift - size / 2, width: size, height: size }));
+      // Nudged clear of the objective's own art where map.json says (M14).
+      const [nx, ny] = map.objectives.find((o) => o.id === objective.id)?.pointNudge?.[`${h.q},${h.r}`] ?? [0, 0];
+      const x = p.x + v.x * shift + nx * map.hexSize, y = p.y + v.y * shift + ny * map.hexSize;
+      point.appendChild(el('use', { href: '#marker-charge-point', x: x - size / 2, y: y - size / 2, width: size, height: size }));
       layers.sites.appendChild(point);
     }
   }
@@ -1191,38 +1199,41 @@ function towardObjective(map, hex, objective) {
 
 /**
  * Telephone wires from the objective to a pole on each of its charge points,
- * on the far side of the hex from the satchel. A wire leaves the wall on the
- * edge between the two hexes and sags to the pole's crossarm. Once the
- * objective is gone (the line cut, or blown) each wire is snapped: two ends
- * hanging, with a gap between.
+ * on the far side of the hex from the satchel: each one long line, sagging,
+ * from the pole's crossarm all the way to the objective's own standard (M14,
+ * the operator's: the short wires stopped in their hex). Once the objective is
+ * gone (the line cut, or blown) each wire is snapped: two ends hanging, with a
+ * gap between.
  */
 function drawWires(layers, objective) {
   const { map } = layers;
-  const g = el('g', {});
+  const art = objectiveArt(objective);
   const centre = labelPoint(map, objective.hexes);
+  const standard = { x: centre.x - art.width / 2 + art.wires.x, y: centre.y - art.height / 2 + art.wires.y };
+  const g = el('g', {});
   for (const h of objective.chargeHexes) {
     const p = axialToPixel(h.q, h.r, map.hexSize);
     const v = towardObjective(map, h, objective);
     const pole = { x: p.x - v.x * map.hexSize * WIRES.poleAway, y: p.y - v.y * map.hexSize * WIRES.poleAway };
     const size = WIRES.poleSize;
     const top = { x: pole.x, y: pole.y - size * 0.3 };
-    // The wires fan in to the building's eaves, at the middle of the footprint.
-    const toPole = { x: top.x - centre.x, y: top.y - centre.y };
-    const reach = Math.hypot(toPole.x, toPole.y) || 1;
-    const wall = { x: centre.x + (toPole.x / reach) * WIRES.wallReach, y: centre.y + (toPole.y / reach) * WIRES.wallReach - WIRES.wallHeight };
-    const mid = { x: (top.x + wall.x) / 2, y: (top.y + wall.y) / 2 + WIRES.sag };
+    // On the standard's insulator on his side: left, middle or right.
+    const side = Math.abs(top.x - standard.x) < map.hexSize * 0.5 ? 0 : Math.sign(top.x - standard.x);
+    const end = { x: standard.x + side * WIRES.insulatorGap, y: standard.y };
+    const sag = Math.hypot(end.x - top.x, end.y - top.y) * WIRES.sag;
+    const at = (t) => ({ x: top.x + (end.x - top.x) * t, y: top.y + (end.y - top.y) * t });
     const wire = (d) => {
       g.appendChild(el('path', { d, fill: 'none', stroke: WIRES.casing, 'stroke-width': WIRES.width + 2.5, 'stroke-linecap': 'round' }));
       g.appendChild(el('path', { d, fill: 'none', stroke: WIRES.stroke, 'stroke-width': WIRES.width, 'stroke-linecap': 'round' }));
     };
     if (objective.destroyed) {
       // Snapped: each end falls from its post, short of the middle.
-      const at = (t) => ({ x: top.x + (wall.x - top.x) * t, y: top.y + (wall.y - top.y) * t });
       const a = at(0.38), b = at(0.62);
-      wire(`M${top.x} ${top.y} Q${a.x} ${top.y + WIRES.sag * 0.5} ${a.x - v.x * 4} ${a.y + WIRES.drop}`);
-      wire(`M${wall.x} ${wall.y} Q${b.x} ${wall.y + WIRES.sag * 0.5} ${b.x + v.x * 4} ${b.y + WIRES.drop}`);
+      wire(`M${top.x} ${top.y} Q${a.x} ${top.y + WIRES.drop * 0.5} ${a.x - v.x * 4} ${a.y + WIRES.drop}`);
+      wire(`M${end.x} ${end.y} Q${b.x} ${end.y + WIRES.drop * 0.5} ${b.x + v.x * 4} ${b.y + WIRES.drop}`);
     } else {
-      wire(`M${top.x} ${top.y} Q${mid.x} ${mid.y + WIRES.sag} ${wall.x} ${wall.y}`);
+      const mid = at(0.5);
+      wire(`M${top.x} ${top.y} Q${mid.x} ${mid.y + sag * 2} ${end.x} ${end.y}`);
     }
     g.appendChild(el('use', { href: '#marker-telegraph-pole', x: pole.x - size / 2, y: pole.y - size / 2, width: size, height: size }));
   }
@@ -1761,13 +1772,17 @@ function drawCounter(unit, number, map, isSelected) {
   // AP as dots top right (M13): one per point of this turn's pool, filled for
   // what he has left, hollow for what he has spent — the number by his name is
   // his roster number, and two numbers on one counter confused players.
+  // The leader's orders are the last dots, in leader blue (M14), so they are
+  // the first spent.
   const pool = Math.max(unit.apMax, unit.ap);
+  const orders = pool - (unit.commandBonus ?? 0);
   for (let i = 0; i < pool; i++) {
     const col = i % COUNTER.apDots.columns, row = Math.floor(i / COUNTER.apDots.columns);
     const left = i < unit.ap;
+    const fill = i >= orders ? COUNTER.apOrdersFill : COUNTER.apFill;
     body.appendChild(el('circle', {
       cx: COUNTER.apDots.x + col * COUNTER.apDots.pitch, cy: COUNTER.apDots.y + row * COUNTER.apDots.pitch, r: COUNTER.apDots.radius,
-      fill: left ? COUNTER.apFill : 'none', stroke: left ? COUNTER.apDots.stroke : COUNTER.apFill,
+      fill: left ? fill : 'none', stroke: left ? COUNTER.apDots.stroke : fill,
       'stroke-width': left ? 0.8 : 1, opacity: left ? 1 : COUNTER.apSpentOpacity,
     }));
   }

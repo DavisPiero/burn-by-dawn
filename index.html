@@ -19,6 +19,7 @@
       --red: #C1272D;
       --blue: #3D5A73;
       --leader: #2F7BBF;
+      --fire: #C98249;
       --typewriter: "Courier 10 Pitch", "Courier New", Courier, monospace;
       --slab: "Stardos Stencil", "Rockwell Condensed", Rockwell, "Courier New", serif;
       --paper-fibre: none;
@@ -766,6 +767,8 @@
       background: var(--ink);
     }
     #briefing.tone-raf .brief-head { background: var(--blue); }
+    /* The exfil's are-you-sure (M14): headed in danger red. */
+    #briefing.tone-warn .brief-head { background: var(--red); }
     #briefing .brief-title { font-size: 22px; }
     #briefing .brief-kicker { font-size: 13px; opacity: 0.8; }
     #briefing h3 {
@@ -793,7 +796,7 @@
     /* Wider, so the picture is cropped lower rather than grown taller. */
     #briefing-backdrop.orders #briefing .title-banner { aspect-ratio: 5.8 / 1; }
     /* The level, first thing under the head: what it sets is in the text below. */
-    #briefing .brief-top { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+    #briefing .brief-top { margin: 0 0 7px; padding-bottom: 5px; border-bottom: 2px solid var(--ink); }
     #briefing .brief-choice {
       display: flex;
       align-items: center;
@@ -805,13 +808,14 @@
       top: 3px;
       margin-right: 4px;
       font-family: var(--slab);
-      font-size: 14px;
+      font-size: 16px;
       font-weight: bold;
       letter-spacing: 2px;
     }
+    /* Bigger since M14, the operator's: the first choice on the card. */
     #briefing .brief-choice .btn {
-      padding: 1px 8px;
-      font-size: 12px;
+      padding: 3px 14px;
+      font-size: 15px;
       font-weight: bold;
       letter-spacing: 1px;
     }
@@ -866,7 +870,7 @@
   <main id="spread">
     <section id="left-page" class="page">
       <div id="outer-gutter">
-        <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMin meet"></svg>
         <div id="seed"></div>
         <button id="sound-toggle" type="button" title="Sound on or off [M]"></button>
         <button id="restart" type="button" title="A new game on a fresh seed, at the same level"></button>

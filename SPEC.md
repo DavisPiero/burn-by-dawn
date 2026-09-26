@@ -352,9 +352,10 @@ he is shot on (`combat.shotResult` in `rules.json`):
 | heavy (hedgerow, wood, farmhouse) | **Pinned** — no hit, but his next turn's pool is 1 AP smaller (never below 1), and he stays in contact |
 
 **Range** (M13b, from playtesting — a spotted man had no way out): a shot hits only if an
-enemy firing on him is within **2 hexes** (`combat.hitRange`); from further off, every
-shot only pins, whatever the cover. Getting distance is a way out, and the readout shows
-it before he moves.
+enemy firing on him is within **3 hexes** (`combat.hitRange`; 2 until M14, when the
+operator found Normal played like Easy — Easy keeps 2); from further off, every shot only
+pins, whatever the cover. Getting distance is a way out, and the readout shows it before
+he moves.
 
 A trooper has **two hits** (`hitsToKill`): the first **wounds** him, the second **kills**
 him. A trooper is shot **at most once per turn**, however many enemies fire, so there are
@@ -641,6 +642,14 @@ Every mission ends in one of three outcomes:
 The mission also ends when nobody is left on the board (all out or dead), after any
 charges still burning have gone off.
 
+**Asked before it is lost** (M14, from playtesting): a move onto the exfil that would end
+the mission short of success — too few men left on the board who can carry the charges
+still needed, the last man leaving with the bridge up, too few men — is held back by a
+card, "Are you sure? Mission not yet complete. An exfil now will end it: WITHDRAWN." with
+the reason; Enter or its button goes anyway, any other key or click stays. The hover
+readout says it first. It is the same move and settlement the click makes, so charges
+still burning that would finish the job are counted.
+
 **Exfil** is a short run of hexes on the **south map edge**, listed in `map.json`, away
 from all three drop runs (north, east, west — §9). A trooper who ends a move on an exfil
 hex is out: removed from the board, safe, and counted. At Alarmed the reserve squad
@@ -668,9 +677,9 @@ as `?seed=` picks the seed.
 
 | Level | Changes from Normal |
 |---|---|
-| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b); hiding gives +2 concealment, not +1 (M13b) |
+| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b); hiding gives +2 concealment, not +1 (M13b); shots hit only from 2 hexes off, not 3 (M14) |
 | **Normal** | The mission as above |
-| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3, and keeps the old 120° arc (M13b); their shots hit from 3 hexes off, not 2 (M13b) |
+| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3, and keeps the old 120° arc (M13b) |
 
 The score is the same sum at every level.
 
@@ -694,8 +703,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Palette: paper `#F2E8D5`, ink `#1A1A18`, army green `#5C6B4A`, danger red `#C1272D`,
   cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
   the ranking man (his counter's name strip and rank flash, his number on the roster) and
-  his orders (their radius and chevron, §5 Command).
-  Nothing else.
+  his orders (their radius, chevron and AP dots, §5 Command), and one for fire, a soft
+  printed orange `#C98249` (M14, the operator's), used only for flames and the blast's
+  fireball. Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
@@ -704,7 +714,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Speech bubbles for dialogue on the board, tail pointing at the man's counter, shown for
   the man selected or under the mouse (on the board or in the roster). A line is heard
   once: when the selection moves off that man it goes (hovering shows it without using
-  it up), and any line never heard goes at the end of the turn. Bubbles are set smaller
+  it up), when he moves off the hex where he said it it goes (M14), and any line never
+  heard goes at the end of the turn. Bubbles are set smaller
   than the board's labels. Dialogue stays on the board, not in the
   roster rail.
 - **Type is not comic lettering,** except in the speech bubbles. The annual look comes
@@ -717,7 +728,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,
   no new terrain. It is the landmark Vance's landing line refers to, and spires were how
   real sticks checked they had been dropped in the right place.
-- "CUT OUT AND PLAY" margin note in the outer gutter.
+- "CUT OUT AND PLAY" margin note in the outer gutter, and above it, at the top of the
+  margin, BURN BY DAWN in the title stencil, pale, running up the page (M14).
 - **Roads and the railway read as continuous lines.** A track is drawn as one smooth road
   through its hexes' centres, not a motif stamped per hex. A **railway** runs east–west
   across the board and over the rail bridge, as art only, like the church: no rule, no
@@ -855,6 +867,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M14** | Fourth operator playtest review, no rules change: Normal toughened, an exfil that would lose the mission asked first, two bugs (a replayed bang, a passed charge not shown), bigger difficulty buttons, BURN BY DAWN in the margin, the squad's back page, lines that go when a man moves, the leader's AP in blue, a fire orange and better flames, Ferme Lebrun drawn, the exchange's lines run to its roof, the bridge's south satchel moved, a clearer sentry | Normal's shots hit from 3 hexes, Easy's from 2; cutting the line or calling the RAF never replays a bang; a hidden man handed a charge shows it; an exfil that would withdraw the mission asks first; the orders still fit at 1280x800; the balance bot is re-run (Normal 94/84/76 with the knife, from 99/90/86) |
 | **M13b** | The approved playtest rules: 110° arcs and a Road patrol, next turn's facing shown, a 60° sweep, shots from far off only pin, a stone turns sentries at once, charges left at the exfil, hiding counts double on Easy, Hard keeping the old arcs and range | A shot from more than 2 hexes pins; a stone turns a sentry before the detection check; a man leaving with a charge leaves it before the exfil; hovering an enemy outlines its next turn; the balance bot is re-run at every level |
 | **M13** | Third operator playtest review, no rules change but one bug: the orders reworked (level on top, wider, more air), Hide on H and Hold gone, turn cards docked bottom right, keys one to a line, shots and a suppressed band, AP as dots, new gunner and scout symbols, report grouped by man, the mission ended when no one can carry the charges left | The orders fit at 1280x800 with the difficulty first; H hides; a turn card leaves the left of the map clear; a suppress is seen and heard; with every man who could carry a charge dead the mission is withdrawn at once |
 | **M12b** | The approved playtest rules: the leader's orders strongest beside him, the knife, the spread zoomed to fit a small window | A man beside the leader gets +2 AP and two chevrons, within 2 hexes +1 and one; any man behind an enemy beside him, not in contact, can knife it for 2 AP and his turn, silently, leaving a body; a 1200-wide window shows the whole spread with no sideways scroll; the balance bot is re-run with and without the knife |

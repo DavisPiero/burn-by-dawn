@@ -25,6 +25,9 @@ export const PALETTE = {
   // than cold blue so he stands out, and kept apart from it so the canal and
   // the move range do not light up too (SPEC.md §11).
   leader: '#2F7BBF',
+  // The seventh, for fire only (M14, the operator's): a printed orange, kept
+  // soft so it sits with the rest — flames, the blast's fireball.
+  fire: '#C98249',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -388,6 +391,8 @@ export const COUNTER = {
   // AP as dots top right since M13 (was one big figure): two across, filled
   // for AP left, hollow and faint for AP spent.
   apFill: PALETTE.paper,
+  // AP from the leader's orders (SPEC.md §5 Command), in his blue (M14).
+  apOrdersFill: PALETTE.leader,
   apDots: { x: 46, y: 6.5, pitch: 5.6, columns: 2, radius: 2.2, stroke: PALETTE.ink },
   apSpentOpacity: 0.45,
   // The man's own face, and his role in the roundel top left.
@@ -633,20 +638,21 @@ export const WIRES = {
   stroke: PALETTE.ink,
   casing: PALETTE.paper,
   width: 2,
-  sag: 7, // how far a wire droops at its middle
+  sag: 0.08, // how far a wire droops at its middle, as a share of its length
   drop: 14, // how far a snapped end hangs
-  wallReach: 34, // from the footprint's middle toward the pole, where a wire leaves the building
-  wallHeight: 26, // and how far up it
+  insulatorGap: 6, // the standard's insulators, either side of its middle one
   poleSize: 34,
   poleAway: 0.42, // hex radii from the charge point's centre, away from the target
 };
 
 // Multi-hex objective art by objective kind (the kind ids in data/rules.json).
 // Drawn centred on the footprint at the manifest's size. A kind with no entry
-// is drawn as its outline only. `wires`: its lines run out to its charge points.
+// is drawn as its outline only. `wires`: its lines run out to its charge points,
+// from the point given in the art's own units (M14: the exchange's roof standard,
+// on the crossarm).
 const OBJECTIVE_ART = {
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
-  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: true },
+  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: { x: 100, y: 42.4 } },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
 };
 
@@ -661,7 +667,7 @@ export function objectiveArt(objective) {
   if (!art) return null;
   const id = objective.destroyed ? art.destroyed : art.intact;
   const [, , width, height] = SPRITES[id].viewBox.split(' ').map(Number);
-  return { id, width, height, wires: Boolean(art.wires) };
+  return { id, width, height, wires: art.wires ?? null };
 }
 
 export const EXFIL = {
@@ -1004,15 +1010,47 @@ const TERRAIN_SPRITES = {
     line('M36 48 Q52 24 68 48', 2),
   ],
 
-  'terrain-farmhouse': () => [
-    ...inked('M24 44 H58 V68 H24 Z', 'paper', 1.6),
-    ...inked('M20 46 L41 28 L62 46 Z', 'red', 1.6),
-    fill('M20 46 L41 28 L62 46 Z', toneClass('ink', 20)),
-    ...inked('M49 34 V26 H54 V38', 'paper', 1.4),
-    ...inked('M36 56 H44 V68 H36 Z', 'ink', 1),
-    ...inked('M27 50 H33 V56 H27 Z', 'blue', 1),
-    ...inked('M49 50 H55 V56 H49 Z', 'blue', 1),
-  ],
+  // A farm round its yard, after the operator's reference (M14; it was one
+  // cottage): seen from the south-west like the exchange, the half-timbered
+  // house under red tiles along the back with its chimney, the stone barn
+  // under slate on the right with its arched cart door, a haystack, and the
+  // yard wall across the front with a gap for the gate. Ferme Lebrun is the
+  // only farmhouse hex not under an objective, so this is its picture. Bold
+  // shapes only: a hex is about 30 px across at 1280x800.
+  'terrain-farmhouse': () => {
+    const yard = 'M10 60 L40 52 L72 60 L66 76 L40 82 L14 76 Z';
+    const front = 'M10 36 H44 V52 H10 Z';
+    const gable = 'M44 52 V36 L49 26 L54 33 V48 Z';
+    const roof = 'M8 37 H45 L50 25 H16 Z';
+    const barnFront = 'M52 50 H70 V66 H52 Z';
+    const barnGable = 'M70 66 V50 L73 44 L76 48 V62 Z';
+    const barnRoof = 'M50 51 H71 L74 43 H55 Z';
+    const wall = 'M8 68 L30 75 V81 L8 74 Z M38 77 L68 68 V74 L38 83 Z';
+    return [
+      fill(yard, toneClass('ink', 10)),
+      // The house: tiles, then its timber frame over the plaster.
+      ...inked(front, 'paper', 1.4),
+      line('M16 36 V52 M23 36 V52 M31 36 V52 M38 36 V52 M10 44 H44 M16 44 L23 36 M31 44 L38 36', 0.8, 'stroke-ink', { opacity: 0.75 }),
+      ...inked(gable, 'paper', 1.4), fill(gable, 'ink', { 'fill-opacity': 0.22 }),
+      ...inked(roof, 'red', 1.4), fill(roof, toneClass('ink', 20)),
+      line('M11 31 H47 M13.5 28 H48.5', 0.7, 'stroke-ink', { opacity: 0.5 }),
+      ...inked('M37 27 V20 H42 V27', 'paper', 1.2),
+      ...inked('M25 46 H30 V52 H25 Z', 'ink', 0.8),
+      ...inked('M13 39 H17 V42 H13 Z', 'blue', 0.8), ...inked('M34 46 H38 V49 H34 Z', 'blue', 0.8),
+      // The barn: stone, slate, the cart door arched.
+      ...inked(barnFront, 'paper', 1.4), fill(barnFront, toneClass('ink', 10)),
+      ...inked(barnGable, 'paper', 1.4), fill(barnGable, 'ink', { 'fill-opacity': 0.22 }),
+      ...inked(barnRoof, 'blue', 1.4),
+      ...inked('M56 66 V58 Q61 52 66 58 V66 Z', 'ink', 0.8),
+      // The haystack in the yard, by the barn.
+      ...inked('M41 66 Q41 56 46 55 Q51 56 51 66 Z', 'paper', 1.2),
+      line('M42.5 60 Q46 58.5 49.5 60 M41.5 63.5 Q46 62 50.5 63.5', 0.7, 'stroke-ink', { opacity: 0.6 }),
+      // The yard wall across the front, open for the gate.
+      ...inked(wall, 'paper', 1.2), fill(wall, toneClass('ink', 20)),
+      line('M19 71.5 V77.5 M53 72.5 V78.5', 0.7, 'stroke-ink', { opacity: 0.6 }),
+      line('M30 74 V82 M38 76 V84', 2),
+    ];
+  },
 
   'terrain-emplacement': () => {
     const bags = [];
@@ -1036,9 +1074,30 @@ function smoke(x, y, s) {
   return [circle(x, y, 9 * s, toneClass('ink', 35)), circle(x + 8 * s, y - 7 * s, 7 * s, toneClass('ink', 20)), circle(x - 6 * s, y - 12 * s, 6 * s, toneClass('ink', 10))];
 }
 
+// One tongue of flame standing on (x, y): w half its width at the root, h its
+// height, its tip leaning `lean` to one side, the root rounded under.
+function tongue(x, y, w, h, lean = 0) {
+  return `M${x - w} ${y} C${x - w * 1.25} ${y - h * 0.45} ${x - w * 0.2 + lean * 0.5} ${y - h * 0.62} ${x + lean} ${y - h} `
+    + `C${x + w * 0.45 + lean * 0.3} ${y - h * 0.6} ${x + w * 1.2} ${y - h * 0.42} ${x + w} ${y} Q${x} ${y + w * 0.45} ${x - w} ${y} Z`;
+}
+
+// A fire (M14, the operator's: the old flame was one red blob): a warm glow
+// on the ground, three red tongues edged in ink, orange inside them, a paper
+// core in the tallest, and embers going up.
 function flame(x, y, s) {
-  const d = `M${x - 8 * s} ${y} Q${x - 10 * s} ${y - 14 * s} ${x - 2 * s} ${y - 24 * s} Q${x} ${y - 14 * s} ${x + 4 * s} ${y - 18 * s} Q${x + 12 * s} ${y - 8 * s} ${x + 8 * s} ${y} Z`;
-  return [...inked(d, 'red', 1.4), fill(`M${x - 4 * s} ${y} Q${x - 4 * s} ${y - 8 * s} ${x} ${y - 12 * s} Q${x + 5 * s} ${y - 6 * s} ${x + 4 * s} ${y} Z`, 'paper')];
+  const tongues = (k) => [
+    tongue(x - 7 * s, y, 6 * k * s, 20 * k * s, -4 * s),
+    tongue(x + 7 * s, y, 6 * k * s, 23 * k * s, 4 * s),
+    tongue(x, y, 9 * k * s, 32 * k * s, 1.5 * s),
+  ];
+  return [
+    svg('ellipse', { cx: x, cy: y - 2 * s, rx: 18 * s, ry: 7 * s, class: toneClass('fire', 50) }),
+    ...tongues(1).map((d) => fill(d, 'red')),
+    ...tongues(1).map((d) => line(d, 1.3)),
+    ...tongues(0.68).map((d) => fill(d, 'fire')),
+    fill(tongue(x + 0.5 * s, y, 3.6 * s, 14 * s, 1 * s), 'paper'),
+    circle(x - 9 * s, y - 29 * s, 1.5 * s, 'fire'), circle(x + 8 * s, y - 33 * s, 1.2 * s, 'red'), circle(x + 2 * s, y - 40 * s, 1 * s, 'fire'),
+  ];
 }
 
 // A fuel drum seen from above: a disc, its rim and its filler cap.
@@ -1159,20 +1218,13 @@ function exchangeBuilding(gutted) {
 
 // The line: poles along the square and the wires to the house and away east,
 // off the edge of the art. Blown, the east pole leans and its wires hang.
-function exchangeWires(gutted) {
-  const parts = [...pole(150, 152, 62, gutted ? 10 : 0), ...pole(152, 72, 42)];
-  if (gutted) {
-    parts.push(line('M152 32 Q164 40 188 34 M152 32 Q146 44 140 58 M160 90 Q150 112 142 124', 1.2));
-    return parts;
-  }
-  parts.push(line([
-    'M144 90 Q142 96 136 100', // into the gable, under the eaves
-    'M144 90 Q166 98 186 92 M156 90 Q172 96 190 90', // away east
-    'M146 32 Q164 40 186 34 M158 32 Q172 38 190 32',
-    'M146 32 Q138 40 124 44', // down to the roof
-    'M144 90 Q146 60 146 32 M156 90 Q158 60 158 32', // pole to pole
-  ].join(' '), 1.1));
-  return parts;
+// The exchange's roof standard (M14): a short post on the ridge with a
+// crossarm, where every line from the charge points comes in — board.js runs
+// the wires to it (OBJECTIVE_ART.exchange.wires). The poles that stood beside
+// the house went: the charge points carry the poles now. Blown, it still
+// stands on the charred rafters, and the wires hang snapped from it.
+function roofStandard() {
+  return pole(100, 58, 18);
 }
 
 // The village church, the landmark Vance's landing line refers to (SPEC.md §11),
@@ -1463,13 +1515,22 @@ const SPRITES = {
     ],
   },
 
+  // One man at his post (M14: the helmet beside an upright rifle read as a
+  // helmet and a letter T): helmet over greatcoat shoulders, the collar
+  // turned up, and a slung rifle's barrel slanting up behind his shoulder.
   'counter-enemy-sentry': {
     viewBox: '0 0 56 56',
-    draw: () => [
-      ...helmet(12, 13, 1.1),
-      svg('rect', { x: 40, y: 10, width: 4, height: 24, class: 'paper' }),
-      svg('rect', { x: 36, y: 10, width: 12, height: 4, class: 'paper' }),
-    ],
+    draw: () => {
+      // The coat starts below the brim, leaving the face dark between them.
+      const coat = 'M9 37 C10 32 16 29.5 22 29.5 H34 C40 29.5 46 32 47 37 Z';
+      return [
+        line('M38 34 L47 5', 3, 'stroke-paper'),
+        svg('rect', { x: 44.6, y: 3.5, width: 3.4, height: 3, class: 'paper', transform: 'rotate(20 46.3 5)' }),
+        fill(coat, 'paper'), fill(coat, toneClass('ink', 20)),
+        line('M22 29.5 L28 34.5 L34 29.5', 1.4),
+        ...helmet(14.5, 8, 1.1),
+      ];
+    },
   },
   'counter-enemy-patrol': { viewBox: '0 0 56 56', draw: () => [...helmet(6, 11, 0.85), ...helmet(26, 19, 0.85)] },
   'counter-enemy-reserve': { viewBox: '0 0 56 56', draw: () => [...helmet(4, 8, 0.7), ...helmet(29, 8, 0.7), ...helmet(16, 22, 0.7)] },
@@ -1526,21 +1587,23 @@ const SPRITES = {
       fill('M104 68 Q136 86 172 80 L174 90 Q136 94 102 80 Z', 'blue', { 'fill-opacity': 0.6 }),
       line('M110 88 Q124 84 138 88 M148 90 Q160 86 172 90', 1.2, 'stroke-paper', { opacity: 0.7 }),
       svg('rect', { x: 150, y: 44, width: 5, height: 4, class: 'ink' }), svg('rect', { x: 126, y: 40, width: 4, height: 3, class: 'ink' }),
+      ...flame(118, 58, 0.55),
       ...smoke(140, 26, 1.2),
     ],
   },
 
   // The PTT exchange in the village, as the reference has it: a stone house
   // under a slate roof, seen from the south-west so the front and the east
-  // gable both show, the PTT board over the door, a gravel yard, and the
-  // poles and wires the scouts can cut running away east. The church beside it.
+  // gable both show, the PTT board over the door, a gravel yard, and the roof
+  // standard its lines come in to (the lines themselves are the board's). The
+  // church beside it.
   'objective-exchange': {
     viewBox: '0 0 160 184',
     draw: () => [
       ...gravelYard(),
       svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(false),
-      ...exchangeWires(false),
+      ...roofStandard(),
     ],
   },
   'objective-exchange-destroyed': {
@@ -1549,7 +1612,7 @@ const SPRITES = {
       ...gravelYard(),
       svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(true),
-      ...exchangeWires(true),
+      ...roofStandard(),
       ...smoke(96, 46, 1.2), ...flame(84, 86, 0.8), ...flame(108, 80, 0.7),
     ],
   },
@@ -1578,7 +1641,7 @@ const SPRITES = {
       // Drums blown about.
       ...[[70, 62], [100, 54], [160, 62], [62, 94]].flatMap(([x, y]) => drum(x, y, 'ink')),
       ...bowser(true),
-      ...flame(90, 80, 1.4), ...flame(150, 74, 1.2),
+      ...flame(90, 80, 1.4), ...flame(150, 74, 1.2), ...flame(124, 112, 1.05),
       ...smoke(120, 34, 1.5),
     ],
   },
@@ -1853,6 +1916,8 @@ const SPRITES = {
       starburst(100, 100, 12, 96, 58, 'red'),
       starburst(100, 100, 12, 96, 58, toneClass('ink', 10)),
       line(starburst(100, 100, 12, 96, 58, 'red').getAttribute('d'), 3),
+      // The fireball inside the burst (M14): orange, then the paper core.
+      starburst(100, 100, 11, 78, 48, 'fire'),
       starburst(100, 100, 10, 62, 36, 'paper'),
       label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
     ],
@@ -1925,15 +1990,19 @@ const SPRITES = {
       return parts;
     },
   },
-  // The margin note down the outer edge of the left page.
+  // The margin note down the outer edge of the left page, hung from the top of
+  // the margin: the game's name first, in the title's stencil, pale as if
+  // printed in the magazine's margin (M14, the operator's), then the scissors,
+  // the cut line and CUT OUT AND PLAY. Pale is ink thinned, not a new colour.
   'ui-gutter-note': {
     viewBox: '0 0 60 900',
     draw: () => [
-      line('M40 0 V900', 1.6, 'stroke-ink', { 'stroke-dasharray': '10 7', opacity: 0.55 }),
-      svg('g', { transform: 'translate(40 120) rotate(-90)' }, [
+      label('BURN BY DAWN', { x: 0, y: 0, 'font-size': 34, 'letter-spacing': 3, 'font-family': TYPE.slab, 'font-weight': 'normal', class: 'ink', transform: 'translate(30 180) rotate(-90)', opacity: 0.3 }),
+      line('M40 360 V900', 1.6, 'stroke-ink', { 'stroke-dasharray': '10 7', opacity: 0.55 }),
+      svg('g', { transform: 'translate(40 380) rotate(-90)' }, [
         line('M-8 -6 L6 4 M-8 6 L6 -4', 1.6), ring(-12, -7, 4, 1.6), ring(-12, 7, 4, 1.6),
       ]),
-      label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 450) rotate(-90)', opacity: 0.75 }),
+      label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 640) rotate(-90)', opacity: 0.75 }),
     ],
   },
   // The title card over the orders (SPEC.md §11): drawn here until a painting

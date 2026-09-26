@@ -454,7 +454,10 @@ export default [
   }],
 
   ['a shot from beyond hitRange pins a man in the open; within it, it hits (M13b)', async () => {
-    const { map, rules, state } = await loadAll();
+    const loaded = await loadAll();
+    const { map, state } = loaded;
+    // Set inside the enemies' sight, whatever the level's number (Normal's is 3 since M14).
+    const rules = { ...loaded.rules, combat: { ...loaded.rules.combat, hitRange: 2 } };
     const row = openRow(map, 5);
     for (const [gap, expected] of [[rules.combat.hitRange + 1, 'pinned'], [rules.combat.hitRange, 'wounded']]) {
       const e = enemy(row.q + gap, row.r, 'W');

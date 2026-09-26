@@ -13,7 +13,7 @@ import { createRng, freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit,
   jump, killEnemy, knifeEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
-  setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
+  exfilWouldFail, setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
@@ -341,9 +341,24 @@ function deriveView() {
     if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
       view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
     }
+    const failure = exfilFailure(unit, plan);
+    if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
     if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
   }
   return view;
+}
+
+/** A move onto the exfil that would lose the mission (state.js exfilWouldFail), or null. */
+function exfilFailure(unit, plan) {
+  return plan?.affordable ? exfilWouldFail(state, unit.id, plan, rules, baseMap) : null;
+}
+
+/** The exfil card's Exfil anyway: make the move it held back. */
+function confirmExfil() {
+  const { unitId, plan } = briefing;
+  briefing = null;
+  commit(moveUnit(state, unitId, plan, baseMap), 'move');
+  render();
 }
 
 /**
@@ -871,7 +886,10 @@ function handleHexClick(q, r) {
     // An unaffordable target does nothing rather than moving part of the way:
     // a half-finished move the player did not ask for is worse than no move.
     if (plan && plan.affordable) {
-      commit(moveUnit(state, mover.id, plan, baseMap), 'move');
+      // Out now and the mission is lost: ask first (M14).
+      const failure = exfilFailure(mover, plan);
+      if (failure) briefing = { kind: 'exfil', unitId: mover.id, plan, failure };
+      else commit(moveUnit(state, mover.id, plan, baseMap), 'move');
     } else if (!mover) {
       state = selectHex(state, q, r);
     }
@@ -1139,6 +1157,19 @@ function handleLevelClick() {
 /** The card's words: the orders before the drop, or this turn's update. */
 function describeBriefing(which, view) {
   const primary = state.objectives.find((o) => o.primary);
+  if (which.kind === 'exfil') {
+    const { kind, reason } = which.failure;
+    const man = state.units.find((u) => u.id === which.unitId);
+    return {
+      title: 'ARE YOU SURE?',
+      kicker: 'EXFIL',
+      tone: 'warn',
+      paragraphs: [[`Mission not yet complete. An exfil now will end it: ${kind.toUpperCase()}.`, `${reason[0].toUpperCase()}${reason.slice(1)}.`]],
+      sections: [],
+      confirm: { label: `${man.shortName} OUT ANYWAY [Enter]`, onConfirm: confirmExfil },
+      go: 'STAY — any other key or click',
+    };
+  }
   if (which.kind === 'orders') {
     // Places in capitals, as the operator's orders name them (M12).
     const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toUpperCase()}`);
@@ -1376,9 +1407,11 @@ function handleKey(event) {
     return;
   }
   if (event.metaKey || event.ctrlKey || event.altKey) return;
-  // Any key puts the briefing away, and does nothing else.
+  // Any key puts the briefing away, and does nothing else — but Enter on the
+  // exfil card, which goes out anyway.
   if (briefing) {
     event.preventDefault();
+    if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     closeBriefing();
     return;
   }
