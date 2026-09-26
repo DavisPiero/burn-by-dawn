@@ -75,12 +75,13 @@ export function attachPopup(element, content) {
 // SPEC.md §4's keys, for the KEYS rollover.
 const KEYS = [
   'The drop: 1–3 pick a run · Space jump',
-  '1–6 select a man · Tab next · H hold position',
+  '1–6 select a man · Esc deselect · Tab next · H hold',
   'G hide · S suppress · K kill · T throw a stone',
   'A stabilise · P pick up a charge · U pack parachute',
   'C place a charge · X cut the line · W swim',
   'D RAF diversion · Space end turn · Z undo',
-  'Esc or right-click cancel · R patrol routes · M sound',
+  'Esc or right-click also backs out of aiming an action',
+  'R patrol routes · M sound',
   '',
   'Hover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
 ].join('\n');
@@ -247,7 +248,7 @@ function titleBanner({ title, tagline }) {
 
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
- * { banner?: { title, tagline }, title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs?, sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
@@ -263,7 +264,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
-    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, line)));
+    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, boldNames(line, briefing.names))));
     if (section.more) list.appendChild(html('li', 'brief-more', section.more));
     card.appendChild(list);
   }
@@ -326,7 +327,7 @@ export function renderReport(element, state, place, onLocate) {
     return;
   }
   for (const event of events) {
-    const item = html('li', null, describeEvent(event, place));
+    const item = html('li', null, boldNames(describeEvent(event, place), state.units.map((u) => u.shortName)));
     if (Number.isInteger(event.q) && Number.isInteger(event.r)) {
       item.classList.add('located');
       item.addEventListener('mouseenter', () => onLocate({ q: event.q, r: event.r }));
@@ -359,19 +360,44 @@ export function describeEvent(event, place) {
   }
 }
 
-/** SPEC.md §9: where he came down, how far off his mark, and what it cost him. */
+/**
+ * SPEC.md §9: where he came down, how far the wind carried him from where he
+ * jumped, and what it cost him. Players read a bare "1 hex off" as a mistake,
+ * so the drift is said as drift.
+ */
 function describeLanding(event, where) {
-  const off = event.distance === null ? '' : event.distance === 0 ? ', on his mark' : `, ${event.distance} hex${event.distance === 1 ? '' : 'es'} off`;
+  const name = event.unitName;
+  const drifts = event.distance > 0 ? `drifts ${event.distance} hex${event.distance === 1 ? '' : 'es'} and ` : '';
+  const onMark = event.distance === 0 ? ' right on his mark' : '';
   if (event.outcome === 'wounds') {
-    return `${event.unitName} comes down in the ${event.terrain.toLowerCase()}${off} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out onto ${where}.`;
+    return `${name} ${drifts}comes down in the ${event.terrain.toLowerCase()}${onMark} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out onto ${where}.`;
   }
   if (event.outcome === 'bad') {
     const cost = event.turnsLost > 0
       ? `loses ${event.turnsLost === 1 ? 'his first turn' : `${event.turnsLost} turns`}`
       : 'lands clean anyway';
-    return `${event.unitName} lands in ${where}${off} — ${cost}.`;
+    return `${name} ${drifts}lands${onMark} in ${where} — ${cost}.`;
   }
-  return `${event.unitName} lands in ${where}${off}.`;
+  return `${name} ${drifts}lands${onMark} in ${where}.`;
+}
+
+/**
+ * A line of text with every man's name in it set in bold, as nodes for
+ * `append`. `names` are the names as the text spells them (the counters'
+ * short names); a name only counts as a whole word.
+ */
+export function boldNames(line, names) {
+  if (!names?.length) return [line];
+  const pattern = new RegExp(`\\b(${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'g');
+  const parts = [];
+  let last = 0;
+  for (const match of line.matchAll(pattern)) {
+    if (match.index > last) parts.push(line.slice(last, match.index));
+    parts.push(html('b', null, match[0]));
+    last = match.index + match[0].length;
+  }
+  if (last < line.length) parts.push(line.slice(last));
+  return parts;
 }
 
 const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', explosion: 'the explosion' };

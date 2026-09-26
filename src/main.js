@@ -569,7 +569,9 @@ function render() {
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE });
-  renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
+  // Every man's name is set in bold on the card, as in the report.
+  const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
+  renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
