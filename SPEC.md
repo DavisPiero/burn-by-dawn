@@ -288,6 +288,9 @@ and must not be extended to cover. The leader is a `leader` flag on a roster ent
 promoting a different trooper is a one-line data change and no code knows anyone's name.
 His roster rollover says what he gives the stick: the orders (radius and bonus, from
 `rules.json`), how many men have them this turn, and the radio for the RAF diversion (§4).
+While he is selected his radius is outlined on the board, dashed in leader blue, and a man
+who has his orders this turn wears a leader-blue chevron on his counter (M11), so the
+bonus can be seen, not just read about.
 
 What it buys the design: the command radius rewards moving as a group, and §6 punishes
 moving as a group, because more men sit inside one vision arc. Speed against stealth,

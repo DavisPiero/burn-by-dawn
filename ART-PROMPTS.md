@@ -382,6 +382,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The C-47 Dakota silhouette for the drop fly-by (until `aircraft-dakota.png` is
   supplied), and the opening, drifting and collapsing parachute canopies.
 - The soft drop shadow under counters.
+- The counter markers (spotted, wounded, hidden, and since M11 the leader-blue orders
+  chevron on a man who has the leader's +AP this turn).
 - Continuous roads, hedges and the railway line.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs.
 - Place names on the map (they are type, set from `data/map.json`).

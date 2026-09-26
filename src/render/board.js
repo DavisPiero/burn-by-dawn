@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -512,6 +512,7 @@ export function renderPieces(layers, state, view) {
   if (view.drop) drawDrop(layers, view.drop);
 
   if (view.reachable) drawReachable(layers, view.reachable);
+  if (view.commandArea) drawCommand(layers, view.commandArea);
 
   for (const route of view.routes) drawRoute(layers, route);
 
@@ -564,6 +565,7 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
+    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, 'marker-orders', -12, 13, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -1376,7 +1378,7 @@ function drawReachable(layers, reachable) {
  * left open: the border closes the area, and stroking them drew a sawtooth
  * past it.
  */
-function drawAreaEdge(layers, layer, area, strokes) {
+function drawAreaEdge(layers, layer, area, strokes, extra = {}) {
   const { corners, map } = layers;
   const edges = edgeCorners(corners, map.hexSize);
   let outline = '';
@@ -1391,9 +1393,19 @@ function drawAreaEdge(layers, layer, area, strokes) {
   if (!outline) return;
   for (const [stroke, width] of strokes) {
     layer.appendChild(el('path', {
-      d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round',
+      d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round', ...extra,
     }));
   }
+}
+
+/**
+ * The leader's command radius while he is selected (SPEC.md §5 Command): a
+ * dashed line in his blue round every hex within it. What it means is in the
+ * readout; a label on the board sat on the counters inside it.
+ */
+function drawCommand(layers, hexes) {
+  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.casing, COMMAND.casingWidth]]);
+  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': COMMAND.dash });
 }
 
 // --- hover path preview -----------------------------------------------------

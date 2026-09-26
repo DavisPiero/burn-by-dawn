@@ -780,7 +780,7 @@ export function renderReadout(element, state, map, view) {
       return;
     }
     element.textContent = state.selectedUnitId
-      ? 'Hover a hex to preview the move. Right-click or Esc to cancel.'
+      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? ` ▸ ${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
       : 'Click a man to select him, or a hex to see what it is.';
     return;
   }
@@ -803,7 +803,7 @@ export function renderReadout(element, state, map, view) {
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
-  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', ')];
+  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
   element.textContent = `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`;
 }
 

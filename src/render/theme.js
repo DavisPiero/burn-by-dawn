@@ -435,6 +435,17 @@ export const PATH = {
   blockedStroke: PALETTE.red,
 };
 
+// The leader's orders (SPEC.md §5 Command): while he is selected, the ground
+// within his command radius, outlined in his blue, dashed so it never reads
+// as the move range. Where a man stands at the start of a turn to get them.
+export const COMMAND = {
+  stroke: PALETTE.leader,
+  casing: PALETTE.paper,
+  width: 3,
+  casingWidth: 7,
+  dash: '10 6',
+};
+
 // ---------------------------------------------------------------------------
 // Enemies, vision and alert (SPEC.md §6).
 
@@ -1642,6 +1653,16 @@ const SPRITES = {
       circle(14, 14, 12, 'green'),
       line('M6 13 Q14 21 22 13', 2.4, 'stroke-paper'),
       line('M9 17 L7.5 20 M14 18.5 L14 22 M19 17 L20.5 20', 1.8, 'stroke-paper'),
+      ring(14, 14, 12),
+    ],
+  },
+  // On a man who has the leader's orders this turn (SPEC.md §5 Command, M11):
+  // a sergeant's chevron in the leader's blue, the one colour kept for him.
+  'marker-orders': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'leader'),
+      line('M7 12 L14 7 L21 12 M7 18 L14 13 L21 18', 2.6, 'stroke-paper', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
       ring(14, 14, 12),
     ],
   },

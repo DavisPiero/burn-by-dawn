@@ -185,6 +185,8 @@ function deriveView() {
       sources: alertSources(),
     },
     reachable: null,
+    commandArea: null,
+    commandLabel: null,
     plan: null,
     moveLabel: null,
     risk: null,
@@ -250,6 +252,16 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
+  // The leader selected: where a man must stand at the start of a turn to get
+  // his orders (SPEC.md §5 Command, M11). A flag, never a name (CLAUDE.md rule 6).
+  if (unit.leader) {
+    const hexes = new Map();
+    forEachCell(map, (q, r) => {
+      if (isInPlay(map, q, r) && hexDistance(unit, { q, r }) <= rules.command.radius) hexes.set(hexKey(q, r), { q, r });
+    });
+    view.commandArea = hexes;
+    view.commandLabel = `dashed blue: ${unit.shortName}'s orders — a man inside it at the start of a turn gets +${rules.command.bonusActionPoints} AP`;
+  }
   if (state.targeting) return deriveTargeting(view, unit, hex, hoverEnemy);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
