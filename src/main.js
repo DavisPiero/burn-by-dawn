@@ -667,14 +667,14 @@ function describeBriefing(which, view) {
       kicker: 'BEFORE THE DROP',
       paragraphs: [
         `Tonight six men drop behind the lines. Blow the ${primary.label.toLowerCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the exfil. Dawn comes at the end of turn ${rules.turnLimit}.`,
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so the order you blow things in is the plan.`] : []),
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off.`] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
         lines: [
-          'Pick a drop run with 1–3, or click its name on the map. Hover the map to see where you might come down.',
-          'Space jumps. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Space ends the turn.',
-          'Red rings mark your targets. The red dashed hexes round them are charge points: stand a man carrying a charge there and press C.',
+          'Pick a drop run with the 1–3 keys, or click its name on the map. Hover the map to see where you might come down.',
+          'Hit the SPACE key to initiate the drop. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Hit SPACE to end a turn.',
+          'Red rings mark your targets. The red dashed hexes are where you need to place explosive charges: stand a man carrying a charge there and press C.',
           'Hover anything for detail. KEYS, top right, lists every key.',
         ],
       }],

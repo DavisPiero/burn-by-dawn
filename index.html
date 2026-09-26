@@ -393,6 +393,13 @@
       background: var(--blue);
     }
     #diversion small { display: block; font-size: 12px; font-weight: normal; }
+    /* Not available yet: printed in blue on the paper rather than faded ink
+       on blue, which could not be read. */
+    #diversion:disabled {
+      color: var(--blue);
+      background: var(--paper);
+      border: 2px dashed var(--blue);
+    }
 
     /* The roster rail (SPEC.md §11): all six, always visible, greying out as
        men are lost. One row each — a small portrait and four lines about the
@@ -566,6 +573,8 @@
       border-bottom: 2px solid var(--ink);
     }
     #briefing p { margin: 0 0 8px; }
+    /* A clear line between the orders' prose and the section under it. */
+    #briefing p + h3 { margin-top: 22px; }
     #briefing ul { margin: 0; padding: 0; list-style: none; }
     #briefing li { position: relative; padding-left: 16px; margin-bottom: 4px; }
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
