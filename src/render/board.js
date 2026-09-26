@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -372,35 +372,57 @@ function drawRoads(layer, map, edge, railway) {
 
 /**
  * Which hedgerow hexes are joined by a hedge: a spanning tree of each run of
- * neighbouring hedgerow hexes, found breadth first in a fixed order, so a
- * clump of three touching hexes draws as a bend, never a little triangle.
- * Keyed by hexKey, each a list of directions.
+ * neighbouring hedgerow hexes, so a clump of three touching hexes draws as a
+ * bend, never a little triangle. The joins are chosen as a hedger would lay
+ * them (M12, the "trident" by Ferme Lebrun): between the hexes with the fewest
+ * hedgerow neighbours first, and on a tie the one that carries a hedge
+ * straight on, so a line of hedge stays one line and two lines meet in a T,
+ * not in a fork with a stub. In a fixed order, so the map always draws the
+ * same. Keyed by hexKey, each a list of directions.
  */
 function hedgeTree(map) {
   const isHedge = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).hedge);
+  const hexes = [];
+  forEachCell(map, (q, r) => { if (isHedge(q, r)) hexes.push({ q, r }); });
+  const degree = new Map(hexes.map((h) => [hexKey(h.q, h.r), NEIGHBOR_DIRS.filter((n) => isHedge(h.q + n.q, h.r + n.r)).length]));
+  const edges = [];
+  for (const h of hexes) {
+    // Each pair once: the three directions E, SE, SW from each hex.
+    for (const dir of [2, 3, 4]) {
+      const n = NEIGHBOR_DIRS[dir];
+      const next = { q: h.q + n.q, r: h.r + n.r };
+      if (!isHedge(next.q, next.r)) continue;
+      edges.push({ a: h, b: next, dir, weight: degree.get(hexKey(h.q, h.r)) + degree.get(hexKey(next.q, next.r)) });
+    }
+  }
+  // Union-find, so no join closes a loop.
+  const parent = new Map(hexes.map((h) => [hexKey(h.q, h.r), hexKey(h.q, h.r)]));
+  const root = (k) => {
+    while (parent.get(k) !== k) k = parent.get(k);
+    return k;
+  };
   const links = new Map();
-  const seen = new Set();
-  const join = (a, dir) => {
-    const k = hexKey(a.q, a.r);
+  const has = (h, dir) => (links.get(hexKey(h.q, h.r)) ?? []).includes(dir);
+  const join = (h, dir) => {
+    const k = hexKey(h.q, h.r);
     if (!links.has(k)) links.set(k, []);
     links.get(k).push(dir);
   };
-  forEachCell(map, (q0, r0) => {
-    if (!isHedge(q0, r0) || seen.has(hexKey(q0, r0))) return;
-    seen.add(hexKey(q0, r0));
-    const queue = [{ q: q0, r: r0 }];
-    while (queue.length) {
-      const h = queue.shift();
-      NEIGHBOR_DIRS.forEach((n, dir) => {
-        const next = { q: h.q + n.q, r: h.r + n.r };
-        if (!isHedge(next.q, next.r) || seen.has(hexKey(next.q, next.r))) return;
-        seen.add(hexKey(next.q, next.r));
-        join(h, dir);
-        join(next, (dir + 3) % 6);
-        queue.push(next);
-      });
+  // Carries a hedge straight on: either end already has a join the opposite way.
+  const straight = (e) => Number(has(e.a, (e.dir + 3) % 6) || has(e.b, e.dir));
+  let open = edges;
+  while (open.length) {
+    open = open.filter((e) => root(hexKey(e.a.q, e.a.r)) !== root(hexKey(e.b.q, e.b.r)));
+    if (!open.length) break;
+    let best = open[0];
+    for (const e of open) {
+      if (e.weight < best.weight || (e.weight === best.weight && straight(e) > straight(best))) best = e;
     }
-  });
+    parent.set(root(hexKey(best.a.q, best.a.r)), root(hexKey(best.b.q, best.b.r)));
+    join(best.a, best.dir);
+    join(best.b, (best.dir + 3) % 6);
+    open = open.filter((e) => e !== best);
+  }
   return links;
 }
 
@@ -1045,6 +1067,9 @@ function drawSites(layers, state, view) {
     const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
     // Names go on last, over the charge points around them.
     labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    // The exchange's telephone lines run out to a pole on each of its charge
+    // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
+    if (objectiveArt(objective)?.wires) drawWires(layers, objective);
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
@@ -1065,8 +1090,11 @@ function drawSites(layers, state, view) {
         points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth,
         'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
       }));
+      // The satchel sits toward the target it is for, not dead centre (M12).
       const size = OBJECTIVE.pointIconSize;
-      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size }));
+      const v = towardObjective(map, h, objective);
+      const shift = map.hexSize * OBJECTIVE.pointIconShift;
+      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x + v.x * shift - size / 2, y: p.y + v.y * shift - size / 2, width: size, height: size }));
       layers.sites.appendChild(point);
     }
   }
@@ -1079,6 +1107,61 @@ function drawSites(layers, state, view) {
     layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - 30, y: p.y + 20, width: size, height: size }));
     layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 12, y: p.y + 24, width: MARKER.size, height: MARKER.size }));
   }
+}
+
+/**
+ * The unit vector, in board pixels, from a charge point toward the nearest hex
+ * of its objective (the first in data order on a tie).
+ */
+function towardObjective(map, hex, objective) {
+  const p = axialToPixel(hex.q, hex.r, map.hexSize);
+  let best = null;
+  for (const h of objective.hexes) {
+    const o = axialToPixel(h.q, h.r, map.hexSize);
+    const d = Math.hypot(o.x - p.x, o.y - p.y);
+    if (!best || d < best.d - 1e-6) best = { d, x: o.x - p.x, y: o.y - p.y };
+  }
+  return best && best.d > 0 ? { x: best.x / best.d, y: best.y / best.d } : { x: 0, y: 0 };
+}
+
+/**
+ * Telephone wires from the objective to a pole on each of its charge points,
+ * on the far side of the hex from the satchel. A wire leaves the wall on the
+ * edge between the two hexes and sags to the pole's crossarm. Once the
+ * objective is gone (the line cut, or blown) each wire is snapped: two ends
+ * hanging, with a gap between.
+ */
+function drawWires(layers, objective) {
+  const { map } = layers;
+  const g = el('g', {});
+  const centre = labelPoint(map, objective.hexes);
+  for (const h of objective.chargeHexes) {
+    const p = axialToPixel(h.q, h.r, map.hexSize);
+    const v = towardObjective(map, h, objective);
+    const pole = { x: p.x - v.x * map.hexSize * WIRES.poleAway, y: p.y - v.y * map.hexSize * WIRES.poleAway };
+    const size = WIRES.poleSize;
+    const top = { x: pole.x, y: pole.y - size * 0.3 };
+    // The wires fan in to the building's eaves, at the middle of the footprint.
+    const toPole = { x: top.x - centre.x, y: top.y - centre.y };
+    const reach = Math.hypot(toPole.x, toPole.y) || 1;
+    const wall = { x: centre.x + (toPole.x / reach) * WIRES.wallReach, y: centre.y + (toPole.y / reach) * WIRES.wallReach - WIRES.wallHeight };
+    const mid = { x: (top.x + wall.x) / 2, y: (top.y + wall.y) / 2 + WIRES.sag };
+    const wire = (d) => {
+      g.appendChild(el('path', { d, fill: 'none', stroke: WIRES.casing, 'stroke-width': WIRES.width + 2.5, 'stroke-linecap': 'round' }));
+      g.appendChild(el('path', { d, fill: 'none', stroke: WIRES.stroke, 'stroke-width': WIRES.width, 'stroke-linecap': 'round' }));
+    };
+    if (objective.destroyed) {
+      // Snapped: each end falls from its post, short of the middle.
+      const at = (t) => ({ x: top.x + (wall.x - top.x) * t, y: top.y + (wall.y - top.y) * t });
+      const a = at(0.38), b = at(0.62);
+      wire(`M${top.x} ${top.y} Q${a.x} ${top.y + WIRES.sag * 0.5} ${a.x - v.x * 4} ${a.y + WIRES.drop}`);
+      wire(`M${wall.x} ${wall.y} Q${b.x} ${wall.y + WIRES.sag * 0.5} ${b.x + v.x * 4} ${b.y + WIRES.drop}`);
+    } else {
+      wire(`M${top.x} ${top.y} Q${mid.x} ${mid.y + WIRES.sag} ${wall.x} ${wall.y}`);
+    }
+    g.appendChild(el('use', { href: '#marker-telegraph-pole', x: pole.x - size / 2, y: pole.y - size / 2, width: size, height: size }));
+  }
+  layers.sites.appendChild(g);
 }
 
 function fillArea(layers, area, opacity, fill = BLAST.fill) {

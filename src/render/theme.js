@@ -588,17 +588,32 @@ export const OBJECTIVE = {
   pointOpacity: 0.8,
   pointHoverOpacity: 1,
   pointIconSize: 34,
+  pointIconShift: 0.3, // hex radii toward the target it serves (M12)
   stampWidth: 110,
   stampHeight: 44,
   stampRotate: -12,
 };
 
+// Telephone wires from an objective to a pole on each of its charge points
+// (M12), for a kind whose art has `wires` below: what a scout cuts.
+export const WIRES = {
+  stroke: PALETTE.ink,
+  casing: PALETTE.paper,
+  width: 2,
+  sag: 7, // how far a wire droops at its middle
+  drop: 14, // how far a snapped end hangs
+  wallReach: 34, // from the footprint's middle toward the pole, where a wire leaves the building
+  wallHeight: 26, // and how far up it
+  poleSize: 34,
+  poleAway: 0.42, // hex radii from the charge point's centre, away from the target
+};
+
 // Multi-hex objective art by objective kind (the kind ids in data/rules.json).
 // Drawn centred on the footprint at the manifest's size. A kind with no entry
-// is drawn as its outline only.
+// is drawn as its outline only. `wires`: its lines run out to its charge points.
 const OBJECTIVE_ART = {
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
-  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed' },
+  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: true },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
 };
 
@@ -608,7 +623,7 @@ export function objectiveArt(objective) {
   if (!art) return null;
   const id = objective.destroyed ? art.destroyed : art.intact;
   const [, , width, height] = SPRITES[id].viewBox.split(' ').map(Number);
-  return { id, width, height };
+  return { id, width, height, wires: Boolean(art.wires) };
 }
 
 export const EXFIL = {
@@ -1743,6 +1758,19 @@ const SPRITES = {
       line('M13 10 C13 5 17 6 18 3', 1.8),
       circle(21.5, 21.5, 6, 'red'), ring(21.5, 21.5, 6, 1.4),
       line('M21.5 18.5 V24.5 M18.5 21.5 H24.5', 1.8, 'stroke-paper'),
+    ],
+  },
+  // A telegraph pole on each of the exchange's charge points (M12): where the
+  // wires go, so a scout can see the line he would cut. Ink only.
+  'marker-telegraph-pole': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      line('M14 27 V4', 4, 'stroke-paper'),
+      line('M6 8.5 H22', 3.5, 'stroke-paper'),
+      line('M14 27 V4', 2),
+      line('M6 8.5 H22 M8 12.5 L14 9.5 L20 12.5', 1.6),
+      circle(7, 7, 1.6, 'ink'), circle(21, 7, 1.6, 'ink'),
+      line('M10 27 H18', 1.6),
     ],
   },
   'marker-charge': {

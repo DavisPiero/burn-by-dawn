@@ -55,7 +55,7 @@
     { "name": "La Butte", "kind": "high", "at": [1, 4], "dy": 0.25 },
     { "name": "Ferme Lebrun", "kind": "farm", "at": [2, 8], "dy": 0.62 },
     { "name": "Les Marais", "kind": "marsh", "at": [7, 9] },
-    { "name": "Canal St-R\u00e9my", "kind": "water", "at": [8, 10], "angle": 62 }
+    { "name": "Canal St-R\u00e9my", "kind": "water", "at": [8, 10], "angle": 47 }
   ],
 
   "legend": {
