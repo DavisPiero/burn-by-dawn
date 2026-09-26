@@ -795,7 +795,7 @@
     /* Wider, so the picture is cropped lower rather than grown taller. */
     #briefing-backdrop.orders #briefing .title-banner { aspect-ratio: 5.8 / 1; }
     /* The level, first thing under the head: what it sets is in the text below. */
-    #briefing .brief-top { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+    #briefing .brief-top { margin: 0 0 7px; padding-bottom: 5px; border-bottom: 2px solid var(--ink); }
     #briefing .brief-choice {
       display: flex;
       align-items: center;
@@ -807,13 +807,14 @@
       top: 3px;
       margin-right: 4px;
       font-family: var(--slab);
-      font-size: 14px;
+      font-size: 16px;
       font-weight: bold;
       letter-spacing: 2px;
     }
+    /* Bigger since M14, the operator's: the first choice on the card. */
     #briefing .brief-choice .btn {
-      padding: 1px 8px;
-      font-size: 12px;
+      padding: 3px 14px;
+      font-size: 15px;
       font-weight: bold;
       letter-spacing: 1px;
     }
