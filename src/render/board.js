@@ -2035,6 +2035,8 @@ export function drawCounterKey(svg, examples, numbers) {
   place(counter, cx, cy, k);
   const dots = COUNTER.apDots;
   const firstBlue = man.apMax - man.commandBonus;
+  // The leader by his name in the data, never a name in code (CLAUDE.md rule 6).
+  const lead = examples.leader.shortName.charAt(0) + examples.leader.shortName.slice(1).toLowerCase();
   const left = [
     [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'sapper, scout', 'or gunner']],
     [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'a dot each']],
@@ -2046,8 +2048,8 @@ export function drawCounterKey(svg, examples, numbers) {
   }
   const right = [
     [{ x: dots.x, y: dots.y }, 58, ['AP LEFT', 'hollow when', 'spent']],
-    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 110, ['BLUE AP', "from Dutch's", 'orders']],
-    [{ x: 51, y: 31 }, 162, ["DUTCH'S", 'ORDERS', 'this turn']],
+    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 110, ['BLUE AP', `from ${lead}'s`, 'orders']],
+    [{ x: 51, y: 31 }, 162, [`${lead.toUpperCase()}'S`, 'ORDERS', 'this turn']],
   ];
   for (const [p, y, lines] of right) {
     pointer({ x: 234, y: y - 4 }, on(cx, cy, k, p));
@@ -2058,7 +2060,7 @@ export function drawCounterKey(svg, examples, numbers) {
   const leader = drawCounter({ ...examples.leader, q: 0, r: 0, ap: examples.leader.apMax }, 1, unitMap, false);
   const small = el('g', { transform: 'translate(30 238) scale(0.8)' });
   small.appendChild(leader);
-  row(234, small, ['DUTCH, THE LEADER', 'blue name and rank; men near', 'him start a turn with more AP']);
+  row(234, small, [`${lead.toUpperCase()}, THE LEADER`, 'blue name and rank; men near', 'him start a turn with more AP']);
   const markerAt = (id, y) => el('use', { href: `#${id}`, x: 17, y: y - 13, width: 26, height: 26 });
   row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'seen again this turn: fired on']);
   row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; one more hit kills']);
