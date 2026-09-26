@@ -11,12 +11,12 @@ import { DIRECTION_NAMES, facingToward, hexDistance } from '../src/hex.js';
 import { isInPlay, loadJson, loadMap, terrainIdAt } from '../src/map.js';
 import {
   createInitialState, deselect, endTurn, hideUnit, moveUnit, pickUpCharge, setTargeting,
-  killEnemy, stabiliseUnit, suppressEnemy, throwStone,
+  killEnemy, knifeEnemy, stabiliseUnit, suppressEnemy, throwStone,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
 import {
-  checkKill, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById,
+  checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById,
 } from '../src/units.js';
 
 function assert(condition, message) {
@@ -452,6 +452,38 @@ export default [
     equal(`${noise.kind} ${noise.q},${noise.r}`, `silenced ${row.q + 1},${row.r}`, 'a muffled shot, heard from the gunner');
     const body = killed.bodies.at(-1);
     equal(`${body.enemyId} ${body.q},${body.r} ${body.found}`, `${target.id} ${target.q},${target.r} false`, 'a body where it fell');
+  }],
+
+  ['knife (M12b): any man, beside an enemy looking the other way, kills it silently, leaves a body and ends his turn', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    // The enemy faces east; the man stands just west of it, behind it.
+    const target = enemy(row.q + 1, row.r, 'E');
+    for (const role of ['sapper', 'scout', 'gunner']) {
+      const { state: s, unitId } = scenario(state, role, row, [target]);
+      assert(checkKnife(unitIn(s, unitId), target, rules).ok, `a ${role} can knife it from behind`);
+    }
+    const { state: s, unitId } = scenario(state, 'sapper', row, [target]);
+    const knifed = knifeEnemy(s, unitId, target.id, rules);
+    equal(knifed.enemies.length, 0, 'gone from the board');
+    equal(unitIn(knifed, unitId).ap, 0, 'his turn is over');
+    equal(knifed.alert.points, s.alert.points, 'no alert');
+    equal(knifed.noises.length, s.noises.length, 'no noise');
+    const body = knifed.bodies.at(-1);
+    equal(`${body.enemyId} ${body.q},${body.r} ${body.found}`, `${target.id} ${target.q},${target.r} false`, 'a body where it fell');
+
+    const facing = enemy(row.q + 1, row.r, 'W');
+    const faced = checkKnife(unitIn(scenario(state, 'sapper', row, [facing]).state, unitId), facing, rules);
+    assert(!faced.ok && faced.reason.includes('looking his way'), `not from in front: ${faced.reason}`);
+    const far = enemy(row.q + 2, row.r, 'E');
+    assert(!checkKnife(unitIn(scenario(state, 'sapper', row, [far]).state, unitId), far, rules).ok, 'not from two hexes off');
+    const spotted = scenario(state, 'sapper', row, [target], { inContact: true });
+    assert(!checkKnife(unitIn(spotted.state, spotted.unitId), target, rules).ok, 'not while he is in contact');
+    const tired = scenario(state, 'sapper', row, [target], { ap: rules.actions.knife.apCost - 1 });
+    assert(!checkKnife(unitIn(tired.state, tired.unitId), target, rules).ok, 'not without the AP');
+    const squad = enemy(row.q + 1, row.r, 'E', { label: 'Reserve squad', killable: false });
+    const reserve = checkKnife(unitIn(scenario(state, 'sapper', row, [squad]).state, unitId), squad, rules);
+    assert(!reserve.ok && reserve.reason.includes('cannot be killed'), `not the reserve: ${reserve.reason}`);
   }],
 
   ['a suppressed enemy stays open to a kill through the next player phase, then is back to normal', async () => {

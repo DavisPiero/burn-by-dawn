@@ -39,7 +39,8 @@ export default [
     assert(has(hints, `${units[1].shortName} is wounded`), hints.join(' | '));
     const leader = units.find((u) => u.leader);
     const regroup = hintsFor({ ...state, turn: 1, parachutes: [] }, rules);
-    assert(has(regroup, `of ${leader.shortName} gets +${rules.command.bonusActionPoints} AP`), regroup.join(' | '));
+    assert(has(regroup, `${leader.shortName}'s orders`), regroup.join(' | '));
+    assert(has(regroup, `+${rules.command.closeBonusActionPoints} AP beside him, +${rules.command.bonusActionPoints} AP within ${rules.command.radius} hexes of him`), regroup.join(' | '));
   }],
   ['with the primary down, it counts the men still to get out and the turns left', async () => {
     const { rules, state } = await start();

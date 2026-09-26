@@ -25,7 +25,7 @@ import {
 import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
 import {
-  checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   createUnits, fillActionPoints, onBoard, unitById,
 } from './units.js';
 
@@ -391,6 +391,23 @@ export function killEnemy(state, unitId, enemyId, map, rules) {
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
   };
   return makeNoise(fired, 'silenced', unit, alert, rules).state;
+}
+
+/**
+ * The knife (SPEC.md §4, M12b): an enemy beside him that cannot see him is
+ * killed without a sound — no alert, no noise — and it ends his turn. Like a
+ * gunner's kill it leaves a body, which the garrison finds the same way.
+ */
+export function knifeEnemy(state, unitId, enemyId, rules) {
+  const unit = unitById(state.units, unitId);
+  const enemy = state.enemies.find((e) => e.id === enemyId);
+  const check = checkKnife(unit, enemy, rules);
+  if (!check.ok) return state;
+  return {
+    ...spend(state, unitId, unit.ap),
+    enemies: state.enemies.filter((e) => e.id !== enemyId),
+    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
+  };
 }
 
 /** Throw a stone: a noise on that hex for the next enemy phase. */

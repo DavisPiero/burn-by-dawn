@@ -4,19 +4,19 @@
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `tag` is one word for what the run is good for, shown beside its name. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the fields north-west of the bridge, flying in off the canal and away from it.",
+  "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `tag` is one word for what the run is good for, shown beside its name. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the fields north-west of the bridge, flying in off the canal and away from it. `labelAlong` and `windAlong` (optional, 0 to 1, art only) are how far along the line its name tab and its wind arrow sit, if not at the defaults (0.3 and halfway): the east run's are lower so they clear the north run's (M12).",
   "dropRuns": [
     { "id": "west", "label": "West run", "tag": "quiet", "description": "Wood and ridge line: under cover the whole way and the fewest eyes on you, but the longest walk to the bridge, and trees make for bad landings.",
       "from": [2, 0], "to": [-4, 12], "jumpAt": 0, "spacing": 1, "wind": "E" },
     { "id": "north", "label": "North run", "tag": "steady", "description": "Hedgerow lanes: the middle way. Soft landings in the hedges and the most reliable run, with two patrol routes to cross.",
       "from": [0, 1], "to": [17, 1], "jumpAt": 3, "spacing": 1, "wind": "SE" },
     { "id": "east", "label": "East run", "tag": "fast", "description": "The fields above the bridge: down closest to the primary, the wind carrying you off the canal. Tricky: the bridge post and its patrol are close by.",
-      "from": [9, 0], "to": [2, 7], "jumpAt": 0, "spacing": 1, "wind": "NW" }
+      "from": [9, 0], "to": [2, 7], "jumpAt": 0, "spacing": 1, "wind": "NW", "labelAlong": 0.5, "windAlong": 0.79 }
   ],
 
   "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes. The base patrol walks the fields south of the fuel dump, not up onto the ridge: when it did, it met the west run coming down the ridge and made that run the worst of the three for no gain (M9c).",
   "enemies": [
-    { "id": "post-bridge", "label": "Bridge post", "type": "sentry", "at": [12, 5], "facing": "W" },
+    { "id": "post-bridge", "label": "Bridge post", "type": "sentry", "at": [12, 4], "facing": "W" },
     { "id": "post-base", "label": "Base post", "type": "sentry", "at": [-4, 10], "facing": "NE" },
     { "id": "patrol-bridge", "label": "Bridge patrol", "type": "patrol", "facing": "W", "loop": false,
       "route": [[12, 6], [4, 6]] },
@@ -55,7 +55,7 @@
     { "name": "La Butte", "kind": "high", "at": [1, 4], "dy": 0.25 },
     { "name": "Ferme Lebrun", "kind": "farm", "at": [2, 8], "dy": 0.62 },
     { "name": "Les Marais", "kind": "marsh", "at": [7, 9] },
-    { "name": "Canal St-R\u00e9my", "kind": "water", "at": [8, 10], "angle": 62 }
+    { "name": "Canal St-R\u00e9my", "kind": "water", "at": [8, 10], "angle": 47 }
   ],
 
   "legend": {
@@ -78,8 +78,8 @@
     "WWRFFHFFTFFHCFFOOF",
     "WRRFFHFFTFFHCFBBFF",
     "WRRFHHFFTFFHCFBBFF",
-    "WWRFHFFHTFFMCFFTFF",
-    "FWRFHFFHTFFMCFETFF",
+    "WWRFHFFHTFFMCFETFF",
+    "FWRFHFFHTFFMCFFTFF",
     "FWRFHFFTTTTXXXTTFF",
     "DDRFHFFHFTFMCFFHFF",
     "FDFOHFBHFTFMCFFHFF",

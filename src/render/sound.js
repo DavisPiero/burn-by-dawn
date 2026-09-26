@@ -1,7 +1,9 @@
 // Sound (ART-ASSETS.md §9, SPEC.md §11). The sounds of the table: a counter
 // snapped down, a pencil, a turned card, a dog a long way off — and, since
 // M11, one from the battlefield: a charge going off is a real explosion, the
-// payoff of the whole plan. The RAF's bombs, miles off, stay muffled crumps. Presentation only, like the rest of render/: it
+// payoff of the whole plan. Since M12 the back page has its own: the village
+// church's bells for a mission accomplished, a tolling bell and a far siren
+// for the rest. The RAF's bombs, miles off, stay muffled crumps. Presentation only, like the rest of render/: it
 // is told what happened and never looks at a rule.
 //
 // Each sound is made in code with Web Audio until a file is supplied, the way
@@ -89,6 +91,23 @@ function noiseThrough(ctx, out, at, length, nodes, offset = 0) {
   }
   last.connect(out);
   source.start(at, offset % 1.5, length);
+}
+
+/**
+ * A struck bell: a handful of sine partials at a bell's out-of-tune ratios
+ * (hum, prime, minor third, fifth, nominal and above), each dying away at its
+ * own rate, and a short tick of the clapper. `freq` is the prime.
+ */
+function bell(ctx, out, at, freq, peak, length) {
+  const partials = [[0.5, 0.3, 1], [1, 0.5, 0.75], [1.19, 0.28, 0.5], [1.5, 0.18, 0.4], [2, 0.26, 0.32], [2.52, 0.12, 0.22], [3, 0.08, 0.16]];
+  for (const [ratio, amp, share] of partials) {
+    const tone = ctx.createOscillator();
+    tone.frequency.value = freq * ratio;
+    tone.connect(envelope(ctx, at, peak * amp, length * share, 0.003)).connect(out);
+    tone.start(at);
+    tone.stop(at + length * share + 0.05);
+  }
+  noiseThrough(ctx, out, at, 0.03, [filter(ctx, 'bandpass', Math.min(freq * 4, 8000), 2), envelope(ctx, at, peak * 0.25, 0.025, 0.001)], freq / 1000);
 }
 
 // --- the placeholders -----------------------------------------------------------
@@ -202,6 +221,41 @@ const SYNTHS = {
       noiseThrough(ctx, out, t, 0.04, [filter(ctx, 'bandpass', 1800 + rng.next() * 3500, 3), envelope(ctx, t, loud, 0.03, 0.001)], rng.next());
     }
   },
+
+  // Mission accomplished (M12): the church in the village ringing at dawn,
+  // six bells in rounds, twice through — one for each man — heard across the fields.
+  'church-bells': (ctx, destination, at) => {
+    const far = filter(ctx, 'lowpass', 3200);
+    far.connect(destination);
+    const tenor = 330;
+    const scale = [5 / 3, 3 / 2, 4 / 3, 5 / 4, 9 / 8, 1];
+    for (let round = 0; round < 2; round++) {
+      scale.forEach((ratio, i) => {
+        bell(ctx, far, at + round * 2.1 + i * 0.3, tenor * ratio, 0.17, 2.4);
+      });
+    }
+  },
+
+  // The mission failed (M12): one low bell tolling, slowly, and an air-raid
+  // siren winding up and down a long way off under it.
+  'bell-toll': (ctx, destination, at) => {
+    for (const t of [0, 1.8, 3.6]) bell(ctx, destination, at + t, 98, 0.42, 4.2);
+    const siren = ctx.createOscillator();
+    siren.type = 'triangle';
+    siren.frequency.setValueAtTime(300, at + 0.4);
+    for (let k = 0; k < 3; k++) {
+      siren.frequency.linearRampToValueAtTime(560, at + 1.4 + k * 1.8);
+      siren.frequency.linearRampToValueAtTime(380, at + 2.2 + k * 1.8);
+    }
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0.0001, at + 0.4);
+    level.gain.exponentialRampToValueAtTime(0.07, at + 1.4);
+    level.gain.setValueAtTime(0.07, at + 4.4);
+    level.gain.exponentialRampToValueAtTime(0.0001, at + 6);
+    siren.connect(filter(ctx, 'lowpass', 900)).connect(level).connect(destination);
+    siren.start(at + 0.4);
+    siren.stop(at + 6.1);
+  },
 };
 
 export const SOUND_IDS = Object.keys(SYNTHS);
@@ -218,6 +272,10 @@ const CUES = {
   explosion: [['explosion', 1, 0]],
   // Bombers over the town, miles off: three small crumps.
   diversion: [['crump', 0.25, 0], ['crump', 0.18, 0.4], ['crump', 0.22, 0.95]],
+  // The back page (M12): bells for a mission accomplished, a toll for the rest,
+  // just after the page has turned.
+  victory: [['church-bells', 0.9, 0.35]],
+  defeat: [['bell-toll', 0.55, 0.35]],
 };
 
 export const CUE_NAMES = Object.keys(CUES);

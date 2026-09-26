@@ -66,6 +66,11 @@ export function validateDrop(map, rules, count, mapUrl = 'data/map.json', rulesU
     if (!Number.isInteger(run.jumpAt) || run.jumpAt < 0) throw new Error(`${where} "jumpAt" must be a non-negative integer`);
     if (!Number.isInteger(run.spacing) || run.spacing < 1) throw new Error(`${where} "spacing" must be a positive integer`);
     if (!DIRECTION_NAMES.includes(run.wind)) throw new Error(`${where} "wind" must be one of ${DIRECTION_NAMES.join(', ')}`);
+    for (const key of ['labelAlong', 'windAlong']) {
+      if (run[key] !== undefined && !(typeof run[key] === 'number' && run[key] >= 0 && run[key] <= 1)) {
+        throw new Error(`${where} "${key}" must be a number from 0 to 1, got ${JSON.stringify(run[key])}`);
+      }
+    }
     const line = flightLine(run);
     const last = run.jumpAt + (count - 1) * run.spacing;
     if (last >= line.length) {

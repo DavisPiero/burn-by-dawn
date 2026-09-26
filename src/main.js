@@ -10,20 +10,20 @@ import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './m
 import { freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
-  jump, killEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
+  jump, killEnemy, knifeEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
   setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
-import { hintsFor } from './hints.js';
+import { hintsFor, ordersWords } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
-  chargeCapacity, checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces } from './render/board.js';
+import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
@@ -33,7 +33,7 @@ import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
+  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -52,6 +52,7 @@ const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
+const restartButton = document.getElementById('restart');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
@@ -189,6 +190,7 @@ function deriveView() {
     },
     reachable: null,
     commandArea: null,
+    commandCloseArea: null,
     commandLabel: null,
     plan: null,
     moveLabel: null,
@@ -254,19 +256,23 @@ function deriveView() {
   }
 
   const unit = selectedUnit(state);
+  // The leader selected, or under the mouse (M12): where a man must stand at
+  // the start of a turn to get his orders (SPEC.md §5 Command, M11). A flag,
+  // never a name (CLAUDE.md rule 6).
+  const leader = unit?.leader ? unit : (!state.targeting && leaderAt(hex));
+  if (leader) {
+    const hexes = new Map();
+    forEachCell(map, (q, r) => {
+      if (isInPlay(map, q, r) && hexDistance(leader, { q, r }) <= rules.command.radius) hexes.set(hexKey(q, r), { q, r });
+    });
+    view.commandArea = hexes;
+    const { closeRadius } = rules.command;
+    if (closeRadius != null) view.commandCloseArea = new Map([...hexes].filter(([, h]) => hexDistance(leader, h) <= closeRadius));
+    if (unit?.leader) view.commandLabel = `dashed blue: ${leaderOrdersWords(unit)}`;
+  }
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
-  // The leader selected: where a man must stand at the start of a turn to get
-  // his orders (SPEC.md §5 Command, M11). A flag, never a name (CLAUDE.md rule 6).
-  if (unit.leader) {
-    const hexes = new Map();
-    forEachCell(map, (q, r) => {
-      if (isInPlay(map, q, r) && hexDistance(unit, { q, r }) <= rules.command.radius) hexes.set(hexKey(q, r), { q, r });
-    });
-    view.commandArea = hexes;
-    view.commandLabel = `dashed blue: ${unit.shortName}'s orders — a man inside it at the start of a turn gets +${rules.command.bonusActionPoints} AP`;
-  }
   if (state.targeting) return deriveTargeting(view, unit, hex, hoverEnemy);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
@@ -316,7 +322,7 @@ function deriveDrop(view, hex) {
   if (briefing?.kind === 'orders') return view;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
-      id: run.id, label: run.label, tag: run.tag, wind: run.wind,
+      id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, windAlong: run.windAlong ?? null,
       from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
       jumps: jumpPoints(run, count), selected: run.id === state.dropRunId,
     })),
@@ -329,14 +335,14 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         hexes: o.hexes, primary: o.primary, colour: 'red',
         // The charges it takes, so three dashed points never read as three charges.
-        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, payoffNote(kindOf(o, rules)), chargeCount(kindOf(o, rules).chargesNeeded)].filter(Boolean),
+        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
       })),
       { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
     ];
   }
   if (!hex) {
     view.dropLabel = selected
-      ? `${selected.label}, ${selected.tag.toUpperCase()}: ${selected.description} Wind ${selected.wind}. Space or JUMP to go.`
+      ? `${selected.label}, ${selected.tag.toUpperCase()}: ${selected.description} Wind ${selected.wind}. Press SPACE to jump, or click the run again.`
       : null;
     return view;
   }
@@ -384,6 +390,18 @@ function primaryLabel() {
 function chargeCount(n) {
   const words = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
   return `USE ${words[n] ?? n} CHARGE${n === 1 ? '' : 'S'}`;
+}
+
+/**
+ * The charge count on a ring, and for a target a scout can cut instead, the
+ * other way in (M12: the operator wanted Cut the line on the rings):
+ * "USE ONE CHARGE," / "OR HAVE A SCOUT CUT THE LINES".
+ */
+function chargeNote(kind) {
+  const count = chargeCount(kind.chargesNeeded);
+  const cutter = Object.values(rules.roles).find((role) => role.cutLine);
+  if (!kind.cutLine || !cutter) return [count];
+  return [`${count},`, `OR HAVE A ${cutter.label.toUpperCase()} CUT THE LINES`];
 }
 
 /** Charges an objective still wants: what it needs, less those gone off or burning. */
@@ -435,11 +453,11 @@ function payoffWords(kind) {
   return words.length ? words.join(' and ') : null;
 }
 
-/** The same, lettered on its target ring before the drop: "STOPS THE RESERVE", "A PATROL LEAVES". */
+/** The same, lettered on its target ring before the drop: "STOPS THE RESERVE", "MAKES A PATROL LEAVE". */
 function payoffNote(kind) {
   const { noReserve, withdrawPatrols } = kind.payoff;
   if (noReserve) return 'STOPS THE RESERVE';
-  if (withdrawPatrols > 0) return withdrawPatrols === 1 ? 'A PATROL LEAVES' : `${withdrawPatrols} PATROLS LEAVE`;
+  if (withdrawPatrols > 0) return withdrawPatrols === 1 ? 'MAKES A PATROL LEAVE' : `MAKES ${withdrawPatrols} PATROLS LEAVE`;
   return null;
 }
 
@@ -487,6 +505,11 @@ function actionsFor(unit) {
   const suppress = canSuppress.find((c) => c.ok) ?? checkSuppress(map, unit, null, rules);
   const kill = state.enemies.map((e) => checkKill(map, unit, e, rules)).find((c) => c.ok)
     ?? checkKill(map, unit, null, rules);
+  // The knife: ok if any enemy beside him could be knifed; otherwise the
+  // reason for the nearest one beside him, or that there is none.
+  const beside = state.enemies.filter((e) => hexDistance(e, unit) === 1);
+  const knife = beside.map((e) => checkKnife(unit, e, rules)).find((c) => c.ok)
+    ?? (beside.length ? checkKnife(unit, beside[0], rules) : checkKnife(unit, null, rules));
   // Every man has somewhere in range to throw, so only his AP can stop him.
   const stoneCheck = checkThrowStone(map, unit, nearestInPlay(unit), rules);
   const ap = (n) => `${n} AP`;
@@ -497,13 +520,18 @@ function actionsFor(unit) {
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
+    {
+      id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
+      help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
+        + 'but it leaves a body, and it ends his turn. Not while he is spotted. The reserve squad cannot be killed. Press N, then click the enemy',
+    },
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Patrols in earshot walk over to look and sentries turn to face it — use it to pull a patrol off your path or turn a sentry's back. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
-    { id: 'pack', key: 'U', label: 'Pack chute', short: 'Pack', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
+    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
@@ -614,6 +642,16 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     } else {
       view.targetLabel = `Kill: click a suppressed enemy inside ${unit.shortName}'s spot radius with a clear line. Esc to cancel.`;
     }
+  } else if (kind === 'knife') {
+    for (const e of state.enemies) if (checkKnife(unit, e, rules).ok) add(e);
+    if (hoverEnemy) {
+      const check = checkKnife(unit, hoverEnemy, rules);
+      view.targetLabel = check.ok
+        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP and the rest of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
+        : `Knife: ${check.reason}.`;
+    } else {
+      view.targetLabel = `Knife: click an enemy beside ${unit.shortName} that is looking the other way. Esc to cancel.`;
+    }
   } else if (kind === 'stone') {
     forEachCell(map, (q, r) => { if (checkThrowStone(map, unit, { q, r }, rules).ok) add({ q, r }); });
     const check = hex ? checkThrowStone(map, unit, hex, rules) : null;
@@ -678,7 +716,7 @@ function render() {
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
-  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE });
+  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE }, restartMission);
   // Every man's name is set in bold on the card, as in the report.
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
@@ -686,6 +724,7 @@ function render() {
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
   if (shown && shown !== cardShown) playCue('card');
+  if (shown === 'results' && cardShown !== 'results') playCue(state.outcome.kind === 'success' ? 'victory' : 'defeat');
   cardShown = shown;
 }
 
@@ -809,6 +848,9 @@ function handleTargetClick(q, r) {
   } else if (state.targeting === 'kill') {
     const enemy = state.enemies.find((e) => e.q === q && e.r === r);
     if (enemy) next = killEnemy(state, mover.id, enemy.id, map, rules);
+  } else if (state.targeting === 'knife') {
+    const enemy = state.enemies.find((e) => e.q === q && e.r === r);
+    if (enemy) next = knifeEnemy(state, mover.id, enemy.id, rules);
   } else if (state.targeting === 'stone') {
     next = throwStone(state, mover.id, { q, r }, map, rules);
   } else if (state.targeting === 'stabilise') {
@@ -862,6 +904,7 @@ function handleAction(id) {
       break;
     case 'suppress':
     case 'kill':
+    case 'knife':
     case 'stone':
     case 'swim':
     case 'pass':
@@ -881,11 +924,26 @@ function handleAction(id) {
 function handleHexHover(q, r) {
   state = setHover(state, { q, r });
   render();
+  showLeaderHover();
 }
 
 function handleHexLeave() {
   state = setHover(state, null);
   render();
+  showLeaderHover();
+}
+
+// The leader's rollover follows the mouse onto and off his hex (M12).
+let leaderHoverShown = false;
+function showLeaderHover() {
+  const leader = !state.targeting && !briefing && leaderAt(state.hoverHex);
+  if (leader) {
+    showPopup(layers.hexNodes.get(hexKey(leader.q, leader.r)), describeLeaderHover(leader));
+    leaderHoverShown = true;
+  } else if (leaderHoverShown) {
+    hidePopup();
+    leaderHoverShown = false;
+  }
 }
 
 function handleRosterClick(unitId) {
@@ -926,6 +984,53 @@ function endBangHold() {
   bangTimer = null;
   briefing = { kind: 'turn' };
   render();
+}
+
+/**
+ * Start a new game on a fresh seed at the same level, without reloading the
+ * page (M12): the restart in the margin, and Play again on the back page. The
+ * orders open again, as on any new game (SPEC.md §11).
+ */
+function restartMission() {
+  clearTimeout(dropShowTimer);
+  clearTimeout(flyShowTimer);
+  clearTimeout(bangTimer);
+  dropShow = null;
+  flyShow = null;
+  bangTimer = null;
+  briefingAfterDrop = false;
+  highlightHex = null;
+  hoverUnitId = null;
+  lastSelectedId = null;
+  hidePopup();
+  resetBoardMemory(layers);
+  // A seed in the address would replay the old drop on a reload: the new one is fresh.
+  const query = new URLSearchParams(window.location.search);
+  query.delete('seed');
+  const search = query.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+  startMission(level, freshSeed(Date.now()));
+  briefing = { kind: 'orders' };
+  render();
+}
+
+// The restart in the margin asks once: a first click arms it for a few
+// seconds, a second click starts again. A mission is too long to lose to a slip.
+let restartArmed = null;
+function handleRestartClick() {
+  restartButton.blur();
+  if (restartArmed) {
+    clearTimeout(restartArmed);
+    restartArmed = null;
+    renderRestart(restartButton, false);
+    restartMission();
+    return;
+  }
+  restartArmed = setTimeout(() => {
+    restartArmed = null;
+    renderRestart(restartButton, false);
+  }, 4000);
+  renderRestart(restartButton, true);
 }
 
 function closeBriefing() {
@@ -973,33 +1078,40 @@ function handleLevelClick() {
 function describeBriefing(which, view) {
   const primary = state.objectives.find((o) => o.primary);
   if (which.kind === 'orders') {
-    const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toLowerCase()}`);
+    // Places in capitals, as the operator's orders name them (M12).
+    const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toUpperCase()}`);
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
     const needs = state.objectives.map((o) => {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
-      const where = needed === points ? (needed === 1 ? 'on its point' : 'one on each point') : `on any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
-      return `the ${o.label.toLowerCase()} ${needed}, ${where}`;
+      const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
+      return `${o.label.toLowerCase()} ${needed}, ${where}`;
     }).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
+    const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
+    const runList = runs.length > 1 ? `${runs.slice(0, -1).join(', ')} or ${runs.at(-1)}` : runs.join('');
+    // The one target a scout can cut instead of blowing (M12: the orders did not say).
+    const cuttable = state.objectives.find((o) => kindOf(o, rules).cutLine);
+    const cutter = Object.values(rules.roles).find((role) => role.cutLine);
     return {
       banner: { title: GAME_TITLE, tagline: GAME_TAGLINE },
       title: 'ORDERS',
       kicker: 'BEFORE THE DROP',
       paragraphs: [
-        `Tonight six men drop behind the lines. Blow the ${primary.label.toLowerCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the exfil. Dawn comes at the end of turn ${rules.turnLimit}.`,
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off. It’s good to be slow and stealthy, as long as you finish before dawn!`] : []),
+        `Tonight six men are to drop behind enemy lines. Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the EXFIL. Dawn comes at the end of turn ${rules.turnLimit}.`,
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (+${rules.scoring.secondary}pts${bonus.length === 1 ? '' : ' ea'}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
         lines: [
-          'The Dakota troop aircraft flies one of these lines; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.',
+          `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
           'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
           'Red rings mark your targets. The red dashed hexes are their charge points: stand a man with a charge on one and press C.',
-          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`,
-          'Hover anything for detail. KEYS, top right, lists every key.',
+          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
+            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, silent.` : ''),
+          'Hover anything for detail; KEYBOARD lists every key.',
         ],
       }],
       // SPEC.md §10: the level, chosen here and fixed once the stick jumps.
@@ -1076,9 +1188,33 @@ function describeMarker(id, unit) {
   }
   if (id === 'marker-orders') {
     const leader = state.units.find((u) => u.leader);
-    return ['ORDERS', `${name} started this turn within ${rules.command.radius} hexes of ${leader?.shortName ?? 'the leader'}: +${unit.commandBonus} AP this turn.`];
+    const where = rules.command.closeRadius != null && unit.commandBonus === rules.command.closeBonusActionPoints
+      ? (rules.command.closeRadius === 1 ? 'beside' : `within ${rules.command.closeRadius} hexes of`)
+      : `within ${rules.command.radius} hexes of`;
+    return ['ORDERS', `${name} started this turn ${where} ${leader?.shortName ?? 'the leader'}: +${unit.commandBonus} AP this turn. `
+      + `The orders give ${ordersWords(rules.command)}.`];
   }
   return ['', ''];
+}
+
+/** The leader standing on this hex, if he is: his counter has a rollover (M12). */
+function leaderAt(hex) {
+  if (!hex || state.phase === 'drop') return null;
+  return state.units.find((u) => u.leader && onBoard(u) && u.q === hex.q && u.r === hex.r) ?? null;
+}
+
+/** "Dutch's orders — at the start of a turn, +2 AP beside him, +1 AP within 2 hexes of him". */
+function leaderOrdersWords(leader) {
+  return `${leader.shortName}'s orders — at the start of a turn, ${ordersWords(rules.command)}`;
+}
+
+/** The leader's rollover on the board: his orders, and who has them this turn. */
+function describeLeaderHover(leader) {
+  const led = state.units.filter((u) => onBoard(u) && u.commandBonus > 0).length;
+  const inner = rules.command.closeRadius != null ? ' (the finer dash is the inner ring)' : '';
+  return titled(`${leader.shortName.toUpperCase()}'S ORDERS`,
+    `The dashed blue rings${inner}: a man inside them at the start of a turn gets ${ordersWords(rules.command)}. `
+    + `${led === 0 ? 'Nobody has' : led === 1 ? '1 man has' : `${led} men have`} them this turn.`);
 }
 
 /** Jump, and show the stick going out and coming down. */
@@ -1121,7 +1257,13 @@ function endFlyShow() {
   render();
 }
 
+// A run clicked a second time jumps (M12: players did not see that Space was next).
 function handleChooseRun(runId) {
+  if (runId !== null && runId === state.dropRunId && !briefing) {
+    hidePopup();
+    jumpNow();
+    return;
+  }
   state = chooseDropRun(state, baseMap, runId);
   render();
 }
@@ -1229,6 +1371,10 @@ function handleKey(event) {
     case 'k':
     case 'K':
       handleAction('kill');
+      return;
+    case 'n':
+    case 'N':
+      handleAction('knife');
       return;
     case 't':
     case 'T':
@@ -1345,6 +1491,8 @@ try {
     toggleSound();
   });
   renderSoundToggle(soundToggle, isMuted());
+  restartButton.addEventListener('click', handleRestartClick);
+  renderRestart(restartButton, false);
   // Sound files dropped into assets/audio replace the placeholders (ART-ASSETS.md §9).
   loadSuppliedSounds();
 

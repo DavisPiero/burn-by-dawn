@@ -37,7 +37,9 @@ let popupAnchor = null;
 export function showPopup(anchor, content) {
   const box = popupBox();
   if (!box) return;
-  box.replaceChildren(...[].concat(typeof content === 'function' ? content() : content));
+  const parts = [].concat(typeof content === 'function' ? content() : content);
+  // Every key a rollover mentions is set in bold (M12), whoever worded it.
+  box.replaceChildren(...parts.flatMap((part) => (typeof part === 'string' ? boldKeys(part) : [part])));
   box.hidden = false;
   popupAnchor = anchor;
   const a = anchor.getBoundingClientRect();
@@ -77,22 +79,26 @@ export function attachPopup(element, content) {
   element.addEventListener('mouseleave', hidePopup);
 }
 
-// SPEC.md §4's keys, for the KEYS rollover.
+// SPEC.md §4's keys, for the KEYBOARD rollover: each line is [key, what it does]
+// pairs, the keys set in bold (M12).
 const KEYS = [
-  'The drop: 1–3 pick a run · Space jump',
-  '1–6 select a man · Esc deselect · Tab next · H hold',
-  'G hide · S suppress · K kill · T throw a stone',
-  'A stabilise · P pick up a charge · U pack parachute',
-  'C place a charge · E pass a charge · X cut the line · W swim',
-  'D RAF diversion · Space end turn · Z undo',
-  'Esc or right-click also backs out of aiming an action',
-  'R patrol routes · M sound',
-  '',
-  'Hover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
-].join('\n');
+  [['1–3', 'pick a drop run'], ['Space', 'jump']],
+  [['1–6', 'select a man'], ['Tab', 'next man'], ['Esc', 'deselect']],
+  [['H', 'hold'], ['G', 'hide'], ['N', 'knife'], ['S', 'suppress'], ['K', 'kill']],
+  [['T', 'throw a stone'], ['A', 'stabilise'], ['U', 'pack chute']],
+  [['P', 'pick up a charge'], ['C', 'place a charge']],
+  [['E', 'pass a charge'], ['X', 'cut the line'], ['W', 'swim']],
+  [['D', 'RAF diversion'], ['Space', 'end turn'], ['Z', 'undo']],
+  [['R', 'patrol routes'], ['M', 'sound on or off']],
+  [['Esc', 'or right-click backs out of aiming an action']],
+];
 
 export function renderKeys(button) {
-  attachPopup(button, () => [html('b', null, 'KEYS'), `\n${KEYS}`]);
+  attachPopup(button, () => [
+    html('b', null, 'KEYBOARD'),
+    ...KEYS.flatMap((line) => ['\n', ...line.flatMap(([key, what], i) => [i ? ' · ' : '', html('b', null, key), ` ${what}`])]),
+    '\n\nHover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
+  ]);
 }
 
 // --- fitting the spread to the window ---------------------------------------
@@ -107,6 +113,7 @@ export function renderKeys(button) {
 export const SPREAD = {
   minWidth: 1280,
   minHeight: 760,
+  minScale: 0.75, // the most the spread is zoomed down to fit a small window (M12b)
   marginX: 8 + 22, // spread padding left and right (index.html #spread)
   marginY: 8 + 8,
   leftChromeX: 20 + 4 + 2 + 16, // outer gutter, its gap, left page padding
@@ -120,8 +127,16 @@ export const SPREAD = {
 
 /** Size the board, captions and right page to the window. `aspect` is the board's width over height. */
 export function fitSpread(aspect, root = document.documentElement) {
-  const width = Math.max(window.innerWidth, SPREAD.minWidth);
-  const height = Math.max(window.innerHeight, SPREAD.minHeight);
+  // A window smaller than the spread's minimum (a Chromebook's 1200 across,
+  // M12b) shows the same spread zoomed down to fit, never a different layout;
+  // below SPREAD.minScale it stops shrinking and the page scrolls instead.
+  const scale = Math.max(SPREAD.minScale, Math.min(1, window.innerWidth / SPREAD.minWidth, window.innerHeight / SPREAD.minHeight));
+  const width = Math.max(window.innerWidth / scale, SPREAD.minWidth);
+  const height = Math.max(window.innerHeight / scale, SPREAD.minHeight);
+  root.classList.toggle('scaled', scale < 1);
+  root.style.setProperty('--spread-zoom', String(scale));
+  root.style.setProperty('--spread-w', `${Math.floor(width)}px`);
+  root.style.setProperty('--spread-h', `${Math.floor(height)}px`);
   const across = width - SPREAD.marginX - SPREAD.leftChromeX;
   const down = height - SPREAD.marginY - SPREAD.leftChromeY;
   const panelWanted = Math.min(SPREAD.panelMax, Math.max(SPREAD.panelMin, width * SPREAD.panelShare));
@@ -275,6 +290,7 @@ function titleBanner({ title, tagline }) {
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
+  backdrop.classList.toggle('orders', Boolean(briefing?.banner));
   if (!briefing) return;
   card.replaceChildren();
   card.className = briefing.tone ? `tone-${briefing.tone}` : '';
@@ -282,7 +298,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
   card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, text));
+  for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, boldNames(text, briefing.names)));
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
@@ -413,6 +429,11 @@ function describeLanding(event, where) {
  * short names); a name only counts as a whole word.
  */
 export function boldNames(line, names) {
+  if (!names?.length) return boldKeys(line);
+  return boldNamesOnly(line, names).flatMap((part) => (typeof part === 'string' ? boldKeys(part) : [part]));
+}
+
+function boldNamesOnly(line, names) {
   if (!names?.length) return [line];
   const pattern = new RegExp(`\\b(${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'g');
   const parts = [];
@@ -424,6 +445,30 @@ export function boldNames(line, names) {
   }
   if (last < line.length) parts.push(line.slice(last));
   return parts;
+}
+
+// Keys as the game's text mentions them (M12: the operator wants every one in
+// bold): anything in square brackets, "[D]", "[SPACE]"; the named keys; a run
+// of number keys, "1–6"; and a letter after "press".
+const KEY_WORDS = /\[([^\]\n]{1,12})\]|\b(SPACE|Space|Esc|Tab)\b|\b([1-9]–[1-9])\b(?! (?:hex|turn|AP|charge|men))|(?<=\b[Pp]ress )([A-Z])\b/g;
+
+/** Set an element's text with its keys in bold. */
+function setText(element, text) {
+  element.replaceChildren(...boldKeys(text));
+}
+
+/** A line of text with every keyboard key in it set in bold, as nodes for `append`. */
+export function boldKeys(line) {
+  const parts = [];
+  let last = 0;
+  for (const match of line.matchAll(KEY_WORDS)) {
+    if (match.index > last) parts.push(line.slice(last, match.index));
+    if (match[1] !== undefined) parts.push('[', html('b', 'key', match[1]), ']');
+    else parts.push(html('b', 'key', match[0]));
+    last = match.index + match[0].length;
+  }
+  if (last < line.length) parts.push(line.slice(last));
+  return parts.length ? parts : [line];
 }
 
 // Why a man who went to ground was spotted anyway (enemy.js runDetection `hid`).
@@ -521,13 +566,13 @@ export function renderDawnStrip(svg, state, rules) {
 export function renderEndTurnButton(button, state, rules) {
   if (state.phase === 'drop') {
     button.disabled = state.dropRunId === null;
-    button.textContent = state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP  [space]';
+    setText(button, state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP  [SPACE]');
     return;
   }
   button.disabled = Boolean(state.outcome);
-  if (state.outcome) button.textContent = 'MISSION OVER';
-  else if (state.turn >= rules.turnLimit) button.textContent = 'END THE LAST TURN — DAWN  [space]';
-  else button.textContent = 'END TURN  [space]';
+  if (state.outcome) setText(button, 'MISSION OVER');
+  else if (state.turn >= rules.turnLimit) setText(button, 'END THE LAST TURN — DAWN  [SPACE]');
+  else setText(button, 'END TURN  [SPACE]');
 }
 
 /** Undo's rollover, for how many steps the level allows (rules.json `undo.steps`; null is the whole turn). */
@@ -544,7 +589,7 @@ export function describeUndo(steps) {
 export function renderUndoButton(button, state, canUndo) {
   button.hidden = state.phase === 'drop';
   button.disabled = !canUndo || Boolean(state.outcome);
-  button.textContent = 'UNDO  [Z]';
+  setText(button, 'UNDO  [Z]');
 }
 
 // --- the briefing -------------------------------------------------------------
@@ -575,7 +620,7 @@ export function renderMission(element, mission) {
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
-  button.replaceChildren('RAF DIVERSION', html('small', null, check.ok ? `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP` : check.reason));
+  button.replaceChildren('RAF DIVERSION', html('small', null, boldKeys(check.ok ? `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP` : check.reason)));
 }
 
 /** The diversion's rollover; `uses` is how many calls the mission allows. */
@@ -593,7 +638,7 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * The results (SPEC.md §10), printed as the back page of the annual over the
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
-export function renderResults(element, outcome, levelLabel, banner) {
+export function renderResults(element, outcome, levelLabel, banner, onAgain) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
@@ -622,7 +667,7 @@ export function renderResults(element, outcome, levelLabel, banner) {
 
   const again = html('button', 'btn', 'PLAY AGAIN');
   again.type = 'button';
-  again.addEventListener('click', () => window.location.reload());
+  again.addEventListener('click', () => onAgain());
 
   element.append(
     titleBanner(banner),
@@ -660,7 +705,13 @@ export function renderDropRuns(element, runs, onChoose) {
 
 /** A drop run's rollover, on its button and on its tab on the board. */
 export function describeRun(run) {
-  return [html('b', null, `${run.label.toUpperCase()} · ${run.tag.toUpperCase()}`), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
+  return [html('b', null, `${run.label.toUpperCase()} · ${run.tag.toUpperCase()}`), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\n${run.selected ? 'Press SPACE to jump, or click again.' : 'Click to pick this run.'}`];
+}
+
+/** Restart, in the margin under the sound: a first click arms it and says so (M12). */
+export function renderRestart(button, armed) {
+  button.textContent = armed ? 'click again to restart' : 'restart';
+  button.classList.toggle('armed', armed);
 }
 
 /** Sound on or off, in the margin under the seed. */
@@ -703,7 +754,8 @@ export function renderActions(element, actions, onAction) {
   element.classList.remove('runs');
   if (!actions) {
     element.classList.add('idle');
-    element.textContent = 'Select a man: 1–6, Tab, or click him.';
+    // One span: the strip is a flex box, which would space out each bold key.
+    element.replaceChildren(html('span', null, boldKeys('Select a man: 1–6, Tab, or click him.')));
     return;
   }
   element.classList.remove('idle');
@@ -799,7 +851,7 @@ export function describeEffect(effect) {
 export function renderReadout(element, state, map, view) {
   const hex = state.hoverHex ?? state.selectedHex;
   if (view?.targetLabel) {
-    element.textContent = view.targetLabel;
+    setText(element, view.targetLabel);
     return;
   }
   if (view?.hoverEnemy) {
@@ -810,23 +862,23 @@ export function renderReadout(element, state, map, view) {
     if (e.suppressed) doing = `SUPPRESSED — will not fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
     else if (e.openToKill && e.killable) doing = `${doing}; still shaken — a gunner can kill it this turn`;
     const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
-    element.textContent = `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}`;
+    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}`);
     return;
   }
   if (!hex) {
     if (state.phase === 'drop') {
-      element.textContent = view?.dropLabel ?? 'Pick a drop run with 1–3 or its button. Hover the board to see what landing there would mean.';
+      setText(element, view?.dropLabel ?? 'Pick a drop run with 1–3 or its button. Hover the board to see what landing there would mean.');
       return;
     }
-    element.textContent = state.selectedUnitId
+    setText(element, state.selectedUnitId
       ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? ` ▸ ${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
-      : 'Click a man to select him, or a hex to see what it is.';
+      : 'Click a man to select him, or a hex to see what it is.');
     return;
   }
 
   const terrain = terrainAt(map, hex.q, hex.r);
   if (!terrain) {
-    element.textContent = 'off the map';
+    setText(element, 'off the map');
     return;
   }
 
@@ -843,7 +895,7 @@ export function renderReadout(element, state, map, view) {
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
   const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
-  element.textContent = `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`;
+  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`);
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */

@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -95,6 +95,9 @@ export function createBoard(svg, map, handlers) {
   // An objective's own art stands in for the terrain motif on its footprint:
   // the exchange's farmhouse hexes would otherwise print a cottage under it.
   const underArt = new Set((map.objectives ?? []).flatMap((o) => o.hexes.map((h) => (Array.isArray(h) ? hexKey(h[0], h[1]) : hexKey(h.q, h.r)))));
+  // Each in-play hex's node, which lasts the whole game: a rollover about what
+  // stands on a hex anchors to it, as the counters are redrawn every frame.
+  const hexNodes = new Map();
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
     const terrainId = terrainIdAt(map, q, r);
@@ -125,6 +128,7 @@ export function createBoard(svg, map, handlers) {
     hex.style.cursor = 'pointer';
     hex.addEventListener('click', () => handlers.onHexClick(q, r));
     hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
+    hexNodes.set(hexKey(q, r), hex);
     terrain.appendChild(hex);
   });
 
@@ -160,11 +164,18 @@ export function createBoard(svg, map, handlers) {
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
   return {
-    svg, map, corners, handlers, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
+    svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
     blasts: { report: null, list: [] },
   };
+}
+
+/** Forget what was last drawn where, for a new game on the same board (M12 restart). */
+export function resetBoardMemory(layers) {
+  layers.motion = new Map();
+  layers.blasts = { report: null, list: [] };
+  layers.ringsSince = null;
 }
 
 // --- area terrain (SPEC.md §11) --------------------------------------------------
@@ -361,35 +372,57 @@ function drawRoads(layer, map, edge, railway) {
 
 /**
  * Which hedgerow hexes are joined by a hedge: a spanning tree of each run of
- * neighbouring hedgerow hexes, found breadth first in a fixed order, so a
- * clump of three touching hexes draws as a bend, never a little triangle.
- * Keyed by hexKey, each a list of directions.
+ * neighbouring hedgerow hexes, so a clump of three touching hexes draws as a
+ * bend, never a little triangle. The joins are chosen as a hedger would lay
+ * them (M12, the "trident" by Ferme Lebrun): between the hexes with the fewest
+ * hedgerow neighbours first, and on a tie the one that carries a hedge
+ * straight on, so a line of hedge stays one line and two lines meet in a T,
+ * not in a fork with a stub. In a fixed order, so the map always draws the
+ * same. Keyed by hexKey, each a list of directions.
  */
 function hedgeTree(map) {
   const isHedge = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).hedge);
+  const hexes = [];
+  forEachCell(map, (q, r) => { if (isHedge(q, r)) hexes.push({ q, r }); });
+  const degree = new Map(hexes.map((h) => [hexKey(h.q, h.r), NEIGHBOR_DIRS.filter((n) => isHedge(h.q + n.q, h.r + n.r)).length]));
+  const edges = [];
+  for (const h of hexes) {
+    // Each pair once: the three directions E, SE, SW from each hex.
+    for (const dir of [2, 3, 4]) {
+      const n = NEIGHBOR_DIRS[dir];
+      const next = { q: h.q + n.q, r: h.r + n.r };
+      if (!isHedge(next.q, next.r)) continue;
+      edges.push({ a: h, b: next, dir, weight: degree.get(hexKey(h.q, h.r)) + degree.get(hexKey(next.q, next.r)) });
+    }
+  }
+  // Union-find, so no join closes a loop.
+  const parent = new Map(hexes.map((h) => [hexKey(h.q, h.r), hexKey(h.q, h.r)]));
+  const root = (k) => {
+    while (parent.get(k) !== k) k = parent.get(k);
+    return k;
+  };
   const links = new Map();
-  const seen = new Set();
-  const join = (a, dir) => {
-    const k = hexKey(a.q, a.r);
+  const has = (h, dir) => (links.get(hexKey(h.q, h.r)) ?? []).includes(dir);
+  const join = (h, dir) => {
+    const k = hexKey(h.q, h.r);
     if (!links.has(k)) links.set(k, []);
     links.get(k).push(dir);
   };
-  forEachCell(map, (q0, r0) => {
-    if (!isHedge(q0, r0) || seen.has(hexKey(q0, r0))) return;
-    seen.add(hexKey(q0, r0));
-    const queue = [{ q: q0, r: r0 }];
-    while (queue.length) {
-      const h = queue.shift();
-      NEIGHBOR_DIRS.forEach((n, dir) => {
-        const next = { q: h.q + n.q, r: h.r + n.r };
-        if (!isHedge(next.q, next.r) || seen.has(hexKey(next.q, next.r))) return;
-        seen.add(hexKey(next.q, next.r));
-        join(h, dir);
-        join(next, (dir + 3) % 6);
-        queue.push(next);
-      });
+  // Carries a hedge straight on: either end already has a join the opposite way.
+  const straight = (e) => Number(has(e.a, (e.dir + 3) % 6) || has(e.b, e.dir));
+  let open = edges;
+  while (open.length) {
+    open = open.filter((e) => root(hexKey(e.a.q, e.a.r)) !== root(hexKey(e.b.q, e.b.r)));
+    if (!open.length) break;
+    let best = open[0];
+    for (const e of open) {
+      if (e.weight < best.weight || (e.weight === best.weight && straight(e) > straight(best))) best = e;
     }
-  });
+    parent.set(root(hexKey(best.a.q, best.a.r)), root(hexKey(best.b.q, best.b.r)));
+    join(best.a, best.dir);
+    join(best.b, (best.dir + 3) % 6);
+    open = open.filter((e) => e !== best);
+  }
   return links;
 }
 
@@ -513,6 +546,8 @@ export function renderPieces(layers, state, view) {
 
   if (view.reachable) drawReachable(layers, view.reachable);
   if (view.commandArea) drawCommand(layers, view.commandArea);
+  // The inner band, where his orders are strongest (M12), in a finer dash.
+  if (view.commandCloseArea) drawCommand(layers, view.commandCloseArea, COMMAND.closeDash);
 
   for (const route of view.routes) drawRoute(layers, route);
 
@@ -565,7 +600,9 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
-    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, 'marker-orders', -12, 13, unit));
+    // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
+    // One chevron for the ordinary orders, two for the strongest, beside him.
+    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 38, 13, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -603,7 +640,10 @@ function drawTargetRings(layers, rings, now) {
     const points = ring.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
     const half = { x: map.hexSize * Math.sqrt(3) / 2, y: map.hexSize };
     const left = Math.min(...points.map((p) => p.x)) - half.x, right = Math.max(...points.map((p) => p.x)) + half.x;
-    const top = Math.min(...points.map((p) => p.y)) - half.y, bottom = Math.max(...points.map((p) => p.y)) + half.y;
+    // The ring takes in the name printed over the hexes, so the pen never
+    // runs through the words (M12: it crossed RAIL BRIDGE).
+    const labelTop = Math.min(...points.map((p) => p.y)) - map.hexSize * OBJECTIVE.labelLift - OBJECTIVE.labelSize;
+    const top = Math.min(Math.min(...points.map((p) => p.y)) - half.y, labelTop), bottom = Math.max(...points.map((p) => p.y)) + half.y;
     const c = { x: (left + right) / 2, y: (top + bottom) / 2 };
     const rx = (right - left) / 2 + RINGS.margin, ry = (bottom - top) / 2 + RINGS.margin;
     const colour = RINGS[ring.colour] ?? RINGS.red;
@@ -623,8 +663,11 @@ function drawTargetRings(layers, rings, now) {
         const x = c.x + Math.cos(t) * rx * grow, y = c.y + Math.sin(t) * ry * grow;
         d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
       }
-      const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: 0.9 });
-      layers.effects.appendChild(path);
+      const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: RINGS.opacity });
+      // Under the objectives' names, charge points and counters, as a pen
+      // mark on the map would be, so where it crosses one the print still
+      // reads over it (M12); the notes stay on top.
+      layers.sites.insertBefore(path, layers.sites.firstChild);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
         delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
       }, elapsed);
@@ -638,8 +681,13 @@ function drawTargetRings(layers, rings, now) {
       'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
       'font-size': RINGS.noteSize, fill: colour, stroke: RINGS.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
     });
+    // Above the ring, or under it if the lines would run off the top of the
+    // board (M12: the exchange's four lines did).
+    const lead = RINGS.noteSize * RINGS.noteLeading;
+    const above = c.y - ry - 8 - (lines.length - 1) * lead - RINGS.noteSize / 2 >= edge.top;
     lines.forEach((words, k) => {
-      const span = el('tspan', { x, y: c.y - ry - 8 - (lines.length - 1 - k) * RINGS.noteSize * RINGS.noteLeading });
+      const y = above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead;
+      const span = el('tspan', { x, y });
       span.textContent = words;
       note.appendChild(span);
     });
@@ -1023,6 +1071,9 @@ function drawSites(layers, state, view) {
     const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
     // Names go on last, over the charge points around them.
     labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    // The exchange's telephone lines run out to a pole on each of its charge
+    // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
+    if (objectiveArt(objective)?.wires) drawWires(layers, objective);
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
@@ -1043,8 +1094,11 @@ function drawSites(layers, state, view) {
         points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth,
         'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
       }));
+      // The satchel sits toward the target it is for, not dead centre (M12).
       const size = OBJECTIVE.pointIconSize;
-      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size }));
+      const v = towardObjective(map, h, objective);
+      const shift = map.hexSize * OBJECTIVE.pointIconShift;
+      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x + v.x * shift - size / 2, y: p.y + v.y * shift - size / 2, width: size, height: size }));
       layers.sites.appendChild(point);
     }
   }
@@ -1057,6 +1111,61 @@ function drawSites(layers, state, view) {
     layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - 30, y: p.y + 20, width: size, height: size }));
     layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 12, y: p.y + 24, width: MARKER.size, height: MARKER.size }));
   }
+}
+
+/**
+ * The unit vector, in board pixels, from a charge point toward the nearest hex
+ * of its objective (the first in data order on a tie).
+ */
+function towardObjective(map, hex, objective) {
+  const p = axialToPixel(hex.q, hex.r, map.hexSize);
+  let best = null;
+  for (const h of objective.hexes) {
+    const o = axialToPixel(h.q, h.r, map.hexSize);
+    const d = Math.hypot(o.x - p.x, o.y - p.y);
+    if (!best || d < best.d - 1e-6) best = { d, x: o.x - p.x, y: o.y - p.y };
+  }
+  return best && best.d > 0 ? { x: best.x / best.d, y: best.y / best.d } : { x: 0, y: 0 };
+}
+
+/**
+ * Telephone wires from the objective to a pole on each of its charge points,
+ * on the far side of the hex from the satchel. A wire leaves the wall on the
+ * edge between the two hexes and sags to the pole's crossarm. Once the
+ * objective is gone (the line cut, or blown) each wire is snapped: two ends
+ * hanging, with a gap between.
+ */
+function drawWires(layers, objective) {
+  const { map } = layers;
+  const g = el('g', {});
+  const centre = labelPoint(map, objective.hexes);
+  for (const h of objective.chargeHexes) {
+    const p = axialToPixel(h.q, h.r, map.hexSize);
+    const v = towardObjective(map, h, objective);
+    const pole = { x: p.x - v.x * map.hexSize * WIRES.poleAway, y: p.y - v.y * map.hexSize * WIRES.poleAway };
+    const size = WIRES.poleSize;
+    const top = { x: pole.x, y: pole.y - size * 0.3 };
+    // The wires fan in to the building's eaves, at the middle of the footprint.
+    const toPole = { x: top.x - centre.x, y: top.y - centre.y };
+    const reach = Math.hypot(toPole.x, toPole.y) || 1;
+    const wall = { x: centre.x + (toPole.x / reach) * WIRES.wallReach, y: centre.y + (toPole.y / reach) * WIRES.wallReach - WIRES.wallHeight };
+    const mid = { x: (top.x + wall.x) / 2, y: (top.y + wall.y) / 2 + WIRES.sag };
+    const wire = (d) => {
+      g.appendChild(el('path', { d, fill: 'none', stroke: WIRES.casing, 'stroke-width': WIRES.width + 2.5, 'stroke-linecap': 'round' }));
+      g.appendChild(el('path', { d, fill: 'none', stroke: WIRES.stroke, 'stroke-width': WIRES.width, 'stroke-linecap': 'round' }));
+    };
+    if (objective.destroyed) {
+      // Snapped: each end falls from its post, short of the middle.
+      const at = (t) => ({ x: top.x + (wall.x - top.x) * t, y: top.y + (wall.y - top.y) * t });
+      const a = at(0.38), b = at(0.62);
+      wire(`M${top.x} ${top.y} Q${a.x} ${top.y + WIRES.sag * 0.5} ${a.x - v.x * 4} ${a.y + WIRES.drop}`);
+      wire(`M${wall.x} ${wall.y} Q${b.x} ${wall.y + WIRES.sag * 0.5} ${b.x + v.x * 4} ${b.y + WIRES.drop}`);
+    } else {
+      wire(`M${top.x} ${top.y} Q${mid.x} ${mid.y + WIRES.sag} ${wall.x} ${wall.y}`);
+    }
+    g.appendChild(el('use', { href: '#marker-telegraph-pole', x: pole.x - size / 2, y: pole.y - size / 2, width: size, height: size }));
+  }
+  layers.sites.appendChild(g);
 }
 
 function fillArea(layers, area, opacity, fill = BLAST.fill) {
@@ -1156,7 +1265,10 @@ function drawDrop(layers, drop) {
     group.appendChild(polyline([a, b], { stroke: DROP.stroke, 'stroke-width': DROP.width, 'stroke-dasharray': DROP.dash }));
     group.appendChild(arrow(b, a, DROP.stroke, DROP.width, DROP.windHead));
 
-    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    // The wind arrow sits halfway along unless the run says where (M12: the
+    // east run's met the north run's name).
+    const windAlong = run.windAlong ?? 0.5;
+    const mid = { x: a.x + (b.x - a.x) * windAlong, y: a.y + (b.y - a.y) * windAlong };
     const d = NEIGHBOR_DIRS[DIRECTION_NAMES.indexOf(run.wind)];
     const v = axialToPixel(d.q, d.r, 1);
     const len = Math.hypot(v.x, v.y);
@@ -1167,7 +1279,10 @@ function drawDrop(layers, drop) {
 
     // The name sits a way along the line, not at its start: the runs begin
     // close together in the north-west corner and their names would collide.
-    const at = { x: a.x + (b.x - a.x) * DROP.labelAlong, y: a.y + (b.y - a.y) * DROP.labelAlong - map.hexSize * 0.35 };
+    // Centred on the line, so the line runs through its middle (M12); a run
+    // may set how far along (`labelAlong` in map.json).
+    const along = run.labelAlong ?? DROP.labelAlong;
+    const at = { x: a.x + (b.x - a.x) * along, y: a.y + (b.y - a.y) * along };
     tabs.push(runTab(layers, run, at));
 
     if (run.selected) {
@@ -1449,9 +1564,9 @@ function drawAreaEdge(layers, layer, area, strokes, extra = {}) {
  * dashed line in his blue round every hex within it. What it means is in the
  * readout; a label on the board sat on the counters inside it.
  */
-function drawCommand(layers, hexes) {
+function drawCommand(layers, hexes, dash = COMMAND.dash) {
   drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.casing, COMMAND.casingWidth]]);
-  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': COMMAND.dash });
+  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': dash });
 }
 
 // --- hover path preview -----------------------------------------------------

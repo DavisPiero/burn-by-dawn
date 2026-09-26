@@ -5,7 +5,7 @@
 // row's rollover. Reads state, never mutates it (CLAUDE.md rule 7); clicks and
 // hovers are handed back to the caller.
 
-import { timesWord } from '../hints.js';
+import { ordersWords, timesWord } from '../hints.js';
 import { terrainAt } from '../map.js';
 import { portraitId } from './theme.js';
 import { attachPopup, describeEffect, shortEffect } from './ui.js';
@@ -131,10 +131,8 @@ function describeUnit(unit, number, state, map, view) {
  */
 function leaderLines(unit, state, command, uses) {
   if (unit.dead) return ['He led the stick. His orders and the radio went with him.'];
-  const hexes = `${command.radius} hex${command.radius === 1 ? '' : 'es'}`;
   const lines = [
-    `Orders — at the start of each turn, every ${command.leaderReceivesOwnBonus ? '' : 'other '}man within ${hexes} of him`
-      + ` gets +${command.bonusActionPoints} AP. Keep the stick close to move faster.`,
+    `Orders — at the start of each turn, ${ordersWords(command)}${command.leaderReceivesOwnBonus ? ', himself included' : ''}. Keep the stick close to move faster.`,
   ];
   if (unit.landed && !unit.out) {
     const led = state.units.filter((u) => u.commandBonus > 0).length;

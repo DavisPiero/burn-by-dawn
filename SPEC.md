@@ -28,7 +28,9 @@ without warning. The player should always be able to see the risk before committ
   Nothing may require a bundler, a package manager, or a Node process.
 - **Target: desktop, mouse and keyboard, 1280x800 minimum.** Do not build a mobile layout.
   It only needs to *load* on a phone so progress can be glanced at; it does not need to be
-  playable there.
+  playable there. A window smaller than 1280x760 (a Chromebook reports 1200 across) gets
+  the same spread zoomed down to fit, to no less than 75%, rather than a sideways scroll
+  (M12b); it is one layout scaled, never a second one.
 - Deployed via GitHub Pages.
 - All randomness through one seeded RNG (`rng.js`). A seed reproduces a playthrough
   exactly. Seed is visible in the UI for debugging.
@@ -144,6 +146,15 @@ All costs and modifiers below are numbers in `rules.json`.
   next detection check and does not move in the next enemy phase**; it can still spot.
   Firing is gunfire: +2 alert (§6), and it is heard (§6). A suppressed enemy is open to a
   **kill** until the end of the next player phase.
+- **Knife** (any trooper, M12b; a playtester: "I snuck up behind a patrol before
+  realising my guy could only throw stones") — costs **2 AP and ends his turn**. The
+  target must be **beside him** and **unable to see him**: he is outside its arc (beside
+  it, range and line of sight are never the question). He must **not be in contact**. It
+  is silent — **no alert, no noise** — but it leaves a **body**, found like any other
+  (+1). The reserve squad cannot be knifed any more than shot (`killable: false`). The
+  turn card hints at it when a man starts his turn behind an enemy. `knife.fullTurn` in
+  `rules.json` makes it a full turn instead (he must not have spent AP), a lever if it
+  proves too strong.
 - **Kill** (gunner only) — costs **2 AP**. The target must be visible, exactly as for
   suppress, and **under suppression**: suppressed this player phase or the one before, so
   one gunner needs two turns (suppress, then kill) and two gunners can do it in one. From
@@ -220,7 +231,7 @@ to be casual while still being strategic.
   tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
-  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
+  `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
@@ -293,7 +304,10 @@ Names are placeholders and will be replaced.
 
 Holloway is the ranking man, and that is a mechanic. At the start of each turn, every
 trooper within **2 hexes** of the leader gets **+1 AP** for that turn: he has been given
-his orders. The leader does not give the bonus to himself.
+his orders — and a trooper **beside him** gets **+2 AP** instead (M12b, from playtesting:
+the orders are strongest closest to him; `closeRadius` and `closeBonusActionPoints` in
+`rules.json`). A man with +1 wears one chevron, a man with +2 two. The leader does not
+give the bonus to himself.
 
 It is measured when pools are filled, so walking into the leader's radius mid-turn pays
 off on the following turn, not the current one.
@@ -305,9 +319,11 @@ and must not be extended to cover. The leader is a `leader` flag on a roster ent
 promoting a different trooper is a one-line data change and no code knows anyone's name.
 His roster rollover says what he gives the stick: the orders (radius and bonus, from
 `rules.json`), how many men have them this turn, and the radio for the RAF diversion (§4).
-While he is selected his radius is outlined on the board, dashed in leader blue, and a man
-who has his orders this turn wears a leader-blue chevron on his counter (M11), so the
-bonus can be seen, not just read about.
+While he is selected, or the mouse is on him (M12), his radius is outlined on the board,
+dashed in leader blue, and a man who has his orders this turn wears a leader-blue chevron
+on the right of his counter, beside the AP it adds to (M11; moved right in M12, clear of
+the leader's rank flash), so the bonus can be seen, not just read about. Hovering the
+leader's counter says what the ring is and how many men have his orders this turn (M12).
 
 What it buys the design: the command radius rewards moving as a group, and §6 punishes
 moving as a group, because more men sit inside one vision arc. Speed against stealth,
@@ -461,9 +477,13 @@ Three objectives, each on a different approach:
 
 1. **Rail bridge over the canal** (PRIMARY) — 2 charges, on separate hexes. The charges
    go on the **piers, placed from the west canal bank beside the bridge**, not on the deck:
-   the towpath runs directly under it (§8). The deck and the east bank are in the bridge
-   post's view every turn; the west bank is watched only some turns, so the skill is
-   timing, not luck. **A destroyed bridge is gone**: its hexes become canal, and the only
+   the towpath runs directly under it (§8). The deck is in the bridge post's view every
+   turn; the west bank is walked by the bridge patrol only some turns, so the skill is
+   timing, not luck. The post stands on the east bank just north of the bridge (moved one
+   hex north in M12): at rest it looks over the north pier, where a man in the marsh is
+   seen but not spotted until the garrison is Alert, and a stone thrown north of it, from
+   the west bank opposite, turns it off both piers for a turn (§6). Where it stood before,
+   the north pier lay due west of it and no stone from the west bank could turn it away. **A destroyed bridge is gone**: its hexes become canal, and the only
    way over is to swim (§4 Actions).
 2. **Telephone exchange, village** (secondary) — 1 charge, or a Scout can cut the line
    silently: a full turn instead of 1 AP, and it raises no alert (§4 Actions).
@@ -710,13 +730,27 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **Objectives say where to go.** Each objective's hexes are outlined firmly, its art sits
   inside them, and its name above them. Each charge point is a red dashed hex with an empty
   satchel in it: where a man stands to place a charge. Hovering one says so.
-- **Targets are ringed before the drop.** Until a drop run is picked, each objective is
+- **Targets are ringed before the drop.** (M12: each ring takes in the objective's printed
+  name, and is drawn under the names, charge points and counters, as a pen mark on the
+  map would be, so the print reads over it; the exchange's note says a scout can cut its
+  lines instead.) Until a drop run is picked, each objective is
   circled in red marker pen, the primary twice, with a hand-lettered note beside it, and
   the exfil in green. Picking a run clears them.
 - **The title card.** The orders open under a painted picture of the drop across the top
   of the card with the title, BURN BY DAWN, lettered in stencil (a supplied
   `assets/title/title-card.jpg`, ART-ASSETS.md §7; drawn in code, with the title in type,
   if the file is missing).
+- **The exchange has wires** (M12, art only): a telegraph pole on each of its charge points
+  and a line from each to the building, hanging snapped once the exchange is cut or blown,
+  so "cut the line" has a line to cut. A charge point's satchel sits a third of the way
+  toward the target it serves.
+- **The orders are the first thing seen** (M12): while they are up the whole spread is put
+  in shade under a coarse halftone, and the card stands off it on a deep soft shadow.
+  Picking a run then jumping needs **Space**, or a second click on the same run.
+- **Keys are set in bold** wherever the game's text names one (M12).
+- **Starting again.** A restart in the outer margin (a first click arms it, a second
+  starts a new game on a fresh seed at the same level), and Play again on the back page,
+  start a new mission without reloading the page; the orders open again (M12).
 - **Briefings.** A briefing card opens over the board: the orders before the drop, and at
   the start of every turn (turn 1 after the drop has been shown) an update: what happened
   at the turn boundary, most important first, and up to three hints about what to do
@@ -743,7 +777,9 @@ busy and the roster runs off the bottom at 1280x800. At M7:
 rendered as SVG `<symbol>` / `<use>`. Procedural shapes now, hand-drawn SVG later, swapped
 by changing one registry file and nothing else. No inline path data in game logic.
 
-**Sound** (M10). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
+**Sound** (M10). The back page has its own since M12: the village church's bells for a
+mission accomplished, and a single bell tolling with a siren far off for a mission
+withdrawn or failed (`church-bells`, `bell-toll`). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
 counter snapped down when a man moves or a move is undone, a pencil for every other
 action, a card's rustle when a briefing card or the back page opens, a dog a long way off
 when the alert rises, and three far-off crumps for the RAF diversion. The one exception
@@ -786,5 +822,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M12b** | The approved playtest rules: the leader's orders strongest beside him, the knife, the spread zoomed to fit a small window | A man beside the leader gets +2 AP and two chevrons, within 2 hexes +1 and one; any man behind an enemy beside him, not in contact, can knife it for 2 AP and his turn, silently, leaving a body; a 1200-wide window shows the whole spread with no sideways scroll; the balance bot is re-run with and without the knife |
+| **M12** | Second operator playtest review: the bridge post a stone can turn, the orders and ring wording, keys in bold, restart, the leader's rollover, bells on the back page, the exchange's wires, rings clear of the names, a shaded spread under the orders, the run tabs on their lines, hedges that meet in a T | A stone thrown north of the bridge post turns it off both piers; the orders fit at 1280x800 and name the places in capitals; every key in the game's text is bold; a second click on a run jumps; restart and Play again start a new seed without a reload; hovering the leader shows his orders; the back page rings bells or tolls; the balance bot is re-run (Normal 81/75/65, from 81/78/69) |
 
 Do not start a milestone before the previous one is merged and playable.

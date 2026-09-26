@@ -166,13 +166,15 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-suppressed.svg` | 28 x 28 |
 | `marker-spotted.svg` | 28 x 28 |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
-| `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +AP, SPEC.md §5 Command: a chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used) |
+| `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
+| `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
 | `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
 | `stamp-destroyed.svg` | 200 x 80 (red rubber stamp, rotated in code) |
-| `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target) |
+| `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
+| `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs the wires from its crossarm to the building, M12) |
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
 | `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11). **Or a painted PNG**, `/assets/aircraft/aircraft-dakota.png`, 512 x 512, transparent, the same view — it replaces the drawn one on load, and its shadow is made from it (see ART-PROMPTS.md) |
 | `aircraft-dakota-shadow.svg` | 120 x 120 (the same silhouette, one flat fill; printed faint on the ground below it) |
@@ -241,7 +243,9 @@ figures or the UI will jitter every turn.
 
 Keep it diegetic to the *table*, not the battlefield — you are playing a paper game, not
 standing in Normandy — with one exception since M11: a charge going off is a real
-explosion, close and loud, because it is the payoff of the whole plan. Since M10 all of
+explosion, close and loud, because it is the payoff of the whole plan, and since M12 the
+back page is met by the village church: bells for a mission accomplished, a toll for the
+rest. Since M10 all of
 them are made in code (`src/render/sound.js`) as
 placeholders; a file dropped into `/assets/audio/` with the name below replaces its
 placeholder on the next reload, with no code change. A missing file is fine.
@@ -258,6 +262,8 @@ MP3, and a second would double the requests for files that are not there.
 | `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
 | `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
 | `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |
+| `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12) | ~4–5 s |
+| `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.
 

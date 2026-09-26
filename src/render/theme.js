@@ -444,6 +444,7 @@ export const COMMAND = {
   width: 3,
   casingWidth: 7,
   dash: '10 6',
+  closeDash: '4 5', // the inner band, where the orders are strongest (M12)
 };
 
 // ---------------------------------------------------------------------------
@@ -588,19 +589,39 @@ export const OBJECTIVE = {
   pointOpacity: 0.8,
   pointHoverOpacity: 1,
   pointIconSize: 34,
+  pointIconShift: 0.3, // hex radii toward the target it serves (M12)
   stampWidth: 110,
   stampHeight: 44,
   stampRotate: -12,
 };
 
+// Telephone wires from an objective to a pole on each of its charge points
+// (M12), for a kind whose art has `wires` below: what a scout cuts.
+export const WIRES = {
+  stroke: PALETTE.ink,
+  casing: PALETTE.paper,
+  width: 2,
+  sag: 7, // how far a wire droops at its middle
+  drop: 14, // how far a snapped end hangs
+  wallReach: 34, // from the footprint's middle toward the pole, where a wire leaves the building
+  wallHeight: 26, // and how far up it
+  poleSize: 34,
+  poleAway: 0.42, // hex radii from the charge point's centre, away from the target
+};
+
 // Multi-hex objective art by objective kind (the kind ids in data/rules.json).
 // Drawn centred on the footprint at the manifest's size. A kind with no entry
-// is drawn as its outline only.
+// is drawn as its outline only. `wires`: its lines run out to its charge points.
 const OBJECTIVE_ART = {
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
-  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed' },
+  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: true },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
 };
+
+/** The orders chevrons for a man's bonus from the leader: one, or two for more than one AP (M12). */
+export function ordersMarkerId(bonus) {
+  return bonus > 1 ? 'marker-orders-2' : 'marker-orders';
+}
 
 /** { id, width, height } for an objective as it stands, or null. */
 export function objectiveArt(objective) {
@@ -608,7 +629,7 @@ export function objectiveArt(objective) {
   if (!art) return null;
   const id = objective.destroyed ? art.destroyed : art.intact;
   const [, , width, height] = SPRITES[id].viewBox.split(' ').map(Number);
-  return { id, width, height };
+  return { id, width, height, wires: Boolean(art.wires) };
 }
 
 export const EXFIL = {
@@ -712,6 +733,7 @@ export const RINGS = {
   width: 4.5,
   margin: 14, // beyond the footprint's hexes
   overshoot: 0.14, // of a turn past the start
+  opacity: 0.8, // a touch under full, so what it crosses still shows (M12)
   wobble: 0.05, // of the radius
   drawMs: 650,
   staggerMs: 180,
@@ -1661,7 +1683,17 @@ const SPRITES = {
   },
   // On a man who has the leader's orders this turn (SPEC.md §5 Command, M11):
   // a sergeant's chevron in the leader's blue, the one colour kept for him.
+  // The leader's orders on a man's counter (SPEC.md §5 Command): one chevron
+  // for the ordinary bonus, two for the strongest, beside him (M12).
   'marker-orders': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'leader'),
+      line('M7 16.5 L14 10.5 L21 16.5', 2.8, 'stroke-paper', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+      ring(14, 14, 12),
+    ],
+  },
+  'marker-orders-2': {
     viewBox: '0 0 28 28',
     draw: () => [
       circle(14, 14, 12, 'leader'),
@@ -1742,6 +1774,19 @@ const SPRITES = {
       line('M13 10 C13 5 17 6 18 3', 1.8),
       circle(21.5, 21.5, 6, 'red'), ring(21.5, 21.5, 6, 1.4),
       line('M21.5 18.5 V24.5 M18.5 21.5 H24.5', 1.8, 'stroke-paper'),
+    ],
+  },
+  // A telegraph pole on each of the exchange's charge points (M12): where the
+  // wires go, so a scout can see the line he would cut. Ink only.
+  'marker-telegraph-pole': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      line('M14 27 V4', 4, 'stroke-paper'),
+      line('M6 8.5 H22', 3.5, 'stroke-paper'),
+      line('M14 27 V4', 2),
+      line('M6 8.5 H22 M8 12.5 L14 9.5 L20 12.5', 1.6),
+      circle(7, 7, 1.6, 'ink'), circle(21, 7, 1.6, 'ink'),
+      line('M10 27 H18', 1.6),
     ],
   },
   'marker-charge': {
