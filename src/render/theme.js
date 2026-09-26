@@ -167,7 +167,7 @@ const TERRAIN_ART = {
   ridge: { base: 'paper', area: { tint: ['ink', 0.13], rim: { width: 26, opacity: 0.5 }, outline: 1.2, outlineOpacity: 0.45, dash: '8 3' }, motif: null },
   canal: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
   lock: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse' },
+  farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse', building: true },
   emplacement: { base: 'paper', tint: ['red', 0.1], motif: 'terrain-emplacement' },
   // The bridge and the dump are drawn by their objective art, over the hexes.
   bridge: { base: 'paper', motif: null, road: true },
@@ -252,9 +252,11 @@ export const PLACE = {
   font: 'Georgia, "Times New Roman", Times, serif',
   halo: PALETTE.paper,
   haloWidth: 4.5,
-  village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink },
-  water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, halo: false },
-  other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink },
+  // Pushed back to a mid grey (ink at an opacity): names are flavour, and must
+  // never out-shout the labels that affect play.
+  village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink, opacity: 0.5 },
+  water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.6, halo: false },
+  other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink, opacity: 0.5 },
 };
 
 export const GRID = {
@@ -1060,11 +1062,11 @@ const SPRITES = {
   // faint rounded squares, each a little bigger than the last.
   'counter-shadow': {
     viewBox: '0 0 56 56',
-    draw: () => Array.from({ length: 6 }, (_, i) => {
-      const grow = i * 1.6;
+    draw: () => Array.from({ length: 5 }, (_, i) => {
+      const grow = i * 0.8;
       return svg('rect', {
-        x: 5 - grow, y: 6 - grow, width: 50 + grow * 2, height: 50 + grow * 2, rx: 6 + grow,
-        class: 'ink', 'fill-opacity': 0.11,
+        x: 3 - grow, y: 3.5 - grow, width: 50 + grow * 2, height: 50 + grow * 2, rx: 6 + grow,
+        class: 'ink', 'fill-opacity': 0.12,
       });
     }),
   },

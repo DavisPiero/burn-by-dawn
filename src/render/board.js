@@ -307,6 +307,12 @@ function edgeMiddle(map, q, r, dir) {
  */
 function drawRoads(layer, map, edge, railway) {
   const isRoad = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).road);
+  // Where a road may end: a building, an objective, the exfil.
+  const roadEnds = new Set([
+    ...(map.objectives ?? []).flatMap((o) => o.hexes.map(([q, r]) => hexKey(q, r))),
+    ...(map.exfil ?? []).map(([q, r]) => hexKey(q, r)),
+  ]);
+  forEachCell(map, (q, r) => { if (terrainArt(terrainIdAt(map, q, r)).building) roadEnds.add(hexKey(q, r)); });
   const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
   let d = '';
   forEachCell(map, (q, r) => {
@@ -324,15 +330,22 @@ function drawRoads(layer, map, edge, railway) {
       }
       links.push(dir);
     });
+    // A road never stops in the middle of a hex. One that ends runs on out
+    // of it the way it was going: off the board, or up to the building, the
+    // objective or the exfil it leads to, or at least to the hex's far edge.
+    let arrival = null;
     if (links.length === 1) {
       const away = (links[0] + 3) % 6;
       const n = NEIGHBOR_DIRS[away];
-      if (!inBounds(map, q + n.q, r + n.r)) links.push(away);
+      const next = { q: q + n.q, r: r + n.r };
+      links.push(away);
+      if (inBounds(map, next.q, next.r) && roadEnds.has(hexKey(next.q, next.r))) arrival = axialToPixel(next.q, next.r, map.hexSize);
     }
     const c = axialToPixel(q, r, map.hexSize);
     const mids = links.map((dir) => edgeMiddle(map, q, r, dir));
     if (mids.length === 2) d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
     else for (const m of mids) d += `M${f(m)} L${f(c)} `;
+    if (arrival) d += `M${f(mids[1])} L${f(arrival)} `;
     if (crossing !== null) {
       const n = NEIGHBOR_DIRS[crossing];
       d += `M${f(edgeMiddle(map, q, r, crossing))} L${f(axialToPixel(q + n.q, r + n.r, map.hexSize))} `;
@@ -392,7 +405,7 @@ function drawPlaces(layer, map) {
     if (style.halo !== false) {
       layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': 0.85 }));
     }
-    layer.appendChild(text(name, { ...attrs, fill: style.fill }));
+    layer.appendChild(text(name, { ...attrs, fill: style.fill, 'fill-opacity': style.opacity ?? 1 }));
   }
 }
 
