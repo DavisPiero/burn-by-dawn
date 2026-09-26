@@ -2,7 +2,7 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
-import { alertIndex, detectionAt, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
+import { alertIndex, detectionAt, hearingRadius, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
@@ -17,7 +17,7 @@ import {
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
 import { hintsFor } from './hints.js';
-import { validateTraits } from './traits.js';
+import { applyHook, validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
@@ -366,7 +366,7 @@ function actionsFor(unit) {
   return [
     { id: 'hide', key: 'G', label: 'Hide', help: 'Go to ground: +concealment on this hex, ends his turn', ...withCost(checkHide(unit, rules), ap) },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
-    { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy he suppressed this turn or last: dead, and it leaves a body. Loud. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
+    { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     { id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
     { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', short: 'Pack', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
@@ -427,7 +427,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     if (hoverEnemy) {
       const check = checkKill(map, unit, hoverEnemy, rules);
       view.targetLabel = check.ok
-        ? `Kill the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP, gunfire: alert rises and it is heard. Leaves a body. Click to fire.`
+        ? `Kill the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP, one silenced shot: alert +${applyHook(unit, 'onFire', 'alert', rules.alert.silenced).value}, heard ${hearingRadius('silenced', state.alert.points, rules)} hexes off. Leaves a body. Click to fire.`
         : `Kill: ${check.reason}.`;
     } else {
       view.targetLabel = `Kill: click a suppressed enemy inside ${unit.shortName}'s spot radius with a clear line. Esc to cancel.`;

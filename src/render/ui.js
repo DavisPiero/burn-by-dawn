@@ -205,7 +205,7 @@ export function renderAlertDial(svg, caption, alert) {
 export function describeAlertStates(alert) {
   const lines = alert.states.map((s, i) => {
     const mark = i === alert.index ? '▶ ' : '  ';
-    return `${mark}${s.label} — from ${s.from} · vision +${s.visionBonus} · hearing +${s.hearingBonus}`;
+    return `${mark}${s.label} — from ${s.from} · vision +${s.visionBonus} · looks harder +${s.detectionBonus} · hearing +${s.hearingBonus}`;
   });
   return [
     html('b', null, 'GARRISON ALERT'),
@@ -303,7 +303,7 @@ export function describeEvent(event, place) {
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
-    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in cover, not hit.`;
+    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in heavy cover, not hit.`;
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} in ${at()}.`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
@@ -330,7 +330,7 @@ function describeLanding(event, where) {
   return `${event.unitName} lands in ${where}${off}.`;
 }
 
-const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', explosion: 'the explosion' };
+const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', explosion: 'the explosion' };
 
 function listOf(labels) {
   if (!labels || labels.length === 0) return 'someone';
@@ -348,6 +348,7 @@ export function describeDetection(d) {
   let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover} − conceal ${d.concealment}`;
   if (d.hidden) sum += ` − hidden ${d.hidden}`;
   sum += ` + close ${d.proximity}`;
+  if (d.alert) sum += ` + alert ${d.alert}`;
   if (d.trait) sum += ` ${d.trait > 0 ? '+' : '−'} trait ${Math.abs(d.trait)}`;
   return `${sum} = ${d.score} of ${d.threshold}`;
 }
@@ -365,7 +366,10 @@ export function describeRisk(plan, risk, place) {
   if (shot.length > 0) {
     // The shot lands on the most exposed hex he would be shot on (SPEC.md §5).
     const worst = shot.find((i) => risk[i].shotResult === 'hit') ?? shot[0];
-    const outcome = risk[worst].shotResult === 'hit' ? 'SHOT — HIT in the open' : 'SHOT — PINNED in cover, not hit';
+    const cover = risk[worst].coverLabel;
+    const outcome = risk[worst].shotResult === 'hit'
+      ? `SHOT — HIT ${cover === 'none' ? 'in the open' : `through ${cover} cover`}`
+      : `SHOT — PINNED in ${cover} cover, not hit`;
     return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again in ${place(plan.path[worst])}: ${describeDetection(risk[worst])}`;
   }
   if (spotted.length > 0) {

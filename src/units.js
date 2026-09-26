@@ -66,7 +66,7 @@ export function createUnits(roster, traits, rules, rosterUrl = 'data/roster.json
       dead: false,
       stabilised: false,
       inContact: false,
-      pinned: false, // shot at in cover: his next pool is smaller
+      pinned: false, // shot at in heavy cover: his next pool is smaller
       out: false, // reached an exfil hex: off the board, safe (SPEC.md §10)
       hidden: false,
       apBase: role.actionPoints,
@@ -129,7 +129,7 @@ export function fillActionPoints(units, rules) {
   });
 }
 
-/** Shot at in cover last turn (SPEC.md §5): a smaller pool, but never below 1. */
+/** Shot at in heavy cover last turn (SPEC.md §5): a smaller pool, but never below 1. */
 function pinnedPool(unit, pool, rules) {
   return unit.pinned ? Math.max(Math.min(pool, 1), pool - rules.combat.pinnedApLoss) : pool;
 }
