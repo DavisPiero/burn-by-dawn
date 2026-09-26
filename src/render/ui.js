@@ -750,6 +750,30 @@ function amount(value, words) {
   return `${value}${Math.abs(value) === 1 ? words.unit : words.units}`;
 }
 
+// A trait's effect as short as it will go, for the roster row itself (M11d:
+// the names alone told the player nothing): base → value where the base is
+// known, the change where it depends on the situation. A stat missing here
+// falls back to describeEffect.
+const SHORT_EFFECT = {
+  fuse: (b, v) => `fuse ${b} → ${v} turn${v === 1 ? '' : 's'}`,
+  apCost: (b, v) => `set a charge ${b} → ${v} AP`,
+  charges: (b, v) => `carries ${b} → ${v} charge${v === 1 ? '' : 's'}`,
+  alert: (b, v) => `gunfire alert ${b} → ${v}`,
+  landingPenalty: (b, v) => `bad landing ${b} → ${v} turns`,
+  spotRadius: (b, v) => `sees ${b} → ${v} hexes`,
+  actionPoints: (b, v) => `AP ${b} → ${v}`,
+};
+
+/** "Steady Hands: fuse 3 → 2 turns", "Cat's Eyes: 1 harder to spot". */
+export function shortEffect(effect) {
+  const { stat, base, value, modifier } = effect;
+  let words;
+  if (stat === 'detection' && modifier.op === 'add') words = `${Math.abs(modifier.value)} ${modifier.value < 0 ? 'harder' : 'easier'} to spot`;
+  else if (base !== null && SHORT_EFFECT[stat]) words = SHORT_EFFECT[stat](base, value);
+  else words = describeEffect(effect);
+  return `${effect.name}: ${words}`;
+}
+
 /**
  * "fuse 3 → 2 turns" where the base is known; "move cost +1 AP" where it
  * depends on the situation.

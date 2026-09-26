@@ -8,7 +8,7 @@
 import { timesWord } from '../hints.js';
 import { terrainAt } from '../map.js';
 import { portraitId } from './theme.js';
-import { attachPopup, describeEffect } from './ui.js';
+import { attachPopup, describeEffect, shortEffect } from './ui.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -58,7 +58,7 @@ export function renderRoster(element, state, map, view, handlers) {
     const text = html('div', 'slot-text', [
       html('div', 'slot-name', [html('span', null, unit.name), html('span', null, apText(unit))]),
       conditionLine(unit),
-      html('div', 'slot-line slot-trait', effects.map((e) => e.name).join(' · ') || ' '),
+      html('div', 'slot-line slot-trait', effects.map(shortEffect).join(' · ') || ' '),
     ]);
     slot.append(portrait, text);
 

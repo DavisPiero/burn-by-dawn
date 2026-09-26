@@ -104,7 +104,8 @@ export default [
   ['detection is base − cover − concealment + proximity, and the scout gets one step', async () => {
     const { map, rules, state } = await loadAll();
     const sapper = state.units.find((u) => u.role === 'sapper');
-    const scout = state.units.find((u) => u.role === 'scout');
+    // Traits left off: this is the role's step alone (Cat's Eyes adds its own, M11d).
+    const scout = { ...state.units.find((u) => u.role === 'scout'), traits: [] };
     // Open field two hexes east of an enemy facing east, with a clear line.
     const spot = findHex(map, (q, r) => terrainIdAt(map, q + 2, r) === 'field'
       && terrainIdAt(map, q + 1, r) === 'field' && terrainIdAt(map, q, r) === 'field');

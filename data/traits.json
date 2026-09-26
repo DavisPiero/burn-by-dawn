@@ -18,9 +18,13 @@
     },
     "cats-eyes": {
       "name": "Cat's Eyes",
-      "description": "Sees in the dark better than the rest. One more hex of spot radius.",
-      "hook": "onSpotRadius",
-      "modifier": { "stat": "spotRadius", "op": "add", "value": 1 }
+      "description": "Sees them before they see him, and keeps out of their eyeline. One harder to spot.",
+      "hook": "onDetectionCheck",
+      "modifier": {
+        "stat": "detection",
+        "op": "add",
+        "value": -1
+      }
     },
     "treetops": {
       "name": "Treetops",
