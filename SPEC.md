@@ -597,7 +597,10 @@ Results page, styled as the back page of the annual, listing all six by name and
 
 - Objectives destroyed (primary 3, each secondary 2)
 - Troopers exfiltrated (1 each)
-- Turns remaining (1 per 2 turns)
+- Troopers exfiltrated who were never spotted all mission (1 more each; M11b replaced
+  "turns remaining, 1 per 2 turns", which paid players to rush — playtesters did, and
+  either made chaos or finished early). A man's roster rollover says whether he is
+  still unseen.
 - Never reached Alarmed and never called the RAF diversion (+3)
 
 The page also says which difficulty the mission was played at.

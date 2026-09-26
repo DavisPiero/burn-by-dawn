@@ -354,6 +354,7 @@ export function runDetection(state, map, rules) {
     // Seeing a man spoils a quiet turn even when he is not counted again: the
     // garrison does not settle while it has someone in its sights (SPEC.md §6).
     alert = { ...alert, raisedThisTurn: true };
+    units = updateUnit(units, unit.id, { everSpotted: true });
 
     if (!unit.inContact) {
       alert = raiseAlert(alert, rules.alert.spotted, rules);

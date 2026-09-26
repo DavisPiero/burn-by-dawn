@@ -212,6 +212,8 @@ function deriveView() {
     // The leader's orders, for his rollover in the roster (SPEC.md §5 Command).
     command: rules.command,
     diversionUses: rules.diversion.uses,
+    // The stealth score (SPEC.md §10, M11b), for each man's roster rollover.
+    unseenPoints: rules.scoring.perTrooperUnseen,
     hoverObjective: null,
     previewBlastArea: null,
     siteLabel: null,

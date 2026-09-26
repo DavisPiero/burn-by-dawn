@@ -79,6 +79,9 @@ export function createUnits(roster, traits, rules, rosterUrl = 'data/roster.json
       dead: false,
       stabilised: false,
       inContact: false,
+      // Spotted at any detection check this mission, for the stealth score
+      // (SPEC.md §10, M11b). Never cleared.
+      everSpotted: false,
       pinned: false, // shot at in heavy cover: his next pool is smaller
       out: false, // reached an exfil hex: off the board, safe (SPEC.md §10)
       hidden: false,

@@ -32,12 +32,12 @@
   "_explosionFloor": "SPEC.md §6: once anything has exploded, the alert never decays below this state. A cut line is not an explosion.",
   "explosionFloor": "suspicious",
 
-  "_scoring": "SPEC.md §10. `turnsPerPoint`: one point per this many turns left when the mission ends. `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion.",
+  "_scoring": "SPEC.md §10. `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion.",
   "scoring": {
     "primary": 3,
     "secondary": 2,
     "perTrooperOut": 1,
-    "turnsPerPoint": 2,
+    "perTrooperUnseen": 1,
     "clean": 3,
     "cleanNeverReached": "alarmed"
   },

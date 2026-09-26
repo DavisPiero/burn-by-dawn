@@ -298,7 +298,7 @@ export default [
       enemies: state.enemies.map((e, i) => (i === 0 ? { ...e, investigating: { q: 1, r: 1 } } : e)),
       units: state.units.map((u) => (u.id === other.id ? { ...u, inContact: true } : u)),
     };
-    const before = scoreOf(s, rules, s.turn).total;
+    const before = scoreOf(s, rules).total;
     const called = callDiversion(s, rules);
     equal(alertIndex(called.alert.points, rules), 1, 'down one state');
     equal(called.alert.points, rules.alert.states[1].from, 'to its start');
@@ -311,7 +311,7 @@ export default [
     const twice = { ...rules, diversion: { ...rules.diversion, uses: 2 } };
     assert(checkDiversion(called, twice).ok, 'a second call when the level allows two');
     assert(!checkDiversion(callDiversion(called, twice), twice).ok, 'and no third');
-    equal(scoreOf(called, rules, s.turn).total, before - rules.scoring.clean, 'clean bonus gone');
+    equal(scoreOf(called, rules).total, before - rules.scoring.clean, 'clean bonus gone');
 
     const floored = callDiversion({ ...s, explosions: 1, alert: { ...s.alert, points: rules.alert.states[1].from } }, rules);
     equal(floored.alert.points, rules.alert.states[1].from, 'never below the explosion floor');
@@ -357,7 +357,10 @@ export default [
     equal(settled.charges.length, 0, 'every fuse played out');
     equal(settled.outcome.turn, 12, 'two turns of fuses');
     const lines = settled.outcome.score.lines.map((l) => l.label).join('; ');
+    // Three out and never seen: each pays twice (M11b), and no turns-left points.
     equal(settled.outcome.score.total, rules.scoring.primary + 3 * rules.scoring.perTrooperOut
-      + Math.floor((rules.turnLimit - 12) / rules.scoring.turnsPerPoint) + rules.scoring.clean, `score (${lines})`);
+      + 3 * rules.scoring.perTrooperUnseen + rules.scoring.clean, `score (${lines})`);
+    const seen = settleMission({ ...s, units: s.units.map((u) => (u.out ? { ...u, everSpotted: true } : u)) }, rules, map);
+    equal(seen.outcome.score.total, settled.outcome.score.total - 3 * rules.scoring.perTrooperUnseen, 'seen men pay once');
   }],
 ];
