@@ -783,6 +783,36 @@
       color: var(--paper);
       background: var(--ink);
     }
+    /* Beside the orders, over the right page (M15): how to read a counter,
+       as an insert card of its own. Any click on it carries on, as on the shade. */
+    #counter-key {
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 17px;
+      bottom: 17px;
+      width: 358px;
+      box-sizing: border-box;
+      padding: 0 12px 8px;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--paper);
+      background-image: var(--paper-fibre);
+      background-size: var(--paper-fibre-size);
+      border: 3px solid var(--ink);
+      box-shadow: 6px 6px 0 var(--ink), 0 16px 70px 12px rgba(0, 0, 0, 0.6);
+    }
+    #counter-key[hidden] { display: none; }
+    #counter-key .key-head {
+      margin: 0 -12px 10px;
+      padding: 7px 12px;
+      font-family: var(--slab);
+      font-size: 17px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    #counter-key svg { flex: 1 1 auto; min-height: 0; width: 100%; }
     /* The orders (M15): the level in the black bar, the head under it in ink. */
     #briefing .brief-top.bar {
       margin: 0 -18px 6px;
@@ -910,7 +940,7 @@
         <button id="sound-toggle" type="button" title="Sound on or off [M]"></button>
         <button id="restart" type="button" title="A new game on a fresh seed, at the same level"></button>
       </div>
-      <div id="briefing-backdrop" hidden><section id="briefing" role="dialog" aria-modal="true"></section></div>
+      <div id="briefing-backdrop" hidden><section id="briefing" role="dialog" aria-modal="true"></section><aside id="counter-key" hidden><div class="key-head">HOW TO READ A COUNTER</div><svg id="counter-key-art" viewBox="-4 0 338 748" preserveAspectRatio="xMidYMin meet"></svg></aside></div>
       <div id="left-content">
         <svg id="board"></svg>
         <div id="captions">

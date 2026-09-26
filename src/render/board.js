@@ -23,7 +23,7 @@ import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js'
 import {
   BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -1976,4 +1976,121 @@ export function boardPixelBounds(map) {
     maxX: edge.right + padX,
     maxY: edge.bottom + padY,
   };
+}
+
+// --- the counter key (M15) ------------------------------------------------------
+
+/**
+ * "How to read a counter", beside the orders: one of our counters drawn big,
+ * every mark on it labelled, the other marks a man can wear, and an enemy
+ * counter the same way — drawn by the same code as the board, so the key can
+ * never drift from what it explains. `examples` come from main.js: `man` (a
+ * man with a charge, the leader's orders and some AP spent), `leader`, and
+ * `enemy`; `numbers` the figures the words quote (`arc`).
+ */
+export function drawCounterKey(svg, examples, numbers) {
+  svg.replaceChildren();
+  const unitMap = { hexSize: 1 };
+  const scale = COUNTER.drawn / COUNTER.size;
+  // A point on a counter drawn at (cx, cy), k times its board size.
+  const on = (cx, cy, k, p) => ({ x: cx + k * (-COUNTER.drawn / 2 + p.x * scale), y: cy + k * (-COUNTER.drawn / 2 + p.y * scale) });
+  const place = (node, cx, cy, k) => {
+    const g = el('g', { transform: `translate(${cx} ${cy}) scale(${k})` });
+    g.appendChild(node);
+    svg.appendChild(g);
+    return g;
+  };
+  const words = (x, y, lines, anchor = 'start') => {
+    // 13 in the drawing, 12 px on screen at 1280x800, where the key is drawn
+    // at 0.92: the right page's floor (SPEC.md §11).
+    const t = el('text', { x, y, 'text-anchor': anchor, 'font-family': TYPE.typewriter, 'font-size': 13, fill: PALETTE.ink });
+    lines.forEach((line, i) => {
+      const span = el('tspan', { x, dy: i === 0 ? 0 : 14.5, 'font-weight': i === 0 ? 'bold' : 'normal' });
+      span.textContent = line;
+      t.appendChild(span);
+    });
+    svg.appendChild(t);
+  };
+  const pointer = (from, to) => {
+    svg.appendChild(el('path', { d: `M${from.x} ${from.y} L${to.x} ${to.y}`, stroke: PALETTE.ink, 'stroke-width': 1, fill: 'none' }));
+    svg.appendChild(el('circle', { cx: to.x, cy: to.y, r: 2.2, fill: PALETTE.red, stroke: PALETTE.paper, 'stroke-width': 1 }));
+  };
+  const heading = (y, content) => {
+    svg.appendChild(el('path', { d: `M0 ${y + 5} H330`, stroke: PALETTE.ink, 'stroke-width': 2 }));
+    svg.appendChild(text(content, { x: 0, y: y - 4, 'text-anchor': 'start', 'dominant-baseline': 'auto', 'font-family': TYPE.slab, 'font-size': 14, 'letter-spacing': 2, fill: PALETTE.ink }));
+  };
+  const row = (y, node, lines, x = 64) => {
+    svg.appendChild(node);
+    words(x, y - 3, lines);
+  };
+
+  // Our men: Fitch, say, with a charge and the orders, one AP spent. The
+  // spotted mark goes in the list below: on the counter it covers his AP.
+  heading(16, 'YOUR MEN');
+  const man = { ...examples.man, q: 0, r: 0 };
+  const counter = drawCounter(man, examples.manNumber, unitMap, false);
+  const ordersSize = MARKER.size * MARKER.ordersScale;
+  counter.appendChild(marker(ordersMarkerId(man.commandBonus), 51 - ordersSize / 2, 31 - ordersSize / 2, ordersSize));
+  const cx = 167, cy = 128, k = 1.8;
+  place(counter, cx, cy, k);
+  const dots = COUNTER.apDots;
+  const firstBlue = man.apMax - man.commandBonus;
+  const left = [
+    [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'sapper, scout', 'or gunner']],
+    [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'a dot each']],
+    [{ x: 7, y: 46.5 }, 164, ['KEY 1–6', 'and name']],
+  ];
+  for (const [p, y, lines] of left) {
+    pointer({ x: 100, y: y - 4 }, on(cx, cy, k, p));
+    words(96, y, lines, 'end');
+  }
+  const right = [
+    [{ x: dots.x, y: dots.y }, 58, ['AP LEFT', 'hollow when', 'spent']],
+    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 110, ['BLUE AP', "from Dutch's", 'orders']],
+    [{ x: 51, y: 31 }, 162, ["DUTCH'S", 'ORDERS', 'this turn']],
+  ];
+  for (const [p, y, lines] of right) {
+    pointer({ x: 234, y: y - 4 }, on(cx, cy, k, p));
+    words(238, y, lines);
+  }
+
+  // The other marks a man can wear.
+  const leader = drawCounter({ ...examples.leader, q: 0, r: 0, ap: examples.leader.apMax }, 1, unitMap, false);
+  const small = el('g', { transform: 'translate(30 238) scale(0.8)' });
+  small.appendChild(leader);
+  row(234, small, ['DUTCH, THE LEADER', 'blue name and rank; men near', 'him start a turn with more AP']);
+  const markerAt = (id, y) => el('use', { href: `#${id}`, x: 17, y: y - 13, width: 26, height: 26 });
+  row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'seen again this turn: fired on']);
+  row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; one more hit kills']);
+  row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'gone to ground, harder to see']);
+
+  // The garrison.
+  heading(390, 'THE GARRISON');
+  const east = 2, southEast = 3;
+  const enemy = { ...examples.enemy, q: 0, r: 0, facing: east, suppressed: false, openToKill: false };
+  const ex = 92, ey = 482, ek = 1.7;
+  place(drawEnemy(enemy, unitMap, false, false, southEast), ex, ey, ek);
+  const size = COUNTER.size;
+  const tip = (facing) => {
+    const d = NEIGHBOR_DIRS[facing];
+    const toward = axialToPixel(d.q, d.r, 1);
+    const len = Math.hypot(toward.x, toward.y);
+    const reach = ENEMY.facingDistance + ENEMY.facingSize * 0.6;
+    return { x: size / 2 + (toward.x / len) * reach, y: size / 2 + (toward.y / len) * reach };
+  };
+  const enemyLabels = [
+    [tip(east), 432, ['FACING', `sees ${numbers.arc}° this`, 'way']],
+    [tip(southEast), 486, ['NEXT TURN', 'it will face', 'here (dashed)']],
+    [{ x: 28, y: 45.5 }, 540, ['WHO', 'sentry, patrol', 'or reserve']],
+  ];
+  for (const [p, y, lines] of enemyLabels) {
+    pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
+    words(220, y, lines);
+  }
+  const mini = el('g', { transform: 'translate(30 606) scale(0.8)' });
+  mini.appendChild(drawEnemy({ ...enemy, suppressed: true }, unitMap, false, false));
+  row(602, mini, ['SUPPRESSED', 'head down this turn: it', 'does not see, fire or move'], 76);
+  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'the turn after: it sees again']);
+  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'the reserve squad']);
+  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'it saw or found something']);
 }

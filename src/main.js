@@ -25,7 +25,7 @@ import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
@@ -803,6 +803,7 @@ function render() {
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE }, restartMission);
   // Every man's name is set in bold on the card, as in the report.
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
+  showCounterKey(briefing?.kind === 'orders');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
@@ -1088,6 +1089,31 @@ function endTurnNow() {
     }
   }
   render();
+}
+
+// The counter key beside the orders (M15), drawn once per game from its men
+// and garrison, so its examples are the real counters.
+const counterKey = document.getElementById('counter-key');
+let counterKeyDrawn = null;
+
+function showCounterKey(on) {
+  counterKey.hidden = !on;
+  // Again for a new game or a new level, whose arcs may differ.
+  const drawnFor = `${state.seed}:${level.id}`;
+  if (!on || counterKeyDrawn === drawnFor) return;
+  counterKeyDrawn = drawnFor;
+  const index = state.units.findIndex((u) => !u.leader && chargeCapacity(u, rules) > 0);
+  const man = state.units[index];
+  // Beside him, so two blue dots, one of them spent: both kinds show.
+  const bonus = rules.command.closeBonusActionPoints ?? rules.command.bonusActionPoints;
+  const enemy = state.enemies.find((e) => e.speed > 0) ?? state.enemies[0];
+  drawCounterKey(document.getElementById('counter-key-art'), {
+    // A man with a charge and the leader's orders, one AP spent.
+    man: { ...man, apMax: man.apBase + bonus, ap: man.apBase + bonus - 1, commandBonus: bonus, charges: 1, hidden: false, hits: 0 },
+    manNumber: index + 1,
+    leader: state.units.find((u) => u.leader),
+    enemy,
+  }, { arc: enemy.arcDegrees });
 }
 
 /**
