@@ -608,12 +608,27 @@ Desktop makes the skeuomorphism work properly, so use the room:
   spaced capitals, water in italic on the water, the rest in italic. The turn report uses
   them ("the field by Ferme Lebrun"). Map names may be set in a serif italic; they are
   the one type on the board that is neither typewriter nor lettering.
+  Marker-pen annotations (the target rings and their notes) are set in the speech
+  lettering: they are the player's own pen, not print.
 - **The move path counts.** Each step on the hover path shows the AP spent by the time he
   gets there, grey past what he has. A hex on the path where he would be spotted is
   crossed out in red, marker-pen style, over the risk pips.
 - **Our counters are printed solid army green** with a dark name strip (leader blue for
   the ranking man), AP left as one large figure top right, the role in a paper roundel,
   and a sliver of the card's cut edge showing down-right under the soft shadow.
+- **Objectives say where to go.** Each objective's hexes are outlined firmly, its art sits
+  inside them, and its name above them. Each charge point is a red dashed hex with an empty
+  satchel in it: where a man stands to place a charge. Hovering one says so.
+- **Targets are ringed before the drop.** Until a drop run is picked, each objective is
+  circled in red marker pen, the primary twice, with a hand-lettered note beside it, and
+  the exfil in green. Picking a run clears them.
+- **Briefings.** A briefing card opens over the board: the orders before the drop, and at
+  the start of every turn (turn 1 after the drop has been shown) an update: what happened
+  at the turn boundary, most important first, and up to three hints about what to do
+  next, worked out from the state (a pure function in `src/hints.js`, numbers from
+  `data/rules.json`). Any key or click puts it away, and that key does nothing else. A
+  box on the card turns the turn updates off for the rest of the session; the orders
+  still open on a new game.
 - **Type is set for reading.** The right page is set at 13–15px at 1280x800, never below
   12. It carries only what the player needs every turn: detail goes into rollovers.
 
