@@ -1080,7 +1080,7 @@ function drawDrop(layers, drop) {
  * run (the same as 1–3); hovering it shows the run's description.
  */
 function runTab(layers, run, at) {
-  const name = run.label.toUpperCase();
+  const name = `${run.label} · ${run.tag}`.toUpperCase();
   const width = name.length * DROP.tabFontSize * 0.62 + DROP.tabPadX * 2;
   const height = DROP.tabHeight;
   const x = at.x - width / 2, y = at.y - height / 2;

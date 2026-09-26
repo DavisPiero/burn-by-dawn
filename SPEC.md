@@ -500,6 +500,15 @@ The map must support **three genuinely viable approaches**, each with a distinct
 No route reaches all three objectives efficiently. Choosing one is choosing which
 secondary objective is realistic.
 
+*Since M9c:* the balance bot found the fuel dump equally reachable from every drop run —
+what a bonus target costs is the garrison it rouses, not the walk — so the drop runs are
+told apart by what they are good for instead, one word each, shown with the run's name
+(`tag` in `map.json`): **West · QUIET** (under cover the whole way, the fewest sightings,
+the longest walk), **North · STEADY** (soft landings, the most reliable), **East · FAST**
+(down closest to the bridge; its description says it is tricky, as it is the hardest run
+for a first-timer). The base patrol walks the fields south of the fuel dump, not
+up onto the ridge, so the wood and ridge line is the quiet one.
+
 ---
 
 ## 9. The drop
@@ -509,7 +518,8 @@ The drop is not a cutscene. It is the first decision, and it is how the player c
 Before turn 1, the player picks one of **three drop runs** (north, east, west), drawn as a
 flight line across the map with a wind arrow. The run decides which corridor the stick
 lands nearest: west on the wood and ridge line, north on the hedgerow lanes, east on the
-canal towpath above the bridge. All three land west of the canal, so nobody starts on the
+fields north-west of the bridge, nearest the primary (moved off the towpath at M9c: it
+dropped the stick into the bridge patrol's walk and was hard by accident). All three land west of the canal, so nobody starts on the
 wrong side of the chokepoint. The men jump in roster order along the flight line. Each
 trooper then lands with **small seeded scatter**, 1–2 hexes, rarely 3, leaning **downwind**.
 Nobody lands out of play, on the exfil, on impassable ground other than the canal, on
@@ -725,5 +735,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M8e** | Operator review: undo, blasts kill enemies, the stone throw shown as a throw, the exfil barn, lighter paper | Undo takes back any move or action this turn and no further; an enemy in a blast dies unless it is the reserve, leaving no body; aiming a stone draws the lob and the earshot; the painted aircraft flies the drop |
 | **M9** | Difficulty levels: Easy, Normal, Hard (§10) | The orders offer the three levels and still fit at 1280x800; each level's numbers show in the orders, the rings and the panel; the level is beside the seed and on the back page; it cannot change after the jump; the balance bot wins clearly more on Easy and clearly less on Hard |
 | **M9b** | Operator review: one-step undo, the RAF diversion's card, aiming lets go of a clicked man, the title card and strapline on the orders and the back page, back page tidied | Undo takes back the last action only; calling the diversion opens a card saying what it did and what calls are left; clicking another man while aiming selects him; the orders still fit at 1280x800 |
+| **M9c** | Drop runs: the east run clear of the bridge patrol, the base patrol off the ridge, each run labelled for what it is good for | No run is much the hardest for a first-timer by accident; each run shows its word (QUIET, STEADY, FAST) on its button, its tab and its rollover |
 
 Do not start a milestone before the previous one is merged and playable.
