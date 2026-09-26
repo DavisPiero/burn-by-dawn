@@ -16,7 +16,7 @@
 
   "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes. The base patrol walks the fields south of the fuel dump, not up onto the ridge: when it did, it met the west run coming down the ridge and made that run the worst of the three for no gain (M9c).",
   "enemies": [
-    { "id": "post-bridge", "label": "Bridge post", "type": "sentry", "at": [12, 5], "facing": "W" },
+    { "id": "post-bridge", "label": "Bridge post", "type": "sentry", "at": [12, 4], "facing": "W" },
     { "id": "post-base", "label": "Base post", "type": "sentry", "at": [-4, 10], "facing": "NE" },
     { "id": "patrol-bridge", "label": "Bridge patrol", "type": "patrol", "facing": "W", "loop": false,
       "route": [[12, 6], [4, 6]] },
@@ -78,8 +78,8 @@
     "WWRFFHFFTFFHCFFOOF",
     "WRRFFHFFTFFHCFBBFF",
     "WRRFHHFFTFFHCFBBFF",
-    "WWRFHFFHTFFMCFFTFF",
-    "FWRFHFFHTFFMCFETFF",
+    "WWRFHFFHTFFMCFETFF",
+    "FWRFHFFHTFFMCFFTFF",
     "FWRFHFFTTTTXXXTTFF",
     "DDRFHFFHFTFMCFFHFF",
     "FDFOHFBHFTFMCFFHFF",

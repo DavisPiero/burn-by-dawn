@@ -461,9 +461,13 @@ Three objectives, each on a different approach:
 
 1. **Rail bridge over the canal** (PRIMARY) — 2 charges, on separate hexes. The charges
    go on the **piers, placed from the west canal bank beside the bridge**, not on the deck:
-   the towpath runs directly under it (§8). The deck and the east bank are in the bridge
-   post's view every turn; the west bank is watched only some turns, so the skill is
-   timing, not luck. **A destroyed bridge is gone**: its hexes become canal, and the only
+   the towpath runs directly under it (§8). The deck is in the bridge post's view every
+   turn; the west bank is walked by the bridge patrol only some turns, so the skill is
+   timing, not luck. The post stands on the east bank just north of the bridge (moved one
+   hex north in M12): at rest it looks over the north pier, where a man in the marsh is
+   seen but not spotted until the garrison is Alert, and a stone thrown north of it, from
+   the west bank opposite, turns it off both piers for a turn (§6). Where it stood before,
+   the north pier lay due west of it and no stone from the west bank could turn it away. **A destroyed bridge is gone**: its hexes become canal, and the only
    way over is to swim (§4 Actions).
 2. **Telephone exchange, village** (secondary) — 1 charge, or a Scout can cut the line
    silently: a full turn instead of 1 AP, and it raises no alert (§4 Actions).
