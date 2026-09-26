@@ -343,6 +343,9 @@ export function runDetection(state, map, rules) {
     events.push({
       kind: 'spotted', unitId: unit.id, unitName: unit.shortName,
       enemyLabel: seenAt.result.enemyLabel, q: seenAt.hex.q, r: seenAt.hex.r, score: seenAt.result.score,
+      // Gone to ground and seen anyway, so the report can say why (M11):
+      // 'here' on his hiding hex, 'before' on a hex crossed before he hid.
+      hid: !unit.hidden ? null : seenAt.hex.q === unit.q && seenAt.hex.r === unit.r ? 'here' : 'before',
     });
     // Seeing a man spoils a quiet turn even when he is not counted again: the
     // garrison does not settle while it has someone in its sights (SPEC.md §6).

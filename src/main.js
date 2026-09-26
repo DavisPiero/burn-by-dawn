@@ -2,7 +2,7 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
-import { alertIndex, detectionAt, hearingRadius, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
+import { alertIndex, detectionAt, hearingRadius, listeners, routePath, shotResultOf, testedHexes, visibleHexes, visionRadiusOf } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
@@ -268,12 +268,7 @@ function deriveView() {
     if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
       view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
     }
-    if (plan.steps === 0 && checkHide(unit, rules).ok) {
-      const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
-      view.hideLabel = hidden
-        ? `hide here [G]: ${hidden.spotted ? 'still SPOTTED' : 'not spotted'} — ${describeDetection(hidden)}`
-        : 'hide here [G]: unseen anyway';
-    }
+    if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [G]: ${hideEffect(unit)}`;
   }
   return view;
 }
@@ -440,7 +435,11 @@ function actionsFor(unit) {
   const stoneCheck = checkThrowStone(map, unit, nearestInPlay(unit), rules);
   const ap = (n) => `${n} AP`;
   return [
-    { id: 'hide', key: 'G', label: 'Hide', help: 'Go to ground: +concealment on this hex, ends his turn', ...withCost(checkHide(unit, rules), ap) },
+    {
+      id: 'hide', key: 'G', label: 'Hide', ...withCost(checkHide(unit, rules), ap),
+      help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
+        + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
+    },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
@@ -454,6 +453,30 @@ function actionsFor(unit) {
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
+}
+
+/**
+ * What going to ground would do for him where he stands, in words (SPEC.md §4
+ * Hide): the detection check tests every hex he entered this turn, and hiding
+ * helps only on the last, so a man seen on the way is seen whatever he does
+ * now. Players hid and were shot anyway without knowing why (M11).
+ */
+function hideEffect(unit) {
+  const seenOnTheWay = testedHexes(unit)
+    .filter((h) => h.q !== unit.q || h.r !== unit.r)
+    .map((h) => ({ h, d: detectionAt(map, rules, state.enemies, state.alert.points, unit, h) }))
+    .find(({ d }) => d?.spotted);
+  if (seenOnTheWay) {
+    return `too late to help — the ${seenOnTheWay.d.enemyLabel.toLowerCase()} already sees him in ${placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), seenOnTheWay.h)}, on his way here${unit.inContact ? ', and will fire' : ''}.`;
+  }
+  const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
+  const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
+  if (!hidden) return 'no enemy can see this hex, so hiding adds nothing.';
+  if (hidden.spotted) {
+    return `still SPOTTED, hidden or not — too little cover this close (${describeDetection(hidden)})${unit.inContact && hidden.firing ? '. He will be fired on' : ''}. Get further away or into heavier cover.`;
+  }
+  if (open?.spotted) return `NOT spotted once hidden — hiding here ${unit.inContact ? 'breaks contact' : 'keeps him out of sight'} (${describeDetection(hidden)}).`;
+  return `not spotted either way (${describeDetection(hidden)}).`;
 }
 
 // Place a charge, with its fuse — and a warning if setting it on a secondary

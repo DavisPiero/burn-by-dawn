@@ -340,7 +340,7 @@ export function renderReport(element, state, place, onLocate) {
 export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
-    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}.`;
+    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
@@ -399,6 +399,12 @@ export function boldNames(line, names) {
   if (last < line.length) parts.push(line.slice(last));
   return parts;
 }
+
+// Why a man who went to ground was spotted anyway (enemy.js runDetection `hid`).
+const HID_WORDS = {
+  here: ', although he was hiding: too little cover, or the enemy too close',
+  before: ', on his way to where he hid — hiding covers only the hex he stops on',
+};
 
 const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', explosion: 'the explosion' };
 
