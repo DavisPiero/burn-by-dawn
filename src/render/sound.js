@@ -1,6 +1,7 @@
-// Sound (ART-ASSETS.md §9, SPEC.md §11). The sounds of the table, not the
-// battlefield: a counter snapped down, a pencil, a turned card, a dog a long
-// way off, one muffled crump. Presentation only, like the rest of render/: it
+// Sound (ART-ASSETS.md §9, SPEC.md §11). The sounds of the table: a counter
+// snapped down, a pencil, a turned card, a dog a long way off — and, since
+// M11, one from the battlefield: a charge going off is a real explosion, the
+// payoff of the whole plan. The RAF's bombs, miles off, stay muffled crumps. Presentation only, like the rest of render/: it
 // is told what happened and never looks at a rule.
 //
 // Each sound is made in code with Web Audio until a file is supplied, the way
@@ -163,6 +164,44 @@ const SYNTHS = {
     rumble.frequency.exponentialRampToValueAtTime(90, at + 1.2);
     noiseThrough(ctx, out, at, 1.4, [rumble, envelope(ctx, at, 0.9, 1.3, 0.02)], v * 0.2);
   },
+
+  // A demolition charge going off, close (M11: the operator wanted the bangs
+  // to land hard). A sharp crack, a deep boom with the air in it closing
+  // down, a sub-bass shove, and debris pattering down for a second after.
+  explosion: (ctx, destination, at, v) => {
+    const rng = createRng(NOISE_SEED + 90 + v);
+    // The parts are levelled against each other below; this keeps their sum
+    // under full scale, where the crack and the boom land together.
+    const out = ctx.createGain();
+    out.gain.value = 0.62;
+    out.connect(destination);
+    // Grit on the body, as a real blast overdrives whatever hears it.
+    const grit = ctx.createWaveShaper();
+    const curve = new Float32Array(256);
+    for (let i = 0; i < 256; i++) { const x = i / 128 - 1; curve[i] = Math.tanh(2.2 * x); }
+    grit.curve = curve;
+    grit.connect(out);
+    // The crack: a short, bright burst.
+    noiseThrough(ctx, out, at, 0.14, [filter(ctx, 'highpass', 900), envelope(ctx, at, 0.55, 0.12, 0.001)], v * 0.19);
+    // The boom: wide noise through a lowpass closing from bright to dull.
+    const body = filter(ctx, 'lowpass', 2600, 0.7);
+    body.frequency.setValueAtTime(2600, at);
+    body.frequency.exponentialRampToValueAtTime(110, at + 1.7);
+    noiseThrough(ctx, grit, at, 2, [body, envelope(ctx, at, 0.7, 1.9, 0.006)], v * 0.23 + 0.3);
+    // The shove: a sine falling through the sub-bass.
+    const sub = ctx.createOscillator();
+    sub.frequency.setValueAtTime(62, at);
+    sub.frequency.exponentialRampToValueAtTime(26, at + 1.1);
+    sub.connect(envelope(ctx, at, 0.6, 1.4, 0.01)).connect(out);
+    sub.start(at);
+    sub.stop(at + 1.5);
+    // Debris: small bright ticks, thinning out.
+    for (let i = 0; i < 14; i++) {
+      const t = at + 0.25 + rng.next() * 1.4;
+      const loud = 0.12 * (1 - (t - at) / 1.8) + 0.02;
+      noiseThrough(ctx, out, t, 0.04, [filter(ctx, 'bandpass', 1800 + rng.next() * 3500, 3), envelope(ctx, t, loud, 0.03, 0.001)], rng.next());
+    }
+  },
 };
 
 export const SOUND_IDS = Object.keys(SYNTHS);
@@ -176,7 +215,7 @@ const CUES = {
   action: [['pencil-scratch', 0.35, 0]],
   card: [['paper-rustle', 0.35, 0]],
   alertRise: [['dog-distant', 0.18, 0.25]],
-  explosion: [['crump', 0.8, 0]],
+  explosion: [['explosion', 1, 0]],
   // Bombers over the town, miles off: three small crumps.
   diversion: [['crump', 0.25, 0], ['crump', 0.18, 0.4], ['crump', 0.22, 0.95]],
 };

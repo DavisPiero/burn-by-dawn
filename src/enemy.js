@@ -122,9 +122,8 @@ export function decayAlert(state, rules) {
   const events = [];
   let { points, quietTurns } = state.alert;
   quietTurns = state.alert.raisedThisTurn ? 0 : quietTurns + 1;
-  const floor = alertFloor(state, rules);
   if (quietTurns >= rules.alert.quietTurnsToDecay) {
-    const dropped = Math.max(floor, dropOneState(points, rules));
+    const dropped = decayTarget(state, rules);
     if (dropped < points) {
       const from = alertIndex(points, rules);
       const to = alertIndex(dropped, rules);
@@ -134,6 +133,11 @@ export function decayAlert(state, rules) {
     quietTurns = 0;
   }
   return { state: { ...state, alert: { ...state.alert, points, quietTurns, raisedThisTurn: false } }, events };
+}
+
+/** Where the points fall to when the quiet turns run out: never below the explosion floor. */
+export function decayTarget(state, rules) {
+  return Math.max(alertFloor(state, rules), dropOneState(state.alert.points, rules));
 }
 
 /** The start of the state below this one, or 0 from anywhere in Calm. */
@@ -343,6 +347,9 @@ export function runDetection(state, map, rules) {
     events.push({
       kind: 'spotted', unitId: unit.id, unitName: unit.shortName,
       enemyLabel: seenAt.result.enemyLabel, q: seenAt.hex.q, r: seenAt.hex.r, score: seenAt.result.score,
+      // Gone to ground and seen anyway, so the report can say why (M11):
+      // 'here' on his hiding hex, 'before' on a hex crossed before he hid.
+      hid: !unit.hidden ? null : seenAt.hex.q === unit.q && seenAt.hex.r === unit.r ? 'here' : 'before',
     });
     // Seeing a man spoils a quiet turn even when he is not counted again: the
     // garrison does not settle while it has someone in its sights (SPEC.md §6).

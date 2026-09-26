@@ -415,7 +415,18 @@
       letter-spacing: 1px;
       color: var(--paper);
     }
-    .alert-note { font-size: 13px; }
+    .alert-note { font-size: 12px; white-space: nowrap; }
+    /* One pip per alert point, grouped by state (ui.js renderAlertDial). */
+    .alert-level { display: flex; align-items: center; gap: 8px; }
+    .alert-pips { display: flex; gap: 2px; }
+    .alert-pips .pip {
+      width: 11px;
+      height: 11px;
+      border: 1.5px solid var(--ink);
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+    .alert-pips .pip.gap { margin-left: 6px; }
 
     #mission-box { flex: 0 0 auto; }
     #mission {
@@ -683,6 +694,7 @@
       color: var(--paper);
       background: var(--ink);
     }
+    #briefing.tone-raf .brief-head { background: var(--blue); }
     #briefing .brief-title { font-size: 22px; }
     #briefing .brief-kicker { font-size: 13px; opacity: 0.8; }
     #briefing h3 {

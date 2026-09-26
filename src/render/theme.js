@@ -416,7 +416,13 @@ export const PATH = {
   reachableEdgeCasingWidth: 12,
   reachableEdge: PALETTE.blue,
   reachableEdgeWidth: 6,
-  lineStroke: PALETTE.red,
+  // The move line is cold blue, cased in paper so it reads over the blue of
+  // the move range, and turns red from the first hex where he would be
+  // spotted: red on the path means trouble, and only then (M11).
+  lineStroke: PALETTE.blue,
+  lineCasing: PALETTE.paper,
+  lineCasingWidth: 9,
+  spottedStroke: PALETTE.red,
   lineWidth: 5,
   overspendStroke: PALETTE.ink,
   overspendOpacity: 0.45,
@@ -427,6 +433,17 @@ export const PATH = {
   badgeFill: PALETTE.ink,
   badgeText: PALETTE.paper,
   blockedStroke: PALETTE.red,
+};
+
+// The leader's orders (SPEC.md §5 Command): while he is selected, the ground
+// within his command radius, outlined in his blue, dashed so it never reads
+// as the move range. Where a man stands at the start of a turn to get them.
+export const COMMAND = {
+  stroke: PALETTE.leader,
+  casing: PALETTE.paper,
+  width: 3,
+  casingWidth: 7,
+  dash: '10 6',
 };
 
 // ---------------------------------------------------------------------------
@@ -611,8 +628,26 @@ export const BLAST = {
   width: 3,
   casingWidth: 6,
   previewOpacity: 0.08,
-  // The starburst drawn where a charge went off, for a moment after the turn.
+  // The starburst drawn where a charge went off, for a moment after the turn,
+  // half as big again when it brings the target down.
   artSize: 150,
+  destroyedScale: 1.5,
+  // Around it (M11, to make a bang land): the page flashes, the board jolts,
+  // a shock ring runs out to the edge of the blast, and smoke rolls up and
+  // thins. The turn's card waits `holdMs` so all of it is seen.
+  flash: PALETTE.paper,
+  flashOpacity: 0.85,
+  flashMs: 260,
+  shakeMs: 480,
+  shakePx: 7,
+  ringStroke: PALETTE.ink,
+  ringWidth: 7,
+  ringMs: 520,
+  smoke: PALETTE.ink,
+  smokeOpacity: 0.3,
+  smokePuffs: 7,
+  smokeMs: 2300,
+  holdMs: 1900,
 };
 
 // The drop (SPEC.md §9).
@@ -887,9 +922,11 @@ const TERRAIN_SPRITES = {
   'terrain-wood-02': () => [...treeCrown(42, 32, 15), ...treeCrown(30, 58, 13), ...treeCrown(56, 60, 12)],
   'terrain-wood-03': () => [...treeCrown(28, 44, 13), ...treeCrown(50, 34, 13), ...treeCrown(46, 62, 13)],
 
-  'terrain-orchard-01': () => [[28, 34], [52, 34], [28, 58], [52, 58]].flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-02': () => [[40, 30], [24, 50], [56, 50], [40, 68]].flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-03': () => [[32, 32], [54, 40], [26, 56], [48, 64]].flatMap(([x, y]) => appleTree(x, y)),
+  // Three trees a hex, not four (M11): enough to read as an orchard, sparse
+  // enough that the counters and markers on it still stand out.
+  'terrain-orchard-01': () => [[28, 36], [52, 36], [40, 60]].flatMap(([x, y]) => appleTree(x, y)),
+  'terrain-orchard-02': () => [[40, 30], [26, 54], [54, 54]].flatMap(([x, y]) => appleTree(x, y)),
+  'terrain-orchard-03': () => [[32, 34], [54, 44], [34, 62]].flatMap(([x, y]) => appleTree(x, y)),
 
   'terrain-marsh': () => [
     line('M18 40 H32 M46 56 H62 M24 68 H38', 1.4, 'stroke-blue', { opacity: 0.8 }),
@@ -958,27 +995,27 @@ function drum(x, y, cls = 'green') {
 // The dump's trodden ground, inside its three hexes.
 const FUEL_GROUND = 'M46 40 Q120 30 198 38 L200 104 Q176 110 160 112 L158 164 Q120 176 84 166 L80 112 Q60 108 44 104 Z';
 
-// Ten rows of four, the east half about to go under the net.
+// Twelve drums in one neat stack, four by three: few enough to read as a
+// dump at a glance (M11: the forty-drum park made the corner too busy to
+// approach), all one colour so nothing in it reads as a marker.
 function drumPark() {
   const parts = [];
-  for (let col = 0; col < 10; col++) {
-    for (let row = 0; row < 4; row++) parts.push(...drum(60 + col * 13.5, 48 + row * 13.5, (col * 4 + row) % 7 === 3 ? 'red' : 'green'));
+  for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < 3; row++) parts.push(...drum(70 + col * 14, 56 + row * 14));
   }
   return parts;
 }
 
-// A camouflage net over the east drums: printed green with ink and paper
-// mottling, so the drums show faintly through, pegged out at its corners.
+// A camouflage net over a second stack, pegged at its corners: printed green,
+// a little ink mottling, the drums under it left to the imagination.
 function camouflageNet() {
-  const net = 'M122 38 Q156 34 190 38 Q194 68 190 98 Q168 104 146 102 Q138 72 122 38 Z';
-  const mottle = 'M140 46 q8 -4 12 3 q-4 7 -12 -3 Z M168 42 q9 2 8 9 q-9 1 -8 -9 Z M150 66 q10 -3 13 5 q-7 6 -13 -5 Z M176 64 q8 1 9 8 q-8 3 -9 -8 Z M158 88 q9 -2 11 5 q-8 5 -11 -5 Z M182 90 q6 -3 8 4 q-6 4 -8 -4 Z M136 60 q5 -1 6 5 q-5 2 -6 -5 Z';
-  const light = 'M156 52 q6 -2 8 3 q-5 4 -8 -3 Z M166 78 q6 -1 7 4 q-5 3 -7 -4 Z M186 50 q5 0 5 5 q-4 2 -5 -5 Z';
+  const net = 'M134 46 Q160 42 184 46 Q188 70 184 94 Q162 99 140 96 Q132 72 134 46 Z';
+  const mottle = 'M146 56 q8 -4 12 3 q-4 7 -12 -3 Z M166 70 q9 2 8 9 q-9 1 -8 -9 Z M150 82 q8 -2 10 4 q-6 5 -10 -4 Z';
   return [
-    line('M122 38 L116 32 M190 38 L196 32 M190 98 L196 102 M146 102 L140 108', 1.1, 'stroke-ink', { opacity: 0.7 }),
-    ...[[116, 32], [196, 32], [196, 102], [140, 108]].map(([x, y]) => circle(x, y, 1.6, 'ink')),
-    fill(net, 'green', { 'fill-opacity': 0.85 }),
-    fill(mottle, 'ink', { 'fill-opacity': 0.4 }),
-    fill(light, 'paper', { 'fill-opacity': 0.35 }),
+    line('M134 46 L128 40 M184 46 L190 40 M184 94 L190 100 M140 96 L134 102', 1.1, 'stroke-ink', { opacity: 0.6 }),
+    ...[[128, 40], [190, 40], [190, 100], [134, 102]].map(([x, y]) => circle(x, y, 1.6, 'ink')),
+    fill(net, 'green', { 'fill-opacity': 0.75 }),
+    fill(mottle, 'ink', { 'fill-opacity': 0.3 }),
     line(net, 1.6, 'stroke-ink', { 'stroke-dasharray': '5 2.5' }),
   ];
 }
@@ -996,21 +1033,6 @@ function bowser(burnt) {
     circle(102, 134, 3.2, 'paper'), ring(102, 134, 3.2, 1.2), circle(122, 134, 3.2, 'paper'), ring(122, 134, 3.2, 1.2),
     ...inked('M146 127 H150 V141 H146 Z', 'blue', 1),
   ];
-}
-
-// A gun pit: a ring of sandbags round a dark hole, the gun laid over them.
-function gunPit(x, y) {
-  const bags = [];
-  for (let i = 0; i < 10; i++) {
-    const a = (i / 10) * Math.PI * 2;
-    const bx = x + Math.cos(a) * 11, by = y + Math.sin(a) * 9;
-    const turn = (a * 180) / Math.PI + 90;
-    bags.push(svg('g', { transform: `translate(${bx.toFixed(1)} ${by.toFixed(1)}) rotate(${turn.toFixed(0)})` }, [
-      svg('ellipse', { cx: 0, cy: 0, rx: 4.4, ry: 2.8, class: 'paper' }),
-      svg('ellipse', { cx: 0, cy: 0, rx: 4.4, ry: 2.8, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.1 }),
-    ]));
-  }
-  return [svg('ellipse', { cx: x, cy: y, rx: 8, ry: 6.5, class: 'ink', 'fill-opacity': 0.8 }), ...bags, line(`M${x} ${y} L${x - 10} ${y - 13}`, 2.4)];
 }
 
 // A telephone pole: the post, a crossarm and its insulators.
@@ -1474,34 +1496,32 @@ const SPRITES = {
     ],
   },
 
-  // The fuel dump from above, after the reference: rows of drums on trodden
-  // ground, the east end under a camouflage net pegged at its corners, a
-  // bowser with its hose run out to the drums, and a sandbagged gun pit.
+  // The fuel dump from above, after the reference, kept plain (M11): a stack
+  // of drums on trodden ground, a second under a camouflage net pegged at its
+  // corners, and a bowser with its hose run out to the drums. The gun pit and
+  // most of the drums went: the corner was too busy for players to approach.
   // Kept inside its three hexes, so the art, the outline and the label all
   // sit on the same ground.
   'objective-fuel-dump': {
     viewBox: '0 0 240 184',
     draw: () => [
-      fill(FUEL_GROUND, 'green', { 'fill-opacity': 0.3 }),
+      fill(FUEL_GROUND, 'green', { 'fill-opacity': 0.16 }),
       ...drumPark(),
       ...camouflageNet(),
-      line('M92 136 Q70 132 74 112', 1.6),
+      line('M92 136 Q76 120 84 98', 1.4, 'stroke-ink', { opacity: 0.7 }),
       ...bowser(false),
-      ...gunPit(112, 162),
     ],
   },
   'objective-fuel-destroyed': {
     viewBox: '0 0 240 184',
     draw: () => [
-      fill(FUEL_GROUND, 'ink', { 'fill-opacity': 0.35 }),
-      fill('M40 110 Q60 30 140 40 Q210 44 204 112 Q180 150 120 150 Q60 150 40 110 Z', 'ink', { 'fill-opacity': 0.3 }),
-      // Drums blown about, some on their sides.
-      ...[[66, 60], [96, 52], [150, 58], [178, 82], [58, 92]].flatMap(([x, y]) => drum(x, y, 'ink')),
-      ...inked('M118 84 h14 v8 h-14 Z', 'ink', 1.2), ...inked('M84 80 h8 v14 h-8 Z', 'ink', 1.2),
+      fill(FUEL_GROUND, 'ink', { 'fill-opacity': 0.3 }),
+      fill('M50 110 Q64 40 140 44 Q204 48 198 110 Q176 146 120 146 Q66 146 50 110 Z', 'ink', { 'fill-opacity': 0.25 }),
+      // Drums blown about.
+      ...[[70, 62], [100, 54], [160, 62], [62, 94]].flatMap(([x, y]) => drum(x, y, 'ink')),
       ...bowser(true),
-      ...gunPit(112, 162),
-      ...flame(76, 76, 1.4), ...flame(126, 66, 1.2), ...flame(166, 72, 1.1), ...flame(116, 132, 0.9),
-      ...smoke(96, 30, 1.6), ...smoke(150, 22, 1.3),
+      ...flame(90, 80, 1.4), ...flame(150, 74, 1.2),
+      ...smoke(120, 34, 1.5),
     ],
   },
   // The exfil barn at the edge of the fields, seen from the south-west like the
@@ -1636,6 +1656,16 @@ const SPRITES = {
       circle(14, 14, 12, 'green'),
       line('M6 13 Q14 21 22 13', 2.4, 'stroke-paper'),
       line('M9 17 L7.5 20 M14 18.5 L14 22 M19 17 L20.5 20', 1.8, 'stroke-paper'),
+      ring(14, 14, 12),
+    ],
+  },
+  // On a man who has the leader's orders this turn (SPEC.md §5 Command, M11):
+  // a sergeant's chevron in the leader's blue, the one colour kept for him.
+  'marker-orders': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'leader'),
+      line('M7 12 L14 7 L21 12 M7 18 L14 13 L21 18', 2.6, 'stroke-paper', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
       ring(14, 14, 12),
     ],
   },

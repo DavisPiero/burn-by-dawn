@@ -349,16 +349,16 @@ board.
 
 ## Priority 11 — the sounds (find, don't generate)
 
-**Why:** since M10 the game has sound, but all five are made in code and sound like it:
-the paper and pencil are passable, the dog is a placeholder, and the crump wants a real
-recording. Real ones are found, not generated.
+**Why:** since M10 the game has sound, but all six are made in code and sound like it:
+the paper and pencil are passable, the dog is a placeholder, and the crump and the
+explosion (M11) want real recordings. Real ones are found, not generated.
 
 | | |
 |---|---|
-| Files | `assets/audio/paper-rustle.mp3`, `pencil-scratch.mp3`, `counter-snap.mp3`, `dog-distant.mp3`, `crump.mp3` — exactly these names; each replaces its placeholder on reload |
+| Files | `assets/audio/paper-rustle.mp3`, `pencil-scratch.mp3`, `counter-snap.mp3`, `dog-distant.mp3`, `crump.mp3`, `explosion.mp3` — exactly these names; each replaces its placeholder on reload |
 | Format | **MP3**, mono, 44.1 kHz, under 200 KB, trimmed with no silence at the start |
 | Where | freesound.org with the **CC0** licence filter, or Pixabay's sound effects: both free to use with no credit needed |
-| Feel | The table, not the battlefield (ART-ASSETS.md §9): a card counter put down on a wooden table, a page turned, a pencil note, a dog barking far across fields at night, a distant muffled explosion |
+| Feel | The table, not the battlefield (ART-ASSETS.md §9): a card counter put down on a wooden table, a page turned, a pencil note, a dog barking far across fields at night, a distant muffled explosion (the RAF's bombs) — and one from the battlefield, a demolition charge going off close by, big, with debris falling after (`explosion.mp3`, ~2 s) |
 
 Lengths and when each is heard are in ART-ASSETS.md §9. Loudness is balanced in code.
 
@@ -382,6 +382,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The C-47 Dakota silhouette for the drop fly-by (until `aircraft-dakota.png` is
   supplied), and the opening, drifting and collapsing parachute canopies.
 - The soft drop shadow under counters.
+- The counter markers (spotted, wounded, hidden, and since M11 the leader-blue orders
+  chevron on a man who has the leader's +AP this turn).
 - Continuous roads, hedges and the railway line.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs.
 - Place names on the map (they are type, set from `data/map.json`).
@@ -393,7 +395,7 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
   exchange.
-- The five sounds (M10), made with Web Audio in `src/render/sound.js` until the MP3s of
+- The six sounds (M10, the explosion M11), made with Web Audio in `src/render/sound.js` until the MP3s of
   priority 11 are supplied.
 - The parachutes: the canopy opening and drifting in the air and the spent one on the
   ground are the same green-and-cream cloth (M8e). Not worth a bitmap: they print at about

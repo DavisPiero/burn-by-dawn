@@ -277,7 +277,12 @@ export function runFusePhase(state, rules) {
       explosions: next.explosions + 1,
       objectives: next.objectives.map((o) => (o.id === objective.id ? { ...o, detonated, destroyed } : o)),
     };
-    events.push({ kind: 'explosion', label: objective.label, destroyed, q: charges[0].q, r: charges[0].r });
+    // Every charge that went off, and its blast radius, so the board can
+    // show each bang where it happened, as big as it was (M11).
+    events.push({
+      kind: 'explosion', label: objective.label, destroyed, q: charges[0].q, r: charges[0].r,
+      at: charges.map((c) => ({ q: c.q, r: c.r })), blastRadius: kind.blastRadius,
+    });
 
     const centre = objective.hexes[Math.floor(objective.hexes.length / 2)];
     const noise = makeNoise(next, 'explosion', centre, kind.alert, rules);

@@ -66,6 +66,11 @@ export function dropStalePopup() {
   if (popupAnchor && !popupAnchor.isConnected) hidePopup();
 }
 
+/** A rollover's usual content: a bold heading, then the text under it. */
+export function titled(heading, body) {
+  return [html('b', null, heading), `\n${body}`];
+}
+
 /** Give an element a rollover. `content` may be a function, so it is built when shown. */
 export function attachPopup(element, content) {
   element.addEventListener('mouseenter', () => showPopup(element, content));
@@ -75,12 +80,13 @@ export function attachPopup(element, content) {
 // SPEC.md §4's keys, for the KEYS rollover.
 const KEYS = [
   'The drop: 1–3 pick a run · Space jump',
-  '1–6 select a man · Tab next · H hold position',
+  '1–6 select a man · Esc deselect · Tab next · H hold',
   'G hide · S suppress · K kill · T throw a stone',
   'A stabilise · P pick up a charge · U pack parachute',
   'C place a charge · X cut the line · W swim',
   'D RAF diversion · Space end turn · Z undo',
-  'Esc or right-click cancel · R patrol routes · M sound',
+  'Esc or right-click also backs out of aiming an action',
+  'R patrol routes · M sound',
   '',
   'Hover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
 ].join('\n');
@@ -190,15 +196,30 @@ export function renderAlertDial(svg, caption, alert) {
   chip.style.background = ALERT_STATE[state.id];
   chip.style.color = ALERT_STATE.text;
   // Several events share one state (SPEC.md §6), so the needle alone cannot
-  // warn that the next sighting tips the dial; the points to go do.
+  // warn that the next sighting tips the dial. A pip per point, grouped by the
+  // state each point is in and printed in its colour, says how close the next
+  // state is without a number to decode (M11: players could not read "0 pts").
+  const pips = html('div', 'alert-pips');
+  const top = alert.states.at(-1).from;
+  for (let p = 1; p <= top; p++) {
+    const at = alert.states.findLastIndex((st) => st.from <= p);
+    const pip = html('span', alert.states[at].from === p && p > 1 ? 'pip gap' : 'pip');
+    if (p <= alert.points) pip.style.background = ALERT_STATE[alert.states[at].id];
+    pips.appendChild(pip);
+  }
   const next = alert.states[alert.index + 1];
-  const parts = [`${alert.points} pts`];
-  if (next) parts.push(`${next.from - alert.points} to ${next.label}`);
-  if (alert.points > 0) parts.push(`quiet ${alert.quietTurns}/${alert.quietTurnsToDecay}`);
+  const parts = [];
+  if (next) parts.push(`${next.label} in ${next.from - alert.points} pip${next.from - alert.points === 1 ? '' : 's'}`);
+  if (alert.canEase) {
+    const left = alert.quietTurnsToDecay - alert.quietTurns;
+    parts.push(`${left} quiet turn${left === 1 ? '' : 's'} to ease`);
+  } else if (alert.points > 0 && alert.floor) {
+    parts.push('held up by the bang');
+  }
   caption.replaceChildren(
     html('div', 'alert-heading', 'GARRISON ALERT'),
-    chip,
-    html('div', 'alert-note', parts.join(' · ')),
+    html('div', 'alert-level', [chip, pips]),
+    ...parts.map((part) => html('div', 'alert-note', part)),
   );
 }
 
@@ -206,11 +227,12 @@ export function renderAlertDial(svg, caption, alert) {
 export function describeAlertStates(alert) {
   const lines = alert.states.map((s, i) => {
     const mark = i === alert.index ? '▶ ' : '  ';
-    return `${mark}${s.label} — from ${s.from} · vision +${s.visionBonus} · looks harder +${s.detectionBonus} · hearing +${s.hearingBonus}`;
+    return `${mark}${s.label} — from ${s.from} pip${s.from === 1 ? '' : 's'} · vision +${s.visionBonus} · looks harder +${s.detectionBonus} · hearing +${s.hearingBonus}`;
   });
   return [
     html('b', null, 'GARRISON ALERT'),
-    `\n${lines.join('\n')}\n\nAfter ${alert.quietTurnsToDecay} quiet turns it eases to the start of the state below.`
+    `\n${lines.join('\n')}\n\nEach pip is a point: ${alert.sources.join(', ')}.`
+      + `\nAfter ${alert.quietTurnsToDecay} quiet turns (nothing raised, nobody seen) it eases to the start of the state below.`
       + (alert.floor ? `\nOnce anything has exploded it never eases below ${alert.floor}.` : ''),
   ];
 }
@@ -247,7 +269,7 @@ function titleBanner({ title, tagline }) {
 
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
- * { banner?: { title, tagline }, title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs?, sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
@@ -255,6 +277,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
   if (!briefing) return;
   card.replaceChildren();
+  card.className = briefing.tone ? `tone-${briefing.tone}` : '';
   // The title card, over the orders only: the `title-card` sprite, drawn or
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
@@ -263,7 +286,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
-    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, line)));
+    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, boldNames(line, briefing.names))));
     if (section.more) list.appendChild(html('li', 'brief-more', section.more));
     card.appendChild(list);
   }
@@ -318,7 +341,7 @@ export function renderReport(element, state, place, onLocate) {
   element.replaceChildren();
   const events = state.report;
   if (state.phase === 'drop') {
-    element.appendChild(html('li', null, 'Pick a drop run, then jump. Where each man lands is scattered by the wind.'));
+    element.appendChild(html('li', null, 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
     return;
   }
   if (events.length === 0) {
@@ -326,7 +349,7 @@ export function renderReport(element, state, place, onLocate) {
     return;
   }
   for (const event of events) {
-    const item = html('li', null, describeEvent(event, place));
+    const item = html('li', null, boldNames(describeEvent(event, place), state.units.map((u) => u.shortName)));
     if (Number.isInteger(event.q) && Number.isInteger(event.r)) {
       item.classList.add('located');
       item.addEventListener('mouseenter', () => onLocate({ q: event.q, r: event.r }));
@@ -339,7 +362,7 @@ export function renderReport(element, state, place, onLocate) {
 export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
-    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}.`;
+    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
@@ -359,20 +382,51 @@ export function describeEvent(event, place) {
   }
 }
 
-/** SPEC.md §9: where he came down, how far off his mark, and what it cost him. */
+/**
+ * SPEC.md §9: where he came down, how far the wind carried him from where he
+ * jumped, and what it cost him. Players read a bare "1 hex off" as a mistake,
+ * so the drift is said as drift.
+ */
 function describeLanding(event, where) {
-  const off = event.distance === null ? '' : event.distance === 0 ? ', on his mark' : `, ${event.distance} hex${event.distance === 1 ? '' : 'es'} off`;
+  const name = event.unitName;
+  const drifts = event.distance > 0 ? `drifts ${event.distance} hex${event.distance === 1 ? '' : 'es'} and ` : '';
+  const onMark = event.distance === 0 ? ' right on his mark' : '';
   if (event.outcome === 'wounds') {
-    return `${event.unitName} comes down in the ${event.terrain.toLowerCase()}${off} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out onto ${where}.`;
+    return `${name} ${drifts}comes down in the ${event.terrain.toLowerCase()}${onMark} — ${event.dead ? 'drowned' : 'WOUNDED'}, and drags himself out onto ${where}.`;
   }
   if (event.outcome === 'bad') {
     const cost = event.turnsLost > 0
       ? `loses ${event.turnsLost === 1 ? 'his first turn' : `${event.turnsLost} turns`}`
       : 'lands clean anyway';
-    return `${event.unitName} lands in ${where}${off} — ${cost}.`;
+    return `${name} ${drifts}lands${onMark} in ${where} — ${cost}.`;
   }
-  return `${event.unitName} lands in ${where}${off}.`;
+  return `${name} ${drifts}lands${onMark} in ${where}.`;
 }
+
+/**
+ * A line of text with every man's name in it set in bold, as nodes for
+ * `append`. `names` are the names as the text spells them (the counters'
+ * short names); a name only counts as a whole word.
+ */
+export function boldNames(line, names) {
+  if (!names?.length) return [line];
+  const pattern = new RegExp(`\\b(${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'g');
+  const parts = [];
+  let last = 0;
+  for (const match of line.matchAll(pattern)) {
+    if (match.index > last) parts.push(line.slice(last, match.index));
+    parts.push(html('b', null, match[0]));
+    last = match.index + match[0].length;
+  }
+  if (last < line.length) parts.push(line.slice(last));
+  return parts;
+}
+
+// Why a man who went to ground was spotted anyway (enemy.js runDetection `hid`).
+const HID_WORDS = {
+  here: ', although he was hiding: too little cover, or the enemy too close',
+  before: ', on his way to where he hid — hiding covers only the hex he stops on',
+};
 
 const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', explosion: 'the explosion' };
 
@@ -726,7 +780,7 @@ export function renderReadout(element, state, map, view) {
       return;
     }
     element.textContent = state.selectedUnitId
-      ? 'Hover a hex to preview the move. Right-click or Esc to cancel.'
+      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? ` ▸ ${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
       : 'Click a man to select him, or a hex to see what it is.';
     return;
   }
@@ -749,7 +803,7 @@ export function renderReadout(element, state, map, view) {
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
-  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', ')];
+  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
   element.textContent = `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`;
 }
 

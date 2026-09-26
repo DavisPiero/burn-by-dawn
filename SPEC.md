@@ -189,6 +189,9 @@ All costs and modifiers below are numbers in `rules.json`.
   found, or the explosion floor (§6). The leader carries the radio, so it is gone if he
   is dead; that is a rule keyed to the `leader` flag, not a trait (§5 Command). Calling it
   forfeits the "never reached Alarmed" score (§10): a clean run still scores highest.
+  When it is called the Dakota flies across the board over the garrison (display only,
+  skipped by any key or click), then a card headed in the diversion's blue says what it
+  did (M11).
 
 ### Desktop interaction (this matters more than it sounds)
 
@@ -285,6 +288,9 @@ and must not be extended to cover. The leader is a `leader` flag on a roster ent
 promoting a different trooper is a one-line data change and no code knows anyone's name.
 His roster rollover says what he gives the stick: the orders (radius and bonus, from
 `rules.json`), how many men have them this turn, and the radio for the RAF diversion (§4).
+While he is selected his radius is outlined on the board, dashed in leader blue, and a man
+who has his orders this turn wears a leader-blue chevron on his counter (M11), so the
+bonus can be seen, not just read about.
 
 What it buys the design: the command radius rewards moving as a group, and §6 punishes
 moving as a group, because more men sit inside one vision arc. Speed against stealth,
@@ -620,7 +626,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   did (M7b).
 - Palette: paper `#F2E8D5`, ink `#1A1A18`, army green `#5C6B4A`, danger red `#C1272D`,
   cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
-  the ranking man (his counter's name strip and rank flash, his number on the roster).
+  the ranking man (his counter's name strip and rank flash, his number on the roster) and
+  his orders (their radius and chevron, §5 Command).
   Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
@@ -670,7 +677,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   lettering: they are the player's own pen, not print.
 - **The move path counts.** Each step on the hover path shows the AP spent by the time he
   gets there, grey past what he has. A hex on the path where he would be spotted is
-  crossed out in red, marker-pen style, over the risk pips.
+  crossed out in red, marker-pen style, over the risk pips. The line is cold blue, and
+  red from the first hex where he would be spotted (M11), so red means trouble.
 - **Our counters are printed solid army green** with a dark name strip (leader blue for
   the ranking man), AP left as one large figure top right, the role in a paper roundel,
   and a sliver of the card's cut edge showing down-right under the soft shadow.
@@ -713,8 +721,11 @@ by changing one registry file and nothing else. No inline path data in game logi
 **Sound** (M10). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
 counter snapped down when a man moves or a move is undone, a pencil for every other
 action, a card's rustle when a briefing card or the back page opens, a dog a long way off
-when the alert rises, a muffled crump for each turn with a bang, and three far-off crumps
-for the RAF diversion. Made in code (`src/render/sound.js`, Web Audio) until files are
+when the alert rises, and three far-off crumps for the RAF diversion. The one exception
+(M11, from playtesting): a turn with a bang plays a real explosion, close and loud, and
+the board shows it — the page flashes, the board jolts, a shock ring runs out to the edge
+of the blast under the starburst, and smoke rolls up — before that turn's card is laid
+over it. It is the payoff of the plan, and it should land. Made in code (`src/render/sound.js`, Web Audio) until files are
 supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
 turns it off for the session (nothing is stored, CLAUDE.md rule 9).
@@ -746,5 +757,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M9b** | Operator review: one-step undo, the RAF diversion's card, aiming lets go of a clicked man, the title card and strapline on the orders and the back page, back page tidied | Undo takes back the last action only; calling the diversion opens a card saying what it did and what calls are left; clicking another man while aiming selects him; the orders still fit at 1280x800 |
 | **M9c** | Drop runs: the east run clear of the bridge patrol, the base patrol off the ridge, each run labelled for what it is good for | No run is much the hardest for a first-timer by accident; each run shows its word (QUIET, STEADY, FAST) on its button, its tab and its rollover |
 | **M10** | Sound: the five table sounds of ART-ASSETS.md §9, made in code, each replaceable by a supplied file (§11) | A move snaps, an action scratches, a card rustles, a rising alert brings a distant dog, a bang is a crump; nothing sounds before the first key or click; `M` mutes; a supplied MP3 replaces its placeholder with no code change |
+| **M11** | Operator playtest review, no rules change: the drop runs explained and kept off the title card, clearer landing, alert and hide wording, names in bold, the move line blue until it gets him spotted, rollovers on the counter markers, the leader's orders shown, the RAF card and flyover, a calmer fuel dump, bigger bangs | The orders still fit at 1280x800; the runs are not drawn under the orders; the move line turns red from the first hex where he would be spotted; hovering the `!` explains it; the leader's radius shows while he is selected and his orders show on each man who has them; calling the RAF flies the Dakota over the garrison before its blue card; a bang is seen before the turn card covers it; no rules change |
+| **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 
 Do not start a milestone before the previous one is merged and playable.

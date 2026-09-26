@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -512,13 +512,14 @@ export function renderPieces(layers, state, view) {
   if (view.drop) drawDrop(layers, view.drop);
 
   if (view.reachable) drawReachable(layers, view.reachable);
+  if (view.commandArea) drawCommand(layers, view.commandArea);
 
   for (const route of view.routes) drawRoute(layers, route);
 
   if (view.targets) drawTargets(layers, view.targets);
   if (view.throwPreview) drawThrow(layers, view.throwPreview);
 
-  if (view.plan) drawPlan(layers, view.plan);
+  if (view.plan) drawPlan(layers, view.plan, view.risk);
   if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
@@ -560,9 +561,11 @@ export function renderPieces(layers, state, view) {
     // in three places.
     const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
     // In contact top right, where the eye goes first; his condition top left.
-    if (unit.inContact) counter.appendChild(marker('marker-spotted', 38, -12));
-    if (unit.hits > 0 && !unit.stabilised) counter.appendChild(marker('marker-wounded', -6, -12));
-    if (unit.hidden) counter.appendChild(marker('marker-hidden', 38, 38));
+    // Each marker has a rollover saying what it means (M11).
+    if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
+    if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
+    if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
+    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, 'marker-orders', -12, 13, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -572,6 +575,7 @@ export function renderPieces(layers, state, view) {
 
   drawBlasts(layers, state, now);
   drawTargetRings(layers, view.targetRings, now);
+  if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points), now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
@@ -694,10 +698,6 @@ function playFrom(node, frames, options, elapsed) {
 }
 
 function drawDropShow(layers, show, timeline, elapsed) {
-  const { start, end, angle } = timeline;
-  const size = DROP_SHOW.aircraftSize;
-  const at = (p, extra = '') => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)${extra}`;
-
   // Each canopy, and its shadow on the ground closing in as it comes down.
   const canopy = DROP_SHOW.canopySize;
   const open = DROP_SHOW.openMs, drift = DROP_SHOW.driftMs, collapse = DROP_SHOW.collapseMs;
@@ -726,20 +726,68 @@ function drawDropShow(layers, show, timeline, elapsed) {
     layers.effects.append(shadow, body);
   }
 
-  // The aircraft over everything, its shadow far below it.
-  if (elapsed < DROP_SHOW.flightMs) {
-    const s = DROP_SHOW.aircraftShadow;
-    const shadow = el('g', {});
-    shadow.appendChild(el('use', { href: '#aircraft-dakota-shadow', x: -size / 2, y: -size / 2, width: size, height: size, opacity: s.opacity }));
-    playFrom(shadow, [
-      { transform: at({ x: start.x + s.x, y: start.y + s.y }) },
-      { transform: at({ x: end.x + s.x, y: end.y + s.y }) },
-    ], { duration: DROP_SHOW.flightMs }, elapsed);
-    const plane = el('g', {});
-    plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
-    playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
-    layers.effects.append(shadow, plane);
-  }
+  drawAircraft(layers, timeline, elapsed);
+}
+
+// The aircraft over everything, its shadow far below it, flying from the
+// timeline's start to its end.
+function drawAircraft(layers, timeline, elapsed) {
+  const { start, end, angle } = timeline;
+  const size = DROP_SHOW.aircraftSize;
+  const at = (p) => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)`;
+  if (elapsed >= DROP_SHOW.flightMs) return;
+  const s = DROP_SHOW.aircraftShadow;
+  const shadow = el('g', {});
+  shadow.appendChild(el('use', { href: '#aircraft-dakota-shadow', x: -size / 2, y: -size / 2, width: size, height: size, opacity: s.opacity }));
+  playFrom(shadow, [
+    { transform: at({ x: start.x + s.x, y: start.y + s.y }) },
+    { transform: at({ x: end.x + s.x, y: end.y + s.y }) },
+  ], { duration: DROP_SHOW.flightMs }, elapsed);
+  const plane = el('g', {});
+  plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
+  playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
+  layers.effects.append(shadow, plane);
+}
+
+// --- the RAF flyover (M11) --------------------------------------------------------
+// Display only, like the drop: when the diversion is called the Dakota crosses
+// the board over the garrison, on the straight line that best fits where the
+// enemies stand, from edge to edge. Then the diversion's card opens.
+
+/**
+ * The flyover's line and length. `points` are the enemies' hexes as they
+ * stood when the call was made. Exported so main.js knows when it is over.
+ */
+export function flyoverTimeline(map, points) {
+  const px = points.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+  const edge = boardEdges(map);
+  const n = px.length || 1;
+  const c = px.length
+    ? { x: px.reduce((a, p) => a + p.x, 0) / n, y: px.reduce((a, p) => a + p.y, 0) / n }
+    : { x: (edge.left + edge.right) / 2, y: (edge.top + edge.bottom) / 2 };
+  // The line of best fit through them: the direction they are most spread along.
+  let sxx = 0, syy = 0, sxy = 0;
+  for (const p of px) { sxx += (p.x - c.x) ** 2; syy += (p.y - c.y) ** 2; sxy += (p.x - c.x) * (p.y - c.y); }
+  let theta = px.length > 1 ? 0.5 * Math.atan2(2 * sxy, sxx - syy) : 0;
+  // Always from the west, the way the bombers come in.
+  let ux = Math.cos(theta), uy = Math.sin(theta);
+  if (ux < 0) { ux = -ux; uy = -uy; }
+  // From where the line leaves the board behind it to where it leaves ahead,
+  // plus the aircraft's own length, so it flies in and out of sight.
+  const margin = DROP_SHOW.aircraftSize;
+  const box = { left: edge.left - margin, right: edge.right + margin, top: edge.top - margin, bottom: edge.bottom + margin };
+  const ts = [];
+  if (Math.abs(ux) > 1e-6) ts.push((box.left - c.x) / ux, (box.right - c.x) / ux);
+  if (Math.abs(uy) > 1e-6) ts.push((box.top - c.y) / uy, (box.bottom - c.y) / uy);
+  const before = Math.max(...ts.filter((t) => t <= 0));
+  const after = Math.min(...ts.filter((t) => t >= 0));
+  theta = Math.atan2(uy, ux);
+  return {
+    start: { x: c.x + ux * before, y: c.y + uy * before },
+    end: { x: c.x + ux * after, y: c.y + uy * after },
+    angle: (theta * 180) / Math.PI,
+    length: DROP_SHOW.flightMs + DROP_SHOW.tailMs,
+  };
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
@@ -781,26 +829,72 @@ function travel(layers, mover, unit, now) {
   animation.currentTime = elapsed;
 }
 
-// A starburst where each charge went off, revealed in steps and then gone.
+// Each charge that went off: the page flashes and the board jolts once, then
+// at each charge a shock ring runs out to the edge of its blast, the
+// starburst is revealed in steps, and smoke rolls up and thins (M11). Drawing
+// memory like a move: redrawn part-way, it carries on from where it was.
 function drawBlasts(layers, state, now) {
   if (layers.blasts.report !== state.report) {
-    layers.blasts = {
-      report: state.report,
-      list: state.report.filter((e) => e.kind === 'explosion').map((e) => ({ q: e.q, r: e.r, since: now })),
-    };
+    const list = state.report.filter((e) => e.kind === 'explosion').flatMap((e) => (
+      (e.at ?? [{ q: e.q, r: e.r }]).map((h) => ({ q: h.q, r: h.r, destroyed: e.destroyed, radius: e.blastRadius ?? 1 }))
+    ));
+    layers.blasts = { report: state.report, since: now, list };
+    if (list.length && typeof layers.svg.animate === 'function') {
+      const d = BLAST.shakePx;
+      layers.svg.animate([
+        { transform: 'translate(0, 0)' }, { transform: `translate(${-d}px, ${d * 0.6}px)` }, { transform: `translate(${d * 0.8}px, ${-d * 0.5}px)` },
+        { transform: `translate(${-d * 0.5}px, ${-d * 0.4}px)` }, { transform: `translate(${d * 0.3}px, ${d * 0.3}px)` }, { transform: 'translate(0, 0)' },
+      ], { duration: BLAST.shakeMs, easing: 'linear' });
+    }
   }
-  for (const blast of layers.blasts.list) {
-    const elapsed = now - blast.since;
-    if (elapsed >= MOTION.blastMs) continue;
-    const p = axialToPixel(blast.q, blast.r, layers.map.hexSize);
-    const size = BLAST.artSize;
+  const { list, since } = layers.blasts;
+  const elapsed = now - since;
+  if (list.length === 0 || elapsed >= Math.max(BLAST.smokeMs + 600, MOTION.blastMs)) return;
+  const { map } = layers;
+
+  const edge = boardEdges(map);
+  const flash = el('rect', {
+    x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top, fill: BLAST.flash,
+  });
+  playFrom(flash, [{ opacity: BLAST.flashOpacity }, { opacity: 0 }], { duration: BLAST.flashMs }, elapsed);
+  layers.effects.appendChild(flash);
+
+  list.forEach((blast, n) => {
+    const p = axialToPixel(blast.q, blast.r, map.hexSize);
+    const reach = (blast.radius + 0.5) * map.hexSize * Math.sqrt(3);
+    const ring = el('circle', { cx: p.x, cy: p.y, r: reach, fill: 'none', stroke: BLAST.ringStroke, 'stroke-width': BLAST.ringWidth });
+    ring.style.transformOrigin = `${p.x}px ${p.y}px`;
+    playFrom(ring, [
+      { transform: 'scale(0.1)', opacity: 0.9, strokeWidth: BLAST.ringWidth * 2 },
+      { transform: 'scale(1)', opacity: 0, strokeWidth: 1 },
+    ], { duration: BLAST.ringMs, easing: 'ease-out' }, elapsed);
+    layers.effects.appendChild(ring);
+
+    for (let i = 0; i < BLAST.smokePuffs; i++) {
+      // Spread round the blast by index, not rolled: display never uses the game's dice.
+      const a = ((i * 137.5 + n * 53) % 360) * (Math.PI / 180);
+      const spread = map.hexSize * (0.25 + (i % 3) * 0.22);
+      const x = p.x + Math.cos(a) * spread, y = p.y + Math.sin(a) * spread * 0.6;
+      const puff = el('circle', { cx: x, cy: y, r: map.hexSize * (0.35 + (i % 2) * 0.15), fill: BLAST.smoke });
+      puff.style.transformOrigin = `${x}px ${y}px`;
+      const rise = map.hexSize * (1 + (i % 4) * 0.35);
+      playFrom(puff, [
+        { transform: 'translate(0, 0) scale(0.4)', opacity: 0 },
+        { transform: `translate(0, ${-rise * 0.3}px) scale(1)`, opacity: BLAST.smokeOpacity, offset: 0.2 },
+        { transform: `translate(${(i % 2 ? 1 : -1) * 6}px, ${-rise}px) scale(1.8)`, opacity: 0 },
+      ], { delay: 120 + i * 70, duration: BLAST.smokeMs, easing: 'ease-out' }, elapsed);
+      layers.effects.appendChild(puff);
+    }
+
+    if (elapsed >= MOTION.blastMs) return;
+    const size = BLAST.artSize * (blast.destroyed ? BLAST.destroyedScale : 1);
     const outer = el('g', { transform: `translate(${p.x - size / 2} ${p.y - size / 2})` });
     const inner = el('g', { class: 'nd-blast' });
     inner.style.animationDelay = `${-Math.round(elapsed)}ms`;
     inner.appendChild(el('use', { href: '#marker-blast', width: size, height: size }));
     outer.appendChild(inner);
     layers.effects.appendChild(outer);
-  }
+  });
 }
 
 // --- speech bubbles (SPEC.md §5 Dialogue, §11) ---------------------------------
@@ -994,6 +1088,20 @@ function casedText(content, x, y, fill) {
 
 function marker(id, x, y) {
   return el('use', { href: `#${id}`, x, y, width: MARKER.size, height: MARKER.size });
+}
+
+/**
+ * A marker on one of our counters that takes the mouse, for its rollover: the
+ * handlers given to createBoard say what it means. A click on it is a click on
+ * his hex, as if the marker were not there.
+ */
+function hoverMarker(layers, id, x, y, unit) {
+  const node = marker(id, x, y);
+  node.setAttribute('pointer-events', 'all');
+  node.addEventListener('mouseenter', () => layers.handlers.onMarkerHover?.(id, unit.id, node));
+  node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
+  node.addEventListener('click', () => layers.handlers.onHexClick(unit.q, unit.r));
+  return node;
 }
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
@@ -1316,7 +1424,7 @@ function drawReachable(layers, reachable) {
  * left open: the border closes the area, and stroking them drew a sawtooth
  * past it.
  */
-function drawAreaEdge(layers, layer, area, strokes) {
+function drawAreaEdge(layers, layer, area, strokes, extra = {}) {
   const { corners, map } = layers;
   const edges = edgeCorners(corners, map.hexSize);
   let outline = '';
@@ -1331,25 +1439,41 @@ function drawAreaEdge(layers, layer, area, strokes) {
   if (!outline) return;
   for (const [stroke, width] of strokes) {
     layer.appendChild(el('path', {
-      d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round',
+      d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round', ...extra,
     }));
   }
+}
+
+/**
+ * The leader's command radius while he is selected (SPEC.md §5 Command): a
+ * dashed line in his blue round every hex within it. What it means is in the
+ * readout; a label on the board sat on the counters inside it.
+ */
+function drawCommand(layers, hexes) {
+  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.casing, COMMAND.casingWidth]]);
+  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': COMMAND.dash });
 }
 
 // --- hover path preview -----------------------------------------------------
 // SPEC.md §4: hovering a hex with a trooper selected draws the path and shows
 // the total AP cost. The risk pips for the same path are drawRisk, above.
 
-function drawPlan(layers, plan) {
+function drawPlan(layers, plan, risk) {
   const { map } = layers;
   const points = plan.path.map((hex) => axialToPixel(hex.q, hex.r, map.hexSize));
   const split = plan.affordableUpTo;
+  // The first step on which he would be spotted: the line is red into it and
+  // on from it, blue before it.
+  const found = plan.path.findIndex((_, i) => i > 0 && risk?.[i]?.spotted);
+  const spottedFrom = found === -1 ? Infinity : found;
+  const colourAt = (i) => (i >= spottedFrom ? PATH.spottedStroke : PATH.lineStroke);
 
   if (split > 0) {
-    layers.path.appendChild(polyline(points.slice(0, split + 1), {
-      stroke: PATH.lineStroke,
-      'stroke-width': PATH.lineWidth,
-    }));
+    const reach = points.slice(0, split + 1);
+    layers.path.appendChild(polyline(reach, { stroke: PATH.lineCasing, 'stroke-width': PATH.lineCasingWidth }));
+    const turn = Math.min(spottedFrom, split + 1);
+    if (turn > 1) layers.path.appendChild(polyline(points.slice(0, turn), { stroke: PATH.lineStroke, 'stroke-width': PATH.lineWidth }));
+    if (turn <= split) layers.path.appendChild(polyline(points.slice(turn - 1, split + 1), { stroke: PATH.spottedStroke, 'stroke-width': PATH.lineWidth }));
   }
   if (split < points.length - 1) {
     layers.path.appendChild(polyline(points.slice(split), {
@@ -1365,7 +1489,7 @@ function drawPlan(layers, plan) {
   points.forEach((point, i) => {
     if (i === 0) return;
     const withinReach = i <= split;
-    const colour = withinReach ? PATH.lineStroke : PATH.overspendStroke;
+    const colour = withinReach ? colourAt(i) : PATH.overspendStroke;
     const step = el('g', { opacity: withinReach ? 1 : PATH.overspendOpacity + 0.2 });
     step.appendChild(el('circle', {
       cx: point.x, cy: point.y, r: PATH.stepRadius, fill: PATH.stepFill, stroke: colour, 'stroke-width': 2.5,

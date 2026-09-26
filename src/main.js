@@ -2,7 +2,7 @@
 // render modules only draw; this module is the one place state actually
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
-import { alertIndex, detectionAt, hearingRadius, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
+import { alertIndex, decayTarget, detectionAt, hearingRadius, listeners, routePath, shotResultOf, testedHexes, visibleHexes, visionRadiusOf } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
@@ -23,17 +23,17 @@ import {
   chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
+import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup,
+  renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -95,6 +95,13 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
+// The RAF flyover (M11): the Dakota over the garrison when the diversion is
+// called, before its card. Display only; any key or click skips it.
+let flyShow = null;
+let flyShowTimer = null;
+// A turn that ended with a bang (M11): its card waits until the explosion has
+// been seen, instead of covering it at once. Any key or click brings it now.
+let bangTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -175,8 +182,14 @@ function deriveView() {
       quietTurns: state.alert.quietTurns,
       quietTurnsToDecay: rules.alert.quietTurnsToDecay,
       floor: state.explosions > 0 ? rules.alert.states.find((s) => s.id === rules.explosionFloor)?.label ?? null : null,
+      // Whether quiet turns can still bring it down (not at 0, not held by the explosion floor).
+      canEase: decayTarget(state, rules) < state.alert.points,
+      // What puts points on, for the dial's rollover, from rules.json.
+      sources: alertSources(),
     },
     reachable: null,
+    commandArea: null,
+    commandLabel: null,
     plan: null,
     moveLabel: null,
     risk: null,
@@ -208,6 +221,7 @@ function deriveView() {
     dropRuns: null,
     dropLabel: null,
     dropShow,
+    flyShow,
     targetRings: null,
   };
 
@@ -241,6 +255,16 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
+  // The leader selected: where a man must stand at the start of a turn to get
+  // his orders (SPEC.md §5 Command, M11). A flag, never a name (CLAUDE.md rule 6).
+  if (unit.leader) {
+    const hexes = new Map();
+    forEachCell(map, (q, r) => {
+      if (isInPlay(map, q, r) && hexDistance(unit, { q, r }) <= rules.command.radius) hexes.set(hexKey(q, r), { q, r });
+    });
+    view.commandArea = hexes;
+    view.commandLabel = `dashed blue: ${unit.shortName}'s orders — a man inside it at the start of a turn gets +${rules.command.bonusActionPoints} AP`;
+  }
   if (state.targeting) return deriveTargeting(view, unit, hex, hoverEnemy);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
@@ -268,12 +292,7 @@ function deriveView() {
     if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
       view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
     }
-    if (plan.steps === 0 && checkHide(unit, rules).ok) {
-      const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
-      view.hideLabel = hidden
-        ? `hide here [G]: ${hidden.spotted ? 'still SPOTTED' : 'not spotted'} — ${describeDetection(hidden)}`
-        : 'hide here [G]: unseen anyway';
-    }
+    if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [G]: ${hideEffect(unit)}`;
   }
   return view;
 }
@@ -286,6 +305,13 @@ function deriveView() {
 function deriveDrop(view, hex) {
   const selected = runById(baseMap, state.dropRunId);
   const count = state.units.length;
+  view.dropRuns = baseMap.dropRuns.map((run, i) => ({
+    id: run.id, key: String(i + 1), label: run.label, tag: run.tag, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
+  }));
+  // Nothing of the drop is drawn on the board under the orders: a run's line
+  // showed through the title card as if it were part of the picture, and the
+  // rings are drawn on as the card is put away, where they can be seen.
+  if (briefing?.kind === 'orders') return view;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
       id: run.id, label: run.label, tag: run.tag, wind: run.wind,
@@ -306,9 +332,6 @@ function deriveDrop(view, hex) {
       { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
     ];
   }
-  view.dropRuns = baseMap.dropRuns.map((run, i) => ({
-    id: run.id, key: String(i + 1), label: run.label, tag: run.tag, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
-  }));
   if (!hex) {
     view.dropLabel = selected
       ? `${selected.label}, ${selected.tag.toUpperCase()}: ${selected.description} Wind ${selected.wind}. Space or JUMP to go.`
@@ -336,6 +359,16 @@ function areaAround(blasts) {
     if (isInPlay(map, q, r) && inBlast(blasts, { q, r })) area.set(hexKey(q, r), { q, r });
   });
   return area;
+}
+
+/** What raises the alert, and by how much, in words, from rules.json (SPEC.md §6). */
+function alertSources() {
+  const a = rules.alert;
+  const bangs = [...new Set(Object.values(rules.objectives).map((k) => k.alert))].sort((x, y) => x - y);
+  return [
+    `seen +${a.spotted}`, `stone +${a.stone}`, `parachute or body found +${a.parachuteFound}`,
+    `silenced shot +${a.silenced}`, `gunfire +${a.gunfire}`, `a bang +${bangs.join(' or +')}`,
+  ];
 }
 
 function primaryLabel() {
@@ -436,7 +469,11 @@ function actionsFor(unit) {
   const stoneCheck = checkThrowStone(map, unit, nearestInPlay(unit), rules);
   const ap = (n) => `${n} AP`;
   return [
-    { id: 'hide', key: 'G', label: 'Hide', help: 'Go to ground: +concealment on this hex, ends his turn', ...withCost(checkHide(unit, rules), ap) },
+    {
+      id: 'hide', key: 'G', label: 'Hide', ...withCost(checkHide(unit, rules), ap),
+      help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
+        + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
+    },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
@@ -450,6 +487,30 @@ function actionsFor(unit) {
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
+}
+
+/**
+ * What going to ground would do for him where he stands, in words (SPEC.md §4
+ * Hide): the detection check tests every hex he entered this turn, and hiding
+ * helps only on the last, so a man seen on the way is seen whatever he does
+ * now. Players hid and were shot anyway without knowing why (M11).
+ */
+function hideEffect(unit) {
+  const seenOnTheWay = testedHexes(unit)
+    .filter((h) => h.q !== unit.q || h.r !== unit.r)
+    .map((h) => ({ h, d: detectionAt(map, rules, state.enemies, state.alert.points, unit, h) }))
+    .find(({ d }) => d?.spotted);
+  if (seenOnTheWay) {
+    return `too late to help — the ${seenOnTheWay.d.enemyLabel.toLowerCase()} already sees him in ${placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), seenOnTheWay.h)}, on his way here${unit.inContact ? ', and will fire' : ''}.`;
+  }
+  const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
+  const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
+  if (!hidden) return 'no enemy can see this hex, so hiding adds nothing.';
+  if (hidden.spotted) {
+    return `still SPOTTED, hidden or not — too little cover this close (${describeDetection(hidden)})${unit.inContact && hidden.firing ? '. He will be fired on' : ''}. Get further away or into heavier cover.`;
+  }
+  if (open?.spotted) return `NOT spotted once hidden — hiding here ${unit.inContact ? 'breaks contact' : 'keeps him out of sight'} (${describeDetection(hidden)}).`;
+  return `not spotted either way (${describeDetection(hidden)}).`;
 }
 
 // Place a charge, with its fuse — and a warning if setting it on a secondary
@@ -565,7 +626,9 @@ function render() {
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE });
-  renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
+  // Every man's name is set in bold on the card, as in the report.
+  const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
+  renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
@@ -634,7 +697,7 @@ function cueReport(report) {
 
 /** Take back the last move or action, once, keeping where the mouse is. */
 function undoLast() {
-  if (!undoState || state.outcome || briefing || dropShow) return;
+  if (!undoState || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
   const previous = undoState;
   undoState = null;
   playCue('move');
@@ -646,6 +709,8 @@ function undoLast() {
 
 function handleHexClick(q, r) {
   if (dropShow) return endDropShow();
+  if (flyShow) return endFlyShow();
+  if (bangTimer) return endBangHold();
   if (state.outcome || state.phase === 'drop') return;
   highlightHex = null;
   if (state.targeting) {
@@ -704,12 +769,19 @@ function handleTargetClick(q, r) {
 
 /** An action button or its key. Aimed actions start aiming; the rest happen. */
 function handleAction(id) {
+  if (bangTimer) return endBangHold();
   if (state.outcome) return;
   if (id === 'diversion') {
+    if (flyShow) return;
     const before = state;
     commit(callDiversion(state, rules), 'diversion');
-    // Said on a card, so a call can never pass unnoticed and be made twice.
-    if (state !== before) briefing = { kind: 'diversion', before };
+    // The Dakota flies over the garrison, then the call is said on a card, so
+    // it can never pass unnoticed and be made twice.
+    if (state !== before) {
+      flyShow = { since: performance.now(), before, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
+      clearTimeout(flyShowTimer);
+      flyShowTimer = setTimeout(endFlyShow, flyoverTimeline(baseMap, flyShow.points).length);
+    }
     render();
     return;
   }
@@ -759,6 +831,8 @@ function handleHexLeave() {
 
 function handleRosterClick(unitId) {
   if (dropShow) return endDropShow();
+  if (flyShow) return endFlyShow();
+  if (bangTimer) return endBangHold();
   if (state.outcome) return;
   state = selectUnit(state, unitId);
   render();
@@ -767,6 +841,8 @@ function handleRosterClick(unitId) {
 function handleEndTurn() {
   if (briefing) return closeBriefing();
   if (dropShow) return endDropShow();
+  if (flyShow) return endFlyShow();
+  if (bangTimer) return endBangHold();
   if (state.phase === 'drop') return jumpNow();
   endTurnNow();
 }
@@ -775,7 +851,21 @@ function endTurnNow() {
   undoState = null;
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
-  if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
+  if (!state.outcome && briefingsOn) {
+    if (state.report.some((e) => e.kind === 'explosion')) {
+      clearTimeout(bangTimer);
+      bangTimer = setTimeout(endBangHold, BLAST.holdMs);
+    } else {
+      briefing = { kind: 'turn' };
+    }
+  }
+  render();
+}
+
+function endBangHold() {
+  clearTimeout(bangTimer);
+  bangTimer = null;
+  briefing = { kind: 'turn' };
   render();
 }
 
@@ -841,15 +931,15 @@ function describeBriefing(which, view) {
       kicker: 'BEFORE THE DROP',
       paragraphs: [
         `Tonight six men drop behind the lines. Blow the ${primary.label.toLowerCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the exfil. Dawn comes at the end of turn ${rules.turnLimit}.`,
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off.`] : []),
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off. It’s good to be slow and stealthy, as long as you finish before dawn!`] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
         lines: [
-          'Pick a drop run with the 1–3 keys, or click its name on the map. Hover the map to see where you might come down.',
-          'Hit the SPACE key to initiate the drop. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Hit SPACE to end a turn.',
-          'Red rings mark your targets. The red dashed hexes around each are its charge points, where explosives go: stand a man carrying a charge on one and press C.',
-          `You do not fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`,
+          'The Dakota troop aircraft flies one of these lines; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.',
+          'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+          'Red rings mark your targets. The red dashed hexes are their charge points: stand a man with a charge on one and press C.',
+          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`,
           'Hover anything for detail. KEYS, top right, lists every key.',
         ],
       }],
@@ -899,12 +989,37 @@ function describeDiversionCard(before) {
   return {
     title: 'RAF DIVERSION',
     kicker: 'BOMBERS OVER THE TOWN',
+    // Headed in the diversion's own blue, as its button is (M11).
+    tone: 'raf',
     paragraphs: ['The radio worked. The garrison looks the other way.'],
     sections: [
       { heading: 'WHAT IT DID', lines },
       { heading: 'THE RADIO', lines: [left > 0 ? `${left === 1 ? 'One more call' : `${left} more calls`} left, while the leader lives.` : 'No more calls this mission.'] },
     ],
   };
+}
+
+/** A marker on a man's counter, in words — [heading, text]: what it means and what to do about it. */
+function describeMarker(id, unit) {
+  const name = unit.shortName;
+  if (id === 'marker-spotted') {
+    return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
+      + 'If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover.\n'
+      + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [G], or have a gunner suppress it [S].'];
+  }
+  if (id === 'marker-wounded') {
+    const left = rules.combat.hitsToKill - unit.hits;
+    return ['WOUNDED', `${name} is down to ${rules.combat.woundedActionPoints} AP and cannot carry a charge. ${left === 1 ? 'One more hit kills him' : `${left} more hits kill him`}. `
+      + 'A man beside him can stabilise him [A]: a full turn, and he gets his full AP back.'];
+  }
+  if (id === 'marker-hidden') {
+    return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP. Hold [H] to stay down.`];
+  }
+  if (id === 'marker-orders') {
+    const leader = state.units.find((u) => u.leader);
+    return ['ORDERS', `${name} started this turn within ${rules.command.radius} hexes of ${leader?.shortName ?? 'the leader'}: +${unit.commandBonus} AP this turn.`];
+  }
+  return ['', ''];
 }
 
 /** Jump, and show the stick going out and coming down. */
@@ -937,6 +1052,13 @@ function endDropShow() {
   dropShow = null;
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
+  render();
+}
+
+function endFlyShow() {
+  clearTimeout(flyShowTimer);
+  if (flyShow) briefing = { kind: 'diversion', before: flyShow.before };
+  flyShow = null;
   render();
 }
 
@@ -976,7 +1098,7 @@ function handleKey(event) {
     return;
   }
   // Cmd-Z or Ctrl-Z undoes, as everywhere else; so does Z on its own.
-  if ((event.metaKey || event.ctrlKey) && !event.altKey && (event.key === 'z' || event.key === 'Z') && !briefing && !dropShow) {
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && (event.key === 'z' || event.key === 'Z') && !briefing && !dropShow && !flyShow) {
     event.preventDefault();
     undoLast();
     return;
@@ -991,6 +1113,16 @@ function handleKey(event) {
   if (dropShow) {
     event.preventDefault();
     endDropShow();
+    return;
+  }
+  if (flyShow) {
+    event.preventDefault();
+    endFlyShow();
+    return;
+  }
+  if (bangTimer) {
+    event.preventDefault();
+    endBangHold();
     return;
   }
   if (state.phase === 'drop') {
@@ -1127,6 +1259,8 @@ try {
     onRunHover: (runId, anchor) => showPopup(anchor, describeRun(currentView.dropRuns.find((r) => r.id === runId))),
     onRunLeave: hidePopup,
     onRunChoose: handleChooseRun,
+    onMarkerHover: (id, unitId, anchor) => showPopup(anchor, titled(...describeMarker(id, state.units.find((u) => u.id === unitId)))),
+    onMarkerLeave: hidePopup,
   });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of
