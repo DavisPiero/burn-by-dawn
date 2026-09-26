@@ -145,7 +145,7 @@ These span several hexes and sit as overlays above the terrain layer.
 |---|---|---|
 | `objective-rail-bridge.svg` | 280 x 92 | 3 hexes wide, spanning the canal |
 | `objective-bridge-destroyed.svg` | 280 x 92 | collapsed span, same footprint |
-| `objective-exchange.svg` | 160 x 184 | 2x2 hex village building, telephone poles |
+| `objective-exchange.svg` | 160 x 184 | 2x2 hex village building with a roof standard on its ridge (a short post and crossarm at 100, 42 in these units, where the code's wires end; the poles beside the house went in M14) |
 | `objective-exchange-destroyed.svg` | 160 x 184 | |
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
@@ -175,7 +175,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
-| `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs the wires from its crossarm to the building, M12) |
+| `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs one long sagging wire from its crossarm to the exchange's roof standard, M12; M14) |
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
 | `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11). **Or a painted PNG**, `/assets/aircraft/aircraft-dakota.png`, 512 x 512, transparent, the same view — it replaces the drawn one on load, and its shadow is made from it (see ART-PROMPTS.md) |
 | `aircraft-dakota-shadow.svg` | 120 x 120 (the same silhouette, one flat fill; printed faint on the ground below it) |

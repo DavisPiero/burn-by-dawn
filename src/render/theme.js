@@ -638,20 +638,21 @@ export const WIRES = {
   stroke: PALETTE.ink,
   casing: PALETTE.paper,
   width: 2,
-  sag: 7, // how far a wire droops at its middle
+  sag: 0.08, // how far a wire droops at its middle, as a share of its length
   drop: 14, // how far a snapped end hangs
-  wallReach: 34, // from the footprint's middle toward the pole, where a wire leaves the building
-  wallHeight: 26, // and how far up it
+  insulatorGap: 6, // the standard's insulators, either side of its middle one
   poleSize: 34,
   poleAway: 0.42, // hex radii from the charge point's centre, away from the target
 };
 
 // Multi-hex objective art by objective kind (the kind ids in data/rules.json).
 // Drawn centred on the footprint at the manifest's size. A kind with no entry
-// is drawn as its outline only. `wires`: its lines run out to its charge points.
+// is drawn as its outline only. `wires`: its lines run out to its charge points,
+// from the point given in the art's own units (M14: the exchange's roof standard,
+// on the crossarm).
 const OBJECTIVE_ART = {
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
-  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: true },
+  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: { x: 100, y: 42.4 } },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
 };
 
@@ -666,7 +667,7 @@ export function objectiveArt(objective) {
   if (!art) return null;
   const id = objective.destroyed ? art.destroyed : art.intact;
   const [, , width, height] = SPRITES[id].viewBox.split(' ').map(Number);
-  return { id, width, height, wires: Boolean(art.wires) };
+  return { id, width, height, wires: art.wires ?? null };
 }
 
 export const EXFIL = {
@@ -1185,20 +1186,13 @@ function exchangeBuilding(gutted) {
 
 // The line: poles along the square and the wires to the house and away east,
 // off the edge of the art. Blown, the east pole leans and its wires hang.
-function exchangeWires(gutted) {
-  const parts = [...pole(150, 152, 62, gutted ? 10 : 0), ...pole(152, 72, 42)];
-  if (gutted) {
-    parts.push(line('M152 32 Q164 40 188 34 M152 32 Q146 44 140 58 M160 90 Q150 112 142 124', 1.2));
-    return parts;
-  }
-  parts.push(line([
-    'M144 90 Q142 96 136 100', // into the gable, under the eaves
-    'M144 90 Q166 98 186 92 M156 90 Q172 96 190 90', // away east
-    'M146 32 Q164 40 186 34 M158 32 Q172 38 190 32',
-    'M146 32 Q138 40 124 44', // down to the roof
-    'M144 90 Q146 60 146 32 M156 90 Q158 60 158 32', // pole to pole
-  ].join(' '), 1.1));
-  return parts;
+// The exchange's roof standard (M14): a short post on the ridge with a
+// crossarm, where every line from the charge points comes in — board.js runs
+// the wires to it (OBJECTIVE_ART.exchange.wires). The poles that stood beside
+// the house went: the charge points carry the poles now. Blown, it still
+// stands on the charred rafters, and the wires hang snapped from it.
+function roofStandard() {
+  return pole(100, 58, 18);
 }
 
 // The village church, the landmark Vance's landing line refers to (SPEC.md §11),
@@ -1559,15 +1553,16 @@ const SPRITES = {
 
   // The PTT exchange in the village, as the reference has it: a stone house
   // under a slate roof, seen from the south-west so the front and the east
-  // gable both show, the PTT board over the door, a gravel yard, and the
-  // poles and wires the scouts can cut running away east. The church beside it.
+  // gable both show, the PTT board over the door, a gravel yard, and the roof
+  // standard its lines come in to (the lines themselves are the board's). The
+  // church beside it.
   'objective-exchange': {
     viewBox: '0 0 160 184',
     draw: () => [
       ...gravelYard(),
       svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(false),
-      ...exchangeWires(false),
+      ...roofStandard(),
     ],
   },
   'objective-exchange-destroyed': {
@@ -1576,7 +1571,7 @@ const SPRITES = {
       ...gravelYard(),
       svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(true),
-      ...exchangeWires(true),
+      ...roofStandard(),
       ...smoke(96, 46, 1.2), ...flame(84, 86, 0.8), ...flame(108, 80, 0.7),
     ],
   },
