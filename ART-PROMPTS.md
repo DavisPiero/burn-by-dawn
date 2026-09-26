@@ -87,9 +87,10 @@ it is? If not, push the one feature harder and simplify the background.
 
 ## Priority 2 — the six counter chips ✅ done (2026-09-26)
 
-Made from the painted portraits by `tools/make-chips.js` (paste it into the browser
-console on the running game). If a portrait is regenerated, retune that man's crop in its
-`CROPS` table and run it again; there is no need to generate chips separately.
+Made by the operator from the second set of portraits (2026-09-26) and used as supplied.
+`tools/make-chips.js` (paste it into the browser console on the running game) made the
+first set and can still cut chips from the full portraits; its `CROPS` table was tuned
+for the first portraits, so retune it before using it on these.
 
 **Why:** if you supply painted portraits but no chips, the counters on the board show
 drawn faces that won't match the portraits. Make the chips from the portraits you
@@ -120,10 +121,13 @@ melt into it.
 
 ---
 
-## Priority 2b — the title card
+## Priority 2b — the title card ✅ done (2026-09-26)
+
+Supplied with the title painted in; `title-card_original.jpg` beside it is the picture
+without, kept to revert to (set `TITLE_CARD.lettered` to false in `src/render/theme.js`).
 
 **Why:** it is the first thing a player sees. It sits across the top of the orders card
-when the game opens, with BURN BY DAWN set over it by code.
+when the game opens.
 
 | | |
 |---|---|
@@ -148,7 +152,10 @@ file in and reload: the title should read clearly without squinting.
 
 ---
 
-## Priority 3 — the paper
+## Priority 3 — the paper ✅ done (2026-09-26)
+
+Supplied as an opaque grey scan (`paper-fibre_original.png`); the game's file was made
+from it by moving the texture into the alpha (see `assets/paper/README.md`).
 
 **Why:** ART-ASSETS.md rates this as the single biggest change to the feel. It's also
 very low risk: it sits under everything at low opacity.
@@ -171,7 +178,9 @@ can see the repeat from arm's length, it's too contrasty. Flatten it.
 
 ---
 
-## Priority 4 — a lettering font (choose, don't generate)
+## Priority 4 — a lettering font (choose, don't generate) ✅ done (2026-09-26)
+
+Manly Men BB for the lettering, Stardos Stencil for headings; see `assets/fonts/README.md`.
 
 **Why:** speech bubbles are currently set in whatever hand face the desktop ships
 (Noteworthy on a Mac). A proper comic lettering face makes them look like the annual.
@@ -188,7 +197,9 @@ Once supplied, it goes first in `TYPE.lettering` in `src/render/theme.js` with a
 
 ---
 
-## Priority 5 — objective reference art (for tracing, not dropping in)
+## Priority 5 — objective reference art (for tracing, not dropping in) ✅ done (2026-09-26)
+
+In `assets/reference/`; the three objectives were redrawn in code after them.
 
 **Why:** the fuel dump, telephone exchange and rail bridge are SVG (ART-ASSETS.md §5),
 because they need recolouring and halftone applied in code. Generated raster art can't
@@ -219,6 +230,34 @@ redraws these in M7b regardless, so this only raises the ceiling.
 
 ---
 
+## Priority 6 — the aircraft
+
+**Why:** the drop is the first thing that moves. The drawn Dakota is a flat icon; a
+painted one matches the portraits and the title card. A bitmap is the right format here:
+it is one object, on screen for about three seconds, turned but never recoloured, and at
+about 95 px wide an SVG's crispness buys nothing.
+
+| | |
+|---|---|
+| File | `assets/aircraft/aircraft-dakota.png` |
+| Size | **1:1, 512 × 512 px** |
+| Format | PNG, 8-bit sRGB, **transparent background** |
+| View | **Straight down from above, nose pointing right (east)**, centred, wingspan about 90% of the width. Not three-quarter: the game turns it to each run's heading, and any perspective would tumble. |
+| Shown at | About 95 × 95 px, flying across the board for about 3 seconds. |
+| Code does | The ground shadow (the same picture printed black and faint, offset), the rotation and the flight. Don't paint a shadow, clouds or ground. |
+
+### Prompt (add the style block)
+
+> Top-down view from directly above of a C-47 Dakota transport aircraft in flight, olive
+> drab, black and white invasion stripes on the wings and rear fuselage, nose pointing
+> to the right, wings spread level, isolated on a plain transparent background, no
+> shadow, no ground, no clouds.
+
+Most generators can't make transparency: generate it on flat white or flat magenta, then
+cut it out (Photoshop's Remove Background, or Preview's Instant Alpha) before saving.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
@@ -236,16 +275,16 @@ Not worth making yet. The map and layout will still change.
 
 These are part of M7b and are made as SVG in `src/render/theme.js`:
 
-- The C-47 Dakota silhouette for the drop fly-by, and the opening, drifting and
-  collapsing parachute canopies.
+- The C-47 Dakota silhouette for the drop fly-by (until `aircraft-dakota.png` is
+  supplied), and the opening, drifting and collapsing parachute canopies.
 - The soft drop shadow under counters.
 - Continuous roads, hedges and the railway line.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs.
 - Place names on the map (they are type, set from `data/map.json`).
 - The green counter frames, their AP figure and card edge.
-- Redrawn fuel dump, telephone exchange and rail bridge, at the new, lower level of detail.
+- The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the
+  reference art, intact and destroyed.
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.
-- A plain night scene for the title card (moon, Dakota, canopies, skyline): the fallback
-  until `assets/title/title-card.jpg` is supplied. The title lettering over it is always
-  type, never art.
+- A plain night scene for the title card (moon, Dakota, canopies, skyline), with the title
+  set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
 - The results masthead, BURN BY DAWN in slab capitals.

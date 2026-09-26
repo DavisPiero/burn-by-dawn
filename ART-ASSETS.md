@@ -173,7 +173,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `stamp-destroyed.svg` | 200 x 80 (red rubber stamp, rotated in code) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target) |
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
-| `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11) |
+| `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11). **Or a painted PNG**, `/assets/aircraft/aircraft-dakota.png`, 512 x 512, transparent, the same view — it replaces the drawn one on load, and its shadow is made from it (see ART-PROMPTS.md) |
 | `aircraft-dakota-shadow.svg` | 120 x 120 (the same silhouette, one flat fill; printed faint on the ground below it) |
 | `parachute-canopy.svg` | 40 x 40 (an open canopy from above, in the air — distinct from `marker-parachute`, which is spent on the ground) |
 | `parachute-canopy-shadow.svg` | 40 x 40 (its silhouette, one flat fill) |
@@ -197,8 +197,10 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 **The title card** is the one painted picture outside the portraits, so like them it is
 raster and the SVG rules above do not apply. It is JPEG rather than PNG because it is a
 full-colour painting with no transparency, and a PNG that size would weigh several MB
-for a page shared over the web. 8-bit sRGB, quality about 85, opaque, **no text** (code
-sets BURN BY DAWN over it, with a soft dark scrim behind the letters). Shown at 600 x 150
+for a page shared over the web. 8-bit sRGB, quality about 85, opaque. The title may be
+**painted in** (the supplied card has it, in Stardos Stencil) — then `TITLE_CARD.lettered`
+in `src/render/theme.js` is true and code hides its own; or left out, and code sets BURN
+BY DAWN over the picture with a soft dark scrim. Shown at 600 x 150
 across the card; a picture of another shape is cropped from its middle. Keep the middle
 of the picture — roughly the central 60% of the width and height — open and dark (night
 sky), since the title sits there; put the aircraft and canopies toward the left and right
@@ -215,11 +217,16 @@ the speech bubbles, which are comic lettering.
 - **Body, captions, numbers and UI:** a typewriter Courier. `Courier 10
   Pitch` if supplied, falling back to `Courier New`, `Courier`, `monospace`, which ship on
   every desktop, so nothing has to be supplied.
-- **Speech bubbles:** comic lettering, set in capitals. Until a face is supplied it falls
-  back to faces desktops ship (`Noteworthy` bold, `Segoe Print`, `Ink Free`, `Marker Felt`).
-  Never Comic Sans. A supplied lettering face is a WOFF2 in `/assets/fonts/` and goes
-  first in `TYPE.lettering` in `src/render/theme.js`, with an `@font-face` for it.
-- **Display / headings (optional):** a condensed slab for the masthead and big headings.
+- **Speech bubbles and marker-pen notes:** comic lettering, set in capitals — **Manly Men
+  BB** (Blambot), bold. It falls back to faces desktops ship (`Noteworthy` bold, `Segoe
+  Print`, `Ink Free`, `Marker Felt`). Never Comic Sans.
+- **Display / headings:** **Stardos Stencil** bold (OFL), the stencil the title card is
+  lettered in: card titles, panel headings, the results masthead.
+
+A supplied face is a WOFF2 in `/assets/fonts/`, listed in `FONTS` in `src/render/theme.js`
+(which registers it; no `@font-face` needed) and put first in its `TYPE` stack. The game
+waits for them before its first draw, since speech bubbles are measured in their face.
+`assets/fonts/README.md` lists what each file is for and its licence.
 
 Any face that is supplied: **WOFF2**, into `/assets/fonts/`. Check the licence permits web
 embedding — desktop-only licences are the usual trap. Supply a fallback stack for each.

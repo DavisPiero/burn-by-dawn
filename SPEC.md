@@ -596,9 +596,10 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **Type is not comic lettering,** except in the speech bubbles. The annual look comes
   from the print, paper and colour. Text on the right page is a typewriter face, a Courier
   (`Courier 10 Pitch`, then `Courier New`, `Courier`, `monospace`), so it reads as a typed
-  briefing. Speech bubbles are hand lettering in capitals (never Comic Sans). A condensed
-  slab may still set big headings. Pin the board's label face rather than leaving it to
-  the browser's default monospace.
+  briefing. Speech bubbles and the marker-pen notes are hand lettering in capitals, Manly
+  Men BB (never Comic Sans). Headings and the masthead are set in Stardos Stencil, the
+  stencil the title card is lettered in. Pin the board's label face rather than leaving
+  it to the browser's default monospace.
 - A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,
   no new terrain. It is the landmark Vance's landing line refers to, and spires were how
   real sticks checked they had been dropped in the right place.
@@ -640,8 +641,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
   circled in red marker pen, the primary twice, with a hand-lettered note beside it, and
   the exfil in green. Picking a run clears them.
 - **The title card.** The orders open under a painted picture of the drop across the top
-  of the card, with the title, BURN BY DAWN, set over it in type (a supplied
-  `assets/title/title-card.jpg`, ART-ASSETS.md §7; drawn in code until then).
+  of the card with the title, BURN BY DAWN, lettered in stencil (a supplied
+  `assets/title/title-card.jpg`, ART-ASSETS.md §7; drawn in code, with the title in type,
+  if the file is missing).
 - **Briefings.** A briefing card opens over the board: the orders before the drop, and at
   the start of every turn (turn 1 after the drop has been shown) an update: what happened
   at the turn boundary, most important first, and up to three hints about what to do
