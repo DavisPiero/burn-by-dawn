@@ -261,12 +261,34 @@ const EVENT_WEIGHT = {
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
+const DEATHS = new Set(['killed', 'blastKilled']);
+
+/**
+ * The report's events in reading order (M13): everything about one man
+ * together, in the order it happened but with his death always last, each
+ * man's lines placed by the worst of them; other lines by how much they
+ * matter. The card and the report under the map both read it this way.
+ */
+export function orderReport(events) {
+  const items = events.map((event, i) => ({ event, i, weight: EVENT_WEIGHT[event.kind] ?? 4, group: event.unitId ?? `#${i}` }));
+  const groups = new Map();
+  for (const item of items) {
+    const group = groups.get(item.group);
+    if (!group) groups.set(item.group, { weight: item.weight, first: item.i });
+    else group.weight = Math.min(group.weight, item.weight);
+  }
+  const death = (item) => Number(DEATHS.has(item.event.kind));
+  return items
+    .sort((a, b) => {
+      const ga = groups.get(a.group), gb = groups.get(b.group);
+      return ga.weight - gb.weight || ga.first - gb.first || death(a) - death(b) || a.i - b.i;
+    })
+    .map(({ event }) => event);
+}
+
 /** The report's lines, most important first, as the card shows them. */
 export function rankedReport(events, place) {
-  return events
-    .map((event, i) => ({ event, i, weight: EVENT_WEIGHT[event.kind] ?? 4 }))
-    .sort((a, b) => a.weight - b.weight || a.i - b.i)
-    .map(({ event }) => describeEvent(event, place));
+  return orderReport(events).map((event) => describeEvent(event, place));
 }
 
 /**
@@ -364,7 +386,7 @@ export function renderReport(element, state, place, onLocate) {
     element.appendChild(html('li', null, state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.'));
     return;
   }
-  for (const event of events) {
+  for (const event of orderReport(events)) {
     const item = html('li', null, boldNames(describeEvent(event, place), state.units.map((u) => u.shortName)));
     if (Number.isInteger(event.q) && Number.isInteger(event.r)) {
       item.classList.add('located');
@@ -392,7 +414,7 @@ export function describeEvent(event, place) {
     case 'landed': return describeLanding(event, at());
     case 'explosion': return event.destroyed ? `BOOM — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
-    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
+    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} and dies.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
     case 'noReserve': return event.deployed
       ? `With the ${event.label.toLowerCase()} gone, the garrison can call up nobody more — but the reserve is already out.`
@@ -429,8 +451,15 @@ function describeLanding(event, where) {
  * short names); a name only counts as a whole word.
  */
 export function boldNames(line, names) {
-  if (!names?.length) return boldKeys(line);
-  return boldNamesOnly(line, names).flatMap((part) => (typeof part === 'string' ? boldKeys(part) : [part]));
+  const parts = names?.length ? boldNamesOnly(line, names) : [line];
+  return parts.flatMap((part) => (typeof part === 'string' ? markKilled(part) : [part]))
+    .flatMap((part) => (typeof part === 'string' ? boldKeys(part) : [part]));
+}
+
+/** "killed" in a report or card line, in bold red (M13): one of ours is dead. */
+function markKilled(line) {
+  const parts = line.split(/\b(killed)\b/);
+  return parts.map((part, i) => (i % 2 ? html('b', 'killed', part) : part)).filter((p) => p !== '');
 }
 
 function boldNamesOnly(line, names) {

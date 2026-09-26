@@ -544,10 +544,18 @@ export function renderPieces(layers, state, view) {
   drawSites(layers, state, view);
   if (view.drop) drawDrop(layers, view.drop);
 
+  // Where he can go and the leader's orders: every outline's paper casing
+  // first, then every line, so where two run along the same hex edge neither
+  // casing blanks out the other's line (M13: Dutch's two rings).
   if (view.reachable) drawReachable(layers, view.reachable);
-  if (view.commandArea) drawCommand(layers, view.commandArea);
-  // The inner band, where his orders are strongest (M12), in a finer dash.
-  if (view.commandCloseArea) drawCommand(layers, view.commandCloseArea, COMMAND.closeDash);
+  const outlines = [
+    view.reachable && { area: view.reachable, casing: [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth], line: [PATH.reachableEdge, PATH.reachableEdgeWidth], extra: {} },
+    view.commandArea && { area: view.commandArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.dash } },
+    // The inner band, where his orders are strongest (M12), in a finer dash.
+    view.commandCloseArea && { area: view.commandCloseArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.closeDash } },
+  ].filter(Boolean);
+  for (const o of outlines) drawAreaEdge(layers, layers.reachable, o.area, [o.casing]);
+  for (const o of outlines) drawAreaEdge(layers, layers.reachable, o.area, [o.line], o.extra);
 
   for (const route of view.routes) drawRoute(layers, route);
 
@@ -1526,10 +1534,7 @@ function drawReachable(layers, reachable) {
       'fill-opacity': PATH.reachableOpacity,
     }));
   }
-  drawAreaEdge(layers, layers.reachable, reachable, [
-    [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth],
-    [PATH.reachableEdge, PATH.reachableEdgeWidth],
-  ]);
+  // Its outline is drawn with the leader's, in renderPieces.
 }
 
 /**
@@ -1557,16 +1562,6 @@ function drawAreaEdge(layers, layer, area, strokes, extra = {}) {
       d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round', ...extra,
     }));
   }
-}
-
-/**
- * The leader's command radius while he is selected (SPEC.md §5 Command): a
- * dashed line in his blue round every hex within it. What it means is in the
- * readout; a label on the board sat on the counters inside it.
- */
-function drawCommand(layers, hexes, dash = COMMAND.dash) {
-  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.casing, COMMAND.casingWidth]]);
-  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': dash });
 }
 
 // --- hover path preview -----------------------------------------------------

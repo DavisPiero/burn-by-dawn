@@ -590,7 +590,7 @@ export const OBJECTIVE = {
   pointHoverOpacity: 1,
   pointIconSize: 34,
   pointIconShift: 0.3, // hex radii toward the target it serves (M12)
-  stampWidth: 110,
+  stampWidth: 138,
   stampHeight: 44,
   stampRotate: -12,
 };
@@ -1821,13 +1821,15 @@ const SPRITES = {
       label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
     ],
   },
+  // Wider since M13: the stencil was squeezed to fit and looked squashed. It
+  // is still fitted to the width, but by the gaps between letters, never by
+  // narrowing the letters themselves.
   'stamp-destroyed': {
-    viewBox: '0 0 200 80',
+    viewBox: '0 0 250 80',
     draw: () => [
-      svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, class: 'paper', 'fill-opacity': 0.85 }),
-      svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, fill: 'none', class: 'stroke-red', 'stroke-width': 6 }),
-      // Fitted to the stamp's width whatever face is used, so it never runs off the edge.
-      label('DESTROYED', { x: 100, y: 43, 'font-size': 34, 'font-family': TYPE.slab, textLength: 164, lengthAdjust: 'spacingAndGlyphs', class: 'red' }),
+      svg('rect', { x: 4, y: 4, width: 242, height: 72, rx: 6, class: 'paper', 'fill-opacity': 0.85 }),
+      svg('rect', { x: 4, y: 4, width: 242, height: 72, rx: 6, fill: 'none', class: 'stroke-red', 'stroke-width': 6 }),
+      label('DESTROYED', { x: 125, y: 43, 'font-size': 34, 'font-family': TYPE.slab, textLength: 212, lengthAdjust: 'spacing', class: 'red' }),
     ],
   },
 

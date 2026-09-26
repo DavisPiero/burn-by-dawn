@@ -1,6 +1,7 @@
 // M7b: the briefing card's hints (SPEC.md §11), a pure function of the state.
 
 import { hintsFor } from '../src/hints.js';
+import { orderReport } from '../src/render/ui.js';
 import { loadJson, loadMap } from '../src/map.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
@@ -47,5 +48,13 @@ export default [
     const objectives = state.objectives.map((o) => (o.primary ? { ...o, destroyed: true } : o));
     const hints = hintsFor({ ...state, turn: 15, objectives }, rules);
     assert(has(hints, `Get ${rules.mission.minimumOut} more men onto the exfil`) && has(hints, `${rules.turnLimit - 15} turns left`), hints[0]);
+  }],
+  ['the turn report keeps each man together, worst news first, his death last (M13)', async () => {
+    const events = [
+      { kind: 'alertRise' }, { kind: 'killed', unitId: 'a' }, { kind: 'spotted', unitId: 'b' },
+      { kind: 'spotted', unitId: 'a' }, { kind: 'heard' },
+    ];
+    const order = orderReport(events).map((e) => `${e.kind}${e.unitId ?? ''}`).join(' ');
+    assert(order === 'spotteda killeda spottedb alertRise heard', order);
   }],
 ];
