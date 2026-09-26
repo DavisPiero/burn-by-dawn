@@ -122,6 +122,18 @@
       padding: 4px 0;
     }
     #seed a { color: inherit; opacity: 0.6; }
+    /* The difficulty beside the seed: text, not a button to look at, but a
+       click on it before the jump opens the orders where it is chosen. */
+    #seed .seed-level {
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      opacity: 0.6;
+      background: none;
+      border: 0;
+      text-decoration: underline;
+      cursor: pointer;
+    }
 
     #left-content {
       display: flex;
@@ -629,6 +641,39 @@
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
     #briefing .brief-hints li::before { content: "→"; color: var(--red); font-weight: bold; }
     #briefing .brief-more { opacity: 0.65; }
+    /* The difficulty on the orders (SPEC.md §10): the levels as buttons,
+       the picked one inked in, and what it changes on the line under them. */
+    #briefing .brief-choice {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 2px solid var(--ink);
+    }
+    #briefing .brief-choice-head {
+      margin-right: 4px;
+      font-family: var(--slab);
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    #briefing .brief-choice .btn {
+      padding: 3px 10px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    #briefing .brief-choice .btn.active {
+      color: var(--paper);
+      background: var(--blue);
+    }
+    #briefing .brief-choice-note {
+      flex: 1 0 100%;
+      font-size: 13px;
+      line-height: 1.35;
+    }
     #briefing .brief-foot {
       display: flex;
       justify-content: space-between;

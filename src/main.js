@@ -4,6 +4,7 @@
 
 import { alertIndex, detectionAt, hearingRadius, listeners, routePath, shotResultOf, visibleHexes, visionRadiusOf } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
+import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
 import { freshSeed, seedFromQuery } from './rng.js';
@@ -28,8 +29,8 @@ import {
   applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
-  DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
-  hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
+  attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
+  describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderTurnCounter, showPopup,
 } from './render/ui.js';
@@ -68,6 +69,15 @@ let baseMap = null;
 let map = null;
 let rules = null;
 let layers = null;
+// The files as loaded, before the difficulty level's patches (difficulty.js),
+// kept so the level can be changed on the orders before the jump. `level` is
+// the level in play; `rules` and `baseMap` above are already patched by it.
+let rawRules = null;
+let rawMap = null;
+let difficulty = null;
+let level = null;
+let roster = null;
+let traits = null;
 // Interface only, never game state: the hex a hovered report line points at,
 // and the last derived view, for rollovers built when they are shown.
 let highlightHex = null;
@@ -182,6 +192,7 @@ function deriveView() {
     chargedObjectiveIds: new Set(state.objectives.filter((o) => !o.destroyed && chargesWanted(o) === 0).map((o) => o.id)),
     // The leader's orders, for his rollover in the roster (SPEC.md §5 Command).
     command: rules.command,
+    diversionUses: rules.diversion.uses,
     hoverObjective: null,
     previewBlastArea: null,
     siteLabel: null,
@@ -389,7 +400,7 @@ function describeMissionState() {
     out,
     minimumOut: rules.mission.minimumOut,
     shortfall: primaryShortfall(state, rules),
-    diversion: checkDiversion(state, rules),
+    diversion: { ...checkDiversion(state, rules), left: rules.diversion.uses - state.diversionsCalled },
   };
 }
 
@@ -547,7 +558,7 @@ function render() {
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
-  renderResults(resultsBox, state.outcome);
+  renderResults(resultsBox, state.outcome, level.label);
   renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
   dropStalePopup();
 }
@@ -734,6 +745,42 @@ function closeBriefing() {
   render();
 }
 
+/**
+ * Set up the mission at a difficulty level (SPEC.md §10): the level's patches
+ * over the files as loaded, and a fresh state on that seed. Only before the
+ * jump, so a level can never be changed with anything at stake.
+ */
+function startMission(nextLevel, seed) {
+  level = nextLevel;
+  ({ rules, map: baseMap } = applyDifficulty(level, rawRules, rawMap));
+  map = baseMap;
+  state = createInitialState(roster, traits, rules, baseMap, seed);
+  undoStack = [];
+  renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
+}
+
+/** A level picked on the orders: start again at it, keeping the seed and the run chosen. */
+function handleChooseLevel(id) {
+  if (state.phase !== 'drop' || id === level.id) return;
+  const runId = state.dropRunId;
+  startMission(levelById(difficulty, id), state.seed);
+  if (runId) state = chooseDropRun(state, baseMap, runId);
+  // Carried in the address, so Play again keeps it.
+  const query = new URLSearchParams(window.location.search);
+  if (id === difficulty.default) query.delete('difficulty');
+  else query.set('difficulty', id);
+  const search = query.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+  render();
+}
+
+/** The level in the margin: before the jump it opens the orders, where it is chosen. */
+function handleLevelClick() {
+  if (state.phase !== 'drop') return;
+  briefing = { kind: 'orders' };
+  render();
+}
+
 /** The card's words: the orders before the drop, or this turn's update. */
 function describeBriefing(which, view) {
   const primary = state.objectives.find((o) => o.primary);
@@ -767,6 +814,12 @@ function describeBriefing(which, view) {
           'Hover anything for detail. KEYS, top right, lists every key.',
         ],
       }],
+      // SPEC.md §10: the level, chosen here and fixed once the stick jumps.
+      choice: {
+        heading: 'DIFFICULTY',
+        options: difficulty.levels.map((l) => ({ id: l.id, label: l.label, summary: l.summary, selected: l.id === level.id })),
+        onChoose: handleChooseLevel,
+      },
     };
   }
   const lines = rankedReport(state.report, view.place);
@@ -975,17 +1028,17 @@ try {
   applyDocumentTheme();
   loadSuppliedPaper();
   const fontsLoaded = loadSuppliedFonts();
-  baseMap = await loadMap();
-  map = baseMap;
-  rules = await loadJson('data/rules.json');
-  const traits = validateTraits(await loadJson('data/traits.json'));
-  const roster = await loadJson('data/roster.json');
+  rawMap = await loadMap();
+  rawRules = await loadJson('data/rules.json');
+  traits = validateTraits(await loadJson('data/traits.json'));
+  roster = await loadJson('data/roster.json');
+  difficulty = validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes });
 
   // SPEC.md §1: a seed reproduces a playthrough. `?seed=N` replays one; with
-  // none, the clock picks a fresh one. It is shown on the page either way.
+  // none, the clock picks a fresh one. It is shown on the page either way,
+  // with the difficulty, which `?difficulty=` picks the same way (§10).
   const seed = seedFromQuery(window.location.search) ?? freshSeed(Date.now());
-  state = createInitialState(roster, traits, rules, baseMap, seed);
-  renderSeed(seedBox, seed);
+  startMission(levelById(difficulty, difficultyFromQuery(window.location.search, difficulty)), seed);
 
   const bounds = boardPixelBounds(map);
   svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);
@@ -1028,7 +1081,7 @@ try {
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
-  attachPopup(diversionButton, DIVERSION_HELP);
+  attachPopup(diversionButton, () => describeDiversion(rules.diversion.uses));
   // The orders open over the board before anything else (SPEC.md §11).
   briefing = { kind: 'orders' };
   briefingBackdrop.addEventListener('click', () => closeBriefing());

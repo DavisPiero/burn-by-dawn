@@ -4,6 +4,7 @@
 // rail is roster.js. Reads state and map data, never mutates them (CLAUDE.md
 // hard rule 7) — clicks are handed straight back to the caller.
 
+import { timesWord } from '../hints.js';
 import { hexDistance } from '../hex.js';
 import { columnOf, terrainAt } from '../map.js';
 import { ALERT_STATE, DAWN, DIAL, portraitId } from './theme.js';
@@ -234,7 +235,8 @@ export function rankedReport(events, place) {
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
  * { banner?: { title }, title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
- *   toggle?: { on } } — worded in main.js. `onToggle(on)` is the turn-update box.
+ *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
+ * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
@@ -256,6 +258,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     if (section.more) list.appendChild(html('li', 'brief-more', section.more));
     card.appendChild(list);
   }
+  if (briefing.choice) card.appendChild(briefChoice(briefing.choice));
   const foot = html('div', 'brief-foot');
   if (briefing.toggle) {
     const box = html('input');
@@ -271,6 +274,29 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   foot.appendChild(html('span', 'brief-go', 'CARRY ON — any key or click'));
   card.appendChild(foot);
+}
+
+/**
+ * A row of buttons on the card, one picked, with the picked one's summary
+ * beside them. A click picks and does not put the card away, as every other
+ * click on the card does.
+ */
+function briefChoice(choice) {
+  const picked = choice.options.find((o) => o.selected);
+  const row = html('div', 'brief-choice', [html('span', 'brief-choice-head', choice.heading)]);
+  for (const option of choice.options) {
+    const button = html('button', option.selected ? 'btn active' : 'btn', option.label.toUpperCase());
+    button.type = 'button';
+    button.setAttribute('aria-pressed', String(option.selected));
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      choice.onChoose(option.id);
+    });
+    row.appendChild(button);
+  }
+  row.appendChild(html('span', 'brief-choice-note', picked?.summary ?? ''));
+  row.addEventListener('click', (event) => event.stopPropagation());
+  return row;
 }
 
 // --- the turn report ----------------------------------------------------------
@@ -474,10 +500,14 @@ export function renderMission(element, mission) {
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
-  button.replaceChildren('RAF DIVERSION', html('small', null, check.ok ? '[D] once, no AP' : check.reason));
+  button.replaceChildren('RAF DIVERSION', html('small', null, check.ok ? `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP` : check.reason));
 }
 
-export const DIVERSION_HELP = 'The alert drops a state, every search and held contact is dropped, every man is out of contact. Once per mission, while the leader lives. Costs the clean-run bonus.';
+/** The diversion's rollover; `uses` is how many calls the mission allows. */
+export function describeDiversion(uses) {
+  const times = timesWord(uses);
+  return `The alert drops a state, every search and held contact is dropped, every man is out of contact. ${times[0].toUpperCase()}${times.slice(1)} per mission, while the leader lives. Costs the clean-run bonus.`;
+}
 
 // --- the back page ------------------------------------------------------------
 
@@ -488,7 +518,7 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * The results (SPEC.md §10), printed as the back page of the annual over the
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
-export function renderResults(element, outcome) {
+export function renderResults(element, outcome, levelLabel) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
@@ -525,7 +555,7 @@ export function renderResults(element, outcome) {
     logo,
     html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
     html('h2', null, OUTCOME_WORDS[outcome.kind]),
-    html('p', null, `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}.`),
+    html('p', null, `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}, on ${levelLabel}.`),
     fates,
     score,
     again,
@@ -558,14 +588,27 @@ export function describeRun(run) {
   return [html('b', null, run.label.toUpperCase()), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\nClick to pick this run.`];
 }
 
-/** The seed (SPEC.md §1), with a link that replays the same drop. */
-export function renderSeed(element, seed) {
+/**
+ * The seed (SPEC.md §1), with a link that replays the same drop at the same
+ * difficulty, and the difficulty (§10). `levelQuery` is the level's id for
+ * the address, or null for the default level. `onLevelClick` reopens the
+ * orders, where the level is chosen.
+ */
+export function renderSeed(element, seed, level, levelQuery, onLevelClick) {
   element.replaceChildren();
   const link = document.createElement('a');
-  link.href = `?seed=${seed}`;
+  link.href = `?seed=${seed}${levelQuery ? `&difficulty=${levelQuery}` : ''}`;
   link.textContent = `seed ${seed}`;
-  attachPopup(link, 'Reload with this seed: the same run lands the same way.');
-  element.append(link);
+  attachPopup(link, 'Reload with this seed: the same run lands the same way, at the same difficulty.');
+  const levelButton = html('button', 'seed-level', level.label.toLowerCase());
+  levelButton.type = 'button';
+  levelButton.addEventListener('click', () => {
+    // Off the button, so the next Space jumps rather than pressing it again.
+    levelButton.blur();
+    onLevelClick();
+  });
+  attachPopup(levelButton, [html('b', null, `DIFFICULTY: ${level.label.toUpperCase()}`), `\n${level.summary}\nChosen on the orders: click to change it until the stick jumps.`]);
+  element.append(link, ' · ', levelButton);
 }
 
 /**

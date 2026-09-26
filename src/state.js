@@ -65,7 +65,7 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     objectives: createObjectives(map),
     charges: [],
     explosions: 0,
-    diversionUsed: false, // the RAF diversion, once per mission (§4)
+    diversionsCalled: 0, // the RAF diversion, rules.diversion.uses per mission (§4)
     // Null while the mission is on; set once by settleMission (§10).
     outcome: null,
     // What happened at the last turn boundary, for the turn report.
@@ -482,17 +482,17 @@ export function swimAcross(state, unitId, target, map, rules) {
 export function checkDiversion(state, rules) {
   if (state.outcome) return { ok: false, reason: 'the mission is over' };
   if (state.phase === 'drop') return { ok: false, reason: 'not before the drop' };
-  if (state.diversionUsed) return { ok: false, reason: 'already called' };
   if (rules.diversion.uses < 1) return { ok: false, reason: 'not on this mission' };
+  if (state.diversionsCalled >= rules.diversion.uses) return { ok: false, reason: rules.diversion.uses === 1 ? 'already called' : 'all called' };
   if (!state.units.some((u) => u.leader && !u.dead)) return { ok: false, reason: 'the leader carried the radio, and he is dead' };
   return { ok: true, reason: null };
 }
 
-/** Call the RAF diversion: no AP, once, while the leader lives. */
+/** Call the RAF diversion: no AP, up to diversion.uses times, while the leader lives. */
 export function callDiversion(state, rules) {
   if (!checkDiversion(state, rules).ok) return state;
   const diverted = divertGarrison(state, rules);
-  return { ...diverted.state, diversionUsed: true, report: [...state.report, ...diverted.events] };
+  return { ...diverted.state, diversionsCalled: state.diversionsCalled + 1, report: [...state.report, ...diverted.events] };
 }
 
 /** Wait for a click on the target of an action; null cancels. */

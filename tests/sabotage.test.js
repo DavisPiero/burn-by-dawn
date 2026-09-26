@@ -280,7 +280,11 @@ export default [
     equal(called.noises.length, 0, 'unheard noises dropped');
     assert(called.enemies.every((e) => !e.investigating && !e.holding), 'searches dropped');
     assert(!unitIn(called, other.id).inContact, 'out of contact');
-    assert(called.diversionUsed && !checkDiversion(called, rules).ok, 'once');
+    equal(called.diversionsCalled, 1, 'counted');
+    assert(!checkDiversion(called, rules).ok, 'once');
+    const twice = { ...rules, diversion: { ...rules.diversion, uses: 2 } };
+    assert(checkDiversion(called, twice).ok, 'a second call when the level allows two');
+    assert(!checkDiversion(callDiversion(called, twice), twice).ok, 'and no third');
     equal(scoreOf(called, rules, s.turn).total, before - rules.scoring.clean, 'clean bonus gone');
 
     const floored = callDiversion({ ...s, explosions: 1, alert: { ...s.alert, points: rules.alert.states[1].from } }, rules);

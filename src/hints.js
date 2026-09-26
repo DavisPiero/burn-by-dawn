@@ -8,10 +8,19 @@ import { alertIndex } from './enemy.js';
 import { onBoard } from './units.js';
 
 const plural = (n, one, many) => (n === 1 ? one : many);
+
+/** "once", "twice", "3 times": how often something may be done. */
+export const timesWord = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
 const names = (units) => {
   const list = units.map((u) => u.shortName);
   return list.length <= 1 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
 };
+
+/** "one call left", "2 calls left": what is left of the RAF diversion. */
+export function callsLeft(state, rules) {
+  const left = Math.max(0, rules.diversion.uses - state.diversionsCalled);
+  return left === 1 ? (rules.diversion.uses === 1 ? 'once only' : 'one call left') : `${left} calls left`;
+}
 
 /**
  * @param {object} state
@@ -62,7 +71,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   const alert = alertIndex(state.alert.points, rules);
   if (alert >= 2 && diversionOk && leader) {
     const label = rules.alert.states[alert].label;
-    hints.push(`The garrison is ${label}. The RAF diversion [D] knocks it down a state: once only, and only while ${leader.shortName} lives.`);
+    hints.push(`The garrison is ${label}. The RAF diversion [D] knocks it down a state: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
   }
 
   const chutes = state.parachutes.length;
