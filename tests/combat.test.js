@@ -292,7 +292,7 @@ export default [
     assert(points[0] !== points[1], `gunfire alert differs between gunners: ${points}`);
   }],
 
-  ['a thrown stone: patrols in earshot go to look, a sentry turns for one turn, the rest walk on', async () => {
+  ['a thrown stone: patrols in earshot go to look, a sentry turns at once until the enemy phase (M13b), the rest walk on', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 7);
     const stone = { q: row.q + 3, r: row.r };
@@ -310,18 +310,17 @@ export default [
     const heardBy = listeners(thrown.enemies, 'stone', stone, thrown.alert.points, rules).map((e) => e.id);
     assert(heardBy.includes(nearPatrol.id) && heardBy.includes('sentry') && !heardBy.includes('far'), `listeners ${heardBy}`);
 
+    equal(thrown.enemies.find((e) => e.id === 'sentry').facing, facingToward(sentry, stone), 'the sentry faces the stone at once');
+    equal(thrown.enemies.find((e) => e.id === nearPatrol.id).facing, nearPatrol.facing, 'a patrol does not turn yet');
     const phase = runEnemyPhase(thrown, map, rules);
     const near = phase.state.enemies.find((e) => e.id === nearPatrol.id);
     assert(hexDistance(near, stone) < hexDistance(nearPatrol, stone), 'near patrol walked toward the stone');
-    const turned = phase.state.enemies.find((e) => e.id === 'sentry');
-    equal(turned.facing, facingToward(sentry, stone), 'sentry faces the stone');
+    equal(phase.state.enemies.find((e) => e.id === 'sentry').facing, sentry.homeFacing, 'the sentry is back at its post after the enemy phase');
     const far = phase.state.enemies.find((e) => e.id === 'far');
     const planned = walkRoute(map, farPatrol, new Set(), rules);
     equal(`${far.q},${far.r}`, `${planned.q},${planned.r}`, 'far patrol kept to its route');
     equal(`${phase.state.contact.q},${phase.state.contact.r}`, `${stone.q},${stone.r}`, 'the stone is the last known contact');
 
-    const later = runEnemyPhase({ ...phase.state, noises: [] }, map, rules);
-    equal(later.state.enemies.find((e) => e.id === 'sentry').facing, sentry.homeFacing, 'sentry back to its post facing');
   }],
 
   ['hearing carries further at Alert', async () => {
@@ -452,6 +451,17 @@ export default [
     equal(`${noise.kind} ${noise.q},${noise.r}`, `silenced ${row.q + 1},${row.r}`, 'a muffled shot, heard from the gunner');
     const body = killed.bodies.at(-1);
     equal(`${body.enemyId} ${body.q},${body.r} ${body.found}`, `${target.id} ${target.q},${target.r} false`, 'a body where it fell');
+  }],
+
+  ['a shot from beyond hitRange pins a man in the open; within it, it hits (M13b)', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    for (const [gap, expected] of [[rules.combat.hitRange + 1, 'pinned'], [rules.combat.hitRange, 'wounded']]) {
+      const e = enemy(row.q + gap, row.r, 'W');
+      const { state: s, unitId } = scenario(state, 'sapper', row, [e], { inContact: true });
+      const { events } = runDetection(s, map, rules);
+      assert(events.some((ev) => ev.kind === expected && ev.unitId === unitId), `${gap} hexes off: ${expected} (${events.map((ev) => ev.kind).join(', ')})`);
+    }
   }],
 
   ['knife (M12b): any man, beside an enemy looking the other way, kills it silently, leaves a body and ends his turn', async () => {

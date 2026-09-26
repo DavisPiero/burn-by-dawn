@@ -79,24 +79,36 @@ export function attachPopup(element, content) {
   element.addEventListener('mouseleave', hidePopup);
 }
 
-// SPEC.md §4's keys, for the KEYBOARD rollover: each line is [key, what it does]
-// pairs, the keys set in bold (M12).
+// SPEC.md §4's keys, for the KEYBOARD rollover: one to a line, in the
+// order of the keys (M13), each key in bold.
 const KEYS = [
-  [['1–3', 'pick a drop run'], ['Space', 'jump']],
-  [['1–6', 'select a man'], ['Tab', 'next man'], ['Esc', 'deselect']],
-  [['H', 'hold'], ['G', 'hide'], ['N', 'knife'], ['S', 'suppress'], ['K', 'kill']],
-  [['T', 'throw a stone'], ['A', 'stabilise'], ['U', 'pack chute']],
-  [['P', 'pick up a charge'], ['C', 'place a charge']],
-  [['E', 'pass a charge'], ['X', 'cut the line'], ['W', 'swim']],
-  [['D', 'RAF diversion'], ['Space', 'end turn'], ['Z', 'undo']],
-  [['R', 'patrol routes'], ['M', 'sound on or off']],
-  [['Esc', 'or right-click backs out of aiming an action']],
+  ['1–3', 'pick a drop run'],
+  ['1–6', 'select a man'],
+  ['A', 'stabilise a wounded man (aid)'],
+  ['C', 'place a charge'],
+  ['D', 'RAF diversion'],
+  ['E', 'pass a charge'],
+  ['Esc', 'deselect, or back out of aiming (or right-click)'],
+  ['H', 'hide'],
+  ['K', 'kill (gunners)'],
+  ['M', 'sound on or off'],
+  ['N', 'knife'],
+  ['P', 'pick up a charge'],
+  ['R', 'patrol routes'],
+  ['S', 'suppress (gunners)'],
+  ['Space', 'jump, then end turn'],
+  ['T', 'throw a stone'],
+  ['Tab', 'next man'],
+  ['U', 'pack chute'],
+  ['W', 'swim'],
+  ['X', 'cut the line (scouts)'],
+  ['Z', 'undo'],
 ];
 
 export function renderKeys(button) {
   attachPopup(button, () => [
     html('b', null, 'KEYBOARD'),
-    ...KEYS.flatMap((line) => ['\n', ...line.flatMap(([key, what], i) => [i ? ' · ' : '', html('b', null, key), ` ${what}`])]),
+    ...KEYS.flatMap(([key, what]) => ['\n', html('b', null, key), ` ${what}`]),
     '\n\nHover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
   ]);
 }
@@ -261,12 +273,34 @@ const EVENT_WEIGHT = {
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
+const DEATHS = new Set(['killed', 'blastKilled']);
+
+/**
+ * The report's events in reading order (M13): everything about one man
+ * together, in the order it happened but with his death always last, each
+ * man's lines placed by the worst of them; other lines by how much they
+ * matter. The card and the report under the map both read it this way.
+ */
+export function orderReport(events) {
+  const items = events.map((event, i) => ({ event, i, weight: EVENT_WEIGHT[event.kind] ?? 4, group: event.unitId ?? `#${i}` }));
+  const groups = new Map();
+  for (const item of items) {
+    const group = groups.get(item.group);
+    if (!group) groups.set(item.group, { weight: item.weight, first: item.i });
+    else group.weight = Math.min(group.weight, item.weight);
+  }
+  const death = (item) => Number(DEATHS.has(item.event.kind));
+  return items
+    .sort((a, b) => {
+      const ga = groups.get(a.group), gb = groups.get(b.group);
+      return ga.weight - gb.weight || ga.first - gb.first || death(a) - death(b) || a.i - b.i;
+    })
+    .map(({ event }) => event);
+}
+
 /** The report's lines, most important first, as the card shows them. */
 export function rankedReport(events, place) {
-  return events
-    .map((event, i) => ({ event, i, weight: EVENT_WEIGHT[event.kind] ?? 4 }))
-    .sort((a, b) => a.weight - b.weight || a.i - b.i)
-    .map(({ event }) => describeEvent(event, place));
+  return orderReport(events).map((event) => describeEvent(event, place));
 }
 
 /**
@@ -284,7 +318,7 @@ function titleBanner({ title, tagline }) {
 
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
- * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
@@ -298,7 +332,12 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
   card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, boldNames(text, briefing.names)));
+  if (briefing.choice?.top) card.appendChild(html('div', 'brief-top', briefChoice(briefing.choice)));
+  // A paragraph may be several lines, each on its own line (M13).
+  for (const text of briefing.paragraphs ?? []) {
+    const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
+    card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
+  }
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
@@ -316,7 +355,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     const label = html('label', null, [box, ' Brief me at the start of every turn']);
     label.addEventListener('click', (event) => event.stopPropagation());
     foot.appendChild(label);
-  } else if (briefing.choice) {
+  } else if (briefing.choice && !briefing.choice.top) {
     foot.appendChild(briefChoice(briefing.choice));
   } else {
     foot.appendChild(html('span'));
@@ -364,7 +403,7 @@ export function renderReport(element, state, place, onLocate) {
     element.appendChild(html('li', null, state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.'));
     return;
   }
-  for (const event of events) {
+  for (const event of orderReport(events)) {
     const item = html('li', null, boldNames(describeEvent(event, place), state.units.map((u) => u.shortName)));
     if (Number.isInteger(event.q) && Number.isInteger(event.r)) {
       item.classList.add('located');
@@ -385,14 +424,14 @@ export function describeEvent(event, place) {
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
-    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned in heavy cover, not hit.`;
+    case 'pinned': return `${event.unitName} is fired on by ${listOf(event.by)} — pinned, not hit (heavy cover, or too far off to hit him).`;
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} in ${at()}.`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
     case 'landed': return describeLanding(event, at());
     case 'explosion': return event.destroyed ? `BOOM — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
-    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
+    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} and dies.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
     case 'noReserve': return event.deployed
       ? `With the ${event.label.toLowerCase()} gone, the garrison can call up nobody more — but the reserve is already out.`
@@ -429,8 +468,15 @@ function describeLanding(event, where) {
  * short names); a name only counts as a whole word.
  */
 export function boldNames(line, names) {
-  if (!names?.length) return boldKeys(line);
-  return boldNamesOnly(line, names).flatMap((part) => (typeof part === 'string' ? boldKeys(part) : [part]));
+  const parts = names?.length ? boldNamesOnly(line, names) : [line];
+  return parts.flatMap((part) => (typeof part === 'string' ? markKilled(part) : [part]))
+    .flatMap((part) => (typeof part === 'string' ? boldKeys(part) : [part]));
+}
+
+/** "killed" in a report or card line, in bold red (M13): one of ours is dead. */
+function markKilled(line) {
+  const parts = line.split(/\b(killed)\b/);
+  return parts.map((part, i) => (i % 2 ? html('b', 'killed', part) : part)).filter((p) => p !== '');
 }
 
 function boldNamesOnly(line, names) {
@@ -657,7 +703,8 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
   const score = document.createElement('table');
   for (const line of outcome.score.lines) {
     const row = score.insertRow();
-    row.insertCell().textContent = line.label;
+    // Each scoring line with a bullet before it (M13).
+    row.insertCell().textContent = `• ${line.label}`;
     row.insertCell().textContent = `+${line.points}`;
   }
   const total = score.insertRow();
@@ -673,7 +720,8 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
     titleBanner(banner),
     html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
     html('h2', null, OUTCOME_WORDS[outcome.kind]),
-    html('p', null, `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}, on ${levelLabel}.`),
+    // The turn and level on a line of their own (M13).
+    html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),
     fates,
     score,
     html('div', 'again', [again]),
@@ -842,6 +890,10 @@ export function describeEffect(effect) {
 
 // --- the hover readout ----------------------------------------------------------
 
+// Between the readout's items: a bar, not an arrow, which read as "this
+// leads to that" (M13).
+const READOUT_GAP = '  |  ';
+
 /**
  * A fixed-height readout about whatever the mouse is over. With a trooper
  * selected this is the path readout SPEC.md §4 asks for: route, total AP, and
@@ -862,7 +914,10 @@ export function renderReadout(element, state, map, view) {
     if (e.suppressed) doing = `SUPPRESSED — will not fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
     else if (e.openToKill && e.killable) doing = `${doing}; still shaken — a gunner can kill it this turn`;
     const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
-    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}`);
+    // What it will do if the turn ended now (M13b), which the dashed outline shows.
+    const n = view.hoverEnemyNext;
+    const next = !n ? '' : `${READOUT_GAP}Next turn, as things stand: ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).`;
+    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}${next}`);
     return;
   }
   if (!hex) {
@@ -871,7 +926,7 @@ export function renderReadout(element, state, map, view) {
       return;
     }
     setText(element, state.selectedUnitId
-      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? ` ▸ ${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
+      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? `${READOUT_GAP}${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
       : 'Click a man to select him, or a hex to see what it is.');
     return;
   }
@@ -895,7 +950,7 @@ export function renderReadout(element, state, map, view) {
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
   const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
-  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`);
+  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join(READOUT_GAP)}`);
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */

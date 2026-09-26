@@ -279,6 +279,11 @@ export default [
     assert(out.out && !onBoard(out), 'out');
     equal(out.trail.length, 0, 'nothing left to test');
     equal(settleMission(moved, rules, map).outcome, null, 'others still in the field, mission goes on');
+    // M13b: his charge stays behind, on the hex he stepped off from.
+    const carried = unitIn(s, unit.id).charges;
+    assert(carried > 0, 'he was carrying one');
+    equal(out.charges, 0, 'he takes none out');
+    equal(moved.droppedCharges.filter((c) => c.q === eq && c.r === er - 1).length, carried, 'left where he stepped off');
   }],
 
   ['at Alarmed the reserve marches to its guard hex and stands facing the exfil, not hunting', async () => {
@@ -363,6 +368,19 @@ export default [
     const noCharges = { ...state, units: state.units.map((u) => ({ ...u, charges: 0 })) };
     assert(primaryShortfall(noCharges, rules) > 0, 'short');
     equal(settleMission(noCharges, rules, map).outcome.kind, 'withdrawn', 'too few charges');
+
+    // M13: charges on the ground with nobody left who could carry one.
+    const carriers = (u) => u.role === 'sapper' || u.charges > 0;
+    const dropped = state.units.filter(carriers).map((u) => ({ q: u.q, r: u.r }));
+    const stranded = {
+      ...state,
+      units: state.units.map((u) => (carriers(u) ? { ...u, dead: true, charges: 0 } : u)),
+      droppedCharges: dropped,
+    };
+    assert(primaryShortfall(stranded, rules) > 0, 'charges nobody can carry do not count');
+    equal(settleMission(stranded, rules, map).outcome.kind, 'withdrawn', 'withdrawn at once');
+    const oneLeft = { ...stranded, units: stranded.units.map((u) => (u.role === 'sapper' && u.leader ? { ...u, dead: false } : u)) };
+    equal(primaryShortfall(oneLeft, rules), 0, 'with a sapper alive they count again');
 
     let dawn = { ...state, turn: rules.turnLimit };
     dawn = endTurn(dawn, rules, map);

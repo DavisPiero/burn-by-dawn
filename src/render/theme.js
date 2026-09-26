@@ -385,12 +385,11 @@ export const COUNTER = {
   nameAspect: 0.62,
   numberFill: PALETTE.paper,
   numberText: PALETTE.ink,
-  // AP left, one big figure top right, as a wargame counter prints its
-  // factors; greyed back when he has none.
+  // AP as dots top right since M13 (was one big figure): two across, filled
+  // for AP left, hollow and faint for AP spent.
   apFill: PALETTE.paper,
-  apSize: 16,
-  apAt: { x: 47.5, y: 12 },
-  apSpentOpacity: 0.4,
+  apDots: { x: 46, y: 6.5, pitch: 5.6, columns: 2, radius: 2.2, stroke: PALETTE.ink },
+  apSpentOpacity: 0.45,
   // The man's own face, and his role in the roundel top left.
   chip: { x: 14, y: 6, size: 29 },
   role: { x: 3.5, y: 4, size: 12 },
@@ -398,8 +397,34 @@ export const COUNTER = {
 
 // SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
 // path a hex at a time, quickly, and stops; a blast is revealed in steps.
+// Shots on the board (M13): a gunner's burst when he suppresses, one dim shot
+// when he kills. Display only.
+export const SHOT = {
+  ms: 900,
+  burstRounds: 4,
+  roundMs: 110,
+  travelMs: 160,
+  tracer: PALETTE.red,
+  tracerWidth: 3,
+  dash: 16,
+  muzzleOffset: 24,
+  flashSize: 30,
+};
+
+// An enemy under suppression (M13): its counter faded and a red band across it.
+export const SUPPRESSED = {
+  fade: PALETTE.paper,
+  fadeOpacity: 0.5,
+  band: PALETTE.red,
+  bandStroke: PALETTE.ink,
+  bandHeight: 13,
+  bandRotate: -14,
+  text: PALETTE.paper,
+  textSize: 8.5,
+};
+
 export const MOTION = {
-  travelMsPerHex: 70,
+  travelMsPerHex: 105, // half as slow again since M13: the eye can follow him
   blastMs: 1500,
 };
 
@@ -460,9 +485,15 @@ export const ENEMY = {
   facingStroke: PALETTE.ink,
   facingDistance: 33,
   facingSize: 7,
+  // Next turn's facing, when it differs (M13b): hollow, dashed in red.
+  nextFill: PALETTE.paper,
 };
 
 export const VISION = {
+  // The hovered enemy's next-turn view (M13b): a dashed ink outline.
+  nextEdge: PALETTE.ink,
+  nextEdgeWidth: 2.5,
+  nextDash: '6 5',
   fill: PALETTE.red,
   opacity: 0.13,
   hoverOpacity: 0.3,
@@ -543,6 +574,7 @@ export const MARKER = {
   size: 22,
   hiddenOpacity: 0.6,
   groundSize: 26,
+  chuteReach: 0.72, // hex radii from the centre into a corner, clear of most of a counter (M13)
 };
 
 export const RISK = {
@@ -590,7 +622,7 @@ export const OBJECTIVE = {
   pointHoverOpacity: 1,
   pointIconSize: 34,
   pointIconShift: 0.3, // hex radii toward the target it serves (M12)
-  stampWidth: 110,
+  stampWidth: 138,
   stampHeight: 44,
   stampRotate: -12,
 };
@@ -1395,23 +1427,27 @@ const SPRITES = {
       svg('rect', { x: 5, y: 2, width: 14, height: 3.5, rx: 1.5, class: 'ink' }),
     ],
   },
+  // Redrawn bolder and simpler in M13: at about 15 px the old ones blurred.
+  // Binoculars from the front: two big lenses and the bridge between them.
   'symbol-scout': {
     viewBox: '0 0 24 24',
     draw: () => [
-      svg('rect', { x: 9, y: 9, width: 6, height: 4, class: 'ink' }),
-      svg('rect', { x: 3, y: 5, width: 6, height: 4, rx: 1, class: 'ink' }),
-      svg('rect', { x: 15, y: 5, width: 6, height: 4, rx: 1, class: 'ink' }),
-      circle(6.5, 14, 4.5, 'ink'),
-      circle(17.5, 14, 4.5, 'ink'),
+      svg('rect', { x: 8, y: 8.5, width: 8, height: 4.5, class: 'ink' }),
+      circle(6.5, 13, 5.5, 'ink'),
+      circle(17.5, 13, 5.5, 'ink'),
+      circle(6.5, 13, 2.4, 'paper'),
+      circle(17.5, 13, 2.4, 'paper'),
     ],
   },
+  // A Bren from the side, as a solid silhouette: the curved magazine standing
+  // up out of the top, the stock behind, the bipod down at the muzzle.
   'symbol-gunner': {
     viewBox: '0 0 24 24',
     draw: () => [
-      svg('rect', { x: 2, y: 10, width: 18, height: 3, class: 'ink' }),
-      svg('rect', { x: 10, y: 3, width: 3.5, height: 7, class: 'ink' }),
-      fill('M18 13 L22 13 L18 19 Z', 'ink'),
-      line('M6 13 L3 20 M6 13 L9 20', 1.6),
+      fill('M1.5 10 H18 V14.5 H7 L4.5 17.5 H1.5 Z', 'ink'),
+      svg('rect', { x: 17, y: 11, width: 6, height: 2.4, class: 'ink' }),
+      fill('M9 10 L9.5 3 Q12.5 2 14.5 4 L13.2 10 Z', 'ink'),
+      line('M17 14 L14.5 21 M17 14 L19.5 21', 2.2),
     ],
   },
 
@@ -1821,13 +1857,15 @@ const SPRITES = {
       label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
     ],
   },
+  // Wider since M13: the stencil was squeezed to fit and looked squashed. It
+  // is still fitted to the width, but by the gaps between letters, never by
+  // narrowing the letters themselves.
   'stamp-destroyed': {
-    viewBox: '0 0 200 80',
+    viewBox: '0 0 250 80',
     draw: () => [
-      svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, class: 'paper', 'fill-opacity': 0.85 }),
-      svg('rect', { x: 4, y: 4, width: 192, height: 72, rx: 6, fill: 'none', class: 'stroke-red', 'stroke-width': 6 }),
-      // Fitted to the stamp's width whatever face is used, so it never runs off the edge.
-      label('DESTROYED', { x: 100, y: 43, 'font-size': 34, 'font-family': TYPE.slab, textLength: 164, lengthAdjust: 'spacingAndGlyphs', class: 'red' }),
+      svg('rect', { x: 4, y: 4, width: 242, height: 72, rx: 6, class: 'paper', 'fill-opacity': 0.85 }),
+      svg('rect', { x: 4, y: 4, width: 242, height: 72, rx: 6, fill: 'none', class: 'stroke-red', 'stroke-width': 6 }),
+      label('DESTROYED', { x: 125, y: 43, 'font-size': 34, 'font-family': TYPE.slab, textLength: 212, lengthAdjust: 'spacing', class: 'red' }),
     ],
   },
 

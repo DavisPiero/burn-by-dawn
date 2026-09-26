@@ -138,7 +138,7 @@ All costs and modifiers below are numbers in `rules.json`.
   lost. He gets **+1 concealment** on the hex he is on — a hiding man is as hard to see as
   a scout, a hiding scout harder still. It protects only the hex he stops on: hexes he
   walked through earlier that turn are tested without it. It lasts until he next spends
-  AP, so a man who stays down (`H`) stays hidden for free. A hidden trooper is marked on
+  AP, so a man left where he is stays hidden for free. A hidden trooper is marked on
   his counter.
 - **Suppress** (gunner only) — costs **2 AP**, leaving one step to get back into cover.
   The target must be a **visible enemy: within the gunner's spot radius, with a clear
@@ -175,7 +175,8 @@ All costs and modifiers below are numbers in `rules.json`.
   carry one.
 - **Throw a stone** (any trooper) — costs **1 AP**. Pick a hex **up to 3 away**; no line
   of sight needed, it is lobbed. It is a noise event on that hex (§6): **alert +1**, and
-  enemies in earshot react to it — patrols go and look, sentries turn to face it. The
+  enemies in earshot react to it — patrols go and look in the enemy phase, sentries turn
+  to face it **at once** (M13b), for the rest of the player phase and the detection check. The
   trade is deliberate: you choose where they look, and you pay a sighting's worth of alert
   for it. The hover readout shows which enemies would hear it before the player commits.
   **A throw is not a move:** he stays on his hex. While it is aimed the board draws the lob
@@ -230,7 +231,8 @@ to be casual while still being strategic.
   §9), so undoing can never re-roll anything; it is a mis-click safety net, not a scouting
   tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
-  `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
+  `R` toggle patrol-route overlay. Actions: `H` hide (go to ground; M13 — it was `G`, and
+  `H` held a man's position, which nothing needed: Tab moves on, End turn ends it),
   `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
@@ -349,6 +351,11 @@ he is shot on (`combat.shotResult` in `rules.json`):
 | none or light (field, track, bridge; marsh, orchard, ridge, lock) | **Hit** |
 | heavy (hedgerow, wood, farmhouse) | **Pinned** — no hit, but his next turn's pool is 1 AP smaller (never below 1), and he stays in contact |
 
+**Range** (M13b, from playtesting — a spotted man had no way out): a shot hits only if an
+enemy firing on him is within **2 hexes** (`combat.hitRange`); from further off, every
+shot only pins, whatever the cover. Getting distance is a way out, and the readout shows
+it before he moves.
+
 A trooper has **two hits** (`hitsToKill`): the first **wounds** him, the second **kills**
 him. A trooper is shot **at most once per turn**, however many enemies fire, so there are
 always at least two turns between being first spotted and dying — and a man who keeps to
@@ -376,7 +383,9 @@ costs nothing mechanically, and it is most of what makes the six feel like six p
 
 There is **no fog of war.** Enemies are always drawn. The hidden resource is alert.
 
-Each enemy has a vision radius and a facing arc (120°). A trooper inside it is tested:
+Each enemy has a vision radius and a facing arc (110° since M13b, was 120°: at 120° the
+arc took in both hexes beside the facing one, and playtesters found patrols too hard to
+avoid; the garrison gained the Road patrol, §8, to make up). A trooper inside it is tested:
 
 ```
 detection = base(enemy) - cover(terrain) - concealment(trooper) + proximity bonus
@@ -391,7 +400,7 @@ pips. The player must see risk before committing.
 | State | From | Effect |
 |---|---|---|
 | **Calm** | 0 | Patrols walk fixed routes. |
-| **Suspicious** | 2 | Patrols pause and sweep. Vision radius +1. |
+| **Suspicious** | 2 | Patrols pause and sweep (a turn of 60°, M13b; it was an about-face). Vision radius +1. |
 | **Alert** | 4 | Vision +1. **Detection +1**: the garrison looks harder, so light cover no longer hides a man in the open arc. Hearing +1: noise draws enemies from further away. |
 | **Alarmed** | 7 | As Alert, and all patrols hunt last known contact. A reserve squad enters from the road edge and watches exfil. |
 
@@ -429,9 +438,17 @@ the dial.
 
 **Sentries cannot leave their post.** A sentry that hears a noise turns to face it in the
 enemy phase instead, and holds that facing through the next player phase and detection
-check; in the enemy phase after that it turns back to its facing in `map.json`. So a stone
-thrown on turn N opens the ground the sentry was watching for turn N+1. The turned facing
-is drawn like any other, so the gap is visible.
+check; in the enemy phase after that it turns back to its facing in `map.json`. A thrown
+stone is the exception (M13b): the sentries in earshot turn to it **at once**, in the
+player phase, and hold it through that turn's detection check, turning back to their post
+in the enemy phase — so a stone opens the ground now, for the men who still have AP. The
+turned facing is drawn like any other, so the gap is visible.
+
+**Next turn is shown** (M13b): every enemy that will face a new way after the coming
+enemy phase, if the turn ended now, shows it as a hollow dashed wedge beside its solid
+one; hovering an enemy outlines, dashed, what it will see next turn from where it will
+stand, and the readout says where it will be. It is the same sum the turn will do, so it
+changes as the men move.
 
 The most recent noise hex, or the hex of a first sighting, is the **last known contact**
 that every patrol hunts at Alarmed. Seeing a man who is already in contact again does not
@@ -543,6 +560,9 @@ The map must support **three genuinely viable approaches**, each with a distinct
 
 - **Canal towpath** — heavy cover, slow, marsh, but runs directly under the bridge.
 - **Hedgerow lanes** — the middle path. Balanced, crosses two patrol routes.
+- *Since M13b* a **Road patrol** walks the length of the road that runs north–south
+  through the middle of the board, from the south fields up past the railway to the north
+  edge and back, starting at its south end.
 - **Wood and ridge line** — fast and good spotting, but passes the patrol base.
 
 No route reaches all three objectives efficiently. Choosing one is choosing which
@@ -611,7 +631,8 @@ Every mission ends in one of three outcomes:
 - **Success:** primary destroyed AND at least 3 troopers reach an exfil hex by turn 20.
 - **Withdrawn:** the mission can no longer succeed, but the stick is not wiped out —
   fewer than 3 men are still alive or already out, or there are not enough charges left
-  anywhere (carried, dropped or set) to finish the primary. Also: nobody is left on the
+  anywhere (carried, dropped or set) to finish the primary — a dropped charge counts only
+  while a man still on the board could carry it (M13). Also: nobody is left on the
   board and the primary is intact. The mission ends at once: every man still on the board
   gets out, then any charges still burning go off (they can still finish an objective).
 - **Failed:** dawn arrives (the end of turn 20) without success, or every man is dead.
@@ -623,7 +644,8 @@ charges still burning have gone off.
 **Exfil** is a short run of hexes on the **south map edge**, listed in `map.json`, away
 from all three drop runs (north, east, west — §9). A trooper who ends a move on an exfil
 hex is out: removed from the board, safe, and counted. At Alarmed the reserve squad
-watches it (§6).
+watches it (§6). A man carrying a charge does not take it out: he leaves it on the hex he
+stepped off from, for another man to pick up (M13b).
 
 Results page, styled as the back page of the annual, listing all six by name and fate
 (out, killed, left behind), and the score, whatever the outcome:
@@ -646,9 +668,9 @@ as `?seed=` picks the seed.
 
 | Level | Changes from Normal |
 |---|---|
-| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b) |
+| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b); hiding gives +2 concealment, not +1 (M13b) |
 | **Normal** | The mission as above |
-| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3 |
+| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3, and keeps the old 120° arc (M13b); their shots hit from 3 hexes off, not 2 (M13b) |
 
 The score is the same sum at every level.
 
@@ -725,7 +747,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   crossed out in red, marker-pen style, over the risk pips. The line is cold blue, and
   red from the first hex where he would be spotted (M11), so red means trouble.
 - **Our counters are printed solid army green** with a dark name strip (leader blue for
-  the ranking man), AP left as one large figure top right, the role in a paper roundel,
+  the ranking man), AP left as dots top right (M13, was one large figure: two numbers on
+  a counter confused players), filled for AP left and hollow for AP spent, the role in a paper roundel,
   and a sliver of the card's cut edge showing down-right under the soft shadow.
 - **Objectives say where to go.** Each objective's hexes are outlined firmly, its art sits
   inside them, and its name above them. Each charge point is a red dashed hex with an empty
@@ -748,6 +771,16 @@ Desktop makes the skeuomorphism work properly, so use the room:
   in shade under a coarse halftone, and the card stands off it on a deep soft shadow.
   Picking a run then jumping needs **Space**, or a second click on the same run.
 - **Keys are set in bold** wherever the game's text names one (M12).
+- **The turn cards sit in the bottom right of the map** (M13), narrower and with nothing
+  darkened, so what they report can be seen beside them; the orders stay in the middle,
+  wider, with the difficulty at the top because it changes the numbers written below it.
+- **Shots are seen and heard** (M13): suppressing fires a burst — flashes at the gunner,
+  red tracer to the enemy, its counter flashing, and a burst of gunfire — and a kill is
+  one dim shot and a muffled cough. A suppressed enemy's counter is printed faint with a
+  red SUPPRESSED band across it.
+- **The turn report** keeps each man's lines together, his death always last, and sets
+  "killed" in bold red (M13).
+- **Parachutes** lie inside their hex, in one of its corners, the same one all game (M13).
 - **Starting again.** A restart in the outer margin (a first click arms it, a second
   starts a new game on a fresh seed at the same level), and Play again on the back page,
   start a new mission without reloading the page; the orders open again (M12).
@@ -822,6 +855,8 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M13b** | The approved playtest rules: 110° arcs and a Road patrol, next turn's facing shown, a 60° sweep, shots from far off only pin, a stone turns sentries at once, charges left at the exfil, hiding counts double on Easy, Hard keeping the old arcs and range | A shot from more than 2 hexes pins; a stone turns a sentry before the detection check; a man leaving with a charge leaves it before the exfil; hovering an enemy outlines its next turn; the balance bot is re-run at every level |
+| **M13** | Third operator playtest review, no rules change but one bug: the orders reworked (level on top, wider, more air), Hide on H and Hold gone, turn cards docked bottom right, keys one to a line, shots and a suppressed band, AP as dots, new gunner and scout symbols, report grouped by man, the mission ended when no one can carry the charges left | The orders fit at 1280x800 with the difficulty first; H hides; a turn card leaves the left of the map clear; a suppress is seen and heard; with every man who could carry a charge dead the mission is withdrawn at once |
 | **M12b** | The approved playtest rules: the leader's orders strongest beside him, the knife, the spread zoomed to fit a small window | A man beside the leader gets +2 AP and two chevrons, within 2 hexes +1 and one; any man behind an enemy beside him, not in contact, can knife it for 2 AP and his turn, silently, leaving a body; a 1200-wide window shows the whole spread with no sideways scroll; the balance bot is re-run with and without the knife |
 | **M12** | Second operator playtest review: the bridge post a stone can turn, the orders and ring wording, keys in bold, restart, the leader's rollover, bells on the back page, the exchange's wires, rings clear of the names, a shaded spread under the orders, the run tabs on their lines, hedges that meet in a T | A stone thrown north of the bridge post turns it off both piers; the orders fit at 1280x800 and name the places in capitals; every key in the game's text is bold; a second click on a run jumps; restart and Play again start a new seed without a reload; hovering the leader shows his orders; the back page rings bells or tolls; the balance bot is re-run (Normal 81/75/65, from 81/78/69) |
 

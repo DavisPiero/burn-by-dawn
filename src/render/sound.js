@@ -222,6 +222,23 @@ const SYNTHS = {
     }
   },
 
+  // A gunner's burst (M13, suppressing): four quick shots, each a hard crack
+  // with a short, dull body behind it.
+  gunfire: (ctx, out, at, v) => {
+    const rng = createRng(NOISE_SEED + 140 + v);
+    for (let i = 0; i < 4; i++) {
+      const t = at + i * 0.11 + rng.next() * 0.012;
+      noiseThrough(ctx, out, t, 0.05, [filter(ctx, 'highpass', 1600), envelope(ctx, t, 0.7, 0.04, 0.001)], v * 0.13 + i * 0.09);
+      noiseThrough(ctx, out, t, 0.16, [filter(ctx, 'lowpass', 900 + rng.next() * 300), envelope(ctx, t, 0.55, 0.14, 0.002)], v * 0.17 + i * 0.11 + 0.4);
+    }
+  },
+
+  // A silenced Sten (M13, a kill): one muffled cough and the bolt's click.
+  'silenced-shot': (ctx, out, at, v) => {
+    noiseThrough(ctx, out, at, 0.09, [filter(ctx, 'lowpass', 700), envelope(ctx, at, 0.8, 0.08, 0.002)], v * 0.21 + 0.2);
+    noiseThrough(ctx, out, at + 0.05, 0.03, [filter(ctx, 'bandpass', 3500, 4), envelope(ctx, at + 0.05, 0.25, 0.02, 0.001)], v * 0.07);
+  },
+
   // Mission accomplished (M12): the church in the village ringing at dawn,
   // six bells in rounds, twice through — one for each man — heard across the fields.
   'church-bells': (ctx, destination, at) => {
@@ -239,13 +256,14 @@ const SYNTHS = {
   // The mission failed (M12): one low bell tolling, slowly, and an air-raid
   // siren winding up and down a long way off under it.
   'bell-toll': (ctx, destination, at) => {
-    for (const t of [0, 1.8, 3.6]) bell(ctx, destination, at + t, 98, 0.42, 4.2);
+    // Lower, and the siren's wail shallower (M13: it wobbled too much).
+    for (const t of [0, 1.8, 3.6]) bell(ctx, destination, at + t, 73, 0.46, 4.4);
     const siren = ctx.createOscillator();
     siren.type = 'triangle';
-    siren.frequency.setValueAtTime(300, at + 0.4);
+    siren.frequency.setValueAtTime(250, at + 0.4);
     for (let k = 0; k < 3; k++) {
-      siren.frequency.linearRampToValueAtTime(560, at + 1.4 + k * 1.8);
-      siren.frequency.linearRampToValueAtTime(380, at + 2.2 + k * 1.8);
+      siren.frequency.linearRampToValueAtTime(330, at + 1.4 + k * 1.8);
+      siren.frequency.linearRampToValueAtTime(290, at + 2.2 + k * 1.8);
     }
     const level = ctx.createGain();
     level.gain.setValueAtTime(0.0001, at + 0.4);
@@ -274,6 +292,8 @@ const CUES = {
   diversion: [['crump', 0.25, 0], ['crump', 0.18, 0.4], ['crump', 0.22, 0.95]],
   // The back page (M12): bells for a mission accomplished, a toll for the rest,
   // just after the page has turned.
+  suppress: [['gunfire', 0.45, 0]],
+  kill: [['silenced-shot', 0.5, 0]],
   victory: [['church-bells', 0.9, 0.35]],
   defeat: [['bell-toll', 0.55, 0.35]],
 };

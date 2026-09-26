@@ -80,14 +80,14 @@
     ]
   },
 
-  "_patrols": "How the alert states move patrols (SPEC.md §6). Suspicious: a patrol stops to sweep on every `suspiciousPauseEvery`-th turn and walks on the others — read literally, 'pause and sweep' would freeze patrols for the rest of the mission once an explosion pins the alert at Suspicious. A sweep turns the patrol `sweepRotation` hex directions (3 is an about-face). Who reacts to a noise is decided by `noise` below, not by the state. Alarmed: every moving enemy hunts the last known contact; whoever reaches it sweeps, the contact counts as searched, and everyone goes back to their route.",
+  "_patrols": "How the alert states move patrols (SPEC.md §6). Suspicious: a patrol stops to sweep on every `suspiciousPauseEvery`-th turn and walks on the others — read literally, 'pause and sweep' would freeze patrols for the rest of the mission once an explosion pins the alert at Suspicious. A sweep turns the patrol `sweepRotation` hex directions (3 is an about-face). Who reacts to a noise is decided by `noise` below, not by the state. Alarmed: every moving enemy hunts the last known contact; whoever reaches it sweeps, the contact counts as searched, and everyone goes back to their route. M13b: `sweepRotation` 1 (60°, was 3, an about-face): playtesters found enemies swinging round to watch whole new stretches of the map between turns.",
 
   "patrols": {
     "suspiciousPauseEvery": 2,
-    "sweepRotation": 3
+    "sweepRotation": 1
   },
 
-  "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body or a parachute an enemy came onto or beside, on its way or where it ended its go. A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off.",
+  "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body or a parachute an enemy came onto or beside, on its way or where it ended its go. A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off. M13b: a thrown stone turns the sentries in earshot at once, in the player phase, and they hold that facing through the detection check and back to their post in the enemy phase; patrols still walk over in the enemy phase.",
 
   "noise": {
     "found": 3,
@@ -97,10 +97,11 @@
     "explosion": 7
   },
 
-  "_combat": "SPEC.md §5 Wounds and §6 contact. A trooper spotted at one detection check and spotted again at the next is shot, at most once per turn. `shotResult` says what a shot does by the cover of the hex he is shot on (light cover hides but does not stop a bullet, M8b): `hit` counts toward `hitsToKill` (the first wounds, the last kills); `pinned` does no harm but takes `pinnedApLoss` off his next pool, never below 1. No dice: the readout shows which it will be. A wounded man's pool is `woundedActionPoints`, with no orders bonus, until he is stabilised; his charges drop on his hex, and a dead man's do too.",
+  "_combat": "SPEC.md §5 Wounds and §6 contact. A trooper spotted at one detection check and spotted again at the next is shot, at most once per turn. `shotResult` says what a shot does by the cover of the hex he is shot on (light cover hides but does not stop a bullet, M8b): `hit` counts toward `hitsToKill` (the first wounds, the last kills); `pinned` does no harm but takes `pinnedApLoss` off his next pool, never below 1. No dice: the readout shows which it will be. A wounded man's pool is `woundedActionPoints`, with no orders bonus, until he is stabilised; his charges drop on his hex, and a dead man's do too. `hitRange` (M13b, from playtesting: a spotted man had no way out): a shot hits only if an enemy firing on him is within this many hexes; from further off every shot pins, as in heavy cover. Null turns it off.",
 
   "combat": {
     "shotResult": { "none": "hit", "light": "hit", "heavy": "pinned" },
+    "hitRange": 2,
     "pinnedApLoss": 1,
     "hitsToKill": 2,
     "woundedActionPoints": 1

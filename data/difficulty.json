@@ -9,13 +9,14 @@
     {
       "id": "easy",
       "label": "Easy",
-      "summary": "The bridge takes one charge, two men out will do, the RAF can be called twice, orders reach 3 hexes, and undo goes back as far as the start of the turn.",
+      "summary": "The bridge takes one charge, two men out will do, the RAF can be called twice, orders reach 3 hexes, hiding counts double, and undo goes back as far as the start of the turn.",
       "rules": {
         "objectives": { "bridge": { "chargesNeeded": 1 } },
         "mission": { "minimumOut": 2 },
         "diversion": { "uses": 2 },
         "command": { "radius": 3 },
-        "undo": { "steps": null }
+        "undo": { "steps": null },
+        "actions": { "hide": { "concealment": 2 } }
       }
     },
     {
@@ -27,15 +28,16 @@
     {
       "id": "hard",
       "label": "Hard",
-      "summary": "Four men must get out, and every sentry and patrol sees a hex further.",
+      "summary": "Four men must get out, every sentry and patrol sees a hex further and wider, and their shots hit from 3 hexes off.",
       "rules": {
-        "mission": { "minimumOut": 4 }
+        "mission": { "minimumOut": 4 },
+        "combat": { "hitRange": 3 }
       },
       "enemies": {
         "types": {
-          "sentry": { "visionRadius": 4 },
-          "patrol": { "visionRadius": 4 },
-          "reserve": { "visionRadius": 4 }
+          "sentry": { "visionRadius": 4, "arcDegrees": 120 },
+          "patrol": { "visionRadius": 4, "arcDegrees": 120 },
+          "reserve": { "visionRadius": 4, "arcDegrees": 120 }
         }
       }
     }

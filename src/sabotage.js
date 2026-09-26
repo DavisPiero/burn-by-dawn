@@ -11,7 +11,7 @@ import { hexDistance, NEIGHBOR_DIRS } from './hex.js';
 import { columnOf, hexKey, isInPlay, isPassable, terrainAt, terrainIdAt } from './map.js';
 import { makeNoise } from './enemy.js';
 import { applyHook } from './traits.js';
-import { canAct, isWounded, occupiedHexes, onBoard, result } from './units.js';
+import { canAct, chargeCapacity, isWounded, occupiedHexes, onBoard, result } from './units.js';
 
 // --- setup -------------------------------------------------------------------
 
@@ -253,7 +253,11 @@ export function primaryShortfall(state, rules) {
   if (primary.destroyed) return 0;
   const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
   const set = state.charges.filter((c) => c.objectiveId === primary.id).length;
-  const have = primary.detonated + set + carried + state.droppedCharges.length;
+  // A charge on the ground counts only while a man still in the field could
+  // carry it (M13): with both sappers and Ox dead, a scout or gunner can never
+  // pick one up, and the mission must end rather than drag on.
+  const carrier = state.units.some((u) => onBoard(u) && chargeCapacity(u, rules) > 0);
+  const have = primary.detonated + set + carried + (carrier ? state.droppedCharges.length : 0);
   return Math.max(0, kindOf(primary, rules).chargesNeeded - have);
 }
 

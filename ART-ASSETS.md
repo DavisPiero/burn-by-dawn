@@ -81,12 +81,12 @@ keeps a seventh man a JSON entry until someone draws him.
 
 | Asset | viewBox | Notes |
 |---|---|---|
-| `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square printed solid `.green`, a dark name strip along the bottom, a paper roundel top left for the role symbol, AP figure top right is drawn by code, and a sliver of card edge down-right (M7b) |
+| `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square printed solid `.green`, a dark name strip along the bottom, a paper roundel top left for the role symbol, AP dots top right are drawn by code (M13; a figure before), and a sliver of card edge down-right (M7b) |
 | `counter-frame-allied-leader.svg` | 56 x 56 | the ranking man. Same die-cut silhouette as above so the two read as one set — distinguish it by the name strip and a rank flash, not by a different shape. Strip and rank flash use `.leader` |
 | `counter-frame-enemy.svg` | 56 x 56 | visually distinct at a glance, not just recoloured |
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
-| `symbol-scout.svg` | 24 x 24 | binoculars |
-| `symbol-gunner.svg` | 24 x 24 | Bren |
+| `symbol-scout.svg` | 24 x 24 | binoculars, from the front: two big lenses and a bridge (redrawn bolder M13) |
+| `symbol-gunner.svg` | 24 x 24 | Bren, a solid side silhouette: curved magazine up, stock, bipod (redrawn bolder M13) |
 | `counter-enemy-sentry.svg` | 56 x 56 | static post. **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
@@ -172,7 +172,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal) |
-| `stamp-destroyed.svg` | 200 x 80 (red rubber stamp, rotated in code) |
+| `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
 | `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs the wires from its crossarm to the building, M12) |
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
@@ -259,6 +259,8 @@ MP3, and a second would double the requests for files that are not there.
 | `paper-rustle.mp3` | a briefing card opens, the back page turns over | ~0.4 s |
 | `pencil-scratch.mp3` | any action but a move: hide, a charge, a stone, suppress… | ~0.3 s |
 | `counter-snap.mp3` | a man moves, or a move is undone | ~0.1 s |
+| `gunfire.mp3` | a gunner suppresses: a short burst of four shots (M13) | ~0.5 s |
+| `silenced-shot.mp3` | a gunner's kill: one muffled shot from a silenced Sten and the bolt's click (M13) | ~0.2 s |
 | `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
 | `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
 | `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |

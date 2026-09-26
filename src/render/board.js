@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SPEECH, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -541,13 +541,27 @@ export function renderPieces(layers, state, view) {
 
   drawArt(layers, state, view);
   drawVision(layers, view.visionById, view.hoverEnemy);
+  // What the hovered enemy will see next turn, if the turn ended now (M13b):
+  // a dashed outline only, so it never reads as this turn's risk.
+  if (view.hoverEnemyNextArea) {
+    drawAreaEdge(layers, layers.vision, view.hoverEnemyNextArea, [[VISION.edgeCasing, VISION.edgeCasingWidth]]);
+    drawAreaEdge(layers, layers.vision, view.hoverEnemyNextArea, [[VISION.nextEdge, VISION.nextEdgeWidth]], { 'stroke-dasharray': VISION.nextDash });
+  }
   drawSites(layers, state, view);
   if (view.drop) drawDrop(layers, view.drop);
 
+  // Where he can go and the leader's orders: every outline's paper casing
+  // first, then every line, so where two run along the same hex edge neither
+  // casing blanks out the other's line (M13: Dutch's two rings).
   if (view.reachable) drawReachable(layers, view.reachable);
-  if (view.commandArea) drawCommand(layers, view.commandArea);
-  // The inner band, where his orders are strongest (M12), in a finer dash.
-  if (view.commandCloseArea) drawCommand(layers, view.commandCloseArea, COMMAND.closeDash);
+  const outlines = [
+    view.reachable && { area: view.reachable, casing: [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth], line: [PATH.reachableEdge, PATH.reachableEdgeWidth], extra: {} },
+    view.commandArea && { area: view.commandArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.dash } },
+    // The inner band, where his orders are strongest (M12), in a finer dash.
+    view.commandCloseArea && { area: view.commandCloseArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.closeDash } },
+  ].filter(Boolean);
+  for (const o of outlines) drawAreaEdge(layers, layers.reachable, o.area, [o.casing]);
+  for (const o of outlines) drawAreaEdge(layers, layers.reachable, o.area, [o.line], o.extra);
 
   for (const route of view.routes) drawRoute(layers, route);
 
@@ -578,7 +592,7 @@ export function renderPieces(layers, state, view) {
 
   for (const enemy of state.enemies) {
     const hovered = enemy.id === view.hoverEnemy?.id;
-    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id));
+    const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id), view.nextFacing?.get(enemy.id));
     // Suppressed, or still open to a kill after it (SPEC.md §4): both are
     // under the gunner's fire, and the hover says which.
     if (enemy.suppressed || enemy.openToKill) counter.appendChild(marker('marker-suppressed', 38, -12));
@@ -599,10 +613,10 @@ export function renderPieces(layers, state, view) {
     // Each marker has a rollover saying what it means (M11).
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
-    if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 38, unit));
+    if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 40, unit));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
     // One chevron for the ordinary orders, two for the strongest, beside him.
-    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 38, 13, unit));
+    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 40, 20, unit));
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
@@ -612,7 +626,8 @@ export function renderPieces(layers, state, view) {
 
   drawBlasts(layers, state, now);
   drawTargetRings(layers, view.targetRings, now);
-  if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points), now - view.flyShow.since);
+  if (view.shotShow) drawShot(layers, view.shotShow, now);
+  if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
@@ -674,8 +689,8 @@ function drawTargetRings(layers, rings, now) {
     }
     // The note, on the side of the ring toward the middle of the board. It may
     // be several lines; the last sits just above the ring.
-    const east = c.x < midX;
-    const x = east ? c.x + rx * 0.75 : c.x - rx * 0.75;
+    const east = ring.beside || c.x < midX;
+    const x = ring.beside ? c.x + rx + 12 : east ? c.x + rx * 0.75 : c.x - rx * 0.75;
     const lines = [].concat(ring.note);
     const note = text('', {
       'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
@@ -686,7 +701,9 @@ function drawTargetRings(layers, rings, now) {
     const lead = RINGS.noteSize * RINGS.noteLeading;
     const above = c.y - ry - 8 - (lines.length - 1) * lead - RINGS.noteSize / 2 >= edge.top;
     lines.forEach((words, k) => {
-      const y = above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead;
+      // `beside`: level with the ring's middle, just off its right-hand side.
+      const y = ring.beside ? c.y - ((lines.length - 1) / 2 - k) * lead
+        : above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead;
       const span = el('tspan', { x, y });
       span.textContent = words;
       note.appendChild(span);
@@ -806,7 +823,7 @@ function drawAircraft(layers, timeline, elapsed) {
  * The flyover's line and length. `points` are the enemies' hexes as they
  * stood when the call was made. Exported so main.js knows when it is over.
  */
-export function flyoverTimeline(map, points) {
+export function flyoverTimeline(map, points, heading = null) {
   const px = points.map((h) => axialToPixel(h.q, h.r, map.hexSize));
   const edge = boardEdges(map);
   const n = px.length || 1;
@@ -817,9 +834,11 @@ export function flyoverTimeline(map, points) {
   let sxx = 0, syy = 0, sxy = 0;
   for (const p of px) { sxx += (p.x - c.x) ** 2; syy += (p.y - c.y) ** 2; sxy += (p.x - c.x) * (p.y - c.y); }
   let theta = px.length > 1 ? 0.5 * Math.atan2(2 * sxy, sxx - syy) : 0;
-  // Always from the west, the way the bombers come in.
   let ux = Math.cos(theta), uy = Math.sin(theta);
-  if (ux < 0) { ux = -ux; uy = -uy; }
+  // Always from the west, the way the bombers come in — unless a heading is
+  // given (M13: each call its own, over the middle of the garrison).
+  if (heading !== null) { ux = Math.cos(heading); uy = Math.sin(heading); }
+  else if (ux < 0) { ux = -ux; uy = -uy; }
   // From where the line leaves the board behind it to where it leaves ahead,
   // plus the aircraft's own length, so it flies in and out of sight.
   const margin = DROP_SHOW.aircraftSize;
@@ -836,6 +855,48 @@ export function flyoverTimeline(map, points) {
     angle: (theta * 180) / Math.PI,
     length: DROP_SHOW.flightMs + DROP_SHOW.tailMs,
   };
+}
+
+/**
+ * Shots (M13): a gunner suppressing fires a burst — muzzle flashes stepping on
+ * and off at his counter, tracer dashes running to the enemy, and the enemy's
+ * counter flashing as it is hit — and a kill is one short, dim shot. Display
+ * only, played once from `since`.
+ */
+function drawShot(layers, shot, now) {
+  const elapsed = now - shot.since;
+  if (elapsed > SHOT.ms) return;
+  const { map } = layers;
+  const a = axialToPixel(shot.from.q, shot.from.r, map.hexSize);
+  const b = axialToPixel(shot.to.q, shot.to.r, map.hexSize);
+  const burst = shot.kind === 'suppress';
+  const rounds = burst ? SHOT.burstRounds : 1;
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const muzzle = { x: a.x + ((b.x - a.x) / len) * SHOT.muzzleOffset, y: a.y + ((b.y - a.y) / len) * SHOT.muzzleOffset };
+  for (let i = 0; i < rounds; i++) {
+    const delay = i * SHOT.roundMs;
+    const tracer = el('line', {
+      x1: muzzle.x, y1: muzzle.y, x2: b.x, y2: b.y, stroke: SHOT.tracer, 'stroke-width': burst ? SHOT.tracerWidth : SHOT.tracerWidth * 0.6,
+      'stroke-linecap': 'round', 'stroke-dasharray': `${SHOT.dash} ${len}`, opacity: 0,
+    });
+    layers.effects.appendChild(tracer);
+    playFrom(tracer, [
+      { strokeDashoffset: 0, opacity: burst ? 1 : 0.6 },
+      { strokeDashoffset: -(len - SHOT.dash), opacity: burst ? 1 : 0.6 },
+      { strokeDashoffset: -(len - SHOT.dash), opacity: 0 },
+    ], { delay, duration: SHOT.travelMs }, elapsed);
+    const flash = el('use', {
+      href: '#marker-blast', x: muzzle.x - SHOT.flashSize / 2, y: muzzle.y - SHOT.flashSize / 2,
+      width: SHOT.flashSize, height: SHOT.flashSize, opacity: 0,
+    });
+    layers.effects.appendChild(flash);
+    playFrom(flash, [{ opacity: burst ? 1 : 0.5 }, { opacity: 0 }], { delay, duration: SHOT.roundMs * 0.8, easing: 'steps(2, end)' }, elapsed);
+  }
+  if (burst) {
+    const hit = el('circle', { cx: b.x, cy: b.y, r: COUNTER.size / 2 + 4, fill: 'none', stroke: SHOT.tracer, 'stroke-width': 4, opacity: 0 });
+    layers.effects.appendChild(hit);
+    playFrom(hit, [{ opacity: 1 }, { opacity: 0 }], { delay: SHOT.travelMs, duration: rounds * SHOT.roundMs, easing: `steps(${rounds * 2}, end)` }, elapsed);
+  }
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
@@ -1228,8 +1289,15 @@ function drawOnGround(layers, id, at, side) {
 function drawParachute(layers, chute) {
   const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
   const size = MARKER.size;
+  // Inside its hex, toward one of its corners (M13: on the left edge it sat on
+  // the hex lines). Which corner is fixed by the man's id, so it never moves
+  // about between frames; display only, no dice.
+  let hash = 0;
+  for (const ch of String(chute.unitId)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const angle = ((30 + 60 * (hash % 6)) * Math.PI) / 180;
+  const reach = layers.map.hexSize * MARKER.chuteReach;
   const marker = el('use', {
-    href: '#marker-parachute', x: p.x - COUNTER.drawn / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
+    href: '#marker-parachute', x: p.x + Math.cos(angle) * reach - size / 2, y: p.y + Math.sin(angle) * reach - size / 2, width: size, height: size,
   });
   layers.tokens.appendChild(marker);
   return marker;
@@ -1526,10 +1594,7 @@ function drawReachable(layers, reachable) {
       'fill-opacity': PATH.reachableOpacity,
     }));
   }
-  drawAreaEdge(layers, layers.reachable, reachable, [
-    [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth],
-    [PATH.reachableEdge, PATH.reachableEdgeWidth],
-  ]);
+  // Its outline is drawn with the leader's, in renderPieces.
 }
 
 /**
@@ -1557,16 +1622,6 @@ function drawAreaEdge(layers, layer, area, strokes, extra = {}) {
       d: outline, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round', ...extra,
     }));
   }
-}
-
-/**
- * The leader's command radius while he is selected (SPEC.md §5 Command): a
- * dashed line in his blue round every hex within it. What it means is in the
- * readout; a label on the board sat on the counters inside it.
- */
-function drawCommand(layers, hexes, dash = COMMAND.dash) {
-  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.casing, COMMAND.casingWidth]]);
-  drawAreaEdge(layers, layers.reachable, hexes, [[COMMAND.stroke, COMMAND.width]], { 'stroke-dasharray': dash });
 }
 
 // --- hover path preview -----------------------------------------------------
@@ -1703,10 +1758,19 @@ function drawCounter(unit, number, map, isSelected) {
     'font-weight': 'bold', fill: COUNTER.nameFill,
   }));
 
-  body.appendChild(text(String(unit.ap), {
-    x: COUNTER.apAt.x, y: COUNTER.apAt.y, 'font-size': COUNTER.apSize, 'font-weight': 'bold',
-    fill: COUNTER.apFill, opacity: unit.ap > 0 ? 1 : COUNTER.apSpentOpacity,
-  }));
+  // AP as dots top right (M13): one per point of this turn's pool, filled for
+  // what he has left, hollow for what he has spent — the number by his name is
+  // his roster number, and two numbers on one counter confused players.
+  const pool = Math.max(unit.apMax, unit.ap);
+  for (let i = 0; i < pool; i++) {
+    const col = i % COUNTER.apDots.columns, row = Math.floor(i / COUNTER.apDots.columns);
+    const left = i < unit.ap;
+    body.appendChild(el('circle', {
+      cx: COUNTER.apDots.x + col * COUNTER.apDots.pitch, cy: COUNTER.apDots.y + row * COUNTER.apDots.pitch, r: COUNTER.apDots.radius,
+      fill: left ? COUNTER.apFill : 'none', stroke: left ? COUNTER.apDots.stroke : COUNTER.apFill,
+      'stroke-width': left ? 0.8 : 1, opacity: left ? 1 : COUNTER.apSpentOpacity,
+    }));
+  }
 
   if (isSelected) {
     body.appendChild(el('rect', {
@@ -1722,22 +1786,27 @@ function drawCounter(unit, number, map, isSelected) {
 
 // Enemy counters: frame, type, a strip naming the type, and a wedge outside
 // the counter pointing the way it faces.
-function drawEnemy(enemy, map, isHovered, hears) {
+function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
   const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', { transform: counterPlace(center) });
 
-  const d = NEIGHBOR_DIRS[enemy.facing];
-  const toward = axialToPixel(d.q, d.r, 1);
-  const len = Math.hypot(toward.x, toward.y);
-  const ux = toward.x / len, uy = toward.y / len;
-  const tip = { x: size / 2 + ux * (ENEMY.facingDistance + ENEMY.facingSize), y: size / 2 + uy * (ENEMY.facingDistance + ENEMY.facingSize) };
-  const base = { x: size / 2 + ux * ENEMY.facingDistance, y: size / 2 + uy * ENEMY.facingDistance };
-  const w = ENEMY.facingSize;
-  group.appendChild(el('polygon', {
-    points: `${tip.x},${tip.y} ${base.x - uy * w},${base.y + ux * w} ${base.x + uy * w},${base.y - ux * w}`,
-    fill: ENEMY.facingFill, stroke: ENEMY.facingStroke, 'stroke-width': 1.5,
-  }));
+  const wedge = (facing, attrs) => {
+    const d = NEIGHBOR_DIRS[facing];
+    const toward = axialToPixel(d.q, d.r, 1);
+    const len = Math.hypot(toward.x, toward.y);
+    const ux = toward.x / len, uy = toward.y / len;
+    const tip = { x: size / 2 + ux * (ENEMY.facingDistance + ENEMY.facingSize), y: size / 2 + uy * (ENEMY.facingDistance + ENEMY.facingSize) };
+    const base = { x: size / 2 + ux * ENEMY.facingDistance, y: size / 2 + uy * ENEMY.facingDistance };
+    const w = ENEMY.facingSize;
+    return el('polygon', { points: `${tip.x},${tip.y} ${base.x - uy * w},${base.y + ux * w} ${base.x + uy * w},${base.y - ux * w}`, ...attrs });
+  };
+  // Which way it will face next turn, if that is not the way it faces now
+  // (M13b): a hollow dashed wedge beside the solid one.
+  if (nextFacing != null && nextFacing !== enemy.facing) {
+    group.appendChild(wedge(nextFacing, { fill: ENEMY.nextFill, stroke: ENEMY.facingFill, 'stroke-width': 1.5, 'stroke-dasharray': '2.5 1.5' }));
+  }
+  group.appendChild(wedge(enemy.facing, { fill: ENEMY.facingFill, stroke: ENEMY.facingStroke, 'stroke-width': 1.5 }));
 
   const body = el('g', {});
   group.appendChild(body);
@@ -1752,6 +1821,21 @@ function drawEnemy(enemy, map, isHovered, hears) {
     x: (ENEMY.labelBoxLeft + ENEMY.labelBoxRight) / 2, y: 45.5,
     'font-size': Math.min(ENEMY.labelSize, fitted).toFixed(2), 'font-weight': 'bold', fill: ENEMY.labelFill,
   }));
+
+  // Suppressed (M13: players could not tell): the counter printed faint, as
+  // if pressed flat, with a red band across it saying so.
+  if (enemy.suppressed) {
+    body.appendChild(el('rect', { x: 0, y: 0, width: size - 4, height: size - 4, rx: 7, fill: SUPPRESSED.fade, 'fill-opacity': SUPPRESSED.fadeOpacity }));
+    const band = el('g', { transform: `rotate(${SUPPRESSED.bandRotate} ${size / 2} ${size / 2})` });
+    band.appendChild(el('rect', {
+      x: -6, y: size / 2 - SUPPRESSED.bandHeight / 2, width: size + 8, height: SUPPRESSED.bandHeight,
+      fill: SUPPRESSED.band, stroke: SUPPRESSED.bandStroke, 'stroke-width': 1.5,
+    }));
+    band.appendChild(text('SUPPRESSED', {
+      x: size / 2 + 1, y: size / 2 + 0.5, 'font-size': SUPPRESSED.textSize, 'font-weight': 'bold', 'letter-spacing': 0.5, fill: SUPPRESSED.text,
+    }));
+    body.appendChild(band);
+  }
 
   if (isHovered) {
     group.appendChild(el('rect', {
