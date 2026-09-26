@@ -134,7 +134,8 @@ function visionById() {
       enemies: state.enemies,
       points: state.alert.points,
       map,
-      byId: new Map(state.enemies.map((e) => [e.id, visibleHexes(map, e, state.alert.points, rules)])),
+      // A suppressed enemy sees nothing until its head comes up (M15).
+      byId: new Map(state.enemies.map((e) => [e.id, e.suppressed ? new Map() : visibleHexes(map, e, state.alert.points, rules)])),
     };
   }
   return visionCache.byId;
@@ -290,7 +291,7 @@ function deriveView() {
   } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
     const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
     view.siteLabel = `${chute.name}'s PARACHUTE — found if an enemy comes onto or beside this hex: alert +${rules.alert.parachuteFound}. `
-      + `${chute.name} can pack it up standing here: [U] ${rules.actions.packParachute.apCost} AP.`;
+      + `Any man standing here can pack it up: [U] ${rules.actions.packParachute.apCost} AP.`;
   } else if (hex && isExfil(baseMap, hex)) {
     view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn. `
       + 'A man carrying a charge leaves it on the hex he steps off from, for another man to pick up [P].';
@@ -495,7 +496,7 @@ function describeObjective(o) {
     `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge, killing anyone in it, ours or theirs`,
     `alert +${kind.alert}`,
   ];
-  if (kind.cutLine) parts.push('or a scout can cut the line: a full turn, silent');
+  if (kind.cutLine) parts.push(`or a scout can cut the line: a full turn, no noise, alert +${rules.alert.lineCut}`);
   const payoff = payoffWords(kind);
   if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
@@ -576,7 +577,7 @@ function actionsFor(unit) {
       help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
-    { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
+    { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
       id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
       help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
@@ -588,11 +589,11 @@ function actionsFor(unit) {
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
-    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
+    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
-    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
+    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
 }
@@ -627,8 +628,8 @@ function cutLineHelp() {
   const kind = Object.values(rules.objectives).find((k) => k.cutLine);
   const target = kind ? `the ${kind.label.toLowerCase()}` : 'the target';
   const payoff = kind ? payoffWords(kind) : null;
-  return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, silently. `
-    + `No alert, no noise, no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
+  return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, quietly. `
+    + `No noise, so nobody comes to look, though the garrison notices its telephones go dead (alert +${rules.alert.lineCut}); no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
 }
 
 // Pass a charge to a man beside him (M11b): ok if there is anyone he could
@@ -1209,7 +1210,7 @@ function describeBriefing(which, view) {
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
-            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, silent.` : ''),
+            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, and quiet.` : ''),
           'Hover anything for detail; KEYBOARD lists every key.',
         ],
       }],

@@ -489,9 +489,8 @@ export function checkPackParachute(parachutes, unit, rules) {
   const cost = rules.actions.packParachute.apCost;
   const busy = canAct(unit, cost);
   if (busy) return result(cost, busy);
-  const own = parachutes.find((p) => p.unitId === unit.id);
-  if (!own) return result(cost, 'his parachute is gone');
-  if (own.q !== unit.q || own.r !== unit.r) return result(cost, 'his parachute is not on this hex');
+  // Anyone's, not only his own (M15, the operator's): a man on the hex packs it.
+  if (!parachutes.some((p) => p.q === unit.q && p.r === unit.r)) return result(cost, 'no parachute on this hex');
   return result(cost, null);
 }
 

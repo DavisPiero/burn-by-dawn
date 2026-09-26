@@ -15,7 +15,7 @@
 // man can take one; these take it.
 
 import {
-  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, runDetection, runEnemyPhase, turnSentriesNow,
+  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, raiseAlert, runDetection, runEnemyPhase, turnSentriesNow,
 } from './enemy.js';
 import { landStick, runById, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
@@ -151,6 +151,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.alert.stone, '"alert.stone"', rulesUrl);
   requireCount(rules.alert.bodyFound, '"alert.bodyFound"', rulesUrl);
   requireCount(rules.alert.parachuteFound, '"alert.parachuteFound"', rulesUrl);
+  requireCount(rules.alert.lineCut, '"alert.lineCut"', rulesUrl);
 
   // Noise, contact and wounds, SPEC.md §5 and §6.
   for (const kind of ['found', 'stone', 'gunfire', 'silenced']) {
@@ -365,7 +366,7 @@ export function hideUnit(state, unitId, rules) {
 }
 
 /**
- * A gunner fires on an enemy: it will not fire at the next detection check or
+ * A gunner fires on an enemy: it will not spot or fire at the next detection check or
  * move in the next enemy phase. Gunfire is loud — the onFire hook sets how
  * loud — and is heard from the gunner's hex.
  */
@@ -451,7 +452,8 @@ export function packParachute(state, unitId, rules) {
   if (!checkPackParachute(state.parachutes, unit, rules).ok) return state;
   return {
     ...spend(state, unitId, rules.actions.packParachute.apCost),
-    parachutes: state.parachutes.filter((p) => p.unitId !== unitId),
+    // One a time: the first on his hex, whoever's it was (M15).
+    parachutes: state.parachutes.filter((p, i, all) => i !== all.findIndex((c) => c.q === unit.q && c.r === unit.r)),
   };
 }
 
@@ -493,16 +495,21 @@ export function placeCharge(state, unitId, rules) {
   };
 }
 
-/** A scout cuts the exchange line: a full turn, destroyed at once, silently. */
+/**
+ * A scout cuts the exchange line: a full turn, destroyed at once. No noise, so
+ * nobody comes to look, but the garrison notices its telephones go dead:
+ * alert.lineCut (M15).
+ */
 export function cutLine(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
   const check = checkCutLine(state, unit, rules);
   if (!check.ok) return state;
   const cut = {
     ...spend(state, unitId, check.cost),
+    alert: raiseAlert(state.alert, rules.alert.lineCut, rules),
     objectives: state.objectives.map((o) => (o.id === check.objective.id ? { ...o, destroyed: true, cut: true } : o)),
   };
-  // Destroyed silently, but it pays back all the same (SPEC.md §7), said in
+  // Destroyed quietly, and it pays back all the same (SPEC.md §7), said in
   // the report at once, as the RAF diversion is.
   const paid = applyPayoff(cut, check.objective, rules);
   return { ...paid.state, report: [...state.report, ...paid.events] };

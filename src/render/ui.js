@@ -921,7 +921,7 @@ export function renderReadout(element, state, map, view) {
     let doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
     if (e.investigating) doing = `going to look at ${view.place(e.investigating)}`;
     if (e.watching) doing = `has a man in its sights in ${view.place(e.watching)}`;
-    if (e.suppressed) doing = `SUPPRESSED — will not fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
+    if (e.suppressed) doing = `SUPPRESSED — head down: will not see, fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
     else if (e.openToKill && e.killable) doing = `${doing}; still shaken — a gunner can kill it this turn`;
     const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
     // What it will do if the turn ended now (M13b), which the dashed outline shows.

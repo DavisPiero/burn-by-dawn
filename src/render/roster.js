@@ -121,8 +121,9 @@ function describeUnit(unit, number, state, map, view) {
     if (!unit.everSpotted) lines.push(`Never seen yet: +${view.unseenPoints} score if he gets out unseen.`);
     else lines.push('Seen by the garrison: no stealth bonus for him.');
     if (unit.inContact) lines.push('In contact: if he is seen again at the end of this turn, he is fired on. Break contact: out of sight, hide, or suppress.');
-    if (state.parachutes.some((p) => p.unitId === unit.id && p.q === unit.q && p.r === unit.r)) {
-      lines.push('Standing on his parachute: [U] to pack it.');
+    const chute = state.parachutes.find((p) => p.q === unit.q && p.r === unit.r);
+    if (chute) {
+      lines.push(`Standing on ${chute.unitId === unit.id ? 'his' : `${chute.name}'s`} parachute: [U] to pack it.`);
     }
   }
   for (const effect of view.traitEffectsById.get(unit.id) ?? []) {

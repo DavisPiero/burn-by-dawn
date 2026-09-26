@@ -256,9 +256,11 @@ export function detectionScore(map, rules, enemy, alertPoints, unit, hex) {
  * highest score, first enemy in data order on a tie. Null if nobody sees it.
  *
  * It also carries who would spot him there (`spotters`) and whether any of
- * them is free to shoot (`firing`): a suppressed enemy still spots, but does
- * not fire (SPEC.md §4). Whether he is actually shot depends on his being in
- * contact already — see runDetection.
+ * them is free to shoot (`firing`). A suppressed enemy has its head down: it
+ * neither spots nor fires at the next detection check (SPEC.md §4; M15, it
+ * spotted until then, and playtesters found suppression did not cover the
+ * others). Whether he is actually shot depends on his being in contact
+ * already — see runDetection.
  */
 export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
   let worst = null;
@@ -268,6 +270,7 @@ export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
   // shot from far off pins rather than hits).
   let firingDistance = null;
   for (const enemy of enemies) {
+    if (enemy.suppressed) continue;
     const result = detectionScore(map, rules, enemy, alertPoints, unit, hex);
     if (!result) continue;
     if (result.spotted) {
