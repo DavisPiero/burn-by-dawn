@@ -193,7 +193,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
-| `ui-gutter-note.svg` | 60 x 900 | the "CUT OUT AND PLAY" margin text, as outlines |
+| `ui-gutter-note.svg` | 60 x 900 | the margin note, hung from the top of the margin: BURN BY DAWN in the stencil, pale (ink at 30%), then scissors, the dashed cut line and "CUT OUT AND PLAY", as outlines (M14) |
 | `logo-burn-by-dawn.svg` | 800 x 300 | *Not used since M9b: the results page is headed by the title card. The drawn sprite is kept in theme.js.* |
 | `title-card.jpg` | 4:1, **2400 x 600** px (no smaller than 1200 x 300) | **JPEG**, not SVG or PNG — see below. The painted picture across the top of the orders card, under the title, and smaller across the top of the results page. Drop into `/assets/title/`. |
 

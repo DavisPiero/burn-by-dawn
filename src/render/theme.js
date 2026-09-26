@@ -1927,15 +1927,19 @@ const SPRITES = {
       return parts;
     },
   },
-  // The margin note down the outer edge of the left page.
+  // The margin note down the outer edge of the left page, hung from the top of
+  // the margin: the game's name first, in the title's stencil, pale as if
+  // printed in the magazine's margin (M14, the operator's), then the scissors,
+  // the cut line and CUT OUT AND PLAY. Pale is ink thinned, not a new colour.
   'ui-gutter-note': {
     viewBox: '0 0 60 900',
     draw: () => [
-      line('M40 0 V900', 1.6, 'stroke-ink', { 'stroke-dasharray': '10 7', opacity: 0.55 }),
-      svg('g', { transform: 'translate(40 120) rotate(-90)' }, [
+      label('BURN BY DAWN', { x: 0, y: 0, 'font-size': 34, 'letter-spacing': 3, 'font-family': TYPE.slab, 'font-weight': 'normal', class: 'ink', transform: 'translate(30 180) rotate(-90)', opacity: 0.3 }),
+      line('M40 360 V900', 1.6, 'stroke-ink', { 'stroke-dasharray': '10 7', opacity: 0.55 }),
+      svg('g', { transform: 'translate(40 380) rotate(-90)' }, [
         line('M-8 -6 L6 4 M-8 6 L6 -4', 1.6), ring(-12, -7, 4, 1.6), ring(-12, 7, 4, 1.6),
       ]),
-      label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 450) rotate(-90)', opacity: 0.75 }),
+      label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 640) rotate(-90)', opacity: 0.75 }),
     ],
   },
   // The title card over the orders (SPEC.md §11): drawn here until a painting
