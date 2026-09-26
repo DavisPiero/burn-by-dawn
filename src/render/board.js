@@ -167,14 +167,14 @@ export function createBoard(svg, map, handlers) {
     svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
-    blasts: { report: null, list: [] },
+    blasts: { bangs: null, list: [] },
   };
 }
 
 /** Forget what was last drawn where, for a new game on the same board (M12 restart). */
 export function resetBoardMemory(layers) {
   layers.motion = new Map();
-  layers.blasts = { report: null, list: [] };
+  layers.blasts = { bangs: null, list: [] };
   layers.ringsSince = null;
 }
 
@@ -943,11 +943,16 @@ function travel(layers, mover, unit, now) {
 // starburst is revealed in steps, and smoke rolls up and thins (M11). Drawing
 // memory like a move: redrawn part-way, it carries on from where it was.
 function drawBlasts(layers, state, now) {
-  if (layers.blasts.report !== state.report) {
-    const list = state.report.filter((e) => e.kind === 'explosion').flatMap((e) => (
+  // Keyed on the explosion events themselves, not the report: cutting the line
+  // or calling the RAF adds to the turn's report mid-turn, and that must not
+  // set off last turn's bang again (M14 bug).
+  const bangs = state.report.filter((e) => e.kind === 'explosion');
+  const known = layers.blasts.bangs;
+  if (!known || bangs.length !== known.length || bangs.some((e, i) => e !== known[i])) {
+    const list = bangs.flatMap((e) => (
       (e.at ?? [{ q: e.q, r: e.r }]).map((h) => ({ q: h.q, r: h.r, destroyed: e.destroyed, radius: e.blastRadius ?? 1 }))
     ));
-    layers.blasts = { report: state.report, since: now, list };
+    layers.blasts = { bangs, since: now, list };
     if (list.length && typeof layers.svg.animate === 'function') {
       const d = BLAST.shakePx;
       layers.svg.animate([
