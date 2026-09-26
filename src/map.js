@@ -62,6 +62,26 @@ function validate(map, terrain, mapUrl, terrainUrl) {
     if (char.length !== 1) throw new Error(`${mapUrl}: legend key "${char}" must be a single character`);
     if (!terrain.types[id]) throw new Error(`${mapUrl}: legend "${char}" names terrain "${id}", which ${terrainUrl} does not define`);
   }
+  // The railway (SPEC.md §11) is art only, like the church: waypoints the
+  // line is drawn through, straight between them. It changes no rule.
+  if (map.railway !== undefined) {
+    if (!Array.isArray(map.railway) || map.railway.length < 2) {
+      throw new Error(`${mapUrl}: "railway" must be a list of at least two [q, r] waypoints`);
+    }
+    for (const hex of map.railway) {
+      if (!Array.isArray(hex) || hex.length !== 2 || !hex.every(Number.isInteger) || !inBounds(map, hex[0], hex[1])) {
+        throw new Error(`${mapUrl}: "railway" waypoint ${JSON.stringify(hex)} must be a [q, r] pair on the map`);
+      }
+    }
+  }
+  // Place names (SPEC.md §11) are art only too.
+  for (const place of map.places ?? []) {
+    const at = place?.at;
+    if (typeof place?.name !== 'string' || place.name === '' || !Array.isArray(at) || at.length !== 2
+      || !at.every(Number.isInteger) || !inBounds(map, at[0], at[1])) {
+      throw new Error(`${mapUrl}: every "places" entry needs a "name" and an "at" [q, r] on the map, got ${JSON.stringify(place)}`);
+    }
+  }
   map.rows.forEach((row, r) => {
     if (typeof row !== 'string' || row.length !== map.width) {
       throw new Error(`${mapUrl}: row ${r} must be ${map.width} characters, got ${typeof row === 'string' ? row.length : typeof row}`);

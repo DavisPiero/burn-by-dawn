@@ -557,13 +557,16 @@ Desktop makes the skeuomorphism work properly, so use the room:
   the mission briefing in caption boxes, the alert dial, the turn counter, and the
   **roster rail: all six portraits, always visible**, greying out as men are lost.
 - Paper cream ground, fibre texture, centre-fold crease and gutter shadow between pages.
-- Ben-Day halftone dots for all tonal fill, as SVG `<pattern>` defs.
+- Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, on
+  objectives, on the enemy's vision and in the chrome. Open ground is flat spot colour.
+  Clarity beats texture: the board must read at a glance, as the flat-colour prototype
+  did (M7b).
 - Palette: paper `#F2E8D5`, ink `#1A1A18`, army green `#5C6B4A`, danger red `#C1272D`,
   cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
   the ranking man (his counter's name strip and rank flash, his number on the roster).
   Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
-- Units are **counters**: rounded squares, drop shadow, symbol, name strip. A man who
+- Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
   no easing in or out. A man with no AP left stays fully printed; his counter's edge goes
   grey. Halftone is printed faint, close to the colour beneath it.
@@ -583,6 +586,51 @@ Desktop makes the skeuomorphism work properly, so use the room:
   no new terrain. It is the landmark Vance's landing line refers to, and spires were how
   real sticks checked they had been dropped in the right place.
 - "CUT OUT AND PLAY" margin note in the outer gutter.
+- **Roads and the railway read as continuous lines.** A track is drawn as one smooth road
+  through its hexes' centres, not a motif stamped per hex. A **railway** runs east–west
+  across the board and over the rail bridge, as art only, like the church: no rule, no
+  terrain, no cost. It is why the bridge is there.
+- **The drop is shown.** When the player jumps, a Dakota flies the chosen run's line, and
+  each man's canopy opens where he jumps, drifts downwind to where the rules have already
+  put him, lands and collapses into his parachute marker. It is display only: every
+  landing is decided before it starts. A click or Space skips it.
+- **Terrain motifs are few and bold.** One clear shape per hex at most. A field is plain,
+  with a small mark on a minority of hexes. An enemy's vision stays a faint flat tint at
+  rest (it is the risk map, and there is no fog of war) and is filled strongly and
+  outlined when that enemy is hovered.
+- **The board is printed as a map, not as tiles** (M7b, after cardboard wargame maps).
+  Woods, orchards, marsh and the ridge are each one shape across their run of hexes,
+  with a rounded, slightly irregular edge, and the hex grid is printed over them. The
+  ridge is tonal bands: dark crest, pale fall, a contour at its foot. Neighbouring
+  hedgerow hexes are joined into hedges, drawn like roads. All of it is ink only: every
+  rule still reads the hex.
+- **Place names** are printed on the map, art only, from `data/map.json`: the village in
+  spaced capitals, water in italic on the water, the rest in italic. The turn report uses
+  them ("the field by Ferme Lebrun"). Map names may be set in a serif italic; they are
+  the one type on the board that is neither typewriter nor lettering.
+  Marker-pen annotations (the target rings and their notes) are set in the speech
+  lettering: they are the player's own pen, not print.
+- **The move path counts.** Each step on the hover path shows the AP spent by the time he
+  gets there, grey past what he has. A hex on the path where he would be spotted is
+  crossed out in red, marker-pen style, over the risk pips.
+- **Our counters are printed solid army green** with a dark name strip (leader blue for
+  the ranking man), AP left as one large figure top right, the role in a paper roundel,
+  and a sliver of the card's cut edge showing down-right under the soft shadow.
+- **Objectives say where to go.** Each objective's hexes are outlined firmly, its art sits
+  inside them, and its name above them. Each charge point is a red dashed hex with an empty
+  satchel in it: where a man stands to place a charge. Hovering one says so.
+- **Targets are ringed before the drop.** Until a drop run is picked, each objective is
+  circled in red marker pen, the primary twice, with a hand-lettered note beside it, and
+  the exfil in green. Picking a run clears them.
+- **Briefings.** A briefing card opens over the board: the orders before the drop, and at
+  the start of every turn (turn 1 after the drop has been shown) an update: what happened
+  at the turn boundary, most important first, and up to three hints about what to do
+  next, worked out from the state (a pure function in `src/hints.js`, numbers from
+  `data/rules.json`). Any key or click puts it away, and that key does nothing else. A
+  box on the card turns the turn updates off for the rest of the session; the orders
+  still open on a new game.
+- **Type is set for reading.** The right page is set at 13–15px at 1280x800, never below
+  12. It carries only what the player needs every turn: detail goes into rollovers.
 
 **Right page layout (notes for M7, from the operator's review of M6).** The panel is too
 busy and the roster runs off the bottom at 1280x800. At M7:
@@ -617,6 +665,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M5b** | Charges, fuses, explosions, explosion floor, charge hexes per objective (bridge charges from the banks), win/lose, exfil, exfil watched by the reserve, RAF diversion | A full mission can be won and lost; the bridge can be charged without being spotted by timing the patrols; the diversion can be called once, only while the leader lives, and costs the clean-run score |
 | **M6** | Drop phase and parachutes | Three drop runs, seeded scatter, regroup turn works; parachutes drop with the men, cost 1 AP to pack up, and raise alert when a patrol finds one |
 | **M7** | Art pass: spread layout, roster rail, halftone, counters, speech bubbles | It looks like the annual |
+| **M7b** | Visual clean-up: less noise, bigger type, continuous roads and railway, soft counter shadows, the drop shown, redrawn objectives and portraits | The board reads at a glance at 1280x800; no text on the right page is below 12px; the right page has no empty gaps; the drop plays and can be skipped; no rules change |
 | **M8a** | Killing: the gunner's kill of a suppressed enemy, enemy bodies, the unkillable reserve | A gunner can suppress an enemy and kill it next turn, or two gunners in one; the kill is loud and leaves a body the garrison finds; the reserve squad can be suppressed but never killed, and the game says so before the player tries |
 | **M8b** | Balance pass | Winnable roughly 1 in 3 by a thoughtful first-timer |
 

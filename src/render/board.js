@@ -18,12 +18,12 @@
 // and a blast play out once rather than again on every hover. That is drawing
 // memory, not game state.
 
-import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners } from '../hex.js';
+import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, CONTACT, COUNTER, DROP, ENEMY, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RISK, ROUTE,
+  BLAST, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SPEECH, TARGET, TYPE, VISION, WATCH, counterFrameId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass,
+  AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -69,11 +69,6 @@ export function createBoard(svg, map, handlers) {
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
   }));
   defs.appendChild(clip);
-  // Half of a hex, toward its east edge: a road that leaves a hex only one way
-  // is its edge-to-edge motif cut here, then turned.
-  const half = el('clipPath', { id: 'board-half-hex' });
-  half.appendChild(el('rect', { x: 38, y: -10, width: 50, height: 112 }));
-  defs.appendChild(half);
   svg.appendChild(defs);
 
   const terrain = el('g', { 'clip-path': 'url(#board-edge)' });
@@ -105,21 +100,18 @@ export function createBoard(svg, map, handlers) {
     const points = cornersToPoints(center, corners);
 
     const hex = el('g', { 'data-q': q, 'data-r': r });
-    if (!inPlay) hex.setAttribute('opacity', GRID.outOfPlayOpacity);
 
-    // Printed in plates: the flat base, the halftone screen over it (off
-    // register, through its class), the motif, then the grid rule in ink.
+    // Printed in plates: the flat base, a flat tint and a halftone screen over
+    // it where the terrain has them, and the motif. Area terrain is printed
+    // over all the hexes at once, below; the grid rule goes over everything.
     hex.appendChild(el('polygon', { points, fill: style.fill }));
-    if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
-    if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
-    if (style.connects) drawConnected(hex, map, q, r, center, style);
-    else {
-      const motif = terrainMotifId(style, q, r);
+    if (!style.area) {
+      if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
+      if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
+      if (style.banks) drawBanks(hex, map, q, r, center, style.banks);
+      const motif = style.hedge && hedgeLinks(map, q, r).length > 0 ? null : terrainMotifId(style, q, r);
       if (motif) hex.appendChild(el('use', { href: `#${motif}`, x: center.x - 40, y: center.y - 46, width: 80, height: 92 }));
     }
-    hex.appendChild(el('polygon', {
-      points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
-    }));
 
     // The half-hexes past the border get no pointer events, so they cannot be
     // hovered, selected or moved to.
@@ -132,6 +124,30 @@ export function createBoard(svg, map, handlers) {
     hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
     terrain.appendChild(hex);
   });
+
+  // Over the hexes and under the grid, none of it taking the mouse: area
+  // terrain, the grid rule, the dead wash over the half-hexes past the border,
+  // then roads and the railway.
+  const areas = el('g', { 'pointer-events': 'none' });
+  drawAreas(areas, defs, map, corners);
+  terrain.appendChild(areas);
+  const grid = el('g', { 'pointer-events': 'none' });
+  forEachCell(map, (q, r) => {
+    const points = cornersToPoints(axialToPixel(q, r, map.hexSize), corners);
+    grid.appendChild(el('polygon', {
+      points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
+    }));
+    if (!isInPlay(map, q, r)) grid.appendChild(el('polygon', { points, fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity }));
+  });
+  terrain.appendChild(grid);
+
+  const lines = el('g', { 'pointer-events': 'none' });
+  const railway = railwayHexes(map);
+  drawHedges(lines, map);
+  drawRoads(lines, map, edge, railway);
+  drawRailway(lines, map, edge);
+  drawPlaces(lines, map);
+  terrain.appendChild(lines);
 
   terrain.appendChild(el('rect', {
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
@@ -148,30 +164,305 @@ export function createBoard(svg, map, handlers) {
   };
 }
 
+// --- area terrain (SPEC.md §11) --------------------------------------------------
+// Woods, orchards, marsh and the ridge are printed as one shape over each run
+// of neighbouring hexes of the same terrain, the way a map draws a wood, not
+// as a tile per hex. The rules still read each hex; the shape is only ink.
+
 /**
- * A road runs edge to edge: its motif is turned to meet every neighbouring
- * hex it connects to. Two opposite connections are one straight motif; any
- * other set is drawn as a half motif toward each. A road that runs off the
- * board keeps going off it.
+ * Every run of neighbouring hexes of each area terrain, drawn as its outline
+ * (see AREA in theme.js) filled with the terrain's colour, with the terrain's
+ * motif scattered over it hex by hex.
  */
-function drawConnected(hex, map, q, r, center, style) {
-  const links = [];
-  NEIGHBOR_DIRS.forEach((d, dir) => {
-    if (style.connects.includes(terrainIdAt(map, q + d.q, r + d.r))) links.push(dir);
+function drawAreas(layer, defs, map, corners) {
+  const edges = edgeCorners(corners, map.hexSize);
+  const seen = new Set();
+  let clips = 0;
+  const motifs = [];
+  forEachCell(map, (q0, r0) => {
+    const id = terrainIdAt(map, q0, r0);
+    const style = terrainArt(id);
+    if (!style.area || seen.has(hexKey(q0, r0))) return;
+    // The run of hexes, and each edge of it that faces something else, in
+    // the hexes' own corner order so every loop goes the same way round.
+    const run = [];
+    const stack = [{ q: q0, r: r0 }];
+    seen.add(hexKey(q0, r0));
+    while (stack.length) {
+      const h = stack.pop();
+      run.push(h);
+      for (const d of NEIGHBOR_DIRS) {
+        const n = { q: h.q + d.q, r: h.r + d.r };
+        if (seen.has(hexKey(n.q, n.r)) || terrainIdAt(map, n.q, n.r) !== id) continue;
+        seen.add(hexKey(n.q, n.r));
+        stack.push(n);
+      }
+    }
+    const segments = [];
+    for (const h of run) {
+      const c = axialToPixel(h.q, h.r, map.hexSize);
+      NEIGHBOR_DIRS.forEach((d, dir) => {
+        if (terrainIdAt(map, h.q + d.q, h.r + d.r) === id) return;
+        let [i, j] = edges[dir];
+        if (j !== (i + 1) % 6) [i, j] = [j, i];
+        segments.push({ a: { x: c.x + corners[i].x, y: c.y + corners[i].y }, b: { x: c.x + corners[j].x, y: c.y + corners[j].y } });
+      });
+      const motif = terrainMotifId(style, h.q, h.r);
+      if (motif) motifs.push(el('use', { href: `#${motif}`, x: c.x - 40, y: c.y - 46, width: 80, height: 92 }));
+    }
+    const d = areaOutline(segments);
+    const area = style.area;
+    if (area.fill) {
+      layer.appendChild(el('path', { d, class: area.fill, 'fill-rule': 'evenodd' }));
+      if (area.tone) layer.appendChild(el('path', { d, class: toneClass(...area.tone), 'fill-rule': 'evenodd' }));
+    }
+    if (area.tint) layer.appendChild(el('path', { d, fill: area.tintFill, 'fill-opacity': area.tint[1], 'fill-rule': 'evenodd' }));
+    if (area.rim) {
+      const clipId = `area-clip-${clips++}`;
+      const clip = el('clipPath', { id: clipId });
+      clip.appendChild(el('path', { d, 'fill-rule': 'evenodd' }));
+      defs.appendChild(clip);
+      layer.appendChild(el('path', {
+        d, fill: 'none', class: 'stroke-paper', 'stroke-width': area.rim.width, 'stroke-opacity': area.rim.opacity,
+        'stroke-linejoin': 'round', 'clip-path': `url(#${clipId})`,
+      }));
+    }
+    if (area.outline) {
+      layer.appendChild(el('path', {
+        d, fill: 'none', class: area.outlineClass ?? 'stroke-ink', 'stroke-width': area.outline,
+        'stroke-linejoin': 'round', 'stroke-opacity': area.outlineOpacity ?? 1, ...(area.dash ? { 'stroke-dasharray': area.dash } : {}),
+      }));
+    }
   });
-  if (links.length === 1) {
-    const away = (links[0] + 3) % 6;
-    const d = NEIGHBOR_DIRS[away];
-    if (!inBounds(map, q + d.q, r + d.r)) links.push(away);
+  for (const motif of motifs) layer.appendChild(motif);
+}
+
+/**
+ * Chain boundary edges into closed loops and draw each as a rounded, wobbled
+ * outline: through the middle of every edge, pushed along its normal, curving
+ * round each corner.
+ */
+function areaOutline(segments) {
+  const key = (p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  const from = new Map();
+  for (const s of segments) {
+    const k = key(s.a);
+    if (!from.has(k)) from.set(k, []);
+    from.get(k).push(s);
   }
-  const place = (dir, halfOnly) => {
-    const g = el('g', { transform: `translate(${center.x - 40} ${center.y - 46}) rotate(${directionAngle(dir)} 40 46)` });
-    g.appendChild(el('use', { href: `#${style.motif}`, width: 80, height: 92, ...(halfOnly ? { 'clip-path': 'url(#board-half-hex)' } : {}) }));
-    hex.appendChild(g);
+  const used = new Set();
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  for (const start of segments) {
+    if (used.has(start)) continue;
+    const loop = [];
+    let s = start;
+    while (s && !used.has(s)) {
+      used.add(s);
+      loop.push(s);
+      s = (from.get(key(s.b)) ?? []).find((n) => !used.has(n));
+    }
+    const mids = loop.map(({ a, b }) => {
+      const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const push = wobbleAt(m.x, m.y) * AREA.wobble;
+      return { x: m.x - ((b.y - a.y) / len) * push, y: m.y + ((b.x - a.x) / len) * push };
+    });
+    d += `M${f(mids[mids.length - 1])} `;
+    loop.forEach((seg, i) => { d += `Q${f(seg.a)} ${f(mids[i])} `; });
+    d += 'Z ';
+  }
+  return d;
+}
+
+// --- roads and the railway (SPEC.md §11) ---------------------------------------
+// Drawn once, over the terrain, as continuous lines: a road is one smooth line
+// through its hexes, never a motif stamped per hex, so a road running down the
+// board's offset rows waves gently instead of zigzagging.
+
+/** Every hex the railway's line passes through, keyed by hexKey. */
+function railwayHexes(map) {
+  const hexes = new Map();
+  const points = (map.railway ?? []).map(([q, r]) => ({ q, r }));
+  for (let i = 1; i < points.length; i++) {
+    for (const h of hexLine(points[i - 1], points[i])) hexes.set(hexKey(h.q, h.r), h);
+  }
+  return hexes;
+}
+
+/** The point halfway from a hex's centre to its neighbour's: the middle of their shared edge. */
+function edgeMiddle(map, q, r, dir) {
+  const d = NEIGHBOR_DIRS[dir];
+  const a = axialToPixel(q, r, map.hexSize), b = axialToPixel(q + d.q, r + d.r, map.hexSize);
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+/**
+ * Each road hex joins the middles of the edges its road leaves by: through its
+ * centre as one curve when it leaves by two, as spokes from the centre at a
+ * junction or an end. Neighbouring hexes meet at the same edge middle heading
+ * the same way, so the lines join smoothly. A road that runs to the edge of
+ * the map keeps going off it. Under the railway a road hex is drawn as the
+ * railway; a road that meets the line runs straight up to it, a crossing.
+ */
+function drawRoads(layer, map, edge, railway) {
+  const isRoad = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).road);
+  // Where a road may end: a building, an objective, the exfil.
+  const roadEnds = new Set([
+    ...(map.objectives ?? []).flatMap((o) => o.hexes.map(([q, r]) => hexKey(q, r))),
+    ...(map.exfil ?? []).map(([q, r]) => hexKey(q, r)),
+  ]);
+  forEachCell(map, (q, r) => { if (terrainArt(terrainIdAt(map, q, r)).building) roadEnds.add(hexKey(q, r)); });
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  forEachCell(map, (q, r) => {
+    // A road hex under the railway is drawn as the railway.
+    if (!isRoad(q, r) || railway.has(hexKey(q, r))) return;
+    const links = [];
+    let crossing = null;
+    NEIGHBOR_DIRS.forEach((n, dir) => {
+      if (!isRoad(q + n.q, r + n.r)) return;
+      // A road meets the railway once, at one crossing, however many of the
+      // line's hexes it touches.
+      if (railway.has(hexKey(q + n.q, r + n.r))) {
+        if (crossing !== null) return;
+        crossing = dir;
+      }
+      links.push(dir);
+    });
+    // A road never stops in the middle of a hex. One that ends runs on out
+    // of it the way it was going: off the board, or up to the building, the
+    // objective or the exfil it leads to, or at least to the hex's far edge.
+    let arrival = null;
+    if (links.length === 1) {
+      const away = (links[0] + 3) % 6;
+      const n = NEIGHBOR_DIRS[away];
+      const next = { q: q + n.q, r: r + n.r };
+      links.push(away);
+      if (inBounds(map, next.q, next.r) && roadEnds.has(hexKey(next.q, next.r))) arrival = axialToPixel(next.q, next.r, map.hexSize);
+    }
+    const c = axialToPixel(q, r, map.hexSize);
+    const mids = links.map((dir) => edgeMiddle(map, q, r, dir));
+    if (mids.length === 2) d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
+    else for (const m of mids) d += `M${f(m)} L${f(c)} `;
+    if (arrival) d += `M${f(mids[1])} L${f(arrival)} `;
+    if (crossing !== null) {
+      const n = NEIGHBOR_DIRS[crossing];
+      d += `M${f(edgeMiddle(map, q, r, crossing))} L${f(axialToPixel(q + n.q, r + n.r, map.hexSize))} `;
+    }
+  });
+  if (!d) return;
+  layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.edge, 'stroke-width': ROAD.edgeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.fill, 'stroke-width': ROAD.fillWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+}
+
+/**
+ * Which hedgerow hexes are joined by a hedge: a spanning tree of each run of
+ * neighbouring hedgerow hexes, found breadth first in a fixed order, so a
+ * clump of three touching hexes draws as a bend, never a little triangle.
+ * Keyed by hexKey, each a list of directions.
+ */
+function hedgeTree(map) {
+  const isHedge = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).hedge);
+  const links = new Map();
+  const seen = new Set();
+  const join = (a, dir) => {
+    const k = hexKey(a.q, a.r);
+    if (!links.has(k)) links.set(k, []);
+    links.get(k).push(dir);
   };
-  if (links.length === 0) place(0, false);
-  else if (links.length === 2 && links[1] === (links[0] + 3) % 6) place(links[0], false);
-  else for (const dir of links) place(dir, true);
+  forEachCell(map, (q0, r0) => {
+    if (!isHedge(q0, r0) || seen.has(hexKey(q0, r0))) return;
+    seen.add(hexKey(q0, r0));
+    const queue = [{ q: q0, r: r0 }];
+    while (queue.length) {
+      const h = queue.shift();
+      NEIGHBOR_DIRS.forEach((n, dir) => {
+        const next = { q: h.q + n.q, r: h.r + n.r };
+        if (!isHedge(next.q, next.r) || seen.has(hexKey(next.q, next.r))) return;
+        seen.add(hexKey(next.q, next.r));
+        join(h, dir);
+        join(next, (dir + 3) % 6);
+        queue.push(next);
+      });
+    }
+  });
+  return links;
+}
+
+/** Place names, printed on the map under everything that moves. */
+function drawPlaces(layer, map) {
+  for (const place of map.places ?? []) {
+    const style = PLACE[place.kind] ?? PLACE.other;
+    const c = axialToPixel(place.at[0], place.at[1], map.hexSize);
+    const y = c.y + (place.dy ?? 0) * map.hexSize;
+    const attrs = {
+      x: c.x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
+      'font-style': style.italic ? 'italic' : 'normal', 'letter-spacing': style.spacing,
+      ...(place.angle ? { transform: `rotate(${place.angle} ${c.x} ${y})` } : {}),
+    };
+    const name = style.capitals ? place.name.toUpperCase() : place.name;
+    if (style.halo !== false) {
+      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': 0.85 }));
+    }
+    layer.appendChild(text(name, { ...attrs, fill: style.fill, 'fill-opacity': style.opacity ?? 1 }));
+  }
+}
+
+/** The directions from a hedgerow hex to the hedgerow hexes its hedge joins. */
+// Worked out once per map: drawing memory, never written onto the map itself.
+const hedgeTrees = new WeakMap();
+
+function hedgeLinks(map, q, r) {
+  if (!hedgeTrees.has(map)) hedgeTrees.set(map, hedgeTree(map));
+  return [...(hedgeTrees.get(map).get(hexKey(q, r)) ?? [])];
+}
+
+/**
+ * Hedgerows as hedges: each hedgerow hex joins the middles of the edges its
+ * hedge leaves by, like a road. A hedge that ends in a hex runs on through it
+ * to the far edge, so it never stops short in the middle of a field.
+ */
+function drawHedges(layer, map) {
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  forEachCell(map, (q, r) => {
+    if (!terrainArt(terrainIdAt(map, q, r)).hedge) return;
+    const links = hedgeLinks(map, q, r);
+    if (links.length === 0) return;
+    if (links.length === 1) links.push((links[0] + 3) % 6);
+    const c = axialToPixel(q, r, map.hexSize);
+    const mids = links.map((dir) => edgeMiddle(map, q, r, dir));
+    if (mids.length === 2) d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
+    else for (const m of mids) d += `M${f(m)} L${f(c)} `;
+  });
+  if (!d) return;
+  const stroke = (cls, width, extra = {}) => el('path', {
+    d, fill: 'none', class: cls, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', ...extra,
+  });
+  layer.appendChild(stroke('stroke-ink', HEDGE.edgeWidth));
+  layer.appendChild(stroke('stroke-ink', HEDGE.lumpEdgeWidth, { 'stroke-dasharray': HEDGE.lumpSpacing }));
+  layer.appendChild(stroke('stroke-green', HEDGE.width));
+  layer.appendChild(stroke('stroke-green', HEDGE.lumpWidth, { 'stroke-dasharray': HEDGE.lumpSpacing }));
+}
+
+/**
+ * The railway: straight through its waypoints' centres, carried on past the
+ * first and last to the board's edge, as a bed, two rails and the sleepers across them.
+ */
+function drawRailway(layer, map, edge) {
+  const points = (map.railway ?? []).map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  if (points.length < 2) return;
+  const reach = (edge.right - edge.left) + (edge.bottom - edge.top);
+  const extend = (from, to) => {
+    const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    return { x: to.x + ((to.x - from.x) / len) * reach, y: to.y + ((to.y - from.y) / len) * reach };
+  };
+  const line = [extend(points[1], points[0]), ...points, extend(points.at(-2), points.at(-1))];
+  layer.appendChild(polyline(line, { stroke: RAIL.bed, 'stroke-width': RAIL.bedWidth, 'stroke-opacity': RAIL.bedOpacity, 'stroke-linecap': 'butt' }));
+  layer.appendChild(polyline(line, { stroke: RAIL.rail, 'stroke-width': RAIL.railWidth, 'stroke-linecap': 'butt' }));
+  layer.appendChild(polyline(line, { stroke: RAIL.gauge, 'stroke-width': RAIL.gaugeWidth, 'stroke-linecap': 'butt' }));
+  layer.appendChild(polyline(line, { stroke: RAIL.sleeper, 'stroke-width': RAIL.sleeperWidth, 'stroke-dasharray': RAIL.sleeperDash, 'stroke-linecap': 'butt' }));
 }
 
 /** Water gets a bank on every edge that faces dry land on the board. */
@@ -229,7 +520,9 @@ export function renderPieces(layers, state, view) {
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
   for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1);
-  for (const chute of state.parachutes) drawParachute(layers, chute);
+  const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
+  const elapsed = show ? now - view.dropShow.since : 0;
+  for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
   for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
 
@@ -270,10 +563,172 @@ export function renderPieces(layers, state, view) {
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
     travel(layers, mover, unit, now);
+    appear(counter, show?.byUnit.get(unit.id), elapsed);
   });
 
   drawBlasts(layers, state, now);
-  drawSpeech(layers, state, view.speakers ?? new Set());
+  drawTargetRings(layers, view.targetRings, now);
+  if (show) drawDropShow(layers, view.dropShow, show, elapsed);
+  // Nobody speaks until the stick is down.
+  else drawSpeech(layers, state, view.speakers ?? new Set());
+}
+
+// --- target rings (SPEC.md §11) --------------------------------------------------
+
+/**
+ * Marker-pen rings round the targets and the exfil, before a drop run is
+ * picked. Each is drawn on once, in turn; a redraw part-way carries on. When
+ * they go, the drawing memory goes with them, so they draw on again if the
+ * player goes back to no run.
+ */
+function drawTargetRings(layers, rings, now) {
+  if (!rings) {
+    layers.ringsSince = null;
+    return;
+  }
+  layers.ringsSince ??= now;
+  const elapsed = now - layers.ringsSince;
+  const { map } = layers;
+  const edge = boardEdges(map);
+  const midX = (edge.left + edge.right) / 2;
+  rings.forEach((ring, i) => {
+    const points = ring.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+    const half = { x: map.hexSize * Math.sqrt(3) / 2, y: map.hexSize };
+    const left = Math.min(...points.map((p) => p.x)) - half.x, right = Math.max(...points.map((p) => p.x)) + half.x;
+    const top = Math.min(...points.map((p) => p.y)) - half.y, bottom = Math.max(...points.map((p) => p.y)) + half.y;
+    const c = { x: (left + right) / 2, y: (top + bottom) / 2 };
+    const rx = (right - left) / 2 + RINGS.margin, ry = (bottom - top) / 2 + RINGS.margin;
+    const colour = RINGS[ring.colour] ?? RINGS.red;
+    const loops = ring.primary ? 2 : 1;
+    for (let loop = 0; loop < loops; loop++) {
+      const start = -2.2 + loop * 0.9 + wobbleAt(c.x, c.y);
+      const phase = (wobbleAt(c.y + loop, c.x) + 1) * Math.PI;
+      const turns = 1 + RINGS.overshoot;
+      let d = '';
+      const steps = 64;
+      for (let k = 0; k <= steps; k++) {
+        const t = start + (k / steps) * turns * Math.PI * 2;
+        // The pen drifts outward as it goes round, so the ends pass each other.
+        // A hand's sway, not pen noise: two slow waves, phased by where it is.
+        const sway = Math.sin(2 * t + phase) * 0.6 + Math.sin(3 * t + phase * 2) * 0.4;
+        const grow = 1 + (k / steps) * 0.07 + loop * 0.05 + sway * RINGS.wobble;
+        const x = c.x + Math.cos(t) * rx * grow, y = c.y + Math.sin(t) * ry * grow;
+        d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
+      }
+      const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: 0.9 });
+      layers.effects.appendChild(path);
+      playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
+        delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
+      }, elapsed);
+    }
+    // The note, on the side of the ring toward the middle of the board.
+    const east = c.x < midX;
+    const x = east ? c.x + rx * 0.75 : c.x - rx * 0.75;
+    const note = text(ring.note, {
+      x, y: c.y - ry - 8, 'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
+      'font-size': RINGS.noteSize, fill: colour, stroke: RINGS.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+    });
+    layers.effects.appendChild(note);
+    playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
+  });
+}
+
+// --- the drop shown (SPEC.md §11) ----------------------------------------------
+// Display only: the rules have already put every man down, and this plays the
+// aircraft's pass and the canopies coming down to where they are. Like a
+// move, it is drawing memory: redrawn mid-way (the mouse moving), each piece
+// carries on from where it was, by `elapsed` since the jump.
+
+/**
+ * When everything in the drop happens, from where the aircraft crosses each
+ * man's jump point. `show` is { from, to, jumps: [{ unitId, jump, land }] }
+ * in hexes. Exported so main.js knows when it is over.
+ */
+export function dropTimeline(map, show) {
+  const px = (h) => axialToPixel(h.q, h.r, map.hexSize);
+  const a = px(show.from), b = px(show.to);
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const ux = (b.x - a.x) / len, uy = (b.y - a.y) / len;
+  const runIn = DROP_SHOW.runIn * map.hexSize * Math.sqrt(3);
+  const start = { x: a.x - ux * runIn, y: a.y - uy * runIn };
+  const end = { x: b.x + ux * runIn, y: b.y + uy * runIn };
+  const total = len + runIn * 2;
+  const byUnit = new Map();
+  let last = DROP_SHOW.flightMs;
+  for (const j of show.jumps) {
+    const p = px(j.jump);
+    const along = (p.x - start.x) * ux + (p.y - start.y) * uy;
+    const jumpAt = Math.max(0, (along / total) * DROP_SHOW.flightMs);
+    const landAt = jumpAt + DROP_SHOW.openMs + DROP_SHOW.driftMs;
+    byUnit.set(j.unitId, { jumpAt, landAt, from: p, to: px(j.land) });
+    last = Math.max(last, landAt + DROP_SHOW.collapseMs);
+  }
+  return { start, end, angle: (Math.atan2(uy, ux) * 180) / Math.PI, byUnit, length: last + DROP_SHOW.tailMs };
+}
+
+/** Hide something until its man is down, then show it at once. */
+function appear(node, timing, elapsed) {
+  if (!timing || elapsed >= timing.landAt || typeof node.animate !== 'function') return;
+  const animation = node.animate([{ opacity: 0 }, { opacity: 1 }], {
+    delay: timing.landAt, duration: DROP_SHOW.appearMs, fill: 'both', easing: 'linear',
+  });
+  animation.currentTime = elapsed;
+}
+
+/** Run `frames` on `node` as if it had started `elapsed` ago. */
+function playFrom(node, frames, options, elapsed) {
+  if (typeof node.animate !== 'function') return;
+  const animation = node.animate(frames, { fill: 'both', easing: 'linear', ...options });
+  animation.currentTime = elapsed;
+}
+
+function drawDropShow(layers, show, timeline, elapsed) {
+  const { start, end, angle } = timeline;
+  const size = DROP_SHOW.aircraftSize;
+  const at = (p, extra = '') => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)${extra}`;
+
+  // Each canopy, and its shadow on the ground closing in as it comes down.
+  const canopy = DROP_SHOW.canopySize;
+  const open = DROP_SHOW.openMs, drift = DROP_SHOW.driftMs, collapse = DROP_SHOW.collapseMs;
+  const whole = open + drift + collapse;
+  for (const t of timeline.byUnit.values()) {
+    if (elapsed >= t.landAt + collapse) continue;
+    const move = (p, scale, opacity) => ({ transform: `translate(${p.x}px, ${p.y}px) scale(${scale})`, opacity });
+    const shadow = el('g', {});
+    shadow.appendChild(el('use', { href: '#parachute-canopy-shadow', x: -canopy / 2, y: -canopy / 2, width: canopy, height: canopy, opacity: 0.18 }));
+    const off = DROP_SHOW.shadowStart;
+    const shifted = (p, d) => ({ x: p.x + d, y: p.y + d });
+    playFrom(shadow, [
+      { ...move(shifted(t.from, off), 0.3, 0), offset: 0 },
+      { ...move(shifted(t.from, off), 0.9, 1), offset: open / whole },
+      { ...move(shifted(t.to, 2), 0.8, 1), offset: (open + drift) / whole },
+      { ...move(shifted(t.to, 2), 0.4, 0), offset: 1 },
+    ], { delay: t.jumpAt, duration: whole }, elapsed);
+    const body = el('g', {});
+    body.appendChild(el('use', { href: '#parachute-canopy', x: -canopy / 2, y: -canopy / 2, width: canopy, height: canopy }));
+    playFrom(body, [
+      { ...move(t.from, 0.3, 0), offset: 0 },
+      { ...move(t.from, 1, 1), offset: open / whole },
+      { ...move(t.to, 0.8, 1), offset: (open + drift) / whole },
+      { ...move(t.to, 0.4, 0), offset: 1 },
+    ], { delay: t.jumpAt, duration: whole }, elapsed);
+    layers.effects.append(shadow, body);
+  }
+
+  // The aircraft over everything, its shadow far below it.
+  if (elapsed < DROP_SHOW.flightMs) {
+    const s = DROP_SHOW.aircraftShadow;
+    const shadow = el('g', {});
+    shadow.appendChild(el('use', { href: '#aircraft-dakota-shadow', x: -size / 2, y: -size / 2, width: size, height: size, opacity: s.opacity }));
+    playFrom(shadow, [
+      { transform: at({ x: start.x + s.x, y: start.y + s.y }) },
+      { transform: at({ x: end.x + s.x, y: end.y + s.y }) },
+    ], { duration: DROP_SHOW.flightMs }, elapsed);
+    const plane = el('g', {});
+    plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
+    playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
+    layers.effects.append(shadow, plane);
+  }
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
@@ -351,10 +806,10 @@ function drawBlasts(layers, state, now) {
 function drawSpeech(layers, state, speakers) {
   const { map } = layers;
   const edge = boardEdges(map);
-  const half = COUNTER.size / 2;
+  const half = COUNTER.drawn / 2;
   const counterBox = (at) => {
     const c = axialToPixel(at.q, at.r, map.hexSize);
-    return { x: c.x - half - 4, y: c.y - half - 4, width: COUNTER.size + 8, height: COUNTER.size + 8 };
+    return { x: c.x - half - 4, y: c.y - half - 4, width: COUNTER.drawn + 8, height: COUNTER.drawn + 8 };
   };
   const taken = [
     ...state.units.filter((u) => u.landed && !u.dead && !u.out).map(counterBox),
@@ -451,6 +906,7 @@ function drawSites(layers, state, view) {
     drawAreaEdge(layers, layers.sites, view.blastArea, [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
   }
 
+  const labels = [];
   for (const objective of state.objectives) {
     const hovered = objective.id === view.hoverObjective?.id;
     const outline = el('g', { opacity: hovered ? 1 : OBJECTIVE.outlineOpacity });
@@ -460,7 +916,8 @@ function drawSites(layers, state, view) {
     layers.sites.appendChild(outline);
     const at = labelPoint(map, objective.hexes);
     const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
-    layers.sites.appendChild(casedText(name, at.x, at.top - map.hexSize * 0.75, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    // Names go on last, over the charge points around them.
+    labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
@@ -472,14 +929,19 @@ function drawSites(layers, state, view) {
     }
     for (const h of objective.chargeHexes) {
       const p = axialToPixel(h.q, h.r, map.hexSize);
-      for (const [stroke, width] of [[OBJECTIVE.casing, OBJECTIVE.ringWidth + 3], [OBJECTIVE.ringStroke, OBJECTIVE.ringWidth]]) {
-        layers.sites.appendChild(el('circle', {
-          cx: p.x, cy: p.y, r: OBJECTIVE.ringRadius, fill: 'none', stroke, 'stroke-width': width,
-          'stroke-dasharray': OBJECTIVE.ringDash, opacity: hovered ? OBJECTIVE.ringHoverOpacity : OBJECTIVE.ringOpacity,
-        }));
-      }
+      const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
+      const point = el('g', { opacity: hovered ? OBJECTIVE.pointHoverOpacity : OBJECTIVE.pointOpacity });
+      point.appendChild(el('polygon', { points: inset, fill: 'none', stroke: OBJECTIVE.casing, 'stroke-width': OBJECTIVE.pointCasingWidth, 'stroke-linejoin': 'round' }));
+      point.appendChild(el('polygon', {
+        points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth,
+        'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
+      }));
+      const size = OBJECTIVE.pointIconSize;
+      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size }));
+      layers.sites.appendChild(point);
     }
   }
+  for (const label of labels) layers.sites.appendChild(label);
 
   // A charge set and burning: the satchel, and a token with the turns left.
   for (const charge of state.charges) {
@@ -511,7 +973,7 @@ function labelPoint(map, hexes) {
 
 function casedText(content, x, y, fill) {
   const g = el('g', {});
-  const attrs = { x, y, 'font-size': 14, 'font-weight': 'bold', 'letter-spacing': 1 };
+  const attrs = { x, y, 'font-size': OBJECTIVE.labelSize, 'font-weight': 'bold', 'letter-spacing': 1 };
   g.appendChild(text(content, { ...attrs, fill: 'none', stroke: OBJECTIVE.labelCasing, 'stroke-width': 5, 'stroke-linejoin': 'round' }));
   g.appendChild(text(content, { ...attrs, fill }));
   return g;
@@ -536,9 +998,11 @@ function drawOnGround(layers, id, at, side) {
 function drawParachute(layers, chute) {
   const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
   const size = MARKER.size;
-  layers.tokens.appendChild(el('use', {
-    href: '#marker-parachute', x: p.x - COUNTER.size / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
-  }));
+  const marker = el('use', {
+    href: '#marker-parachute', x: p.x - COUNTER.drawn / 2 - size + 8, y: p.y - size / 2, width: size, height: size,
+  });
+  layers.tokens.appendChild(marker);
+  return marker;
 }
 
 // The hex a hovered line of the turn report is about.
@@ -731,6 +1195,13 @@ function drawRisk(layers, plan, risk) {
     const result = risk[i];
     if (!result) return;
     const at = axialToPixel(hex.q, hex.r, map.hexSize);
+    // Spotted there: a marker-pen cross over the hex, under the step count.
+    if (result.spotted) {
+      const s = RISK.crossSize;
+      const d = `M${at.x - s} ${at.y - s} Q${at.x - 2} ${at.y + 3} ${at.x + s} ${at.y + s} M${at.x + s} ${at.y - s} Q${at.x + 3} ${at.y - 1} ${at.x - s} ${at.y + s}`;
+      layers.reachable.appendChild(el('path', { d, fill: 'none', stroke: RISK.crossCasing, 'stroke-width': RISK.crossWidth + 4, 'stroke-linecap': 'round' }));
+      layers.reachable.appendChild(el('path', { d, fill: 'none', stroke: RISK.crossStroke, 'stroke-width': RISK.crossWidth, 'stroke-linecap': 'round' }));
+    }
     const count = result.threshold;
     const filled = Math.max(0, Math.min(count, result.score));
     const width = count * RISK.pipGap + 6;
@@ -861,24 +1332,27 @@ function drawPlan(layers, plan) {
     }));
   }
 
+  // Each step carries the AP spent by the time he gets there, as a wargame
+  // map's movement count along a road: past what he has, it goes grey.
   points.forEach((point, i) => {
     if (i === 0) return;
     const withinReach = i <= split;
-    layers.path.appendChild(el('circle', {
-      cx: point.x,
-      cy: point.y,
-      r: PATH.stepRadius,
-      fill: withinReach ? PATH.lineStroke : 'none',
-      stroke: withinReach ? PATH.lineStroke : PATH.overspendStroke,
-      'stroke-opacity': withinReach ? 1 : PATH.overspendOpacity,
-      'stroke-width': 2,
+    const colour = withinReach ? PATH.lineStroke : PATH.overspendStroke;
+    const step = el('g', { opacity: withinReach ? 1 : PATH.overspendOpacity + 0.2 });
+    step.appendChild(el('circle', {
+      cx: point.x, cy: point.y, r: PATH.stepRadius, fill: PATH.stepFill, stroke: colour, 'stroke-width': 2.5,
+      ...(withinReach ? {} : { 'stroke-dasharray': '3 2.5' }),
     }));
+    step.appendChild(text(String(plan.costs?.[i] ?? i), {
+      x: point.x, y: point.y + 1, 'font-size': PATH.stepFontSize, 'font-weight': 'bold', fill: colour,
+    }));
+    layers.path.appendChild(step);
   });
 
-  // Hovering his own hex is not a move: no badge. It would sit under his
-  // counter, and "0 AP" says nothing. The risk pips for standing still stay.
+  // The count says the cost; the badge is kept only for the one move the
+  // numbers cannot explain, a single step that spends his whole pool.
   const end = points[points.length - 1];
-  if (end && plan.steps > 0) drawCostBadge(layers.path, end, plan);
+  if (end && plan.steps > 0 && plan.minimumStep) drawCostBadge(layers.path, end, plan);
 }
 
 function drawCostBadge(layer, at, plan) {
@@ -908,15 +1382,24 @@ function polyline(points, attrs) {
 }
 
 // --- counters ---------------------------------------------------------------
-// All art is <use> of a registry symbol (CLAUDE.md rule 8). The AP pips and
+// All art is <use> of a registry symbol (CLAUDE.md rule 8). The AP figure and
 // the selection ring are drawn here as geometry: they are readouts of state,
 // not artwork, and they have no asset id.
+
+/**
+ * Counters are drawn in their 56-unit sprite space (ART-ASSETS.md §3) and
+ * printed at COUNTER.drawn on the board, centred on the hex.
+ */
+function counterPlace(center) {
+  const half = COUNTER.drawn / 2;
+  return `translate(${center.x - half}, ${center.y - half}) scale(${COUNTER.drawn / COUNTER.size})`;
+}
 
 function drawCounter(unit, number, map, isSelected) {
   const center = axialToPixel(unit.q, unit.r, map.hexSize);
   const size = COUNTER.size;
   const group = el('g', {
-    transform: `translate(${center.x - size / 2}, ${center.y - size / 2})`,
+    transform: counterPlace(center),
     opacity: unit.hidden ? MARKER.hiddenOpacity : 1,
   });
   // A man with no AP left is done for the turn: his die-cut edge goes grey.
@@ -924,6 +1407,7 @@ function drawCounter(unit, number, map, isSelected) {
   const body = el('g', {});
   group.appendChild(body);
 
+  group.insertBefore(el('use', { href: '#counter-shadow', width: size, height: size }), body);
   body.appendChild(el('use', { href: `#${counterFrameId(unit)}`, width: size, height: size }));
   body.appendChild(el('use', {
     href: `#${portraitId(unit.id, 'chip')}`, x: COUNTER.chip.x, y: COUNTER.chip.y, width: COUNTER.chip.size, height: COUNTER.chip.size,
@@ -952,18 +1436,10 @@ function drawCounter(unit, number, map, isSelected) {
     'font-weight': 'bold', fill: COUNTER.nameFill,
   }));
 
-  for (let i = 0; i < unit.apMax; i++) {
-    const spent = i >= unit.ap;
-    body.appendChild(el('circle', {
-      cx: 27 - ((unit.apMax - 1) * 8) / 2 + i * 8,
-      cy: 6.5,
-      r: COUNTER.pipRadius,
-      fill: spent ? 'none' : COUNTER.pipFill,
-      stroke: COUNTER.pipFill,
-      'stroke-width': 1,
-      'stroke-opacity': spent ? 0.5 : 1,
-    }));
-  }
+  body.appendChild(text(String(unit.ap), {
+    x: COUNTER.apAt.x, y: COUNTER.apAt.y, 'font-size': COUNTER.apSize, 'font-weight': 'bold',
+    fill: COUNTER.apFill, opacity: unit.ap > 0 ? 1 : COUNTER.apSpentOpacity,
+  }));
 
   if (isSelected) {
     body.appendChild(el('rect', {
@@ -982,7 +1458,7 @@ function drawCounter(unit, number, map, isSelected) {
 function drawEnemy(enemy, map, isHovered, hears) {
   const center = axialToPixel(enemy.q, enemy.r, map.hexSize);
   const size = COUNTER.size;
-  const group = el('g', { transform: `translate(${center.x - size / 2}, ${center.y - size / 2})` });
+  const group = el('g', { transform: counterPlace(center) });
 
   const d = NEIGHBOR_DIRS[enemy.facing];
   const toward = axialToPixel(d.q, d.r, 1);
@@ -998,6 +1474,7 @@ function drawEnemy(enemy, map, isHovered, hears) {
 
   const body = el('g', {});
   group.appendChild(body);
+  group.insertBefore(el('use', { href: '#counter-shadow', width: size, height: size }), body);
   body.appendChild(el('use', { href: '#counter-frame-enemy', width: size, height: size }));
   body.appendChild(el('use', { href: `#${enemySymbolId(enemy.type)}`, width: size, height: size }));
 

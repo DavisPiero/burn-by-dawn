@@ -138,7 +138,7 @@ export function renderGutter(svg) {
 // the way a briefing would: by the objective it is beside, or the part of the
 // map it is in.
 
-/** "the marsh by the rail bridge", "the field in the north-west". */
+/** "the marsh by the rail bridge", "the field by Ferme Lebrun", "the field in the north-west". */
 export function placeName(map, objectives, exfil, hex) {
   const terrain = terrainAt(map, hex.q, hex.r);
   const ground = terrain ? terrain.label.toLowerCase() : 'ground';
@@ -146,14 +146,18 @@ export function placeName(map, objectives, exfil, hex) {
   let best = Infinity;
   const landmarks = [...objectives.map((o) => ({ label: o.label.toLowerCase(), hexes: o.hexes }))];
   if (exfil.length) landmarks.push({ label: 'exfil', hexes: exfil });
+  // Named places are proper names: no "the", and their own case. An
+  // objective or the exfil wins a tie, being listed first.
+  for (const place of map.places ?? []) landmarks.push({ label: place.name, proper: true, hexes: [{ q: place.at[0], r: place.at[1] }] });
   for (const mark of landmarks) {
     for (const h of mark.hexes) {
       const d = hexDistance(h, hex);
       if (d < best) { best = d; near = mark; }
     }
   }
-  if (near && best === 0) return `the ${near.label}`;
-  if (near && best <= 2) return `the ${ground} by the ${near.label}`;
+  const named = near && (near.proper ? near.label : `the ${near.label}`);
+  if (near && best === 0) return near.proper ? `the ${ground} at ${named}` : named;
+  if (near && best <= 2) return `the ${ground} by ${named}`;
   const across = columnOf(hex.q, hex.r) / map.width;
   const down = hex.r / map.height;
   const ns = down < 1 / 3 ? 'north' : down >= 2 / 3 ? 'south' : '';
@@ -210,6 +214,57 @@ export function describeAlertStates(alert) {
   ];
 }
 
+// --- the briefing card (SPEC.md §11) ---------------------------------------------
+
+// How much a line of the turn report matters, lowest first: the card puts the
+// worst news at the top and cuts from the bottom.
+const EVENT_WEIGHT = {
+  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, reserve: 2, spotted: 2, diversion: 2,
+  pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
+};
+
+/** The report's lines, most important first, as the card shows them. */
+export function rankedReport(events, place) {
+  return events
+    .map((event, i) => ({ event, i, weight: EVENT_WEIGHT[event.kind] ?? 4 }))
+    .sort((a, b) => a.weight - b.weight || a.i - b.i)
+    .map(({ event }) => describeEvent(event, place));
+}
+
+/**
+ * Show the briefing card, or hide it when `briefing` is null. `briefing` is
+ * { title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ *   toggle?: { on } } — worded in main.js. `onToggle(on)` is the turn-update box.
+ */
+export function renderBriefing(backdrop, card, briefing, onToggle) {
+  backdrop.hidden = !briefing;
+  if (!briefing) return;
+  card.replaceChildren(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
+  for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, text));
+  for (const section of briefing.sections) {
+    if (!section.lines.length) continue;
+    card.appendChild(html('h3', null, section.heading));
+    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, line)));
+    if (section.more) list.appendChild(html('li', 'brief-more', section.more));
+    card.appendChild(list);
+  }
+  const foot = html('div', 'brief-foot');
+  if (briefing.toggle) {
+    const box = html('input');
+    box.type = 'checkbox';
+    box.checked = briefing.toggle.on;
+    box.addEventListener('click', (event) => event.stopPropagation());
+    box.addEventListener('change', () => onToggle(box.checked));
+    const label = html('label', null, [box, ' Brief me at the start of every turn']);
+    label.addEventListener('click', (event) => event.stopPropagation());
+    foot.appendChild(label);
+  } else {
+    foot.appendChild(html('span'));
+  }
+  foot.appendChild(html('span', 'brief-go', 'CARRY ON — any key or click'));
+  card.appendChild(foot);
+}
+
 // --- the turn report ----------------------------------------------------------
 
 /**
@@ -238,7 +293,7 @@ export function renderReport(element, state, place, onLocate) {
   }
 }
 
-function describeEvent(event, place) {
+export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
     case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}.`;
@@ -379,20 +434,25 @@ export function renderMission(element, mission) {
   element.replaceChildren();
   for (const o of mission.objectives) {
     const item = html('li', o.destroyed ? 'done' : null);
-    const name = html('b', null, o.primary ? `${o.label} ★` : o.label);
-    // SPEC.md §10: only the primary is needed to win. Say so, or the three
-    // read as a checklist.
-    const role = html('i', null, o.primary ? ' needed' : ` optional, +${o.points}`);
-    item.append(name, role, ` — ${o.detail}`);
+    // SPEC.md §10: only the primary is needed to win. The star says so, and
+    // the optional ones carry their score, or the three read as a checklist.
+    const name = html('span', null, [html('b', null, o.primary ? `★ ${o.label}` : o.label), html('i', null, o.primary ? ' needed' : ` +${o.points}`)]);
+    item.append(name, html('span', null, o.progress));
+    attachPopup(item, () => [
+      html('b', null, o.label.toUpperCase()),
+      `\n${o.primary ? 'Primary: needed to win.' : `Optional: +${o.points} score.`}\n${o.detail}.`,
+    ]);
     element.appendChild(item);
   }
-  element.appendChild(html('li', null, `Men out: ${mission.out} of ${mission.minimumOut} needed`));
+  const out = html('li', null, [html('span', null, 'Men out at the exfil'), html('span', null, `${mission.out}/${mission.minimumOut}`)]);
+  attachPopup(out, [html('b', null, 'MEN OUT'), `\nAt least ${mission.minimumOut} must reach the exfil for the mission to count.`]);
+  element.appendChild(out);
 }
 
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
-  button.textContent = check.ok ? 'RAF DIVERSION [D] — once, no AP' : `RAF diversion — ${check.reason}`;
+  button.replaceChildren('RAF DIVERSION', html('small', null, check.ok ? '[D] once, no AP' : check.reason));
 }
 
 export const DIVERSION_HELP = 'The alert drops a state, every search and held contact is dropped, every man is out of contact. Once per mission, while the leader lives. Costs the clean-run bonus.';
@@ -460,11 +520,9 @@ export function renderResults(element, outcome) {
 export function renderDropRuns(element, runs, onChoose) {
   element.replaceChildren();
   element.classList.remove('idle');
+  element.classList.add('runs');
   for (const run of runs) {
-    const button = html('button', 'action', [
-      html('span', 'action-name', `${run.label} [${run.key}]`),
-      html('span', 'action-cost', `wind ${run.wind}`),
-    ]);
+    const button = html('button', 'action', [html('span', 'action-key', run.key), html('span', 'action-name', run.label)]);
     button.type = 'button';
     if (run.selected) button.classList.add('active');
     attachPopup(button, () => describeRun(run));
@@ -489,13 +547,14 @@ export function renderSeed(element, seed) {
 }
 
 /**
- * The selected man's actions (SPEC.md §4), as buttons with their key and cost.
+ * The selected man's actions (SPEC.md §4), as buttons with their key and name.
  * `actions` is worked out in main.js: [{ id, key, label, cost, ok, reason,
  * help, active }]. What an action does, and why it cannot be taken, are its
  * rollover.
  */
 export function renderActions(element, actions, onAction) {
   element.replaceChildren();
+  element.classList.remove('runs');
   if (!actions) {
     element.classList.add('idle');
     element.textContent = 'Select a man: 1–6, Tab, or click him.';
@@ -503,10 +562,9 @@ export function renderActions(element, actions, onAction) {
   }
   element.classList.remove('idle');
   for (const action of actions) {
-    const button = html('button', 'action', [
-      html('span', 'action-name', `[${action.key}] ${action.label}`),
-      html('span', 'action-cost', action.active ? 'click a target' : action.ok ? action.cost : action.reason),
-    ]);
+    // Key and verb only; the cost, and why not, are the rollover, which has
+    // the full name where the button has a short one.
+    const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-name', action.short ?? action.label)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
     button.disabled = !action.ok && !action.active;

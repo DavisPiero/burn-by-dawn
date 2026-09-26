@@ -4,11 +4,12 @@
 import combatTests from './combat.test.js';
 import dropTests from './drop.test.js';
 import enemyTests from './enemy.test.js';
+import hintTests from './hints.test.js';
 import sabotageTests from './sabotage.test.js';
 import speechTests from './speech.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');

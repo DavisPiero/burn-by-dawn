@@ -14,19 +14,20 @@ import {
 } from './state.js';
 import {
   blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
-  objectiveAt, primaryShortfall, swimTargets,
+  objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
+import { hintsFor } from './hints.js';
 import { validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, renderPieces } from './render/board.js';
+import { boardPixelBounds, createBoard, dropTimeline, renderPieces } from './render/board.js';
 import { renderRoster } from './render/roster.js';
-import { applyDocumentTheme, loadSuppliedPortraits } from './render/theme.js';
+import { applyDocumentTheme, loadSuppliedPaper, loadSuppliedPortraits } from './render/theme.js';
 import {
   DIVERSION_HELP, attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
-  hidePopup, placeName, renderActions, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
+  hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderTurnCounter, showPopup,
 } from './render/ui.js';
@@ -49,6 +50,8 @@ const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
 const alertBox = document.getElementById('alert');
+const briefingBackdrop = document.getElementById('briefing-backdrop');
+const briefingCard = document.getElementById('briefing');
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -67,6 +70,17 @@ let hoverUnitId = null;
 // The man selected at the last draw. Once the selection moves off a man, his
 // line has been heard and goes (SPEC.md §11).
 let lastSelectedId = null;
+// The drop being shown (SPEC.md §11): the run's line and where each man jumped
+// and came down, and when. Display only: state already has them landed. Any
+// key or click skips to the end.
+let dropShow = null;
+let dropShowTimer = null;
+// The briefing card (SPEC.md §11): which one is open, if any, whether turn
+// updates are wanted this session, and whether one is waiting for the drop
+// to finish being shown. Interface only, never game state.
+let briefing = null;
+let briefingsOn = true;
+let briefingAfterDrop = false;
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -156,6 +170,8 @@ function deriveView() {
     drop: null,
     dropRuns: null,
     dropLabel: null,
+    dropShow,
+    targetRings: null,
   };
 
   if (state.phase === 'drop') return deriveDrop(view, hex);
@@ -164,6 +180,9 @@ function deriveView() {
   if (objective) {
     view.hoverObjective = objective;
     view.siteLabel = describeObjective(objective);
+    if (!objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective) {
+      view.siteLabel = `CHARGE POINT for the ${objective.label} — a man carrying a charge stands here and places it [C]. ${view.siteLabel}`;
+    }
     if (!objective.destroyed) {
       const radius = kindOf(objective, rules).blastRadius;
       view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius })));
@@ -233,6 +252,17 @@ function deriveDrop(view, hex) {
     })),
     area: selected ? dropArea(map, rules, selected, state.units, state.enemies) : null,
   };
+  // Before a run is picked, the targets and the exfil are ringed in marker pen
+  // (SPEC.md §11), so the first thing the player sees is where to go.
+  if (!selected) {
+    view.targetRings = [
+      ...state.objectives.map((o) => ({
+        hexes: o.hexes, primary: o.primary, colour: 'red',
+        note: o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`,
+      })),
+      { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
+    ];
+  }
   view.dropRuns = baseMap.dropRuns.map((run, i) => ({
     id: run.id, key: String(i + 1), label: run.label, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
   }));
@@ -297,7 +327,8 @@ function describeMissionState() {
       return {
         label: o.label, primary: o.primary, destroyed: o.destroyed, cut: o.cut,
         points: o.primary ? rules.scoring.primary : rules.scoring.secondary,
-        detail: o.destroyed ? (o.cut ? 'line cut' : 'destroyed') : `${o.detonated + set}/${kind.chargesNeeded} charges${set ? `, ${set} burning` : ''}`,
+        detail: o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`,
+        progress: o.destroyed ? (o.cut ? 'cut' : 'done') : `${o.detonated + set}/${kind.chargesNeeded}${set ? ' ●' : ''}`,
       };
     }),
     out,
@@ -336,12 +367,12 @@ function actionsFor(unit) {
     { id: 'hide', key: 'G', label: 'Hide', help: 'Go to ground: +concealment on this hex, ends his turn', ...withCost(checkHide(unit, rules), ap) },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy he suppressed this turn or last: dead, and it leaves a body. Loud. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
-    { id: 'stone', key: 'T', label: 'Throw stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
+    { id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', help: `A noise up to ${rules.actions.throwStone.range} hexes away: patrols go to look, sentries turn`, ...withCost(stoneCheck, ap) },
     { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
-    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
+    { id: 'pack', key: 'U', label: 'Pack chute', short: 'Pack', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     placeChargeAction(unit),
-    { id: 'cut', key: 'X', label: 'Cut the line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
+    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
 }
@@ -355,7 +386,7 @@ function placeChargeAction(unit) {
     cost += ` — leaves too few for the ${primaryLabel()}: WITHDRAWS`;
   }
   return {
-    id: 'charge', key: 'C', label: 'Place charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
+    id: 'charge', key: 'C', label: 'Place charge', short: 'Charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
     ok: check.ok, reason: check.reason, cost,
   };
 }
@@ -450,6 +481,7 @@ function render() {
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
   renderResults(resultsBox, state.outcome);
+  renderBriefing(briefingBackdrop, briefingCard, briefing && describeBriefing(briefing, view), (on) => { briefingsOn = on; });
   dropStalePopup();
 }
 
@@ -499,6 +531,7 @@ function commit(next) {
 // --- input ------------------------------------------------------------------
 
 function handleHexClick(q, r) {
+  if (dropShow) return endDropShow();
   if (state.outcome || state.phase === 'drop') return;
   highlightHex = null;
   if (state.targeting) {
@@ -599,13 +632,101 @@ function handleHexLeave() {
 }
 
 function handleRosterClick(unitId) {
+  if (dropShow) return endDropShow();
   if (state.outcome) return;
   state = selectUnit(state, unitId);
   render();
 }
 
 function handleEndTurn() {
-  state = state.phase === 'drop' ? jump(state, baseMap, rules) : endTurn(state, rules, baseMap);
+  if (briefing) return closeBriefing();
+  if (dropShow) return endDropShow();
+  if (state.phase === 'drop') return jumpNow();
+  endTurnNow();
+}
+
+function endTurnNow() {
+  state = endTurn(state, rules, baseMap);
+  if (!state.outcome && briefingsOn) briefing = { kind: 'turn' };
+  render();
+}
+
+function closeBriefing() {
+  briefing = null;
+  render();
+}
+
+/** The card's words: the orders before the drop, or this turn's update. */
+function describeBriefing(which, view) {
+  const primary = state.objectives.find((o) => o.primary);
+  if (which.kind === 'orders') {
+    const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toLowerCase()}`);
+    const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
+    return {
+      title: 'ORDERS',
+      kicker: 'BEFORE THE DROP',
+      paragraphs: [
+        `Tonight six men drop behind the lines. Blow the ${primary.label.toLowerCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the exfil. Dawn comes at the end of turn ${rules.turnLimit}.`,
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off.`] : []),
+      ],
+      sections: [{
+        heading: 'HOW TO PLAY',
+        lines: [
+          'Pick a drop run with the 1–3 keys, or click its name on the map. Hover the map to see where you might come down.',
+          'Hit the SPACE key to initiate the drop. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Hit SPACE to end a turn.',
+          'Red rings mark your targets. The red dashed hexes are where you need to place explosive charges: stand a man carrying a charge there and press C.',
+          'Hover anything for detail. KEYS, top right, lists every key.',
+        ],
+      }],
+    };
+  }
+  const lines = rankedReport(state.report, view.place);
+  const shown = 6;
+  const alert = rules.alert.states[alertIndex(state.alert.points, rules)];
+  return {
+    title: `TURN ${state.turn} OF ${rules.turnLimit}`,
+    kicker: `GARRISON ${alert.label.toUpperCase()}`,
+    sections: [
+      {
+        heading: state.turn === 1 ? 'THE DROP' : 'SINCE LAST TURN',
+        lines: lines.length ? lines.slice(0, shown) : ['A quiet night. Nothing seen.'],
+        more: lines.length > shown ? `…and ${lines.length - shown} more in the report under the map.` : null,
+      },
+      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok }) },
+    ],
+    toggle: { on: briefingsOn },
+  };
+}
+
+/** Jump, and show the stick going out and coming down. */
+function jumpNow() {
+  const run = runById(baseMap, state.dropRunId);
+  if (!run) return;
+  const jumps = jumpPoints(run, state.units.length);
+  const order = state.units.map((u) => u.id);
+  state = jump(state, baseMap, rules);
+  const landed = state.report.filter((e) => e.kind === 'landed');
+  if (landed.length) {
+    dropShow = {
+      since: performance.now(),
+      from: { q: run.from[0], r: run.from[1] },
+      to: { q: run.to[0], r: run.to[1] },
+      jumps: landed.map((e) => ({ unitId: e.unitId, jump: jumps[order.indexOf(e.unitId)], land: { q: e.q, r: e.r } })),
+    };
+    clearTimeout(dropShowTimer);
+    dropShowTimer = setTimeout(endDropShow, dropTimeline(baseMap, dropShow).length);
+    briefingAfterDrop = briefingsOn;
+  } else if (state.phase !== 'drop' && briefingsOn) {
+    briefing = { kind: 'turn' };
+  }
+  render();
+}
+
+function endDropShow() {
+  clearTimeout(dropShowTimer);
+  dropShow = null;
+  if (briefingAfterDrop) briefing = { kind: 'turn' };
+  briefingAfterDrop = false;
   render();
 }
 
@@ -623,7 +744,8 @@ function handleDropKey(event) {
     state = chooseDropRun(state, baseMap, run.id);
   } else if (key === ' ') {
     event.preventDefault();
-    state = jump(state, baseMap, rules);
+    jumpNow();
+    return;
   } else if (key === 'r' || key === 'R') {
     state = toggleRoutes(state);
   } else if (key === 'Escape') {
@@ -639,6 +761,17 @@ function handleDropKey(event) {
 // over only R still does anything.
 function handleKey(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+  // Any key puts the briefing away, and does nothing else.
+  if (briefing) {
+    event.preventDefault();
+    closeBriefing();
+    return;
+  }
+  if (dropShow) {
+    event.preventDefault();
+    endDropShow();
+    return;
+  }
   if (state.phase === 'drop') {
     handleDropKey(event);
     return;
@@ -664,8 +797,8 @@ function handleKey(event) {
     }
     case ' ':
       event.preventDefault();
-      state = endTurn(state, rules, baseMap);
-      break;
+      endTurnNow();
+      return;
     case 'r':
     case 'R':
       state = toggleRoutes(state);
@@ -740,6 +873,7 @@ window.dispatchEvent(new Event('night-drop-started'));
 
 try {
   applyDocumentTheme();
+  loadSuppliedPaper();
   baseMap = await loadMap();
   map = baseMap;
   rules = await loadJson('data/rules.json');
@@ -787,6 +921,9 @@ try {
   renderKeys(keysTab);
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, DIVERSION_HELP);
+  // The orders open over the board before anything else (SPEC.md §11).
+  briefing = { kind: 'orders' };
+  briefingBackdrop.addEventListener('click', () => closeBriefing());
   render();
 
   // The board is up. The failure reporter in index.html stops attributing

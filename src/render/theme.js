@@ -55,7 +55,7 @@ export const HALFTONE = {
 
 // Every colour fill is printed a hair off its ink outline. In the units of
 // whatever it is drawn in; at board scale this is about half a screen pixel.
-export const MISREGISTER = { x: 0.6, y: 0.45 };
+export const MISREGISTER = { x: 0.4, y: 0.3 };
 
 /** The halftone class for a colour at a density, rounded to the nearest screen we print. */
 export function toneClass(colour, density) {
@@ -128,29 +128,64 @@ export function applyDocumentTheme(root = document.documentElement) {
   for (const [id, colour] of Object.entries(ALERT_STATE)) root.style.setProperty(`--alert-${id}`, colour);
 }
 
+// A supplied paper texture (ART-ASSETS.md §1, ART-PROMPTS.md): a PNG at
+// PAPER_FILE replaces the drawn fibre tile once it loads, shown at half its
+// pixel size for retina. A missing file is fine: the drawn tile stays.
+export const PAPER_FILE = { url: 'assets/paper/paper-fibre.png', tile: 1024 };
+
+export function loadSuppliedPaper(root = document.documentElement) {
+  const probe = new Image();
+  probe.onload = () => {
+    root.style.setProperty('--paper-fibre', `url("${PAPER_FILE.url}")`);
+    root.style.setProperty('--paper-fibre-size', `${PAPER_FILE.tile}px`);
+  };
+  probe.src = PAPER_FILE.url;
+}
+
 // ---------------------------------------------------------------------------
-// Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, a halftone
-// screen over it, a motif, and the grid line. `variants` motifs are picked per
-// hex from its coordinates, so the same hex always looks the same. `connects`
-// motifs (the track) run edge to edge and are turned to meet their neighbours;
-// `banks` terrain (the canal) gets a bank on every edge that faces dry land.
+// Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, an optional
+// flat tint of one spot colour over it (a printer's tint, at an opacity), an
+// optional halftone screen, a motif, and the grid line. The board has to read
+// at a glance (SPEC.md §11, M7b): open ground is flat colour, and the screen
+// is kept for wood alone. `variants` motifs are picked per hex from its
+// coordinates, so the same hex always looks the same; `sparse` is the share
+// of hexes that get a motif at all. Roads are not a motif: board.js draws each
+// one as a single continuous line through its hexes (`road`). `banks` terrain
+// (the canal) gets a bank on every edge that faces dry land.
 
 const TERRAIN_ART = {
-  field: { base: 'paper', tone: ['green', 10], motif: 'terrain-field', variants: 3 },
-  track: { base: 'paper', tone: ['ink', 10], motif: 'terrain-track', connects: ['track', 'bridge'] },
-  hedgerow: { base: 'paper', tone: ['green', 35], motif: 'terrain-hedgerow', variants: 3 },
-  wood: { base: 'green', tone: ['ink', 35], motif: 'terrain-wood', variants: 3 },
-  orchard: { base: 'paper', tone: ['green', 20], motif: 'terrain-orchard', variants: 3 },
-  marsh: { base: 'paper', tone: ['blue', 20], motif: 'terrain-marsh' },
-  canal: { base: 'blue', tone: ['ink', 20], motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  lock: { base: 'blue', tone: ['ink', 20], motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  ridge: { base: 'paper', tone: ['ink', 20], motif: 'terrain-ridge' },
-  farmhouse: { base: 'paper', tone: ['red', 10], motif: 'terrain-farmhouse' },
-  emplacement: { base: 'paper', tone: ['red', 20], motif: 'terrain-emplacement' },
+  field: { base: 'paper', motif: 'terrain-field', variants: 3, sparse: 0.22 },
+  track: { base: 'paper', motif: null, road: true },
+  hedgerow: { base: 'paper', tint: ['green', 0.12], motif: 'terrain-hedgerow', variants: 3, hedge: true },
+  // `area` terrain is printed as one shape across every run of neighbouring
+  // hexes of it (see AREA), with its motif scattered over the shape.
+  wood: { base: 'paper', area: { fill: 'green', tone: ['ink', 20], outline: 1.8 }, motif: 'terrain-wood', variants: 3 },
+  orchard: { base: 'paper', area: { tint: ['green', 0.13], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-orchard', variants: 3 },
+  marsh: { base: 'paper', area: { tint: ['blue', 0.16] }, motif: 'terrain-marsh' },
+  // High ground in tonal bands: darker at the crest, a paler band round the
+  // edge where it falls away, a contour at its foot, and no symbol.
+  ridge: { base: 'paper', area: { tint: ['ink', 0.13], rim: { width: 26, opacity: 0.5 }, outline: 1.2, outlineOpacity: 0.45, dash: '8 3' }, motif: null },
+  canal: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
+  lock: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
+  farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse', building: true },
+  emplacement: { base: 'paper', tint: ['red', 0.1], motif: 'terrain-emplacement' },
   // The bridge and the dump are drawn by their objective art, over the hexes.
-  bridge: { base: 'paper', tone: ['ink', 10], motif: null },
-  depot: { base: 'paper', tone: ['ink', 20], motif: null },
+  bridge: { base: 'paper', motif: null, road: true },
+  depot: { base: 'paper', tint: ['ink', 0.07], motif: null },
 };
+
+// Area terrain's outline: it follows the hexes' edges, rounded off at every
+// corner and pushed in and out by up to `wobble` at each edge's middle, so it
+// reads as a wood on a map rather than a patch of hexes. The push is fixed by
+// where the edge is, never rolled, so the map is the same every time.
+export const AREA = { wobble: 6 };
+
+/** A fixed push, -1 to 1, for the point (x, y). */
+export function wobbleAt(x, y) {
+  const rng = createRng((Math.round(x * 10) * 73856093) ^ (Math.round(y * 10) * 19349663));
+  rng.next();
+  return rng.next() * 2 - 1;
+}
 
 // A terrain id with no art yet still draws, in a colour that looks wrong on
 // purpose, rather than vanishing.
@@ -159,26 +194,79 @@ const UNKNOWN_TERRAIN = { base: null, fill: '#FF00FF', tone: null, motif: null }
 export function terrainArt(terrainId) {
   const art = TERRAIN_ART[terrainId];
   if (!art) return UNKNOWN_TERRAIN;
-  return { ...art, fill: PALETTE[art.base] };
+  const area = art.area ? { ...art.area, tintFill: art.area.tint ? PALETTE[art.area.tint[0]] : null } : null;
+  return { ...art, area, fill: PALETTE[art.base], tintFill: art.tint ? PALETTE[art.tint[0]] : null };
 }
 
-/** Which variant of a motif a hex gets: fixed by its coordinates, not rolled. */
+/** Which variant of a motif a hex gets, or none: fixed by its coordinates, not rolled. */
 export function terrainMotifId(art, q, r) {
   if (!art.motif) return null;
-  if (!art.variants) return art.motif;
   const rng = createRng(((q + 64) * 73856093) ^ ((r + 64) * 19349663));
   rng.next();
-  const n = 1 + Math.floor(rng.next() * art.variants);
-  return `${art.motif}-0${n}`;
+  const pick = rng.next();
+  if (art.sparse !== undefined && rng.next() > art.sparse) return null;
+  if (!art.variants) return art.motif;
+  return `${art.motif}-0${1 + Math.floor(pick * art.variants)}`;
 }
+
+// Roads and the railway are drawn as continuous lines over the terrain, not
+// stamped per hex (SPEC.md §11, M7b). A road is a paper lane between two ink
+// edges; the railway is the map-maker's rails-and-sleepers, on a faint bed.
+export const ROAD = {
+  edge: PALETTE.ink,
+  edgeWidth: 12,
+  fill: PALETTE.paper,
+  fillWidth: 8.5,
+};
+
+// A hedgerow is a line: neighbouring hedgerow hexes are joined into one hedge,
+// drawn as a lumpy green stroke with an ink edge (the lumps are a dotted
+// stroke with round caps). A hedgerow hex with no hedgerow beside it keeps
+// its motif.
+export const HEDGE = {
+  edgeWidth: 9.5,
+  lumpEdgeWidth: 16.5,
+  width: 6.5,
+  lumpWidth: 13.5,
+  lumpSpacing: '0 10.5',
+};
+
+export const RAIL = {
+  bed: PALETTE.ink,
+  bedWidth: 20,
+  bedOpacity: 0.08,
+  sleeper: PALETTE.ink,
+  sleeperWidth: 13,
+  sleeperDash: '2.2 6',
+  rail: PALETTE.ink,
+  railWidth: 6.5,
+  gauge: PALETTE.paper,
+  gaugeWidth: 3.5,
+};
+
+// Place names printed on the map (SPEC.md §11), set as a map-maker sets them:
+// the village in spaced capitals, water in paper italic on the water, everything else in
+// italic, all with a paper halo so they read over any ground. A kind with no
+// entry is set as `other`.
+export const PLACE = {
+  font: 'Georgia, "Times New Roman", Times, serif',
+  halo: PALETTE.paper,
+  haloWidth: 4.5,
+  // Pushed back to a mid grey (ink at an opacity): names are flavour, and must
+  // never out-shout the labels that affect play.
+  village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink, opacity: 0.5 },
+  water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.6, halo: false },
+  other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink, opacity: 0.5 },
+};
 
 export const GRID = {
   stroke: PALETTE.ink,
   strokeWidth: 1,
-  strokeOpacity: 0.3,
+  strokeOpacity: 0.16,
   // The clipped half-hexes past the straight border. Drawn, so the border
   // reads as a printed crop rather than a void, but visibly dead.
   outOfPlayOpacity: 0.35,
+  deadWash: PALETTE.paper,
   border: PALETTE.ink,
   borderWidth: 4,
 };
@@ -188,10 +276,13 @@ export const SELECTION = {
   strokeWidth: 4,
 };
 
-// Counters are 56px inside an 80px hex so the hex edge stays visible under
-// them — ART-ASSETS.md §3.
+// Counters are drawn in a 56px sprite space (ART-ASSETS.md §3) and printed at
+// `drawn` inside an 80px hex, so the hex edge stays visible under them.
 export const COUNTER = {
   size: 56,
+  // Printed a little larger than the sprite, so the name strip reads at the
+  // size the board is shown at; the hex edge still shows round it (M7b).
+  drawn: 64,
   // The name strip is 52 wide with the roster number boxed off at its left,
   // so this is what is left for the name itself.
   nameBoxLeft: 14,
@@ -203,17 +294,21 @@ export const COUNTER = {
   edge: PALETTE.ink,
   spentEdge: '#A39E90',
   nameFill: PALETTE.paper,
-  nameSize: 9,
+  nameSize: 10.5,
   // Glyphs are never stretched to fill the strip — a long name scales down as
   // whole type instead. Roughly the width of one character at font-size 1.
   nameAspect: 0.62,
-  numberFill: PALETTE.ink,
-  numberText: PALETTE.paper,
-  pipFill: PALETTE.ink,
-  pipRadius: 2.6,
-  // The man's own face, and his role as a small badge beside it.
-  chip: { x: 17, y: 11, size: 26 },
-  role: { x: 2, y: 13, size: 14 },
+  numberFill: PALETTE.paper,
+  numberText: PALETTE.ink,
+  // AP left, one big figure top right, as a wargame counter prints its
+  // factors; greyed back when he has none.
+  apFill: PALETTE.paper,
+  apSize: 16,
+  apAt: { x: 47.5, y: 12 },
+  apSpentOpacity: 0.4,
+  // The man's own face, and his role in the roundel top left.
+  chip: { x: 14, y: 6, size: 29 },
+  role: { x: 3.5, y: 4, size: 12 },
 };
 
 // SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
@@ -241,7 +336,9 @@ export const PATH = {
   overspendStroke: PALETTE.ink,
   overspendOpacity: 0.45,
   overspendDash: '6 7',
-  stepRadius: 7,
+  stepRadius: 10,
+  stepFill: PALETTE.paper,
+  stepFontSize: 13,
   badgeFill: PALETTE.ink,
   badgeText: PALETTE.paper,
   blockedStroke: PALETTE.red,
@@ -252,7 +349,7 @@ export const PATH = {
 
 export const ENEMY = {
   labelFill: PALETTE.paper,
-  labelSize: 8.5,
+  labelSize: 10,
   labelBoxLeft: 4,
   labelBoxRight: 52,
   // The small wedge outside the counter that says which way it is looking.
@@ -264,7 +361,7 @@ export const ENEMY = {
 
 export const VISION = {
   fill: PALETTE.red,
-  opacity: 0.16,
+  opacity: 0.13,
   hoverOpacity: 0.3,
   edgeCasing: PALETTE.paper,
   edgeCasingWidth: 7,
@@ -341,27 +438,39 @@ export const RISK = {
   shotFill: PALETTE.red,
   pinnedFill: PALETTE.ink,
   shotText: PALETTE.paper,
+  // The cross over a hex on the path where he would be spotted.
+  crossStroke: PALETTE.red,
+  crossCasing: PALETTE.paper,
+  crossWidth: 5,
+  crossSize: 22,
 };
 
 // SPEC.md §7, §10: objectives, their charge hexes, charges burning, blasts
 // about to happen, and the exfil.
 export const OBJECTIVE = {
-  // The footprint outline is faint: the art says where the objective is, the
-  // outline only says which hexes count as it.
+  // The footprint: which hexes are the target, in a firm ink line cased in
+  // paper, so the art and its hexes read as one thing (M7b).
   stroke: PALETTE.ink,
   casing: PALETTE.paper,
-  width: 2,
-  casingWidth: 5,
-  outlineOpacity: 0.35,
+  width: 3,
+  casingWidth: 7,
+  outlineOpacity: 0.85,
   label: PALETTE.ink,
   labelCasing: PALETTE.paper,
   primaryLabel: PALETTE.red,
-  ringRadius: 17,
-  ringStroke: PALETTE.ink,
-  ringDash: '4 3',
-  ringOpacity: 0.55,
-  ringHoverOpacity: 1,
-  ringWidth: 2,
+  labelSize: 16,
+  labelLift: 1.02, // hex radii above the top row's centre, clear of the bridge's girders
+  // A charge point, where a man stands to place a charge: a red dashed hex
+  // just inside the hex's own edge, so it shows round a counter standing on
+  // it, and an empty satchel in it — "put one here", not a target.
+  pointInset: 0.84,
+  pointStroke: PALETTE.red,
+  pointDash: '7 4',
+  pointWidth: 2.8,
+  pointCasingWidth: 6.5,
+  pointOpacity: 0.8,
+  pointHoverOpacity: 1,
+  pointIconSize: 34,
   stampWidth: 110,
   stampHeight: 44,
   stampRotate: -12,
@@ -439,6 +548,40 @@ export const DROP = {
   areaOpacity: 0.22,
   areaStroke: PALETTE.blue,
   areaWidth: 3,
+};
+
+// The drop shown (SPEC.md §11): a Dakota flies the chosen run's line and each
+// man's canopy opens where he jumps, drifts to where the rules put him, and
+// collapses into his parachute marker as his counter appears. Display only;
+// every landing is decided before it starts. Times in ms.
+export const DROP_SHOW = {
+  flightMs: 2800,
+  runIn: 2.5, // hexes the aircraft flies before the first waypoint and after the last
+  aircraftSize: 170,
+  aircraftShadow: { x: 34, y: 44, opacity: 0.16 },
+  canopySize: 38,
+  openMs: 220,
+  driftMs: 1300,
+  collapseMs: 220,
+  shadowStart: 18, // the canopy's shadow starts this far down-right and closes in as it lands
+  appearMs: 120,
+  tailMs: 350,
+};
+
+// The marker-pen rings round the targets before the drop (SPEC.md §11): a
+// loop that overshoots where it started, twice round the primary, drawn on
+// once and then left; a note beside each in the lettering.
+export const RINGS = {
+  red: PALETTE.red,
+  green: PALETTE.green,
+  width: 4.5,
+  margin: 14, // beyond the footprint's hexes
+  overshoot: 0.14, // of a turn past the start
+  wobble: 0.05, // of the radius
+  drawMs: 650,
+  staggerMs: 180,
+  noteSize: 17,
+  halo: PALETTE.paper,
 };
 
 // Speech bubbles on the board (SPEC.md §11): hand lettering in capitals,
@@ -539,19 +682,26 @@ function label(content, attrs) {
 
 // Both allied frames are the same die-cut silhouette so the six read as one
 // set of chits; only the name strip's colour and the rank flash differ. The
-// drop shadow is part of the frame, down-right 2px and hard edged: a cardboard
-// chit, not a soft UI shadow (ART-ASSETS.md §3).
+// chit is printed solid army green, so our side reads off the map at a glance
+// as the enemy's black does (M7b), with a paper roundel for the role symbol.
+// Under it, a sliver of the card's cut edge shows down-right. The soft shadow
+// is not part of the frame: it is counter-shadow, drawn under it.
+function cardEdge(d) {
+  return [fill(d, 'paper', { transform: 'translate(1.8 1.8)' }), line(d, 0.8, 'stroke-ink', { transform: 'translate(1.8 1.8)', opacity: 0.7 })];
+}
+
+const ALLIED_OUTLINE = 'M6 1 H48 A5 5 0 0 1 53 6 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 V6 A5 5 0 0 1 6 1 Z';
+
 function alliedFrame(stripClass, extras = []) {
   return [
-    svg('rect', { x: 3, y: 3, width: 52, height: 52, rx: 5, class: 'ink', 'fill-opacity': 0.6 }),
-    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, class: 'paper' }),
-    svg('rect', { x: 1, y: 1, width: 52, height: 37, rx: 5, class: toneClass('green', 10) }),
+    ...cardEdge(ALLIED_OUTLINE),
+    fill(ALLIED_OUTLINE, 'green'),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', stripClass),
-    fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', toneClass('ink', 20)),
+    circle(9.5, 10, 7.5, 'paper'), ring(9.5, 10, 7.5, 1.2),
     ...extras,
     // The die-cut edge takes its colour from --counter-edge, so board.js can
     // grey a spent man's edge without a second frame.
-    svg('rect', { x: 1, y: 1, width: 52, height: 52, rx: 5, fill: 'none', class: 'counter-edge', 'stroke-width': 2 }),
+    svg('path', { d: ALLIED_OUTLINE, fill: 'none', class: 'counter-edge', 'stroke-width': 2 }),
   ];
 }
 
@@ -592,7 +742,7 @@ function tuft(x, y, s = 1) {
 
 function bush(x, y, r) {
   const d = `M${x - r} ${y + r * 0.4} C${x - r * 1.2} ${y - r * 0.6} ${x - r * 0.3} ${y - r * 1.2} ${x + r * 0.1} ${y - r * 0.8} C${x + r * 0.7} ${y - r * 1.3} ${x + r * 1.4} ${y - r * 0.2} ${x + r} ${y + r * 0.4} C${x + r * 0.6} ${y + r} ${x - r * 0.6} ${y + r} ${x - r} ${y + r * 0.4} Z`;
-  return [fill(d, 'green'), fill(d, toneClass('ink', 20)), line(d, 1.4)];
+  return [fill(d, 'green'), line(d, 1.6)];
 }
 
 function treeCrown(x, y, r) {
@@ -608,93 +758,61 @@ function treeCrown(x, y, r) {
     }
   }
   return [
-    fill(d, 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
-    fill(d, 'green'), fill(d, toneClass('ink', 35)), line(d, 1.4),
-    line(`M${x - r * 0.4} ${y - r * 0.2} Q${x - r * 0.1} ${y - r * 0.55} ${x + r * 0.3} ${y - r * 0.45}`, 1.2, 'stroke-paper', { opacity: 0.6 }),
+    fill(d, 'green'), fill(d, toneClass('ink', 50)), line(d, 1.6),
+    line(`M${x - r * 0.4} ${y - r * 0.2} Q${x - r * 0.1} ${y - r * 0.55} ${x + r * 0.3} ${y - r * 0.45}`, 1.4, 'stroke-paper', { opacity: 0.4 }),
   ];
 }
 
 function appleTree(x, y) {
-  return [
-    circle(x + 1.5, y + 1.5, 6, 'ink', { 'fill-opacity': 0.45 }),
-    circle(x, y, 6, 'green'), circle(x, y, 6, toneClass('ink', 20)), ring(x, y, 6, 1.2),
-    circle(x - 2, y - 1, 1.2, 'red'), circle(x + 2, y + 2, 1.2, 'red'),
-  ];
+  return [circle(x, y, 7, 'green'), ring(x, y, 7, 1.4)];
 }
 
 function reeds(x, y) {
-  return line(`M${x} ${y} L${x - 4} ${y - 9} M${x} ${y} L${x} ${y - 11} M${x} ${y} L${x + 4} ${y - 9}`, 1.2, 'stroke-green');
+  return line(`M${x} ${y} L${x - 4} ${y - 9} M${x} ${y} L${x} ${y - 11} M${x} ${y} L${x + 4} ${y - 9}`, 1.4, 'stroke-green');
 }
 
+// Few and bold (SPEC.md §11, M7b): one clear shape per hex at most, no shadows,
+// no screens. A field is mostly bare paper: only some hexes get a mark at all.
 const TERRAIN_SPRITES = {
-  'terrain-field-01': () => [
-    line('M14 30 Q40 26 66 30 M10 42 Q40 38 70 42 M10 54 Q40 50 70 54 M14 66 Q40 62 66 66', 1, 'stroke-ink', { opacity: 0.35 }),
-  ],
-  'terrain-field-02': () => [
-    line('M18 24 L62 68 M10 36 L50 76 M30 18 L70 58', 1, 'stroke-ink', { opacity: 0.3 }),
-    tuft(52, 34, 0.8), tuft(28, 64, 0.8),
-  ],
-  'terrain-field-03': () => [tuft(24, 34), tuft(54, 30), tuft(38, 58), tuft(58, 66, 0.8), tuft(20, 62, 0.7)],
+  'terrain-field-01': () => [line('M26 40 Q40 37 54 40 M22 50 Q40 47 58 50', 1.2, 'stroke-ink', { opacity: 0.22 })],
+  'terrain-field-02': () => [tuft(36, 50, 0.9), tuft(48, 56, 0.7)].map((t) => { t.setAttribute('opacity', 0.35); return t; }),
+  'terrain-field-03': () => [line('M30 38 L50 58 M40 34 L56 50', 1.2, 'stroke-ink', { opacity: 0.18 })],
 
-  'terrain-hedgerow-01': () => [
-    ...bush(8, 40, 7), ...bush(22, 38, 8), ...bush(38, 41, 7), ...bush(53, 38, 8), ...bush(70, 40, 7),
-    line('M4 54 L76 54', 1, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '3 4' }),
-  ],
-  'terrain-hedgerow-02': () => [
-    ...bush(20, 18, 7), ...bush(26, 32, 8), ...bush(34, 46, 7), ...bush(42, 60, 8), ...bush(50, 74, 7),
-    line('M44 20 L64 58', 1, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '3 4' }),
-  ],
-  'terrain-hedgerow-03': () => [
-    ...bush(14, 58, 7), ...bush(28, 48, 8), ...bush(42, 42, 7), ...bush(56, 34, 8), ...bush(66, 24, 6),
-    tuft(30, 70, 0.8),
-  ],
+  'terrain-hedgerow-01': () => [...bush(12, 46, 8), ...bush(30, 44, 9), ...bush(50, 46, 9), ...bush(68, 44, 8)],
+  'terrain-hedgerow-02': () => [...bush(24, 20, 8), ...bush(32, 38, 9), ...bush(42, 56, 9), ...bush(52, 74, 8)],
+  'terrain-hedgerow-03': () => [...bush(16, 62, 8), ...bush(32, 50, 9), ...bush(48, 40, 9), ...bush(64, 28, 8)],
 
-  'terrain-wood-01': () => [...treeCrown(28, 34, 13), ...treeCrown(52, 40, 14), ...treeCrown(36, 60, 13)],
-  'terrain-wood-02': () => [...treeCrown(40, 30, 14), ...treeCrown(24, 54, 12), ...treeCrown(56, 60, 13)],
-  'terrain-wood-03': () => [...treeCrown(22, 38, 11), ...treeCrown(44, 28, 11), ...treeCrown(58, 50, 12), ...treeCrown(34, 62, 12)],
+  'terrain-wood-01': () => [...treeCrown(30, 36, 14), ...treeCrown(52, 52, 15)],
+  'terrain-wood-02': () => [...treeCrown(42, 32, 15), ...treeCrown(30, 58, 13), ...treeCrown(56, 60, 12)],
+  'terrain-wood-03': () => [...treeCrown(28, 44, 13), ...treeCrown(50, 34, 13), ...treeCrown(46, 62, 13)],
 
-  'terrain-orchard-01': () => [[20, 30], [40, 30], [60, 30], [30, 50], [50, 50], [20, 70], [40, 70], [60, 70]]
-    .flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-02': () => [[26, 26], [46, 26], [16, 46], [36, 46], [56, 46], [26, 66], [46, 66]]
-    .flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-03': () => [[22, 34], [42, 28], [62, 34], [32, 54], [52, 52], [42, 72]]
-    .flatMap(([x, y]) => appleTree(x, y)),
-
-  // Edge to edge, east to west through the centre; board.js turns it to meet
-  // each neighbouring road and clips it to half where the road only leaves one way.
-  'terrain-track': () => [
-    fill('M0 39 H80 V53 H0 Z', 'paper'),
-    fill('M0 39 H80 V53 H0 Z', toneClass('ink', 20)),
-    line('M0 39 H80 M0 53 H80', 1.4),
-    line('M0 44 H80 M0 48 H80', 1, 'stroke-ink', { opacity: 0.4, 'stroke-dasharray': '5 4' }),
-  ],
+  'terrain-orchard-01': () => [[28, 34], [52, 34], [28, 58], [52, 58]].flatMap(([x, y]) => appleTree(x, y)),
+  'terrain-orchard-02': () => [[40, 30], [24, 50], [56, 50], [40, 68]].flatMap(([x, y]) => appleTree(x, y)),
+  'terrain-orchard-03': () => [[32, 32], [54, 40], [26, 56], [48, 64]].flatMap(([x, y]) => appleTree(x, y)),
 
   'terrain-marsh': () => [
-    line('M14 34 H30 M44 28 H62 M20 58 H38 M48 64 H66 M28 76 H40', 1.4, 'stroke-blue'),
-    reeds(22, 32), reeds(56, 26), reeds(30, 56), reeds(60, 62), reeds(40, 44),
+    line('M18 40 H32 M46 56 H62 M24 68 H38', 1.4, 'stroke-blue', { opacity: 0.8 }),
+    reeds(26, 38), reeds(54, 54), reeds(32, 66),
   ],
 
-  // Ripples; the water itself is the hex's base colour.
+  // One ripple; the water itself is the hex's base colour.
   'terrain-canal': () => [
-    line('M18 32 Q24 28 30 32 Q36 36 42 32 M40 52 Q46 48 52 52 Q58 56 64 52 M16 66 Q22 62 28 66', 1.4, 'stroke-paper', { opacity: 0.7 }),
+    line('M28 44 Q34 40 40 44 Q46 48 52 44', 1.4, 'stroke-paper', { opacity: 0.5 }),
   ],
   // The bank along the east edge of the hex; board.js turns it to every edge
   // that faces dry land.
   'terrain-canal-edge': () => [
-    fill('M79.8 23 L73 26 L73 66 L79.8 69 Z', 'paper'),
-    fill('M79.8 23 L73 26 L73 66 L79.8 69 Z', toneClass('green', 35)),
-    line('M73 26 L73 66', 1.6),
-    line('M74 32 L70 30 M74 42 L69 41 M74 52 L70 52 M74 62 L69 63', 1, 'stroke-green'),
+    fill('M79.8 23 L74 26 L74 66 L79.8 69 Z', 'paper'),
+    line('M74 26 L74 66', 1.8),
   ],
 
+  // High ground as the map-maker's hill: two rounded crests, no hachures.
   'terrain-ridge': () => [
-    line('M8 52 Q24 30 40 34 Q58 38 72 26', 2.2),
-    line('M14 46 L12 54 M22 38 L21 47 M31 34 L31 43 M40 34 L41 43 M50 36 L51 45 M60 34 L62 42 M68 29 L71 37', 1.2),
-    line('M12 70 Q34 58 52 66 Q62 70 70 62', 1, 'stroke-ink', { opacity: 0.4 }),
+    line('M12 58 Q27 32 42 58', 2),
+    line('M36 48 Q52 24 68 48', 2),
   ],
 
   'terrain-farmhouse': () => [
-    fill('M24 44 H58 V68 H24 Z', 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
     ...inked('M24 44 H58 V68 H24 Z', 'paper', 1.6),
     ...inked('M20 46 L41 28 L62 46 Z', 'red', 1.6),
     fill('M20 46 L41 28 L62 46 Z', toneClass('ink', 20)),
@@ -731,39 +849,34 @@ function flame(x, y, s) {
   return [...inked(d, 'red', 1.4), fill(`M${x - 4 * s} ${y} Q${x - 4 * s} ${y - 8 * s} ${x} ${y - 12 * s} Q${x + 5 * s} ${y - 6 * s} ${x + 4 * s} ${y} Z`, 'paper')];
 }
 
+// A fuel drum seen from above: a disc and its filler cap.
 function drum(x, y, cls = 'green') {
-  return [
-    svg('rect', { x: x - 6, y: y - 8, width: 12, height: 14, class: cls }),
-    svg('rect', { x: x - 6, y: y - 8, width: 12, height: 14, class: toneClass('ink', 20) }),
-    svg('rect', { x: x - 6, y: y - 8, width: 12, height: 14, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.3 }),
-    svg('ellipse', { cx: x, cy: y - 8, rx: 6, ry: 2.5, class: 'paper' }),
-    svg('ellipse', { cx: x, cy: y - 8, rx: 6, ry: 2.5, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2 }),
-  ];
+  return [circle(x, y, 7, cls), ring(x, y, 7, 1.6), circle(x + 2.5, y - 2.5, 1.4, 'ink')];
 }
 
 function pole(x, y, h) {
-  return [line(`M${x} ${y} V${y - h} M${x - 7} ${y - h + 4} H${x + 7}`, 2.2)];
+  return [line(`M${x} ${y} V${y - h} M${x - 7} ${y - h + 4} H${x + 7}`, 2.4)];
 }
 
-// A telephone exchange building, used intact and gutted.
+// A telephone exchange building, front on, used intact and gutted: white
+// walls, a slate roof, two rows of windows and the PTT board over the door.
 function exchangeBuilding(gutted) {
-  const parts = [
-    fill('M44 78 H136 V150 H44 Z', 'ink', { transform: 'translate(3 3)', 'fill-opacity': 0.5 }),
-    ...inked('M44 78 H136 V150 H44 Z', 'paper', 2),
-    fill('M44 78 H136 V150 H44 Z', toneClass(gutted ? 'ink' : 'red', gutted ? 35 : 10)),
-  ];
-  if (!gutted) {
-    parts.push(...inked('M38 80 L90 56 L142 80 Z', 'blue', 2), fill('M38 80 L90 56 L142 80 Z', toneClass('ink', 20)));
+  const walls = 'M46 84 H138 V150 H46 Z';
+  const parts = [...inked(walls, 'paper', 2.4)];
+  if (gutted) {
+    parts.push(fill(walls, 'ink', { 'fill-opacity': 0.35 }));
+    parts.push(line('M46 84 L62 74 L74 86 L92 66 L106 84 L122 70 L138 84', 2.4));
   } else {
-    parts.push(line('M44 78 L60 70 L72 80 L90 62 L104 78 L120 66 L136 78', 2));
+    parts.push(...inked('M40 86 L92 58 L144 86 Z', 'blue', 2.4));
+    parts.push(...inked('M112 70 V58 H120 V74', 'paper', 2));
   }
-  for (const x of [56, 80, 104]) {
-    for (const y of [92, 118]) parts.push(...inked(`M${x} ${y} h14 v14 h-14 Z`, gutted ? 'ink' : 'blue', 1.3));
+  for (const x of [58, 86, 114]) {
+    for (const y of [96, 120]) parts.push(...inked(`M${x} ${y} h12 v14 h-12 Z`, gutted ? 'ink' : 'blue', 1.6));
   }
-  parts.push(...inked('M82 134 h16 v16 h-16 Z', 'ink', 1.2));
+  parts.push(...inked('M84 134 h16 v16 h-16 Z', 'ink', 1.6));
   if (!gutted) {
-    parts.push(svg('rect', { x: 62, y: 84, width: 56, height: 6, class: 'paper' }));
-    parts.push(label('PTT', { x: 90, y: 87.5, 'font-size': 6.5, class: 'ink' }));
+    parts.push(...inked('M70 88 H114 V94 H70 Z', 'paper', 1.2));
+    parts.push(label('PTT', { x: 92, y: 91.2, 'font-size': 6.5, class: 'ink' }));
   }
   return parts;
 }
@@ -771,16 +884,13 @@ function exchangeBuilding(gutted) {
 // The village church, the landmark Vance's landing line refers to (SPEC.md §11).
 function church() {
   return [
-    fill('M18 50 H58 V80 H18 Z', 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
-    ...inked('M18 50 H58 V80 H18 Z', 'paper', 1.6),
-    ...inked('M14 52 L38 40 L62 52 Z', 'red', 1.6),
-    fill('M14 52 L38 40 L62 52 Z', toneClass('ink', 20)),
-    ...inked('M20 26 H32 V80 H20 Z', 'paper', 1.6),
-    ...inked('M18 28 L26 2 L34 28 Z', 'blue', 1.6),
-    fill('M18 28 L26 2 L34 28 Z', toneClass('ink', 20)),
-    line('M26 2 V-6 M22 -3 H30', 1.6),
+    ...inked('M18 50 H58 V80 H18 Z', 'paper', 2),
+    ...inked('M14 52 L38 40 L62 52 Z', 'red', 2),
+    ...inked('M20 26 H32 V80 H20 Z', 'paper', 2),
+    ...inked('M18 28 L26 2 L34 28 Z', 'blue', 2),
+    line('M26 2 V-6 M22 -3 H30', 1.8),
     ...inked('M23 60 a3 3 0 0 1 6 0 v8 h-6 Z', 'ink', 1),
-    ...inked('M40 60 a3 3 0 0 1 6 0 v8 h-6 Z', 'blue', 1),
+    ...inked('M40 60 a3 3 0 0 1 6 0 v8 h-6 Z', 'blue', 1.2),
   ];
 }
 
@@ -808,27 +918,32 @@ const CHIPS = {
   nunn: 'broad',
 };
 
+// Printed flat, not screened (M7b): each tone is its spot colour at an
+// opacity, lit from the left by the moon, with a heavy ink line round it.
 function portrait(id, f = {}) {
   const cx = 120;
   const faceW = f.faceW ?? 44, jawW = f.jawW ?? 32, chinY = 214, neck = f.neck ?? 22;
+  const shade = (d) => fill(d, 'ink', { 'fill-opacity': 0.16 + (f.shade ?? 0) / 200 });
   const parts = [
-    svg('rect', { x: 0, y: 0, width: 240, height: 300, class: 'paper' }),
-    svg('rect', { x: 0, y: 0, width: 240, height: 300, class: toneClass('blue', 35) }),
+    svg('rect', { x: 0, y: 0, width: 240, height: 300, class: 'blue' }),
+    // Moonlight behind his head, so the silhouette reads at thumbnail size.
+    circle(104, 128, 104, 'paper', { 'fill-opacity': 0.22 }),
   ];
-  // Shoulders in a Denison smock, camouflage as halftone blotches.
-  const smock = 'M14 300 C18 248 58 226 98 220 L142 220 C182 226 222 248 226 300 Z';
+  // Shoulders in a Denison smock, its camouflage in flat brush patches.
+  const smock = 'M10 300 C14 246 56 224 98 218 L142 218 C184 224 226 246 230 300 Z';
   parts.push(fill(smock, 'green'));
-  parts.push(fill('M40 262 Q60 240 88 250 Q92 270 66 280 Q44 284 40 262 Z M150 248 Q180 236 196 260 Q190 280 164 274 Q146 266 150 248 Z M100 280 Q120 266 140 284 L136 300 H104 Z', toneClass('ink', 50)));
-  parts.push(line(smock, 3));
+  parts.push(fill('M40 262 Q60 240 88 250 Q92 270 66 280 Q44 284 40 262 Z M150 248 Q180 236 196 260 Q190 280 164 274 Q146 266 150 248 Z M100 280 Q120 266 140 284 L136 300 H104 Z', 'ink', { 'fill-opacity': 0.3 }));
+  parts.push(fill('M150 222 C190 232 222 252 230 300 H160 Z', 'ink', { 'fill-opacity': 0.18 }));
+  parts.push(line(smock, 4));
   if (f.chevrons) {
-    for (let i = 0; i < 3; i++) parts.push(line(`M36 ${258 + i * 11} L50 ${248 + i * 11} L64 ${258 + i * 11}`, 5, 'stroke-leader'));
+    for (let i = 0; i < 3; i++) parts.push(line(`M34 ${258 + i * 11} L48 ${248 + i * 11} L62 ${258 + i * 11}`, 5.5, 'stroke-leader'));
   }
-  if (f.scarf) parts.push(...inked(`M${cx - neck - 16} 226 Q${cx} 250 ${cx + neck + 16} 226 L${cx + neck + 10} 244 Q${cx} 262 ${cx - neck - 10} 244 Z`, 'blue', 2.5));
+  if (f.scarf) parts.push(...inked(`M${cx - neck - 16} 224 Q${cx} 250 ${cx + neck + 16} 224 L${cx + neck + 10} 244 Q${cx} 262 ${cx - neck - 10} 244 Z`, 'blue', 3));
   // Neck.
-  parts.push(...inked(`M${cx - neck} 196 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 196 Z`, 'paper', 3));
-  parts.push(fill(`M${cx - neck} 200 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 214 Z`, toneClass('ink', 20)));
+  parts.push(...inked(`M${cx - neck} 196 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 196 Z`, 'paper', 3.5));
+  parts.push(shade(`M${cx - neck} 200 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 214 Z`));
   if (f.binoculars) {
-    parts.push(line(`M${cx - neck} 228 L${cx - 18} 250 M${cx + neck} 228 L${cx + 18} 250`, 2.5));
+    parts.push(line(`M${cx - neck} 228 L${cx - 18} 250 M${cx + neck} 228 L${cx + 18} 250`, 3));
     parts.push(...inked('M92 248 h24 v34 h-24 Z', 'ink', 2), ...inked('M124 248 h24 v34 h-24 Z', 'ink', 2));
     parts.push(svg('rect', { x: 114, y: 256, width: 12, height: 8, class: 'ink' }));
   }
@@ -836,23 +951,32 @@ function portrait(id, f = {}) {
   const earR = f.ears ?? 7;
   for (const side of [-1, 1]) {
     const x = cx + side * (faceW + 2);
-    parts.push(svg('ellipse', { cx: x, cy: 148, rx: earR, ry: 13, class: 'paper' }));
-    parts.push(svg('ellipse', { cx: x, cy: 148, rx: earR, ry: 13, fill: 'none', class: 'stroke-ink', 'stroke-width': 3 }));
+    parts.push(svg('ellipse', { cx: x, cy: 150, rx: earR, ry: 13, class: 'paper' }));
+    parts.push(svg('ellipse', { cx: x, cy: 150, rx: earR, ry: 13, fill: 'none', class: 'stroke-ink', 'stroke-width': 3.5 }));
   }
-  // Face.
+  // Face: paper warmed a touch, the right side in shadow, and burnt cork
+  // smudged across the cheeks for the night.
   const face = `M${cx - faceW} 112 C${cx - faceW} 180 ${cx - jawW} ${chinY - 12} ${cx} ${chinY} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`;
   parts.push(fill(face, 'paper'));
-  parts.push(fill(`M${cx + 6} 112 C${cx + 10} 150 ${cx + 2} 190 ${cx + 8} ${chinY - 2} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`, toneClass('ink', f.shade ?? 10)));
-  parts.push(fill(face, toneClass('red', 10)));
-  if (f.stubble) parts.push(fill(`M${cx - jawW - 6} 176 C${cx - jawW} 200 ${cx - 10} ${chinY} ${cx} ${chinY} C${cx + 10} ${chinY} ${cx + jawW} 200 ${cx + jawW + 6} 176 Q${cx} 196 ${cx - jawW - 6} 176 Z`, toneClass('ink', 35)));
-  parts.push(line(face, 3));
+  parts.push(fill(face, 'red', { 'fill-opacity': 0.1 }));
+  parts.push(shade(`M${cx + 8} 112 C${cx + 14} 150 ${cx + 4} 190 ${cx + 8} ${chinY - 2} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`));
+  parts.push(fill(`M${cx - faceW + 6} 166 Q${cx - 24} 158 ${cx - 12} 170 Q${cx - 26} 176 ${cx - faceW + 8} 178 Z M${cx + faceW - 6} 166 Q${cx + 24} 158 ${cx + 12} 170 Q${cx + 26} 176 ${cx + faceW - 8} 178 Z`, 'ink', { 'fill-opacity': 0.13 }));
+  if (f.stubble) parts.push(fill(`M${cx - jawW - 6} 176 C${cx - jawW} 200 ${cx - 10} ${chinY} ${cx} ${chinY} C${cx + 10} ${chinY} ${cx + jawW} 200 ${cx + jawW + 6} 176 Q${cx} 196 ${cx - jawW - 6} 176 Z`, 'ink', { 'fill-opacity': 0.3 }));
+  parts.push(line(face, 3.5));
   // Eyes and brows.
-  const browW = f.brows ?? 4;
-  parts.push(line(`M${cx - 32} 142 L${cx - 10} 139 M${cx + 10} 139 L${cx + 32} 142`, browW));
-  if (f.eyes === 'squint') parts.push(line(`M${cx - 28} 154 L${cx - 12} 153 M${cx + 12} 153 L${cx + 28} 154`, 3));
-  else parts.push(svg('ellipse', { cx: cx - 19, cy: 154, rx: 4.5, ry: 3, class: 'ink' }), svg('ellipse', { cx: cx + 19, cy: 154, rx: 4.5, ry: 3, class: 'ink' }));
+  const browW = f.brows ?? 4.5;
+  parts.push(line(`M${cx - 33} 141 Q${cx - 22} 136 ${cx - 10} 139 M${cx + 10} 139 Q${cx + 22} 136 ${cx + 33} 141`, browW));
+  if (f.eyes === 'squint') parts.push(line(`M${cx - 29} 154 L${cx - 11} 152 M${cx + 11} 152 L${cx + 29} 154`, 3.5));
+  else {
+    for (const side of [-1, 1]) {
+      const x = cx + side * 19;
+      parts.push(svg('ellipse', { cx: x, cy: 154, rx: 7, ry: 4, class: 'paper' }));
+      parts.push(circle(x + 1, 154, 3, 'ink'));
+      parts.push(line(`M${x - 8} 153 Q${x} 147 ${x + 8} 153`, 3));
+    }
+  }
   // Nose.
-  parts.push(line(f.nose === 'broken' ? `M${cx} 150 L${cx + 7} 164 L${cx - 6} 182 L${cx + 6} 185` : `M${cx + 2} 150 L${cx - 6} 181 L${cx + 6} 184`, 3));
+  parts.push(line(f.nose === 'broken' ? `M${cx} 150 L${cx + 7} 164 L${cx - 6} 182 L${cx + 6} 185` : `M${cx + 2} 150 L${cx - 6} 181 L${cx + 6} 184`, 3.5));
   // Mouth, and what is around it.
   if (f.moustache) parts.push(fill(`M${cx - 28} 198 Q${cx - 18} 180 ${cx} 186 Q${cx + 18} 180 ${cx + 28} 198 Q${cx + 12} 192 ${cx} 197 Q${cx - 12} 192 ${cx - 28} 198 Z`, 'ink'));
   const mouth = {
@@ -860,30 +984,31 @@ function portrait(id, f = {}) {
     grin: `M${cx - 18} 194 Q${cx} 212 ${cx + 18} 194`,
     open: `M${cx - 9} 197 Q${cx} 208 ${cx + 9} 197 Z`,
   }[f.mouth ?? 'set'];
-  parts.push(line(mouth, 3));
-  if (f.cigarette) parts.push(line(`M${cx + 14} 200 L${cx + 36} 208`, 5, 'stroke-paper'), line(`M${cx + 14} 197.5 L${cx + 36} 205.5 M${cx + 14} 202.5 L${cx + 35} 210.5`, 1.2), circle(cx + 37, 208, 2.6, 'red'));
-  if (f.freckles) for (const [x, y] of [[-24, 170], [-18, 176], [-28, 177], [22, 172], [28, 177], [18, 178]]) parts.push(circle(cx + x, y, 1.6, 'ink'));
-  if (f.scar) parts.push(line(`M${cx + 26} 160 L${cx + 34} 186`, 2, 'stroke-red'));
-  // The para helmet, rimless, and its chin strap.
-  const hw = faceW + 12;
-  const helm = `M${cx - hw} 130 C${cx - hw - 4} 56 ${cx + hw + 4} 56 ${cx + hw} 130 Q${cx} 116 ${cx - hw} 130 Z`;
-  parts.push(fill(helm, 'green'), fill(helm, toneClass('ink', 35)));
+  parts.push(line(mouth, 3.5));
+  if (f.cigarette) parts.push(line(`M${cx + 14} 200 L${cx + 38} 209`, 6, 'stroke-ink'), line(`M${cx + 14} 200 L${cx + 38} 209`, 3.5, 'stroke-paper'), circle(cx + 39, 209.5, 3, 'red'));
+  if (f.freckles) for (const [x, y] of [[-24, 170], [-18, 176], [-28, 177], [22, 172], [28, 177], [18, 178]]) parts.push(circle(cx + x, y, 1.8, 'ink'));
+  if (f.scar) parts.push(line(`M${cx + 26} 158 L${cx + 34} 188`, 2.6, 'stroke-red'));
+  // The para helmet, rimless, shaded on the right, and its chin strap.
+  const hw = faceW + 13;
+  const helm = `M${cx - hw} 132 C${cx - hw - 4} 52 ${cx + hw + 4} 52 ${cx + hw} 132 Q${cx} 116 ${cx - hw} 132 Z`;
+  parts.push(fill(helm, 'green'));
+  parts.push(fill(`M${cx + 10} 58 C${cx + hw} 60 ${cx + hw + 4} 100 ${cx + hw} 132 Q${cx + 30} 122 ${cx + 12} 121 Z`, 'ink', { 'fill-opacity': 0.25 }));
   if (f.net) {
     let net = '';
-    for (let i = -6; i <= 6; i++) net += `M${cx + i * 12 - 30} 60 L${cx + i * 12 + 30} 132 M${cx + i * 12 + 30} 60 L${cx + i * 12 - 30} 132 `;
+    for (let i = -6; i <= 6; i++) net += `M${cx + i * 12 - 30} 56 L${cx + i * 12 + 30} 134 M${cx + i * 12 + 30} 56 L${cx + i * 12 - 30} 134 `;
     const clipId = `${id}-helmet-clip`;
     parts.push(svg('clipPath', { id: clipId }, [fill(helm, 'ink')]));
-    parts.push(line(net, 1.6, 'stroke-ink', { 'clip-path': `url(#${clipId})` }));
+    parts.push(line(net, 1.8, 'stroke-ink', { 'clip-path': `url(#${clipId})` }));
   }
-  parts.push(line(`M${cx - hw + 18} 80 Q${cx - 20} 64 ${cx + 6} 66`, 4, 'stroke-paper', { opacity: 0.55 }));
-  parts.push(line(helm, 3));
-  parts.push(line(`M${cx - faceW + 4} 126 L${cx - jawW + 2} ${chinY - 14} Q${cx} ${chinY + 6} ${cx + jawW - 2} ${chinY - 14} L${cx + faceW - 4} 126`, 2.2, 'stroke-ink', { opacity: 0.8 }));
+  parts.push(line(`M${cx - hw + 16} 84 Q${cx - 22} 62 ${cx + 2} 64`, 5, 'stroke-paper', { opacity: 0.6 }));
+  parts.push(line(helm, 4));
+  parts.push(line(`M${cx - faceW + 4} 128 L${cx - jawW + 2} ${chinY - 14} Q${cx} ${chinY + 6} ${cx + jawW - 2} ${chinY - 14} L${cx + faceW - 4} 128`, 2.6, 'stroke-ink', { opacity: 0.85 }));
   if (f.twig) {
-    parts.push(line(`M${cx + 20} 78 L${cx + 44} 22 M${cx + 34} 46 L${cx + 58} 34 M${cx + 38} 36 L${cx + 26} 20`, 3.5));
-    for (const [x, y] of [[44, 18], [60, 30], [24, 16], [52, 44]]) {
+    parts.push(line(`M${cx + 20} 76 L${cx + 44} 20 M${cx + 34} 44 L${cx + 58} 32 M${cx + 38} 34 L${cx + 26} 18`, 4));
+    for (const [x, y] of [[44, 16], [60, 28], [24, 14], [52, 42]]) {
       parts.push(svg('g', { transform: `rotate(-30 ${cx + x} ${y})` }, [
-        svg('ellipse', { cx: cx + x, cy: y, rx: 7, ry: 4, class: 'green' }),
-        svg('ellipse', { cx: cx + x, cy: y, rx: 7, ry: 4, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
+        svg('ellipse', { cx: cx + x, cy: y, rx: 8, ry: 4.5, class: 'green' }),
+        svg('ellipse', { cx: cx + x, cy: y, rx: 8, ry: 4.5, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
       ]));
     }
   }
@@ -914,6 +1039,21 @@ function fallbackPortrait() {
 
 // --- chrome -------------------------------------------------------------------
 
+// The bridge's stone abutments on either bank, and the track across its
+// deck, drawn to match the railway either side (RAIL, board.js).
+function bridgeAbutments() {
+  return [84, 180].flatMap((x) => [
+    ...inked(`M${x} 30 h16 v36 h-16 Z`, 'paper', 2.2),
+    line(`M${x} 42 h16 M${x} 54 h16 M${x + 8} 30 v12 M${x + 5} 42 v12 M${x + 11} 54 v12`, 1.2),
+  ]);
+}
+
+function bridgeTrack(from, to) {
+  const sleepers = [];
+  for (let x = from + 4; x < to - 2; x += 8) sleepers.push(`M${x} 41.5 V54.5`);
+  return [line(sleepers.join(' '), 2.2, 'stroke-ink', { 'stroke-linecap': 'butt' }), line(`M${from} 45.5 H${to} M${from} 50.5 H${to}`, 1.6)];
+}
+
 function starburst(cx, cy, points, outer, inner, cls, extra = {}) {
   let d = '';
   for (let i = 0; i < points * 2; i++) {
@@ -926,15 +1066,30 @@ function starburst(cx, cy, points, outer, inner, cls, extra = {}) {
 
 const SPRITES = {
   // --- counters and symbols (ART-ASSETS.md §3) ---
-  'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('green') },
+  'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('ink') },
 
   // The ranking man: leader-blue name strip, plus a sergeant's three chevrons
-  // in the right-hand margin, clear of his face and the AP pips.
+  // down the left margin under his role, clear of his face and his AP.
   'counter-frame-allied-leader': {
     viewBox: '0 0 56 56',
-    draw: () => alliedFrame('leader', [
-      line('M44 16 L47.5 12.5 L51 16 M44 22 L47.5 18.5 L51 22 M44 28 L47.5 24.5 L51 28', 1.8, 'stroke-leader'),
-    ]),
+    draw: () => {
+      const chevrons = 'M5.5 23 L9.5 19.5 L13.5 23 M5.5 28.5 L9.5 25 L13.5 28.5 M5.5 34 L9.5 30.5 L13.5 34';
+      return alliedFrame('leader', [line(chevrons, 3.6, 'stroke-paper'), line(chevrons, 1.8, 'stroke-leader')]);
+    },
+  },
+
+  // A soft shadow under every counter, down-right, as if the chit is lifted
+  // off the page (SPEC.md §11, M7b). Soft without an SVG filter: a stack of
+  // faint rounded squares, each a little bigger than the last.
+  'counter-shadow': {
+    viewBox: '0 0 56 56',
+    draw: () => Array.from({ length: 5 }, (_, i) => {
+      const grow = i * 0.8;
+      return svg('rect', {
+        x: 3 - grow, y: 3.5 - grow, width: 50 + grow * 2, height: 50 + grow * 2, rx: 6 + grow,
+        class: 'ink', 'fill-opacity': 0.12,
+      });
+    }),
   },
 
   'symbol-sapper': {
@@ -968,7 +1123,7 @@ const SPRITES = {
   'counter-frame-enemy': {
     viewBox: '0 0 56 56',
     draw: () => [
-      fill(ENEMY_OUTLINE, 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.6 }),
+      ...cardEdge(ENEMY_OUTLINE),
       fill(ENEMY_OUTLINE, 'ink'),
       fill('M1 38 H53 V45 L45 53 H9 L1 45 Z', 'red'),
       fill('M1 38 H53 V45 L45 53 H9 L1 45 Z', toneClass('ink', 20)),
@@ -1004,79 +1159,80 @@ const SPRITES = {
   // --- objectives (ART-ASSETS.md §5) ---
   // Three hexes wide across the canal: water under the middle, a girder span
   // on stone abutments.
+  // The girder span over the canal, on stone abutments, carrying the railway
+  // (drawn by board.js either side of it) on its deck.
   'objective-rail-bridge': {
     viewBox: '0 0 280 92',
     draw: () => [
-      fill('M112 0 H168 V92 H112 Z', 'blue'), fill('M112 0 H168 V92 H112 Z', toneClass('ink', 20)),
-      line('M112 0 V92 M168 0 V92', 2),
-      ...inked('M20 34 H64 V62 H20 Z', 'paper', 2), fill('M20 34 H64 V62 H20 Z', toneClass('ink', 35)),
-      ...inked('M216 34 H260 V62 H216 Z', 'paper', 2), fill('M216 34 H260 V62 H216 Z', toneClass('ink', 35)),
-      fill('M8 38 H272 V58 H8 Z', 'ink', { transform: 'translate(3 3)', 'fill-opacity': 0.5 }),
-      ...inked('M8 38 H272 V58 H8 Z', 'paper', 2.5),
-      fill('M8 38 H272 V58 H8 Z', toneClass('ink', 20)),
-      line('M8 43 H272 M8 53 H272', 1.6),
-      line(Array.from({ length: 27 }, (_, i) => `M${12 + i * 10} 41 V55`).join(' '), 1, 'stroke-ink', { opacity: 0.55 }),
-      line('M40 38 L60 22 L220 22 L240 38 M60 22 L80 38 L100 22 L120 38 L140 22 L160 38 L180 22 L200 38 L220 22', 2.4),
+      fill('M100 0 H180 V92 H100 Z', 'blue'),
+      line('M100 0 V92 M180 0 V92', 2),
+      ...bridgeAbutments(),
+      ...inked('M52 38 H228 V58 H52 Z', 'paper', 2.6),
+      ...bridgeTrack(52, 228),
+      // The girders, side on: a heavy top chord and the Warren web under it.
+      line('M60 38 L78 12 H202 L220 38', 4),
+      line('M78 12 L98 38 L118 12 L138 38 L158 12 L178 38 L198 12 L220 38 M60 38 L78 12', 2.4),
     ],
   },
   'objective-bridge-destroyed': {
     viewBox: '0 0 280 92',
     draw: () => [
-      fill('M112 0 H168 V92 H112 Z', 'blue'), fill('M112 0 H168 V92 H112 Z', toneClass('ink', 20)),
-      line('M112 0 V92 M168 0 V92', 2),
-      ...inked('M20 34 H64 V62 H20 Z', 'paper', 2), fill('M20 34 H64 V62 H20 Z', toneClass('ink', 50)),
-      ...inked('M216 34 H260 V62 H216 Z', 'paper', 2), fill('M216 34 H260 V62 H216 Z', toneClass('ink', 50)),
-      ...inked('M8 38 H96 L104 50 L92 58 H8 Z', 'paper', 2.5), fill('M8 38 H96 L104 50 L92 58 H8 Z', toneClass('ink', 35)),
-      ...inked('M272 38 H188 L178 46 L190 58 H272 Z', 'paper', 2.5), fill('M272 38 H188 L178 46 L190 58 H272 Z', toneClass('ink', 35)),
-      ...inked('M118 40 L160 66 L154 76 L112 50 Z', 'ink', 2),
-      line('M104 50 L126 70 M178 46 L150 30', 2.4),
-      line('M120 84 Q132 78 144 84 Q156 90 166 84', 1.6, 'stroke-paper'),
-      ...smoke(140, 26, 1.1), ...smoke(96, 30, 0.8),
+      fill('M100 0 H180 V92 H100 Z', 'blue'),
+      line('M100 0 V92 M180 0 V92', 2),
+      ...bridgeAbutments(),
+      ...inked('M52 38 H104 L112 50 L100 58 H52 Z', 'paper', 2.6),
+      ...inked('M228 38 H178 L168 46 L180 58 H228 Z', 'paper', 2.6),
+      ...bridgeTrack(52, 100),
+      ...bridgeTrack(182, 228),
+      // The fallen span, half in the water.
+      ...inked('M116 40 L166 66 L158 78 L108 52 Z', 'ink', 2),
+      line('M100 40 L122 14 M176 44 L156 18', 3),
+      ...smoke(140, 24, 1.2),
     ],
   },
   'objective-exchange': {
     viewBox: '0 0 160 184',
     draw: () => [
       ...exchangeBuilding(false),
-      svg('g', { transform: 'translate(0 64) scale(0.9)' }, church()),
-      ...pole(150, 150, 60), ...pole(150, 70, 44),
-      line('M143 94 Q120 104 136 80 M157 94 Q162 110 160 150', 1, 'stroke-ink', { opacity: 0.7 }),
+      svg('g', { transform: 'translate(-2 72) scale(0.9)' }, church()),
+      ...pole(150, 150, 58), ...pole(150, 72, 40),
+      // Wires away east, off the edge of the art: the line the scouts can cut.
+      line('M143 96 Q152 104 172 100 M157 96 Q166 102 186 96 M143 36 Q156 44 176 40 M157 36 Q168 42 188 36', 1.3),
     ],
   },
   'objective-exchange-destroyed': {
     viewBox: '0 0 160 184',
     draw: () => [
       ...exchangeBuilding(true),
-      svg('g', { transform: 'translate(0 64) scale(0.9)' }, church()),
-      line('M146 150 L118 116 M140 124 L156 112', 2.2),
-      ...smoke(96, 60, 1.2), ...flame(112, 80, 0.8),
+      svg('g', { transform: 'translate(-2 72) scale(0.9)' }, church()),
+      line('M146 150 L120 116 M140 124 L156 112', 2.4),
+      ...smoke(96, 58, 1.2), ...flame(112, 80, 0.8),
     ],
   },
+  // Drums in rows under a camouflage net, seen from above, and a bowser beside.
   'objective-fuel-dump': {
     viewBox: '0 0 240 184',
     draw: () => [
-      ...inked('M40 64 L78 40 L116 64 Z', 'green', 2), fill('M40 64 L78 40 L116 64 Z', toneClass('ink', 35)),
-      ...inked('M40 64 H116 V74 H40 Z', 'green', 2),
-      ...[60, 74, 88, 102].flatMap((x) => drum(x, 100)),
-      ...[52, 66, 80, 94, 108].flatMap((x) => drum(x, 120, 'red')),
-      ...[64, 78, 92].flatMap((x) => drum(x, 140)),
-      // A tank in the laager, hull down beside the drums.
-      fill('M126 116 H192 L200 128 L186 138 H132 L120 128 Z', 'ink', { transform: 'translate(3 3)', 'fill-opacity': 0.5 }),
-      ...inked('M126 116 H192 L200 128 L186 138 H132 L120 128 Z', 'green', 2),
-      fill('M126 116 H192 L200 128 L186 138 H132 L120 128 Z', toneClass('ink', 35)),
-      ...inked('M140 100 H178 V116 H140 Z', 'green', 2),
-      line('M178 106 H212', 4),
-      line('M128 132 H192', 1.4, 'stroke-paper'),
+      // Kept inside its three hexes, so the art, the outline and the label
+      // all sit on the same ground.
+      fill('M56 48 L142 42 L148 134 L62 140 Z', 'green', { 'fill-opacity': 0.3 }),
+      ...[68, 86, 104, 122].flatMap((x, i) => [60, 78, 96, 114].map((y, j) => [x + j, y - i])).map(([x, y], k) => drum(x + 2, y + 6, k % 5 === 2 ? 'red' : 'green')).flat(),
+      line('M56 48 L142 42 L148 134 L62 140 Z', 2, 'stroke-ink', { 'stroke-dasharray': '6 4' }),
+      // The bowser: cab and tank, nose to the road.
+      ...inked('M158 58 H182 V124 H158 Z', 'green', 2.4),
+      ...inked('M160 124 H180 V140 H160 Z', 'green', 2.4),
+      ...inked('M163 128 H177 V133 H163 Z', 'blue', 1.4),
+      line('M158 80 H182 M158 102 H182', 1.6),
     ],
   },
   'objective-fuel-destroyed': {
     viewBox: '0 0 240 184',
     draw: () => [
-      fill('M30 150 Q80 70 130 90 Q200 80 214 150 Z', toneClass('ink', 50)),
-      ...[62, 90, 104].flatMap((x) => drum(x, 138, 'ink')),
-      ...inked('M126 124 H192 L198 134 L186 142 H132 L122 134 Z', 'ink', 2),
-      ...flame(70, 110, 1.4), ...flame(104, 104, 1), ...flame(150, 118, 1.1),
-      ...smoke(90, 60, 1.6), ...smoke(146, 50, 1.3),
+      fill('M24 150 Q60 50 140 64 Q200 70 214 156 Z', 'ink', { 'fill-opacity': 0.35 }),
+      ...[[60, 120], [92, 132], [124, 116], [74, 146]].flatMap(([x, y]) => drum(x, y, 'ink')),
+      ...inked('M166 96 H194 V160 H166 Z', 'ink', 2.4),
+      ...flame(70, 110, 1.4), ...flame(108, 100, 1.1), ...flame(150, 118, 1.1),
+      ...smoke(90, 56, 1.6), ...smoke(146, 46, 1.3),
     ],
   },
   // The exfil barn at the edge of the fields.
@@ -1091,6 +1247,71 @@ const SPRITES = {
     ],
   },
   'landmark-church': { viewBox: '0 0 80 92', draw: () => [svg('g', { transform: 'translate(2 8)' }, church())] },
+
+  // --- the drop shown (ART-ASSETS.md §6) ---
+  // A C-47 Dakota from above, nose to the east (+x): board.js turns it to the
+  // run's heading. Olive drab with the invasion stripes on the wings and
+  // fuselage, which is what says June 1944 at a glance.
+  'aircraft-dakota': {
+    viewBox: '0 0 120 120',
+    draw: () => {
+      const wings = 'M50 60 L56 6 Q60 2 64 6 L70 58 L70 62 L64 114 Q60 118 56 114 L50 62 Z';
+      const body = 'M14 56 Q12 60 14 64 L96 64 Q112 62 114 60 Q112 58 96 56 Z';
+      const tail = 'M18 60 L10 42 Q13 38 17 42 L26 58 L26 62 L17 78 Q13 82 10 78 Z';
+      const stripes = svg('clipPath', { id: 'aircraft-dakota-wing-clip' }, [fill(wings, 'ink')]);
+      const fuselageStripes = svg('clipPath', { id: 'aircraft-dakota-body-clip' }, [fill(body, 'ink')]);
+      return [
+        stripes, fuselageStripes,
+        ...inked(tail, 'green', 2),
+        fill(wings, 'green'),
+        svg('g', { 'clip-path': 'url(#aircraft-dakota-wing-clip)' }, [
+          svg('rect', { x: 48, y: 0, width: 26, height: 120, class: 'paper' }),
+          svg('rect', { x: 52, y: 0, width: 4, height: 120, class: 'ink' }),
+          svg('rect', { x: 60, y: 0, width: 4, height: 120, class: 'ink' }),
+          svg('rect', { x: 68, y: 0, width: 4, height: 120, class: 'ink' }),
+        ]),
+        line(wings, 2.2),
+        fill(body, 'green'),
+        svg('g', { 'clip-path': 'url(#aircraft-dakota-body-clip)' }, [
+          svg('rect', { x: 30, y: 50, width: 16, height: 20, class: 'paper' }),
+          svg('rect', { x: 33, y: 50, width: 3, height: 20, class: 'ink' }),
+          svg('rect', { x: 40, y: 50, width: 3, height: 20, class: 'ink' }),
+        ]),
+        line(body, 2.2),
+        // Engines on the wings, the cockpit glazing.
+        ...inked('M66 36 h16 q3 0 3 3 v2 q0 3 -3 3 h-16 Z', 'green', 2),
+        ...inked('M66 76 h16 q3 0 3 3 v2 q0 3 -3 3 h-16 Z', 'green', 2),
+        line('M86 36 V44 M86 76 V84', 2.6),
+        fill('M100 57.5 Q108 58 110 60 Q108 62 100 62.5 Z', 'blue'),
+      ];
+    },
+  },
+  // The aircraft's and a canopy's shadows on the ground: flat ink silhouettes,
+  // printed faint by board.js.
+  'aircraft-dakota-shadow': {
+    viewBox: '0 0 120 120',
+    draw: () => [fill('M50 60 L56 6 Q60 2 64 6 L70 58 L70 62 L64 114 Q60 118 56 114 L50 62 Z M14 56 Q12 60 14 64 L96 64 Q112 62 114 60 Q112 58 96 56 Z M18 60 L10 42 Q13 38 17 42 L26 58 L26 62 L17 78 Q13 82 10 78 Z', 'ink')],
+  },
+  'parachute-canopy-shadow': { viewBox: '0 0 40 40', draw: () => [circle(20, 20, 18, 'ink')] },
+  // An open canopy seen from above: eight gores, alternate ones printed in
+  // green, round a vent. The man is under it and out of sight.
+  'parachute-canopy': {
+    viewBox: '0 0 40 40',
+    draw: () => {
+      const parts = [circle(20, 20, 18, 'paper')];
+      for (let i = 0; i < 8; i += 2) {
+        const a1 = (i / 8) * Math.PI * 2, a2 = ((i + 1) / 8) * Math.PI * 2;
+        parts.push(fill(`M20 20 L${(20 + Math.cos(a1) * 18).toFixed(2)} ${(20 + Math.sin(a1) * 18).toFixed(2)} A18 18 0 0 1 ${(20 + Math.cos(a2) * 18).toFixed(2)} ${(20 + Math.sin(a2) * 18).toFixed(2)} Z`, 'green'));
+      }
+      let gores = '';
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        gores += `M20 20 L${(20 + Math.cos(a) * 18).toFixed(2)} ${(20 + Math.sin(a) * 18).toFixed(2)} `;
+      }
+      parts.push(line(gores, 1.2), ring(20, 20, 18, 2), circle(20, 20, 3, 'paper'), ring(20, 20, 3, 1.2));
+      return parts;
+    },
+  },
 
   // --- markers (ART-ASSETS.md §6) ---
   'marker-spotted': {
@@ -1177,6 +1398,18 @@ const SPRITES = {
         svg('rect', { x: 12, y: 23, width: 6, height: 4, rx: 1, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
       ];
     },
+  },
+  // A charge point (SPEC.md §7): an empty satchel with its fuse, and a red
+  // plus — where a charge goes, not a charge.
+  'marker-charge-point': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      svg('rect', { x: 4, y: 10, width: 18, height: 13, rx: 2, class: 'paper' }),
+      svg('rect', { x: 4, y: 10, width: 18, height: 13, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.8, 'stroke-dasharray': '3 2' }),
+      line('M13 10 C13 5 17 6 18 3', 1.8),
+      circle(21.5, 21.5, 6, 'red'), ring(21.5, 21.5, 6, 1.4),
+      line('M21.5 18.5 V24.5 M18.5 21.5 H24.5', 1.8, 'stroke-paper'),
+    ],
   },
   'marker-charge': {
     viewBox: '0 0 28 28',
