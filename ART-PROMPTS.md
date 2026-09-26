@@ -391,6 +391,7 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The green counter frames, their AP figure and card edge.
 - The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the
   reference art, intact and destroyed.
+- Ferme Lebrun's farm (M14), after the operator's reference: the farmhouse hex.
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.
 - A plain night scene for the title card (moon, Dakota, canopies, skyline), with the title
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.

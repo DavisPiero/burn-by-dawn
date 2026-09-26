@@ -1010,15 +1010,47 @@ const TERRAIN_SPRITES = {
     line('M36 48 Q52 24 68 48', 2),
   ],
 
-  'terrain-farmhouse': () => [
-    ...inked('M24 44 H58 V68 H24 Z', 'paper', 1.6),
-    ...inked('M20 46 L41 28 L62 46 Z', 'red', 1.6),
-    fill('M20 46 L41 28 L62 46 Z', toneClass('ink', 20)),
-    ...inked('M49 34 V26 H54 V38', 'paper', 1.4),
-    ...inked('M36 56 H44 V68 H36 Z', 'ink', 1),
-    ...inked('M27 50 H33 V56 H27 Z', 'blue', 1),
-    ...inked('M49 50 H55 V56 H49 Z', 'blue', 1),
-  ],
+  // A farm round its yard, after the operator's reference (M14; it was one
+  // cottage): seen from the south-west like the exchange, the half-timbered
+  // house under red tiles along the back with its chimney, the stone barn
+  // under slate on the right with its arched cart door, a haystack, and the
+  // yard wall across the front with a gap for the gate. Ferme Lebrun is the
+  // only farmhouse hex not under an objective, so this is its picture. Bold
+  // shapes only: a hex is about 30 px across at 1280x800.
+  'terrain-farmhouse': () => {
+    const yard = 'M10 60 L40 52 L72 60 L66 76 L40 82 L14 76 Z';
+    const front = 'M10 36 H44 V52 H10 Z';
+    const gable = 'M44 52 V36 L49 26 L54 33 V48 Z';
+    const roof = 'M8 37 H45 L50 25 H16 Z';
+    const barnFront = 'M52 50 H70 V66 H52 Z';
+    const barnGable = 'M70 66 V50 L73 44 L76 48 V62 Z';
+    const barnRoof = 'M50 51 H71 L74 43 H55 Z';
+    const wall = 'M8 68 L30 75 V81 L8 74 Z M38 77 L68 68 V74 L38 83 Z';
+    return [
+      fill(yard, toneClass('ink', 10)),
+      // The house: tiles, then its timber frame over the plaster.
+      ...inked(front, 'paper', 1.4),
+      line('M16 36 V52 M23 36 V52 M31 36 V52 M38 36 V52 M10 44 H44 M16 44 L23 36 M31 44 L38 36', 0.8, 'stroke-ink', { opacity: 0.75 }),
+      ...inked(gable, 'paper', 1.4), fill(gable, 'ink', { 'fill-opacity': 0.22 }),
+      ...inked(roof, 'red', 1.4), fill(roof, toneClass('ink', 20)),
+      line('M11 31 H47 M13.5 28 H48.5', 0.7, 'stroke-ink', { opacity: 0.5 }),
+      ...inked('M37 27 V20 H42 V27', 'paper', 1.2),
+      ...inked('M25 46 H30 V52 H25 Z', 'ink', 0.8),
+      ...inked('M13 39 H17 V42 H13 Z', 'blue', 0.8), ...inked('M34 46 H38 V49 H34 Z', 'blue', 0.8),
+      // The barn: stone, slate, the cart door arched.
+      ...inked(barnFront, 'paper', 1.4), fill(barnFront, toneClass('ink', 10)),
+      ...inked(barnGable, 'paper', 1.4), fill(barnGable, 'ink', { 'fill-opacity': 0.22 }),
+      ...inked(barnRoof, 'blue', 1.4),
+      ...inked('M56 66 V58 Q61 52 66 58 V66 Z', 'ink', 0.8),
+      // The haystack in the yard, by the barn.
+      ...inked('M41 66 Q41 56 46 55 Q51 56 51 66 Z', 'paper', 1.2),
+      line('M42.5 60 Q46 58.5 49.5 60 M41.5 63.5 Q46 62 50.5 63.5', 0.7, 'stroke-ink', { opacity: 0.6 }),
+      // The yard wall across the front, open for the gate.
+      ...inked(wall, 'paper', 1.2), fill(wall, toneClass('ink', 20)),
+      line('M19 71.5 V77.5 M53 72.5 V78.5', 0.7, 'stroke-ink', { opacity: 0.6 }),
+      line('M30 74 V82 M38 76 V84', 2),
+    ];
+  },
 
   'terrain-emplacement': () => {
     const bags = [];

@@ -54,7 +54,7 @@
     { "name": "Bellecour", "kind": "village", "at": [15, 0], "dy": 0.1 },
     { "name": "Bois des Moines", "kind": "wood", "at": [1, 1] },
     { "name": "La Butte", "kind": "high", "at": [1, 4], "dy": 0.25 },
-    { "name": "Ferme Lebrun", "kind": "farm", "at": [2, 8], "dy": 0.62 },
+    { "name": "Ferme Lebrun", "kind": "farm", "at": [2, 8], "dy": 0.98 },
     { "name": "Les Marais", "kind": "marsh", "at": [7, 9] },
     { "name": "Canal St-R\u00e9my", "kind": "water", "at": [8, 10], "angle": 47 }
   ],

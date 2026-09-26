@@ -115,7 +115,7 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
 | `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
 | `terrain-ridge.svg` | 80 x 92 | 1 — not used since M7b: the ridge is drawn as tonal bands |
-| `terrain-farmhouse.svg` | 80 x 92 | 1 |
+| `terrain-farmhouse.svg` | 80 x 92 | 1: Ferme Lebrun, the one farmhouse hex not under an objective — a farm round its yard after `assets/reference/Farmhouse_Reference_01.jpeg` (M14): half-timbered house under red tiles, stone barn under slate with an arched door, haystack, yard wall with a gate gap. *Drawn by code.* |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
 
 **Roads and the railway are not motifs** (M7b). Code draws each road as one continuous
