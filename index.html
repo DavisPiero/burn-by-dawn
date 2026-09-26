@@ -505,6 +505,9 @@
       cursor: pointer;
       overflow: hidden;
     }
+    .slot.safe { cursor: default; background: var(--green); color: var(--paper); }
+    .slot.safe .slot-text, .slot.safe .slot-line { font-weight: bold; }
+    .slot.safe .slot-trait { opacity: 0.85; }
     .slot.selected { border-color: var(--red); box-shadow: 2px 2px 0 var(--red); outline: 1px solid var(--red); }
     .slot-face {
       position: relative;
@@ -638,6 +641,28 @@
       cursor: pointer;
     }
     #briefing-backdrop[hidden] { display: none; }
+    /* A turn card (or the diversion's) sits in the bottom right of the map,
+       where the men seldom go, narrower and with nothing darkened, so what it
+       reports can be seen beside it (M13). Any click still puts it away. */
+    #briefing-backdrop:not(.orders) { background: none; }
+    /* Its foot 14 px above the board's (the left page's 10 px padding, then
+       the board), its right 30 px in from the page's edge. */
+    #briefing-backdrop:not(.orders) #briefing {
+      position: absolute;
+      right: 30px;
+      bottom: calc(100% - 10px - var(--board-h) + 14px);
+      width: min(500px, 62%);
+      max-height: calc(var(--board-h) - 28px);
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.35;
+      box-shadow: 5px 5px 0 var(--ink), 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+    #briefing-backdrop:not(.orders) #briefing li { margin-bottom: 2px; }
+    #briefing-backdrop:not(.orders) #briefing h3 { margin-top: 7px; }
+    #briefing-backdrop:not(.orders) #briefing .brief-head { margin-bottom: 6px; }
+    #briefing-backdrop:not(.orders) #briefing .brief-title { font-size: 19px; }
+    #briefing-backdrop:not(.orders) #briefing .brief-foot { margin-top: 8px; font-size: 12px; }
     /* Under the orders the whole spread is put in shade, with a coarse
        halftone over it like a cheap print's shadow, and the card stands off
        it on a deep soft shadow (M12). A click anywhere on it carries on. */
@@ -650,7 +675,9 @@
       background-image: radial-gradient(circle, rgba(10, 8, 5, 0.38) 0.9px, transparent 1.5px);
       background-size: 5px 5px;
     }
+    /* The orders: wider than a turn card, with more air between its parts (M13). */
     #briefing-backdrop.orders #briefing {
+      width: min(720px, 94%);
       position: relative;
       box-shadow: 6px 6px 0 var(--ink), 0 16px 70px 12px rgba(0, 0, 0, 0.6);
     }
@@ -759,6 +786,14 @@
     /* The difficulty on the orders (SPEC.md §10), in the foot where the
        turn cards keep their checkbox: the levels as buttons, the picked one
        inked in. What each changes is its rollover. */
+    #briefing-backdrop.orders #briefing p { margin-bottom: 9px; }
+    #briefing-backdrop.orders #briefing p + h3 { margin-top: 16px; }
+    #briefing-backdrop.orders #briefing li { margin-bottom: 5px; }
+    #briefing-backdrop.orders #briefing .brief-foot { margin-top: 12px; }
+    /* Wider, so the picture is cropped lower rather than grown taller. */
+    #briefing-backdrop.orders #briefing .title-banner { aspect-ratio: 5.8 / 1; }
+    /* The level, first thing under the head: what it sets is in the text below. */
+    #briefing .brief-top { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
     #briefing .brief-choice {
       display: flex;
       align-items: center;

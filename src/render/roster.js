@@ -49,6 +49,8 @@ export function renderRoster(element, state, map, view, handlers) {
     const slot = html('li', 'slot');
     if (unit.id === state.selectedUnitId) slot.classList.add('selected');
     if (lost) slot.classList.add('lost');
+    // Out and safe: the row goes army green, all in bold (M13).
+    if (unit.out && !lost) slot.classList.add('safe');
     // His number in the leader's blue, as on his counter's strip. A flag, not
     // a name (CLAUDE.md rule 6).
     if (unit.leader) slot.classList.add('leader');

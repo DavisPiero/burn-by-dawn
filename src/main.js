@@ -7,9 +7,9 @@ import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
-import { freshSeed, seedFromQuery } from './rng.js';
+import { createRng, freshSeed, seedFromQuery } from './rng.js';
 import {
-  callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
+  callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit,
   jump, killEnemy, knifeEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
   setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
@@ -27,7 +27,7 @@ import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPie
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -103,6 +103,10 @@ let flyShowTimer = null;
 // A turn that ended with a bang (M11): its card waits until the explosion has
 // been seen, instead of covering it at once. Any key or click brings it now.
 let bangTimer = null;
+// Shots fired (M13): the flash and tracer of a suppress or a kill, display
+// only, cleared once it has played.
+let shotShow = null;
+let shotShowTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -226,6 +230,7 @@ function deriveView() {
     dropLabel: null,
     dropShow,
     flyShow,
+    shotShow,
     targetRings: null,
   };
 
@@ -268,7 +273,7 @@ function deriveView() {
     view.commandArea = hexes;
     const { closeRadius } = rules.command;
     if (closeRadius != null) view.commandCloseArea = new Map([...hexes].filter(([, h]) => hexDistance(leader, h) <= closeRadius));
-    if (unit?.leader) view.commandLabel = `dashed blue: ${leaderOrdersWords(unit)}`;
+    if (unit?.leader) view.commandLabel = `dashed blue outline: ${leaderOrdersWords(unit)}`;
   }
   if (!unit) return view;
 
@@ -300,7 +305,7 @@ function deriveView() {
     if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
       view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
     }
-    if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [G]: ${hideEffect(unit)}`;
+    if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
   }
   return view;
 }
@@ -337,7 +342,8 @@ function deriveDrop(view, hex) {
         // The charges it takes, so three dashed points never read as three charges.
         note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
       })),
-      { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
+      // Beside the exfil on its right, so it plainly means the exfil (M13).
+      { hexes: view.exfil, primary: false, colour: 'green', beside: true, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
     ];
   }
   if (!hex) {
@@ -515,7 +521,7 @@ function actionsFor(unit) {
   const ap = (n) => `${n} AP`;
   return [
     {
-      id: 'hide', key: 'G', label: 'Hide', ...withCost(checkHide(unit, rules), ap),
+      id: 'hide', key: 'H', label: 'Hide', ...withCost(checkHide(unit, rules), ap),
       help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
@@ -789,6 +795,15 @@ function cueReport(report) {
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
 }
 
+function showShot(kind, from, to) {
+  shotShow = { kind, since: performance.now(), from: { q: from.q, r: from.r }, to: { q: to.q, r: to.r } };
+  clearTimeout(shotShowTimer);
+  shotShowTimer = setTimeout(() => {
+    shotShow = null;
+    renderBoard();
+  }, SHOT.ms);
+}
+
 /** Take back the last move or action, keeping where the mouse is. */
 function undoLast() {
   if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
@@ -862,7 +877,15 @@ function handleTargetClick(q, r) {
     const taker = unitAt(state.units, q, r);
     if (taker) next = passCharge(state, mover.id, taker.id, rules);
   }
-  if (next !== state) commit(setTargeting(next, null));
+  if (next !== state) {
+    // Gunfire is heard and seen (M13): a burst for suppressing, one muffled
+    // shot for a kill, with the muzzle flash and tracer on the board.
+    const kind = state.targeting;
+    const gun = kind === 'suppress' || kind === 'kill';
+    const target = gun ? state.enemies.find((e) => e.q === q && e.r === r) : null;
+    commit(setTargeting(next, null), gun ? kind : 'action');
+    if (target) showShot(kind, mover, target);
+  }
   else if (other && other.id !== mover.id) state = selectUnit(state, other.id);
 }
 
@@ -877,9 +900,12 @@ function handleAction(id) {
     // The Dakota flies over the garrison, then the call is said on a card, so
     // it can never pass unnoticed and be made twice.
     if (state !== before) {
-      flyShow = { since: performance.now(), before, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
+      // A heading of its own each time (M13: it flew the same line every
+      // call), from the seed, the turn and the call, so a replay flies it again.
+      const heading = createRng((state.seed ^ Math.imul(state.turn, 2654435761) ^ state.diversionsCalled) >>> 0).next() * Math.PI * 2;
+      flyShow = { since: performance.now(), before, heading, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
       clearTimeout(flyShowTimer);
-      flyShowTimer = setTimeout(endFlyShow, flyoverTimeline(baseMap, flyShow.points).length);
+      flyShowTimer = setTimeout(endFlyShow, flyoverTimeline(baseMap, flyShow.points, flyShow.heading).length);
     }
     render();
     return;
@@ -1100,7 +1126,11 @@ function describeBriefing(which, view) {
       title: 'ORDERS',
       kicker: 'BEFORE THE DROP',
       paragraphs: [
-        `Tonight six men are to drop behind enemy lines. Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the EXFIL. Dawn comes at the end of turn ${rules.turnLimit}.`,
+        // The opening on a line of its own (M13), then the job.
+        [
+          'Tonight six men are to drop behind enemy lines.',
+          `Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL. Dawn comes at the end of turn ${rules.turnLimit}.`,
+        ],
         ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (+${rules.scoring.secondary}pts${bonus.length === 1 ? '' : ' ea'}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
       ],
       sections: [{
@@ -1108,14 +1138,18 @@ function describeBriefing(which, view) {
         lines: [
           `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
           'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
-          'Red rings mark your targets. The red dashed hexes are their charge points: stand a man with a charge on one and press C.',
+          // The operator's words (M13): "vulnerable points" here only; the
+          // game calls them charge points from then on.
+          'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, silent.` : ''),
           'Hover anything for detail; KEYBOARD lists every key.',
         ],
       }],
       // SPEC.md §10: the level, chosen here and fixed once the stick jumps.
+      // At the top (M13): the level changes numbers in the text under it.
       choice: {
+        top: true,
         heading: 'DIFFICULTY',
         options: difficulty.levels.map((l) => ({ id: l.id, label: l.label, summary: l.summary, selected: l.id === level.id })),
         onChoose: handleChooseLevel,
@@ -1176,7 +1210,7 @@ function describeMarker(id, unit) {
   if (id === 'marker-spotted') {
     return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
       + 'If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover.\n'
-      + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [G], or have a gunner suppress it [S].'];
+      + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or have a gunner suppress it [S].'];
   }
   if (id === 'marker-wounded') {
     const left = rules.combat.hitsToKill - unit.hits;
@@ -1184,7 +1218,7 @@ function describeMarker(id, unit) {
       + 'A man beside him can stabilise him [A]: a full turn, and he gets his full AP back.'];
   }
   if (id === 'marker-hidden') {
-    return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP. Hold [H] to stay down.`];
+    return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP: leave him where he is and he stays down.`];
   }
   if (id === 'marker-orders') {
     const leader = state.units.find((u) => u.leader);
@@ -1360,8 +1394,9 @@ function handleKey(event) {
     case 'Escape':
       state = deselect(state);
       break;
-    case 'g':
-    case 'G':
+    // M13: Hide is H, and Hold is gone — Tab moves on, and End turn ends it.
+    case 'h':
+    case 'H':
       handleAction('hide');
       return;
     case 's':
@@ -1416,15 +1451,6 @@ function handleKey(event) {
     case 'D':
       handleAction('diversion');
       return;
-    case 'h':
-    case 'H': {
-      const unit = selectedUnit(state);
-      if (!unit) return;
-      commit(holdUnit(state, unit.id), null);
-      const next = nextUnitId(state);
-      if (next) state = selectUnit(state, next);
-      break;
-    }
     default:
       return;
   }

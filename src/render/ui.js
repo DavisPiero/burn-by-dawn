@@ -79,24 +79,36 @@ export function attachPopup(element, content) {
   element.addEventListener('mouseleave', hidePopup);
 }
 
-// SPEC.md §4's keys, for the KEYBOARD rollover: each line is [key, what it does]
-// pairs, the keys set in bold (M12).
+// SPEC.md §4's keys, for the KEYBOARD rollover: one to a line, in the
+// order of the keys (M13), each key in bold.
 const KEYS = [
-  [['1–3', 'pick a drop run'], ['Space', 'jump']],
-  [['1–6', 'select a man'], ['Tab', 'next man'], ['Esc', 'deselect']],
-  [['H', 'hold'], ['G', 'hide'], ['N', 'knife'], ['S', 'suppress'], ['K', 'kill']],
-  [['T', 'throw a stone'], ['A', 'stabilise'], ['U', 'pack chute']],
-  [['P', 'pick up a charge'], ['C', 'place a charge']],
-  [['E', 'pass a charge'], ['X', 'cut the line'], ['W', 'swim']],
-  [['D', 'RAF diversion'], ['Space', 'end turn'], ['Z', 'undo']],
-  [['R', 'patrol routes'], ['M', 'sound on or off']],
-  [['Esc', 'or right-click backs out of aiming an action']],
+  ['1–3', 'pick a drop run'],
+  ['1–6', 'select a man'],
+  ['A', 'stabilise a wounded man (aid)'],
+  ['C', 'place a charge'],
+  ['D', 'RAF diversion'],
+  ['E', 'pass a charge'],
+  ['Esc', 'deselect, or back out of aiming (or right-click)'],
+  ['H', 'hide'],
+  ['K', 'kill (gunners)'],
+  ['M', 'sound on or off'],
+  ['N', 'knife'],
+  ['P', 'pick up a charge'],
+  ['R', 'patrol routes'],
+  ['S', 'suppress (gunners)'],
+  ['Space', 'jump, then end turn'],
+  ['T', 'throw a stone'],
+  ['Tab', 'next man'],
+  ['U', 'pack chute'],
+  ['W', 'swim'],
+  ['X', 'cut the line (scouts)'],
+  ['Z', 'undo'],
 ];
 
 export function renderKeys(button) {
   attachPopup(button, () => [
     html('b', null, 'KEYBOARD'),
-    ...KEYS.flatMap((line) => ['\n', ...line.flatMap(([key, what], i) => [i ? ' · ' : '', html('b', null, key), ` ${what}`])]),
+    ...KEYS.flatMap(([key, what]) => ['\n', html('b', null, key), ` ${what}`]),
     '\n\nHover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
   ]);
 }
@@ -306,7 +318,7 @@ function titleBanner({ title, tagline }) {
 
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
- * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
@@ -320,7 +332,12 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
   card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, boldNames(text, briefing.names)));
+  if (briefing.choice?.top) card.appendChild(html('div', 'brief-top', briefChoice(briefing.choice)));
+  // A paragraph may be several lines, each on its own line (M13).
+  for (const text of briefing.paragraphs ?? []) {
+    const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
+    card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
+  }
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
@@ -338,7 +355,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     const label = html('label', null, [box, ' Brief me at the start of every turn']);
     label.addEventListener('click', (event) => event.stopPropagation());
     foot.appendChild(label);
-  } else if (briefing.choice) {
+  } else if (briefing.choice && !briefing.choice.top) {
     foot.appendChild(briefChoice(briefing.choice));
   } else {
     foot.appendChild(html('span'));
@@ -686,7 +703,8 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
   const score = document.createElement('table');
   for (const line of outcome.score.lines) {
     const row = score.insertRow();
-    row.insertCell().textContent = line.label;
+    // Each scoring line with a bullet before it (M13).
+    row.insertCell().textContent = `• ${line.label}`;
     row.insertCell().textContent = `+${line.points}`;
   }
   const total = score.insertRow();
@@ -702,7 +720,8 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
     titleBanner(banner),
     html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
     html('h2', null, OUTCOME_WORDS[outcome.kind]),
-    html('p', null, `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}, on ${levelLabel}.`),
+    // The turn and level on a line of their own (M13).
+    html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),
     fates,
     score,
     html('div', 'again', [again]),
@@ -871,6 +890,10 @@ export function describeEffect(effect) {
 
 // --- the hover readout ----------------------------------------------------------
 
+// Between the readout's items: a bar, not an arrow, which read as "this
+// leads to that" (M13).
+const READOUT_GAP = '  |  ';
+
 /**
  * A fixed-height readout about whatever the mouse is over. With a trooper
  * selected this is the path readout SPEC.md §4 asks for: route, total AP, and
@@ -900,7 +923,7 @@ export function renderReadout(element, state, map, view) {
       return;
     }
     setText(element, state.selectedUnitId
-      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? ` ▸ ${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
+      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? `${READOUT_GAP}${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
       : 'Click a man to select him, or a hex to see what it is.');
     return;
   }
@@ -924,7 +947,7 @@ export function renderReadout(element, state, map, view) {
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
   const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
-  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join('   ▸ ')}`);
+  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join(READOUT_GAP)}`);
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */

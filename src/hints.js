@@ -69,7 +69,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
 
   const inContact = men.filter((u) => u.inContact);
   if (inContact.length) {
-    hints.push(`${names(inContact)} ${plural(inContact.length, 'is', 'are')} in contact: an enemy has ${plural(inContact.length, 'him', 'them')} in its sights and will fire. Get out of its view, hide in cover [G], or have a gunner suppress it [S].`);
+    hints.push(`${names(inContact)} ${plural(inContact.length, 'is', 'are')} in contact: an enemy has ${plural(inContact.length, 'him', 'them')} in its sights and will fire. Get out of its view, hide in cover [H], or have a gunner suppress it [S].`);
   }
 
   const wounded = men.filter((u) => u.hits > 0 && !u.stabilised);
