@@ -505,7 +505,8 @@ what a bonus target costs is the garrison it rouses, not the walk — so the dro
 told apart by what they are good for instead, one word each, shown with the run's name
 (`tag` in `map.json`): **West · QUIET** (under cover the whole way, the fewest sightings,
 the longest walk), **North · STEADY** (soft landings, the most reliable), **East · FAST**
-(down closest to the bridge). The base patrol walks the fields south of the fuel dump, not
+(down closest to the bridge; its description says it is tricky, as it is the hardest run
+for a first-timer). The base patrol walks the fields south of the fuel dump, not
 up onto the ridge, so the wood and ridge line is the quiet one.
 
 ---

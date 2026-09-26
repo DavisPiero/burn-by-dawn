@@ -10,7 +10,7 @@
       "from": [2, 0], "to": [-4, 12], "jumpAt": 0, "spacing": 1, "wind": "E" },
     { "id": "north", "label": "North run", "tag": "steady", "description": "Hedgerow lanes: the middle way. Soft landings in the hedges and the most reliable run, with two patrol routes to cross.",
       "from": [0, 1], "to": [17, 1], "jumpAt": 3, "spacing": 1, "wind": "SE" },
-    { "id": "east", "label": "East run", "tag": "fast", "description": "The fields above the bridge: down closest to the primary, the wind carrying you off the canal. The bridge post and its patrol are close by.",
+    { "id": "east", "label": "East run", "tag": "fast", "description": "The fields above the bridge: down closest to the primary, the wind carrying you off the canal. Tricky: the bridge post and its patrol are close by.",
       "from": [9, 0], "to": [2, 7], "jumpAt": 0, "spacing": 1, "wind": "NW" }
   ],
 
