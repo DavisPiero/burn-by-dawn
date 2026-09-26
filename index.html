@@ -118,18 +118,33 @@
       align-items: center;
       min-height: 0;
     }
+    /* The game's name up the top of the margin, as a magazine prints its
+       title in the margin (M14; twice the size and darker since M15). */
+    #margin-title {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 6px 0 4px;
+      font-family: var(--slab);
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: 3px;
+      white-space: nowrap;
+      color: var(--ink);
+      opacity: 0.55;
+      user-select: none;
+    }
     #gutter-note {
       flex: 1 1 auto;
       min-height: 0;
       width: var(--outer-gutter);
     }
-    #seed {
+    #seed, #version {
       writing-mode: vertical-rl;
       transform: rotate(180deg);
       font-size: 11px;
       padding: 4px 0;
     }
-    #seed a { color: inherit; opacity: 0.6; }
+    #seed a, #version { color: inherit; opacity: 0.6; }
     /* Sound on or off, under the seed and set the same way. */
     #sound-toggle, #restart {
       writing-mode: vertical-rl;
@@ -144,7 +159,9 @@
       text-decoration: underline;
       cursor: pointer;
     }
-    #restart.armed { color: var(--red); opacity: 1; font-weight: bold; }
+    /* RESTART in the bottom corner, dark and bold (M15), so it can be found. */
+    #restart { opacity: 1; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
+    #restart.armed { color: var(--red); }
     /* The difficulty beside the seed: text, not a button to look at, but a
        click on it before the jump opens the orders where it is chosen. */
     #seed .seed-level {
@@ -870,7 +887,9 @@
   <main id="spread">
     <section id="left-page" class="page">
       <div id="outer-gutter">
-        <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMin meet"></svg>
+        <div id="margin-title">BURN BY DAWN</div>
+        <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="version"></div>
         <div id="seed"></div>
         <button id="sound-toggle" type="button" title="Sound on or off [M]"></button>
         <button id="restart" type="button" title="A new game on a fresh seed, at the same level"></button>

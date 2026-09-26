@@ -768,7 +768,7 @@ export function describeRun(run) {
 
 /** Restart, in the margin under the sound: a first click arms it and says so (M12). */
 export function renderRestart(button, armed) {
-  button.textContent = armed ? 'click again to restart' : 'restart';
+  button.textContent = armed ? 'CLICK AGAIN TO RESTART' : 'RESTART';
   button.classList.toggle('armed', armed);
 }
 
@@ -799,6 +799,12 @@ export function renderSeed(element, seed, level, levelQuery, onLevelClick) {
   });
   attachPopup(levelButton, [html('b', null, `DIFFICULTY: ${level.label.toUpperCase()}`), `\n${level.summary}\nChosen on the orders: click to change it until the stick jumps.`]);
   element.append(link, ' · ', levelButton);
+}
+
+/** Which build this is (M15), on its own line above the seed and level: data/version.json. */
+export function renderVersion(element, version) {
+  element.textContent = version ? `build ${version}` : '';
+  attachPopup(element, `This is build ${version}, the milestone it was made in.`);
 }
 
 /**

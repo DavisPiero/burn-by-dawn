@@ -35,7 +35,7 @@ import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
+  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -81,6 +81,8 @@ let layers = null;
 let rawRules = null;
 let rawMap = null;
 let difficulty = null;
+// The build shown in the margin (data/version.json, M15).
+let version = null;
 let level = null;
 let roster = null;
 let traits = null;
@@ -1558,6 +1560,8 @@ try {
   traits = validateTraits(await loadJson('data/traits.json'));
   roster = await loadJson('data/roster.json');
   difficulty = validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes });
+  ({ version } = await loadJson('data/version.json'));
+  renderVersion(document.getElementById('version'), version);
 
   // SPEC.md §1: a seed reproduces a playthrough. `?seed=N` replays one; with
   // none, the clock picks a fresh one. It is shown on the page either way,
