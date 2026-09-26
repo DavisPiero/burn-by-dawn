@@ -4,14 +4,14 @@
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the canal towpath north of the bridge, flying down the west bank.",
+  "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the fields north-west of the bridge, flying in off the canal and away from it.",
   "dropRuns": [
     { "id": "west", "label": "West run", "description": "Wood and ridge line: fast going and high ground, but trees make for bad landings, and it passes the patrol base.",
       "from": [2, 0], "to": [-4, 12], "jumpAt": 0, "spacing": 1, "wind": "E" },
     { "id": "north", "label": "North run", "description": "Hedgerow lanes: the middle way, open fields between the hedges, and two patrol routes to cross.",
       "from": [0, 1], "to": [17, 1], "jumpAt": 3, "spacing": 1, "wind": "SE" },
-    { "id": "east", "label": "East run", "description": "Canal towpath: down the west bank above the bridge. Closest to the primary, and to the water — the wind blows toward it.",
-      "from": [10, 0], "to": [4, 12], "jumpAt": 0, "spacing": 1, "wind": "SE" }
+    { "id": "east", "label": "East run", "description": "The fields above the bridge: in off the canal and down closest to the primary, the wind carrying you away from the water. The bridge post and its patrol are close by.",
+      "from": [9, 0], "to": [4, 5], "jumpAt": 0, "spacing": 1, "wind": "NW" }
   ],
 
   "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes.",

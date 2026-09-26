@@ -509,7 +509,8 @@ The drop is not a cutscene. It is the first decision, and it is how the player c
 Before turn 1, the player picks one of **three drop runs** (north, east, west), drawn as a
 flight line across the map with a wind arrow. The run decides which corridor the stick
 lands nearest: west on the wood and ridge line, north on the hedgerow lanes, east on the
-canal towpath above the bridge. All three land west of the canal, so nobody starts on the
+fields north-west of the bridge, nearest the primary (moved off the towpath at M9c: it
+dropped the stick into the bridge patrol's walk and was hard by accident). All three land west of the canal, so nobody starts on the
 wrong side of the chokepoint. The men jump in roster order along the flight line. Each
 trooper then lands with **small seeded scatter**, 1–2 hexes, rarely 3, leaning **downwind**.
 Nobody lands out of play, on the exfil, on impassable ground other than the canal, on

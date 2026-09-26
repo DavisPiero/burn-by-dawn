@@ -15,6 +15,8 @@
 // MAP_PATCH take JSON deep-merged over that file (arrays are replaced whole),
 // e.g. RULES_PATCH='{"turnLimit":16}' node tools/balance-bot.mjs 200 naive
 //
+// RUN=<id> plays only that drop run, for trying a change to one run quickly.
+//
 // DIFFICULTY=<id> plays at a level from data/difficulty.json, as the game
 // does: its patches over the files (and over any *_PATCH above).
 //
@@ -252,6 +254,10 @@ function play(seed, runId) {
   state = S.jump(S.chooseDropRun(state, map0, runId), map0, rules);
   let bridgeTurn = null;
   const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0 };
+  // How the stick came down: hurt in the water, or a bad landing that costs turns.
+  const landings = state.report.filter((e) => e.kind === 'landed');
+  ev.wet = landings.filter((e) => e.outcome === 'wounds').length;
+  ev.bad = landings.filter((e) => e.outcome === 'bad').length;
   while (!state.outcome) {
     state = playTurn(state);
     for (const e of state.report ?? []) {
@@ -272,11 +278,13 @@ function play(seed, runId) {
     out: state.units.filter((u) => u.out).length,
     kills: state.bodies.filter((b) => b.enemyId).length,
     secondaries: state.objectives.filter((x) => !x.primary && x.destroyed).length,
+    destroyedIds: state.objectives.filter((x) => !x.primary && x.destroyed).map((x) => x.id),
     ...ev,
   };
 }
 
-const runs = map0.dropRuns.map((r) => r.id);
+const runs = map0.dropRuns.map((r) => r.id).filter((id) => !process.env.RUN || id === process.env.RUN);
+if (runs.length === 0) throw new Error(`unknown drop run "${process.env.RUN}"`);
 const summary = {};
 for (const run of runs) {
   const res = [];
@@ -290,6 +298,9 @@ for (const run of runs) {
     avgScore: avg((r) => r.score), avgDead: avg((r) => r.dead), avgPeak: avg((r) => r.peak ?? 0),
     avgBridgeTurn: (() => { const down = res.filter((r) => r.bridgeTurn); return down.length ? (down.reduce((n, r) => n + r.bridgeTurn, 0) / down.length).toFixed(2) : '-'; })(), kills: avg((r) => r.kills), secondaries: avg((r) => r.secondaries), reasons,
     endTurn: avg((r) => r.turn ?? 0), spotted: avg((r) => r.spotted), pinned: avg((r) => r.pinned), wounded: avg((r) => r.wounded), killedMen: avg((r) => r.killed), found: avg((r) => r.found),
+    landedWet: avg((r) => r.wet), landedBad: avg((r) => r.bad),
+    // How often each bonus target went up, as a share of games.
+    bonusPct: Object.fromEntries(map0.objectives.filter((o) => !o.primary).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
     alarmedPct: `${((100 * res.filter((r) => (r.peak ?? 0) >= rules.alert.states.at(-1).from).length) / N).toFixed(0)}%`,
   };
 }
@@ -299,7 +310,7 @@ if (AS_JSON) {
   console.log(`${STRATEGY}, ${N} seeds per drop run${DATA_OVERRIDE ? `, rules patch ${JSON.stringify(DATA_OVERRIDE)}` : ''}`);
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
-      + `  bridge down turn ${v.avgBridgeTurn}  spotted ${v.spotted}  dead ${v.avgDead}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  kills ${v.kills}`);
+      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  kills ${v.kills}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
   }
 }
