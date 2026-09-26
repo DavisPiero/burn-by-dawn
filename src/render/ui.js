@@ -318,7 +318,7 @@ export function renderReport(element, state, place, onLocate) {
   element.replaceChildren();
   const events = state.report;
   if (state.phase === 'drop') {
-    element.appendChild(html('li', null, 'Pick a drop run, then jump. Where each man lands is scattered by the wind.'));
+    element.appendChild(html('li', null, 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
     return;
   }
   if (events.length === 0) {

@@ -286,6 +286,13 @@ function deriveView() {
 function deriveDrop(view, hex) {
   const selected = runById(baseMap, state.dropRunId);
   const count = state.units.length;
+  view.dropRuns = baseMap.dropRuns.map((run, i) => ({
+    id: run.id, key: String(i + 1), label: run.label, tag: run.tag, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
+  }));
+  // Nothing of the drop is drawn on the board under the orders: a run's line
+  // showed through the title card as if it were part of the picture, and the
+  // rings are drawn on as the card is put away, where they can be seen.
+  if (briefing?.kind === 'orders') return view;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
       id: run.id, label: run.label, tag: run.tag, wind: run.wind,
@@ -306,9 +313,6 @@ function deriveDrop(view, hex) {
       { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
     ];
   }
-  view.dropRuns = baseMap.dropRuns.map((run, i) => ({
-    id: run.id, key: String(i + 1), label: run.label, tag: run.tag, description: run.description, wind: run.wind, selected: run.id === state.dropRunId,
-  }));
   if (!hex) {
     view.dropLabel = selected
       ? `${selected.label}, ${selected.tag.toUpperCase()}: ${selected.description} Wind ${selected.wind}. Space or JUMP to go.`
@@ -841,15 +845,15 @@ function describeBriefing(which, view) {
       kicker: 'BEFORE THE DROP',
       paragraphs: [
         `Tonight six men drop behind the lines. Blow the ${primary.label.toLowerCase()} before dawn, then get at least ${rules.mission.minimumOut} of them out at the exfil. Dawn comes at the end of turn ${rules.turnLimit}.`,
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off.`] : []),
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'}, +${rules.scoring.secondary} each. Every bang wakes the garrison, so it’s important to plan the order you set them off. It’s good to be slow and stealthy, as long as you finish before dawn!`] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
         lines: [
-          'Pick a drop run with the 1–3 keys, or click its name on the map. Hover the map to see where you might come down.',
-          'Hit the SPACE key to initiate the drop. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. Hit SPACE to end a turn.',
-          'Red rings mark your targets. The red dashed hexes around each are its charge points, where explosives go: stand a man carrying a charge on one and press C.',
-          `You do not fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`,
+          'The Dakota troop aircraft flies one of these lines; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.',
+          'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+          'Red rings mark your targets. The red dashed hexes are their charge points: stand a man with a charge on one and press C.',
+          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried} charges in total.`,
           'Hover anything for detail. KEYS, top right, lists every key.',
         ],
       }],
