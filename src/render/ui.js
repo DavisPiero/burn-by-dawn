@@ -968,7 +968,7 @@ export function renderReadout(element, state, map, view) {
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
-  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
+  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, view?.noiseLabel, parts.join(', '), view?.commandLabel];
   setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join(READOUT_GAP)}`);
 }
 

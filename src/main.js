@@ -256,6 +256,7 @@ function deriveView() {
     previewBlastArea: null,
     siteLabel: null,
     blastLabel: null,
+    noiseLabel: null,
     mission: describeMissionState(),
     drop: null,
     dropRuns: null,
@@ -301,6 +302,15 @@ function deriveView() {
   } else if (hex && isExfil(baseMap, hex)) {
     view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn. `
       + 'A man carrying a charge leaves it on the hex he steps off from, for another man to pick up [P].';
+  }
+
+  // A noise waiting to be heard (M15: the ring on a blown fuel dump was taken
+  // for a leftover stone): what it was and who comes for it.
+  const noise = hex && state.noises.findLast((n) => n.q === hex.q && n.r === hex.r);
+  if (noise) {
+    const what = { explosion: 'a bang', stone: 'a thrown stone', gunfire: 'gunfire', silenced: 'a silenced shot', found: 'something found here' }[noise.kind] ?? 'a noise';
+    const radius = hearingRadius(noise.kind, state.alert.points, rules);
+    view.noiseLabel = `HEARD — ${what}: in the enemy phase, patrols within ${radius} hexes come here to look, and sentries in earshot turn to face it`;
   }
 
   const unit = selectedUnit(state);

@@ -542,6 +542,10 @@ export const NOISE = {
   casingWidth: 6,
   radius: 24,
   text: PALETTE.ink,
+  // What each kind of noise is called under its ring (M15: a bang's ring
+  // looked like a stone's left behind).
+  words: { explosion: 'BANG', stone: 'STONE', gunfire: 'SHOTS', silenced: 'SHOT', found: 'FOUND' },
+  wordSize: 10,
 };
 
 export const TARGET = {

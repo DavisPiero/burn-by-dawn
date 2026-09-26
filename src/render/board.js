@@ -1443,6 +1443,13 @@ function drawNoise(layers, noise) {
   layers.highlight.appendChild(text('!', {
     x: p.x, y: p.y - NOISE.radius - 2, 'font-size': 18, 'font-weight': 'bold', fill: NOISE.text,
   }));
+  // Which noise it is, under the ring, cased so it reads over anything (M15).
+  const word = NOISE.words[noise.kind];
+  if (word) {
+    const attrs = { x: p.x, y: p.y + NOISE.radius + NOISE.wordSize * 0.9, 'font-size': NOISE.wordSize, 'font-weight': 'bold', 'letter-spacing': 1 };
+    layers.highlight.appendChild(text(word, { ...attrs, fill: 'none', stroke: NOISE.casing, 'stroke-width': 4, 'stroke-linejoin': 'round' }));
+    layers.highlight.appendChild(text(word, { ...attrs, fill: NOISE.text }));
+  }
 }
 
 // A stone being aimed: earshot tinted and edged, then the lob as an arc bowed
