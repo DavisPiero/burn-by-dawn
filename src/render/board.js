@@ -1164,7 +1164,10 @@ function drawSites(layers, state, view) {
       const size = OBJECTIVE.pointIconSize;
       const v = towardObjective(map, h, objective);
       const shift = map.hexSize * OBJECTIVE.pointIconShift;
-      point.appendChild(el('use', { href: '#marker-charge-point', x: p.x + v.x * shift - size / 2, y: p.y + v.y * shift - size / 2, width: size, height: size }));
+      // Nudged clear of the objective's own art where map.json says (M14).
+      const [nx, ny] = map.objectives.find((o) => o.id === objective.id)?.pointNudge?.[`${h.q},${h.r}`] ?? [0, 0];
+      const x = p.x + v.x * shift + nx * map.hexSize, y = p.y + v.y * shift + ny * map.hexSize;
+      point.appendChild(el('use', { href: '#marker-charge-point', x: x - size / 2, y: y - size / 2, width: size, height: size }));
       layers.sites.appendChild(point);
     }
   }

@@ -33,10 +33,10 @@
   "reserve": { "id": "reserve", "label": "Reserve squad", "type": "reserve", "facing": "SE", "entryHexes": [[8, 0], [8, 1], [7, 1]],
     "guardHex": [4, 9], "guardFacing": "SE" },
 
-  "_objectives": "SPEC.md §7. `kind` picks the numbers in data/rules.json objectives (charges needed, blast radius, alert, whether a scout can cut it, what its hexes become when destroyed). `hexes` is the footprint the art covers; `chargeHexes` are where a trooper stands to place a charge. Exactly one objective is `primary`. Charge hexes were chosen by simulating the patrols at Calm and Suspicious: the bridge's west-bank marsh is watched only when the bridge patrol passes, the exchange's north, east and south sides only when the village patrol comes round, and the dump's two ridge hexes differ (-1,6 is rarely seen, -1,7 often).",
+  "_objectives": "SPEC.md §7. `kind` picks the numbers in data/rules.json objectives (charges needed, blast radius, alert, whether a scout can cut it, what its hexes become when destroyed). `hexes` is the footprint the art covers; `chargeHexes` are where a trooper stands to place a charge. Exactly one objective is `primary`. `pointNudge` (M14, art only) moves a charge point's satchel, keyed \"q,r\", by [x, y] hex radii, clear of the objective's art: the bridge's south one, whose fuse crossed the pier. Charge hexes were chosen by simulating the patrols at Calm and Suspicious: the bridge's west-bank marsh is watched only when the bridge patrol passes, the exchange's north, east and south sides only when the village patrol comes round, and the dump's two ridge hexes differ (-1,6 is rarely seen, -1,7 often).",
   "objectives": [
     { "id": "bridge", "label": "Rail bridge", "kind": "bridge", "primary": true,
-      "hexes": [[8, 6], [9, 6], [10, 6]], "chargeHexes": [[9, 5], [8, 7]] },
+      "hexes": [[8, 6], [9, 6], [10, 6]], "chargeHexes": [[9, 5], [8, 7]], "pointNudge": { "8,7": [0.35, 0] } },
     { "id": "exchange", "label": "Telephone exchange", "kind": "exchange", "primary": false,
       "hexes": [[13, 2], [14, 2], [13, 3], [14, 3]], "chargeHexes": [[13, 1], [15, 2], [14, 4]] },
     { "id": "fuel-dump", "label": "Fuel dump", "kind": "fuelDump", "primary": false,
