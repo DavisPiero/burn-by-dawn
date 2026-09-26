@@ -107,12 +107,14 @@ export default [
     equal(result.state.enemies[0].holding.unitId, unitId, 'the spotter holds him');
     equal(`${result.state.contact.q},${result.state.contact.r}`, `${row.q + 2},${row.r}`, 'last known contact');
     equal(result.state.noises.length, 0, 'a sighting is not a noise');
+    // Who saw him, for the "!" on its counter in the garrison's turn (M15).
+    equal(result.events.find((ev) => ev.kind === 'spotted').enemyIds.join(), e.id, 'names its spotter');
   }],
 
   ['a man already in contact is not counted again when he is seen again', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 5);
-    const e = enemy(row.q, row.r, 'E', { suppressed: true }); // sees him, cannot shoot
+    const e = enemy(row.q, row.r, 'E'); // sees him again, and fires: the shot raises nothing either
     const { state: s, unitId } = scenario(state, 'sapper', { q: row.q + 2, r: row.r }, [e], { inContact: true });
     const result = runDetection(s, map, rules);
     equal(result.state.alert.points, 0, 'no alert rise');
@@ -199,7 +201,7 @@ export default [
     assert(!unit.inContact, 'contact broken');
   }],
 
-  ['a suppressed enemy spots but does not fire, does not move, and recovers after its enemy phase', async () => {
+  ['a suppressed enemy neither spots nor fires (M15), does not move, and recovers after its enemy phase', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 5);
     const e = enemy(row.q, row.r, 'E', { suppressed: true });
@@ -207,8 +209,10 @@ export default [
     const detected = runDetection(s, map, rules);
     const unit = unitIn(detected.state, unitId);
     equal(unit.hits, 0, 'not hit');
-    assert(unit.inContact, 'still in contact');
-    assert(detectionAt(map, rules, [e], 0, unit, unit).spotted, 'still spots');
+    assert(!unit.inContact, 'out of contact: nobody sees him');
+    equal(detectionAt(map, rules, [e], 0, unit, unit), null, 'head down: sees nothing');
+    const fresh = scenario(state, 'sapper', { q: row.q + 2, r: row.r }, [e]);
+    equal(runDetection(fresh.state, map, rules).state.alert.points, 0, 'a man walking past it is not spotted');
     const moved = runEnemyPhase(detected.state, map, rules);
     const after = moved.state.enemies[0];
     equal(`${after.q},${after.r},${after.facing}`, `${e.q},${e.r},${e.facing}`, 'did not move or turn');

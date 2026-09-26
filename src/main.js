@@ -25,17 +25,17 @@ import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, GARRISON_SHOW, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
+  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -81,6 +81,8 @@ let layers = null;
 let rawRules = null;
 let rawMap = null;
 let difficulty = null;
+// The build shown in the margin (data/version.json, M15).
+let version = null;
 let level = null;
 let roster = null;
 let traits = null;
@@ -98,6 +100,8 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
+// The Dakota's drone over the drop (M15), cut short if the show is skipped.
+let dropSound = null;
 // The RAF flyover (M11): the Dakota over the garrison when the diversion is
 // called, before its card. Display only; any key or click skips it.
 let flyShow = null;
@@ -105,6 +109,9 @@ let flyShowTimer = null;
 // A turn that ended with a bang (M11): its card waits until the explosion has
 // been seen, instead of covering it at once. Any key or click brings it now.
 let bangTimer = null;
+// The garrison's turn shown on the board before its card (M15): who walked,
+// who raised the alarm, what was heard. Display only.
+let garrisonShow = null;
 // Shots fired (M13): the flash and tracer of a suppress or a kill, display
 // only, cleared once it has played.
 let shotShow = null;
@@ -134,7 +141,8 @@ function visionById() {
       enemies: state.enemies,
       points: state.alert.points,
       map,
-      byId: new Map(state.enemies.map((e) => [e.id, visibleHexes(map, e, state.alert.points, rules)])),
+      // A suppressed enemy sees nothing until its head comes up (M15).
+      byId: new Map(state.enemies.map((e) => [e.id, e.suppressed ? new Map() : visibleHexes(map, e, state.alert.points, rules)])),
     };
   }
   return visionCache.byId;
@@ -171,7 +179,9 @@ function deriveView() {
   const traitEffectsById = new Map(state.units.map((u) => [u.id, traitEffects(u, rules)]));
 
   const hex = state.hoverHex;
-  const hoverEnemy = hex ? state.enemies.find((e) => e.q === hex.q && e.r === hex.r) ?? null : null;
+  const enemyUnderMouse = hex ? state.enemies.find((e) => e.q === hex.q && e.r === hex.r) ?? null : null;
+  // Aiming at an enemy shows a crosshair on it, not its route and view (M15).
+  const hoverEnemy = AIMED.has(state.targeting) ? null : enemyUnderMouse;
   const routes = (state.showRoutes ? state.enemies : hoverEnemy ? [hoverEnemy] : [])
     .map((e) => routePath(map, e))
     .filter(Boolean);
@@ -195,6 +205,7 @@ function deriveView() {
       hex ? unitAt(state.units, hex.q, hex.r)?.id : null,
     ].filter(Boolean)),
     visionById: visionById(),
+    garrisonShow,
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
     hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
@@ -249,6 +260,7 @@ function deriveView() {
     previewBlastArea: null,
     siteLabel: null,
     blastLabel: null,
+    noiseLabel: null,
     mission: describeMissionState(),
     drop: null,
     dropRuns: null,
@@ -290,10 +302,19 @@ function deriveView() {
   } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
     const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
     view.siteLabel = `${chute.name}'s PARACHUTE — found if an enemy comes onto or beside this hex: alert +${rules.alert.parachuteFound}. `
-      + `${chute.name} can pack it up standing here: [U] ${rules.actions.packParachute.apCost} AP.`;
+      + `Any man standing here can pack it up: [U] ${rules.actions.packParachute.apCost} AP.`;
   } else if (hex && isExfil(baseMap, hex)) {
     view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn. `
       + 'A man carrying a charge leaves it on the hex he steps off from, for another man to pick up [P].';
+  }
+
+  // A noise waiting to be heard (M15: the ring on a blown fuel dump was taken
+  // for a leftover stone): what it was and who comes for it.
+  const noise = hex && state.noises.findLast((n) => n.q === hex.q && n.r === hex.r);
+  if (noise) {
+    const what = { explosion: 'a bang', stone: 'a thrown stone', gunfire: 'gunfire', silenced: 'a silenced shot', found: 'something found here' }[noise.kind] ?? 'a noise';
+    const radius = hearingRadius(noise.kind, state.alert.points, rules);
+    view.noiseLabel = `HEARD — ${what}: in the enemy phase, patrols within ${radius} hexes come here to look, and sentries in earshot turn to face it`;
   }
 
   const unit = selectedUnit(state);
@@ -314,7 +335,7 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
-  if (state.targeting) return deriveTargeting(view, unit, hex, hoverEnemy);
+  if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
   if (!hex || hoverEnemy) return view;
@@ -495,7 +516,7 @@ function describeObjective(o) {
     `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge, killing anyone in it, ours or theirs`,
     `alert +${kind.alert}`,
   ];
-  if (kind.cutLine) parts.push('or a scout can cut the line: a full turn, silent');
+  if (kind.cutLine) parts.push(`or a scout can cut the line: a full turn, no noise, alert +${rules.alert.lineCut}`);
   const payoff = payoffWords(kind);
   if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
@@ -576,7 +597,7 @@ function actionsFor(unit) {
       help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
-    { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it will not fire or move next turn. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
+    { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
       id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
       help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
@@ -588,11 +609,11 @@ function actionsFor(unit) {
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
-    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
+    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
-    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
+    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
 }
@@ -627,8 +648,8 @@ function cutLineHelp() {
   const kind = Object.values(rules.objectives).find((k) => k.cutLine);
   const target = kind ? `the ${kind.label.toLowerCase()}` : 'the target';
   const payoff = kind ? payoffWords(kind) : null;
-  return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, silently. `
-    + `No alert, no noise, no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
+  return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, quietly. `
+    + `No noise, so nobody comes to look, though the garrison notices its telephones go dead (alert +${rules.alert.lineCut}); no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
 }
 
 // Pass a charge to a man beside him (M11b): ok if there is anyone he could
@@ -674,6 +695,9 @@ function nearestInPlay(unit) {
  * would do. For a stone, ring the enemies that would hear it (SPEC.md §4: the
  * readout shows who would hear it before the player commits).
  */
+// The actions aimed at an enemy (M15: a crosshair while aiming).
+const AIMED = new Set(['suppress', 'kill', 'knife']);
+
 function deriveTargeting(view, unit, hex, hoverEnemy) {
   const targets = new Map();
   const add = (h) => targets.set(hexKey(h.q, h.r), { q: h.q, r: h.r });
@@ -683,6 +707,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const e of state.enemies) if (checkSuppress(map, unit, e, rules).ok) add(e);
     if (hoverEnemy) {
       const check = checkSuppress(map, unit, hoverEnemy, rules);
+      view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
         ? `Suppress ${hoverEnemy.label} — ${check.cost} AP, gunfire: alert rises and it is heard. Click to fire.`
         : `Suppress ${hoverEnemy.label}: ${check.reason}.`;
@@ -693,6 +718,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const e of state.enemies) if (checkKill(map, unit, e, rules).ok) add(e);
     if (hoverEnemy) {
       const check = checkKill(map, unit, hoverEnemy, rules);
+      view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
         ? `Kill the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP, one silenced shot: alert +${applyHook(unit, 'onFire', 'alert', rules.alert.silenced).value}, heard ${hearingRadius('silenced', state.alert.points, rules)} hexes off. Leaves a body. Click to fire.`
         : `Kill: ${check.reason}.`;
@@ -703,6 +729,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const e of state.enemies) if (checkKnife(unit, e, rules).ok) add(e);
     if (hoverEnemy) {
       const check = checkKnife(unit, hoverEnemy, rules);
+      view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
         ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP and the rest of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
         : `Knife: ${check.reason}.`;
@@ -776,6 +803,7 @@ function render() {
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE }, restartMission);
   // Every man's name is set in bold on the card, as in the report.
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
+  showCounterKey(briefing?.kind === 'orders');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
@@ -1048,15 +1076,65 @@ function endTurnNow() {
   undoStack = [];
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
+  garrisonShow = describeGarrisonShow(state);
+  // The card waits for the garrison's moves and any bang to be seen (M11, M15);
+  // any key or click brings it at once.
+  const hold = Math.max(garrisonShow.length, state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0);
   if (!state.outcome && briefingsOn) {
-    if (state.report.some((e) => e.kind === 'explosion')) {
+    if (hold > 0) {
       clearTimeout(bangTimer);
-      bangTimer = setTimeout(endBangHold, BLAST.holdMs);
+      bangTimer = setTimeout(endBangHold, hold);
     } else {
       briefing = { kind: 'turn' };
     }
   }
   render();
+}
+
+// The counter key beside the orders (M15), drawn once per game from its men
+// and garrison, so its examples are the real counters.
+const counterKey = document.getElementById('counter-key');
+let counterKeyDrawn = null;
+
+function showCounterKey(on) {
+  counterKey.hidden = !on;
+  // Again for a new game or a new level, whose arcs may differ.
+  const drawnFor = `${state.seed}:${level.id}`;
+  if (!on || counterKeyDrawn === drawnFor) return;
+  counterKeyDrawn = drawnFor;
+  const index = state.units.findIndex((u) => !u.leader && chargeCapacity(u, rules) > 0);
+  const man = state.units[index];
+  // Beside him, so two blue dots, one of them spent: both kinds show.
+  const bonus = rules.command.closeBonusActionPoints ?? rules.command.bonusActionPoints;
+  const enemy = state.enemies.find((e) => e.speed > 0) ?? state.enemies[0];
+  drawCounterKey(document.getElementById('counter-key-art'), {
+    // A man with a charge and the leader's orders, one AP spent.
+    man: { ...man, apMax: man.apBase + bonus, ap: man.apBase + bonus - 1, commandBonus: bonus, charges: 1, hidden: false, hits: 0 },
+    manNumber: index + 1,
+    leader: state.units.find((u) => u.leader),
+    enemy,
+  }, { arc: enemy.arcDegrees });
+}
+
+/**
+ * What the board shows of the garrison's turn (M15): each enemy walks its
+ * `walked` steps; a "!" pops on each that spotted a man (at once) or found a
+ * body or parachute (once it has walked there); a ripple runs out from each
+ * noise heard. `length` is how long the walking takes, with a beat after.
+ */
+function describeGarrisonShow(after) {
+  const steps = Math.max(0, ...after.enemies.map((e) => e.walked?.length ?? 0));
+  const alarmed = new Map();
+  for (const e of after.report) {
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
+    if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
+      const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
+      alarmed.set(e.enemyId, walked * GARRISON_SHOW.msPerHex);
+    }
+  }
+  const heard = after.report.filter((e) => e.kind === 'heard').map((e) => ({ q: e.q, r: e.r }));
+  const busy = steps > 0 || alarmed.size > 0 || heard.length > 0;
+  return { since: performance.now(), alarmed, heard, length: busy ? steps * GARRISON_SHOW.msPerHex + GARRISON_SHOW.tailMs : 0 };
 }
 
 function endBangHold() {
@@ -1073,11 +1151,14 @@ function endBangHold() {
  */
 function restartMission() {
   clearTimeout(dropShowTimer);
+  dropSound?.stop();
+  dropSound = null;
   clearTimeout(flyShowTimer);
   clearTimeout(bangTimer);
   dropShow = null;
   flyShow = null;
   bangTimer = null;
+  garrisonShow = null;
   briefingAfterDrop = false;
   highlightHex = null;
   hoverUnitId = null;
@@ -1209,7 +1290,7 @@ function describeBriefing(which, view) {
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
-            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, silent.` : ''),
+            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, and quiet.` : ''),
           'Hover anything for detail; KEYBOARD lists every key.',
         ],
       }],
@@ -1337,6 +1418,7 @@ function jumpNow() {
     };
     clearTimeout(dropShowTimer);
     dropShowTimer = setTimeout(endDropShow, dropTimeline(baseMap, dropShow).length);
+    dropSound = playCue('drop');
     briefingAfterDrop = briefingsOn;
   } else if (state.phase !== 'drop' && briefingsOn) {
     briefing = { kind: 'turn' };
@@ -1346,6 +1428,8 @@ function jumpNow() {
 
 function endDropShow() {
   clearTimeout(dropShowTimer);
+  dropSound?.stop();
+  dropSound = null;
   dropShow = null;
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
@@ -1542,6 +1626,8 @@ try {
   traits = validateTraits(await loadJson('data/traits.json'));
   roster = await loadJson('data/roster.json');
   difficulty = validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes });
+  ({ version } = await loadJson('data/version.json'));
+  renderVersion(document.getElementById('version'), version);
 
   // SPEC.md §1: a seed reproduces a playthrough. `?seed=N` replays one; with
   // none, the clock picks a fresh one. It is shown on the page either way,

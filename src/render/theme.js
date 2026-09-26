@@ -398,6 +398,8 @@ export const COUNTER = {
   // The man's own face, and his role in the roundel top left.
   chip: { x: 14, y: 6, size: 29 },
   role: { x: 3.5, y: 4, size: 12 },
+  // One orange dot per charge carried, under the role (M15).
+  chargeDots: { x: 9.5, leaderX: 18, y: 22, pitch: 7.4, radius: 2.7, fill: PALETTE.fire },
 };
 
 // SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
@@ -431,6 +433,20 @@ export const SUPPRESSED = {
 export const MOTION = {
   travelMsPerHex: 105, // half as slow again since M13: the eye can follow him
   blastMs: 1500,
+};
+
+// The garrison's turn shown before its card (M15): each enemy walks its steps,
+// a "!" pops on each that spotted a man or found something, and a ripple runs
+// out from each noise it heard. Display only.
+export const GARRISON_SHOW = {
+  msPerHex: 240, // slower than our men, so the whole garrison can be watched at once
+  tailMs: 500, // a beat after the last step before the card
+  popMs: 300,
+  alarmSize: 24,
+  alarmLingerMs: 1800, // the "!" stays this long after the show
+  rippleMs: 900,
+  rippleHexes: 2.5,
+  rippleStroke: PALETTE.ink,
 };
 
 // Hover path preview. The affordable part of a path and the part beyond this
@@ -540,6 +556,10 @@ export const NOISE = {
   casingWidth: 6,
   radius: 24,
   text: PALETTE.ink,
+  // What each kind of noise is called under its ring (M15: a bang's ring
+  // looked like a stone's left behind).
+  words: { explosion: 'BANG', stone: 'STONE', gunfire: 'SHOTS', silenced: 'SHOT', found: 'FOUND' },
+  wordSize: 10,
 };
 
 export const TARGET = {
@@ -579,6 +599,10 @@ export const MARKER = {
   size: 22,
   hiddenOpacity: 0.6,
   groundSize: 26,
+  fuseSize: 34, // the stopwatch on a burning charge (M15)
+  ordersScale: 0.6, // the orders chevrons on a counter, against MARKER.size (M15)
+  bodySize: 39, // half as big again as groundSize since M15, the operator's: bodies were easy to miss
+  aimScale: 1.35, // the crosshair while aiming at an enemy, in hex radii across (M15)
   chuteReach: 0.72, // hex radii from the centre into a corner, clear of most of a counter (M13)
 };
 
@@ -1762,6 +1786,34 @@ const SPRITES = {
       ring(14, 14, 12),
     ],
   },
+  // The turn after suppression (M15): no longer suppressed — it sees and fires
+  // again — but a gunner can still kill it. The suppressed marker stayed on
+  // it and read as still suppressed.
+  'marker-open-kill': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'paper'),
+      ring(14, 14, 6.5, 2.2, 'stroke-red'),
+      line('M14 3 V9 M14 19 V25 M3 14 H9 M19 14 H25', 2.2, 'stroke-red'),
+      ring(14, 14, 12),
+    ],
+  },
+  // Aiming a suppress, kill or knife (M15): a crosshair over the enemy under
+  // the mouse, red if it can be done, grey if not, in place of its route and
+  // view, which aiming does not need.
+  ...Object.fromEntries([['marker-aim', 'red'], ['marker-aim-no', 'ink']].map(([id, colour]) => [id, {
+    viewBox: '0 0 100 100',
+    draw: () => {
+      const ticks = 'M50 3 V28 M50 72 V97 M3 50 H28 M72 50 H97';
+      return [
+        svg('g', { opacity: colour === 'ink' ? 0.55 : 1 }, [
+          ring(50, 50, 36, 10, 'stroke-paper'), line(ticks, 10, 'stroke-paper'),
+          ring(50, 50, 36, 4.5, `stroke-${colour}`), line(ticks, 4.5, `stroke-${colour}`),
+          circle(50, 50, 4.5, colour),
+        ]),
+      ];
+    },
+  }])),
   'marker-suppressed': {
     viewBox: '0 0 28 28',
     draw: () => [
@@ -1898,15 +1950,34 @@ const SPRITES = {
       svg('rect', { x: 4, y: 10, width: 20, height: 14, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
     ],
   },
-  // Fuse tokens: turns left before the charge goes off, typed in a paper disc
-  // with a red rim. 1 is the red one.
+  // Fuse tokens: a stopwatch counting down the turns left before the charge
+  // goes off (M15: a number in a disc read as how many charges were laid).
+  // The burning wedge is a quarter of the face per turn left, swept from
+  // twelve o'clock to the hand; on its last turn it is red, with a burst
+  // behind the watch: it goes off at the end of this turn.
   ...Object.fromEntries([1, 2, 3, 4, 5].map((n) => [`marker-fuse-${n}`, {
     viewBox: '0 0 28 28',
-    draw: () => [
-      circle(14, 14, 12, n === 1 ? 'red' : 'paper'),
-      ring(14, 14, 12, 3, 'stroke-red'),
-      label(String(n), { x: 14, y: 15, 'font-size': 18, class: n === 1 ? 'paper' : 'ink' }),
-    ],
+    draw: () => {
+      const cx = 14, cy = 15.5, r = 9.5;
+      const sweep = Math.min(n, 4) * 90;
+      const at = (deg, rad = r) => ({ x: cx + rad * Math.sin((deg * Math.PI) / 180), y: cy - rad * Math.cos((deg * Math.PI) / 180) });
+      const end = at(sweep);
+      const wedge = sweep >= 360
+        ? svg('circle', { cx, cy, r, class: 'fire' })
+        : fill(`M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)} Z`, n === 1 ? 'red' : 'fire');
+      const hand = at(sweep % 360, r - 1.5);
+      return [
+        ...(n === 1 ? [starburst(cx, cy, 16, 13.8, 10.2, 'red')] : []),
+        svg('rect', { x: 12, y: 1.2, width: 4, height: 2.6, rx: 0.8, class: 'ink' }),
+        svg('rect', { x: 13.2, y: 3.6, width: 1.6, height: 2.6, class: 'ink' }),
+        circle(cx, cy, r + 1, 'paper'),
+        wedge,
+        line([0, 90, 180, 270].map((d) => { const a = at(d, r), b = at(d, r - 2.4); return `M${a.x.toFixed(2)} ${a.y.toFixed(2)} L${b.x.toFixed(2)} ${b.y.toFixed(2)}`; }).join(' '), 1.2),
+        line(`M${cx} ${cy} L${hand.x.toFixed(2)} ${hand.y.toFixed(2)}`, 1.8),
+        circle(cx, cy, 1.6, 'ink'),
+        ring(cx, cy, r + 1, 2),
+      ];
+    },
   }])),
   // A comic starburst, one frame; board.js does the stepped reveal.
   'marker-blast': {
@@ -1990,19 +2061,17 @@ const SPRITES = {
       return parts;
     },
   },
-  // The margin note down the outer edge of the left page, hung from the top of
-  // the margin: the game's name first, in the title's stencil, pale as if
-  // printed in the magazine's margin (M14, the operator's), then the scissors,
-  // the cut line and CUT OUT AND PLAY. Pale is ink thinned, not a new colour.
+  // The margin note down the outer edge of the left page, in the middle of
+  // the margin (M15: back where it was before M14). The game's name above it
+  // is type in index.html (#margin-title), not part of this drawing.
   'ui-gutter-note': {
     viewBox: '0 0 60 900',
     draw: () => [
-      label('BURN BY DAWN', { x: 0, y: 0, 'font-size': 34, 'letter-spacing': 3, 'font-family': TYPE.slab, 'font-weight': 'normal', class: 'ink', transform: 'translate(30 180) rotate(-90)', opacity: 0.3 }),
-      line('M40 360 V900', 1.6, 'stroke-ink', { 'stroke-dasharray': '10 7', opacity: 0.55 }),
-      svg('g', { transform: 'translate(40 380) rotate(-90)' }, [
+      line('M40 0 V900', 1.6, 'stroke-ink', { 'stroke-dasharray': '10 7', opacity: 0.55 }),
+      svg('g', { transform: 'translate(40 120) rotate(-90)' }, [
         line('M-8 -6 L6 4 M-8 6 L6 -4', 1.6), ring(-12, -7, 4, 1.6), ring(-12, 7, 4, 1.6),
       ]),
-      label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 640) rotate(-90)', opacity: 0.75 }),
+      label('CUT OUT AND PLAY', { x: 0, y: 0, 'font-size': 20, 'letter-spacing': 6, class: 'ink', transform: 'translate(20 450) rotate(-90)', opacity: 0.75 }),
     ],
   },
   // The title card over the orders (SPEC.md §11): drawn here until a painting

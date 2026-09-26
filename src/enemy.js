@@ -256,9 +256,11 @@ export function detectionScore(map, rules, enemy, alertPoints, unit, hex) {
  * highest score, first enemy in data order on a tie. Null if nobody sees it.
  *
  * It also carries who would spot him there (`spotters`) and whether any of
- * them is free to shoot (`firing`): a suppressed enemy still spots, but does
- * not fire (SPEC.md §4). Whether he is actually shot depends on his being in
- * contact already — see runDetection.
+ * them is free to shoot (`firing`). A suppressed enemy has its head down: it
+ * neither spots nor fires at the next detection check (SPEC.md §4; M15, it
+ * spotted until then, and playtesters found suppression did not cover the
+ * others). Whether he is actually shot depends on his being in contact
+ * already — see runDetection.
  */
 export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
   let worst = null;
@@ -268,6 +270,7 @@ export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
   // shot from far off pins rather than hits).
   let firingDistance = null;
   for (const enemy of enemies) {
+    if (enemy.suppressed) continue;
     const result = detectionScore(map, rules, enemy, alertPoints, unit, hex);
     if (!result) continue;
     if (result.spotted) {
@@ -357,7 +360,7 @@ export function runDetection(state, map, rules) {
 
     events.push({
       kind: 'spotted', unitId: unit.id, unitName: unit.shortName,
-      enemyLabel: seenAt.result.enemyLabel, q: seenAt.hex.q, r: seenAt.hex.r, score: seenAt.result.score,
+      enemyLabel: seenAt.result.enemyLabel, enemyIds: seenAt.result.spotters, q: seenAt.hex.q, r: seenAt.hex.r, score: seenAt.result.score,
       // Gone to ground and seen anyway, so the report can say why (M11):
       // 'here' on his hiding hex, 'before' on a hex crossed before he hid.
       hid: !unit.hidden ? null : seenAt.hex.q === unit.q && seenAt.hex.r === unit.r ? 'here' : 'before',
@@ -646,7 +649,9 @@ export function runEnemyPhase(state, map, rules) {
     } else if (enemy.route) {
       ({ enemy: moved, steps: entered } = walkRouteSteps(map, enemy, blocked, rules));
     }
-    enemies = enemies.map((e, j) => (j === i ? moved : e));
+    // `walked`: the hexes it walked onto this go, in order — display only, so
+    // the board can show the garrison moving (M15), as a man's trail does.
+    enemies = enemies.map((e, j) => (j === i ? { ...moved, walked: entered } : e));
 
     // Where it stood this go: every hex it walked through and where it ended.
     const stood = [...entered, moved];
@@ -655,7 +660,7 @@ export function runEnemyPhase(state, map, rules) {
       if (body.found || !walkedOn(body)) return body;
       alert = raiseAlert(alert, rules.alert.bodyFound, rules);
       noises.push({ kind: 'found', q: body.q, r: body.r });
-      events.push({ kind: 'bodyFound', label: moved.label, name: body.name, q: body.q, r: body.r });
+      events.push({ kind: 'bodyFound', label: moved.label, enemyId: moved.id, name: body.name, q: body.q, r: body.r });
       return { ...body, found: true };
     });
     // A found parachute is gone: taken away as evidence (SPEC.md §9).
@@ -663,7 +668,7 @@ export function runEnemyPhase(state, map, rules) {
       if (!walkedOn(chute)) return true;
       alert = raiseAlert(alert, rules.alert.parachuteFound, rules);
       noises.push({ kind: 'found', q: chute.q, r: chute.r });
-      events.push({ kind: 'parachuteFound', label: moved.label, name: chute.name, q: chute.q, r: chute.r });
+      events.push({ kind: 'parachuteFound', label: moved.label, enemyId: moved.id, name: chute.name, q: chute.q, r: chute.r });
       return false;
     });
   }

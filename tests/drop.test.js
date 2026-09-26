@@ -282,7 +282,7 @@ export default [
     }
   }],
 
-  ['packing a parachute: 1 AP, only his own, only on its hex, and it is gone', async () => {
+  ['packing a parachute: 1 AP, anyone\'s on his hex (M15), and it is gone', async () => {
     const env = await loadAll();
     const { map, rules, traits, roster } = env;
     const s = landedState(roster, traits, rules, map);
@@ -291,14 +291,15 @@ export default [
     const moved = { ...s, units: s.units.map((u) => (u.id === b.id ? { ...u, q: a.q + 50, r: a.r } : u)) };
     const onOthers = { ...moved, parachutes: moved.parachutes.map((p) => (p.unitId === a.id ? p : { ...p, q: 300, r: 300 })) };
     const bStand = { ...onOthers, units: onOthers.units.map((u) => (u.id === b.id ? { ...u, q: a.q, r: a.r } : u)) };
-    const chuteless = packParachute(bStand, b.id, rules);
-    equal(chuteless, bStand, "he cannot pack someone else's");
+    const helped = packParachute(bStand, b.id, rules);
+    assert(!helped.parachutes.some((p) => p.unitId === a.id), "he packs someone else's on his hex");
+    equal(helped.parachutes.length, bStand.parachutes.length - 1, 'only that one');
 
     const packed = packParachute(s, a.id, rules);
     equal(unitById(packed.units, a.id).ap, a.ap - rules.actions.packParachute.apCost, 'costs its AP');
     assert(!packed.parachutes.some((p) => p.unitId === a.id), 'gone');
     equal(packed.parachutes.length, s.parachutes.length - 1, 'only his');
-    equal(checkPackParachute(packed.parachutes, unitById(packed.units, a.id), rules).reason, 'his parachute is gone', 'not twice');
+    equal(checkPackParachute(packed.parachutes, unitById(packed.units, a.id), rules).reason, 'no parachute on this hex', 'not twice');
 
     const plan = planMove(map, s.units, a, hexRing(a, 1).find((h) => isPassable(terrainAt(map, h.q, h.r)) && !s.units.some((u) => u.q === h.q && u.r === h.r)), rules);
     const walkedOff = moveUnit(s, a.id, plan, map);

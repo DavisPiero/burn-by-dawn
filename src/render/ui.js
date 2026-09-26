@@ -331,8 +331,11 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // The title card, over the orders only: the `title-card` sprite, drawn or
   // painted (theme.js TITLE_CARD), with the title set over it in type.
   if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
-  card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  if (briefing.choice?.top) card.appendChild(html('div', 'brief-top', briefChoice(briefing.choice)));
+  // On the orders the level comes first, in the black bar, and the card's own
+  // head goes under it in ink on the paper (M15, the operator's).
+  const top = Boolean(briefing.choice?.top);
+  if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
+  card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
   // A paragraph may be several lines, each on its own line (M13).
   for (const text of briefing.paragraphs ?? []) {
     const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
@@ -768,7 +771,7 @@ export function describeRun(run) {
 
 /** Restart, in the margin under the sound: a first click arms it and says so (M12). */
 export function renderRestart(button, armed) {
-  button.textContent = armed ? 'click again to restart' : 'restart';
+  button.textContent = armed ? 'CLICK AGAIN TO RESTART' : 'RESTART';
   button.classList.toggle('armed', armed);
 }
 
@@ -799,6 +802,12 @@ export function renderSeed(element, seed, level, levelQuery, onLevelClick) {
   });
   attachPopup(levelButton, [html('b', null, `DIFFICULTY: ${level.label.toUpperCase()}`), `\n${level.summary}\nChosen on the orders: click to change it until the stick jumps.`]);
   element.append(link, ' · ', levelButton);
+}
+
+/** Which build this is (M15), on its own line above the seed and level: data/version.json. */
+export function renderVersion(element, version) {
+  element.textContent = version ? `build ${version}` : '';
+  attachPopup(element, `This is build ${version}, the milestone it was made in.`);
 }
 
 /**
@@ -921,7 +930,7 @@ export function renderReadout(element, state, map, view) {
     let doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
     if (e.investigating) doing = `going to look at ${view.place(e.investigating)}`;
     if (e.watching) doing = `has a man in its sights in ${view.place(e.watching)}`;
-    if (e.suppressed) doing = `SUPPRESSED — will not fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
+    if (e.suppressed) doing = `SUPPRESSED — head down: will not see, fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;
     else if (e.openToKill && e.killable) doing = `${doing}; still shaken — a gunner can kill it this turn`;
     const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
     // What it will do if the turn ended now (M13b), which the dashed outline shows.
@@ -959,7 +968,7 @@ export function renderReadout(element, state, map, view) {
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
-  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, parts.join(', '), view?.commandLabel];
+  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, view?.noiseLabel, parts.join(', '), view?.commandLabel];
   setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join(READOUT_GAP)}`);
 }
 

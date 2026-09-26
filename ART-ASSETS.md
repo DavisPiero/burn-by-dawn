@@ -162,15 +162,17 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 |---|---|
 | `marker-charge.svg` | 28 x 28 |
 | `marker-parachute.svg` | 28 x 28 (an abandoned canopy, §9 — must read as spent kit on the ground, not as a chute in the air) |
-| `marker-fuse-1..5.svg` | 28 x 28 (five number tokens, hand-inked digits) |
+| `marker-fuse-1..5.svg` | 28 x 28 (a stopwatch per turns left, M15: the burning `.fire` wedge a quarter of the face per turn, from twelve to the hand; the last turn's wedge red with a burst behind the watch. Drawn at 34 on the board) |
 | `marker-wounded.svg` | 28 x 28 |
 | `marker-suppressed.svg` | 28 x 28 |
+| `marker-open-kill.svg` | 28 x 28 (M15: a red crosshair in a paper disc — the turn after suppression, when a gunner can still kill it) |
+| `marker-aim.svg`, `marker-aim-no.svg` | 100 x 100 (M15: the crosshair over an enemy while aiming a suppress, kill or knife — red if it can be done, grey if not) |
 | `marker-spotted.svg` | 28 x 28 |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
 | `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
 | `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
-| `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
-| `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
+| `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
+| `marker-body-enemy.svg` | 28 x 28, drawn at 39 since M15 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
@@ -194,7 +196,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
-| `ui-gutter-note.svg` | 60 x 900 | the margin note, hung from the top of the margin: BURN BY DAWN in the stencil, pale (ink at 30%), then scissors, the dashed cut line and "CUT OUT AND PLAY", as outlines (M14) |
+| `ui-gutter-note.svg` | 60 x 900 | the margin note in the middle of the margin: scissors, the dashed cut line and "CUT OUT AND PLAY", as outlines (BURN BY DAWN above it is type, M15) |
 | `logo-burn-by-dawn.svg` | 800 x 300 | *Not used since M9b: the results page is headed by the title card. The drawn sprite is kept in theme.js.* |
 | `title-card.jpg` | 4:1, **2400 x 600** px (no smaller than 1200 x 300) | **JPEG**, not SVG or PNG — see below. The painted picture across the top of the orders card, under the title, and smaller across the top of the results page. Drop into `/assets/title/`. |
 
@@ -265,7 +267,8 @@ MP3, and a second would double the requests for files that are not there.
 | `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
 | `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
 | `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |
-| `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12) | ~4–5 s |
+| `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12), rising to the top bell (M15) | ~4–7 s |
+| `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.

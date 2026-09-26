@@ -10,8 +10,9 @@ function assert(condition, message) {
 }
 
 async function render(name) {
-  // Long enough for the longest cue, the back page's bells (M12).
-  const ctx = new OfflineAudioContext(1, 44100 * 7, 44100);
+  // Long enough for the longest cue, the back page's bells (M12; their last
+  // strike rings to about 7.3 s since M15).
+  const ctx = new OfflineAudioContext(1, 44100 * 8, 44100);
   scheduleCue(ctx, ctx.destination, name, 0);
   const data = (await ctx.startRendering()).getChannelData(0);
   let peak = 0;

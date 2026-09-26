@@ -240,17 +240,48 @@ const SYNTHS = {
   },
 
   // Mission accomplished (M12): the church in the village ringing at dawn,
-  // six bells in rounds, twice through — one for each man — heard across the fields.
+  // six bells twice through — one for each man — heard across the fields.
+  // Rising since M15 (the operator: falling rounds sounded sad): tenor up
+  // to the octave, and the octave and tenor struck together to finish.
   'church-bells': (ctx, destination, at) => {
     const far = filter(ctx, 'lowpass', 3200);
     far.connect(destination);
-    const tenor = 330;
-    const scale = [5 / 3, 3 / 2, 4 / 3, 5 / 4, 9 / 8, 1];
+    const tenor = 262;
+    const scale = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2];
     for (let round = 0; round < 2; round++) {
       scale.forEach((ratio, i) => {
         bell(ctx, far, at + round * 2.1 + i * 0.3, tenor * ratio, 0.17, 2.4);
       });
     }
+    for (const ratio of [1, 2]) bell(ctx, far, at + 4.3, tenor * ratio, 0.2, 3);
+  },
+
+  // The Dakota going over (M15, the operator's): two radial engines a few
+  // beats apart, swelling as it comes, the pitch sinking as it passes, and
+  // gone. Over the drop, and under the RAF diversion's flyover.
+  aircraft: (ctx, destination, at, v) => {
+    const length = 3.4;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, at);
+    out.gain.exponentialRampToValueAtTime(0.5, at + 1.1);
+    out.gain.setValueAtTime(0.5, at + 1.7);
+    out.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    const air = filter(ctx, 'lowpass', 520, 0.8);
+    air.connect(out).connect(destination);
+    for (const [base, type, level] of [[88, 'sawtooth', 0.5], [91.5, 'sawtooth', 0.45], [176, 'square', 0.12]]) {
+      const engine = ctx.createOscillator();
+      engine.type = type;
+      engine.frequency.setValueAtTime(base * 1.06, at);
+      engine.frequency.setValueAtTime(base * 1.06, at + 1.2);
+      engine.frequency.linearRampToValueAtTime(base * 0.94, at + 2.0);
+      const gain = ctx.createGain();
+      gain.gain.value = level;
+      engine.connect(gain).connect(air);
+      engine.start(at);
+      engine.stop(at + length + 0.05);
+    }
+    // The propellers' wash: a band of noise under the engines.
+    noiseThrough(ctx, out, at, length, [filter(ctx, 'bandpass', 380, 0.9), envelope(ctx, at, 0.25, length - 0.1, 1)], v * 0.11);
   },
 
   // The mission failed (M12): one low bell tolling, slowly, and an air-raid
@@ -288,8 +319,10 @@ const CUES = {
   card: [['paper-rustle', 0.35, 0]],
   alertRise: [['dog-distant', 0.18, 0.25]],
   explosion: [['explosion', 1, 0]],
-  // Bombers over the town, miles off: three small crumps.
-  diversion: [['crump', 0.25, 0], ['crump', 0.18, 0.4], ['crump', 0.22, 0.95]],
+  // The Dakota over the garrison, and bombers over the town, miles off: three small crumps.
+  diversion: [['aircraft', 0.45, 0], ['crump', 0.25, 0.9], ['crump', 0.18, 1.3], ['crump', 0.22, 1.85]],
+  // The drop (M15): the Dakota going over as the stick jumps.
+  drop: [['aircraft', 0.6, 0]],
   // The back page (M12): bells for a mission accomplished, a toll for the rest,
   // just after the page has turned.
   suppress: [['gunfire', 0.45, 0]],
@@ -303,15 +336,22 @@ export const CUE_NAMES = Object.keys(CUES);
 // Which stretch of noise the next sound is cut from, turning over each time.
 let nextVariant = 0;
 
-/** Play a cue by name. Nothing happens while muted or where the browser has no Web Audio. */
+/**
+ * Play a cue by name. Nothing happens while muted or where the browser has no
+ * Web Audio. Returns a handle whose stop() fades it out at once (M15: a
+ * skipped drop cuts the Dakota short), or null if nothing played.
+ */
 export function playCue(name) {
   const parts = CUES[name];
-  if (muted || !parts || !unlocked) return;
+  if (muted || !parts || !unlocked) return null;
   const ctx = audio();
-  if (!ctx) return;
+  if (!ctx) return null;
   if (ctx.state === 'suspended') ctx.resume();
-  scheduleCue(ctx, ctx.destination, name, ctx.currentTime + 0.01, nextVariant);
+  const out = ctx.createGain();
+  out.connect(ctx.destination);
+  scheduleCue(ctx, out, name, ctx.currentTime + 0.01, nextVariant);
   nextVariant = (nextVariant + 1) % 7;
+  return { stop: () => out.gain.setTargetAtTime(0, ctx.currentTime, 0.08) };
 }
 
 /**

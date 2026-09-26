@@ -100,7 +100,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   const chutes = state.parachutes.length;
   if (chutes > 0 && state.turn <= 4) {
     // How to pack one is said once, on the first turn; after that, just the count.
-    const how = state.turn === 1 ? ' A man standing on his own can pack it up [U] before a patrol finds it.' : '';
+    const how = state.turn === 1 ? ' Any man standing on one can pack it up [U] before a patrol finds it.' : '';
     hints.push(`${chutes} ${plural(chutes, 'parachute still lies', 'parachutes still lie')} where the men came down.${how}`);
   }
 

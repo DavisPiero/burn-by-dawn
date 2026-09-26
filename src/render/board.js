@@ -21,9 +21,9 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -573,7 +573,7 @@ export function renderPieces(layers, state, view) {
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
-  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1);
+  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize);
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
@@ -593,11 +593,39 @@ export function renderPieces(layers, state, view) {
   for (const enemy of state.enemies) {
     const hovered = enemy.id === view.hoverEnemy?.id;
     const counter = drawEnemy(enemy, map, hovered, view.hearsIds?.has(enemy.id), view.nextFacing?.get(enemy.id));
-    // Suppressed, or still open to a kill after it (SPEC.md §4): both are
-    // under the gunner's fire, and the hover says which.
-    if (enemy.suppressed || enemy.openToKill) counter.appendChild(marker('marker-suppressed', 38, -12));
+    // Suppressed, or the turn after, when it sees and fires again but a
+    // gunner can still kill it (SPEC.md §4): two markers, since M15.
+    if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
+    else if (enemy.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
     if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
-    layers.counters.appendChild(counter);
+    // The garrison's turn (M15): a red "!" pops on each enemy that spotted a
+    // man or found something, once it has got there.
+    const alarm = view.garrisonShow?.alarmed.get(enemy.id);
+    if (alarm !== undefined) {
+      const elapsed = now - view.garrisonShow.since;
+      if (elapsed < view.garrisonShow.length + GARRISON_SHOW.alarmLingerMs) {
+        const pop = marker('marker-spotted', (COUNTER.size - GARRISON_SHOW.alarmSize) / 2 - 2, -GARRISON_SHOW.alarmSize - 2, GARRISON_SHOW.alarmSize);
+        pop.style.transformBox = 'fill-box';
+        pop.style.transformOrigin = '50% 100%';
+        playFrom(pop, [
+          { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
+        ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
+        counter.appendChild(pop);
+      }
+    }
+    // Walked its steps this enemy phase, like a man his path (M15).
+    const mover = el('g', {});
+    mover.appendChild(counter);
+    layers.counters.appendChild(mover);
+    travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, GARRISON_SHOW.msPerHex);
+  }
+  // The enemy being aimed at (M15), over its counter.
+  if (view.aim) {
+    const p = axialToPixel(view.aim.q, view.aim.r, map.hexSize);
+    const size = map.hexSize * MARKER.aimScale;
+    layers.tokens.appendChild(el('use', {
+      href: view.aim.ok ? '#marker-aim' : '#marker-aim-no', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size, 'pointer-events': 'none',
+    }));
   }
 
   state.units.forEach((unit, i) => {
@@ -616,15 +644,21 @@ export function renderPieces(layers, state, view) {
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 40, unit));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
     // One chevron for the ordinary orders, two for the strongest, beside him.
-    if (unit.commandBonus > 0) counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 40, 20, unit));
+    // Smaller since M14's blue AP dots say the same (M15: it outshone Dutch's own rank flash),
+    // centred where it was.
+    if (unit.commandBonus > 0) {
+      const size = MARKER.size * MARKER.ordersScale;
+      counter.appendChild(hoverMarker(layers, ordersMarkerId(unit.commandBonus), 51 - size / 2, 31 - size / 2, unit, size));
+    }
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
-    travel(layers, mover, unit, now);
+    travel(layers, mover, unit, now, `unit:${unit.id}`, unit.trail, MOTION.travelMsPerHex);
     appear(counter, show?.byUnit.get(unit.id), elapsed);
   });
 
   drawBlasts(layers, state, now);
+  if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
@@ -908,8 +942,7 @@ function drawShot(layers, shot, now) {
  * part-way through carries the journey on from where it was. A man appearing
  * for the first time (the drop) simply appears.
  */
-function travel(layers, mover, unit, now) {
-  const key = `unit:${unit.id}`;
+function travel(layers, mover, unit, now, key, trailOf, msPerHex) {
   const where = hexKey(unit.q, unit.r);
   const last = layers.motion.get(key);
   if (!last) {
@@ -917,7 +950,7 @@ function travel(layers, mover, unit, now) {
     return;
   }
   if (last.where !== where) {
-    const trail = unit.trail ?? [];
+    const trail = trailOf ?? [];
     const from = trail.map((h) => hexKey(h.q, h.r)).lastIndexOf(last.where);
     let steps = trail.slice(from + 1);
     if (steps.length === 0 || hexKey(steps.at(-1).q, steps.at(-1).r) !== where) steps = [{ q: unit.q, r: unit.r }];
@@ -926,7 +959,7 @@ function travel(layers, mover, unit, now) {
   layers.motion.get(key).at = { q: unit.q, r: unit.r };
 
   const journey = layers.motion.get(key);
-  const duration = (journey.path.length - 1) * MOTION.travelMsPerHex;
+  const duration = (journey.path.length - 1) * msPerHex;
   const elapsed = now - journey.since;
   if (!(duration > 0) || elapsed >= duration || typeof mover.animate !== 'function') return;
   const end = axialToPixel(unit.q, unit.r, layers.map.hexSize);
@@ -936,6 +969,25 @@ function travel(layers, mover, unit, now) {
   });
   const animation = mover.animate(frames, { duration, easing: 'linear' });
   animation.currentTime = elapsed;
+}
+
+// The garrison's turn (M15): a ripple out from each noise it heard, twice,
+// as the enemies set off toward it.
+function drawHeard(layers, show, now) {
+  const elapsed = now - show.since;
+  if (elapsed >= GARRISON_SHOW.rippleMs * 2) return;
+  const reach = layers.map.hexSize * GARRISON_SHOW.rippleHexes * Math.sqrt(3);
+  for (const hex of show.heard) {
+    const p = axialToPixel(hex.q, hex.r, layers.map.hexSize);
+    for (const delay of [0, GARRISON_SHOW.rippleMs * 0.6]) {
+      const ring = el('circle', { cx: p.x, cy: p.y, r: reach, fill: 'none', stroke: GARRISON_SHOW.rippleStroke, 'stroke-width': 3, opacity: 0 });
+      ring.style.transformOrigin = `${p.x}px ${p.y}px`;
+      playFrom(ring, [
+        { transform: 'scale(0.15)', opacity: 0.8 }, { transform: 'scale(1)', opacity: 0 },
+      ], { delay, duration: GARRISON_SHOW.rippleMs, easing: 'steps(6, end)' }, elapsed);
+      layers.effects.appendChild(ring);
+    }
+  }
 }
 
 // Each charge that went off: the page flashes and the board jolts once, then
@@ -1178,7 +1230,8 @@ function drawSites(layers, state, view) {
     const p = axialToPixel(charge.q, charge.r, map.hexSize);
     const size = MARKER.groundSize;
     layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - 30, y: p.y + 20, width: size, height: size }));
-    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 12, y: p.y + 24, width: MARKER.size, height: MARKER.size }));
+    const watch = MARKER.fuseSize;
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 14, y: p.y + 16, width: watch, height: watch }));
   }
 }
 
@@ -1267,8 +1320,8 @@ function casedText(content, x, y, fill) {
   return g;
 }
 
-function marker(id, x, y) {
-  return el('use', { href: `#${id}`, x, y, width: MARKER.size, height: MARKER.size });
+function marker(id, x, y, size = MARKER.size) {
+  return el('use', { href: `#${id}`, x, y, width: size, height: size });
 }
 
 /**
@@ -1276,8 +1329,8 @@ function marker(id, x, y) {
  * handlers given to createBoard say what it means. A click on it is a click on
  * his hex, as if the marker were not there.
  */
-function hoverMarker(layers, id, x, y, unit) {
-  const node = marker(id, x, y);
+function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
+  const node = marker(id, x, y, size);
   node.setAttribute('pointer-events', 'all');
   node.addEventListener('mouseenter', () => layers.handlers.onMarkerHover?.(id, unit.id, node));
   node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
@@ -1287,9 +1340,8 @@ function hoverMarker(layers, id, x, y, unit) {
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
 // side and dropped charges to the other, so both show when they share it.
-function drawOnGround(layers, id, at, side) {
+function drawOnGround(layers, id, at, side, size = MARKER.groundSize) {
   const p = axialToPixel(at.q, at.r, layers.map.hexSize);
-  const size = MARKER.groundSize;
   layers.highlight.appendChild(el('use', {
     href: `#${id}`, x: p.x + side * 18 - size / 2, y: p.y + 14 - size / 2, width: size, height: size,
   }));
@@ -1430,6 +1482,13 @@ function drawNoise(layers, noise) {
   layers.highlight.appendChild(text('!', {
     x: p.x, y: p.y - NOISE.radius - 2, 'font-size': 18, 'font-weight': 'bold', fill: NOISE.text,
   }));
+  // Which noise it is, under the ring, cased so it reads over anything (M15).
+  const word = NOISE.words[noise.kind];
+  if (word) {
+    const attrs = { x: p.x, y: p.y + NOISE.radius + NOISE.wordSize * 0.9, 'font-size': NOISE.wordSize, 'font-weight': 'bold', 'letter-spacing': 1 };
+    layers.highlight.appendChild(text(word, { ...attrs, fill: 'none', stroke: NOISE.casing, 'stroke-width': 4, 'stroke-linejoin': 'round' }));
+    layers.highlight.appendChild(text(word, { ...attrs, fill: NOISE.text }));
+  }
 }
 
 // A stone being aimed: earshot tinted and edged, then the lob as an arc bowed
@@ -1769,6 +1828,16 @@ function drawCounter(unit, number, map, isSelected) {
     'font-weight': 'bold', fill: COUNTER.nameFill,
   }));
 
+  // A charge he carries (M15): an orange dot each, down the left under his
+  // role, in the colour of what it does, ringed in paper to stand off the
+  // green. The leader's rank flash has that column, so his sit beside it.
+  const dots = COUNTER.chargeDots;
+  for (let i = 0; i < unit.charges; i++) {
+    const at = { cx: unit.leader ? dots.leaderX : dots.x, cy: dots.y + i * dots.pitch };
+    body.appendChild(el('circle', { ...at, r: dots.radius + 1.1, fill: COUNTER.apFill }));
+    body.appendChild(el('circle', { ...at, r: dots.radius, fill: dots.fill, stroke: COUNTER.apDots.stroke, 'stroke-width': 0.8 }));
+  }
+
   // AP as dots top right (M13): one per point of this turn's pool, filled for
   // what he has left, hollow for what he has spent — the number by his name is
   // his roster number, and two numbers on one counter confused players.
@@ -1907,4 +1976,123 @@ export function boardPixelBounds(map) {
     maxX: edge.right + padX,
     maxY: edge.bottom + padY,
   };
+}
+
+// --- the counter key (M15) ------------------------------------------------------
+
+/**
+ * "How to read a counter", beside the orders: one of our counters drawn big,
+ * every mark on it labelled, the other marks a man can wear, and an enemy
+ * counter the same way — drawn by the same code as the board, so the key can
+ * never drift from what it explains. `examples` come from main.js: `man` (a
+ * man with a charge, the leader's orders and some AP spent), `leader`, and
+ * `enemy`; `numbers` the figures the words quote (`arc`).
+ */
+export function drawCounterKey(svg, examples, numbers) {
+  svg.replaceChildren();
+  const unitMap = { hexSize: 1 };
+  const scale = COUNTER.drawn / COUNTER.size;
+  // A point on a counter drawn at (cx, cy), k times its board size.
+  const on = (cx, cy, k, p) => ({ x: cx + k * (-COUNTER.drawn / 2 + p.x * scale), y: cy + k * (-COUNTER.drawn / 2 + p.y * scale) });
+  const place = (node, cx, cy, k) => {
+    const g = el('g', { transform: `translate(${cx} ${cy}) scale(${k})` });
+    g.appendChild(node);
+    svg.appendChild(g);
+    return g;
+  };
+  const words = (x, y, lines, anchor = 'start') => {
+    // 13 in the drawing, 12 px on screen at 1280x800, where the key is drawn
+    // at 0.92: the right page's floor (SPEC.md §11).
+    const t = el('text', { x, y, 'text-anchor': anchor, 'font-family': TYPE.typewriter, 'font-size': 13, fill: PALETTE.ink });
+    lines.forEach((line, i) => {
+      const span = el('tspan', { x, dy: i === 0 ? 0 : 14.5, 'font-weight': i === 0 ? 'bold' : 'normal' });
+      span.textContent = line;
+      t.appendChild(span);
+    });
+    svg.appendChild(t);
+  };
+  const pointer = (from, to) => {
+    svg.appendChild(el('path', { d: `M${from.x} ${from.y} L${to.x} ${to.y}`, stroke: PALETTE.ink, 'stroke-width': 1, fill: 'none' }));
+    svg.appendChild(el('circle', { cx: to.x, cy: to.y, r: 2.2, fill: PALETTE.red, stroke: PALETTE.paper, 'stroke-width': 1 }));
+  };
+  const heading = (y, content) => {
+    svg.appendChild(el('path', { d: `M0 ${y + 5} H330`, stroke: PALETTE.ink, 'stroke-width': 2 }));
+    svg.appendChild(text(content, { x: 0, y: y - 4, 'text-anchor': 'start', 'dominant-baseline': 'auto', 'font-family': TYPE.slab, 'font-size': 14, 'letter-spacing': 2, fill: PALETTE.ink }));
+  };
+  const row = (y, node, lines, x = 64) => {
+    svg.appendChild(node);
+    words(x, y - 3, lines);
+  };
+
+  // Our men: Fitch, say, with a charge and the orders, one AP spent. The
+  // spotted mark goes in the list below: on the counter it covers his AP.
+  heading(16, 'YOUR MEN');
+  const man = { ...examples.man, q: 0, r: 0 };
+  const counter = drawCounter(man, examples.manNumber, unitMap, false);
+  const ordersSize = MARKER.size * MARKER.ordersScale;
+  counter.appendChild(marker(ordersMarkerId(man.commandBonus), 51 - ordersSize / 2, 31 - ordersSize / 2, ordersSize));
+  const cx = 167, cy = 128, k = 1.8;
+  place(counter, cx, cy, k);
+  const dots = COUNTER.apDots;
+  const firstBlue = man.apMax - man.commandBonus;
+  // The leader by his name in the data, never a name in code (CLAUDE.md rule 6).
+  const lead = examples.leader.shortName.charAt(0) + examples.leader.shortName.slice(1).toLowerCase();
+  const left = [
+    [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'sapper, scout', 'or gunner']],
+    [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'a dot each']],
+    [{ x: 7, y: 46.5 }, 164, ['KEY 1–6', 'and name']],
+  ];
+  for (const [p, y, lines] of left) {
+    pointer({ x: 100, y: y - 4 }, on(cx, cy, k, p));
+    words(96, y, lines, 'end');
+  }
+  const right = [
+    [{ x: dots.x, y: dots.y }, 58, ['AP LEFT', 'hollow when', 'spent']],
+    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 110, ['BLUE AP', `from ${lead}'s`, 'orders']],
+    [{ x: 51, y: 31 }, 162, [`${lead.toUpperCase()}'S`, 'ORDERS', 'this turn']],
+  ];
+  for (const [p, y, lines] of right) {
+    pointer({ x: 234, y: y - 4 }, on(cx, cy, k, p));
+    words(238, y, lines);
+  }
+
+  // The other marks a man can wear.
+  const leader = drawCounter({ ...examples.leader, q: 0, r: 0, ap: examples.leader.apMax }, 1, unitMap, false);
+  const small = el('g', { transform: 'translate(30 238) scale(0.8)' });
+  small.appendChild(leader);
+  row(234, small, [`${lead.toUpperCase()}, THE LEADER`, 'blue name and rank; men near', 'him start a turn with more AP']);
+  const markerAt = (id, y) => el('use', { href: `#${id}`, x: 17, y: y - 13, width: 26, height: 26 });
+  row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'seen again this turn: fired on']);
+  row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; one more hit kills']);
+  row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'gone to ground, harder to see']);
+
+  // The garrison.
+  heading(390, 'THE GARRISON');
+  const east = 2, southEast = 3;
+  const enemy = { ...examples.enemy, q: 0, r: 0, facing: east, suppressed: false, openToKill: false };
+  const ex = 92, ey = 482, ek = 1.7;
+  place(drawEnemy(enemy, unitMap, false, false, southEast), ex, ey, ek);
+  const size = COUNTER.size;
+  const tip = (facing) => {
+    const d = NEIGHBOR_DIRS[facing];
+    const toward = axialToPixel(d.q, d.r, 1);
+    const len = Math.hypot(toward.x, toward.y);
+    const reach = ENEMY.facingDistance + ENEMY.facingSize * 0.6;
+    return { x: size / 2 + (toward.x / len) * reach, y: size / 2 + (toward.y / len) * reach };
+  };
+  const enemyLabels = [
+    [tip(east), 432, ['FACING', `sees ${numbers.arc}° this`, 'way']],
+    [tip(southEast), 486, ['NEXT TURN', 'it will face', 'here (dashed)']],
+    [{ x: 28, y: 45.5 }, 540, ['WHO', 'sentry, patrol', 'or reserve']],
+  ];
+  for (const [p, y, lines] of enemyLabels) {
+    pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
+    words(220, y, lines);
+  }
+  const mini = el('g', { transform: 'translate(30 606) scale(0.8)' });
+  mini.appendChild(drawEnemy({ ...enemy, suppressed: true }, unitMap, false, false));
+  row(602, mini, ['SUPPRESSED', 'head down this turn: it', 'does not see, fire or move'], 76);
+  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'the turn after: it sees again']);
+  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'the reserve squad']);
+  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'it saw or found something']);
 }

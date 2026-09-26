@@ -219,7 +219,7 @@ export default [
     equal(never.alert.points, 0, 'without an explosion it would settle');
   }],
 
-  ['cutting the line: a scout, a full turn, destroyed at once with no alert and no noise', async () => {
+  ['cutting the line: a scout, a full turn, destroyed at once, alert.lineCut and no noise (M15)', async () => {
     const { rules, state } = await loadAll();
     const exchange = state.objectives.find((o) => rules.objectives[o.kind].cutLine);
     const scout = state.units.find((u) => rules.roles[u.role].cutLine);
@@ -231,7 +231,7 @@ export default [
     const cut = cutLine(s, scout.id, rules);
     const after = objectiveIn(cut, exchange.id);
     assert(after.destroyed && after.cut, 'destroyed by a cut');
-    equal(cut.alert.points, 0, 'no alert');
+    equal(cut.alert.points, s.alert.points + rules.alert.lineCut, 'the dead telephones are noticed');
     equal(cut.noises.length, 0, 'no noise');
     equal(cut.explosions, 0, 'not an explosion');
     equal(unitIn(cut, scout.id).ap, 0, 'his whole turn');

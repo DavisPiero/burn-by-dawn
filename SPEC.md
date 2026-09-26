@@ -142,8 +142,11 @@ All costs and modifiers below are numbers in `rules.json`.
   his counter.
 - **Suppress** (gunner only) — costs **2 AP**, leaving one step to get back into cover.
   The target must be a **visible enemy: within the gunner's spot radius, with a clear
-  line of sight** (troopers have no facing arc). A suppressed enemy **does not fire at the
-  next detection check and does not move in the next enemy phase**; it can still spot.
+  line of sight** (troopers have no facing arc). A suppressed enemy has its head down: it
+  **does not spot or fire at the next detection check and does not move in the next enemy
+  phase** (M15: until then it still spotted, and playtesters found a suppressed enemy
+  covered no one — the men it saw were put in contact and shot the turn after). Its view
+  is not drawn while it is suppressed.
   Firing is gunfire: +2 alert (§6), and it is heard (§6). A suppressed enemy is open to a
   **kill** until the end of the next player phase.
 - **Knife** (any trooper, M12b; a playtester: "I snuck up behind a patrol before
@@ -191,7 +194,9 @@ All costs and modifiers below are numbers in `rules.json`.
   charge per charge hex.
 - **Cut the line** (scout only) — a **full turn**, like stabilise: he must not have spent
   any AP yet, and it costs his whole pool. Standing on a telephone exchange charge hex,
-  he destroys the exchange at once, silently: no alert, no noise (§7).
+  he destroys the exchange at once, quietly: **no noise**, so nobody comes to look, but the
+  garrison notices its telephones go dead: **alert +1** (`alert.lineCut`; M15, the
+  operator's — it raised nothing until then) (§7).
 - **Swim** — a **full turn**. From a hex beside the canal, straight across one canal
   hex, to the bank opposite. A wounded man cannot swim. He cannot hide as he comes out,
   and is tested on the far bank like any hex he enters. It exists so a man is never
@@ -413,7 +418,7 @@ Raised by: being spotted (+1, and only when he was not already in contact — a 
 counted is not counted again each turn he stays in view), gunfire (+2), a silenced kill
 shot (+1), an explosion (+3), the fuel dump exploding
 (+4, instead of +3), a body found (+1), an abandoned parachute found (+1, see §9), a
-thrown stone (+1, §4 Actions).
+thrown stone (+1, §4 Actions), the telephone line cut (+1, M15, §4 Actions).
 Enemy fire at troopers raises nothing extra — the sighting that caused it already counted.
 
 **Decay:** after 4 quiet turns (no alert raised and nobody spotted) the points drop to the start of the
@@ -423,7 +428,7 @@ state below; in Calm, to 0.
 Suspicious again. After the first bang the garrison never fully settles.
 
 What this does to a run: the bridge alone leaves the garrison Suspicious; the bridge
-plus a silently cut telephone line still does; the bridge plus the fuel dump is Alarmed.
+plus a cut telephone line still does; the bridge plus the fuel dump is Alarmed.
 
 ### Noise: the dial is global, the reaction is local
 
@@ -504,7 +509,7 @@ Three objectives, each on a different approach:
    the north pier lay due west of it and no stone from the west bank could turn it away. **A destroyed bridge is gone**: its hexes become canal, and the only
    way over is to swim (§4 Actions).
 2. **Telephone exchange, village** (secondary) — 1 charge, or a Scout can cut the line
-   silently: a full turn instead of 1 AP, and it raises no alert (§4 Actions).
+   quietly: a full turn instead of 1 AP, no noise, and alert +1, not a bang's +3 (§4 Actions).
 3. **Fuel dump and tank laager** (secondary) — 1 charge. Largest blast, +4 alert. The dump
    stands on the fields below the ridge, near the patrol base (§8).
 
@@ -606,8 +611,8 @@ Turn 1 is therefore always a regroup problem, different every time, never unfair
 Every trooper leaves a **parachute** on the hex he lands in. It is evidence, and what he
 does about it is the second decision of turn 1.
 
-- A trooper standing on his own parachute can **pack it up for 1 AP**, removing it. Only
-  his own, only from that hex. He cannot go back for someone else's.
+- A trooper standing on a parachute can **pack it up for 1 AP**, removing it: his own or
+  anyone's (M15; until then only his own), one per action, only from that hex.
 - A parachute left behind is found when an enemy comes **onto or adjacent to** it during
   the enemy phase — on or beside any hex it walks through, or where it ends its go. Alert **+1**,
   the parachute is removed, and that hex becomes a last known contact (§6). Found once,
@@ -704,8 +709,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
   cold blue `#3D5A73`, and one reserved colour, leader blue `#2F7BBF`, used only to mark
   the ranking man (his counter's name strip and rank flash, his number on the roster) and
   his orders (their radius, chevron and AP dots, §5 Command), and one for fire, a soft
-  printed orange `#C98249` (M14, the operator's), used only for flames and the blast's
-  fireball. Nothing else.
+  printed orange `#C98249` (M14, the operator's), used only for flames, the blast's
+  fireball, a burning fuse's stopwatch and the dots for charges a man carries (M15).
+  Nothing else.
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
@@ -728,8 +734,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - A **church** with a spire in the village, as art on an existing farmhouse hex: no rule,
   no new terrain. It is the landmark Vance's landing line refers to, and spires were how
   real sticks checked they had been dropped in the right place.
-- "CUT OUT AND PLAY" margin note in the outer gutter, and above it, at the top of the
-  margin, BURN BY DAWN in the title stencil, pale, running up the page (M14).
+- "CUT OUT AND PLAY" margin note in the middle of the outer gutter, and above it, at the
+  top of the margin, BURN BY DAWN in the title stencil, running up the page (M14; twice
+  the size and darker in M15).
 - **Roads and the railway read as continuous lines.** A track is drawn as one smooth road
   through its hexes' centres, not a motif stamped per hex. A **railway** runs east–west
   across the board and over the rail bridge, as art only, like the church: no rule, no
@@ -793,9 +800,32 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **The turn report** keeps each man's lines together, his death always last, and sets
   "killed" in bold red (M13).
 - **Parachutes** lie inside their hex, in one of its corners, the same one all game (M13).
-- **Starting again.** A restart in the outer margin (a first click arms it, a second
-  starts a new game on a fresh seed at the same level), and Play again on the back page,
-  start a new mission without reloading the page; the orders open again (M12).
+- **Starting again.** A RESTART at the foot of the outer margin, bold (M15; a first click
+  arms it, a second starts a new game on a fresh seed at the same level), and Play again
+  on the back page, start a new mission without reloading the page; the orders open
+  again (M12). Above the seed the margin says which build this is, "build M15", from
+  `data/version.json` (M15; the game cannot read the git branch once it is published).
+- **The garrison's turn is shown** (M15, from playtesting: players had to read the card
+  to know what had happened). When a turn ends, before its card, every enemy walks the
+  steps it took, a red "!" pops over each enemy that spotted a man or found a body or
+  parachute, and a ripple runs out from each noise it heard. Any key or click brings the
+  card at once. A noise waiting to be heard says what it was under its ring (BANG,
+  STONE, SHOTS, SHOT, FOUND), and its hex's hover says who it will bring.
+- **Aiming at an enemy** (suppress, kill or knife) draws a crosshair over the enemy under
+  the mouse, red if it can be done and grey if not, instead of its route and view (M15).
+  The turn after a suppression, when it sees and fires again but can still be killed, it
+  wears a red crosshair, not the suppressed mark.
+- **Our counters** (M15): a dot in fire orange down the left for each charge a man
+  carries, the leader's orders chevron smaller than his own rank flash, and a burning
+  charge counted down on a stopwatch — a quarter of its face per turn left, red with a
+  burst on its last turn — not a number, which read as a count of charges. Bodies are
+  drawn half as big again.
+- **How to read a counter** (M15): beside the orders, over the right page, a card of its
+  own drawn with the board's own counters: one of our men with every mark labelled, the
+  leader and the marks a man can wear, and an enemy with its facing, next turn's facing,
+  type and marks.
+- **The orders** open with the difficulty in the black bar at the top, and ORDERS / BEFORE
+  THE DROP under it in ink on the paper (M15).
 - **Briefings.** A briefing card opens over the board: the orders before the drop, and at
   the start of every turn (turn 1 after the drop has been shown) an update: what happened
   at the turn boundary, most important first, and up to three hints about what to do
@@ -827,7 +857,9 @@ mission accomplished, and a single bell tolling with a siren far off for a missi
 withdrawn or failed (`church-bells`, `bell-toll`). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
 counter snapped down when a man moves or a move is undone, a pencil for every other
 action, a card's rustle when a briefing card or the back page opens, a dog a long way off
-when the alert rises, and three far-off crumps for the RAF diversion. The one exception
+when the alert rises, and three far-off crumps for the RAF diversion. The Dakota drones
+over the drop and the RAF flyover (M15, `aircraft`), cut short if the drop is skipped;
+the victory bells ring upward to the top bell (M15: falling, they sounded sad). The one exception
 (M11, from playtesting): a turn with a bang plays a real explosion, close and loud, and
 the board shows it — the page flashes, the board jolts, a shock ring runs out to the edge
 of the blast under the starburst, and smoke rolls up — before that turn's card is laid
@@ -867,6 +899,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M15** | Fifth operator playtest review: three rules (a cut line raises the alert, anyone packs any parachute, a suppressed enemy does not spot), the garrison's turn shown, a crosshair when aiming, the counter key beside the orders, a stopwatch fuse, charge dots, the orders' head reordered, the margin reworked with the build, the Dakota's drone and rising bells, the painted enemy chips in | Cutting the line raises the alert 1; a man packs another's parachute; a man walking past a suppressed enemy is not spotted; ending a turn shows the enemies walking before the card; the key reads at 12 px beside the orders at 1280x800; the balance bot is re-run (unchanged for the naive bot, naivefight 96/96/96) |
 | **M14** | Fourth operator playtest review, no rules change: Normal toughened, an exfil that would lose the mission asked first, two bugs (a replayed bang, a passed charge not shown), bigger difficulty buttons, BURN BY DAWN in the margin, the squad's back page, lines that go when a man moves, the leader's AP in blue, a fire orange and better flames, Ferme Lebrun drawn, the exchange's lines run to its roof, the bridge's south satchel moved, a clearer sentry | Normal's shots hit from 3 hexes, Easy's from 2; cutting the line or calling the RAF never replays a bang; a hidden man handed a charge shows it; an exfil that would withdraw the mission asks first; the orders still fit at 1280x800; the balance bot is re-run (Normal 94/84/76 with the knife, from 99/90/86) |
 | **M13b** | The approved playtest rules: 110° arcs and a Road patrol, next turn's facing shown, a 60° sweep, shots from far off only pin, a stone turns sentries at once, charges left at the exfil, hiding counts double on Easy, Hard keeping the old arcs and range | A shot from more than 2 hexes pins; a stone turns a sentry before the detection check; a man leaving with a charge leaves it before the exfil; hovering an enemy outlines its next turn; the balance bot is re-run at every level |
 | **M13** | Third operator playtest review, no rules change but one bug: the orders reworked (level on top, wider, more air), Hide on H and Hold gone, turn cards docked bottom right, keys one to a line, shots and a suppressed band, AP as dots, new gunner and scout symbols, report grouped by man, the mission ended when no one can carry the charges left | The orders fit at 1280x800 with the difficulty first; H hides; a turn card leaves the left of the map clear; a suppress is seen and heard; with every man who could carry a charge dead the mission is withdrawn at once |
