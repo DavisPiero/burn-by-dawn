@@ -25,7 +25,7 @@ import {
 import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
 import {
-  checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   createUnits, fillActionPoints, onBoard, unitById,
 } from './units.js';
 
@@ -435,6 +435,16 @@ export function pickUpCharge(state, unitId, rules) {
     ...spend(state, unitId, check.cost, { charges: unit.charges + 1 }),
     droppedCharges: state.droppedCharges.filter((_, i) => i !== index),
   };
+}
+
+/** Hand one charge to the man beside him (SPEC.md §4, M11b): the giver pays, the taker does not. */
+export function passCharge(state, giverId, receiverId, rules) {
+  const giver = unitById(state.units, giverId);
+  const receiver = unitById(state.units, receiverId);
+  const check = checkPassCharge(giver, receiver, rules);
+  if (!check.ok) return state;
+  const next = spend(state, giverId, check.cost, { charges: giver.charges - 1 });
+  return { ...next, units: next.units.map((u) => (u.id === receiverId ? { ...u, charges: u.charges + 1 } : u)) };
 }
 
 /**

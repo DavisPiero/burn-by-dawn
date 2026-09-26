@@ -10,7 +10,7 @@ import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './m
 import { freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit, holdUnit,
-  jump, killEnemy, moveUnit, nextUnitId, packParachute, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
+  jump, killEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
   setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
@@ -20,7 +20,7 @@ import {
 import { hintsFor } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
-  chargeCapacity, checkHide, checkKill, checkPackParachute, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  chargeCapacity, checkHide, checkKill, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, dropTimeline, flyoverTimeline, renderPieces } from './render/board.js';
@@ -453,7 +453,7 @@ function actionsFor(unit) {
     ...(role.suppress ? [] : ['suppress']),
     ...(role.kill ? [] : ['kill']),
     ...(role.cutLine ? [] : ['cut']),
-    ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge']),
+    ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge', 'pass']),
   ]);
   const patients = state.units.filter((u) => (
     onBoard(u) && u.id !== unit.id && hexDistance(u, unit) === 1 && u.hits > 0 && !u.stabilised
@@ -480,9 +480,10 @@ function actionsFor(unit) {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Patrols in earshot walk over to look and sentries turn to face it — use it to pull a patrol off your path or turn a sentry's back. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
-    { id: 'stabilise', key: 'A', label: 'Stabilise', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
+    { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', short: 'Pack', help: 'Pack up his own parachute from this hex, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
+    passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
@@ -511,6 +512,19 @@ function hideEffect(unit) {
   }
   if (open?.spotted) return `NOT spotted once hidden — hiding here ${unit.inContact ? 'breaks contact' : 'keeps him out of sight'} (${describeDetection(hidden)}).`;
   return `not spotted either way (${describeDetection(hidden)}).`;
+}
+
+// Pass a charge to a man beside him (M11b): ok if there is anyone he could
+// hand one to; the reason otherwise is the first man's, or why he cannot at all.
+function passChargeAction(unit) {
+  const beside = state.units.filter((u) => u.id !== unit.id && onBoard(u) && hexDistance(u, unit) === 1);
+  const checks = beside.map((u) => checkPassCharge(unit, u, rules));
+  const check = checks.find((c) => c.ok) ?? checks[0] ?? checkPassCharge(unit, null, rules);
+  const reason = check.reason === 'pick a man beside him' ? 'nobody beside him' : check.reason;
+  return {
+    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`,
+    help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing. Press E, then click the man.`,
+  };
 }
 
 // Place a charge, with its fuse — and a warning if setting it on a secondary
@@ -595,6 +609,13 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     view.targetLabel = check?.ok
       ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
       : check ? `Swim: ${check.reason}.` : 'Swim: click the bank straight across the water. Esc to cancel.';
+  } else if (kind === 'pass') {
+    for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
+    const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
+    const check = taker && taker.id !== unit.id ? checkPassCharge(unit, taker, rules) : null;
+    view.targetLabel = check?.ok
+      ? `Pass a charge to ${taker.shortName} — ${check.cost} AP of ${unit.shortName}'s. Click to hand it over.`
+      : check ? `Pass a charge: ${check.reason}.` : 'Pass a charge: click a man beside him who can carry one. Esc to cancel.';
   } else if (kind === 'stabilise') {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);
     const patient = hex ? unitAt(state.units, hex.q, hex.r) : null;
@@ -745,7 +766,7 @@ function handleTargetClick(q, r) {
   const mover = selectedUnit(state);
   if (!mover) return;
   const other = unitAt(state.units, q, r);
-  if (other && other.id !== mover.id && state.targeting !== 'stabilise') {
+  if (other && other.id !== mover.id && state.targeting !== 'stabilise' && state.targeting !== 'pass') {
     state = selectUnit(state, other.id);
     return;
   }
@@ -763,6 +784,9 @@ function handleTargetClick(q, r) {
     if (patient) next = stabiliseUnit(state, mover.id, patient.id);
   } else if (state.targeting === 'swim') {
     next = swimAcross(state, mover.id, { q, r }, map, rules);
+  } else if (state.targeting === 'pass') {
+    const taker = unitAt(state.units, q, r);
+    if (taker) next = passCharge(state, mover.id, taker.id, rules);
   }
   if (next !== state) commit(setTargeting(next, null));
   else if (other && other.id !== mover.id) state = selectUnit(state, other.id);
@@ -808,6 +832,7 @@ function handleAction(id) {
     case 'kill':
     case 'stone':
     case 'swim':
+    case 'pass':
     case 'stabilise': {
       const action = actionsFor(unit).find((a) => a.id === id);
       if (state.targeting === id) state = setTargeting(state, null);
@@ -1203,6 +1228,10 @@ function handleKey(event) {
     case 'w':
     case 'W':
       handleAction('swim');
+      return;
+    case 'e':
+    case 'E':
+      handleAction('pass');
       return;
     case 'd':
     case 'D':

@@ -468,6 +468,27 @@ export function checkPackParachute(parachutes, unit, rules) {
 }
 
 /** Pick up a charge (SPEC.md §4): 1 AP, from his own hex, if he can carry one more. */
+/**
+ * Pass a charge (SPEC.md §4, M11b): the giver hands one of his charges to a
+ * man beside him who can carry it. It costs the giver `passCharge.apCost`; the
+ * man taking it pays nothing. With no `receiver`, whether he could pass to
+ * anyone at all is the caller's to ask of each man in turn.
+ */
+export function checkPassCharge(giver, receiver, rules) {
+  const cost = rules.actions.passCharge.apCost;
+  const busy = canAct(giver, cost);
+  if (busy) return result(cost, busy);
+  if (giver.charges <= 0) return result(cost, 'carrying no charge');
+  if (!receiver || receiver.id === giver.id) return result(cost, 'pick a man beside him');
+  if (!onBoard(receiver)) return result(cost, `${receiver.shortName} is not on the board`);
+  if (hexDistance(giver, receiver) !== 1) return result(cost, `${receiver.shortName} is not beside him`);
+  if (!canCarryCharges(receiver)) return result(cost, `${receiver.shortName} is wounded — stabilise him first`);
+  const room = chargeCapacity(receiver, rules);
+  if (room === 0) return result(cost, `${receiver.shortName} is a ${receiver.roleLabel.toLowerCase()}: he carries no charges`);
+  if (receiver.charges >= room) return result(cost, `${receiver.shortName} cannot carry any more`);
+  return result(cost, null);
+}
+
 export function checkPickUpCharge(droppedCharges, unit, rules) {
   const cost = rules.actions.pickUpCharge.apCost;
   const busy = canAct(unit, cost);

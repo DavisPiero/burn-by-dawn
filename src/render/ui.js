@@ -83,7 +83,7 @@ const KEYS = [
   '1–6 select a man · Esc deselect · Tab next · H hold',
   'G hide · S suppress · K kill · T throw a stone',
   'A stabilise · P pick up a charge · U pack parachute',
-  'C place a charge · X cut the line · W swim',
+  'C place a charge · E pass a charge · X cut the line · W swim',
   'D RAF diversion · Space end turn · Z undo',
   'Esc or right-click also backs out of aiming an action',
   'R patrol routes · M sound',
@@ -703,6 +703,9 @@ export function renderActions(element, actions, onAction) {
     return;
   }
   element.classList.remove('idle');
+  // Three rows at most (index.html): a man with more than nine actions — a
+  // gunner who also carries a charge — gets a fourth column instead.
+  element.classList.toggle('four', actions.length > 9);
   for (const action of actions) {
     // Key and verb only; the cost, and why not, are the rollover, which has
     // the full name where the button has a short one.

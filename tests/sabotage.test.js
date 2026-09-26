@@ -10,7 +10,7 @@ import { alertIndex, runEnemyPhase } from '../src/enemy.js';
 import { hexDistance } from '../src/hex.js';
 import { findPath, isPassable, loadJson, loadMap, terrainAt, terrainIdAt } from '../src/map.js';
 import {
-  callDiversion, checkDiversion, createInitialState, cutLine, endTurn, moveUnit, placeCharge, settleMission,
+  callDiversion, checkDiversion, createInitialState, cutLine, endTurn, moveUnit, passCharge, placeCharge, settleMission,
   swimAcross,
 } from '../src/state.js';
 import {
@@ -20,7 +20,7 @@ import {
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
-import { onBoard, planMove, unitById } from '../src/units.js';
+import { checkPassCharge, onBoard, planMove, unitById } from '../src/units.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -261,6 +261,28 @@ export default [
     assert(reserve, 'deployed');
     equal(`${reserve.q},${reserve.r}`, `${map.reserve.guardHex[0]},${map.reserve.guardHex[1]}`, 'at its guard hex');
     equal(reserve.facing, reserve.homeFacing, 'facing its guard facing');
+  }],
+
+  ['passing a charge: to a man beside him who can carry it, for the giver\'s AP only (M11b)', async () => {
+    const { rules, state } = await loadAll();
+    const [a, b] = state.units.filter((u) => u.role === 'sapper');
+    const scout = state.units.find((u) => u.role === 'scout');
+    const cost = rules.actions.passCharge.apCost;
+    // b has set his charge already, so he has room for one.
+    let s = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 4, r: 3, changes: { charges: 0 } }, [scout.id]: { q: 3, r: 4 } });
+    const giver = unitIn(s, a.id);
+    assert(checkPassCharge(giver, unitIn(s, b.id), rules).ok, 'to a sapper beside him');
+    assert(!checkPassCharge(giver, unitIn(s, scout.id), rules).ok, 'a scout carries no charges');
+    s = passCharge(s, a.id, b.id, rules);
+    equal(unitIn(s, a.id).charges, giver.charges - 1, 'one fewer');
+    equal(unitIn(s, b.id).charges, 1, 'one more');
+    equal(unitIn(s, a.id).ap, giver.ap - cost, 'the giver pays');
+    equal(unitIn(s, b.id).ap, unitIn(state, b.id).ap, 'the taker does not');
+    assert(!checkPassCharge(unitIn(s, a.id), unitIn(s, b.id), rules).ok, 'nothing left to pass');
+    const apart = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 6, r: 3, changes: { charges: 0 } } });
+    assert(!checkPassCharge(unitIn(apart, a.id), unitIn(apart, b.id), rules).ok, 'not beside him');
+    const wounded = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 4, r: 3, changes: { charges: 0, hits: 1 } } });
+    assert(!checkPassCharge(unitIn(wounded, a.id), unitIn(wounded, b.id), rules).ok, 'not to a wounded man');
   }],
 
   ['the RAF diversion: once, only while the leader lives, drops a state, clears contact, forfeits the clean score', async () => {

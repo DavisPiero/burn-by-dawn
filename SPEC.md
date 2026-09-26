@@ -170,6 +170,10 @@ All costs and modifiers below are numbers in `rules.json`.
   **A throw is not a move:** he stays on his hex. While it is aimed the board draws the lob
   as a dashed arc from him to the hovered hex and shades the ground in earshot, and the
   readout says he stays put, so it never reads as a path.
+- **Pass a charge** (M11b, from playtesting) — costs the giver **2 AP** (`passCharge` in
+  `rules.json`); the man taking it pays nothing. He hands one of his charges to a man
+  **beside him** who can carry it: not wounded, and with room under his capacity (a scout
+  carries none). Aimed like stabilise: press it, then click the man.
 - **Place a charge** (anyone carrying one) — costs **1 AP** (the `onPlaceCharge` hook may
   change it), standing on a charge hex of an objective that still needs charges (§7). One
   charge per charge hex.
@@ -216,7 +220,7 @@ to be casual while still being strategic.
   tool, because there is nothing hidden to learn by trying a move.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `H` hold position, `R` toggle patrol-route overlay. Actions: `G` hide (go to ground),
-  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `C` place a
+  `S` suppress, `K` kill, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
 
