@@ -1192,7 +1192,8 @@ function drawSites(layers, state, view) {
     const p = axialToPixel(charge.q, charge.r, map.hexSize);
     const size = MARKER.groundSize;
     layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - 30, y: p.y + 20, width: size, height: size }));
-    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 12, y: p.y + 24, width: MARKER.size, height: MARKER.size }));
+    const watch = MARKER.fuseSize;
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 14, y: p.y + 16, width: watch, height: watch }));
   }
 }
 

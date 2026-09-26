@@ -585,6 +585,7 @@ export const MARKER = {
   size: 22,
   hiddenOpacity: 0.6,
   groundSize: 26,
+  fuseSize: 34, // the stopwatch on a burning charge (M15)
   ordersScale: 0.6, // the orders chevrons on a counter, against MARKER.size (M15)
   bodySize: 39, // half as big again as groundSize since M15, the operator's: bodies were easy to miss
   aimScale: 1.35, // the crosshair while aiming at an enemy, in hex radii across (M15)
@@ -1935,15 +1936,34 @@ const SPRITES = {
       svg('rect', { x: 4, y: 10, width: 20, height: 14, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
     ],
   },
-  // Fuse tokens: turns left before the charge goes off, typed in a paper disc
-  // with a red rim. 1 is the red one.
+  // Fuse tokens: a stopwatch counting down the turns left before the charge
+  // goes off (M15: a number in a disc read as how many charges were laid).
+  // The burning wedge is a quarter of the face per turn left, swept from
+  // twelve o'clock to the hand; on its last turn it is red, with a burst
+  // behind the watch: it goes off at the end of this turn.
   ...Object.fromEntries([1, 2, 3, 4, 5].map((n) => [`marker-fuse-${n}`, {
     viewBox: '0 0 28 28',
-    draw: () => [
-      circle(14, 14, 12, n === 1 ? 'red' : 'paper'),
-      ring(14, 14, 12, 3, 'stroke-red'),
-      label(String(n), { x: 14, y: 15, 'font-size': 18, class: n === 1 ? 'paper' : 'ink' }),
-    ],
+    draw: () => {
+      const cx = 14, cy = 15.5, r = 9.5;
+      const sweep = Math.min(n, 4) * 90;
+      const at = (deg, rad = r) => ({ x: cx + rad * Math.sin((deg * Math.PI) / 180), y: cy - rad * Math.cos((deg * Math.PI) / 180) });
+      const end = at(sweep);
+      const wedge = sweep >= 360
+        ? svg('circle', { cx, cy, r, class: 'fire' })
+        : fill(`M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)} Z`, n === 1 ? 'red' : 'fire');
+      const hand = at(sweep % 360, r - 1.5);
+      return [
+        ...(n === 1 ? [starburst(cx, cy, 16, 13.8, 10.2, 'red')] : []),
+        svg('rect', { x: 12, y: 1.2, width: 4, height: 2.6, rx: 0.8, class: 'ink' }),
+        svg('rect', { x: 13.2, y: 3.6, width: 1.6, height: 2.6, class: 'ink' }),
+        circle(cx, cy, r + 1, 'paper'),
+        wedge,
+        line([0, 90, 180, 270].map((d) => { const a = at(d, r), b = at(d, r - 2.4); return `M${a.x.toFixed(2)} ${a.y.toFixed(2)} L${b.x.toFixed(2)} ${b.y.toFixed(2)}`; }).join(' '), 1.2),
+        line(`M${cx} ${cy} L${hand.x.toFixed(2)} ${hand.y.toFixed(2)}`, 1.8),
+        circle(cx, cy, 1.6, 'ink'),
+        ring(cx, cy, r + 1, 2),
+      ];
+    },
   }])),
   // A comic starburst, one frame; board.js does the stepped reveal.
   'marker-blast': {

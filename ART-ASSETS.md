@@ -162,15 +162,17 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 |---|---|
 | `marker-charge.svg` | 28 x 28 |
 | `marker-parachute.svg` | 28 x 28 (an abandoned canopy, §9 — must read as spent kit on the ground, not as a chute in the air) |
-| `marker-fuse-1..5.svg` | 28 x 28 (five number tokens, hand-inked digits) |
+| `marker-fuse-1..5.svg` | 28 x 28 (a stopwatch per turns left, M15: the burning `.fire` wedge a quarter of the face per turn, from twelve to the hand; the last turn's wedge red with a burst behind the watch. Drawn at 34 on the board) |
 | `marker-wounded.svg` | 28 x 28 |
 | `marker-suppressed.svg` | 28 x 28 |
+| `marker-open-kill.svg` | 28 x 28 (M15: a red crosshair in a paper disc — the turn after suppression, when a gunner can still kill it) |
+| `marker-aim.svg`, `marker-aim-no.svg` | 100 x 100 (M15: the crosshair over an enemy while aiming a suppress, kill or knife — red if it can be done, grey if not) |
 | `marker-spotted.svg` | 28 x 28 |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
 | `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
 | `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
-| `marker-body.svg` | 28 x 28 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
-| `marker-body-enemy.svg` | 28 x 28 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
+| `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
+| `marker-body-enemy.svg` | 28 x 28, drawn at 39 since M15 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
