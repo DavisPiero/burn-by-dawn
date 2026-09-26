@@ -203,9 +203,10 @@ to be casual while still being strategic.
 - **Hover an enemy**: highlight its vision arc and its patrol route.
 - **Hover an objective**: show what it needs (charges, fuse, blast radius).
 - **Right-click**: deselect / cancel.
-- **Undo** (M8e, one step since M9b): the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z`
-  takes back the last move or action, and only that one: it cannot be pressed again to go
-  further back. It is forgotten when the turn ends or the stick jumps, so nothing the
+- **Undo** (M8e, one step since M9b, by level since M11b): the button beside End turn,
+  `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last move or action. How many steps back it can
+  go is `undo.steps` in `rules.json`: one on Normal and Hard, so it cannot be pressed again
+  to go further back, and on Easy every step back to the start of the turn. It is forgotten when the turn ends or the stick jumps, so nothing the
   garrison has done is ever undone. The player phase rolls no dice (only the drop does,
   §9), so undoing can never re-roll anything; it is a mis-click safety net, not a scouting
   tool, because there is nothing hidden to learn by trying a move.
@@ -601,7 +602,7 @@ as `?seed=` picks the seed.
 
 | Level | Changes from Normal |
 |---|---|
-| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes |
+| **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b) |
 | **Normal** | The mission as above |
 | **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3 |
 

@@ -45,6 +45,10 @@
   "_mission": "SPEC.md §10. Success needs the primary destroyed and at least `minimumOut` troopers out by the end of the last turn.",
   "mission": { "minimumOut": 3 },
 
+  "_undo": "SPEC.md §4 Undo. How many moves or actions of this player phase can be taken back, most recent first; null is every one of them. Never further than the start of the turn, and never across the jump, so nothing the garrison has done is undone. Normal and Hard keep one step, a mis-click net; Easy lets a new player walk the whole turn back (M11b, data/difficulty.json).",
+  "undo": {
+    "steps": 1
+  },
   "_diversion": "SPEC.md §4 RAF diversion: once per mission, no AP, while the trooper flagged leader is alive. The alert drops `statesDown` states (never below the explosion floor), every search and held contact is dropped, every trooper is out of contact.",
   "diversion": { "uses": 1, "statesDown": 1 },
 

@@ -526,7 +526,15 @@ export function renderEndTurnButton(button, state, rules) {
   else button.textContent = 'END TURN  [space]';
 }
 
-export const UNDO_HELP = 'Take back the last move or action you made. Only that one: undo cannot be repeated to go further back, and once you end the turn, what happened stands.';
+/** Undo's rollover, for how many steps the level allows (rules.json `undo.steps`; null is the whole turn). */
+export function describeUndo(steps) {
+  const reach = steps === null
+    ? 'Press it again to go further back, as far as the start of this turn.'
+    : steps === 1
+      ? 'Only that one: undo cannot be repeated to go further back.'
+      : `Up to ${steps} steps back, never past the start of this turn.`;
+  return `Take back the last move or action you made. ${reach} Once you end the turn, what happened stands.`;
+}
 
 /** Undo, beside End turn: live while there is something this turn to take back. */
 export function renderUndoButton(button, state, canUndo) {

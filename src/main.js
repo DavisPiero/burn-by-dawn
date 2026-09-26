@@ -32,7 +32,7 @@ import {
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
-  renderEndTurnButton, renderError, renderUndoButton, UNDO_HELP, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
+  renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderResults, renderSeed, renderSoundToggle, renderTurnCounter, showPopup, titled,
 } from './render/ui.js';
 
@@ -107,12 +107,12 @@ let bangTimer = null;
 // to finish being shown. Interface only, never game state.
 let briefing = null;
 let briefingsOn = true;
-// Undo (SPEC.md §4): the state before the last move or action, and only the
-// last — one step, a mis-click net. Cleared when it is used, when the turn
-// ends and when the stick jumps, so it can never take back what the garrison
-// has seen — and the player phase rolls no dice, so taking a move back can
-// never re-roll anything.
-let undoState = null;
+// Undo (SPEC.md §4): the states before this turn's moves and actions, most
+// recent last, kept to rules.json `undo.steps` (one on Normal, the whole turn
+// on Easy). Emptied when the turn ends and when the stick jumps, so it can
+// never take back what the garrison has seen — and the player phase rolls no
+// dice, so taking a move back can never re-roll anything.
+let undoStack = [];
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
@@ -618,7 +618,7 @@ function render() {
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
-  renderUndoButton(undoButton, state, Boolean(undoState));
+  renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
@@ -678,7 +678,9 @@ function renderBoard() {
  */
 function commit(next, cue = 'action') {
   if (next === state) return;
-  undoState = state;
+  undoStack.push(state);
+  const { steps } = rules.undo;
+  if (steps !== null && undoStack.length > steps) undoStack = undoStack.slice(-steps);
   state = settleMission(next, rules, baseMap);
   if (cue) playCue(cue);
 }
@@ -695,11 +697,10 @@ function cueReport(report) {
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
 }
 
-/** Take back the last move or action, once, keeping where the mouse is. */
+/** Take back the last move or action, keeping where the mouse is. */
 function undoLast() {
-  if (!undoState || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
-  const previous = undoState;
-  undoState = null;
+  if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
+  const previous = undoStack.pop();
   playCue('move');
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
   render();
@@ -848,7 +849,7 @@ function handleEndTurn() {
 }
 
 function endTurnNow() {
-  undoState = null;
+  undoStack = [];
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
   if (!state.outcome && briefingsOn) {
@@ -884,7 +885,7 @@ function startMission(nextLevel, seed) {
   ({ rules, map: baseMap } = applyDifficulty(level, rawRules, rawMap));
   map = baseMap;
   state = createInitialState(roster, traits, rules, baseMap, seed);
-  undoState = null;
+  undoStack = [];
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 
@@ -1028,7 +1029,7 @@ function jumpNow() {
   if (!run) return;
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
-  undoState = null;
+  undoStack = [];
   state = jump(state, baseMap, rules);
   const landed = state.report.filter((e) => e.kind === 'landed');
   if (landed.length) {
@@ -1272,7 +1273,7 @@ try {
   });
   endTurnButton.addEventListener('click', handleEndTurn);
   undoButton.addEventListener('click', undoLast);
-  attachPopup(undoButton, UNDO_HELP);
+  attachPopup(undoButton, () => describeUndo(rules.undo.steps));
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   window.addEventListener('keydown', handleKey);
   // Browsers keep sound off until the page has been pressed or clicked.
