@@ -507,7 +507,7 @@ function actionsFor(unit) {
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
-    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: 'A full turn on an exchange charge hex: destroyed, silently', ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
+    { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => 'full turn, silent') },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
 }
@@ -534,6 +534,16 @@ function hideEffect(unit) {
   }
   if (open?.spotted) return `NOT spotted once hidden — hiding here ${unit.inContact ? 'breaks contact' : 'keeps him out of sight'} (${describeDetection(hidden)}).`;
   return `not spotted either way (${describeDetection(hidden)}).`;
+}
+
+// Cut the line, in words that say why it is worth a turn: what it takes, and
+// what it gives over a charge, from rules.json (the kinds a scout can cut).
+function cutLineHelp() {
+  const kind = Object.values(rules.objectives).find((k) => k.cutLine);
+  const target = kind ? `the ${kind.label.toLowerCase()}` : 'the target';
+  const payoff = kind ? payoffWords(kind) : null;
+  return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, silently. `
+    + `No alert, no noise, no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
 }
 
 // Pass a charge to a man beside him (M11b): ok if there is anyone he could
