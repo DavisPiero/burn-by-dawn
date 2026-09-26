@@ -532,7 +532,8 @@ export function runEnemyPhase(state, map, rules) {
   const noises = [];
   const living = state.units.filter(onBoard);
 
-  if (stateId === 'alarmed' && !reserveDeployed) {
+  // Not once a bonus target has cut the garrison's call for it (SPEC.md §7 payoffs).
+  if (stateId === 'alarmed' && !reserveDeployed && !state.reserveCancelled) {
     const placed = deployReserve(map, living, enemies);
     if (placed) {
       enemies = [...enemies, placed];

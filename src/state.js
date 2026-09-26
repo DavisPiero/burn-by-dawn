@@ -20,7 +20,7 @@ import {
 import { landStick, runById, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
 import {
-  checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
+  applyPayoff, checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
 import { applyHook } from './traits.js';
@@ -59,6 +59,8 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     // SPEC.md §9: { unitId, name, q, r }, one per man until packed or found.
     parachutes: [],
     reserveDeployed: false,
+    // A bonus target's payoff has kept the reserve away (SPEC.md §7, M11b).
+    reserveCancelled: false,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
     // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
     // explosion floor (§6).
@@ -465,10 +467,14 @@ export function cutLine(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
   const check = checkCutLine(state, unit, rules);
   if (!check.ok) return state;
-  return {
+  const cut = {
     ...spend(state, unitId, check.cost),
     objectives: state.objectives.map((o) => (o.id === check.objective.id ? { ...o, destroyed: true, cut: true } : o)),
   };
+  // Destroyed silently, but it pays back all the same (SPEC.md §7), said in
+  // the report at once, as the RAF diversion is.
+  const paid = applyPayoff(cut, check.objective, rules);
+  return { ...paid.state, report: [...state.report, ...paid.events] };
 }
 
 /**

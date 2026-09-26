@@ -242,7 +242,7 @@ export function describeAlertStates(alert) {
 // How much a line of the turn report matters, lowest first: the card puts the
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
-  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, enemyBlastKilled: 1, reserve: 2, spotted: 2, diversion: 2,
+  killed: 0, blastKilled: 0, wounded: 1, explosion: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reserve: 2, spotted: 2, diversion: 2,
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
@@ -378,6 +378,10 @@ export function describeEvent(event, place) {
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
+    case 'noReserve': return event.deployed
+      ? `With the ${event.label.toLowerCase()} gone, the garrison can call up nobody more — but the reserve is already out.`
+      : `With the ${event.label.toLowerCase()} gone, the garrison cannot call up its reserve squad.`;
+    case 'withdrawn': return `The ${event.enemyLabel.toLowerCase()} leaves the field to deal with the ${event.label.toLowerCase()}.`;
     default: return event.kind;
   }
 }

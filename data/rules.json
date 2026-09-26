@@ -22,11 +22,11 @@
     "fuseTurns": 3
   },
 
-  "_objectives": "SPEC.md §7, by kind; data/map.json places them. `chargesNeeded` charges must go off on it to destroy it, in one fuse phase or several. `blastRadius` is in hexes from each charge that goes off: a trooper inside it dies. `alert` is what one explosion on it raises (charges on one objective going off in the same fuse phase are one explosion), heard as noise.explosion. `cutLine`: a scout may destroy it silently instead (actions.cutLine). `destroyedTerrain`: what its hexes become once destroyed, or null to leave them.",
+  "_objectives": "SPEC.md §7, by kind; data/map.json places them. `chargesNeeded` charges must go off on it to destroy it, in one fuse phase or several. `blastRadius` is in hexes from each charge that goes off: a trooper inside it dies. `alert` is what one explosion on it raises (charges on one objective going off in the same fuse phase are one explosion), heard as noise.explosion. `cutLine`: a scout may destroy it silently instead (actions.cutLine). `destroyedTerrain`: what its hexes become once destroyed, or null to leave them. `payoff` (M11b, SPEC.md §7): what destroying it does for the stick, so a bonus target pays back in play and not only in score. `noReserve`: the reserve squad is never called up after it (if it is already out, it stays). `withdrawPatrols`: that many patrols, the nearest to it, leave the board to deal with it.",
   "objectives": {
-    "bridge": { "label": "Rail bridge", "chargesNeeded": 2, "blastRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "canal" },
-    "exchange": { "label": "Telephone exchange", "chargesNeeded": 1, "blastRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null },
-    "fuelDump": { "label": "Fuel dump", "chargesNeeded": 1, "blastRadius": 2, "alert": 4, "cutLine": false, "destroyedTerrain": null }
+    "bridge": { "label": "Rail bridge", "chargesNeeded": 2, "blastRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "canal", "payoff": { "noReserve": false, "withdrawPatrols": 0 } },
+    "exchange": { "label": "Telephone exchange", "chargesNeeded": 1, "blastRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 } },
+    "fuelDump": { "label": "Fuel dump", "chargesNeeded": 1, "blastRadius": 2, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 1 } }
   },
 
   "_explosionFloor": "SPEC.md §6: once anything has exploded, the alert never decays below this state. A cut line is not an explosion.",

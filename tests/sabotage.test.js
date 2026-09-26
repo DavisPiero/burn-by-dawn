@@ -237,6 +237,35 @@ export default [
     equal(unitIn(cut, scout.id).ap, 0, 'his whole turn');
   }],
 
+  ['bonus payoffs (M11b): the exchange, cut or blown, keeps the reserve away; the fuel dump draws the nearest patrol off', async () => {
+    const { map, rules, state } = await loadAll();
+    const exchange = state.objectives.find((o) => rules.objectives[o.kind].payoff.noReserve);
+    const scout = state.units.find((u) => rules.roles[u.role].cutLine);
+    const cut = cutLine(scenario(state, { [scout.id]: exchange.chargeHexes[0] }), scout.id, rules);
+    assert(cut.reserveCancelled, 'reserve cancelled by the cut');
+    assert(cut.report.some((e) => e.kind === 'noReserve'), 'said in the report at once');
+    const alarmed = rules.alert.states[rules.alert.states.length - 1].from;
+    const after = runEnemyPhase({ ...cut, alert: { ...cut.alert, points: alarmed } }, map, rules).state;
+    assert(!after.enemies.some((e) => e.id === map.reserve.id), 'no reserve at Alarmed');
+
+    const dump = state.objectives.find((o) => rules.objectives[o.kind].payoff.withdrawPatrols > 0);
+    const hex = dump.chargeHexes[0];
+    const far = rules.objectives[dump.kind].blastRadius + 2;
+    const s = {
+      ...scenario(state, {}),
+      charges: [{ objectiveId: dump.id, q: hex.q, r: hex.r, fuse: 1, unitId: null }],
+      enemies: [
+        { id: 'near', label: 'Near patrol', killable: true, speed: 3, q: hex.q + far, r: hex.r, facing: 0 },
+        { id: 'further', label: 'Far patrol', killable: true, speed: 3, q: hex.q + far + 3, r: hex.r, facing: 0 },
+        { id: 'post', label: 'Sentry', killable: true, speed: 0, q: hex.q, r: hex.r + far, facing: 0 },
+        { id: 'reserve', label: 'Reserve squad', killable: false, speed: 4, q: hex.q, r: hex.r - far, facing: 0 },
+      ],
+    };
+    const blown = runFusePhase(s, rules);
+    equal(blown.state.enemies.map((e) => e.id).sort().join(), 'further,post,reserve', 'the nearest patrol leaves; sentries and the reserve stay');
+    equal(blown.events.filter((e) => e.kind === 'withdrawn').length, rules.objectives[dump.kind].payoff.withdrawPatrols, 'reported');
+  }],
+
   ['ending a move on an exfil hex takes him off the board, untested', async () => {
     const { map, rules, state } = await loadAll();
     const [eq, er] = map.exfil[0];

@@ -495,12 +495,17 @@ Blow the bridge last and you may not have turns left to reach exfil.
 alert, and nothing else. The panel labels them "optional, +2" so they do not read as a
 checklist.
 
-**To consider at M8 — secondary payoffs.** As written, a secondary makes the mission harder
-and gives nothing back in play, so §8's "choosing which secondary objective is realistic"
-has little pull. Candidates, to be tested in the balance pass rather than built earlier:
-cutting or blowing the exchange delays or cancels the reserve squad (§6); blowing the fuel
-dump takes a patrol off the board (the tank laager crew go to fight the fire). Each would be a
-per-kind entry in `rules.json`, never a code branch for one objective.
+**Secondary payoffs** (M11b; considered since M8, built after playtesters said beating
+a bonus target should be worth more). A secondary pays back in play, not only in score:
+- **The telephone exchange**, cut or blown: the garrison can no longer call up its
+  **reserve squad** (§6 Exfil watched). If the reserve is already out, it stays.
+- **The fuel dump**, blown: the **nearest patrol leaves the board** to deal with it (the
+  tank laager crew go to fight the fire), on top of any the blast itself kills.
+
+Each is a per-kind `payoff` in `rules.json` (`noReserve`, `withdrawPatrols`), never a
+code branch for one objective. The target rings, the objective hovers and the mission
+panel say what each pays before the player commits, and the turn report says when it
+happens.
 
 ---
 

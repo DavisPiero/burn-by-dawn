@@ -329,7 +329,7 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         hexes: o.hexes, primary: o.primary, colour: 'red',
         // The charges it takes, so three dashed points never read as three charges.
-        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, chargeCount(kindOf(o, rules).chargesNeeded)],
+        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, payoffNote(kindOf(o, rules)), chargeCount(kindOf(o, rules).chargesNeeded)].filter(Boolean),
       })),
       { hexes: view.exfil, primary: false, colour: 'green', note: `GET ${rules.mission.minimumOut} OUT HERE` },
     ];
@@ -421,7 +421,26 @@ function describeObjective(o) {
     `alert +${kind.alert}`,
   ];
   if (kind.cutLine) parts.push('or a scout can cut the line: a full turn, silent');
+  const payoff = payoffWords(kind);
+  if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
+}
+
+/** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */
+function payoffWords(kind) {
+  const { noReserve, withdrawPatrols } = kind.payoff;
+  const words = [];
+  if (noReserve) words.push('keeps the reserve squad from being called up');
+  if (withdrawPatrols > 0) words.push(`draws the nearest ${withdrawPatrols === 1 ? 'patrol' : `${withdrawPatrols} patrols`} off the board`);
+  return words.length ? words.join(' and ') : null;
+}
+
+/** The same, lettered on its target ring before the drop: "STOPS THE RESERVE", "A PATROL LEAVES". */
+function payoffNote(kind) {
+  const { noReserve, withdrawPatrols } = kind.payoff;
+  if (noReserve) return 'STOPS THE RESERVE';
+  if (withdrawPatrols > 0) return withdrawPatrols === 1 ? 'A PATROL LEAVES' : `${withdrawPatrols} PATROLS LEAVE`;
+  return null;
 }
 
 /** The mission at a glance for the panel: objectives, men out, the diversion. */
@@ -434,7 +453,8 @@ function describeMissionState() {
       return {
         label: o.label, primary: o.primary, destroyed: o.destroyed, cut: o.cut,
         points: o.primary ? rules.scoring.primary : rules.scoring.secondary,
-        detail: o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`,
+        detail: (o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`)
+          + (payoffWords(kind) ? `. Destroying it ${payoffWords(kind)}` : ''),
         progress: o.destroyed ? (o.cut ? 'cut' : 'done') : `${o.detonated + set}/${kind.chargesNeeded}${set ? ' ●' : ''}`,
       };
     }),
