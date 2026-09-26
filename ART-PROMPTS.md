@@ -287,10 +287,13 @@ out of a game like this anyway.
 
 ---
 
-## Priority 8 — the results masthead
+## Priority 8 — the results masthead ✖ not needed (2026-09-26)
 
-**Why:** the last page of every game still has the drawn BURN BY DAWN lettering, while the
-title card has your stencil. This one is quick: you already have the lettering.
+**Dropped:** since M9b the back page is headed by the title card itself, smaller, so there
+is no separate masthead to make. The spec is kept below in case that changes.
+
+**Why it was here:** the last page of every game still had the drawn BURN BY DAWN lettering,
+while the title card has your stencil.
 
 | | |
 |---|---|
@@ -352,7 +355,6 @@ Not worth making yet. The map and layout will still change.
 |---|---|---|
 | `paper-crease.png` | 400 × 1800, alpha | *Vertical centre-fold crease of an open comic annual, soft shadow and highlight, isolated on transparency.* |
 | `paper-edge-wear.png` | 2560 × 1600, alpha | *Overlay of aged paper edge browning and corner foxing on transparency, centre fully clear.* |
-| `logo-burn-by-dawn.svg` | 800 × 300, SVG | Generate a raster rough to trace: *Masthead lettering "BURN BY DAWN" in the style of a 1980s British war comic title, bold condensed slab capitals with a hard offset shadow, parachute silhouette.* This is the one prompt where text is the point. Expect to redraw the letters by hand. |
 | Audio | see ART-ASSETS.md §9 | — |
 
 ---
@@ -373,7 +375,6 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - Improved drawn portraits and chips: the fallback when no PNG is supplied.
 - A plain night scene for the title card (moon, Dakota, canopies, skyline), with the title
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
-- The results masthead, BURN BY DAWN in slab capitals (until priority 8 is supplied).
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
   exchange.
 - The parachutes: the canopy opening and drifting in the air and the spent one on the

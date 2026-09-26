@@ -200,9 +200,9 @@ to be casual while still being strategic.
 - **Hover an enemy**: highlight its vision arc and its patrol route.
 - **Hover an objective**: show what it needs (charges, fuse, blast radius).
 - **Right-click**: deselect / cancel.
-- **Undo** (M8e): the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last
-  move or action of this player phase, one step at a time, as far back as the start of the
-  turn. The steps are forgotten when the turn ends or the stick jumps, so nothing the
+- **Undo** (M8e, one step since M9b): the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z`
+  takes back the last move or action, and only that one: it cannot be pressed again to go
+  further back. It is forgotten when the turn ends or the stick jumps, so nothing the
   garrison has done is ever undone. The player phase rolls no dice (only the drop does,
   §9), so undoing can never re-roll anything; it is a mis-click safety net, not a scouting
   tool, because there is nothing hidden to learn by trying a move.
@@ -722,5 +722,6 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M8d** | Supplied art in: portraits, chips, paper, title card, fonts; objectives redrawn after the reference art; a slot for a painted aircraft; published | The supplied files load with no console errors but the optional aircraft; the orders fit at 1280x800; the game plays from its GitHub Pages address; no rules change |
 | **M8e** | Operator review: undo, blasts kill enemies, the stone throw shown as a throw, the exfil barn, lighter paper | Undo takes back any move or action this turn and no further; an enemy in a blast dies unless it is the reserve, leaving no body; aiming a stone draws the lob and the earshot; the painted aircraft flies the drop |
 | **M9** | Difficulty levels: Easy, Normal, Hard (§10) | The orders offer the three levels and still fit at 1280x800; each level's numbers show in the orders, the rings and the panel; the level is beside the seed and on the back page; it cannot change after the jump; the balance bot wins clearly more on Easy and clearly less on Hard |
+| **M9b** | Operator review: one-step undo, the RAF diversion's card, aiming lets go of a clicked man, the title card and strapline on the orders and the back page, back page tidied | Undo takes back the last action only; calling the diversion opens a card saying what it did and what calls are left; clicking another man while aiming selects him; the orders still fit at 1280x800 |
 
 Do not start a milestone before the previous one is merged and playable.

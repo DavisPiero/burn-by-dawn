@@ -233,8 +233,21 @@ export function rankedReport(events, place) {
 }
 
 /**
+ * The title card, drawn or painted (theme.js TITLE_CARD), with the title set
+ * over it in type and the tagline along its foot. Heads the orders, and the
+ * back page smaller.
+ */
+function titleBanner({ title, tagline }) {
+  const art = svgEl('svg', { class: 'title-banner-art', viewBox: '0 0 600 150', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' });
+  art.appendChild(svgEl('use', { href: '#title-card', width: 600, height: 150 }));
+  const parts = [art, html('h1', 'title-banner-title', title)];
+  if (tagline) parts.push(html('div', 'title-banner-tagline', tagline));
+  return html('div', 'title-banner', parts);
+}
+
+/**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
- * { banner?: { title }, title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
+ * { banner?: { title, tagline }, title, kicker, paragraphs?, sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
@@ -244,11 +257,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   card.replaceChildren();
   // The title card, over the orders only: the `title-card` sprite, drawn or
   // painted (theme.js TITLE_CARD), with the title set over it in type.
-  if (briefing.banner) {
-    const art = svgEl('svg', { class: 'brief-banner-art', viewBox: '0 0 600 150', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' });
-    art.appendChild(svgEl('use', { href: '#title-card', width: 600, height: 150 }));
-    card.appendChild(html('div', 'brief-banner', [art, html('h1', 'brief-banner-title', briefing.banner.title)]));
-  }
+  if (briefing.banner) card.appendChild(titleBanner(briefing.banner));
   card.appendChild(html('div', 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
   for (const text of briefing.paragraphs ?? []) card.appendChild(html('p', null, text));
   for (const section of briefing.sections) {
@@ -463,13 +472,13 @@ export function renderEndTurnButton(button, state, rules) {
   else button.textContent = 'END TURN  [space]';
 }
 
-export const UNDO_HELP = 'Take back the last move or action this turn, one at a time. Only this turn: once you end it, what happened stands.';
+export const UNDO_HELP = 'Take back the last move or action you made. Only that one: undo cannot be repeated to go further back, and once you end the turn, what happened stands.';
 
 /** Undo, beside End turn: live while there is something this turn to take back. */
-export function renderUndoButton(button, state, steps) {
+export function renderUndoButton(button, state, canUndo) {
   button.hidden = state.phase === 'drop';
-  button.disabled = steps === 0 || Boolean(state.outcome);
-  button.textContent = steps > 1 ? `UNDO ×${steps}  [Z]` : 'UNDO  [Z]';
+  button.disabled = !canUndo || Boolean(state.outcome);
+  button.textContent = 'UNDO  [Z]';
 }
 
 // --- the briefing -------------------------------------------------------------
@@ -518,14 +527,12 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * The results (SPEC.md §10), printed as the back page of the annual over the
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
-export function renderResults(element, outcome, levelLabel) {
+export function renderResults(element, outcome, levelLabel, banner) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
   element.className = outcome.kind;
 
-  const logo = svgEl('svg', { class: 'logo', viewBox: '0 0 800 300', preserveAspectRatio: 'xMidYMid meet' });
-  logo.appendChild(svgEl('use', { href: '#logo-burn-by-dawn', width: 800, height: 300 }));
 
   const fates = html('ul', 'fates');
   for (const f of outcome.fates) {
@@ -544,21 +551,21 @@ export function renderResults(element, outcome, levelLabel) {
   }
   const total = score.insertRow();
   total.className = 'total';
-  total.insertCell().textContent = 'Score';
+  total.insertCell().textContent = 'SCORE';
   total.insertCell().textContent = String(outcome.score.total);
 
-  const again = html('button', 'btn', 'Play again');
+  const again = html('button', 'btn', 'PLAY AGAIN');
   again.type = 'button';
   again.addEventListener('click', () => window.location.reload());
 
   element.append(
-    logo,
+    titleBanner(banner),
     html('div', 'kicker', 'THE BACK PAGE · HOW DID YOUR STICK DO?'),
     html('h2', null, OUTCOME_WORDS[outcome.kind]),
     html('p', null, `${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}. Turn ${outcome.turn}, on ${levelLabel}.`),
     fates,
     score,
-    again,
+    html('div', 'again', [again]),
   );
 }
 
