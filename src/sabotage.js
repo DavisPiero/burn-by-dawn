@@ -254,8 +254,10 @@ export function primaryShortfall(state, rules) {
  * Charges on one objective going off in the same phase are one explosion: one
  * alert rise, one noise, heard from the objective in the next enemy phase. An
  * objective is destroyed once as many of its charges have gone off as its kind
- * needs. Any trooper within the blast radius of a charge that goes off dies,
- * wounded or not, and leaves a body; enemies are not harmed.
+ * needs. Anyone within the blast radius of a charge that goes off dies: a
+ * trooper, wounded or not, leaving a body; an enemy of a killable type, with no
+ * body, since the explosion itself is what the garrison hears. An enemy that
+ * cannot be killed (the reserve, enemies.json) is not harmed.
  */
 export function runFusePhase(state, rules) {
   const events = [];
@@ -286,6 +288,11 @@ export function runFusePhase(state, rules) {
       if (!onBoard(unit) || !charges.some((c) => hexDistance(c, unit) <= kind.blastRadius)) continue;
       next = killInBlast(next, unit);
       events.push({ kind: 'blastKilled', unitId: unit.id, unitName: unit.shortName, label: objective.label });
+    }
+    const caught = next.enemies.filter((e) => e.killable && charges.some((c) => hexDistance(c, e) <= kind.blastRadius));
+    if (caught.length > 0) {
+      next = { ...next, enemies: next.enemies.filter((e) => !caught.includes(e)) };
+      for (const e of caught) events.push({ kind: 'enemyBlastKilled', enemyId: e.id, enemyLabel: e.label, label: objective.label, q: e.q, r: e.r });
     }
   }
   return { state: next, events };
