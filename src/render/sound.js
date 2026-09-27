@@ -518,18 +518,27 @@ export function setMuted(on) {
 }
 
 // --- music (M17) --------------------------------------------------------------
-// The title music over the opening screens, played round and round until the
-// game starts. Made in code as the sounds are; a supplied
-// assets/audio/music-title.mp3 is looped instead, as it is, so it should be
-// cut to loop cleanly. `beat` is the made music's tempo (88 a minute) and
-// `phrase` one pass of it, four bars.
+// The title music over the orders, played round and round until they are put
+// away, and again between turns (M19, the operator's). Made in code as the
+// sounds are; a supplied assets/audio/music-title.mp3 is looped instead, as
+// it is, so it should be cut to loop cleanly. `beat` is the made music's tempo
+// (88 a minute) and `phrase` one pass of it, four bars.
 export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16, lookahead: 2.5, fadeIn: 2, fadeOut: 1.6 };
 
 let music = null;
+// Where the music got to when it last faded (M19): the pass of the made music
+// to lay next, or the seconds into a supplied file. Between turns it carries
+// on from there, so the same opening bars are not heard every turn.
+let resumeAt = { pass: 0, seconds: 0 };
 
-/** Start the title music, if it is not playing already. Silent while muted or before the first key or click. */
-export function startMusic() {
+/**
+ * Start the title music, if it is not playing already: from the top, or with
+ * `resume` from where it last faded. Silent while muted or before the first
+ * key or click.
+ */
+export function startMusic({ resume = false } = {}) {
   if (music || muted || !unlocked) return;
+  if (!resume) resumeAt = { pass: 0, seconds: 0 };
   const ctx = audio();
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
@@ -537,7 +546,7 @@ export function startMusic() {
   out.gain.setValueAtTime(0.0001, ctx.currentTime);
   out.gain.exponentialRampToValueAtTime(1, ctx.currentTime + MUSIC.fadeIn);
   out.connect(ctx.destination);
-  const playing = { out, timer: null, source: null };
+  const playing = { out, timer: null, source: null, pass: resumeAt.pass, startedAt: ctx.currentTime, offset: 0 };
   const [[id, gain]] = CUES[MUSIC.cue];
   const buffer = supplied.get(id);
   if (buffer) {
@@ -548,16 +557,16 @@ export function startMusic() {
     playing.source.buffer = buffer;
     playing.source.loop = true;
     playing.source.connect(level);
-    playing.source.start();
+    playing.offset = resumeAt.seconds % buffer.duration;
+    playing.source.start(0, playing.offset);
   } else {
     // Each pass is laid down a little before it is due, the horn every other time.
     let next = ctx.currentTime + 0.05;
-    let pass = 0;
     const lay = () => {
       while (next < ctx.currentTime + MUSIC.lookahead) {
-        scheduleCue(ctx, out, MUSIC.cue, next, pass % 2);
+        scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2);
         next += MUSIC.phrase;
-        pass++;
+        playing.pass++;
       }
     };
     lay();
@@ -566,13 +575,15 @@ export function startMusic() {
   music = playing;
 }
 
-/** Fade the title music out: the game has started, or the sound is off. */
+/** Fade the title music out: the orders are put away, a turn begins, or the sound is off. */
 export function stopMusic() {
   if (!music) return;
-  const { out, timer, source } = music;
+  const { out, timer, source, pass, startedAt, offset } = music;
   music = null;
   clearInterval(timer);
   const now = context.currentTime;
+  // The passes already laid play out under the fade; the next time starts after them.
+  resumeAt = { pass, seconds: offset + (now - startedAt) };
   out.gain.cancelScheduledValues(now);
   out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), now);
   out.gain.setTargetAtTime(0, now, MUSIC.fadeOut / 4);

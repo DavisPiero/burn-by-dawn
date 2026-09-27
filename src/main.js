@@ -614,13 +614,21 @@ function actionsFor(unit) {
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
-    { id: 'pack', key: 'U', label: 'Pack chute', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
+    { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
-  ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
+  ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
+}
+
+// What an action costs, under its name on the button (M19, the operator's):
+// "2 AP", or "all AP" for those that take his whole turn. The rollover still
+// has the full cost and what else it does.
+function apLabel(action) {
+  const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
+  return wholeTurn ? 'all AP' : `${action.apCost} AP`;
 }
 
 // What a kill is worth on the back page (M16), from rules.json scoring.
@@ -671,7 +679,7 @@ function passChargeAction(unit) {
   const check = checks.find((c) => c.ok) ?? checks[0] ?? checkPassCharge(unit, null, rules);
   const reason = check.reason === 'pick a man beside him' ? 'nobody beside him' : check.reason;
   return {
-    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`,
+    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`, apCost: check.cost,
     help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing. Press E, then click the man.`,
   };
 }
@@ -686,12 +694,12 @@ function placeChargeAction(unit) {
   }
   return {
     id: 'charge', key: 'C', label: 'Place charge', short: 'Charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
-    ok: check.ok, reason: check.reason, cost,
+    ok: check.ok, reason: check.reason, cost, apCost: check.cost,
   };
 }
 
 function withCost(check, format) {
-  return { ok: check.ok, reason: check.reason, cost: format(check.cost) };
+  return { ok: check.ok, reason: check.reason, cost: format(check.cost), apCost: check.cost };
 }
 
 function nearestInPlay(unit) {
@@ -884,13 +892,18 @@ function toggleSound() {
 }
 
 /**
- * The title music (M17, the operator's) plays over the opening screens — the
- * orders and picking a run — and fades as the stick jumps. A new game brings
- * it back with its orders; the orders reopened in play with ? do not.
+ * The title music (M17, the operator's) plays over a new game's orders and
+ * fades as they are put away (M19, the operator's: it looped on through the
+ * run choice and the drop). It comes back between turns, while the garrison
+ * moves and its turn card is up, carrying on where it left off; a card left
+ * waiting under the orders keeps it. The orders reopened with ? do not bring
+ * it, nor do the other cards.
  */
 function syncMusic() {
-  if (opened && state.phase === 'drop' && !state.outcome && !isMuted()) startMusic();
-  else stopMusic();
+  const opening = briefing?.opening === true;
+  const interlude = bangTimer !== null || (briefing?.under ?? briefing)?.kind === 'turn';
+  if (!opened || state.outcome || isMuted() || !(opening || interlude)) stopMusic();
+  else startMusic({ resume: !opening });
 }
 
 /** The sounds of a turn's report: a crump for any bang, a dog when the garrison stirs. */
@@ -1216,7 +1229,7 @@ function restartMission() {
   const search = query.toString();
   window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
   startMission(level, freshSeed(Date.now()));
-  briefing = { kind: 'orders' };
+  briefing = { kind: 'orders', opening: true };
   render();
 }
 
@@ -1828,8 +1841,9 @@ try {
   helpTab.addEventListener('click', () => openHelp());
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, () => describeDiversion(rules.diversion.uses));
-  // The orders open over the board before anything else (SPEC.md §11).
-  briefing = { kind: 'orders' };
+  // The orders open over the board before anything else (SPEC.md §11), with
+  // the title music over them.
+  briefing = { kind: 'orders', opening: true };
   briefingBackdrop.addEventListener('click', () => closeBriefing());
   loadingProgress(pictures);
   // Speech bubbles are measured in the face they are set in: wait for it.
