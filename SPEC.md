@@ -675,8 +675,9 @@ stepped off from, for another man to pick up (M13b).
 Results page, styled as the back page of the annual, listing all six by name and fate
 (out, killed, left behind), and the score, whatever the outcome:
 
-- Objectives destroyed (primary 3, each secondary 2)
-- Troopers exfiltrated (1 each)
+- Objectives destroyed (primary 10, each secondary 4; 3 and 2 until M18)
+- Troopers exfiltrated: 2 each who was never hit, 1 each who was wounded, dressed or not
+  (M18, the operator's; 1 each until then)
 - Troopers exfiltrated who were never spotted all mission (1 more each; M11b replaced
   "turns remaining, 1 per 2 turns", which paid players to rush — playtesters did, and
   either made chaos or finished early). A man's roster rollover says whether he is
@@ -686,6 +687,11 @@ Results page, styled as the back page of the annual, listing all six by name and
   is worth 1 and one they find nothing). A blast's kills leave no body and score nothing,
   or blowing a target up beside a patrol would pay. The Knife and Kill rollovers say so.
 - Never reached Alarmed and never called the RAF diversion (+3)
+
+Why the bridge is worth so much (M18): with men out paid 2 each, a stick that walked all
+six out unseen without touching the bridge would outscore one that blew it and brought three
+home. At 10 the job done with three men out (22 on a clean run) edges out the best retreat
+(21), and a full success tops out at 39 before kills.
 
 The page also says which difficulty the mission was played at.
 
@@ -958,7 +964,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
-| **M18** | Eighth operator playtest review, no rules change: the exchange's satchels and the wood's name moved, the knife's stain spreading slowly, a stone's landing marked alone, the cut exchange flashing bright and fast, a red cross when aiming aid, the RAF heard first, a lower slower bang, no ring on a bang | The exchange's satchels touch no wire or dashed edge; Bois des Moines clears the north run's line; a knifed enemy's stain spreads from under the body; aiming a stone draws nothing from the man; aiming aid crosses the man under the mouse; no ring stands on a blown target |
+| **M18** | Eighth operator playtest review, one scoring change (the bridge 10, bonus targets 4, a man out 2 unhurt or 1 wounded): the exchange's satchels and the wood's name moved, the knife's stain spreading slowly, a stone's landing marked alone, the cut exchange flashing bright and fast, a red cross when aiming aid, the RAF heard first, a lower slower bang, no ring on a bang | The exchange's satchels touch no wire or dashed edge; Bois des Moines clears the north run's line; a knifed enemy's stain spreads from under the body; aiming a stone draws nothing from the man; aiming aid crosses the man under the mouse; no ring stands on a blown target |
 | **M17** | Seventh operator playtest review, no rules change: the new title card, chips and painted blast in; woods, hedgerows and orchards redrawn after the reference art; the counter key centred on the crease and WHO pointed at the name; ? working over a turn card; title music; a loading page | The board's woods, hedges and orchards match their references and still read at 1280x800; the key's middle is on the crease where the window has room; clicking ? over a turn card opens the orders; music plays over the orders and run choice and fades at the jump; nothing on the spread is seen being laid out |
 | **M16** | Sixth operator playtest review: swimming to any hex on the far bank beside the water and never onto the lock (a bug), a lane to the lock, points for kills and back for bodies found, the counter key reworded and moved, a ? for how to play, ghost Dakotas, faint paper, slower walks, the power going at the exchange, the knife's splat | A man beside the canal can swim to any free far-bank hex sharing its water hex, never the lock or the bridge; a man on the east bank by Canal St-Rémy can swim onto the lane and reach the exfil the next turn; a kill scores 1 and a found body takes it back; ? opens the orders at any time; the balance bot is re-run (unchanged: Normal 94/84/76 with the knife) |
 | **M15** | Fifth operator playtest review: three rules (a cut line raises the alert, anyone packs any parachute, a suppressed enemy does not spot), the garrison's turn shown, a crosshair when aiming, the counter key beside the orders, a stopwatch fuse, charge dots, the orders' head reordered, the margin reworked with the build, the Dakota's drone and rising bells, the painted enemy chips in | Cutting the line raises the alert 1; a man packs another's parachute; a man walking past a suppressed enemy is not spotted; ending a turn shows the enemies walking before the card; the key reads at 12 px beside the orders at 1280x800; the balance bot is re-run (unchanged for the naive bot, naivefight 96/96/96) |

@@ -181,7 +181,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   // Sabotage, exfil, the diversion and the score, SPEC.md §4, §7, §10. The
   // objectives themselves are checked against map.json in sabotage.js.
   requireCount(rules.noise.explosion, '"noise.explosion"', rulesUrl);
-  for (const key of ['primary', 'secondary', 'perTrooperOut', 'perTrooperUnseen', 'clean']) {
+  for (const key of ['primary', 'secondary', 'perTrooperOut', 'perTrooperOutWounded', 'perTrooperUnseen', 'clean']) {
     requireCount(rules.scoring?.[key], `"scoring.${key}"`, rulesUrl);
   }
   if (!rules.alert.states.some((s) => s.id === rules.scoring.cleanNeverReached)) {
