@@ -7,8 +7,8 @@
 // rather than assuming coordinates.
 
 import { alertIndex, runEnemyPhase } from '../src/enemy.js';
-import { hexDistance } from '../src/hex.js';
-import { findPath, isPassable, loadJson, loadMap, terrainAt, terrainIdAt } from '../src/map.js';
+import { hexDistance, NEIGHBOR_DIRS } from '../src/hex.js';
+import { findPath, forEachCell, hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import {
   callDiversion, checkDiversion, createInitialState, cutLine, endTurn, exfilWouldFail, moveUnit, passCharge, placeCharge, settleMission,
   swimAcross,
@@ -160,6 +160,42 @@ export default [
     equal(result.state.alert.points, rules.objectives.fuelDump.alert, 'fuel dump alert');
   }],
 
+  ['a swim lands anywhere on the far bank beside the same water, never on a crossing (M16)', async () => {
+    const { map, rules, state } = await loadAll();
+    const { across, crossings } = rules.actions.swim;
+    const crossingKeys = new Set();
+    forEachCell(map, (q, r) => { if (crossings.includes(terrainIdAt(map, q, r))) crossingKeys.add(hexKey(q, r)); });
+    const man = state.units.find((u) => u.role === 'scout');
+    const exfil = map.exfil.map(([q, r]) => hexKey(q, r));
+    let most = 0;
+    let firmToExfil = false;
+    forEachCell(map, (q, r) => {
+      if (!isInPlay(map, q, r) || !isPassable(terrainAt(map, q, r))) return;
+      const s = scenario(state, { [man.id]: { q, r } });
+      const targets = swimTargets(map, s, unitIn(s, man.id), rules);
+      if (crossingKeys.has(hexKey(q, r))) {
+        equal(targets.length, 0, `no swim from the ${terrainIdAt(map, q, r)} at (${q},${r})`);
+        assert(!checkSwim(map, s, unitIn(s, man.id), null, rules).ok, 'and the button says so');
+        return;
+      }
+      most = Math.max(most, targets.length);
+      for (const t of targets) {
+        const where = `(${q},${r}) -> (${t.q},${t.r})`;
+        assert(!crossingKeys.has(hexKey(t.q, t.r)), `never onto a crossing: ${where}`);
+        assert(hexDistance(t, { q, r }) === 2, `one hex of water: ${where}`);
+        assert(NEIGHBOR_DIRS.some((d) => terrainIdAt(map, q + d.q, r + d.r) === across && hexDistance(t, { q: q + d.q, r: r + d.r }) === 1), `beside the same water: ${where}`);
+        assert(!findPath(map, { q, r }, t, crossingKeys), `the far bank, not his own: ${where}`);
+        // The operator's M16 note: from the south of the far bank there is a
+        // landing on firm ground a man can walk to the exfil from in one turn.
+        if (terrainAt(map, t.q, t.r).moveCost === 1) {
+          const reach = reachableWithin(map, t, rules.roles.sapper.actionPoints, null);
+          if (exfil.some((k) => reach.has(k))) firmToExfil = true;
+        }
+      }
+    });
+    assert(most > 1, 'some bank offers more than one landing');
+    assert(firmToExfil, 'a swim lands on firm ground within a turn of the exfil');
+  }],
   ['a destroyed bridge is canal: nobody walks over it, and patrols turn back; swimming is gated only if the rules say so', async () => {
     const { map, rules, state } = await loadAll();
     const primary = primaryOf(state);
@@ -431,5 +467,14 @@ export default [
       + 3 * rules.scoring.perTrooperUnseen + rules.scoring.clean, `score (${lines})`);
     const seen = settleMission({ ...s, units: s.units.map((u) => (u.out ? { ...u, everSpotted: true } : u)) }, rules, map);
     equal(seen.outcome.score.total, settled.outcome.score.total - 3 * rules.scoring.perTrooperUnseen, 'seen men pay once');
+  }],
+  ['a kill scores, and loses it again when its body is found; a blast kill scores nothing (M16)', async () => {
+    const { rules, state } = await loadAll();
+    const base = { ...state, units: state.units.map((u) => ({ ...u, out: false })), alert: { ...state.alert, peak: 99 } };
+    const baseTotal = scoreOf(base, rules).total;
+    const body = (found) => ({ enemyId: 'e', name: 'the patrol', q: 0, r: 0, found });
+    const two = { ...base, bodies: [body(false), body(true), { unitId: 'x', name: 'X', q: 0, r: 0, found: true }] };
+    equal(scoreOf(two, rules).total - baseTotal, 2 * rules.scoring.perKill + rules.scoring.perKillFound, 'two kills, one found; our own dead count nothing');
+    assert(scoreOf(two, rules).lines.some((l) => l.points < 0), 'the found body is its own line');
   }],
 ];

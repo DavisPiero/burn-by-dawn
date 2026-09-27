@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -549,6 +549,7 @@ export function renderPieces(layers, state, view) {
   }
   drawSites(layers, state, view);
   if (view.drop) drawDrop(layers, view.drop);
+  if (view.drop && !view.drop.runs.some((r) => r.selected)) drawGhostPlanes(layers, view.drop.runs, now);
 
   // Where he can go and the leader's orders: every outline's paper casing
   // first, then every line, so where two run along the same hex edge neither
@@ -573,7 +574,11 @@ export function renderPieces(layers, state, view) {
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
-  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize);
+  for (const body of state.bodies) {
+    // A knifed enemy lies in a faint stain (M16), under the body.
+    if (body.knifed) drawOnGround(layers, 'effect-blood-splat', body, -1, KNIFE_SPLAT.stainSize, KNIFE_SPLAT.stainOffset, { opacity: KNIFE_SPLAT.stainOpacity });
+    drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize, MARKER.bodyOffset);
+  }
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
@@ -617,7 +622,9 @@ export function renderPieces(layers, state, view) {
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
-    travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, GARRISON_SHOW.msPerHex);
+    // At the pace of the show that set it off; after it, only a journey
+    // already under way is carried on, at the pace it began at.
+    travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, view.garrisonShow?.msPerHex ?? GARRISON_SHOW.msPerHex.calm);
   }
   // The enemy being aimed at (M15), over its counter.
   if (view.aim) {
@@ -661,6 +668,11 @@ export function renderPieces(layers, state, view) {
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
+  if (view.strikeShow?.kind === 'knife') drawKnifeSplat(layers, view.strikeShow, now);
+  if (view.strikeShow?.kind === 'cut') {
+    const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
+    if (objective) drawPowerCut(layers, objective, now - view.strikeShow.since);
+  }
   if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
@@ -848,6 +860,28 @@ function drawAircraft(layers, timeline, elapsed) {
   layers.effects.append(shadow, plane);
 }
 
+// Until a run is picked (M16): a faint grey Dakota flies each run's line, again
+// and again, each a third of a pass behind the one before, so the lines read
+// as the aircraft's path. Timed from the page's clock, so a redraw carries
+// each pass on where it was. No shadow and no sound: it is only a hint.
+function drawGhostPlanes(layers, runs, now) {
+  const size = DROP_SHOW.aircraftSize * DROP_GHOST.scale;
+  const period = DROP_GHOST.flightMs + DROP_GHOST.gapMs;
+  const flying = DROP_GHOST.flightMs / period;
+  runs.forEach((run, i) => {
+    const { start, end, angle } = dropTimeline(layers.map, { from: run.from, to: run.to, jumps: [] });
+    const at = (t, opacity, offset) => ({
+      transform: `translate(${start.x + (end.x - start.x) * t}px, ${start.y + (end.y - start.y) * t}px) rotate(${angle}deg)`,
+      opacity, offset: offset * flying,
+    });
+    const plane = el('g', { style: 'filter: grayscale(1)' });
+    plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
+    const frames = [at(0, 0, 0), at(0.08, DROP_GHOST.opacity, 0.08), at(0.92, DROP_GHOST.opacity, 0.92), at(1, 0, 1), { ...at(1, 0, 1), offset: 1 }];
+    playFrom(plane, frames, { duration: period, iterations: Infinity }, now + (i * period) / runs.length);
+    layers.effects.appendChild(plane);
+  });
+}
+
 // --- the RAF flyover (M11) --------------------------------------------------------
 // Display only, like the drop: when the diversion is called the Dakota crosses
 // the board over the garrison, on the straight line that best fits where the
@@ -933,6 +967,68 @@ function drawShot(layers, shot, now) {
   }
 }
 
+// The knife (M16): a red splat bursts on the enemy's hex, in three steps like
+// the blast, holds, and fades; the stain left under the body is drawn with it.
+function drawKnifeSplat(layers, show, now) {
+  const elapsed = now - show.since;
+  if (elapsed > KNIFE_SPLAT.ms) return;
+  const p = axialToPixel(show.at.q, show.at.r, layers.map.hexSize);
+  const size = KNIFE_SPLAT.size;
+  const splat = el('use', { href: '#effect-blood-splat', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size });
+  splat.style.transformBox = 'fill-box';
+  splat.style.transformOrigin = '50% 50%';
+  layers.effects.appendChild(splat);
+  playFrom(splat, [
+    { transform: 'scale(0.2)', opacity: 1, offset: 0, easing: 'steps(3, end)' },
+    { transform: 'scale(1.15)', opacity: 1, offset: 0.2 },
+    { transform: 'scale(1)', opacity: 1, offset: 0.3 },
+    { transform: 'scale(1)', opacity: 1, offset: 0.6 },
+    { transform: 'scale(1)', opacity: 0, offset: 1 },
+  ], { duration: KNIFE_SPLAT.ms }, elapsed);
+}
+
+// The line cut (M16): the lights in the exchange's windows stutter and die,
+// the village round it dims in fits, and each wire sparks where it parted.
+// Every step is held, not eased, like the rest of the board's motion.
+function drawPowerCut(layers, objective, elapsed) {
+  if (elapsed > POWER_CUT.ms) return;
+  const { map } = layers;
+  const art = objectiveArt(objective);
+  const centre = labelPoint(map, objective.hexes);
+  const origin = { x: centre.x - art.width / 2, y: centre.y - art.height / 2 };
+  // Held steps, spread over the first `upTo` of the animation.
+  const held = (values, upTo = 1) => values.map((opacity, i) => ({ opacity, offset: (i / (values.length - 1)) * upTo, easing: 'steps(1, end)' }));
+  // Darkest over the exchange, fading out to nothing at the village's edge.
+  const shade = el('radialGradient', { id: 'power-cut-dim' });
+  shade.append(el('stop', { offset: '0', 'stop-color': PALETTE.ink, 'stop-opacity': 1 }), el('stop', { offset: '0.55', 'stop-color': PALETTE.ink, 'stop-opacity': 0.7 }), el('stop', { offset: '1', 'stop-color': PALETTE.ink, 'stop-opacity': 0 }));
+  const dim = el('circle', {
+    cx: origin.x + 95, cy: origin.y + 105, r: map.hexSize * Math.sqrt(3) * POWER_CUT.dimHexes, fill: 'url(#power-cut-dim)', opacity: 0,
+  });
+  layers.effects.append(shade, dim);
+  const d = POWER_CUT.dimOpacity;
+  // Stutters, holds dark, then the page's own light comes back.
+  playFrom(dim, [...held([0, d, d * 0.2, d * 0.9, d * 0.1, d], 0.6), { opacity: d, offset: 0.8 }, { opacity: 0, offset: 1 }], { duration: POWER_CUT.ms }, elapsed);
+  // The windows, lit, going out: the same squares the exchange is drawn with.
+  const lights = el('g', { opacity: 0 });
+  for (const [x, y] of [[62, 103], [85, 103], [108, 103], [62, 118], [108, 118]]) {
+    lights.appendChild(el('rect', { x: origin.x + x, y: origin.y + y, width: 10, height: 10, fill: PALETTE.paper }));
+  }
+  layers.effects.appendChild(lights);
+  playFrom(lights, held([1, 0, 1, 0, 0.8, 0, 0.5, 0, 0]), { duration: POWER_CUT.ms * 0.7 }, elapsed);
+  // A spark where each wire parted, twice.
+  const standard = { x: origin.x + art.wires.x, y: origin.y + art.wires.y };
+  const size = POWER_CUT.sparkSize;
+  objective.chargeHexes.forEach((h, i) => {
+    const p = axialToPixel(h.q, h.r, map.hexSize);
+    const v = towardObjective(map, h, objective);
+    const pole = { x: p.x - v.x * map.hexSize * WIRES.poleAway, y: p.y - v.y * map.hexSize * WIRES.poleAway - WIRES.poleSize * 0.3 };
+    const at = { x: (pole.x + standard.x) / 2, y: (pole.y + standard.y) / 2 };
+    const spark = el('use', { href: '#effect-spark', x: at.x - size / 2, y: at.y - size / 2, width: size, height: size, opacity: 0 });
+    layers.effects.appendChild(spark);
+    playFrom(spark, held([1, 0, 0, 1, 0, 0]), { delay: i * 90, duration: POWER_CUT.ms * 0.45 }, elapsed);
+  });
+}
+
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
 
 /**
@@ -954,12 +1050,12 @@ function travel(layers, mover, unit, now, key, trailOf, msPerHex) {
     const from = trail.map((h) => hexKey(h.q, h.r)).lastIndexOf(last.where);
     let steps = trail.slice(from + 1);
     if (steps.length === 0 || hexKey(steps.at(-1).q, steps.at(-1).r) !== where) steps = [{ q: unit.q, r: unit.r }];
-    layers.motion.set(key, { where, since: now, path: [last.at, ...steps] });
+    layers.motion.set(key, { where, since: now, path: [last.at, ...steps], msPerHex });
   }
   layers.motion.get(key).at = { q: unit.q, r: unit.r };
 
   const journey = layers.motion.get(key);
-  const duration = (journey.path.length - 1) * msPerHex;
+  const duration = (journey.path.length - 1) * (journey.msPerHex ?? msPerHex);
   const elapsed = now - journey.since;
   if (!(duration > 0) || elapsed >= duration || typeof mover.animate !== 'function') return;
   const end = axialToPixel(unit.q, unit.r, layers.map.hexSize);
@@ -1340,10 +1436,11 @@ function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
 // side and dropped charges to the other, so both show when they share it.
-function drawOnGround(layers, id, at, side, size = MARKER.groundSize) {
+function drawOnGround(layers, id, at, side, size = MARKER.groundSize, offset = MARKER.groundOffset, extra = {}) {
   const p = axialToPixel(at.q, at.r, layers.map.hexSize);
   layers.highlight.appendChild(el('use', {
-    href: `#${id}`, x: p.x + side * 18 - size / 2, y: p.y + 14 - size / 2, width: size, height: size,
+    ...extra,
+    href: `#${id}`, x: p.x + side * offset.x - size / 2, y: p.y + offset.y - size / 2, width: size, height: size,
   }));
 }
 
@@ -1830,10 +1927,11 @@ function drawCounter(unit, number, map, isSelected) {
 
   // A charge he carries (M15): an orange dot each, down the left under his
   // role, in the colour of what it does, ringed in paper to stand off the
-  // green. The leader's rank flash has that column, so his sit beside it.
+  // green. The leader's sit on his rank flash, in the same place as every
+  // other man's (M16, the operator's: beside it they read as something else).
   const dots = COUNTER.chargeDots;
   for (let i = 0; i < unit.charges; i++) {
-    const at = { cx: unit.leader ? dots.leaderX : dots.x, cy: dots.y + i * dots.pitch };
+    const at = { cx: dots.x, cy: dots.y + i * dots.pitch };
     body.appendChild(el('circle', { ...at, r: dots.radius + 1.1, fill: COUNTER.apFill }));
     body.appendChild(el('circle', { ...at, r: dots.radius, fill: dots.fill, stroke: COUNTER.apDots.stroke, 'stroke-width': 0.8 }));
   }
@@ -2000,12 +2098,13 @@ export function drawCounterKey(svg, examples, numbers) {
     svg.appendChild(g);
     return g;
   };
-  const words = (x, y, lines, anchor = 'start') => {
+  // The first `heads` lines are the bold label, the rest its description.
+  const words = (x, y, lines, anchor = 'start', heads = 1) => {
     // 13 in the drawing, 12 px on screen at 1280x800, where the key is drawn
     // at 0.92: the right page's floor (SPEC.md §11).
     const t = el('text', { x, y, 'text-anchor': anchor, 'font-family': TYPE.typewriter, 'font-size': 13, fill: PALETTE.ink });
     lines.forEach((line, i) => {
-      const span = el('tspan', { x, dy: i === 0 ? 0 : 14.5, 'font-weight': i === 0 ? 'bold' : 'normal' });
+      const span = el('tspan', { x, dy: i === 0 ? 0 : 14.5, 'font-weight': i < heads ? 'bold' : 'normal' });
       span.textContent = line;
       t.appendChild(span);
     });
@@ -2016,7 +2115,7 @@ export function drawCounterKey(svg, examples, numbers) {
     svg.appendChild(el('circle', { cx: to.x, cy: to.y, r: 2.2, fill: PALETTE.red, stroke: PALETTE.paper, 'stroke-width': 1 }));
   };
   const heading = (y, content) => {
-    svg.appendChild(el('path', { d: `M0 ${y + 5} H330`, stroke: PALETTE.ink, 'stroke-width': 2 }));
+    svg.appendChild(el('path', { d: `M0 ${y + 5} H336`, stroke: PALETTE.ink, 'stroke-width': 2 }));
     svg.appendChild(text(content, { x: 0, y: y - 4, 'text-anchor': 'start', 'dominant-baseline': 'auto', 'font-family': TYPE.slab, 'font-size': 14, 'letter-spacing': 2, fill: PALETTE.ink }));
   };
   const row = (y, node, lines, x = 64) => {
@@ -2038,33 +2137,34 @@ export function drawCounterKey(svg, examples, numbers) {
   // The leader by his name in the data, never a name in code (CLAUDE.md rule 6).
   const lead = examples.leader.shortName.charAt(0) + examples.leader.shortName.slice(1).toLowerCase();
   const left = [
-    [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'sapper, scout', 'or gunner']],
-    [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'a dot each']],
-    [{ x: 7, y: 46.5 }, 164, ['KEY 1–6', 'and name']],
+    [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'Sapper, scout', 'or gunner']],
+    [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'A dot each']],
+    [{ x: 7, y: 46.5 }, 164, ['KEY 1–6', 'Beside his', 'name']],
   ];
   for (const [p, y, lines] of left) {
     pointer({ x: 100, y: y - 4 }, on(cx, cy, k, p));
     words(96, y, lines, 'end');
   }
+  // [point on the counter, y, lines, how many of them are the bold label]
   const right = [
-    [{ x: dots.x, y: dots.y }, 58, ['AP LEFT', 'hollow when', 'spent']],
-    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 110, ['BLUE AP', `from ${lead}'s`, 'orders']],
-    [{ x: 51, y: 31 }, 162, [`${lead.toUpperCase()}'S`, 'ORDERS', 'this turn']],
+    [{ x: dots.x, y: dots.y }, 50, ['ACTION POINTS', 'REMAINING', 'Hollow when', 'spent'], 2],
+    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 118, ['BLUE AP', 'Bonus from', `${lead}'s orders`], 1],
+    [{ x: 51, y: 31 }, 176, [`${lead.toUpperCase()}'S`, 'ORDERS', 'This turn'], 2],
   ];
-  for (const [p, y, lines] of right) {
-    pointer({ x: 234, y: y - 4 }, on(cx, cy, k, p));
-    words(238, y, lines);
+  for (const [p, y, lines, heads] of right) {
+    pointer({ x: 230, y: y - 4 }, on(cx, cy, k, p));
+    words(234, y, lines, 'start', heads);
   }
 
   // The other marks a man can wear.
   const leader = drawCounter({ ...examples.leader, q: 0, r: 0, ap: examples.leader.apMax }, 1, unitMap, false);
   const small = el('g', { transform: 'translate(30 238) scale(0.8)' });
   small.appendChild(leader);
-  row(234, small, [`${lead.toUpperCase()}, THE LEADER`, 'blue name and rank; men near', 'him start a turn with more AP']);
+  row(234, small, [`${lead.toUpperCase()}, THE LEADER`, 'Blue name and rank; men near', 'him start a turn with more AP']);
   const markerAt = (id, y) => el('use', { href: `#${id}`, x: 17, y: y - 13, width: 26, height: 26 });
-  row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'seen again this turn: fired on']);
-  row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; one more hit kills']);
-  row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'gone to ground, harder to see']);
+  row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'Seen again this turn: fired on']);
+  row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; killed if hit again']);
+  row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'Gone to ground, harder to see']);
 
   // The garrison.
   heading(390, 'THE GARRISON');
@@ -2081,9 +2181,10 @@ export function drawCounterKey(svg, examples, numbers) {
     return { x: size / 2 + (toward.x / len) * reach, y: size / 2 + (toward.y / len) * reach };
   };
   const enemyLabels = [
-    [tip(east), 432, ['FACING', `sees ${numbers.arc}° this`, 'way']],
-    [tip(southEast), 486, ['NEXT TURN', 'it will face', 'here (dashed)']],
-    [{ x: 28, y: 45.5 }, 540, ['WHO', 'sentry, patrol', 'or reserve']],
+    [tip(east), 432, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
+    // WHO above NEXT TURN (M16): the other way round, their pointers crossed.
+    [{ x: 28, y: 45.5 }, 486, ['WHO', 'Sentry, patrol', 'or reserve']],
+    [tip(southEast), 540, ['NEXT TURN', 'It will face', 'here (dashed)']],
   ];
   for (const [p, y, lines] of enemyLabels) {
     pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
@@ -2091,8 +2192,8 @@ export function drawCounterKey(svg, examples, numbers) {
   }
   const mini = el('g', { transform: 'translate(30 606) scale(0.8)' });
   mini.appendChild(drawEnemy({ ...enemy, suppressed: true }, unitMap, false, false));
-  row(602, mini, ['SUPPRESSED', 'head down this turn: it', 'does not see, fire or move'], 76);
-  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'the turn after: it sees again']);
-  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'the reserve squad']);
-  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'it saw or found something']);
+  row(602, mini, ['SUPPRESSED', 'Head down this turn: it', 'does not see, fire or move'], 76);
+  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'The turn after: it sees again']);
+  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'The reserve squad']);
+  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'It saw or found something']);
 }

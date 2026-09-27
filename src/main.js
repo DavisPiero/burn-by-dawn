@@ -29,7 +29,7 @@ import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTim
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, GARRISON_SHOW, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -58,6 +58,7 @@ const restartButton = document.getElementById('restart');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
+const helpTab = document.getElementById('help-tab');
 const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
@@ -116,6 +117,9 @@ let garrisonShow = null;
 // only, cleared once it has played.
 let shotShow = null;
 let shotShowTimer = null;
+// A knife's splat or the line cut's power failing (M16), on the board for a moment.
+let strikeShow = null;
+let strikeShowTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -268,6 +272,7 @@ function deriveView() {
     dropShow,
     flyShow,
     shotShow,
+    strikeShow,
     targetRings: null,
   };
 
@@ -601,9 +606,9 @@ function actionsFor(unit) {
     {
       id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
       help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
-        + 'but it leaves a body, and it ends his turn. Not while he is spotted. The reserve squad cannot be killed. Press N, then click the enemy',
+        + `but it leaves a body, and it ends his turn. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
     },
-    { id: 'kill', key: 'K', label: 'Kill', help: 'Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed.', ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
+    { id: 'kill', key: 'K', label: 'Kill', help: `Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed. ${killScoreWords()}`, ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
@@ -614,8 +619,14 @@ function actionsFor(unit) {
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
-    { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
+    { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
+}
+
+// What a kill is worth on the back page (M16), from rules.json scoring.
+function killScoreWords() {
+  const { perKill, perKillFound } = rules.scoring;
+  return `+${perKill} score, ${perKillFound} if its body is found.`;
 }
 
 /**
@@ -762,7 +773,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     const check = hex ? checkSwim(map, state, unit, hex, rules) : null;
     view.targetLabel = check?.ok
       ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
-      : check ? `Swim: ${check.reason}.` : 'Swim: click the bank straight across the water. Esc to cancel.';
+      : check ? `Swim: ${check.reason}.` : 'Swim: click a hex on the far bank. Esc to cancel.';
   } else if (kind === 'pass') {
     for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
     const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
@@ -883,6 +894,15 @@ function showShot(kind, from, to) {
   }, SHOT.ms);
 }
 
+function showStrike(show, ms) {
+  strikeShow = { ...show, since: performance.now() };
+  clearTimeout(strikeShowTimer);
+  strikeShowTimer = setTimeout(() => {
+    strikeShow = null;
+    renderBoard();
+  }, ms);
+}
+
 /** Take back the last move or action, keeping where the mouse is. */
 function undoLast() {
   if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
@@ -967,6 +987,7 @@ function handleTargetClick(q, r) {
     const target = gun ? state.enemies.find((e) => e.q === q && e.r === r) : null;
     commit(setTargeting(next, null), gun ? kind : 'action');
     if (target) showShot(kind, mover, target);
+    if (kind === 'knife') showStrike({ kind: 'knife', at: { q, r } }, KNIFE_SPLAT.ms);
   }
   else if (other && other.id !== mover.id) state = selectUnit(state, other.id);
 }
@@ -1007,9 +1028,13 @@ function handleAction(id) {
     case 'charge':
       commit(placeCharge(state, unit.id, rules));
       break;
-    case 'cut':
+    case 'cut': {
+      const before = state;
       commit(cutLine(state, unit.id, rules));
+      const cut = state.objectives.find((o) => o.cut && !before.objectives.find((b) => b.id === o.id)?.cut);
+      if (cut) showStrike({ kind: 'cut', objectiveId: cut.id }, POWER_CUT.ms);
       break;
+    }
     case 'suppress':
     case 'kill':
     case 'knife':
@@ -1124,17 +1149,18 @@ function showCounterKey(on) {
  */
 function describeGarrisonShow(after) {
   const steps = Math.max(0, ...after.enemies.map((e) => e.walked?.length ?? 0));
+  const msPerHex = GARRISON_SHOW.msPerHex[rules.alert.states[alertIndex(after.alert.points, rules)].id];
   const alarmed = new Map();
   for (const e of after.report) {
     if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
     if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
       const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
-      alarmed.set(e.enemyId, walked * GARRISON_SHOW.msPerHex);
+      alarmed.set(e.enemyId, walked * msPerHex);
     }
   }
   const heard = after.report.filter((e) => e.kind === 'heard').map((e) => ({ q: e.q, r: e.r }));
   const busy = steps > 0 || alarmed.size > 0 || heard.length > 0;
-  return { since: performance.now(), alarmed, heard, length: busy ? steps * GARRISON_SHOW.msPerHex + GARRISON_SHOW.tailMs : 0 };
+  return { since: performance.now(), alarmed, heard, msPerHex, length: busy ? steps * msPerHex + GARRISON_SHOW.tailMs : 0 };
 }
 
 function endBangHold() {
@@ -1159,6 +1185,7 @@ function restartMission() {
   flyShow = null;
   bangTimer = null;
   garrisonShow = null;
+  strikeShow = null;
   briefingAfterDrop = false;
   highlightHex = null;
   hoverUnitId = null;
@@ -1192,6 +1219,14 @@ function handleRestartClick() {
     renderRestart(restartButton, false);
   }, 4000);
   renderRestart(restartButton, true);
+}
+
+/** The orders again, with the counter key beside them, at any time (M16, the operator's). */
+function openHelp() {
+  if (state.outcome || briefing || dropShow || flyShow || bangTimer) return;
+  hidePopup();
+  briefing = { kind: 'orders' };
+  render();
 }
 
 function closeBriefing() {
@@ -1252,6 +1287,9 @@ function describeBriefing(which, view) {
     };
   }
   if (which.kind === 'orders') {
+    // Opened again in play with ? (M16): the same card, the level fixed and
+    // the drop's own lines gone.
+    const before = state.phase === 'drop';
     // Places in capitals, as the operator's orders name them (M12).
     const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toUpperCase()}`);
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
@@ -1272,7 +1310,7 @@ function describeBriefing(which, view) {
     return {
       banner: { title: GAME_TITLE, tagline: GAME_TAGLINE },
       title: 'ORDERS',
-      kicker: 'BEFORE THE DROP',
+      kicker: before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`,
       paragraphs: [
         // The opening on a line of its own (M13), then the job.
         [
@@ -1284,20 +1322,23 @@ function describeBriefing(which, view) {
       sections: [{
         heading: 'HOW TO PLAY',
         lines: [
-          `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
-          'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+          ...(before ? [
+            `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
+            'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+          ] : ['Click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.']),
           // The operator's words (M13): "vulnerable points" here only; the
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, and quiet.` : ''),
-          'Hover anything for detail; KEYBOARD lists every key.',
+          'Hover anything for detail; KEYBOARD lists every key, and ? brings this card back.',
         ],
       }],
       // SPEC.md §10: the level, chosen here and fixed once the stick jumps.
       // At the top (M13): the level changes numbers in the text under it.
       choice: {
         top: true,
+        locked: !before,
         heading: 'DIFFICULTY',
         options: difficulty.levels.map((l) => ({ id: l.id, label: l.label, summary: l.summary, selected: l.id === level.id })),
         onChoose: handleChooseLevel,
@@ -1514,6 +1555,11 @@ function handleKey(event) {
     endBangHold();
     return;
   }
+  if (event.key === '?' || (event.code === 'Slash' && event.shiftKey)) {
+    event.preventDefault();
+    openHelp();
+    return;
+  }
   if (state.phase === 'drop') {
     handleDropKey(event);
     return;
@@ -1688,6 +1734,8 @@ try {
   loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes));
   renderGutter(gutterNote);
   renderKeys(keysTab);
+  attachPopup(helpTab, () => titled('HOW TO PLAY [?]', 'The orders, how to play and how to read a counter, at any time.'));
+  helpTab.addEventListener('click', () => openHelp());
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, () => describeDiversion(rules.diversion.uses));
   // The orders open over the board before anything else (SPEC.md §11).

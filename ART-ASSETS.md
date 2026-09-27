@@ -147,6 +147,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-bridge-destroyed.svg` | 280 x 92 | collapsed span, same footprint |
 | `objective-exchange.svg` | 160 x 184 | 2x2 hex village building with a roof standard on its ridge (a short post and crossarm at 100, 42 in these units, where the code's wires end; the poles beside the house went in M14) |
 | `objective-exchange-destroyed.svg` | 160 x 184 | |
+| `objective-exchange-cut.svg` | 160 x 184 | the line cut, not blown (M16): the house standing, its windows dark — the power has gone. *Drawn by code.* |
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
 | `objective-rally-point.svg` | 80 x 92 | the exfil barn, from the south-west like the exchange, with the pick-up party's hooded green lamp. *Drawn by code (M8e).* |
@@ -174,6 +175,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-body-enemy.svg` | 28 x 28, drawn at 39 since M15 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
+| `effect-blood-splat.svg` | 100 x 100 (M16: the knife's splat, spot red halftoned and inked, with droplets; drawn small and faint as the stain under a knifed enemy. *Drawn by code.*) |
+| `effect-spark.svg` | 100 x 100 (M16: a spark where a cut telephone wire parts, a small paper starburst. *Drawn by code.*) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |

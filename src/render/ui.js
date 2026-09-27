@@ -70,7 +70,18 @@ export function dropStalePopup() {
 
 /** A rollover's usual content: a bold heading, then the text under it. */
 export function titled(heading, body) {
-  return [html('b', null, heading), `\n${body}`];
+  return [html('b', null, heading), `\n${capitalise(body)}`];
+}
+
+/**
+ * A description's first word with a capital (M16, the operator's: "capitalise
+ * the first word in descriptions"), for text that follows a label — a bold
+ * heading, "Not now:", a trait's name, a bar in the readout. Words are worked
+ * out in lower case, as they are often run into a sentence; this is only for
+ * where one stands on its own.
+ */
+export function capitalise(text) {
+  return typeof text === 'string' && text ? text[0].toUpperCase() + text.slice(1) : text;
 }
 
 /** Give an element a rollover. `content` may be a function, so it is built when shown. */
@@ -103,12 +114,13 @@ const KEYS = [
   ['W', 'swim'],
   ['X', 'cut the line (scouts)'],
   ['Z', 'undo'],
+  ['?', 'how to play, at any time'],
 ];
 
 export function renderKeys(button) {
   attachPopup(button, () => [
     html('b', null, 'KEYBOARD'),
-    ...KEYS.flatMap(([key, what]) => ['\n', html('b', null, key), ` ${what}`]),
+    ...KEYS.flatMap(([key, what]) => ['\n', html('b', null, key), ` ${capitalise(what)}`]),
     '\n\nHover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
   ]);
 }
@@ -384,6 +396,16 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
  */
 function briefChoice(choice) {
   const row = html('div', 'brief-choice', [html('span', 'brief-choice-head', choice.heading)]);
+  // Locked (M16, the orders opened again in play): only the level being
+  // played, and a click on it carries on like any other.
+  if (choice.locked) {
+    const picked = choice.options.find((o) => o.selected);
+    const button = html('button', 'btn active', picked.label.toUpperCase());
+    button.type = 'button';
+    attachPopup(button, [html('b', null, picked.label.toUpperCase()), `\n${picked.summary}\nFixed once the stick has jumped.`]);
+    row.appendChild(button);
+    return row;
+  }
   for (const option of choice.options) {
     const button = html('button', option.selected ? 'btn active' : 'btn', option.label.toUpperCase());
     button.type = 'button';
@@ -679,7 +701,7 @@ export function renderMission(element, mission) {
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
-  button.replaceChildren('RAF DIVERSION', html('small', null, boldKeys(check.ok ? `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP` : check.reason)));
+  button.replaceChildren('RAF DIVERSION', html('small', null, boldKeys(check.ok ? `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP` : capitalise(check.reason))));
 }
 
 /** The diversion's rollover; `uses` is how many calls the mission allows. */
@@ -718,7 +740,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
     const row = score.insertRow();
     // Each scoring line with a bullet before it (M13).
     row.insertCell().textContent = `• ${line.label}`;
-    row.insertCell().textContent = `+${line.points}`;
+    row.insertCell().textContent = line.points < 0 ? `−${-line.points}` : `+${line.points}`;
   }
   const total = score.insertRow();
   total.className = 'total';
@@ -842,7 +864,7 @@ export function renderActions(element, actions, onAction) {
     const wrap = html('div', 'action-wrap', button);
     attachPopup(wrap, () => [
       html('b', null, action.label.toUpperCase()),
-      `\n${action.help}\n${action.ok || action.active ? `Cost: ${action.cost}` : `Not now: ${action.reason}`}`,
+      `\n${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
     ]);
     element.appendChild(wrap);
   }
@@ -890,7 +912,7 @@ export function shortEffect(effect) {
   if (stat === 'detection' && modifier.op === 'add') words = `${Math.abs(modifier.value)} ${modifier.value < 0 ? 'harder' : 'easier'} to spot`;
   else if (base !== null && SHORT_EFFECT[stat]) words = SHORT_EFFECT[stat](base, value);
   else words = describeEffect(effect);
-  return `${effect.name}: ${words}`;
+  return `${effect.name}: ${capitalise(words)}`;
 }
 
 /**
@@ -952,7 +974,7 @@ export function renderReadout(element, state, map, view) {
 
   const terrain = terrainAt(map, hex.q, hex.r);
   if (!terrain) {
-    setText(element, 'off the map');
+    setText(element, 'Off the map');
     return;
   }
 
@@ -969,7 +991,7 @@ export function renderReadout(element, state, map, view) {
   // whatever does not fit is cut from the end. The move, a blast and the
   // detection risk must never be what gets cut.
   const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, view?.noiseLabel, parts.join(', '), view?.commandLabel];
-  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).join(READOUT_GAP)}`);
+  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).map(capitalise).join(READOUT_GAP)}`);
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */

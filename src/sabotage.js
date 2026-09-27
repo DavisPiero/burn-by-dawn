@@ -210,19 +210,53 @@ export function checkCutLine(state, unit, rules) {
   return { ...result(cost, fullTurn(unit)), objective };
 }
 
-/** The hexes this man could swim to: straight across one canal hex, landing somewhere free. */
+/**
+ * The hexes this man could swim to (SPEC.md §4, M16): any free hex on the far
+ * bank that shares a hex of water with his own — across one canal hex, at any
+ * angle, not only straight over (straight over offered one landing, often not
+ * the nearest). Never onto a crossing (`swim.crossings`, the bridge and the
+ * lock): that is not a bank, and the lock sits in the water, so it offered a
+ * swim onto water. The far bank is the ground he cannot walk to without a
+ * crossing. A man on a crossing walks off it to swim.
+ */
 export function swimTargets(map, state, unit, rules) {
+  const { across, crossings } = rules.actions.swim;
+  const isCrossing = (q, r) => crossings.includes(terrainIdAt(map, q, r));
+  if (isCrossing(unit.q, unit.r)) return [];
   const blocked = occupiedHexes(state.units, unit.id, state.enemies);
-  const targets = [];
-  for (const { q: dq, r: dr } of NEIGHBOR_DIRS) {
-    const water = { q: unit.q + dq, r: unit.r + dr };
-    const land = { q: unit.q + 2 * dq, r: unit.r + 2 * dr };
-    if (terrainIdAt(map, water.q, water.r) !== rules.actions.swim.across) continue;
-    if (!isInPlay(map, land.q, land.r) || !isPassable(terrainAt(map, land.q, land.r))) continue;
-    if (blocked.has(hexKey(land.q, land.r))) continue;
-    targets.push(land);
+  const bank = bankOf(map, unit, isCrossing);
+  const targets = new Map();
+  for (const d of NEIGHBOR_DIRS) {
+    const water = { q: unit.q + d.q, r: unit.r + d.r };
+    if (terrainIdAt(map, water.q, water.r) !== across) continue;
+    for (const e of NEIGHBOR_DIRS) {
+      const land = { q: water.q + e.q, r: water.r + e.r };
+      const key = hexKey(land.q, land.r);
+      if (targets.has(key) || bank.has(key)) continue;
+      if (!isInPlay(map, land.q, land.r) || !isPassable(terrainAt(map, land.q, land.r))) continue;
+      if (isCrossing(land.q, land.r) || blocked.has(key)) continue;
+      targets.set(key, land);
+    }
   }
-  return targets;
+  return [...targets.values()];
+}
+
+// The ground a man can walk to from where he stands without using a crossing:
+// his own bank.
+function bankOf(map, from, isCrossing) {
+  const seen = new Set([hexKey(from.q, from.r)]);
+  const queue = [from];
+  while (queue.length) {
+    const h = queue.pop();
+    for (const d of NEIGHBOR_DIRS) {
+      const n = { q: h.q + d.q, r: h.r + d.r };
+      const key = hexKey(n.q, n.r);
+      if (seen.has(key) || !isInPlay(map, n.q, n.r) || !isPassable(terrainAt(map, n.q, n.r)) || isCrossing(n.q, n.r)) continue;
+      seen.add(key);
+      queue.push(n);
+    }
+  }
+  return seen;
 }
 
 /** Swim (SPEC.md §4): a full turn, not wounded, and only once `requiresDestroyed` is down if it names one. */
@@ -236,8 +270,9 @@ export function checkSwim(map, state, unit, target, rules) {
   if (busy) return result(cost, busy);
   if (isWounded(unit)) return result(cost, 'wounded — he would drown');
   const targets = swimTargets(map, state, unit, rules);
-  if (targets.length === 0) return result(cost, 'no water to swim straight across from here');
-  if (target && !targets.some(onHex(target))) return result(cost, 'pick the bank straight across the water');
+  if (rules.actions.swim.crossings.includes(terrainIdAt(map, unit.q, unit.r))) return result(cost, `he is on the ${terrainAt(map, unit.q, unit.r).label.toLowerCase()} — step onto a bank to swim`);
+  if (targets.length === 0) return result(cost, 'no far bank one hex of water away');
+  if (target && !targets.some(onHex(target))) return result(cost, 'pick a hex on the far bank');
   return result(cost, null);
 }
 

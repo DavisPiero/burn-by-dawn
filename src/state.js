@@ -414,10 +414,11 @@ export function knifeEnemy(state, unitId, enemyId, rules) {
   const enemy = state.enemies.find((e) => e.id === enemyId);
   const check = checkKnife(unit, enemy, rules);
   if (!check.ok) return state;
+  // `knifed` is for the board only (M16): a stain is drawn under the body.
   return {
     ...spend(state, unitId, unit.ap),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
-    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
+    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, knifed: true }],
   };
 }
 

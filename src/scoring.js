@@ -81,7 +81,8 @@ export function finalOutcome(state, rules, check, turn, dawn) {
 
 /**
  * SPEC.md §10: primary 3, each secondary 2, 1 per man out, 1 more for each of
- * them never spotted all mission, and 3 for a clean run — never reached
+ * them never spotted all mission, 1 per enemy knifed or shot and 1 back for
+ * each of their bodies found (M16), and 3 for a clean run — never reached
  * Alarmed and never called the RAF diversion. Stealth is paid for, not speed
  * (M11b): a point per turn to spare paid players to rush.
  */
@@ -95,6 +96,11 @@ export function scoreOf(state, rules) {
   if (out.length > 0) lines.push({ label: `${out.length} m${out.length === 1 ? 'a' : 'e'}n out`, points: out.length * s.perTrooperOut });
   const unseen = out.filter((u) => !u.everSpotted).length;
   if (unseen > 0) lines.push({ label: `${unseen} of them never seen`, points: unseen * s.perTrooperUnseen });
+  // M16: kills by knife or gunner are the enemy bodies; a blast leaves none.
+  const kills = state.bodies.filter((b) => b.enemyId);
+  if (kills.length > 0) lines.push({ label: `${kills.length} ${kills.length === 1 ? 'enemy' : 'enemies'} killed`, points: kills.length * s.perKill });
+  const found = kills.filter((b) => b.found).length;
+  if (found > 0) lines.push({ label: `${found} ${found === 1 ? 'body' : 'bodies'} found`, points: found * s.perKillFound });
   const clean = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
   if ((state.alert.peak ?? 0) < clean.from && state.diversionsCalled === 0) {
     lines.push({ label: `never ${clean.label}, no diversion`, points: s.clean });
