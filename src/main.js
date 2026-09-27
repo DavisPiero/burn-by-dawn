@@ -210,6 +210,8 @@ function deriveView() {
     ].filter(Boolean)),
     visionById: visionById(),
     garrisonShow,
+    // Why each enemy wears the red "!", for its rollover and readout (M20).
+    alarmed: alarmReasons(),
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
     hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
@@ -1198,6 +1200,39 @@ function showCounterKey(on) {
 }
 
 /**
+ * Why each enemy wears the red "!" that popped on it in the garrison's turn
+ * (M15): what it saw or found, from the last turn's report, by enemy id. It
+ * stays on the chip through the player phase with a rollover saying so (M20,
+ * the operator's: it could not be asked what had alerted it). The RAF
+ * diversion calls every enemy off, so it takes them away.
+ */
+function alarmReasons() {
+  const reasons = new Map();
+  if (state.phase === 'drop' || state.report.some((e) => e.kind === 'diversion')) return reasons;
+  const place = (h) => placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), h);
+  const add = (id, words) => reasons.set(id, [...(reasons.get(id) ?? []), words]);
+  for (const e of state.report) {
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `spotted ${e.unitName} in ${place(e)}` });
+    if (e.kind === 'bodyFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s body in ${place(e)}` });
+    if (e.kind === 'parachuteFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s parachute in ${place(e)}` });
+  }
+  return reasons;
+}
+
+/** The "!" on an enemy's chip in words: what raised it, and what comes of it (M20). */
+function describeAlarm(enemy) {
+  const reasons = currentView?.alarmed.get(enemy.id) ?? [];
+  const what = reasons.map((r) => r.words).join(', and ');
+  const after = [];
+  if (enemy.watching) {
+    const man = state.units.find((u) => u.id === enemy.holding?.unitId || (u.q === enemy.watching.q && u.r === enemy.watching.r));
+    after.push(`It has ${man ? man.shortName : 'him'} in its sights (the dashed line): if it sees him again at the end of this turn it fires. Get him out of its view, hide him [H], or suppress it [S].`);
+  }
+  if (reasons.some((r) => r.kind === 'found')) after.push(`What it found put the alert up +${rules.alert.bodyFound}, and the patrols in earshot come to look.`);
+  return titled('RAISED THE ALARM', `At the end of last turn the ${enemy.label.toLowerCase()} ${what}. ${after.join(' ')}`.trim());
+}
+
+/**
  * What the board shows of the garrison's turn (M15): each enemy walks its
  * `walked` steps; a "!" pops on each that spotted a man (at once) or found a
  * body or parachute (once it has walked there); a ripple runs out from each
@@ -1821,6 +1856,10 @@ try {
     onRunChoose: handleChooseRun,
     onMarkerHover: (id, unitId, anchor) => showPopup(anchor, titled(...describeMarker(id, state.units.find((u) => u.id === unitId)))),
     onMarkerLeave: hidePopup,
+    onEnemyMarkerHover: (enemyId, anchor) => {
+      const enemy = state.enemies.find((e) => e.id === enemyId);
+      if (enemy) showPopup(anchor, describeAlarm(enemy));
+    },
   });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of

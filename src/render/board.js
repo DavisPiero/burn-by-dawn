@@ -651,19 +651,27 @@ export function renderPieces(layers, state, view) {
     else if (enemy.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
     if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
     // The garrison's turn (M15): a red "!" pops on each enemy that spotted a
-    // man or found something, once it has got there.
+    // man or found something, once it has got there. After the show it stays
+    // on the chip for the player's turn, with a rollover saying what it saw or
+    // found (M20, the operator's).
     const alarm = view.garrisonShow?.alarmed.get(enemy.id);
-    if (alarm !== undefined) {
-      const elapsed = now - view.garrisonShow.since;
-      if (elapsed < view.garrisonShow.length + GARRISON_SHOW.alarmLingerMs) {
-        const pop = marker('marker-spotted', (COUNTER.size - GARRISON_SHOW.alarmSize) / 2 - 2, -GARRISON_SHOW.alarmSize - 2, GARRISON_SHOW.alarmSize);
-        pop.style.transformBox = 'fill-box';
-        pop.style.transformOrigin = '50% 100%';
-        playFrom(pop, [
-          { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
-        ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
-        counter.appendChild(pop);
-      }
+    const alarmAt = [(COUNTER.size - GARRISON_SHOW.alarmSize) / 2 - 2, -GARRISON_SHOW.alarmSize - 2];
+    const elapsed = view.garrisonShow ? now - view.garrisonShow.since : Infinity;
+    if (alarm !== undefined && elapsed < view.garrisonShow.length + GARRISON_SHOW.alarmLingerMs) {
+      const pop = marker('marker-spotted', ...alarmAt, GARRISON_SHOW.alarmSize);
+      pop.style.transformBox = 'fill-box';
+      pop.style.transformOrigin = '50% 100%';
+      playFrom(pop, [
+        { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
+      ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
+      counter.appendChild(pop);
+    } else if (view.alarmed?.has(enemy.id)) {
+      const node = marker('marker-spotted', ...alarmAt, GARRISON_SHOW.alarmSize);
+      node.setAttribute('pointer-events', 'all');
+      node.addEventListener('mouseenter', () => layers.handlers.onEnemyMarkerHover?.(enemy.id, node));
+      node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
+      node.addEventListener('click', () => layers.handlers.onHexClick(enemy.q, enemy.r));
+      counter.appendChild(node);
     }
     // Walked its steps this enemy phase, like a man his path (M15).
     const mover = el('g', {});
@@ -2073,7 +2081,7 @@ function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
   body.appendChild(el('use', { href: '#counter-frame-enemy', width: size, height: size }));
   body.appendChild(el('use', { href: `#${enemySymbolId(enemy.type)}`, width: size, height: size }));
 
-  const label = enemy.typeLabel.toUpperCase();
+  const label = (enemy.counterLabel ?? enemy.typeLabel).toUpperCase();
   const room = ENEMY.labelBoxRight - ENEMY.labelBoxLeft;
   const fitted = room / Math.max(1, label.length * COUNTER.nameAspect);
   body.appendChild(text(label, {
@@ -2260,7 +2268,7 @@ export function drawCounterKey(svg, examples, numbers) {
   // WHO points at the right-hand end of the name on the chip (M17, the
   // operator's: at its middle the line ran over the facing wedge and was lost
   // on the dark chip). Where the name ends is worked out as drawEnemy sets it.
-  const name = enemy.typeLabel.toUpperCase();
+  const name = (enemy.counterLabel ?? enemy.typeLabel).toUpperCase();
   const nameRoom = ENEMY.labelBoxRight - ENEMY.labelBoxLeft;
   const nameSize = Math.min(ENEMY.labelSize, nameRoom / Math.max(1, name.length * COUNTER.nameAspect));
   const nameEnd = (ENEMY.labelBoxLeft + ENEMY.labelBoxRight) / 2 + (name.length * nameSize * COUNTER.nameAspect) / 2 + 1.5;

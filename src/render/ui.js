@@ -968,7 +968,10 @@ export function renderReadout(element, state, map, view) {
     // What it will do if the turn ended now (M13b), which the dashed outline shows.
     const n = view.hoverEnemyNext;
     const next = !n ? '' : `${READOUT_GAP}Next turn, as things stand: ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).`;
-    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}. Detection base ${e.detection}.${killable}${next}`);
+    // What put the "!" on its chip (M20).
+    const raised = view.alarmed?.get(e.id);
+    const alarm = raised ? `${READOUT_GAP}Raised the alarm last turn: ${raised.map((r) => r.words).join(', and ')}.` : '';
+    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}.${alarm} Detection base ${e.detection}.${killable}${next}`);
     return;
   }
   if (!hex) {

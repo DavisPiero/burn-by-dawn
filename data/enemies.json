@@ -1,5 +1,5 @@
 {
-  "_comment": "Enemy types, SPEC.md §6. Where each enemy stands or walks is in data/map.json; what kind of enemy it is lives here. visionRadius is in hexes before the alert bonus in data/rules.json and any terrain spotBonus at the hex it stands on. arcDegrees is the facing arc (SPEC.md §6: 110 since M13b, was 120 — at 120 the arc took in both hexes beside the facing one, which made patrols too hard to slip past; see DECISIONS.md). detection is base(enemy) in the detection formula. speed is movement points per enemy phase, spent on the same terrain costs as the troopers pay; 0 means it never moves. killable is whether a gunner can kill it once it is under suppression (SPEC.md §4 Kill); false is shown to the player on its counter, its hover and the Kill button, and it can still be suppressed.",
+  "_comment": "Enemy types, SPEC.md §6. Where each enemy stands or walks is in data/map.json; what kind of enemy it is lives here. visionRadius is in hexes before the alert bonus in data/rules.json and any terrain spotBonus at the hex it stands on. arcDegrees is the facing arc (SPEC.md §6: 110 since M13b, was 120 — at 120 the arc took in both hexes beside the facing one, which made patrols too hard to slip past; see DECISIONS.md). detection is base(enemy) in the detection formula. speed is movement points per enemy phase, spent on the same terrain costs as the troopers pay; 0 means it never moves. killable is whether a gunner can kill it once it is under suppression (SPEC.md §4 Kill); false is shown to the player on its counter, its hover and the Kill button, and it can still be suppressed. counterLabel (optional, M20) is the shorter name printed on its counter's strip, where the label will not fit.",
 
   "_vehicle": "ART-ASSETS.md lists a vehicle counter, but SPEC.md never says what a vehicle does differently, so there is no vehicle type yet.",
 
@@ -22,6 +22,7 @@
     },
     "reserve": {
       "label": "Reserve squad",
+      "counterLabel": "Reserves",
       "visionRadius": 3,
       "arcDegrees": 110,
       "detection": 3,
