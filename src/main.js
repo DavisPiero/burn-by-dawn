@@ -26,10 +26,10 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
-import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
+import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -794,6 +794,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 }
 
 function render() {
+  syncMusic();
   map = effectiveMap(baseMap, state.objectives, rules);
   const view = deriveView();
   currentView = view;
@@ -877,6 +878,17 @@ function commit(next, cue = 'action') {
 function toggleSound() {
   setMuted(!isMuted());
   renderSoundToggle(soundToggle, isMuted());
+  syncMusic();
+}
+
+/**
+ * The title music (M17, the operator's) plays over the opening screens — the
+ * orders and picking a run — and fades as the stick jumps. A new game brings
+ * it back with its orders; the orders reopened in play with ? do not.
+ */
+function syncMusic() {
+  if (opened && state.phase === 'drop' && !state.outcome && !isMuted()) startMusic();
+  else stopMusic();
 }
 
 /** The sounds of a turn's report: a crump for any bang, a dog when the garrison stirs. */
@@ -1535,6 +1547,12 @@ function isHelpKey(event) {
 // over only R still does anything.
 function handleKey(event) {
   unlockSound();
+  // The loading page (M17): any key opens the game once it is ready, and does nothing else.
+  if (!opened) {
+    event.preventDefault();
+    if (loaded) openGame();
+    return;
+  }
   if ((event.key === 'm' || event.key === 'M') && !event.metaKey && !event.ctrlKey && !event.altKey) {
     toggleSound();
     return;
@@ -1673,6 +1691,52 @@ function handleKey(event) {
   render();
 }
 
+// --- the loading page (M17) ------------------------------------------------------
+// The spread stays hidden until its first draw is done and the supplied
+// pictures are in, so nothing is seen being laid out (the operator: over the
+// web the boxes under the map were drawn first, in the middle of the page,
+// then jumped). Meanwhile a fuse burns down on the table as the files arrive.
+// Ready, it asks for a key or a click, which opens the spread on the orders —
+// and, being the player's first touch, lets the browser start the title music
+// with them.
+const LOADING = { maxWaitMs: 8000 };
+const loadingPage = document.getElementById('loading');
+let loadingDone = 0;
+let loadingTotal = 0;
+let loaded = false;
+let opened = false;
+
+function loadingProgress(promises) {
+  loadingTotal += promises.length;
+  showLoadingProgress();
+  for (const promise of promises) {
+    promise.finally(() => {
+      loadingDone++;
+      showLoadingProgress();
+    });
+  }
+}
+
+function showLoadingProgress() {
+  const share = loaded ? 1 : loadingTotal ? loadingDone / loadingTotal : 0;
+  loadingPage.style.setProperty('--loaded', share.toFixed(3));
+}
+
+function gameLoaded() {
+  loaded = true;
+  showLoadingProgress();
+  document.documentElement.classList.add('loaded');
+  loadingPage.addEventListener('click', openGame);
+}
+
+function openGame() {
+  if (opened) return;
+  opened = true;
+  document.documentElement.classList.add('opened');
+  loadingPage.setAttribute('aria-hidden', 'true');
+  render();
+}
+
 // --- start ------------------------------------------------------------------
 
 // Tells the failure reporter in index.html that the module did run, so it can
@@ -1681,8 +1745,9 @@ window.dispatchEvent(new Event('night-drop-started'));
 
 try {
   applyDocumentTheme();
-  loadSuppliedPaper();
-  const fontsLoaded = loadSuppliedFonts();
+  const paperLoaded = loadSuppliedPaper();
+  const fontsLoaded = loadSuppliedFonts().then(() => document.documentElement.classList.add('fonts-ready'));
+  loadingProgress([paperLoaded, fontsLoaded]);
   rawMap = await loadMap();
   rawRules = await loadJson('data/rules.json');
   traits = validateTraits(await loadJson('data/traits.json'));
@@ -1741,13 +1806,18 @@ try {
   loadSuppliedSounds();
 
   // Portrait art dropped into assets/portraits replaces the drawn portraits
-  // as each file arrives (ART-ASSETS.md §2).
-  loadSuppliedPortraits(state.units.map((u) => u.id), () => render());
-  // So are a painted title card in assets/title (ART-ASSETS.md §7) and a
-  // painted aircraft in assets/aircraft (§6).
-  loadSuppliedTitleCard();
-  loadSuppliedAircraft();
-  loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes));
+  // as each file arrives (ART-ASSETS.md §2). So do a painted title card in
+  // assets/title (§7), a painted aircraft in assets/aircraft and a painted
+  // blast in assets/markers (§6). The page waits for them (M17), so it opens
+  // whole rather than filling in bit by bit.
+  const pictures = [
+    paperLoaded,
+    loadSuppliedPortraits(state.units.map((u) => u.id), () => render()),
+    loadSuppliedTitleCard(),
+    loadSuppliedAircraft(),
+    loadSuppliedBlast(),
+    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes)),
+  ];
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(helpTab, () => titled('HOW TO PLAY [?]', 'The orders, how to play and how to read a counter, at any time.'));
@@ -1757,9 +1827,14 @@ try {
   // The orders open over the board before anything else (SPEC.md §11).
   briefing = { kind: 'orders' };
   briefingBackdrop.addEventListener('click', () => closeBriefing());
+  loadingProgress(pictures);
   // Speech bubbles are measured in the face they are set in: wait for it.
   await fontsLoaded;
   render();
+  // Then for the pictures, but never for long: a slow file is not worth a
+  // page that will not open. Whatever is late fills in as it arrives.
+  await Promise.race([Promise.all(pictures), new Promise((resolve) => setTimeout(resolve, LOADING.maxWaitMs))]);
+  gameLoaded();
 
   // The board is up. The failure reporter in index.html stops attributing
   // stray page errors — extensions throw plenty — to the game's startup.
@@ -1767,4 +1842,6 @@ try {
 } catch (error) {
   readout.textContent = '';
   renderError(errorBox, error);
+  // Nothing to wait for: show what did draw, under the error.
+  document.documentElement.classList.add('opened');
 }
