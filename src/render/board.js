@@ -139,13 +139,18 @@ export function createBoard(svg, map, handlers) {
   drawAreas(areas, defs, map, corners);
   terrain.appendChild(areas);
   const grid = el('g', { 'pointer-events': 'none' });
+  const washBlur = el('filter', { id: 'dead-wash-blur', x: '-5%', y: '-5%', width: '110%', height: '110%' });
+  washBlur.appendChild(el('feGaussianBlur', { stdDeviation: GRID.deadWashBlur }));
+  defs.appendChild(washBlur);
+  const wash = el('g', { fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity, filter: 'url(#dead-wash-blur)' });
   forEachCell(map, (q, r) => {
     const points = cornersToPoints(axialToPixel(q, r, map.hexSize), corners);
     grid.appendChild(el('polygon', {
       points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
     }));
-    if (!isInPlay(map, q, r)) grid.appendChild(el('polygon', { points, fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity }));
+    if (!isInPlay(map, q, r)) wash.appendChild(el('polygon', { points }));
   });
+  grid.appendChild(wash);
   terrain.appendChild(grid);
 
   const lines = el('g', { 'pointer-events': 'none' });
@@ -434,11 +439,12 @@ function drawPlaces(layer, map) {
   for (const place of map.places ?? []) {
     const style = PLACE[place.kind] ?? PLACE.other;
     const c = axialToPixel(place.at[0], place.at[1], map.hexSize);
+    const x = c.x + (place.dx ?? 0) * map.hexSize;
     const y = c.y + (place.dy ?? 0) * map.hexSize;
     const attrs = {
-      x: c.x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
+      x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
       'font-style': style.italic ? 'italic' : 'normal', 'letter-spacing': style.spacing,
-      ...(place.angle ? { transform: `rotate(${place.angle} ${c.x} ${y})` } : {}),
+      ...(place.angle ? { transform: `rotate(${place.angle} ${x} ${y})` } : {}),
     };
     const name = style.capitals ? place.name.toUpperCase() : place.name;
     if (style.halo !== false) {
@@ -608,6 +614,7 @@ export function renderPieces(layers, state, view) {
 
   if (view.plan) drawPlan(layers, view.plan, view.risk);
   if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
+  else if (view.landing) drawRisk(layers, view.landing.plan, view.landing.risk);
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
