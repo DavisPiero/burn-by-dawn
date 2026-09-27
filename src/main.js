@@ -16,7 +16,7 @@ import {
   exfilWouldFail, setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
-  blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
+  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
 import { hintsFor, ordersWords } from './hints.js';
@@ -254,6 +254,8 @@ function deriveView() {
     // ground a charge going off this turn would kill a man on.
     exfil,
     blastArea: areaAround(blastHexesThisTurn(state, rules)),
+    // Where it kills a man, not only wounds him (M20: the fuel dump's outer ring wounds).
+    blastKillArea: areaAround(blastHexesThisTurn(state, rules).map((b) => ({ ...b, radius: b.killRadius }))),
     // An objective with every charge it needs set takes no more, so its empty
     // charge points are no longer drawn: "put one here" would be a lie.
     chargedObjectiveIds: new Set(state.objectives.filter((o) => !o.destroyed && chargesWanted(o) === 0).map((o) => o.id)),
@@ -264,6 +266,7 @@ function deriveView() {
     unseenPoints: rules.scoring.perTrooperUnseen,
     hoverObjective: null,
     previewBlastArea: null,
+    previewBlastKillArea: null,
     siteLabel: null,
     blastLabel: null,
     noiseLabel: null,
@@ -303,8 +306,9 @@ function deriveView() {
         : `The ${objective.label} has all the charges it needs. ${view.siteLabel}`;
     }
     if (!objective.destroyed) {
-      const radius = kindOf(objective, rules).blastRadius;
-      view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius })));
+      const { blastRadius, killRadius } = kindOf(objective, rules);
+      view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius: blastRadius })));
+      if (killRadius < blastRadius) view.previewBlastKillArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius: killRadius })));
     }
   } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
     const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
@@ -366,8 +370,11 @@ function deriveView() {
     });
     view.riskLabel = describeRisk(plan, view.risk, view.place);
     const end = plan.path[plan.path.length - 1];
-    if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
-      view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
+    const blast = isExfil(baseMap, end) ? null : blastEffect(blastHexesThisTurn(state, rules), end);
+    if (blast === 'killed' || (blast === 'wounded' && unit.hits > 0)) {
+      view.blastLabel = `BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED${blast === 'wounded' ? ' (at its edge, but he is already wounded)' : ''}`;
+    } else if (blast === 'wounded') {
+      view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be at the edge of it: WOUNDED';
     }
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
@@ -520,13 +527,20 @@ function describeObjective(o) {
     `needs ${chargesOnPoints(o)}`,
     `${o.detonated} gone off${burning}`,
     `fuse ${rules.charges.fuseTurns} turns`,
-    `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge, killing anyone in it, ours or theirs`,
+    blastWords(kind),
     `alert +${kind.alert}`,
   ];
   if (kind.cutLine) parts.push(`or a scout can cut the line [X], seen or not: a whole turn, so he must start his turn on a charge point; no noise, alert +${rules.alert.lineCut}`);
   const payoff = payoffWords(kind);
   if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
+}
+
+/** How far a kind's blast reaches and what it does (SPEC.md §7; M20, a ring that only wounds our men). */
+function blastWords(kind) {
+  const hexes = (n) => `${n} hex${n === 1 ? '' : 'es'}`;
+  if (kind.killRadius >= kind.blastRadius) return `blast ${hexes(kind.blastRadius)} from each charge, killing anyone in it, ours or theirs`;
+  return `blast ${hexes(kind.blastRadius)} from each charge (shaded): it kills enemies in all of it, and our men within ${hexes(kind.killRadius)} (darker); further out it wounds them`;
 }
 
 /** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */

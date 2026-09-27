@@ -9,9 +9,9 @@
 
 import { hexDistance, NEIGHBOR_DIRS } from './hex.js';
 import { columnOf, hexKey, isInPlay, isPassable, terrainAt, terrainIdAt } from './map.js';
-import { makeNoise } from './enemy.js';
+import { applyHit, makeNoise } from './enemy.js';
 import { applyHook } from './traits.js';
-import { canAct, chargeCapacity, isWounded, occupiedHexes, onBoard, result } from './units.js';
+import { canAct, chargeCapacity, isWounded, occupiedHexes, onBoard, result, woundedLine } from './units.js';
 
 // --- setup -------------------------------------------------------------------
 
@@ -24,11 +24,12 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
   const kinds = rules.objectives;
   if (!kinds || typeof kinds !== 'object') throw new Error(`${rulesUrl}: expected an "objectives" object of kinds`);
   for (const [id, kind] of Object.entries(kinds)) {
-    for (const field of ['chargesNeeded', 'blastRadius', 'alert']) {
+    for (const field of ['chargesNeeded', 'blastRadius', 'killRadius', 'alert']) {
       if (!Number.isInteger(kind[field]) || kind[field] < 0) {
         throw new Error(`${rulesUrl}: objectives.${id}.${field} must be a non-negative integer`);
       }
     }
+    if (kind.killRadius > kind.blastRadius) throw new Error(`${rulesUrl}: objectives.${id}.killRadius must be no more than its blastRadius`);
     if (kind.chargesNeeded < 1) throw new Error(`${rulesUrl}: objectives.${id}.chargesNeeded must be at least 1`);
     if (typeof kind.cutLine !== 'boolean') throw new Error(`${rulesUrl}: objectives.${id}.cutLine must be true or false`);
     if (kind.destroyedTerrain !== null && !legendCharFor(map, kind.destroyedTerrain)) {
@@ -307,10 +308,11 @@ export function primaryShortfall(state, rules) {
  * Charges on one objective going off in the same phase are one explosion: one
  * alert rise, one noise, heard from the objective in the next enemy phase. An
  * objective is destroyed once as many of its charges have gone off as its kind
- * needs. Anyone within the blast radius of a charge that goes off dies: a
- * trooper, wounded or not, leaving a body; an enemy of a killable type, with no
- * body, since the explosion itself is what the garrison hears. An enemy that
- * cannot be killed (the reserve, enemies.json) is not harmed.
+ * needs. A trooper within the kind's killRadius of a charge that goes off
+ * dies, wounded or not, leaving a body; one further off but inside its blast
+ * radius takes a hit (M20). An enemy of a killable type anywhere in the blast
+ * dies, with no body, since the explosion itself is what the garrison hears.
+ * An enemy that cannot be killed (the reserve, enemies.json) is not harmed.
  */
 export function runFusePhase(state, rules) {
   const events = [];
@@ -343,7 +345,17 @@ export function runFusePhase(state, rules) {
     events.push(...noise.events);
 
     for (const unit of next.units) {
-      if (!onBoard(unit) || !charges.some((c) => hexDistance(c, unit) <= kind.blastRadius)) continue;
+      if (!onBoard(unit)) continue;
+      const effect = blastEffect(charges.map((c) => ({ q: c.q, r: c.r, radius: kind.blastRadius, killRadius: kind.killRadius })), unit);
+      if (!effect) continue;
+      const hit = effect === 'wounded' ? applyHit(unit, rules) : null;
+      if (hit && !hit.dead) {
+        // The edge of the blast (M20): a hit, as from a shot, but nobody has
+        // him in their sights for it. His charges drop on his hex.
+        next = woundInBlast(next, unit, { ...hit, inContact: unit.inContact });
+        events.push({ kind: 'blastWounded', unitId: unit.id, unitName: unit.shortName, label: objective.label, line: woundedLine(unit) });
+        continue;
+      }
       next = killInBlast(next, unit);
       events.push({ kind: 'blastKilled', unitId: unit.id, unitName: unit.shortName, label: objective.label });
     }
@@ -401,17 +413,35 @@ function killInBlast(state, unit) {
   };
 }
 
-/** Hexes a charge going off in the coming fuse phase would kill a man on. */
+function woundInBlast(state, unit, hit) {
+  return {
+    ...state,
+    units: state.units.map((u) => (u.id === unit.id ? { ...u, ...hit } : u)),
+    droppedCharges: [...state.droppedCharges, ...Array.from({ length: unit.charges }, () => ({ q: unit.q, r: unit.r }))],
+  };
+}
+
+/** The charges going off in the coming fuse phase, each with how far it blasts and how far it kills a man. */
 export function blastHexesThisTurn(state, rules) {
   const hexes = [];
   for (const c of state.charges) {
     if (c.fuse > 1) continue;
-    const objective = state.objectives.find((o) => o.id === c.objectiveId);
-    hexes.push({ q: c.q, r: c.r, radius: kindOf(objective, rules).blastRadius });
+    const kind = kindOf(state.objectives.find((o) => o.id === c.objectiveId), rules);
+    hexes.push({ q: c.q, r: c.r, radius: kind.blastRadius, killRadius: kind.killRadius });
   }
   return hexes;
 }
 
 export function inBlast(blasts, hex) {
   return blasts.some((b) => hexDistance(b, hex) <= b.radius);
+}
+
+/**
+ * What these blasts do to a trooper on this hex: 'killed' within any one's
+ * killRadius, 'wounded' elsewhere inside one (a hit: it kills a man already
+ * wounded), or null outside them all.
+ */
+export function blastEffect(blasts, hex) {
+  if (blasts.some((b) => hexDistance(b, hex) <= (b.killRadius ?? b.radius))) return 'killed';
+  return inBlast(blasts, hex) ? 'wounded' : null;
 }

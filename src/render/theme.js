@@ -792,6 +792,11 @@ export const BLAST = {
   width: 3,
   casingWidth: 6,
   previewOpacity: 0.08,
+  // The ring where a blast only wounds a man (M20), lighter than where it
+  // kills, which is edged in a dashed line inside the solid one.
+  woundOpacity: 0.08,
+  killEdgeWidth: 2,
+  killEdgeDash: '6 5',
   // The starburst drawn where a charge went off, for a moment after the turn,
   // half as big again when it brings the target down.
   artSize: 150,

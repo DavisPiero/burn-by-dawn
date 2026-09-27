@@ -1316,10 +1316,16 @@ function drawSites(layers, state, view) {
   const exfilAt = labelPoint(map, view.exfil);
   layers.sites.appendChild(casedText('EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, EXFIL.label));
 
+  // Where a blast only wounds our men (M20) is printed lighter than where it kills.
   if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);
+  if (view.previewBlastKillArea) fillArea(layers, view.previewBlastKillArea, BLAST.previewOpacity);
   if (view.blastArea.size > 0) {
-    fillArea(layers, view.blastArea, BLAST.opacity);
+    fillArea(layers, view.blastArea, BLAST.woundOpacity);
+    fillArea(layers, view.blastKillArea, BLAST.opacity - BLAST.woundOpacity);
     drawAreaEdge(layers, layers.sites, view.blastArea, [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
+    if (view.blastKillArea.size < view.blastArea.size) {
+      drawAreaEdge(layers, layers.sites, view.blastKillArea, [[BLAST.stroke, BLAST.killEdgeWidth]], { 'stroke-dasharray': BLAST.killEdgeDash });
+    }
   }
 
   const labels = [];
