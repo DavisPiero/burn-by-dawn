@@ -29,7 +29,7 @@ import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTim
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -785,6 +785,8 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);
     const patient = hex ? unitAt(state.units, hex.q, hex.r) : null;
     const check = patient ? checkStabilise(unit, patient) : null;
+    // A red cross over the man under the mouse (M17), as the crosshair over an enemy.
+    if (patient && patient.id !== unit.id) view.aim = { q: patient.q, r: patient.r, ok: check.ok, icon: 'heal' };
     view.targetLabel = check?.ok
       ? `Stabilise ${patient.shortName} — ${unit.shortName}'s whole turn. ${patient.shortName} gets his full AP back next turn. Click to start.`
       : check ? `Stabilise: ${check.reason}.` : 'Stabilise: click a wounded man beside him. Esc to cancel.';
@@ -1018,9 +1020,11 @@ function handleAction(id) {
       // A heading of its own each time (M13: it flew the same line every
       // call), from the seed, the turn and the call, so a replay flies it again.
       const heading = createRng((state.seed ^ Math.imul(state.turn, 2654435761) ^ state.diversionsCalled) >>> 0).next() * Math.PI * 2;
-      flyShow = { since: performance.now(), before, heading, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
+      // Its engines are heard before it comes into sight (M17): the cue plays now.
+      const lead = DROP_SHOW.flyoverSoundLeadMs;
+      flyShow = { since: performance.now() + lead, before, heading, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
       clearTimeout(flyShowTimer);
-      flyShowTimer = setTimeout(endFlyShow, flyoverTimeline(baseMap, flyShow.points, flyShow.heading).length);
+      flyShowTimer = setTimeout(endFlyShow, lead + flyoverTimeline(baseMap, flyShow.points, flyShow.heading).length);
     }
     render();
     return;

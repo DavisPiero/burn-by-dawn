@@ -80,7 +80,8 @@ export function finalOutcome(state, rules, check, turn, dawn) {
 }
 
 /**
- * SPEC.md §10: primary 3, each secondary 2, 1 per man out, 1 more for each of
+ * SPEC.md §10 (numbers as of M18): primary 10, each secondary 4, 2 per man out
+ * unhurt and 1 per man out who was hit, 1 more for each of
  * them never spotted all mission, 1 per enemy knifed or shot and 1 back for
  * each of their bodies found (M16), and 3 for a clean run — never reached
  * Alarmed and never called the RAF diversion. Stealth is paid for, not speed
@@ -93,7 +94,12 @@ export function scoreOf(state, rules) {
     if (o.destroyed) lines.push({ label: `${o.label} destroyed${o.cut ? ' (line cut)' : ''}`, points: o.primary ? s.primary : s.secondary });
   }
   const out = state.units.filter((u) => u.out);
-  if (out.length > 0) lines.push({ label: `${out.length} m${out.length === 1 ? 'a' : 'e'}n out`, points: out.length * s.perTrooperOut });
+  const men = (n) => `${n} m${n === 1 ? 'a' : 'e'}n`;
+  // M18: a man who was hit, dressed or not, pays less than one who came through whole.
+  const whole = out.filter((u) => !(u.hits > 0)).length;
+  const hurt = out.length - whole;
+  if (whole > 0) lines.push({ label: `${men(whole)} out unhurt`, points: whole * s.perTrooperOut });
+  if (hurt > 0) lines.push({ label: `${men(hurt)} out wounded`, points: hurt * s.perTrooperOutWounded });
   const unseen = out.filter((u) => !u.everSpotted).length;
   if (unseen > 0) lines.push({ label: `${unseen} of them never seen`, points: unseen * s.perTrooperUnseen });
   // M16: kills by knife or gunner are the enemy bodies; a blast leaves none.

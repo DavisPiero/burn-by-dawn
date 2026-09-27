@@ -21,6 +21,10 @@ export const SOUND_FILES = { dir: 'assets/audio', types: ['mp3'] };
 
 const NOISE_SEED = 1944;
 
+// The bang (M17, the operator's: lower and slower): every frequency in it
+// times `pitch`, every length times `stretch`.
+export const BOOM = { pitch: 0.7, stretch: 1.4 };
+
 let context = null;
 // The noise sheet for each context: made once per context from the fixed seed.
 const noiseByContext = new WeakMap();
@@ -68,12 +72,12 @@ function filter(ctx, type, frequency, q = 1) {
   return f;
 }
 
-/** Two seconds of white noise for this context, made once: every placeholder is cut from it. */
+/** Four seconds of white noise for this context, made once: every placeholder is cut from it (M17: the slower bang runs 2.8 s). */
 function noiseSheet(ctx) {
   let sheet = noiseByContext.get(ctx);
   if (sheet) return sheet;
   const rng = createRng(NOISE_SEED);
-  sheet = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  sheet = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
   const data = sheet.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = rng.next() * 2 - 1;
   noiseByContext.set(ctx, sheet);
@@ -185,9 +189,11 @@ const SYNTHS = {
   },
 
   // A demolition charge going off, close (M11: the operator wanted the bangs
-  // to land hard). A sharp crack, a deep boom with the air in it closing
-  // down, a sub-bass shove, and debris pattering down for a second after.
+  // to land hard; M17: lower and slower). A crack, a deep boom with the air in
+  // it closing down, a sub-bass shove, and debris pattering down after it.
+  // BOOM.pitch scales every frequency and BOOM.stretch every time.
   explosion: (ctx, destination, at, v) => {
+    const { pitch, stretch } = BOOM;
     const rng = createRng(NOISE_SEED + 90 + v);
     // The parts are levelled against each other below; this keeps their sum
     // under full scale, where the crack and the boom land together.
@@ -200,25 +206,25 @@ const SYNTHS = {
     for (let i = 0; i < 256; i++) { const x = i / 128 - 1; curve[i] = Math.tanh(2.2 * x); }
     grit.curve = curve;
     grit.connect(out);
-    // The crack: a short, bright burst.
-    noiseThrough(ctx, out, at, 0.14, [filter(ctx, 'highpass', 900), envelope(ctx, at, 0.55, 0.12, 0.001)], v * 0.19);
+    // The crack: a short burst, duller than it was.
+    noiseThrough(ctx, out, at, 0.14 * stretch, [filter(ctx, 'highpass', 900 * pitch), envelope(ctx, at, 0.5, 0.12 * stretch, 0.001)], v * 0.19);
     // The boom: wide noise through a lowpass closing from bright to dull.
-    const body = filter(ctx, 'lowpass', 2600, 0.7);
-    body.frequency.setValueAtTime(2600, at);
-    body.frequency.exponentialRampToValueAtTime(110, at + 1.7);
-    noiseThrough(ctx, grit, at, 2, [body, envelope(ctx, at, 0.7, 1.9, 0.006)], v * 0.23 + 0.3);
+    const body = filter(ctx, 'lowpass', 2600 * pitch, 0.7);
+    body.frequency.setValueAtTime(2600 * pitch, at);
+    body.frequency.exponentialRampToValueAtTime(110 * pitch, at + 1.7 * stretch);
+    noiseThrough(ctx, grit, at, 2 * stretch, [body, envelope(ctx, at, 0.72, 1.9 * stretch, 0.01)], v * 0.23 + 0.3);
     // The shove: a sine falling through the sub-bass.
     const sub = ctx.createOscillator();
-    sub.frequency.setValueAtTime(62, at);
-    sub.frequency.exponentialRampToValueAtTime(26, at + 1.1);
-    sub.connect(envelope(ctx, at, 0.6, 1.4, 0.01)).connect(out);
+    sub.frequency.setValueAtTime(62 * pitch, at);
+    sub.frequency.exponentialRampToValueAtTime(26 * pitch, at + 1.1 * stretch);
+    sub.connect(envelope(ctx, at, 0.7, 1.4 * stretch, 0.015)).connect(out);
     sub.start(at);
-    sub.stop(at + 1.5);
-    // Debris: small bright ticks, thinning out.
+    sub.stop(at + 1.5 * stretch);
+    // Debris: small ticks, thinning out.
     for (let i = 0; i < 14; i++) {
-      const t = at + 0.25 + rng.next() * 1.4;
-      const loud = 0.12 * (1 - (t - at) / 1.8) + 0.02;
-      noiseThrough(ctx, out, t, 0.04, [filter(ctx, 'bandpass', 1800 + rng.next() * 3500, 3), envelope(ctx, t, loud, 0.03, 0.001)], rng.next());
+      const t = at + (0.25 + rng.next() * 1.4) * stretch;
+      const loud = 0.12 * (1 - (t - at) / (1.8 * stretch)) + 0.02;
+      noiseThrough(ctx, out, t, 0.04, [filter(ctx, 'bandpass', (1800 + rng.next() * 3500) * pitch, 3), envelope(ctx, t, loud, 0.03, 0.001)], rng.next());
     }
   },
 

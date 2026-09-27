@@ -467,6 +467,10 @@ export default [
       + 3 * rules.scoring.perTrooperUnseen + rules.scoring.clean, `score (${lines})`);
     const seen = settleMission({ ...s, units: s.units.map((u) => (u.out ? { ...u, everSpotted: true } : u)) }, rules, map);
     equal(seen.outcome.score.total, settled.outcome.score.total - 3 * rules.scoring.perTrooperUnseen, 'seen men pay once');
+    // M18: a man out who was hit pays less than one who came through whole.
+    const hurt = settleMission({ ...s, units: s.units.map((u, i) => (i === 0 ? { ...u, hits: 1 } : u)) }, rules, map);
+    equal(hurt.outcome.score.total, settled.outcome.score.total - rules.scoring.perTrooperOut + rules.scoring.perTrooperOutWounded, 'a wounded man pays less');
+    assert(hurt.outcome.score.lines.some((l) => /wounded/.test(l.label)), 'and is his own line');
   }],
   ['a kill scores, and loses it again when its body is found; a blast kill scores nothing (M16)', async () => {
     const { rules, state } = await loadAll();
