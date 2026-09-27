@@ -125,8 +125,10 @@ export default [
 
   ['shot in cover he is pinned, not hit: one AP less next turn, never below 1', async () => {
     const { map, rules, state } = await loadAll();
+    // Blocking sight hides only what lies beyond a hex, never the hex itself,
+    // so an adjacent enemy sees into any cover (M20: hedgerows block it too).
     const coverId = Object.keys(map.terrain).find((id) => rules.combat.shotResult[map.terrain[id].cover] === 'pinned'
-      && map.terrain[id].moveCost !== null && !map.terrain[id].blocksLOS);
+      && map.terrain[id].moveCost !== null);
     // An enemy two hexes west of a cover hex, looking east, on in-play ground.
     let spot = null;
     for (let r = 0; r < map.height && !spot; r++) {

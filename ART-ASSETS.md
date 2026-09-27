@@ -110,7 +110,7 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-field-01..03.svg` | 80 x 92 | 3 |
 | `terrain-hedgerow-01..03.svg` | 80 x 92 | 3 |
 | `terrain-wood-01..03.svg` | 80 x 92 | 3 — M17: crowded billowing crowns after `Woods_Reference_01.jpeg`, each with a `-shadow` sprite (the ink shadow they throw, printed for the whole wood first). *Drawn by code.* |
-| `terrain-orchard-01..03.svg` | 80 x 92 | 3 — M17: six round trees in two columns on a lattice every hex shares (x 20 and 60, y 23, 46, 69), so the rows run on across the orchard, after `Orchard_Reference_01.jpeg`; grass and an apple between; a `-shadow` sprite each. *Drawn by code.* |
+| `terrain-orchard-01..03.svg` | 80 x 92 | 3 — M17: six round trees in two columns on a lattice every hex shares (x 20 and 60, y 23, 46, 69), so the rows run on across the orchard, after `Orchard_Reference_01.jpeg`; grass and an apple between; a `-shadow` sprite each. M20: each tree a small billowing crown like the wood's, and the apple stalked. *Drawn by code.* |
 | `terrain-marsh.svg` | 80 x 92 | 1 |
 | `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
 | `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
