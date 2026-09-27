@@ -595,6 +595,11 @@ export const NOISE = {
   // What each kind of noise is called under its ring (M15: a bang's ring
   // looked like a stone's left behind).
   words: { explosion: 'BANG', stone: 'STONE', gunfire: 'SHOTS', silenced: 'SHOT', found: 'FOUND' },
+  // Noises with no ring (M17, the operator's: a ring stood on the blown
+  // bridge like a target until the garrison heard it). A bang's place is
+  // already marked by the blast, the smoke and the DESTROYED stamp; hovering
+  // the hex still says who it will bring.
+  unringed: ['explosion'],
   wordSize: 10,
 };
 
@@ -610,13 +615,9 @@ export const TARGET = {
 // A stone being aimed (SPEC.md §4): the lob drawn as a dashed arc from the man,
 // the stone where it lands, and the ground in earshot tinted — a throw, not a move.
 export const THROW = {
-  arc: PALETTE.ink,
-  arcWidth: 4,
-  arcDash: '10 7',
-  casing: PALETTE.paper,
-  casingWidth: 9,
-  rise: 0.45, // of the throw's length, how high the arc bows
-  stone: 8,
+  // Since M17 no lob is drawn, only where it lands (marker-stone-target),
+  // this many hex radii across.
+  targetScale: 1.15,
   earshot: PALETTE.red,
   earshotOpacity: 0.1,
   earshotEdge: 2,
@@ -701,17 +702,25 @@ export const OBJECTIVE = {
 // power going): the lights in its windows flicker and die, the village round
 // it dims in stutters, and sparks jump where each wire parted. Display only.
 export const POWER_CUT = {
-  ms: 1700,
-  dimHexes: 2.6, // how far round the exchange the dimming reaches
-  dimOpacity: 0.34,
-  sparkSize: 40,
+  // M17: quick white stutters, one step every `stepMs`, then gone.
+  ms: 1100,
+  stepMs: 65,
+  flashHexes: 2.2, // how far round the exchange the flash reaches
+  flashes: [0.9, 0, 0.75, 0, 0, 0.95, 0.1, 0.8, 0, 0, 0, 0.6, 0, 0.35, 0],
+  windows: [1, 0.3, 1, 0.2, 1, 1, 0, 1, 0.4, 0, 0.8, 0, 0, 0.5, 0],
+  sparkSize: 46,
 };
 
 // The knife (M16, the operator's): a red splat bursts on the enemy's hex, then
 // fades to a faint stain left under the body. Display only.
 export const KNIFE_SPLAT = {
-  ms: 1300,
-  size: 64,
+  // M17: the stain spreads from a fifth of its size over the first 70% of
+  // `ms`, wet and dark, then dries to its faint print.
+  ms: 3000,
+  fromScale: 0.2,
+  spreadShare: 0.7,
+  wetOpacity: 0.9,
+  easing: 'cubic-bezier(0.15, 0.55, 0.35, 1)',
   stainSize: 62,
   stainOpacity: 0.5,
   stainOffset: { x: -2, y: 0 }, // near the hex's middle, so it shows beside the body
@@ -834,6 +843,9 @@ export const DROP = {
 // every landing is decided before it starts. Times in ms.
 export const DROP_SHOW = {
   flightMs: 2800,
+  // The RAF flyover's aircraft sets off this long after its sound starts
+  // (M17, the operator's): the engines are heard coming before it is seen.
+  flyoverSoundLeadMs: 500,
   runIn: 2.5, // hexes the aircraft flies before the first waypoint and after the last
   aircraftSize: 170,
   aircraftShadow: { x: 34, y: 44, opacity: 0.16 },
@@ -2011,6 +2023,38 @@ const SPRITES = {
       ];
     },
   }])),
+  // Aiming Aid (M17, the operator's): a red cross over the man under the
+  // mouse, as the crosshair is over an enemy — red if he can be stabilised,
+  // grey if not. Big and on a paper disc, so it never reads as the small
+  // wounded marker he already wears.
+  ...Object.fromEntries([['marker-heal', 'red'], ['marker-heal-no', 'ink']].map(([id, colour]) => [id, {
+    viewBox: '0 0 100 100',
+    draw: () => {
+      const cross = 'M40 18 H60 V40 H82 V60 H60 V82 H40 V60 H18 V40 H40 Z';
+      return [
+        svg('g', { opacity: colour === 'ink' ? 0.55 : 1 }, [
+          circle(50, 50, 44, 'paper', { 'fill-opacity': 0.9 }), ring(50, 50, 44, 4.5, `stroke-${colour}`),
+          fill(cross, colour), line(cross, 3),
+        ]),
+      ];
+    },
+  }])),
+  // Where a thrown stone lands (M17, the operator's: the dashed lob from the
+  // man read as a walk, so only its landing is marked): a pebble in an ink
+  // target ring.
+  'marker-stone-target': {
+    viewBox: '0 0 100 100',
+    draw: () => {
+      const ticks = 'M50 6 V26 M50 74 V94 M6 50 H26 M74 50 H94';
+      const pebble = 'M36 46 C36 36 46 32 54 34 C63 36 67 43 65 52 C63 61 55 65 46 63 C39 61 36 54 36 46 Z';
+      return [
+        ring(50, 50, 34, 10, 'stroke-paper'), line(ticks, 10, 'stroke-paper'),
+        ring(50, 50, 34, 4, 'stroke-ink'), line(ticks, 4, 'stroke-ink'),
+        fill(pebble, 'paper'), fill(pebble, toneClass('ink', 50)), line(pebble, 3),
+        line('M44 42 Q48 38 54 39', 2.5, 'stroke-paper'),
+      ];
+    },
+  },
   'marker-suppressed': {
     viewBox: '0 0 28 28',
     draw: () => [

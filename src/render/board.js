@@ -612,8 +612,11 @@ export function renderPieces(layers, state, view) {
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
   for (const body of state.bodies) {
-    // A knifed enemy lies in a faint stain (M16), under the body.
-    if (body.knifed) drawOnGround(layers, 'effect-blood-splat', body, -1, KNIFE_SPLAT.stainSize, KNIFE_SPLAT.stainOffset, { opacity: KNIFE_SPLAT.stainOpacity });
+    // A knifed enemy lies in a faint stain (M16), under the body; just after
+    // the knife the stain spreads out from under him (M17).
+    const knife = view.strikeShow;
+    if (body.knifed && knife?.kind === 'knife' && knife.at.q === body.q && knife.at.r === body.r) drawBloodSpreading(layers, body, now - knife.since);
+    else if (body.knifed) drawOnGround(layers, 'effect-blood-splat', body, -1, KNIFE_SPLAT.stainSize, KNIFE_SPLAT.stainOffset, { opacity: KNIFE_SPLAT.stainOpacity });
     drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize, MARKER.bodyOffset);
   }
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
@@ -663,12 +666,12 @@ export function renderPieces(layers, state, view) {
     // already under way is carried on, at the pace it began at.
     travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, view.garrisonShow?.msPerHex ?? GARRISON_SHOW.msPerHex.calm);
   }
-  // The enemy being aimed at (M15), over its counter.
+  // The enemy being aimed at (M15), or the man being aided (M17), over his counter.
   if (view.aim) {
     const p = axialToPixel(view.aim.q, view.aim.r, map.hexSize);
     const size = map.hexSize * MARKER.aimScale;
     layers.tokens.appendChild(el('use', {
-      href: view.aim.ok ? '#marker-aim' : '#marker-aim-no', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size, 'pointer-events': 'none',
+      href: `#marker-${view.aim.icon ?? 'aim'}${view.aim.ok ? '' : '-no'}`, x: p.x - size / 2, y: p.y - size / 2, width: size, height: size, 'pointer-events': 'none',
     }));
   }
 
@@ -705,7 +708,6 @@ export function renderPieces(layers, state, view) {
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
-  if (view.strikeShow?.kind === 'knife') drawKnifeSplat(layers, view.strikeShow, now);
   if (view.strikeShow?.kind === 'cut') {
     const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
     if (objective) drawPowerCut(layers, objective, now - view.strikeShow.since);
@@ -1004,28 +1006,32 @@ function drawShot(layers, shot, now) {
   }
 }
 
-// The knife (M16): a red splat bursts on the enemy's hex, in three steps like
-// the blast, holds, and fades; the stain left under the body is drawn with it.
-function drawKnifeSplat(layers, show, now) {
-  const elapsed = now - show.since;
+// The knife (M17, the operator's: M16's splat burst over the counters and
+// seemed to fly in onto the hex). A quiet kill: the stain spreads slowly out
+// from under the body, where it will stay, dark at first and drying to the
+// stain's faint print. It is the stain itself, grown, so it hands over to the
+// still one without a jump. Eased, unlike the board's other motion: blood
+// spreads, it does not step.
+function drawBloodSpreading(layers, body, elapsed) {
   if (elapsed > KNIFE_SPLAT.ms) return;
-  const p = axialToPixel(show.at.q, show.at.r, layers.map.hexSize);
-  const size = KNIFE_SPLAT.size;
-  const splat = el('use', { href: '#effect-blood-splat', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size });
-  splat.style.transformBox = 'fill-box';
-  splat.style.transformOrigin = '50% 50%';
-  layers.effects.appendChild(splat);
-  playFrom(splat, [
-    { transform: 'scale(0.2)', opacity: 1, offset: 0, easing: 'steps(3, end)' },
-    { transform: 'scale(1.15)', opacity: 1, offset: 0.2 },
-    { transform: 'scale(1)', opacity: 1, offset: 0.3 },
-    { transform: 'scale(1)', opacity: 1, offset: 0.6 },
-    { transform: 'scale(1)', opacity: 0, offset: 1 },
+  const p = axialToPixel(body.q, body.r, layers.map.hexSize);
+  const size = KNIFE_SPLAT.stainSize;
+  const at = { x: p.x - KNIFE_SPLAT.stainOffset.x, y: p.y + KNIFE_SPLAT.stainOffset.y };
+  const pool = el('g', {});
+  pool.appendChild(el('use', { href: '#effect-blood-splat', x: -size / 2, y: -size / 2, width: size, height: size }));
+  layers.highlight.appendChild(pool);
+  const spread = (scale, opacity, offset) => ({ transform: `translate(${at.x}px, ${at.y}px) scale(${scale})`, opacity, offset });
+  playFrom(pool, [
+    { ...spread(KNIFE_SPLAT.fromScale, KNIFE_SPLAT.wetOpacity, 0), easing: KNIFE_SPLAT.easing },
+    spread(1, KNIFE_SPLAT.wetOpacity, KNIFE_SPLAT.spreadShare),
+    spread(1, KNIFE_SPLAT.stainOpacity, 1),
   ], { duration: KNIFE_SPLAT.ms }, elapsed);
 }
 
-// The line cut (M16): the lights in the exchange's windows stutter and die,
-// the village round it dims in fits, and each wire sparks where it parted.
+// The line cut (M16; M17, the operator's: fast and bright, not a slow
+// dimming). The wires short as they part: the exchange and the ground round
+// it flash white in quick stutters, a spark bursts at each wire with every
+// flash, the lit windows flicker with them, and then they are out for good.
 // Every step is held, not eased, like the rest of the board's motion.
 function drawPowerCut(layers, objective, elapsed) {
   if (elapsed > POWER_CUT.ms) return;
@@ -1033,26 +1039,25 @@ function drawPowerCut(layers, objective, elapsed) {
   const art = objectiveArt(objective);
   const centre = labelPoint(map, objective.hexes);
   const origin = { x: centre.x - art.width / 2, y: centre.y - art.height / 2 };
-  // Held steps, spread over the first `upTo` of the animation.
-  const held = (values, upTo = 1) => values.map((opacity, i) => ({ opacity, offset: (i / (values.length - 1)) * upTo, easing: 'steps(1, end)' }));
-  // Darkest over the exchange, fading out to nothing at the village's edge.
-  const shade = el('radialGradient', { id: 'power-cut-dim' });
-  shade.append(el('stop', { offset: '0', 'stop-color': PALETTE.ink, 'stop-opacity': 1 }), el('stop', { offset: '0.55', 'stop-color': PALETTE.ink, 'stop-opacity': 0.7 }), el('stop', { offset: '1', 'stop-color': PALETTE.ink, 'stop-opacity': 0 }));
-  const dim = el('circle', {
-    cx: origin.x + 95, cy: origin.y + 105, r: map.hexSize * Math.sqrt(3) * POWER_CUT.dimHexes, fill: 'url(#power-cut-dim)', opacity: 0,
+  // Held steps, one every POWER_CUT.stepMs, then nothing.
+  const flicker = (values) => values.map((opacity, i) => ({ opacity, offset: Math.min(1, (i * POWER_CUT.stepMs) / POWER_CUT.ms), easing: 'steps(1, end)' }))
+    .concat([{ opacity: 0, offset: 1 }]);
+  // White at the exchange, fading out to nothing at the village's edge.
+  const glow = el('radialGradient', { id: 'power-cut-flash' });
+  glow.append(el('stop', { offset: '0', 'stop-color': PALETTE.paper, 'stop-opacity': 1 }), el('stop', { offset: '0.5', 'stop-color': PALETTE.paper, 'stop-opacity': 0.75 }), el('stop', { offset: '1', 'stop-color': PALETTE.paper, 'stop-opacity': 0 }));
+  const flash = el('circle', {
+    cx: origin.x + 95, cy: origin.y + 105, r: map.hexSize * Math.sqrt(3) * POWER_CUT.flashHexes, fill: 'url(#power-cut-flash)', opacity: 0,
   });
-  layers.effects.append(shade, dim);
-  const d = POWER_CUT.dimOpacity;
-  // Stutters, holds dark, then the page's own light comes back.
-  playFrom(dim, [...held([0, d, d * 0.2, d * 0.9, d * 0.1, d], 0.6), { opacity: d, offset: 0.8 }, { opacity: 0, offset: 1 }], { duration: POWER_CUT.ms }, elapsed);
-  // The windows, lit, going out: the same squares the exchange is drawn with.
+  layers.effects.append(glow, flash);
+  playFrom(flash, flicker(POWER_CUT.flashes), { duration: POWER_CUT.ms }, elapsed);
+  // The windows, lit, stuttering with the flashes, then out.
   const lights = el('g', { opacity: 0 });
   for (const [x, y] of [[62, 103], [85, 103], [108, 103], [62, 118], [108, 118]]) {
     lights.appendChild(el('rect', { x: origin.x + x, y: origin.y + y, width: 10, height: 10, fill: PALETTE.paper }));
   }
   layers.effects.appendChild(lights);
-  playFrom(lights, held([1, 0, 1, 0, 0.8, 0, 0.5, 0, 0]), { duration: POWER_CUT.ms * 0.7 }, elapsed);
-  // A spark where each wire parted, twice.
+  playFrom(lights, flicker(POWER_CUT.windows), { duration: POWER_CUT.ms }, elapsed);
+  // A spark where each wire parted, with every flash.
   const standard = { x: origin.x + art.wires.x, y: origin.y + art.wires.y };
   const size = POWER_CUT.sparkSize;
   objective.chargeHexes.forEach((h, i) => {
@@ -1062,7 +1067,7 @@ function drawPowerCut(layers, objective, elapsed) {
     const at = { x: (pole.x + standard.x) / 2, y: (pole.y + standard.y) / 2 };
     const spark = el('use', { href: '#effect-spark', x: at.x - size / 2, y: at.y - size / 2, width: size, height: size, opacity: 0 });
     layers.effects.appendChild(spark);
-    playFrom(spark, held([1, 0, 0, 1, 0, 0]), { delay: i * 90, duration: POWER_CUT.ms * 0.45 }, elapsed);
+    playFrom(spark, flicker(POWER_CUT.flashes.map((o) => (o > 0.5 ? 1 : 0))), { delay: i * 40, duration: POWER_CUT.ms }, elapsed);
   });
 }
 
@@ -1609,6 +1614,7 @@ function drawWatch(layers, enemy) {
 
 // A noise made this turn, heard in the enemy phase.
 function drawNoise(layers, noise) {
+  if (NOISE.unringed.includes(noise.kind)) return;
   const p = axialToPixel(noise.q, noise.r, layers.map.hexSize);
   for (const [stroke, width] of [[NOISE.casing, NOISE.casingWidth], [NOISE.stroke, NOISE.width]]) {
     layers.highlight.appendChild(el('circle', { cx: p.x, cy: p.y, r: NOISE.radius, fill: 'none', stroke, 'stroke-width': width }));
@@ -1625,19 +1631,15 @@ function drawNoise(layers, noise) {
   }
 }
 
-// A stone being aimed: earshot tinted and edged, then the lob as an arc bowed
-// up the page from the man to where it lands, and the stone.
+// A stone being aimed: earshot tinted and edged, and where it lands.
 function drawThrow(layers, preview) {
   const { map } = layers;
   fillArea(layers, preview.earshot, THROW.earshotOpacity, THROW.earshot);
   drawAreaEdge(layers, layers.path, preview.earshot, [[THROW.earshot, THROW.earshotEdge]]);
-  const a = axialToPixel(preview.from.q, preview.from.r, map.hexSize);
+  // Where it lands, and nothing from the man to it (M17): a line read as a walk.
   const b = axialToPixel(preview.to.q, preview.to.r, map.hexSize);
-  const lift = Math.hypot(b.x - a.x, b.y - a.y) * THROW.rise;
-  const d = `M${a.x} ${a.y} Q${(a.x + b.x) / 2} ${(a.y + b.y) / 2 - lift} ${b.x} ${b.y}`;
-  layers.path.appendChild(el('path', { d, fill: 'none', stroke: THROW.casing, 'stroke-width': THROW.casingWidth, 'stroke-linecap': 'round' }));
-  layers.path.appendChild(el('path', { d, fill: 'none', stroke: THROW.arc, 'stroke-width': THROW.arcWidth, 'stroke-dasharray': THROW.arcDash, 'stroke-linecap': 'round' }));
-  layers.path.appendChild(el('circle', { cx: b.x, cy: b.y, r: THROW.stone, fill: THROW.arc, stroke: THROW.casing, 'stroke-width': 2 }));
+  const size = map.hexSize * THROW.targetScale;
+  layers.path.appendChild(el('use', { href: '#marker-stone-target', x: b.x - size / 2, y: b.y - size / 2, width: size, height: size, 'pointer-events': 'none' }));
 }
 
 // Where the action being aimed can go.
