@@ -202,7 +202,8 @@ export function loadSuppliedAircraft() {
 
 // A supplied blast (M17, the operator's): a painted starburst PNG at
 // BLAST_FILE.url, square on transparency, replaces the drawn `marker-blast`
-// once it loads — the bang on the board and the gunner's muzzle flash alike.
+// once it loads — the bang on the board and the gunner's muzzle flash alike —
+// with BOOM set over its middle in code.
 // It is shown at 400 x 400 (twice the sprite's 200, for retina); the
 // operator's full-size painting is kept beside it as marker-blast_original.png.
 // A missing file is fine: the drawn one stays.
@@ -211,9 +212,11 @@ export const BLAST_FILE = { url: 'assets/markers/marker-blast.png', size: 200 };
 export function loadSuppliedBlast() {
   return picture(BLAST_FILE.url).then((ok) => {
     if (!ok) return;
-    document.getElementById('marker-blast')?.replaceChildren(svg('image', {
-      href: BLAST_FILE.url, x: 0, y: 0, width: BLAST_FILE.size, height: BLAST_FILE.size,
-    }));
+    // BOOM set over its empty middle, as the drawn one has it (ART-PROMPTS.md priority 10).
+    document.getElementById('marker-blast')?.replaceChildren(
+      svg('image', { href: BLAST_FILE.url, x: 0, y: 0, width: BLAST_FILE.size, height: BLAST_FILE.size }),
+      label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
+    );
   });
 }
 

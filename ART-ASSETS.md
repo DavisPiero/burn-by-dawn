@@ -66,7 +66,7 @@ code change, and uses its own drawn portrait for any file that is missing.
 
 | Asset | Size | Notes |
 |---|---|---|
-| `portrait-<name>-full.png` x6 | **4:5**, 960 x 1200 px (no smaller than 480 x 600) | Head and shoulders. 8-bit sRGB, opaque, a plain or simple background, no border and no text (code draws the frame, number and name). The roster rail crops to the middle — keep the face and helmet inside the central **80% of the width** and between **12% and 92% of the height**; eyes about 40% down. Shown at roughly 55 x 70 in the rail and 96 x 120 in the rollover, so it must read small: strong silhouette, clear light and dark. Code greys it out when the man is killed. |
+| `portrait-<name>-full.png` x6 | **4:5**, 960 x 1200 px (no smaller than 480 x 600). Since M17 the game loads `portrait-<name>-full.jpg`, a 480 x 600 JPEG made from it (the six PNGs were 12 MB over the web); the PNG stays as the source, and a new one needs its JPEG remade (`assets/portraits/README.md`) | Head and shoulders. 8-bit sRGB, opaque, a plain or simple background, no border and no text (code draws the frame, number and name). The roster rail crops to the middle — keep the face and helmet inside the central **80% of the width** and between **12% and 92% of the height**; eyes about 40% down. Shown at roughly 55 x 70 in the rail and 96 x 120 in the rollover, so it must read small: strong silhouette, clear light and dark. Code greys it out when the man is killed. |
 | `portrait-<name>-chip.png` x6 | **1:1**, 128 x 128 px | Optional. On the counter, about 15 px on screen. Helmet and face only, filling the frame, transparent background. Silhouette-level simplicity, one distinguishing feature. Without it the drawn chip is used, which will not match painted portraits. |
 
 Names: holloway, fitch, vance, barrow, speers, nunn — the trooper's `id` in
@@ -109,14 +109,16 @@ that cover large areas, or the map will look rubber-stamped.
 |---|---|---|
 | `terrain-field-01..03.svg` | 80 x 92 | 3 |
 | `terrain-hedgerow-01..03.svg` | 80 x 92 | 3 |
-| `terrain-wood-01..03.svg` | 80 x 92 | 3 |
-| `terrain-orchard-01..03.svg` | 80 x 92 | 3 |
+| `terrain-wood-01..03.svg` | 80 x 92 | 3 — M17: crowded billowing crowns after `Woods_Reference_01.jpeg`, each with a `-shadow` sprite (the ink shadow they throw, printed for the whole wood first). *Drawn by code.* |
+| `terrain-orchard-01..03.svg` | 80 x 92 | 3 — M17: six round trees in two columns on a lattice every hex shares (x 20 and 60, y 23, 46, 69), so the rows run on across the orchard, after `Orchard_Reference_01.jpeg`; grass and an apple between; a `-shadow` sprite each. *Drawn by code.* |
 | `terrain-marsh.svg` | 80 x 92 | 1 |
 | `terrain-canal.svg` | 80 x 92 | 1: surface marks only, the water is the hex's printed base |
 | `terrain-canal-edge.svg` | 80 x 92 | 1: the bank along the hex's **east** edge; code turns it to every edge that faces dry land |
 | `terrain-ridge.svg` | 80 x 92 | 1 — not used since M7b: the ridge is drawn as tonal bands |
 | `terrain-farmhouse.svg` | 80 x 92 | 1: Ferme Lebrun, the one farmhouse hex not under an objective — a farm round its yard after `assets/reference/Farmhouse_Reference_01.jpeg` (M14): half-timbered house under red tiles, stone barn under slate with an arched door, haystack, yard wall with a gate gap. *Drawn by code.* |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
+
+`hedge-clump-01..03` (24 x 24, M17), each with a `-shadow`: one bush of a hedge, laid by board.js every few units along each hedge's line over an ink bottom, now and then half as big again as a tree, after `Hedgerows_Reference_01.jpeg`. *Drawn by code.*
 
 **Roads and the railway are not motifs** (M7b). Code draws each road as one continuous
 line through its hexes' centres, and the railway (art only, `railway` in `data/map.json`)
@@ -177,7 +179,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `effect-blood-splat.svg` | 100 x 100 (M16: the knife's splat, spot red halftoned and inked, with droplets; drawn small and faint as the stain under a knifed enemy. *Drawn by code.*) |
 | `effect-spark.svg` | 100 x 100 (M16: a spark where a cut telephone wire parts, a small paper starburst. *Drawn by code.*) |
-| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14) |
+| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14). **Or a painted PNG**, `/assets/markers/marker-blast.png`, square on transparency, shown from a 400 x 400 copy (M17, the operator's; the full painting is `marker-blast_original.png`, not loaded). It replaces the drawn one on load, the muzzle flash too, and code sets BOOM over its middle |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
 | `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs one long sagging wire from its crossarm to the exchange's roof standard, M12; M14) |
@@ -273,6 +275,7 @@ MP3, and a second would double the requests for files that are not there.
 | `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12), rising to the top bell (M15) | ~4–7 s |
 | `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
+| `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.
 

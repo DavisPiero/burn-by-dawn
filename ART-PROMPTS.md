@@ -48,7 +48,7 @@ of the design (SPEC.md §11), and today they're the weakest drawn art in the gam
 
 | | |
 |---|---|
-| Files | `assets/portraits/portrait-<id>-full.png` × 6 |
+| Files | `assets/portraits/portrait-<id>-full.png` × 6 (since M17 the game loads a 480 × 600 JPEG made from each, `portrait-<id>-full.jpg`: a new PNG needs its JPEG remade, see the portraits README) |
 | ids | `holloway`, `fitch`, `vance`, `barrow`, `speers`, `nunn` |
 | Size | **4:5, 960 × 1200 px** (never below 480 × 600) |
 | Format | PNG, 8-bit sRGB, **opaque** |
@@ -304,7 +304,7 @@ while the title card has your stencil.
 
 ---
 
-## Priority 9 — reference art for the hedgerows, woods and orchards (for Claude to redraw)
+## Priority 9 — reference art for the hedgerows, woods and orchards (for Claude to redraw) ✅ done (2026-09-27)
 
 **Why:** after the objectives, the hedges are the next-biggest thing on the map, and they
 are drawn as lumpy lines in code because they have to follow whatever route the hedgerow
@@ -329,14 +329,14 @@ dark the green is against the cream.
 
 ---
 
-## Priority 10 — the explosion
+## Priority 10 — the explosion ✅ done (2026-09-27)
 
 **Why:** the BOOM starburst is the game's big moment, and it is the flattest drawing on the
 board.
 
 | | |
 |---|---|
-| File | `assets/markers/marker-blast.png` (needs a small code hook) |
+| File | `assets/markers/marker-blast.png` (hooked up in M17: shown from a 400 × 400 copy; the full painting is kept as `marker-blast_original.png`) |
 | Size | **1:1, 512 × 512 px**, PNG, **transparent background** |
 | Shown at | About 110 px, stepped in over three frames, then gone (code does the timing). |
 | Content | A comic-book explosion starburst, jagged spikes, red and yellow-cream with black ink outline and Ben-Day dots. **Leave the middle empty**: code sets BOOM over it in the stencil face. |
@@ -385,8 +385,11 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The soft drop shadow under counters.
 - The counter markers (spotted, wounded, hidden, and since M11 the leader-blue orders
   chevron on a man who has the leader's +AP this turn).
-- Continuous roads, hedges and the railway line.
-- Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs.
+- Continuous roads, hedges and the railway line; since M17 the hedges are laid as bushy
+  clumps along their line, with now and then a tree, after `Hedgerows_Reference_01.jpeg`.
+- Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs. Since M17
+  the woods are crowded billowing crowns throwing ink shadows, and the orchards rows of
+  round trees on one lattice across the orchard, after `Woods_` and `Orchard_Reference_01.jpeg`.
 - Place names on the map (they are type, set from `data/map.json`).
 - The green counter frames, their AP figure and card edge.
 - The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the
@@ -398,7 +401,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
   exchange.
 - The eleven sounds (M10, the explosion M11, the back page's bells M12, the gunfire M13, the Dakota M15), made with Web Audio in `src/render/sound.js` until the MP3s of
-  priority 11 are supplied.
+  priority 11 are supplied, and the title music over the opening screens (M17,
+  `music-title.mp3` replaces it; cut it to loop cleanly, about a minute, under 1 MB).
 - The role symbols on the counters (redrawn bolder M13), the AP dots (the leader's orders in blue, M14), the shots' flash and
   tracer, and the suppressed band.
 - The telephone exchange's wires (M12; M14): a telegraph pole on each of its charge points
