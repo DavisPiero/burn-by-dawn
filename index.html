@@ -24,6 +24,9 @@
       --slab: "Stardos Stencil", "Rockwell Condensed", Rockwell, "Courier New", serif;
       --paper-fibre: none;
       --paper-fibre-size: auto;
+      /* Paper with its fibre printed faintly (M16, the operator's: the flat
+         boxes read as too digital): the fibre under a veil of paper. */
+      --paper-faint: linear-gradient(color-mix(in srgb, var(--paper) 55%, transparent), color-mix(in srgb, var(--paper) 55%, transparent)), var(--paper-fibre) 0 0 / var(--paper-fibre-size) var(--paper);
       --dots-ink: none;
       --dots-blue: none;
       --dots-red: none;
@@ -192,13 +195,27 @@
       width: 100%;
       height: var(--board-h);
     }
+    /* The fibre printed faintly over the map too (M16, the operator's), as
+       if the map were printed on the same paper. Display only: no clicks. */
+    #left-content { position: relative; }
+    #board-paper {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: var(--board-h);
+      pointer-events: none;
+      background-image: var(--paper-fibre);
+      background-size: var(--paper-fibre-size);
+      opacity: 0.4;
+    }
 
     /* Comic caption boxes: paper, an ink rule and a hard offset shadow. */
     .caption {
       box-sizing: border-box;
       margin: 0;
       padding: 5px 9px;
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px solid var(--ink);
       box-shadow: 3px 3px 0 var(--ink);
     }
@@ -288,7 +305,7 @@
       font-weight: bold;
       letter-spacing: 1px;
       white-space: nowrap;
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px solid var(--ink);
     }
     #turn-counter.dawn { color: var(--paper); background: var(--red); }
@@ -305,7 +322,7 @@
       font-size: 13px;
       font-weight: bold;
       color: var(--ink);
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px solid var(--ink);
       box-shadow: 2px 2px 0 var(--ink);
       cursor: help;
@@ -325,7 +342,7 @@
     .btn, #end-turn, #diversion, .action, #undo {
       font-family: var(--typewriter);
       color: var(--ink);
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px solid var(--ink);
       box-shadow: 2px 2px 0 var(--ink);
       cursor: pointer;
@@ -499,7 +516,7 @@
        on blue, which could not be read. */
     #diversion:disabled {
       color: var(--blue);
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px dashed var(--blue);
     }
 
@@ -523,7 +540,7 @@
       gap: 9px;
       min-height: 0;
       padding: 2px 6px 2px 2px;
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px solid var(--ink);
       box-shadow: 2px 2px 0 var(--ink);
       cursor: pointer;
@@ -924,7 +941,7 @@
       font-size: 14px;
       line-height: 1.4;
       color: var(--ink);
-      background: var(--paper);
+      background: var(--paper-faint);
       border: 2px solid var(--ink);
       box-shadow: 3px 3px 0 var(--ink);
       pointer-events: none;
@@ -954,6 +971,7 @@
       <div id="briefing-backdrop" hidden><section id="briefing" role="dialog" aria-modal="true"></section><aside id="counter-key" hidden><div class="key-head">HOW TO READ A COUNTER</div><svg id="counter-key-art" viewBox="-4 0 344 748" preserveAspectRatio="xMidYMin meet"></svg></aside></div>
       <div id="left-content">
         <svg id="board"></svg>
+        <div id="board-paper"></div>
         <div id="captions">
           <div id="coord-readout" class="caption">Loading map…</div>
           <ul id="report" class="caption"></ul>
