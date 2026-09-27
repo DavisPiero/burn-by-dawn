@@ -21,9 +21,9 @@
       "label": "Hedgerow",
       "moveCost": 2,
       "cover": "heavy",
-      "blocksLOS": false,
+      "blocksLOS": true,
       "spotBonus": 0,
-      "notes": "the safe artery"
+      "notes": "the safe artery; blocks sight (M20)"
     },
     "wood": {
       "label": "Wood",
@@ -38,7 +38,7 @@
       "label": "Orchard",
       "moveCost": 1,
       "cover": "light",
-      "blocksLOS": false,
+      "blocksLOS": true,
       "spotBonus": 0,
       "notes": ""
     },

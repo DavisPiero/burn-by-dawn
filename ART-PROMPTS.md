@@ -389,7 +389,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   clumps along their line, with now and then a tree, after `Hedgerows_Reference_01.jpeg`.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs. Since M17
   the woods are crowded billowing crowns throwing ink shadows, and the orchards rows of
-  round trees on one lattice across the orchard, after `Woods_` and `Orchard_Reference_01.jpeg`.
+  round trees on one lattice across the orchard, after `Woods_` and `Orchard_Reference_01.jpeg`;
+  since M20 the orchard's trees are small billowing crowns like the wood's (flat round ones
+  read as oil drums), and a windfall apple has a stalk.
 - Place names on the map (they are type, set from `data/map.json`).
 - The green counter frames, their AP figure and card edge.
 - The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the

@@ -6,6 +6,7 @@
 
 import { alertIndex } from './enemy.js';
 import { onBoard } from './units.js';
+import { checkCutLine } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
 
 const plural = (n, one, many) => (n === 1 ? one : many);
@@ -65,6 +66,16 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     const label = state.objectives.find((o) => o.id === objectiveId)?.label.toLowerCase() ?? 'objective';
     const when = fuse <= 1 ? 'goes off at the end of this turn' : `goes off in ${fuse} turns`;
     hints.push(`The charge on the ${label} ${when}. Get everyone clear of the blast: hover the ${label} to see how far it reaches.`);
+  }
+
+  // A scout starting his turn on a point he can cut (M20: a playtester could
+  // not tell why he had not been able to; it takes the whole turn). Being seen
+  // does not stop him, but he cannot also get out of sight.
+  const cutter = men.find((u) => checkCutLine(state, u, rules).ok);
+  if (cutter) {
+    const { objective } = checkCutLine(state, cutter, rules);
+    const seen = cutter.inContact ? ' He is in contact, so an enemy will fire on him at the end of the turn, but the line is cut all the same.' : '';
+    hints.push(`${cutter.shortName} is on a charge point of the ${objective.label.toLowerCase()}: he can cut the line now [X]. It takes his whole turn.${seen}`);
   }
 
   const inContact = men.filter((u) => u.inContact);

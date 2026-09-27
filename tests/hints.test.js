@@ -49,6 +49,17 @@ export default [
     const hints = hintsFor({ ...state, turn: 15, objectives }, rules);
     assert(has(hints, `Get ${rules.mission.minimumOut} more men onto the exfil`) && has(hints, `${rules.turnLimit - 15} turns left`), hints[0]);
   }],
+  ['a scout starting his turn on the exchange\'s charge point is told he can cut the line, seen or not (M20)', async () => {
+    const { rules, state } = await start();
+    const exchange = state.objectives.find((o) => rules.objectives[o.kind].cutLine);
+    const point = exchange.chargeHexes[0];
+    const scout = state.units.find((u) => rules.roles[u.role].cutLine);
+    const units = state.units.map((u) => (u.id === scout.id ? { ...u, q: point.q, r: point.r, ap: u.apMax, inContact: true } : u));
+    const hints = hintsFor({ ...state, turn: 9, parachutes: [], units }, rules);
+    assert(has(hints, `${scout.shortName} is on a charge point`) && has(hints, 'cut all the same'), hints.join(' | '));
+    const spent = units.map((u) => (u.id === scout.id ? { ...u, ap: 0 } : u));
+    assert(!has(hintsFor({ ...state, turn: 9, parachutes: [], units: spent }, rules), 'is on a charge point'), 'not once he has spent his AP');
+  }],
   ['the turn report keeps each man together, worst news first, his death last (M13)', async () => {
     const events = [
       { kind: 'alertRise' }, { kind: 'killed', unitId: 'a' }, { kind: 'spotted', unitId: 'b' },

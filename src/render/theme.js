@@ -384,9 +384,12 @@ export const GRID = {
   strokeWidth: 1,
   strokeOpacity: 0.16,
   // The clipped half-hexes past the straight border. Drawn, so the border
-  // reads as a printed crop rather than a void, but visibly dead.
-  outOfPlayOpacity: 0.35,
+  // reads as a printed crop rather than a void, but visibly dead. M20 (the
+  // operator's: the woods stopped dead at their edges): a lighter wash, its
+  // edge blurred by `deadWashBlur` so what it covers fades out, not cut off.
+  outOfPlayOpacity: 0.55,
   deadWash: PALETTE.paper,
+  deadWashBlur: 7,
   border: PALETTE.ink,
   borderWidth: 4,
 };
@@ -789,6 +792,11 @@ export const BLAST = {
   width: 3,
   casingWidth: 6,
   previewOpacity: 0.08,
+  // The ring where a blast only wounds a man (M20), lighter than where it
+  // kills, which is edged in a dashed line inside the solid one.
+  woundOpacity: 0.08,
+  killEdgeWidth: 2,
+  killEdgeDash: '6 5',
   // The starburst drawn where a charge went off, for a moment after the turn,
   // half as big again when it brings the target down.
   artSize: 150,
@@ -1082,7 +1090,7 @@ function billowPath(x, y, r, bumps, seed = 0) {
 
 // How far a crown's shadow falls, as a share of its radius: the solid shadow,
 // and the halftone fringe past it.
-export const CANOPY = { shadow: [0.26, 0.3], fringe: [0.5, 0.56], fringeTone: 50, shade: 35, orchardShade: 20, woodScale: 1.18 };
+export const CANOPY = { shadow: [0.26, 0.3], fringe: [0.5, 0.56], fringeTone: 50, shade: 35, woodScale: 1.18 };
 
 // A wood is crowded crowns (M17): five a hex, [x, y, radius] in the hex's
 // 80 x 92, big enough (with CANOPY.woodScale) to meet their neighbours' and
@@ -1118,17 +1126,18 @@ function crownShadow(x, y, r, bumps = 9, seed = 0) {
   ];
 }
 
-/** An orchard tree: a round crown, shaded, on a lattice so the rows run on across the orchard. */
-function appleTree(x, y, r = ORCHARD.radius) {
-  return [
-    circle(x, y, r, 'green'), circle(x, y, r, toneClass('ink', CANOPY.orchardShade)),
-    circle(x - r * 0.1, y - r * 0.12, r * 0.84, 'green'),
-    ring(x, y, r, 1.3),
-  ];
+/**
+ * An orchard tree (M20, the operator's: the round flat crowns read as oil
+ * drums): the wood's billowing crown, smaller and less billowy, on a lattice
+ * so the rows run on across the orchard. `v` is the hex's variant, so its
+ * trees are not the same six as its neighbour's.
+ */
+function appleTree(x, y, v) {
+  return crown(x, y, ORCHARD.radius, ORCHARD.bumps, v);
 }
 
-function appleTreeShadow(x, y, r = ORCHARD.radius) {
-  return [circle(x + r * CANOPY.shadow[0] * 1.2, y + r * CANOPY.shadow[1] * 1.2, r, 'ink')];
+function appleTreeShadow(x, y, v) {
+  return crownShadow(x, y, ORCHARD.radius, ORCHARD.bumps, v);
 }
 
 // The orchard is planted in rows (the reference): trees on a lattice of
@@ -1136,14 +1145,15 @@ function appleTreeShadow(x, y, r = ORCHARD.radius) {
 // on a multiple of 40 across and of 69 down — so the rows run unbroken
 // across the whole orchard. Six trees a hex, small, with the grass and the
 // odd windfall apple between the rows.
-export const ORCHARD = { radius: 9, columns: [20, 60], rows: [23, 46, 69] };
+export const ORCHARD = { radius: 10.5, bumps: 7, columns: [20, 60], rows: [23, 46, 69] };
 
-function orchardTrees(draw) {
-  return ORCHARD.columns.flatMap((x) => ORCHARD.rows.flatMap((y) => draw(x, y)));
+function orchardTrees(draw, v) {
+  return ORCHARD.columns.flatMap((x) => ORCHARD.rows.flatMap((y) => draw(x, y, v)));
 }
 
+/** A windfall apple, with a short stalk (M20: without one it read as a ball or a bomb). */
 function apple(x, y) {
-  return [circle(x, y, 1.9, 'red'), ring(x, y, 1.9, 0.7)];
+  return [line(`M${x + 0.2} ${y - 1.6} L${x + 1.1} ${y - 4}`, 0.9), circle(x, y, 1.9, 'red'), ring(x, y, 1.9, 0.7)];
 }
 
 // A hedge is a run of clumps along its line (board.js lays them), each a
@@ -1187,12 +1197,12 @@ const TERRAIN_SPRITES = {
 
   // Rows of trees (M17), the same lattice in every hex; the variants differ
   // only in the grass and the apples between the rows.
-  'terrain-orchard-01': () => [tuft(40, 30, 0.7), tuft(40, 60, 0.6), tuft(4, 52, 0.6), ...apple(36, 44), ...orchardTrees(appleTree)],
-  'terrain-orchard-02': () => [tuft(40, 40, 0.7), tuft(78, 64, 0.6), tuft(41, 76, 0.5), ...apple(44, 60), ...orchardTrees(appleTree)],
-  'terrain-orchard-03': () => [tuft(40, 22, 0.6), tuft(40, 52, 0.7), tuft(2, 34, 0.5), ...orchardTrees(appleTree)],
-  'terrain-orchard-01-shadow': () => orchardTrees(appleTreeShadow),
-  'terrain-orchard-02-shadow': () => orchardTrees(appleTreeShadow),
-  'terrain-orchard-03-shadow': () => orchardTrees(appleTreeShadow),
+  'terrain-orchard-01': () => [tuft(40, 30, 0.7), tuft(40, 60, 0.6), tuft(4, 52, 0.6), ...apple(36, 44), ...orchardTrees(appleTree, 1)],
+  'terrain-orchard-02': () => [tuft(40, 40, 0.7), tuft(78, 64, 0.6), tuft(41, 76, 0.5), ...apple(44, 60), ...orchardTrees(appleTree, 2)],
+  'terrain-orchard-03': () => [tuft(40, 22, 0.6), tuft(40, 52, 0.7), tuft(2, 34, 0.5), ...orchardTrees(appleTree, 3)],
+  'terrain-orchard-01-shadow': () => orchardTrees(appleTreeShadow, 1),
+  'terrain-orchard-02-shadow': () => orchardTrees(appleTreeShadow, 2),
+  'terrain-orchard-03-shadow': () => orchardTrees(appleTreeShadow, 3),
 
   'terrain-marsh': () => [
     line('M18 40 H32 M46 56 H62 M24 68 H38', 1.4, 'stroke-blue', { opacity: 0.8 }),

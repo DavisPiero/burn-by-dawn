@@ -139,13 +139,18 @@ export function createBoard(svg, map, handlers) {
   drawAreas(areas, defs, map, corners);
   terrain.appendChild(areas);
   const grid = el('g', { 'pointer-events': 'none' });
+  const washBlur = el('filter', { id: 'dead-wash-blur', x: '-5%', y: '-5%', width: '110%', height: '110%' });
+  washBlur.appendChild(el('feGaussianBlur', { stdDeviation: GRID.deadWashBlur }));
+  defs.appendChild(washBlur);
+  const wash = el('g', { fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity, filter: 'url(#dead-wash-blur)' });
   forEachCell(map, (q, r) => {
     const points = cornersToPoints(axialToPixel(q, r, map.hexSize), corners);
     grid.appendChild(el('polygon', {
       points, fill: 'none', stroke: GRID.stroke, 'stroke-width': GRID.strokeWidth, 'stroke-opacity': GRID.strokeOpacity,
     }));
-    if (!isInPlay(map, q, r)) grid.appendChild(el('polygon', { points, fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity }));
+    if (!isInPlay(map, q, r)) wash.appendChild(el('polygon', { points }));
   });
+  grid.appendChild(wash);
   terrain.appendChild(grid);
 
   const lines = el('g', { 'pointer-events': 'none' });
@@ -434,11 +439,12 @@ function drawPlaces(layer, map) {
   for (const place of map.places ?? []) {
     const style = PLACE[place.kind] ?? PLACE.other;
     const c = axialToPixel(place.at[0], place.at[1], map.hexSize);
+    const x = c.x + (place.dx ?? 0) * map.hexSize;
     const y = c.y + (place.dy ?? 0) * map.hexSize;
     const attrs = {
-      x: c.x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
+      x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
       'font-style': style.italic ? 'italic' : 'normal', 'letter-spacing': style.spacing,
-      ...(place.angle ? { transform: `rotate(${place.angle} ${c.x} ${y})` } : {}),
+      ...(place.angle ? { transform: `rotate(${place.angle} ${x} ${y})` } : {}),
     };
     const name = style.capitals ? place.name.toUpperCase() : place.name;
     if (style.halo !== false) {
@@ -608,6 +614,7 @@ export function renderPieces(layers, state, view) {
 
   if (view.plan) drawPlan(layers, view.plan, view.risk);
   if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
+  else if (view.landing) drawRisk(layers, view.landing.plan, view.landing.risk);
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
@@ -644,19 +651,27 @@ export function renderPieces(layers, state, view) {
     else if (enemy.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
     if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
     // The garrison's turn (M15): a red "!" pops on each enemy that spotted a
-    // man or found something, once it has got there.
+    // man or found something, once it has got there. After the show it stays
+    // on the chip for the player's turn, with a rollover saying what it saw or
+    // found (M20, the operator's).
     const alarm = view.garrisonShow?.alarmed.get(enemy.id);
-    if (alarm !== undefined) {
-      const elapsed = now - view.garrisonShow.since;
-      if (elapsed < view.garrisonShow.length + GARRISON_SHOW.alarmLingerMs) {
-        const pop = marker('marker-spotted', (COUNTER.size - GARRISON_SHOW.alarmSize) / 2 - 2, -GARRISON_SHOW.alarmSize - 2, GARRISON_SHOW.alarmSize);
-        pop.style.transformBox = 'fill-box';
-        pop.style.transformOrigin = '50% 100%';
-        playFrom(pop, [
-          { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
-        ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
-        counter.appendChild(pop);
-      }
+    const alarmAt = [(COUNTER.size - GARRISON_SHOW.alarmSize) / 2 - 2, -GARRISON_SHOW.alarmSize - 2];
+    const elapsed = view.garrisonShow ? now - view.garrisonShow.since : Infinity;
+    if (alarm !== undefined && elapsed < view.garrisonShow.length + GARRISON_SHOW.alarmLingerMs) {
+      const pop = marker('marker-spotted', ...alarmAt, GARRISON_SHOW.alarmSize);
+      pop.style.transformBox = 'fill-box';
+      pop.style.transformOrigin = '50% 100%';
+      playFrom(pop, [
+        { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
+      ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
+      counter.appendChild(pop);
+    } else if (view.alarmed?.has(enemy.id)) {
+      const node = marker('marker-spotted', ...alarmAt, GARRISON_SHOW.alarmSize);
+      node.setAttribute('pointer-events', 'all');
+      node.addEventListener('mouseenter', () => layers.handlers.onEnemyMarkerHover?.(enemy.id, node));
+      node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
+      node.addEventListener('click', () => layers.handlers.onHexClick(enemy.q, enemy.r));
+      counter.appendChild(node);
     }
     // Walked its steps this enemy phase, like a man his path (M15).
     const mover = el('g', {});
@@ -1309,10 +1324,16 @@ function drawSites(layers, state, view) {
   const exfilAt = labelPoint(map, view.exfil);
   layers.sites.appendChild(casedText('EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, EXFIL.label));
 
+  // Where a blast only wounds our men (M20) is printed lighter than where it kills.
   if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);
+  if (view.previewBlastKillArea) fillArea(layers, view.previewBlastKillArea, BLAST.previewOpacity);
   if (view.blastArea.size > 0) {
-    fillArea(layers, view.blastArea, BLAST.opacity);
+    fillArea(layers, view.blastArea, BLAST.woundOpacity);
+    fillArea(layers, view.blastKillArea, BLAST.opacity - BLAST.woundOpacity);
     drawAreaEdge(layers, layers.sites, view.blastArea, [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
+    if (view.blastKillArea.size < view.blastArea.size) {
+      drawAreaEdge(layers, layers.sites, view.blastKillArea, [[BLAST.stroke, BLAST.killEdgeWidth]], { 'stroke-dasharray': BLAST.killEdgeDash });
+    }
   }
 
   const labels = [];
@@ -2060,7 +2081,7 @@ function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
   body.appendChild(el('use', { href: '#counter-frame-enemy', width: size, height: size }));
   body.appendChild(el('use', { href: `#${enemySymbolId(enemy.type)}`, width: size, height: size }));
 
-  const label = enemy.typeLabel.toUpperCase();
+  const label = (enemy.counterLabel ?? enemy.typeLabel).toUpperCase();
   const room = ENEMY.labelBoxRight - ENEMY.labelBoxLeft;
   const fitted = room / Math.max(1, label.length * COUNTER.nameAspect);
   body.appendChild(text(label, {
@@ -2247,7 +2268,7 @@ export function drawCounterKey(svg, examples, numbers) {
   // WHO points at the right-hand end of the name on the chip (M17, the
   // operator's: at its middle the line ran over the facing wedge and was lost
   // on the dark chip). Where the name ends is worked out as drawEnemy sets it.
-  const name = enemy.typeLabel.toUpperCase();
+  const name = (enemy.counterLabel ?? enemy.typeLabel).toUpperCase();
   const nameRoom = ENEMY.labelBoxRight - ENEMY.labelBoxLeft;
   const nameSize = Math.min(ENEMY.labelSize, nameRoom / Math.max(1, name.length * COUNTER.nameAspect));
   const nameEnd = (ENEMY.labelBoxLeft + ENEMY.labelBoxRight) / 2 + (name.length * nameSize * COUNTER.nameAspect) / 2 + 1.5;

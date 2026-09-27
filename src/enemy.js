@@ -26,6 +26,8 @@ function makeEnemy(placement, type, at) {
     label: placement.label,
     type: placement.type,
     typeLabel: type.label,
+    // The name on its counter's strip, shorter where the label will not fit (M20).
+    counterLabel: type.counterLabel ?? type.label,
     visionRadius: type.visionRadius,
     arcDegrees: type.arcDegrees,
     detection: type.detection,

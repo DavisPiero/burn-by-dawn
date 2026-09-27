@@ -16,7 +16,7 @@ import {
   exfilWouldFail, setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
-  blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
+  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
 import { hintsFor, ordersWords } from './hints.js';
@@ -210,6 +210,8 @@ function deriveView() {
     ].filter(Boolean)),
     visionById: visionById(),
     garrisonShow,
+    // Why each enemy wears the red "!", for its rollover and readout (M20).
+    alarmed: alarmReasons(),
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
     hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
@@ -240,6 +242,8 @@ function deriveView() {
     moveLabel: null,
     risk: null,
     riskLabel: null,
+    // Aiming a swim: the far bank's risk, drawn like a move's (M20).
+    landing: null,
     hideLabel: null,
     actions: null,
     targets: null,
@@ -252,6 +256,8 @@ function deriveView() {
     // ground a charge going off this turn would kill a man on.
     exfil,
     blastArea: areaAround(blastHexesThisTurn(state, rules)),
+    // Where it kills a man, not only wounds him (M20: the fuel dump's outer ring wounds).
+    blastKillArea: areaAround(blastHexesThisTurn(state, rules).map((b) => ({ ...b, radius: b.killRadius }))),
     // An objective with every charge it needs set takes no more, so its empty
     // charge points are no longer drawn: "put one here" would be a lie.
     chargedObjectiveIds: new Set(state.objectives.filter((o) => !o.destroyed && chargesWanted(o) === 0).map((o) => o.id)),
@@ -262,6 +268,7 @@ function deriveView() {
     unseenPoints: rules.scoring.perTrooperUnseen,
     hoverObjective: null,
     previewBlastArea: null,
+    previewBlastKillArea: null,
     siteLabel: null,
     blastLabel: null,
     noiseLabel: null,
@@ -301,8 +308,9 @@ function deriveView() {
         : `The ${objective.label} has all the charges it needs. ${view.siteLabel}`;
     }
     if (!objective.destroyed) {
-      const radius = kindOf(objective, rules).blastRadius;
-      view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius })));
+      const { blastRadius, killRadius } = kindOf(objective, rules);
+      view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius: blastRadius })));
+      if (killRadius < blastRadius) view.previewBlastKillArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius: killRadius })));
     }
   } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
     const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
@@ -364,8 +372,11 @@ function deriveView() {
     });
     view.riskLabel = describeRisk(plan, view.risk, view.place);
     const end = plan.path[plan.path.length - 1];
-    if (inBlast(blastHexesThisTurn(state, rules), end) && !isExfil(baseMap, end)) {
-      view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED';
+    const blast = isExfil(baseMap, end) ? null : blastEffect(blastHexesThisTurn(state, rules), end);
+    if (blast === 'killed' || (blast === 'wounded' && unit.hits > 0)) {
+      view.blastLabel = `BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED${blast === 'wounded' ? ' (at its edge, but he is already wounded)' : ''}`;
+    } else if (blast === 'wounded') {
+      view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be at the edge of it: WOUNDED';
     }
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
@@ -518,13 +529,20 @@ function describeObjective(o) {
     `needs ${chargesOnPoints(o)}`,
     `${o.detonated} gone off${burning}`,
     `fuse ${rules.charges.fuseTurns} turns`,
-    `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge, killing anyone in it, ours or theirs`,
+    blastWords(kind),
     `alert +${kind.alert}`,
   ];
-  if (kind.cutLine) parts.push(`or a scout can cut the line: a full turn, no noise, alert +${rules.alert.lineCut}`);
+  if (kind.cutLine) parts.push(`or a scout can cut the line [X], seen or not: a whole turn, so he must start his turn on a charge point; no noise, alert +${rules.alert.lineCut}`);
   const payoff = payoffWords(kind);
   if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
+}
+
+/** How far a kind's blast reaches and what it does (SPEC.md §7; M20, a ring that only wounds our men). */
+function blastWords(kind) {
+  const hexes = (n) => `${n} hex${n === 1 ? '' : 'es'}`;
+  if (kind.killRadius >= kind.blastRadius) return `blast ${hexes(kind.blastRadius)} from each charge, killing anyone in it, ours or theirs`;
+  return `blast ${hexes(kind.blastRadius)} from each charge (shaded): it kills enemies in all of it, and our men within ${hexes(kind.killRadius)} (darker); further out it wounds them`;
 }
 
 /** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */
@@ -779,9 +797,21 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
   } else if (kind === 'swim') {
     for (const h of swimTargets(map, state, unit, rules)) add(h);
     const check = hex ? checkSwim(map, state, unit, hex, rules) : null;
-    view.targetLabel = check?.ok
-      ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
-      : check ? `Swim: ${check.reason}.` : 'Swim: click a hex on the far bank. Esc to cancel.';
+    view.targetLabel = check ? `Swim: ${check.reason}.` : 'Swim: click a hex on the far bank. Esc to cancel.';
+    // The far bank's risk, drawn as a move's last hex would be (M20, the
+    // operator's): he comes out of the water unhidden and is tested there.
+    if (check?.ok) {
+      const plan = { steps: 1, path: [{ q: unit.q, r: unit.r }, { q: hex.q, r: hex.r }] };
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, hex);
+      const shot = Boolean(result && unit.inContact && result.spotted && result.firing);
+      const risk = [null, result && { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null }];
+      view.landing = { plan, risk };
+      let seen = 'Unseen on the far bank.';
+      if (risk[1]?.shot) seen = `${describeRisk(plan, risk, view.place)}.`;
+      else if (result?.spotted) seen = `SPOTTED as he comes out: ${describeDetection(result, { dots: true })}.`;
+      else if (result) seen = `Seen, not spotted, as he comes out: ${describeDetection(result, { dots: true })}.`;
+      view.targetLabel = `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. ${seen} Click to swim.`;
+    }
   } else if (kind === 'pass') {
     for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
     const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
@@ -892,18 +922,15 @@ function toggleSound() {
 }
 
 /**
- * The title music (M17, the operator's) plays over a new game's orders and
- * fades as they are put away (M19, the operator's: it looped on through the
- * run choice and the drop). It comes back between turns, while the garrison
- * moves and its turn card is up, carrying on where it left off; a card left
- * waiting under the orders keeps it. The orders reopened with ? do not bring
- * it, nor do the other cards.
+ * The title music (M17, the operator's) plays over a new game's orders and the
+ * run choice, and fades at the jump (M20, the operator's: M19 faded it with the
+ * orders and played it between turns, which was not enjoyable). Sound turned
+ * back on before the jump carries on where it faded; a new game starts it from
+ * the top.
  */
 function syncMusic() {
-  const opening = briefing?.opening === true;
-  const interlude = bangTimer !== null || (briefing?.under ?? briefing)?.kind === 'turn';
-  if (!opened || state.outcome || isMuted() || !(opening || interlude)) stopMusic();
-  else startMusic({ resume: !opening });
+  if (!opened || state.phase !== 'drop' || state.outcome || isMuted()) stopMusic();
+  else startMusic({ resume: briefing?.opening !== true });
 }
 
 /** The sounds of a turn's report: a crump for any bang, a dog when the garrison stirs. */
@@ -1170,6 +1197,39 @@ function showCounterKey(on) {
     leader: state.units.find((u) => u.leader),
     enemy,
   }, { arc: enemy.arcDegrees });
+}
+
+/**
+ * Why each enemy wears the red "!" that popped on it in the garrison's turn
+ * (M15): what it saw or found, from the last turn's report, by enemy id. It
+ * stays on the chip through the player phase with a rollover saying so (M20,
+ * the operator's: it could not be asked what had alerted it). The RAF
+ * diversion calls every enemy off, so it takes them away.
+ */
+function alarmReasons() {
+  const reasons = new Map();
+  if (state.phase === 'drop' || state.report.some((e) => e.kind === 'diversion')) return reasons;
+  const place = (h) => placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), h);
+  const add = (id, words) => reasons.set(id, [...(reasons.get(id) ?? []), words]);
+  for (const e of state.report) {
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `spotted ${e.unitName} in ${place(e)}` });
+    if (e.kind === 'bodyFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s body in ${place(e)}` });
+    if (e.kind === 'parachuteFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s parachute in ${place(e)}` });
+  }
+  return reasons;
+}
+
+/** The "!" on an enemy's chip in words: what raised it, and what comes of it (M20). */
+function describeAlarm(enemy) {
+  const reasons = currentView?.alarmed.get(enemy.id) ?? [];
+  const what = reasons.map((r) => r.words).join(', and ');
+  const after = [];
+  if (enemy.watching) {
+    const man = state.units.find((u) => u.id === enemy.holding?.unitId || (u.q === enemy.watching.q && u.r === enemy.watching.r));
+    after.push(`It has ${man ? man.shortName : 'him'} in its sights (the dashed line): if it sees him again at the end of this turn it fires. Get him out of its view, hide him [H], or suppress it [S].`);
+  }
+  if (reasons.some((r) => r.kind === 'found')) after.push(`What it found put the alert up +${rules.alert.bodyFound}, and the patrols in earshot come to look.`);
+  return titled('RAISED THE ALARM', `At the end of last turn the ${enemy.label.toLowerCase()} ${what}. ${after.join(' ')}`.trim());
 }
 
 /**
@@ -1796,6 +1856,10 @@ try {
     onRunChoose: handleChooseRun,
     onMarkerHover: (id, unitId, anchor) => showPopup(anchor, titled(...describeMarker(id, state.units.find((u) => u.id === unitId)))),
     onMarkerLeave: hidePopup,
+    onEnemyMarkerHover: (enemyId, anchor) => {
+      const enemy = state.enemies.find((e) => e.id === enemyId);
+      if (enemy) showPopup(anchor, describeAlarm(enemy));
+    },
   });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of

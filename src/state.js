@@ -240,7 +240,7 @@ function speechFrom(events, units) {
     const unit = units.find((u) => u.id === event.unitId);
     if (!unit || !onBoard(unit)) continue;
     let line = null;
-    if (event.kind === 'landed' || event.kind === 'wounded') line = event.line;
+    if (event.kind === 'landed' || event.kind === 'wounded' || event.kind === 'blastWounded') line = event.line;
     if (line) speech = say(speech, unit.id, line);
   }
   return speech;

@@ -90,7 +90,7 @@ dist = (abs(q1-q2) + abs(q1+r1-q2-r2) + abs(r1-r2)) / 2
 ```
 
 Pathfinding: A* over hex neighbours, cost from terrain table. Line of sight: hex line
-draw with cube-lerp, blocked by Wood, Farmhouse, Ridge.
+draw with cube-lerp, blocked by Wood, Farmhouse, Ridge, and since M20 Hedgerow and Orchard.
 
 Map is **18 wide x 13 tall**, hex size 46px. That is roughly 1470x900 of board, sitting on
 the left page of the spread (§11).
@@ -103,14 +103,20 @@ the left page of the spread (§11).
 |---|---|---|---|---|
 | Field | 1 | none | no | fully exposed |
 | Track | 1 | none | no | exposed, fast |
-| Hedgerow | 2 | heavy | no | the safe artery |
+| Hedgerow | 2 | heavy | yes (M20) | the safe artery |
 | Wood | 2 | heavy | yes | bad landing |
-| Orchard | 1 | light | no | |
+| Orchard | 1 | light | yes (M20) | |
 | Marsh | 3 | light | no | bad landing |
 | Canal | impassable | — | no | crossable only at bridge/lock |
 | Ridge | 2 | light | yes | high ground, +1 spot radius |
 | Farmhouse | 1 | heavy | yes | may be occupied |
 | Emplacement | impassable | — | no | enemy position |
+
+A hex that blocks line of sight hides what lies beyond it, never itself: a man in a hedge
+or on an orchard's edge is seen as ever, the ground behind is not. Hedgerows and orchards
+were see-through until M20, when the operator found the base post looking over the
+orchard and, on Hard, past the hedges; the balance bot barely moved (Normal 93/85/76 from
+94/84/76, Hard 53/38/23 from 48/37/20).
 
 ---
 
@@ -199,14 +205,19 @@ All costs and modifiers below are numbers in `rules.json`.
   any AP yet, and it costs his whole pool. Standing on a telephone exchange charge hex,
   he destroys the exchange at once, quietly: **no noise**, so nobody comes to look, but the
   garrison notices its telephones go dead: **alert +1** (`alert.lineCut`; M15, the
-  operator's — it raised nothing until then) (§7).
+  operator's — it raised nothing until then) (§7). Being seen does not stop him, though it
+  takes his turn, so he cannot also get out of sight. A man who walked onto the point has
+  spent AP and must wait for the next turn, and the button, the target's hover and the turn
+  card say so in those words (M20: a playtester took the wait for being seen).
 - **Swim** — a **full turn**. From a hex beside the canal, across one canal hex, to any
   free hex on the far bank beside that same water hex (M16, from playtesting: straight
   across only offered one landing, often not the nearest). Never onto the lock or the
   bridge, which are not banks, and not from them either: a man steps onto a bank first.
   Where the canal is two hexes wide there is no swim; the lane to the lock (§8) gives a
   man on the far bank there firm ground to land on. A wounded man cannot swim. He cannot hide as he comes out,
-  and is tested on the far bank like any hex he enters. It exists so a man is never
+  and is tested on the far bank like any hex he enters; while it is aimed, the hovered
+  landing shows its risk dots and says whether he would be spotted there, as a move's last
+  hex does (M20). It exists so a man is never
   stranded by his own demolition. Until M11b it was allowed only once the bridge was
   down; playtesting showed that left the telephone exchange reachable only over the
   watched deck, so nobody went for it. The bridge's charges go on from the west bank and
@@ -537,9 +548,14 @@ Placing a charge costs 1 AP and sets a 3-turn fuse by default. The fuse burns do
 every fuse phase, including the one at the end of the turn it was placed, and the charge
 goes off when it reaches 0: a 3-turn charge placed on turn N goes off at the end of turn
 N+2. Charges can be placed and left. An objective is destroyed once as many of its charges
-have gone off as it needs, in the same turn or not. A trooper inside the blast radius of a
+have gone off as it needs, in the same turn or not. A trooper within the **kill radius** of a
 charge at detonation dies, wounded or not — hits (§5) do not apply — and the hover path
-warns of it. **An enemy inside the blast radius dies too** (M8e, operator's call), unless
+warns of it. Inside the blast radius but past the kill radius he takes **one hit**, as from
+a shot: wounded, and his charge dropped, or killed if he was already wounded (M20, the
+operator's: the fuel dump killed a hex too far). Only the fuel dump has such a ring: its
+blast is 2 hexes and it kills within 1; the bridge and the exchange kill all of their 1
+(`killRadius` in `rules.json`). The ring is shaded lighter than where it kills. **An enemy inside the blast radius dies too**, all of it, the wounding ring included: an
+enemy has no wounds (M8e, operator's call), unless
 its type cannot be killed (`killable: false`: the reserve squad, §6). It leaves no body:
 the explosion itself is what the garrison hears, and a body found after it would count
 the same event twice. Like a gunner's kill (§4), it stops holding anyone in contact.
@@ -786,11 +802,18 @@ Desktop makes the skeuomorphism work properly, so use the room:
   rule still reads the hex. Since M17 (after the operator's reference art) a hedge is
   bushy clumps laid along its line, now and then a tree; a wood is crowded billowing
   crowns; an orchard is rows of round trees running on across it; and the trees throw
-  solid ink shadows down and to the right, as the counters do.
+  solid ink shadows down and to the right, as the counters do. Since M20 an orchard's trees
+  are small billowing crowns like the wood's (round flat ones read as oil drums), and a
+  windfall apple has a stalk. The half-hexes past the border are washed lighter than
+  before, with a soft edge, so a wood fades out into them rather than stopping dead.
 - **Place names** are printed on the map, art only, from `data/map.json`: the village in
   spaced capitals, water in italic on the water, the rest in italic. The turn report uses
   them ("the field by Ferme Lebrun"). Map names may be set in a serif italic; they are
-  the one type on the board that is neither typewriter nor lettering.
+  the one type on the board that is neither typewriter nor lettering. A name can be nudged
+  off its hex's middle (`dx`, `dy` in `map.json`) to sit in what it names.
+- **An enemy counter prints its type** on its strip; the reserve squad's reads RESERVES
+  (M20: RESERVE SQUAD was too small to read and ran off the chip). `counterLabel` in
+  `enemies.json`; its hover still calls it the reserve squad.
   Marker-pen annotations (the target rings and their notes) are set in the speech
   lettering: they are the player's own pen, not print.
 - **The move path counts.** Each step on the hover path shows the AP spent by the time he
@@ -858,7 +881,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
   to know what had happened). When a turn ends, before its card, every enemy walks the
   steps it took — at a patrolling walk, slower than our men, that quickens as the alarm
   rises (M16: 480 ms a hex at Calm to 300 at Alarmed) — a red "!" pops over each enemy that spotted a man or found a body or
-  parachute, and a ripple runs out from each noise it heard. Any key or click brings the
+  parachute, and a ripple runs out from each noise it heard. The "!" stays on the enemy's
+  chip through the player's turn, and hovering it, or the enemy, says what it saw or found
+  and what comes of it (M20, the operator's); the RAF diversion takes it away. Any key or click brings the
   card at once. A noise waiting to be heard says what it was under its ring (STONE,
   SHOTS, SHOT, FOUND), and its hex's hover says who it will bring. A bang has no ring
   (M18, the operator's: it stood on the blown bridge like a target): the blast, the smoke
@@ -932,12 +957,11 @@ of the blast under the starburst, and smoke rolls up — before that turn's card
 over it. It is the payoff of the plan, and it should land. **Title music** (M17, the
 operator's): over a new game's orders, tense 1940s
 war-film music in D minor (tremolo strings, a cello worrying at a semitone, a side drum
-far off, timpani, a horn call every other time round) loops until the orders are put
-away, then fades (M19, the operator's: it looped on through the run choice to the jump).
-It comes back between turns (M19): while the garrison moves and while the turn card is
-up, carrying on where it last faded rather than from the top, and fades as the card is
-put away. A new game brings it back from the top; the orders reopened with ? do not,
-nor the other cards (the RAF's, the exfil's).
+far off, timpani, a horn call every other time round) loops over the orders and the run
+choice and fades at the jump (M20, the operator's). M19 faded it as the orders were put
+away and played it again between turns; the operator found the between-turns music not
+enjoyable, and wanted it longer at the start. A new game brings it back from the top;
+sound turned back on before the jump carries on where it faded.
 `M` stops it. Made in code (`src/render/sound.js`, Web Audio) until files are
 supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
@@ -974,6 +998,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M20** | Tenth operator playtest review, two rules changes (the fuel dump's outer ring wounds rather than kills; hedgerows and orchards block sight): the title music until the jump and not between turns, orchard trees as crowns with stalked apples, the edge wash softened, the canal's name moved, a swim's landing shows its risk, the cut line explained, the alarm "!" explained, RESERVES on the chip | The music plays over the orders and run choice and stops at the jump, never between turns; a man two hexes from the fuel dump's charge is wounded, not killed, and the ring is shaded lighter; the base post sees neither past the hedges on Hard nor into the orchard; aiming a swim shows the far bank's dots; hovering an enemy's "!" says what it saw or found; the balance bot is re-run (Normal 93/85/76, Hard 53/38/23) |
 | **M19** | Ninth operator playtest review, no rules change: the title music fading as the orders are put away and playing between turns, each action's AP on its button, the risk dots explained | The music fades as the orders are cleared, is silent over the run choice and the drop, and plays while the garrison moves and its card is up; every action button shows its AP and all fit at 1280x800, four across included; hovering a seen hex puts a note beside its dots saying what they count |
 | **M18** | Eighth operator playtest review, one scoring change (the bridge 10, bonus targets 4, a man out 2 unhurt or 1 wounded): the exchange's satchels and the wood's name moved, the knife's stain spreading slowly, a stone's landing marked alone, the cut exchange flashing bright and fast, a red cross when aiming aid, the RAF heard first, a lower slower bang, no ring on a bang | The exchange's satchels touch no wire or dashed edge; Bois des Moines clears the north run's line; a knifed enemy's stain spreads from under the body; aiming a stone draws nothing from the man; aiming aid crosses the man under the mouse; no ring stands on a blown target |
 | **M17** | Seventh operator playtest review, no rules change: the new title card, chips and painted blast in; woods, hedgerows and orchards redrawn after the reference art; the counter key centred on the crease and WHO pointed at the name; ? working over a turn card; title music; a loading page | The board's woods, hedges and orchards match their references and still read at 1280x800; the key's middle is on the crease where the window has room; clicking ? over a turn card opens the orders; music plays over the orders and run choice and fades at the jump; nothing on the spread is seen being laid out |
