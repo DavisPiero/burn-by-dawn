@@ -8,7 +8,7 @@
 import { ordersWords, timesWord } from '../hints.js';
 import { terrainAt } from '../map.js';
 import { portraitId } from './theme.js';
-import { attachPopup, describeEffect, shortEffect } from './ui.js';
+import { attachPopup, capitalise, describeEffect, shortEffect } from './ui.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -127,7 +127,7 @@ function describeUnit(unit, number, state, map, view) {
     }
   }
   for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
-    lines.push(`${effect.name} — ${describeEffect(effect)}`);
+    lines.push(`${effect.name} — ${capitalise(describeEffect(effect))}`);
   }
   if (unit.leader) lines.push(...leaderLines(unit, state, view.command, view.diversionUses));
   return [face(unit.id, 'popup-portrait'), html('b', null, unit.name), `\n${lines.join('\n')}`];

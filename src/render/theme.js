@@ -399,7 +399,7 @@ export const COUNTER = {
   chip: { x: 14, y: 6, size: 29 },
   role: { x: 3.5, y: 4, size: 12 },
   // One orange dot per charge carried, under the role (M15).
-  chargeDots: { x: 9.5, leaderX: 18, y: 22, pitch: 7.4, radius: 2.7, fill: PALETTE.fire },
+  chargeDots: { x: 9.5, y: 22, pitch: 7.4, radius: 2.7, fill: PALETTE.fire },
 };
 
 // SPEC.md §11: no smooth easing anywhere. A trooper who moves travels his
@@ -602,6 +602,9 @@ export const MARKER = {
   fuseSize: 34, // the stopwatch on a burning charge (M15)
   ordersScale: 0.6, // the orders chevrons on a counter, against MARKER.size (M15)
   bodySize: 39, // half as big again as groundSize since M15, the operator's: bodies were easy to miss
+  // Where a thing on the ground sits from its hex's centre (x toward its side).
+  groundOffset: { x: 18, y: 14 },
+  bodyOffset: { x: 11, y: 8 }, // nearer the middle since M16, the operator's
   aimScale: 1.35, // the crosshair while aiming at an enemy, in hex radii across (M15)
   chuteReach: 0.72, // hex radii from the centre into a corner, clear of most of a counter (M13)
 };

@@ -573,7 +573,7 @@ export function renderPieces(layers, state, view) {
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
-  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize);
+  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize, MARKER.bodyOffset);
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
@@ -1340,10 +1340,10 @@ function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
 // side and dropped charges to the other, so both show when they share it.
-function drawOnGround(layers, id, at, side, size = MARKER.groundSize) {
+function drawOnGround(layers, id, at, side, size = MARKER.groundSize, offset = MARKER.groundOffset) {
   const p = axialToPixel(at.q, at.r, layers.map.hexSize);
   layers.highlight.appendChild(el('use', {
-    href: `#${id}`, x: p.x + side * 18 - size / 2, y: p.y + 14 - size / 2, width: size, height: size,
+    href: `#${id}`, x: p.x + side * offset.x - size / 2, y: p.y + offset.y - size / 2, width: size, height: size,
   }));
 }
 
@@ -1830,10 +1830,11 @@ function drawCounter(unit, number, map, isSelected) {
 
   // A charge he carries (M15): an orange dot each, down the left under his
   // role, in the colour of what it does, ringed in paper to stand off the
-  // green. The leader's rank flash has that column, so his sit beside it.
+  // green. The leader's sit on his rank flash, in the same place as every
+  // other man's (M16, the operator's: beside it they read as something else).
   const dots = COUNTER.chargeDots;
   for (let i = 0; i < unit.charges; i++) {
-    const at = { cx: unit.leader ? dots.leaderX : dots.x, cy: dots.y + i * dots.pitch };
+    const at = { cx: dots.x, cy: dots.y + i * dots.pitch };
     body.appendChild(el('circle', { ...at, r: dots.radius + 1.1, fill: COUNTER.apFill }));
     body.appendChild(el('circle', { ...at, r: dots.radius, fill: dots.fill, stroke: COUNTER.apDots.stroke, 'stroke-width': 0.8 }));
   }
@@ -2000,12 +2001,13 @@ export function drawCounterKey(svg, examples, numbers) {
     svg.appendChild(g);
     return g;
   };
-  const words = (x, y, lines, anchor = 'start') => {
+  // The first `heads` lines are the bold label, the rest its description.
+  const words = (x, y, lines, anchor = 'start', heads = 1) => {
     // 13 in the drawing, 12 px on screen at 1280x800, where the key is drawn
     // at 0.92: the right page's floor (SPEC.md §11).
     const t = el('text', { x, y, 'text-anchor': anchor, 'font-family': TYPE.typewriter, 'font-size': 13, fill: PALETTE.ink });
     lines.forEach((line, i) => {
-      const span = el('tspan', { x, dy: i === 0 ? 0 : 14.5, 'font-weight': i === 0 ? 'bold' : 'normal' });
+      const span = el('tspan', { x, dy: i === 0 ? 0 : 14.5, 'font-weight': i < heads ? 'bold' : 'normal' });
       span.textContent = line;
       t.appendChild(span);
     });
@@ -2016,7 +2018,7 @@ export function drawCounterKey(svg, examples, numbers) {
     svg.appendChild(el('circle', { cx: to.x, cy: to.y, r: 2.2, fill: PALETTE.red, stroke: PALETTE.paper, 'stroke-width': 1 }));
   };
   const heading = (y, content) => {
-    svg.appendChild(el('path', { d: `M0 ${y + 5} H330`, stroke: PALETTE.ink, 'stroke-width': 2 }));
+    svg.appendChild(el('path', { d: `M0 ${y + 5} H336`, stroke: PALETTE.ink, 'stroke-width': 2 }));
     svg.appendChild(text(content, { x: 0, y: y - 4, 'text-anchor': 'start', 'dominant-baseline': 'auto', 'font-family': TYPE.slab, 'font-size': 14, 'letter-spacing': 2, fill: PALETTE.ink }));
   };
   const row = (y, node, lines, x = 64) => {
@@ -2038,33 +2040,34 @@ export function drawCounterKey(svg, examples, numbers) {
   // The leader by his name in the data, never a name in code (CLAUDE.md rule 6).
   const lead = examples.leader.shortName.charAt(0) + examples.leader.shortName.slice(1).toLowerCase();
   const left = [
-    [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'sapper, scout', 'or gunner']],
-    [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'a dot each']],
-    [{ x: 7, y: 46.5 }, 164, ['KEY 1–6', 'and name']],
+    [{ x: COUNTER.role.x + COUNTER.role.size / 2, y: COUNTER.role.y + COUNTER.role.size / 2 }, 58, ['ROLE', 'Sapper, scout', 'or gunner']],
+    [{ x: COUNTER.chargeDots.x, y: COUNTER.chargeDots.y }, 116, ['CHARGES', 'A dot each']],
+    [{ x: 7, y: 46.5 }, 164, ['KEY 1–6', 'Beside his', 'name']],
   ];
   for (const [p, y, lines] of left) {
     pointer({ x: 100, y: y - 4 }, on(cx, cy, k, p));
     words(96, y, lines, 'end');
   }
+  // [point on the counter, y, lines, how many of them are the bold label]
   const right = [
-    [{ x: dots.x, y: dots.y }, 58, ['AP LEFT', 'hollow when', 'spent']],
-    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 110, ['BLUE AP', `from ${lead}'s`, 'orders']],
-    [{ x: 51, y: 31 }, 162, [`${lead.toUpperCase()}'S`, 'ORDERS', 'this turn']],
+    [{ x: dots.x, y: dots.y }, 50, ['ACTION POINTS', 'REMAINING', 'Hollow when', 'spent'], 2],
+    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 118, ['BLUE AP', 'Bonus from', `${lead}'s orders`], 1],
+    [{ x: 51, y: 31 }, 176, [`${lead.toUpperCase()}'S`, 'ORDERS', 'This turn'], 2],
   ];
-  for (const [p, y, lines] of right) {
-    pointer({ x: 234, y: y - 4 }, on(cx, cy, k, p));
-    words(238, y, lines);
+  for (const [p, y, lines, heads] of right) {
+    pointer({ x: 230, y: y - 4 }, on(cx, cy, k, p));
+    words(234, y, lines, 'start', heads);
   }
 
   // The other marks a man can wear.
   const leader = drawCounter({ ...examples.leader, q: 0, r: 0, ap: examples.leader.apMax }, 1, unitMap, false);
   const small = el('g', { transform: 'translate(30 238) scale(0.8)' });
   small.appendChild(leader);
-  row(234, small, [`${lead.toUpperCase()}, THE LEADER`, 'blue name and rank; men near', 'him start a turn with more AP']);
+  row(234, small, [`${lead.toUpperCase()}, THE LEADER`, 'Blue name and rank; men near', 'him start a turn with more AP']);
   const markerAt = (id, y) => el('use', { href: `#${id}`, x: 17, y: y - 13, width: 26, height: 26 });
-  row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'seen again this turn: fired on']);
-  row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; one more hit kills']);
-  row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'gone to ground, harder to see']);
+  row(284, markerAt('marker-spotted', 284), ['SPOTTED', 'Seen again this turn: fired on']);
+  row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; killed if hit again']);
+  row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'Gone to ground, harder to see']);
 
   // The garrison.
   heading(390, 'THE GARRISON');
@@ -2081,9 +2084,10 @@ export function drawCounterKey(svg, examples, numbers) {
     return { x: size / 2 + (toward.x / len) * reach, y: size / 2 + (toward.y / len) * reach };
   };
   const enemyLabels = [
-    [tip(east), 432, ['FACING', `sees ${numbers.arc}° this`, 'way']],
-    [tip(southEast), 486, ['NEXT TURN', 'it will face', 'here (dashed)']],
-    [{ x: 28, y: 45.5 }, 540, ['WHO', 'sentry, patrol', 'or reserve']],
+    [tip(east), 432, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
+    // WHO above NEXT TURN (M16): the other way round, their pointers crossed.
+    [{ x: 28, y: 45.5 }, 486, ['WHO', 'Sentry, patrol', 'or reserve']],
+    [tip(southEast), 540, ['NEXT TURN', 'It will face', 'here (dashed)']],
   ];
   for (const [p, y, lines] of enemyLabels) {
     pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
@@ -2091,8 +2095,8 @@ export function drawCounterKey(svg, examples, numbers) {
   }
   const mini = el('g', { transform: 'translate(30 606) scale(0.8)' });
   mini.appendChild(drawEnemy({ ...enemy, suppressed: true }, unitMap, false, false));
-  row(602, mini, ['SUPPRESSED', 'head down this turn: it', 'does not see, fire or move'], 76);
-  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'the turn after: it sees again']);
-  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'the reserve squad']);
-  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'it saw or found something']);
+  row(602, mini, ['SUPPRESSED', 'Head down this turn: it', 'does not see, fire or move'], 76);
+  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'The turn after: it sees again']);
+  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'The reserve squad']);
+  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'It saw or found something']);
 }
