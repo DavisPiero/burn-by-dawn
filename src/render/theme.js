@@ -665,6 +665,26 @@ export const OBJECTIVE = {
 
 // Telephone wires from an objective to a pole on each of its charge points
 // (M12), for a kind whose art has `wires` below: what a scout cuts.
+// The line cut at the exchange (M16, the operator's: it should look like the
+// power going): the lights in its windows flicker and die, the village round
+// it dims in stutters, and sparks jump where each wire parted. Display only.
+export const POWER_CUT = {
+  ms: 1700,
+  dimHexes: 2.6, // how far round the exchange the dimming reaches
+  dimOpacity: 0.34,
+  sparkSize: 40,
+};
+
+// The knife (M16, the operator's): a red splat bursts on the enemy's hex, then
+// fades to a faint stain left under the body. Display only.
+export const KNIFE_SPLAT = {
+  ms: 1300,
+  size: 64,
+  stainSize: 62,
+  stainOpacity: 0.5,
+  stainOffset: { x: -2, y: 0 }, // near the hex's middle, so it shows beside the body
+};
+
 export const WIRES = {
   stroke: PALETTE.ink,
   casing: PALETTE.paper,
@@ -683,7 +703,7 @@ export const WIRES = {
 // on the crossarm).
 const OBJECTIVE_ART = {
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
-  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', wires: { x: 100, y: 42.4 } },
+  exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
 };
 
@@ -696,7 +716,8 @@ export function ordersMarkerId(bonus) {
 export function objectiveArt(objective) {
   const art = OBJECTIVE_ART[objective.kind];
   if (!art) return null;
-  const id = objective.destroyed ? art.destroyed : art.intact;
+  // Cut quietly, not blown (M16): its own picture where it has one.
+  const id = objective.destroyed ? (objective.cut && art.cut ? art.cut : art.destroyed) : art.intact;
   const [, , width, height] = SPRITES[id].viewBox.split(' ').map(Number);
   return { id, width, height, wires: art.wires ?? null };
 }
@@ -1219,7 +1240,8 @@ function gravelYard() {
 
 // The exchange house from the south-west: the front wall, the east gable in
 // shadow, the slate roof's front slope with two chimneys, used intact and gutted.
-function exchangeBuilding(gutted) {
+// `dark` (M16): the line cut, the house standing with its lights out.
+function exchangeBuilding(gutted, dark = false) {
   const front = 'M58 88 H122 V134 H58 Z';
   const gable = 'M122 134 V88 L131 58 L140 77 V123 Z';
   const roof = 'M55 89 H124 L132 57 H64 Z';
@@ -1248,12 +1270,12 @@ function exchangeBuilding(gutted) {
     parts.push(label('PTT', { x: 90, y: 95.8, 'font-size': 8, class: 'paper', 'letter-spacing': 1.5 }));
   }
   for (const [x, y] of [[62, 103], [85, 103], [108, 103], [62, 118], [108, 118]]) {
-    parts.push(...inked(`M${x} ${y} h10 v10 h-10 Z`, gutted ? 'ink' : 'blue', 1.4));
-    if (!gutted) parts.push(line(`M${x + 5} ${y} v10 M${x} ${y + 5} h10`, 0.8, 'stroke-paper'));
+    parts.push(...inked(`M${x} ${y} h10 v10 h-10 Z`, gutted || dark ? 'ink' : 'blue', 1.4));
+    if (!gutted) parts.push(line(`M${x + 5} ${y} v10 M${x} ${y + 5} h10`, 0.8, 'stroke-paper', dark ? { opacity: 0.5 } : {}));
   }
   parts.push(...inked('M85 118 h10 v16 h-10 Z', gutted ? 'ink' : 'green', 1.4));
   // A window in the gable end.
-  parts.push(...inked('M127 98 L134 94 V104 L127 108 Z', gutted ? 'ink' : 'blue', 1.2));
+  parts.push(...inked('M127 98 L134 94 V104 L127 108 Z', gutted || dark ? 'ink' : 'blue', 1.2));
   return parts;
 }
 
@@ -1474,6 +1496,26 @@ function bridgeTrack(from, to) {
   return [line(sleepers.join(' '), 2.2, 'stroke-ink', { 'stroke-linecap': 'butt' }), line(`M${from} 45.5 H${to} M${from} 50.5 H${to}`, 1.6)];
 }
 
+// A blobby splat round (50, 50): a ring of fixed radii joined by curves, so
+// it is the same every time, and a few droplets thrown clear of it.
+function bloodSplat() {
+  const radii = [30, 22, 35, 20, 27, 37, 19, 30, 24, 33, 21, 28];
+  const pts = radii.map((r, i) => {
+    const a = (i / radii.length) * Math.PI * 2;
+    return [50 + r * Math.cos(a), 50 + r * Math.sin(a)];
+  });
+  const mid = (a, b) => `${(a[0] + b[0]) / 2} ${(a[1] + b[1]) / 2}`;
+  const d = `M${mid(pts.at(-1), pts[0])} ${pts.map((p, i) => `Q${p[0]} ${p[1]} ${mid(p, pts[(i + 1) % pts.length])}`).join(' ')} Z`;
+  const drops = [[90, 28, 4.5], [12, 72, 4], [82, 86, 3.2], [18, 18, 3], [95, 60, 2.4], [40, 94, 2.6]];
+  return [
+    fill(d, 'ink', { transform: 'translate(2 2)', 'fill-opacity': 0.5 }),
+    fill(d, 'red'),
+    fill(d, toneClass('ink', 10)),
+    line(d, 2.4),
+    ...drops.flatMap(([x, y, r]) => [circle(x, y, r, 'red'), ring(x, y, r, 1.4)]),
+  ];
+}
+
 function starburst(cx, cy, points, outer, inner, cls, extra = {}) {
   let d = '';
   for (let i = 0; i < points * 2; i++) {
@@ -1644,6 +1686,16 @@ const SPRITES = {
       ...gravelYard(),
       svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
       ...exchangeBuilding(false),
+      ...roofStandard(),
+    ],
+  },
+  // The line cut, not blown (M16): the house stands, and its lights are out.
+  'objective-exchange-cut': {
+    viewBox: '0 0 160 184',
+    draw: () => [
+      ...gravelYard(),
+      svg('g', { transform: 'translate(-4 66) scale(0.9)' }, church()),
+      ...exchangeBuilding(false, true),
       ...roofStandard(),
     ],
   },
@@ -1997,6 +2049,22 @@ const SPRITES = {
     },
   }])),
   // A comic starburst, one frame; board.js does the stepped reveal.
+  // Blood, as the annual would print it (M16): a spot-red splat, halftoned,
+  // inked round, with droplets thrown off it. The knife's burst, and drawn
+  // small and faint as the stain under a knifed enemy's body.
+  'effect-blood-splat': {
+    viewBox: '0 0 100 100',
+    draw: () => bloodSplat(),
+  },
+  // A spark where a wire parts (M16): a small paper starburst, inked.
+  'effect-spark': {
+    viewBox: '0 0 100 100',
+    draw: () => [
+      starburst(50, 50, 8, 46, 14, 'paper'),
+      line(starburst(50, 50, 8, 46, 14, 'paper').getAttribute('d'), 3),
+      starburst(50, 50, 6, 20, 8, 'ink'),
+    ],
+  },
   'marker-blast': {
     viewBox: '0 0 200 200',
     draw: () => [

@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -574,7 +574,11 @@ export function renderPieces(layers, state, view) {
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
   for (const noise of state.noises) drawNoise(layers, noise);
-  for (const body of state.bodies) drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize, MARKER.bodyOffset);
+  for (const body of state.bodies) {
+    // A knifed enemy lies in a faint stain (M16), under the body.
+    if (body.knifed) drawOnGround(layers, 'effect-blood-splat', body, -1, KNIFE_SPLAT.stainSize, KNIFE_SPLAT.stainOffset, { opacity: KNIFE_SPLAT.stainOpacity });
+    drawOnGround(layers, body.enemyId ? 'marker-body-enemy' : 'marker-body', body, -1, MARKER.bodySize, MARKER.bodyOffset);
+  }
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
@@ -664,6 +668,11 @@ export function renderPieces(layers, state, view) {
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
+  if (view.strikeShow?.kind === 'knife') drawKnifeSplat(layers, view.strikeShow, now);
+  if (view.strikeShow?.kind === 'cut') {
+    const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
+    if (objective) drawPowerCut(layers, objective, now - view.strikeShow.since);
+  }
   if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
@@ -956,6 +965,68 @@ function drawShot(layers, shot, now) {
     layers.effects.appendChild(hit);
     playFrom(hit, [{ opacity: 1 }, { opacity: 0 }], { delay: SHOT.travelMs, duration: rounds * SHOT.roundMs, easing: `steps(${rounds * 2}, end)` }, elapsed);
   }
+}
+
+// The knife (M16): a red splat bursts on the enemy's hex, in three steps like
+// the blast, holds, and fades; the stain left under the body is drawn with it.
+function drawKnifeSplat(layers, show, now) {
+  const elapsed = now - show.since;
+  if (elapsed > KNIFE_SPLAT.ms) return;
+  const p = axialToPixel(show.at.q, show.at.r, layers.map.hexSize);
+  const size = KNIFE_SPLAT.size;
+  const splat = el('use', { href: '#effect-blood-splat', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size });
+  splat.style.transformBox = 'fill-box';
+  splat.style.transformOrigin = '50% 50%';
+  layers.effects.appendChild(splat);
+  playFrom(splat, [
+    { transform: 'scale(0.2)', opacity: 1, offset: 0, easing: 'steps(3, end)' },
+    { transform: 'scale(1.15)', opacity: 1, offset: 0.2 },
+    { transform: 'scale(1)', opacity: 1, offset: 0.3 },
+    { transform: 'scale(1)', opacity: 1, offset: 0.6 },
+    { transform: 'scale(1)', opacity: 0, offset: 1 },
+  ], { duration: KNIFE_SPLAT.ms }, elapsed);
+}
+
+// The line cut (M16): the lights in the exchange's windows stutter and die,
+// the village round it dims in fits, and each wire sparks where it parted.
+// Every step is held, not eased, like the rest of the board's motion.
+function drawPowerCut(layers, objective, elapsed) {
+  if (elapsed > POWER_CUT.ms) return;
+  const { map } = layers;
+  const art = objectiveArt(objective);
+  const centre = labelPoint(map, objective.hexes);
+  const origin = { x: centre.x - art.width / 2, y: centre.y - art.height / 2 };
+  // Held steps, spread over the first `upTo` of the animation.
+  const held = (values, upTo = 1) => values.map((opacity, i) => ({ opacity, offset: (i / (values.length - 1)) * upTo, easing: 'steps(1, end)' }));
+  // Darkest over the exchange, fading out to nothing at the village's edge.
+  const shade = el('radialGradient', { id: 'power-cut-dim' });
+  shade.append(el('stop', { offset: '0', 'stop-color': PALETTE.ink, 'stop-opacity': 1 }), el('stop', { offset: '0.55', 'stop-color': PALETTE.ink, 'stop-opacity': 0.7 }), el('stop', { offset: '1', 'stop-color': PALETTE.ink, 'stop-opacity': 0 }));
+  const dim = el('circle', {
+    cx: origin.x + 95, cy: origin.y + 105, r: map.hexSize * Math.sqrt(3) * POWER_CUT.dimHexes, fill: 'url(#power-cut-dim)', opacity: 0,
+  });
+  layers.effects.append(shade, dim);
+  const d = POWER_CUT.dimOpacity;
+  // Stutters, holds dark, then the page's own light comes back.
+  playFrom(dim, [...held([0, d, d * 0.2, d * 0.9, d * 0.1, d], 0.6), { opacity: d, offset: 0.8 }, { opacity: 0, offset: 1 }], { duration: POWER_CUT.ms }, elapsed);
+  // The windows, lit, going out: the same squares the exchange is drawn with.
+  const lights = el('g', { opacity: 0 });
+  for (const [x, y] of [[62, 103], [85, 103], [108, 103], [62, 118], [108, 118]]) {
+    lights.appendChild(el('rect', { x: origin.x + x, y: origin.y + y, width: 10, height: 10, fill: PALETTE.paper }));
+  }
+  layers.effects.appendChild(lights);
+  playFrom(lights, held([1, 0, 1, 0, 0.8, 0, 0.5, 0, 0]), { duration: POWER_CUT.ms * 0.7 }, elapsed);
+  // A spark where each wire parted, twice.
+  const standard = { x: origin.x + art.wires.x, y: origin.y + art.wires.y };
+  const size = POWER_CUT.sparkSize;
+  objective.chargeHexes.forEach((h, i) => {
+    const p = axialToPixel(h.q, h.r, map.hexSize);
+    const v = towardObjective(map, h, objective);
+    const pole = { x: p.x - v.x * map.hexSize * WIRES.poleAway, y: p.y - v.y * map.hexSize * WIRES.poleAway - WIRES.poleSize * 0.3 };
+    const at = { x: (pole.x + standard.x) / 2, y: (pole.y + standard.y) / 2 };
+    const spark = el('use', { href: '#effect-spark', x: at.x - size / 2, y: at.y - size / 2, width: size, height: size, opacity: 0 });
+    layers.effects.appendChild(spark);
+    playFrom(spark, held([1, 0, 0, 1, 0, 0]), { delay: i * 90, duration: POWER_CUT.ms * 0.45 }, elapsed);
+  });
 }
 
 // --- motion (SPEC.md §11: stepped, never eased) --------------------------------
@@ -1365,9 +1436,10 @@ function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
 
 // Things left on the ground sit in a lower corner of their hex, a body to one
 // side and dropped charges to the other, so both show when they share it.
-function drawOnGround(layers, id, at, side, size = MARKER.groundSize, offset = MARKER.groundOffset) {
+function drawOnGround(layers, id, at, side, size = MARKER.groundSize, offset = MARKER.groundOffset, extra = {}) {
   const p = axialToPixel(at.q, at.r, layers.map.hexSize);
   layers.highlight.appendChild(el('use', {
+    ...extra,
     href: `#${id}`, x: p.x + side * offset.x - size / 2, y: p.y + offset.y - size / 2, width: size, height: size,
   }));
 }

@@ -29,7 +29,7 @@ import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTim
 import { isMuted, loadSuppliedSounds, playCue, setMuted, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, GARRISON_SHOW, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -117,6 +117,9 @@ let garrisonShow = null;
 // only, cleared once it has played.
 let shotShow = null;
 let shotShowTimer = null;
+// A knife's splat or the line cut's power failing (M16), on the board for a moment.
+let strikeShow = null;
+let strikeShowTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -269,6 +272,7 @@ function deriveView() {
     dropShow,
     flyShow,
     shotShow,
+    strikeShow,
     targetRings: null,
   };
 
@@ -890,6 +894,15 @@ function showShot(kind, from, to) {
   }, SHOT.ms);
 }
 
+function showStrike(show, ms) {
+  strikeShow = { ...show, since: performance.now() };
+  clearTimeout(strikeShowTimer);
+  strikeShowTimer = setTimeout(() => {
+    strikeShow = null;
+    renderBoard();
+  }, ms);
+}
+
 /** Take back the last move or action, keeping where the mouse is. */
 function undoLast() {
   if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
@@ -974,6 +987,7 @@ function handleTargetClick(q, r) {
     const target = gun ? state.enemies.find((e) => e.q === q && e.r === r) : null;
     commit(setTargeting(next, null), gun ? kind : 'action');
     if (target) showShot(kind, mover, target);
+    if (kind === 'knife') showStrike({ kind: 'knife', at: { q, r } }, KNIFE_SPLAT.ms);
   }
   else if (other && other.id !== mover.id) state = selectUnit(state, other.id);
 }
@@ -1014,9 +1028,13 @@ function handleAction(id) {
     case 'charge':
       commit(placeCharge(state, unit.id, rules));
       break;
-    case 'cut':
+    case 'cut': {
+      const before = state;
       commit(cutLine(state, unit.id, rules));
+      const cut = state.objectives.find((o) => o.cut && !before.objectives.find((b) => b.id === o.id)?.cut);
+      if (cut) showStrike({ kind: 'cut', objectiveId: cut.id }, POWER_CUT.ms);
       break;
+    }
     case 'suppress':
     case 'kill':
     case 'knife':
@@ -1167,6 +1185,7 @@ function restartMission() {
   flyShow = null;
   bangTimer = null;
   garrisonShow = null;
+  strikeShow = null;
   briefingAfterDrop = false;
   highlightHex = null;
   hoverUnitId = null;
