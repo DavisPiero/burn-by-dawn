@@ -614,7 +614,7 @@ function actionsFor(unit) {
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
-    { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: straight across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
+    { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, active: state.targeting === a.id }));
 }
 
@@ -762,7 +762,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     const check = hex ? checkSwim(map, state, unit, hex, rules) : null;
     view.targetLabel = check?.ok
       ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
-      : check ? `Swim: ${check.reason}.` : 'Swim: click the bank straight across the water. Esc to cancel.';
+      : check ? `Swim: ${check.reason}.` : 'Swim: click a hex on the far bank. Esc to cancel.';
   } else if (kind === 'pass') {
     for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
     const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;

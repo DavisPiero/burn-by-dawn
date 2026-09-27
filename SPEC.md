@@ -197,8 +197,12 @@ All costs and modifiers below are numbers in `rules.json`.
   he destroys the exchange at once, quietly: **no noise**, so nobody comes to look, but the
   garrison notices its telephones go dead: **alert +1** (`alert.lineCut`; M15, the
   operator's — it raised nothing until then) (§7).
-- **Swim** — a **full turn**. From a hex beside the canal, straight across one canal
-  hex, to the bank opposite. A wounded man cannot swim. He cannot hide as he comes out,
+- **Swim** — a **full turn**. From a hex beside the canal, across one canal hex, to any
+  free hex on the far bank beside that same water hex (M16, from playtesting: straight
+  across only offered one landing, often not the nearest). Never onto the lock or the
+  bridge, which are not banks, and not from them either: a man steps onto a bank first.
+  Where the canal is two hexes wide there is no swim; the lane to the lock (§8) gives a
+  man on the far bank there firm ground to land on. A wounded man cannot swim. He cannot hide as he comes out,
   and is tested on the far bank like any hex he enters. It exists so a man is never
   stranded by his own demolition. Until M11b it was allowed only once the bridge was
   down; playtesting showed that left the telephone exchange reachable only over the
@@ -570,6 +574,10 @@ The map must support **three genuinely viable approaches**, each with a distinct
   through the middle of the board, from the south fields up past the railway to the north
   edge and back, starting at its south end.
 - **Wood and ridge line** — fast and good spotting, but passes the patrol base.
+- *Since M16* a **lane** runs east from the road's south end to the lock, over what was
+  marsh, so a man swimming back from the village side near the exfil lands on firm ground
+  and can reach the exfil the next turn, not after two turns of marsh (the operator's). It
+  is not a crossing: the lock still meets only the west bank.
 
 No route reaches all three objectives efficiently. Choosing one is choosing which
 secondary objective is realistic.
