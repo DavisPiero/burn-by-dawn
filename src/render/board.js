@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -549,6 +549,7 @@ export function renderPieces(layers, state, view) {
   }
   drawSites(layers, state, view);
   if (view.drop) drawDrop(layers, view.drop);
+  if (view.drop && !view.drop.runs.some((r) => r.selected)) drawGhostPlanes(layers, view.drop.runs, now);
 
   // Where he can go and the leader's orders: every outline's paper casing
   // first, then every line, so where two run along the same hex edge neither
@@ -848,6 +849,28 @@ function drawAircraft(layers, timeline, elapsed) {
   plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
   playFrom(plane, [{ transform: at(start) }, { transform: at(end) }], { duration: DROP_SHOW.flightMs }, elapsed);
   layers.effects.append(shadow, plane);
+}
+
+// Until a run is picked (M16): a faint grey Dakota flies each run's line, again
+// and again, each a third of a pass behind the one before, so the lines read
+// as the aircraft's path. Timed from the page's clock, so a redraw carries
+// each pass on where it was. No shadow and no sound: it is only a hint.
+function drawGhostPlanes(layers, runs, now) {
+  const size = DROP_SHOW.aircraftSize * DROP_GHOST.scale;
+  const period = DROP_GHOST.flightMs + DROP_GHOST.gapMs;
+  const flying = DROP_GHOST.flightMs / period;
+  runs.forEach((run, i) => {
+    const { start, end, angle } = dropTimeline(layers.map, { from: run.from, to: run.to, jumps: [] });
+    const at = (t, opacity, offset) => ({
+      transform: `translate(${start.x + (end.x - start.x) * t}px, ${start.y + (end.y - start.y) * t}px) rotate(${angle}deg)`,
+      opacity, offset: offset * flying,
+    });
+    const plane = el('g', { style: 'filter: grayscale(1)' });
+    plane.appendChild(el('use', { href: '#aircraft-dakota', x: -size / 2, y: -size / 2, width: size, height: size }));
+    const frames = [at(0, 0, 0), at(0.08, DROP_GHOST.opacity, 0.08), at(0.92, DROP_GHOST.opacity, 0.92), at(1, 0, 1), { ...at(1, 0, 1), offset: 1 }];
+    playFrom(plane, frames, { duration: period, iterations: Infinity }, now + (i * period) / runs.length);
+    layers.effects.appendChild(plane);
+  });
 }
 
 // --- the RAF flyover (M11) --------------------------------------------------------

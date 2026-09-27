@@ -793,6 +793,16 @@ export const DROP_SHOW = {
   tailMs: 350,
 };
 
+// Before a run is picked (M16, the operator's): a faint grey Dakota flies each
+// drop line over and over, staggered, so the lines read as flight paths.
+// Display only and silent.
+export const DROP_GHOST = {
+  flightMs: 7000, // slow: it is a suggestion, not the drop
+  gapMs: 2400, // unseen between passes
+  opacity: 0.38,
+  scale: 0.8, // of DROP_SHOW.aircraftSize
+};
+
 // The marker-pen rings round the targets before the drop (SPEC.md §11): a
 // loop that overshoots where it started, twice round the primary, drawn on
 // once and then left; a note beside each in the lettering.
