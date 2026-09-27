@@ -412,8 +412,10 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   orange added to the palette for them.
 - The cut exchange (M16): the house standing with its windows dark, the lights flickering
   out and sparks at the snapped wires as the line is cut.
-- The knife's blood (M16): a spot-red splat that bursts on the enemy's hex, and the faint
-  stain left under the body.
+- The knife's blood (M16): the faint stain left under the body, spreading slowly out from
+  under him as he is knifed (M18).
+- The aiming marks (M15, M18): the crosshair over an enemy, the red cross over a man being
+  aided, and the pebble in a ring where a stone will land.
 - The ghost Dakotas (M16): the same aircraft, greyed and faint, flying each drop line until a
   run is picked.
 - The parachutes: the canopy opening and drifting in the air and the spent one on the

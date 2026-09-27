@@ -173,7 +173,9 @@ All costs and modifiers below are numbers in `rules.json`.
   hover and the Kill button both say so, so no effort is wasted trying.
 - **Stabilise** — another trooper spends a full turn adjacent to a wounded man (§5). The
   wounded man gets his **full AP pool back and can carry a charge again**, but the hit is
-  not undone: he is still one hit from death. The wound is dressed, not healed.
+  not undone: he is still one hit from death. The wound is dressed, not healed. While it
+  is aimed, the man under the mouse wears a big red cross, grey if he cannot be aided
+  (M18, the operator's), as an aimed enemy wears a crosshair.
 - **Pick up a charge** — 1 AP, standing on a hex with a dropped charge (§5), if he can
   carry one.
 - **Throw a stone** (any trooper) — costs **1 AP**. Pick a hex **up to 3 away**; no line
@@ -182,9 +184,10 @@ All costs and modifiers below are numbers in `rules.json`.
   to face it **at once** (M13b), for the rest of the player phase and the detection check. The
   trade is deliberate: you choose where they look, and you pay a sighting's worth of alert
   for it. The hover readout shows which enemies would hear it before the player commits.
-  **A throw is not a move:** he stays on his hex. While it is aimed the board draws the lob
-  as a dashed arc from him to the hovered hex and shades the ground in earshot, and the
-  readout says he stays put, so it never reads as a path.
+  **A throw is not a move:** he stays on his hex. While it is aimed the board marks where
+  it lands with a pebble in a target ring and shades the ground in earshot, and the
+  readout says he stays put, so it never reads as a path. (Until M18 it drew the lob as
+  a dashed arc from him; the operator found that read as a walk, so nothing joins them.)
 - **Pass a charge** (M11b, from playtesting) — costs the giver **2 AP** (`passCharge` in
   `rules.json`); the man taking it pays nothing. He hands one of his charges to a man
   **beside him** who can carry it: not wounded, and with room under his capacity (a scout
@@ -220,7 +223,7 @@ All costs and modifiers below are numbers in `rules.json`.
   forfeits the "never reached Alarmed" score (§10): a clean run still scores highest.
   When it is called the Dakota flies across the board over the garrison (display only,
   skipped by any key or click), then a card headed in the diversion's blue says what it
-  did (M11).
+  did (M11). Its engines are heard half a second before it comes into sight (M18).
 
 ### Desktop interaction (this matters more than it sounds)
 
@@ -807,10 +810,13 @@ Desktop makes the skeuomorphism work properly, so use the room:
   so "cut the line" has a line to cut. A charge point's satchel sits a third of the way
   toward the target it serves, nudged off the wires where `pointNudge` says (M16).
 - **The power goes** (M16, the operator's): cutting the line flickers the lights in the
-  exchange's windows out, dims the village round it in stutters and sparks each wire where
-  it parts. A cut exchange then stands with its windows dark, not burning as a blown one.
-- **The knife is seen** (M16, the operator's): a red splat bursts on the enemy's hex, and a
-  faint stain stays under its body.
+  exchange's windows out and sparks each wire where it parts; since M18 (the operator's:
+  it was a slow dark flicker) the exchange and the ground round it flash white in quick
+  stutters as the wires short, a spark with every flash, all over in about a second. A cut exchange then stands with its windows dark, not burning as a blown one.
+- **The knife is seen** (M16, the operator's): a faint stain stays under its body. Since
+  M18 (the operator's: the M16 splat burst over the counters and seemed to fly onto the
+  hex) the stain spreads slowly out from under the body, dark and wet, over about three
+  seconds, and dries to its faint print: a quiet kill.
 - **The loading page** (M17, the operator's: over the web the boxes under the map were
   drawn first, in the middle of the page, then jumped away as the rest came in). The
   spread stays hidden until it is drawn and its supplied pictures are in (never more than
@@ -841,8 +847,10 @@ Desktop makes the skeuomorphism work properly, so use the room:
   steps it took — at a patrolling walk, slower than our men, that quickens as the alarm
   rises (M16: 480 ms a hex at Calm to 300 at Alarmed) — a red "!" pops over each enemy that spotted a man or found a body or
   parachute, and a ripple runs out from each noise it heard. Any key or click brings the
-  card at once. A noise waiting to be heard says what it was under its ring (BANG,
-  STONE, SHOTS, SHOT, FOUND), and its hex's hover says who it will bring.
+  card at once. A noise waiting to be heard says what it was under its ring (STONE,
+  SHOTS, SHOT, FOUND), and its hex's hover says who it will bring. A bang has no ring
+  (M18, the operator's: it stood on the blown bridge like a target): the blast, the smoke
+  and the DESTROYED stamp already mark it, and its hover still says who it will bring.
 - **Aiming at an enemy** (suppress, kill or knife) draws a crosshair over the enemy under
   the mouse, red if it can be done and grey if not, instead of its route and view (M15).
   The turn after a suppression, when it sees and fires again but can still be killed, it
@@ -905,7 +913,8 @@ action, a card's rustle when a briefing card or the back page opens, a dog a lon
 when the alert rises, and three far-off crumps for the RAF diversion. The Dakota drones
 over the drop and the RAF flyover (M15, `aircraft`), cut short if the drop is skipped;
 the victory bells ring upward to the top bell (M15: falling, they sounded sad). The one exception
-(M11, from playtesting): a turn with a bang plays a real explosion, close and loud, and
+(M11, from playtesting): a turn with a bang plays a real explosion, close and loud (lower
+and slower since M18, the operator's), and
 the board shows it — the page flashes, the board jolts, a shock ring runs out to the edge
 of the blast under the starburst, and smoke rolls up — before that turn's card is laid
 over it. It is the payoff of the plan, and it should land. **Title music** (M17, the
@@ -949,6 +958,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M18** | Eighth operator playtest review, no rules change: the exchange's satchels and the wood's name moved, the knife's stain spreading slowly, a stone's landing marked alone, the cut exchange flashing bright and fast, a red cross when aiming aid, the RAF heard first, a lower slower bang, no ring on a bang | The exchange's satchels touch no wire or dashed edge; Bois des Moines clears the north run's line; a knifed enemy's stain spreads from under the body; aiming a stone draws nothing from the man; aiming aid crosses the man under the mouse; no ring stands on a blown target |
 | **M17** | Seventh operator playtest review, no rules change: the new title card, chips and painted blast in; woods, hedgerows and orchards redrawn after the reference art; the counter key centred on the crease and WHO pointed at the name; ? working over a turn card; title music; a loading page | The board's woods, hedges and orchards match their references and still read at 1280x800; the key's middle is on the crease where the window has room; clicking ? over a turn card opens the orders; music plays over the orders and run choice and fades at the jump; nothing on the spread is seen being laid out |
 | **M16** | Sixth operator playtest review: swimming to any hex on the far bank beside the water and never onto the lock (a bug), a lane to the lock, points for kills and back for bodies found, the counter key reworded and moved, a ? for how to play, ghost Dakotas, faint paper, slower walks, the power going at the exchange, the knife's splat | A man beside the canal can swim to any free far-bank hex sharing its water hex, never the lock or the bridge; a man on the east bank by Canal St-Rémy can swim onto the lane and reach the exfil the next turn; a kill scores 1 and a found body takes it back; ? opens the orders at any time; the balance bot is re-run (unchanged: Normal 94/84/76 with the knife) |
 | **M15** | Fifth operator playtest review: three rules (a cut line raises the alert, anyone packs any parachute, a suppressed enemy does not spot), the garrison's turn shown, a crosshair when aiming, the counter key beside the orders, a stopwatch fuse, charge dots, the orders' head reordered, the margin reworked with the build, the Dakota's drone and rising bells, the painted enemy chips in | Cutting the line raises the alert 1; a man packs another's parachute; a man walking past a suppressed enemy is not spotted; ending a turn shows the enemies walking before the card; the key reads at 12 px beside the orders at 1280x800; the balance bot is re-run (unchanged for the naive bot, naivefight 96/96/96) |

@@ -177,7 +177,9 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
 | `marker-body-enemy.svg` | 28 x 28, drawn at 39 since M15 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
-| `effect-blood-splat.svg` | 100 x 100 (M16: the knife's splat, spot red halftoned and inked, with droplets; drawn small and faint as the stain under a knifed enemy. *Drawn by code.*) |
+| `effect-blood-splat.svg` | 100 x 100 (M16: the knife's splat, spot red halftoned and inked, with droplets; drawn small and faint as the stain under a knifed enemy, and since M18 grown slowly from under the body when he is knifed. *Drawn by code.*) |
+| `marker-heal.svg`, `marker-heal-no.svg` | 100 x 100 (M18: a big red cross on a paper disc over the man under the mouse while aiming Aid — red if he can be stabilised, grey if not. *Drawn by code.*) |
+| `marker-stone-target.svg` | 100 x 100 (M18: where a thrown stone will land, a pebble in an ink target ring; no lob is drawn. *Drawn by code.*) |
 | `effect-spark.svg` | 100 x 100 (M16: a spark where a cut telephone wire parts, a small paper starburst. *Drawn by code.*) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14). **Or a painted PNG**, `/assets/markers/marker-blast.png`, square on transparency, shown from a 400 x 400 copy (M17, the operator's; the full painting is `marker-blast_original.png`, not loaded). It replaces the drawn one on load, the muzzle flash too, and code sets BOOM over its middle |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
