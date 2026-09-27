@@ -207,7 +207,11 @@ export function checkCutLine(state, unit, rules) {
   }
   if (objective.destroyed) return result(cost, `${objective.label} is already destroyed`);
   if (state.charges.some((c) => c.objectiveId === objective.id)) return result(cost, 'a charge is already set on it');
-  return { ...result(cost, fullTurn(unit)), objective };
+  // Said plainly (M20: a playtester took it for being seen, as a man who has
+  // just walked onto the point is often spotted there): it wants a whole turn.
+  const busy = fullTurn(unit);
+  if (busy && onBoard(unit) && unit.ap > 0) return { ...result(cost, 'it takes his whole turn, and he has spent AP getting here — stay on this point and cut it at the start of next turn'), objective };
+  return { ...result(cost, busy), objective };
 }
 
 /**

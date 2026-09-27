@@ -240,6 +240,8 @@ function deriveView() {
     moveLabel: null,
     risk: null,
     riskLabel: null,
+    // Aiming a swim: the far bank's risk, drawn like a move's (M20).
+    landing: null,
     hideLabel: null,
     actions: null,
     targets: null,
@@ -521,7 +523,7 @@ function describeObjective(o) {
     `blast ${kind.blastRadius} hex${kind.blastRadius === 1 ? '' : 'es'} from each charge, killing anyone in it, ours or theirs`,
     `alert +${kind.alert}`,
   ];
-  if (kind.cutLine) parts.push(`or a scout can cut the line: a full turn, no noise, alert +${rules.alert.lineCut}`);
+  if (kind.cutLine) parts.push(`or a scout can cut the line [X], seen or not: a whole turn, so he must start his turn on a charge point; no noise, alert +${rules.alert.lineCut}`);
   const payoff = payoffWords(kind);
   if (payoff) parts.push(`destroyed, it ${payoff}`);
   return `${o.label} (${role}) — ${parts.join(', ')}.`;
@@ -779,9 +781,21 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
   } else if (kind === 'swim') {
     for (const h of swimTargets(map, state, unit, rules)) add(h);
     const check = hex ? checkSwim(map, state, unit, hex, rules) : null;
-    view.targetLabel = check?.ok
-      ? `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. He is tested on the far bank. Click to swim.`
-      : check ? `Swim: ${check.reason}.` : 'Swim: click a hex on the far bank. Esc to cancel.';
+    view.targetLabel = check ? `Swim: ${check.reason}.` : 'Swim: click a hex on the far bank. Esc to cancel.';
+    // The far bank's risk, drawn as a move's last hex would be (M20, the
+    // operator's): he comes out of the water unhidden and is tested there.
+    if (check?.ok) {
+      const plan = { steps: 1, path: [{ q: unit.q, r: unit.r }, { q: hex.q, r: hex.r }] };
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, hex);
+      const shot = Boolean(result && unit.inContact && result.spotted && result.firing);
+      const risk = [null, result && { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null }];
+      view.landing = { plan, risk };
+      let seen = 'Unseen on the far bank.';
+      if (risk[1]?.shot) seen = `${describeRisk(plan, risk, view.place)}.`;
+      else if (result?.spotted) seen = `SPOTTED as he comes out: ${describeDetection(result, { dots: true })}.`;
+      else if (result) seen = `Seen, not spotted, as he comes out: ${describeDetection(result, { dots: true })}.`;
+      view.targetLabel = `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. ${seen} Click to swim.`;
+    }
   } else if (kind === 'pass') {
     for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
     const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
@@ -892,18 +906,15 @@ function toggleSound() {
 }
 
 /**
- * The title music (M17, the operator's) plays over a new game's orders and
- * fades as they are put away (M19, the operator's: it looped on through the
- * run choice and the drop). It comes back between turns, while the garrison
- * moves and its turn card is up, carrying on where it left off; a card left
- * waiting under the orders keeps it. The orders reopened with ? do not bring
- * it, nor do the other cards.
+ * The title music (M17, the operator's) plays over a new game's orders and the
+ * run choice, and fades at the jump (M20, the operator's: M19 faded it with the
+ * orders and played it between turns, which was not enjoyable). Sound turned
+ * back on before the jump carries on where it faded; a new game starts it from
+ * the top.
  */
 function syncMusic() {
-  const opening = briefing?.opening === true;
-  const interlude = bangTimer !== null || (briefing?.under ?? briefing)?.kind === 'turn';
-  if (!opened || state.outcome || isMuted() || !(opening || interlude)) stopMusic();
-  else startMusic({ resume: !opening });
+  if (!opened || state.phase !== 'drop' || state.outcome || isMuted()) stopMusic();
+  else startMusic({ resume: briefing?.opening !== true });
 }
 
 /** The sounds of a turn's report: a crump for any bang, a dog when the garrison stirs. */
