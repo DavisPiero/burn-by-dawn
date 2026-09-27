@@ -58,6 +58,7 @@ const restartButton = document.getElementById('restart');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
+const helpTab = document.getElementById('help-tab');
 const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
@@ -1201,6 +1202,14 @@ function handleRestartClick() {
   renderRestart(restartButton, true);
 }
 
+/** The orders again, with the counter key beside them, at any time (M16, the operator's). */
+function openHelp() {
+  if (state.outcome || briefing || dropShow || flyShow || bangTimer) return;
+  hidePopup();
+  briefing = { kind: 'orders' };
+  render();
+}
+
 function closeBriefing() {
   briefing = null;
   render();
@@ -1259,6 +1268,9 @@ function describeBriefing(which, view) {
     };
   }
   if (which.kind === 'orders') {
+    // Opened again in play with ? (M16): the same card, the level fixed and
+    // the drop's own lines gone.
+    const before = state.phase === 'drop';
     // Places in capitals, as the operator's orders name them (M12).
     const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toUpperCase()}`);
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
@@ -1279,7 +1291,7 @@ function describeBriefing(which, view) {
     return {
       banner: { title: GAME_TITLE, tagline: GAME_TAGLINE },
       title: 'ORDERS',
-      kicker: 'BEFORE THE DROP',
+      kicker: before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`,
       paragraphs: [
         // The opening on a line of its own (M13), then the job.
         [
@@ -1291,20 +1303,23 @@ function describeBriefing(which, view) {
       sections: [{
         heading: 'HOW TO PLAY',
         lines: [
-          `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
-          'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+          ...(before ? [
+            `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
+            'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+          ] : ['Click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.']),
           // The operator's words (M13): "vulnerable points" here only; the
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, and quiet.` : ''),
-          'Hover anything for detail; KEYBOARD lists every key.',
+          'Hover anything for detail; KEYBOARD lists every key, and ? brings this card back.',
         ],
       }],
       // SPEC.md §10: the level, chosen here and fixed once the stick jumps.
       // At the top (M13): the level changes numbers in the text under it.
       choice: {
         top: true,
+        locked: !before,
         heading: 'DIFFICULTY',
         options: difficulty.levels.map((l) => ({ id: l.id, label: l.label, summary: l.summary, selected: l.id === level.id })),
         onChoose: handleChooseLevel,
@@ -1521,6 +1536,11 @@ function handleKey(event) {
     endBangHold();
     return;
   }
+  if (event.key === '?' || (event.code === 'Slash' && event.shiftKey)) {
+    event.preventDefault();
+    openHelp();
+    return;
+  }
   if (state.phase === 'drop') {
     handleDropKey(event);
     return;
@@ -1695,6 +1715,8 @@ try {
   loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes));
   renderGutter(gutterNote);
   renderKeys(keysTab);
+  attachPopup(helpTab, () => titled('HOW TO PLAY [?]', 'The orders, how to play and how to read a counter, at any time.'));
+  helpTab.addEventListener('click', () => openHelp());
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, () => describeDiversion(rules.diversion.uses));
   // The orders open over the board before anything else (SPEC.md §11).

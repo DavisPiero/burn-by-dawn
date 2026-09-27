@@ -114,12 +114,13 @@ const KEYS = [
   ['W', 'swim'],
   ['X', 'cut the line (scouts)'],
   ['Z', 'undo'],
+  ['?', 'how to play, at any time'],
 ];
 
 export function renderKeys(button) {
   attachPopup(button, () => [
     html('b', null, 'KEYBOARD'),
-    ...KEYS.flatMap(([key, what]) => ['\n', html('b', null, key), ` ${what}`]),
+    ...KEYS.flatMap(([key, what]) => ['\n', html('b', null, key), ` ${capitalise(what)}`]),
     '\n\nHover an enemy for its arc and route, an objective for what it needs, a report line to see where.',
   ]);
 }
@@ -395,6 +396,16 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
  */
 function briefChoice(choice) {
   const row = html('div', 'brief-choice', [html('span', 'brief-choice-head', choice.heading)]);
+  // Locked (M16, the orders opened again in play): only the level being
+  // played, and a click on it carries on like any other.
+  if (choice.locked) {
+    const picked = choice.options.find((o) => o.selected);
+    const button = html('button', 'btn active', picked.label.toUpperCase());
+    button.type = 'button';
+    attachPopup(button, [html('b', null, picked.label.toUpperCase()), `\n${picked.summary}\nFixed once the stick has jumped.`]);
+    row.appendChild(button);
+    return row;
+  }
   for (const option of choice.options) {
     const button = html('button', option.selected ? 'btn active' : 'btn', option.label.toUpperCase());
     button.type = 'button';

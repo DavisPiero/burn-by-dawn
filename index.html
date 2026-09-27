@@ -298,7 +298,7 @@
       height: 100%;
     }
     /* A tab to hover, raised like the buttons so it does not read as a label (M12). */
-    #keys-tab {
+    #keys-tab, #help-tab {
       flex: 0 0 auto;
       padding: 0 7px;
       font-family: var(--typewriter);
@@ -310,6 +310,8 @@
       box-shadow: 2px 2px 0 var(--ink);
       cursor: help;
     }
+    /* How to play, at any time (M16): the orders again, as a question mark. */
+    #help-tab { font-size: 16px; padding: 0 9px; cursor: pointer; }
     /* End turn and Undo side by side; Undo takes only the room it needs. */
     #turn-row { display: flex; gap: 6px; }
     #turn-row #end-turn { flex: 1 1 auto; }
@@ -964,6 +966,7 @@
           <div id="turn-counter"></div>
           <svg id="dawn-strip" viewBox="0 0 600 60" preserveAspectRatio="none"></svg>
           <button id="keys-tab" type="button">KEYBOARD</button>
+          <button id="help-tab" type="button" aria-label="How to play">?</button>
         </div>
         <div id="turn-row">
           <button id="end-turn" type="button"></button>
