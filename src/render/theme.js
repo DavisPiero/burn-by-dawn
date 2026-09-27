@@ -662,6 +662,15 @@ export const RISK = {
   crossCasing: PALETTE.paper,
   crossWidth: 5,
   crossSize: 22,
+  // What the dots are (M19, the operator's: players did not know), a pen
+  // note beside the dots on the last hex of the path that has them.
+  noteSize: 13,
+  noteLeading: 1.1, // of noteSize, between its two lines
+  noteGap: 5, // from the dots' badge
+  noteRoom: 140, // nearer the board's right-hand edge than this, it goes on the left
+  noteInk: PALETTE.ink,
+  noteSpotted: PALETTE.red,
+  noteHalo: PALETTE.paper,
 };
 
 // SPEC.md §7, §10: objectives, their charge hexes, charges burning, blasts

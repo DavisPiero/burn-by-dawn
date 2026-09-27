@@ -248,6 +248,9 @@ to be casual while still being strategic.
   `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid), `P` pick up a charge, `E` pass a charge, `C` place a
   charge, `X` cut the line, `W` swim, `D` RAF diversion, `Z` undo, `M` sound on or off. An action
   with a target outlines where it can go and waits for a click; `Esc` backs out of it.
+- **Each action's button shows its cost** (M19, the operator's): its AP under its name,
+  "2 AP", or "all AP" for those that take his whole turn. The rollover keeps the full cost
+  and why not.
 
 ---
 
@@ -793,7 +796,10 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **The move path counts.** Each step on the hover path shows the AP spent by the time he
   gets there, grey past what he has. A hex on the path where he would be spotted is
   crossed out in red, marker-pen style, over the risk pips. The line is cold blue, and
-  red from the first hex where he would be spotted (M11), so red means trouble.
+  red from the first hex where he would be spotted (M11), so red means trouble. The last
+  hex on the path with pips has a pen note beside them saying what they are (M19, the
+  operator's: players did not know): "2 of 3 dots: 3 and he's spotted", or "3 of 3 dots:
+  he's spotted" in red; the readout's sum ends "= 2 of 3 dots" to match.
 - **Our counters are printed solid army green** with a dark name strip (leader blue for
   the ranking man), AP left as dots top right (M13, was one large figure: two numbers on
   a counter confused players), filled for AP left and hollow for AP spent, the role in a paper roundel,
@@ -924,10 +930,14 @@ and slower since M18, the operator's), and
 the board shows it — the page flashes, the board jolts, a shock ring runs out to the edge
 of the blast under the starburst, and smoke rolls up — before that turn's card is laid
 over it. It is the payoff of the plan, and it should land. **Title music** (M17, the
-operator's): over the opening screens — the orders and picking a run — tense 1940s
+operator's): over a new game's orders, tense 1940s
 war-film music in D minor (tremolo strings, a cello worrying at a semitone, a side drum
-far off, timpani, a horn call every other time round) loops until the stick jumps, then
-fades under the Dakota. A new game brings it back; the orders reopened in play do not.
+far off, timpani, a horn call every other time round) loops until the orders are put
+away, then fades (M19, the operator's: it looped on through the run choice to the jump).
+It comes back between turns (M19): while the garrison moves and while the turn card is
+up, carrying on where it last faded rather than from the top, and fades as the card is
+put away. A new game brings it back from the top; the orders reopened with ? do not,
+nor the other cards (the RAF's, the exfil's).
 `M` stops it. Made in code (`src/render/sound.js`, Web Audio) until files are
 supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
@@ -964,6 +974,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M19** | Ninth operator playtest review, no rules change: the title music fading as the orders are put away and playing between turns, each action's AP on its button, the risk dots explained | The music fades as the orders are cleared, is silent over the run choice and the drop, and plays while the garrison moves and its card is up; every action button shows its AP and all fit at 1280x800, four across included; hovering a seen hex puts a note beside its dots saying what they count |
 | **M18** | Eighth operator playtest review, one scoring change (the bridge 10, bonus targets 4, a man out 2 unhurt or 1 wounded): the exchange's satchels and the wood's name moved, the knife's stain spreading slowly, a stone's landing marked alone, the cut exchange flashing bright and fast, a red cross when aiming aid, the RAF heard first, a lower slower bang, no ring on a bang | The exchange's satchels touch no wire or dashed edge; Bois des Moines clears the north run's line; a knifed enemy's stain spreads from under the body; aiming a stone draws nothing from the man; aiming aid crosses the man under the mouse; no ring stands on a blown target |
 | **M17** | Seventh operator playtest review, no rules change: the new title card, chips and painted blast in; woods, hedgerows and orchards redrawn after the reference art; the counter key centred on the crease and WHO pointed at the name; ? working over a turn card; title music; a loading page | The board's woods, hedges and orchards match their references and still read at 1280x800; the key's middle is on the crease where the window has room; clicking ? over a turn card opens the orders; music plays over the orders and run choice and fades at the jump; nothing on the spread is seen being laid out |
 | **M16** | Sixth operator playtest review: swimming to any hex on the far bank beside the water and never onto the lock (a bug), a lane to the lock, points for kills and back for bodies found, the counter key reworded and moved, a ? for how to play, ghost Dakotas, faint paper, slower walks, the power going at the exchange, the knife's splat | A man beside the canal can swim to any free far-bank hex sharing its water hex, never the lock or the bridge; a man on the east bank by Canal St-Rémy can swim onto the lane and reach the exfil the next turn; a kill scores 1 and a found body takes it back; ? opens the orders at any time; the balance bot is re-run (unchanged: Normal 94/84/76 with the knife) |

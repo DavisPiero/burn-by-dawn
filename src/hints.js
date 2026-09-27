@@ -115,6 +115,6 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     }
   }
 
-  hints.push('Hover an enemy to see what it can see and where it walks. A red cross on a move means he would be spotted there.');
+  hints.push('Hover an enemy to see what it can see and where it walks. On a move, the dots under a hex are how near he is to being seen there: fill them all, a red cross, and he is spotted.');
   return hints.slice(0, max);
 }

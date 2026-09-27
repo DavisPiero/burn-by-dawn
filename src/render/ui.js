@@ -572,17 +572,21 @@ function listOf(labels) {
  * SPEC.md §6's sum in words, one term at a time, so the player can see why:
  * "Bridge patrol: 3 − cover 2 − conceal 0 + close 1 = 2 of 3".
  */
-export function describeDetection(d) {
+export function describeDetection(d, { dots = false } = {}) {
   let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover} − conceal ${d.concealment}`;
   if (d.hidden) sum += ` − hidden ${d.hidden}`;
   sum += ` + close ${d.proximity}`;
   if (d.alert) sum += ` + alert ${d.alert}`;
   if (d.trait) sum += ` ${d.trait > 0 ? '+' : '−'} trait ${Math.abs(d.trait)}`;
-  return `${sum} = ${d.score} of ${d.threshold}`;
+  return `${sum} = ${d.score} of ${d.threshold}${dots ? ' dots' : ''}`;
 }
 
-/** The whole hover path's risk in one phrase. The pips on the board say which hex. */
+/**
+ * The whole hover path's risk in one phrase. The pips on the board say which
+ * hex, and the sum ends "of 3 dots" so the two are read together (M19).
+ */
 export function describeRisk(plan, risk, place) {
+  const sum = (d) => describeDetection(d, { dots: true });
   if (!plan || !risk) return null;
   const tested = plan.steps === 0 ? [0] : plan.path.map((_, i) => i).slice(1);
   const seen = tested.filter((i) => risk[i]);
@@ -598,12 +602,12 @@ export function describeRisk(plan, risk, place) {
     const outcome = risk[worst].shotResult === 'hit'
       ? `SHOT — HIT ${cover === 'none' ? 'in the open' : `through ${cover} cover`}`
       : `SHOT — PINNED in ${cover} cover, not hit`;
-    return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again in ${place(plan.path[worst])}: ${describeDetection(risk[worst])}`;
+    return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again in ${place(plan.path[worst])}: ${sum(risk[worst])}`;
   }
   if (spotted.length > 0) {
-    return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — worst in ${where}: ${describeDetection(risk[worstAt])}`;
+    return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — worst in ${where}: ${sum(risk[worstAt])}`;
   }
-  return `seen, not spotted — worst in ${where}: ${describeDetection(risk[worstAt])}`;
+  return `seen, not spotted — worst in ${where}: ${sum(risk[worstAt])}`;
 }
 
 function describeCost(terrain) {
@@ -850,11 +854,16 @@ export function renderActions(element, actions, onAction) {
   element.classList.remove('idle');
   // Three rows at most (index.html): a man with more than nine actions — a
   // gunner who also carries a charge — gets a fourth column instead.
-  element.classList.toggle('four', actions.length > 9);
+  const four = actions.length > 9;
+  element.classList.toggle('four', four);
   for (const action of actions) {
-    // Key and verb only; the cost, and why not, are the rollover, which has
-    // the full name where the button has a short one.
-    const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-name', action.short ?? action.label)]);
+    // Key, verb and its AP under it (M19, the operator's); the full cost,
+    // and why not, are the rollover, which has the full name where the
+    // button has a short one. Four across, one shorter still, as a name
+    // there has a line to itself and no more (M19: it had two).
+    const words = [html('span', 'action-name', (four && action.tight) || action.short || action.label)];
+    if (action.apLabel) words.push(html('span', 'action-cost', action.apLabel));
+    const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-words', words)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
     button.disabled = !action.ok && !action.active;
