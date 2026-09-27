@@ -381,8 +381,7 @@
     #actions.four { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
     #actions.four .action-key { margin-right: 2px; padding: 0 2px; }
     #actions.four .action { padding: 0 2px; }
-    /* Four across, a two-word name goes onto two lines rather than being cut ("Pack chute", M12b). */
-    #actions.four .action-name { font-size: 12px; white-space: normal; line-height: 1.05; }
+    #actions.four .action-name { font-size: 12px; }
     #actions.idle {
       display: flex;
       align-items: center;
@@ -423,6 +422,10 @@
        tag) in red. Taller than an action's, as the runs have the row alone. */
     #actions.runs .action { height: auto; padding: 3px 4px; }
     .action-words { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+    /* An action's AP under its name (M19, the operator's), both on the
+       button's one line height. */
+    #actions:not(.runs) .action-words { line-height: 1.02; }
+    .action-cost { font-size: 12px; white-space: nowrap; }
     .action-tag {
       font-size: 11px;
       font-weight: bold;

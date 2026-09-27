@@ -850,11 +850,16 @@ export function renderActions(element, actions, onAction) {
   element.classList.remove('idle');
   // Three rows at most (index.html): a man with more than nine actions — a
   // gunner who also carries a charge — gets a fourth column instead.
-  element.classList.toggle('four', actions.length > 9);
+  const four = actions.length > 9;
+  element.classList.toggle('four', four);
   for (const action of actions) {
-    // Key and verb only; the cost, and why not, are the rollover, which has
-    // the full name where the button has a short one.
-    const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-name', action.short ?? action.label)]);
+    // Key, verb and its AP under it (M19, the operator's); the full cost,
+    // and why not, are the rollover, which has the full name where the
+    // button has a short one. Four across, one shorter still, as a name
+    // there has a line to itself and no more (M19: it had two).
+    const words = [html('span', 'action-name', (four && action.tight) || action.short || action.label)];
+    if (action.apLabel) words.push(html('span', 'action-cost', action.apLabel));
+    const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-words', words)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
     button.disabled = !action.ok && !action.active;
