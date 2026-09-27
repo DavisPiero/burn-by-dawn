@@ -1123,6 +1123,8 @@ let counterKeyDrawn = null;
 
 function showCounterKey(on) {
   counterKey.hidden = !on;
+  // The orders make room for it beside the crease (M17).
+  briefingBackdrop.classList.toggle('with-key', on);
   // Again for a new game or a new level, whose arcs may differ.
   const drawnFor = `${state.seed}:${level.id}`;
   if (!on || counterKeyDrawn === drawnFor) return;
@@ -1223,14 +1225,21 @@ function handleRestartClick() {
 
 /** The orders again, with the counter key beside them, at any time (M16, the operator's). */
 function openHelp() {
-  if (state.outcome || briefing || dropShow || flyShow || bangTimer) return;
+  if (state.outcome || briefing?.kind === 'orders') return;
+  // M17, the operator's: the button did nothing while a turn card was up, as
+  // it is most of the time a player reaches for it. Anything being shown is
+  // cut short, as a key would, and the card it leads to waits under the
+  // orders, laid back down when they are put away.
+  if (dropShow) endDropShow();
+  if (flyShow) endFlyShow();
+  if (bangTimer) endBangHold();
   hidePopup();
-  briefing = { kind: 'orders' };
+  briefing = { kind: 'orders', under: briefing };
   render();
 }
 
 function closeBriefing() {
-  briefing = null;
+  briefing = briefing?.under ?? null;
   render();
 }
 
@@ -1516,6 +1525,11 @@ function handleDropKey(event) {
   render();
 }
 
+/** ? on any layout, or shift and the slash key where ? is not a key of its own. */
+function isHelpKey(event) {
+  return event.key === '?' || (event.code === 'Slash' && event.shiftKey);
+}
+
 // SPEC.md §4: 1–6 select, Tab cycle, Space end turn, Esc cancel, H hold,
 // R toggle the patrol-route overlay, and the action keys. Once the mission is
 // over only R still does anything.
@@ -1537,6 +1551,8 @@ function handleKey(event) {
   if (briefing) {
     event.preventDefault();
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
+    // ? over a turn card swaps it for the orders (M17), as the button does.
+    if (isHelpKey(event) && briefing.kind !== 'orders' && briefing.kind !== 'exfil') return openHelp();
     closeBriefing();
     return;
   }
@@ -1555,7 +1571,7 @@ function handleKey(event) {
     endBangHold();
     return;
   }
-  if (event.key === '?' || (event.code === 'Slash' && event.shiftKey)) {
+  if (isHelpKey(event)) {
     event.preventDefault();
     openHelp();
     return;

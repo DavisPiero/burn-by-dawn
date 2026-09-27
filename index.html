@@ -808,17 +808,28 @@
     }
     /* Beside the orders, over the right page (M15): how to read a counter,
        as an insert card of its own. Any click on it carries on, as on the shade. */
-    /* M16, the operator's: moved left to lie over the crease, and as tall as
-       what it holds, centred beside the orders, so a tall window leaves no
-       gap at its foot. Never taller than the window: the drawing then scales
-       down to fit, as it did when it was stretched. */
+    /* M16, the operator's: over the crease, as tall as what it holds, centred
+       down the page. Never taller than the window: the drawing then scales
+       down to fit. M17, the operator's: its middle on the crease itself (the
+       backdrop's right edge), with the orders centred in the room left of it.
+       A window too narrow for both (1280 wide) keeps the orders whole at the
+       left and sets the key as near the crease as it can without covering
+       them. --key-w, --orders-w and --orders-gap are the three sizes. */
+    #briefing-backdrop.with-key {
+      --key-w: 344px;
+      --orders-w: min(720px, 94%);
+      --orders-gap: 16px;
+      --orders-left: max(12px, calc((100% - var(--key-w) / 2 - var(--orders-gap) - var(--orders-w)) / 2));
+      justify-content: flex-start;
+    }
+    #briefing-backdrop.with-key #briefing { margin-left: var(--orders-left); }
     #counter-key {
       position: absolute;
-      left: calc(100% - 26px);
+      left: max(calc(100% - var(--key-w) / 2), calc(var(--orders-left) + var(--orders-w) + var(--orders-gap)));
       top: 50%;
       transform: translateY(-50%);
       max-height: calc(100% - 34px);
-      width: 358px;
+      width: var(--key-w);
       box-sizing: border-box;
       padding: 0 12px 8px;
       display: flex;

@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -193,6 +193,7 @@ function drawAreas(layer, defs, map, corners) {
   const seen = new Set();
   let clips = 0;
   const motifs = [];
+  const shadows = [];
   forEachCell(map, (q0, r0) => {
     const id = terrainIdAt(map, q0, r0);
     const style = terrainArt(id);
@@ -223,6 +224,7 @@ function drawAreas(layer, defs, map, corners) {
       });
       const motif = terrainMotifId(style, h.q, h.r);
       if (motif) motifs.push(el('use', { href: `#${motif}`, x: c.x - 40, y: c.y - 46, width: 80, height: 92 }));
+      if (motif && style.shadows) shadows.push(el('use', { href: `#${motif}-shadow`, x: c.x - 40, y: c.y - 46, width: 80, height: 92 }));
     }
     const d = areaOutline(segments);
     const area = style.area;
@@ -248,6 +250,7 @@ function drawAreas(layer, defs, map, corners) {
       }));
     }
   });
+  for (const shadow of shadows) layer.appendChild(shadow);
   for (const motif of motifs) layer.appendChild(motif);
 }
 
@@ -462,6 +465,20 @@ function hedgeLinks(map, q, r) {
 function drawHedges(layer, map) {
   const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
   let d = '';
+  // Where the clumps go (M17): every HEDGE_CLUMP.spacing along each hedge.
+  const spots = new Map();
+  const lay = (from, via, to, curved) => {
+    const at = (t) => (curved
+      ? { x: (1 - t) ** 2 * from.x + 2 * (1 - t) * t * via.x + t ** 2 * to.x, y: (1 - t) ** 2 * from.y + 2 * (1 - t) * t * via.y + t ** 2 * to.y }
+      : { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
+    const steps = Math.max(1, Math.round(Math.hypot(to.x - from.x, to.y - from.y) / HEDGE_CLUMP.spacing));
+    for (let i = 0; i <= steps; i++) {
+      const p = at(i / steps);
+      // Neighbouring hexes share the edge's middle: one clump there, not two.
+      const key = `${Math.round(p.x / 3)},${Math.round(p.y / 3)}`;
+      if (!spots.has(key)) spots.set(key, p);
+    }
+  };
   forEachCell(map, (q, r) => {
     if (!terrainArt(terrainIdAt(map, q, r)).hedge) return;
     const links = hedgeLinks(map, q, r);
@@ -469,17 +486,37 @@ function drawHedges(layer, map) {
     if (links.length === 1) links.push((links[0] + 3) % 6);
     const c = axialToPixel(q, r, map.hexSize);
     const mids = links.map((dir) => edgeMiddle(map, q, r, dir));
-    if (mids.length === 2) d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
-    else for (const m of mids) d += `M${f(m)} L${f(c)} `;
+    if (mids.length === 2) {
+      d += `M${f(mids[0])} Q${f(c)} ${f(mids[1])} `;
+      lay(mids[0], c, mids[1], true);
+    } else {
+      for (const m of mids) {
+        d += `M${f(m)} L${f(c)} `;
+        lay(m, null, c, false);
+      }
+    }
   });
   if (!d) return;
-  const stroke = (cls, width, extra = {}) => el('path', {
-    d, fill: 'none', class: cls, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', ...extra,
-  });
-  layer.appendChild(stroke('stroke-ink', HEDGE.edgeWidth));
-  layer.appendChild(stroke('stroke-ink', HEDGE.lumpEdgeWidth, { 'stroke-dasharray': HEDGE.lumpSpacing }));
-  layer.appendChild(stroke('stroke-green', HEDGE.width));
-  layer.appendChild(stroke('stroke-green', HEDGE.lumpWidth, { 'stroke-dasharray': HEDGE.lumpSpacing }));
+  // The hedge's bottom, in ink, so no paper shows between the clumps.
+  layer.appendChild(el('path', {
+    d, fill: 'none', class: 'stroke-ink', 'stroke-width': HEDGE.edgeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+  }));
+  // Each clump's look, size and nudge fixed by where it stands, never rolled;
+  // now and then one grows into a tree. Laid top to bottom so each overlaps
+  // the one behind it, every shadow first.
+  const clumps = [...spots.values()].map((p, i) => {
+    const pick = wobbleAt(p.x, p.y);
+    const tree = Math.abs(Math.round(pick * 1000)) % HEDGE_CLUMP.treeEvery === 0;
+    const [lo, hi] = HEDGE_CLUMP.scale;
+    const k = tree ? HEDGE_CLUMP.treeScale : lo + ((pick + 1) / 2) * (hi - lo);
+    const size = HEDGE_CLUMP.size * k;
+    const x = p.x + wobbleAt(p.y, p.x) * HEDGE_CLUMP.jitter;
+    const y = p.y + wobbleAt(p.x + 1, p.y) * HEDGE_CLUMP.jitter;
+    const variant = 1 + (Math.abs(Math.round(pick * 997)) % HEDGE_CLUMP.variants);
+    return { x: x - size / 2, y: y - size / 2, size, id: `hedge-clump-0${variant}`, order: y + i * 1e-6 };
+  }).sort((a, b) => a.order - b.order);
+  for (const c of clumps) layer.appendChild(el('use', { href: `#${c.id}-shadow`, x: c.x, y: c.y, width: c.size, height: c.size }));
+  for (const c of clumps) layer.appendChild(el('use', { href: `#${c.id}`, x: c.x, y: c.y, width: c.size, height: c.size }));
 }
 
 /**
@@ -2180,11 +2217,18 @@ export function drawCounterKey(svg, examples, numbers) {
     const reach = ENEMY.facingDistance + ENEMY.facingSize * 0.6;
     return { x: size / 2 + (toward.x / len) * reach, y: size / 2 + (toward.y / len) * reach };
   };
+  // WHO points at the right-hand end of the name on the chip (M17, the
+  // operator's: at its middle the line ran over the facing wedge and was lost
+  // on the dark chip). Where the name ends is worked out as drawEnemy sets it.
+  const name = enemy.typeLabel.toUpperCase();
+  const nameRoom = ENEMY.labelBoxRight - ENEMY.labelBoxLeft;
+  const nameSize = Math.min(ENEMY.labelSize, nameRoom / Math.max(1, name.length * COUNTER.nameAspect));
+  const nameEnd = (ENEMY.labelBoxLeft + ENEMY.labelBoxRight) / 2 + (name.length * nameSize * COUNTER.nameAspect) / 2 + 1.5;
   const enemyLabels = [
-    [tip(east), 432, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
+    [tip(east), 428, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
     // WHO above NEXT TURN (M16): the other way round, their pointers crossed.
-    [{ x: 28, y: 45.5 }, 486, ['WHO', 'Sentry, patrol', 'or reserve']],
-    [tip(southEast), 540, ['NEXT TURN', 'It will face', 'here (dashed)']],
+    [{ x: nameEnd, y: 45.5 }, 500, ['WHO', 'Sentry, patrol', 'or reserve']],
+    [tip(southEast), 552, ['NEXT TURN', 'It will face', 'here (dashed)']],
   ];
   for (const [p, y, lines] of enemyLabels) {
     pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
