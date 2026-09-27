@@ -713,6 +713,9 @@ Desktop makes the skeuomorphism work properly, so use the room:
   the mission briefing in caption boxes, the alert dial, the turn counter, and the
   **roster rail: all six portraits, always visible**, greying out as men are lost.
 - Paper cream ground, fibre texture, centre-fold crease and gutter shadow between pages.
+  The fibre is also printed faintly on the flat boxes of the right page and the captions,
+  and over the map (M16, the operator's: they read as too digital); the cards keep their
+  own full-strength paper.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, on
   objectives, on the enemy's vision and in the chrome. Open ground is flat spot colour.
   Clarity beats texture: the board must read at a glance, as the flat-colour prototype
@@ -727,7 +730,7 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
-  no easing in or out. A man with no AP left stays fully printed; his counter's edge goes
+  no easing in or out (140 ms a hex since M16, a quarter slower). A man with no AP left stays fully printed; his counter's edge goes
   grey. Halftone is printed faint, close to the colour beneath it.
 - Speech bubbles for dialogue on the board, tail pointing at the man's counter, shown for
   the man selected or under the mouse (on the board or in the roster). A line is heard
@@ -753,6 +756,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   through its hexes' centres, not a motif stamped per hex. A **railway** runs east–west
   across the board and over the rail bridge, as art only, like the church: no rule, no
   terrain, no cost. It is why the bridge is there.
+- **Ghost Dakotas** (M16, the operator's): until a run is picked, a faint grey Dakota flies
+  each drop line again and again, staggered, so the lines read as flight paths. Silent.
 - **The drop is shown.** When the player jumps, a Dakota flies the chosen run's line, and
   each man's canopy opens where he jumps, drifts downwind to where the rules have already
   put him, lands and collapses into his parachute marker. It is display only: every
@@ -797,7 +802,12 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - **The exchange has wires** (M12, art only): a telegraph pole on each of its charge points
   and a line from each to the building, hanging snapped once the exchange is cut or blown,
   so "cut the line" has a line to cut. A charge point's satchel sits a third of the way
-  toward the target it serves.
+  toward the target it serves, nudged off the wires where `pointNudge` says (M16).
+- **The power goes** (M16, the operator's): cutting the line flickers the lights in the
+  exchange's windows out, dims the village round it in stutters and sparks each wire where
+  it parts. A cut exchange then stands with its windows dark, not burning as a blown one.
+- **The knife is seen** (M16, the operator's): a red splat bursts on the enemy's hex, and a
+  faint stain stays under its body.
 - **The orders are the first thing seen** (M12): while they are up the whole spread is put
   in shade under a coarse halftone, and the card stands off it on a deep soft shadow.
   Picking a run then jumping needs **Space**, or a second click on the same run.
@@ -819,7 +829,8 @@ Desktop makes the skeuomorphism work properly, so use the room:
   `data/version.json` (M15; the game cannot read the git branch once it is published).
 - **The garrison's turn is shown** (M15, from playtesting: players had to read the card
   to know what had happened). When a turn ends, before its card, every enemy walks the
-  steps it took, a red "!" pops over each enemy that spotted a man or found a body or
+  steps it took — at a patrolling walk, slower than our men, that quickens as the alarm
+  rises (M16: 480 ms a hex at Calm to 300 at Alarmed) — a red "!" pops over each enemy that spotted a man or found a body or
   parachute, and a ripple runs out from each noise it heard. Any key or click brings the
   card at once. A noise waiting to be heard says what it was under its ring (BANG,
   STONE, SHOTS, SHOT, FOUND), and its hex's hover says who it will bring.
@@ -828,14 +839,21 @@ Desktop makes the skeuomorphism work properly, so use the room:
   The turn after a suppression, when it sees and fires again but can still be killed, it
   wears a red crosshair, not the suppressed mark.
 - **Our counters** (M15): a dot in fire orange down the left for each charge a man
-  carries, the leader's orders chevron smaller than his own rank flash, and a burning
+  carries (the leader's on his rank flash, in the same place as everyone's, M16), the leader's orders chevron smaller than his own rank flash, and a burning
   charge counted down on a stopwatch — a quarter of its face per turn left, red with a
   burst on its last turn — not a number, which read as a count of charges. Bodies are
-  drawn half as big again.
+  drawn half as big again, and since M16 nearer the middle of their hex.
 - **How to read a counter** (M15): beside the orders, over the right page, a card of its
   own drawn with the board's own counters: one of our men with every mark labelled, the
   leader and the marks a man can wear, and an enemy with its facing, next turn's facing,
-  type and marks.
+  type and marks. Since M16 it lies over the crease, as tall as what it holds and centred
+  beside the orders; WHO sits above NEXT TURN so their pointers do not cross.
+- **How to play, at any time** (M16, the operator's): a **?** button beside KEYBOARD, and
+  the `?` key, open the orders again with the counter key beside them; in play the level is
+  shown but fixed and the drop's own lines are left out. Any key or click puts it away.
+- **Descriptions start with a capital** (M16): the words under a bold label in the key, in
+  the rollovers and the keyboard list, after "Not now:" and "Cost:", after a trait's name,
+  and each item of the hover readout. Text run into a sentence stays as it is.
 - **The orders** open with the difficulty in the black bar at the top, and ORDERS / BEFORE
   THE DROP under it in ink on the paper (M15).
 - **Briefings.** A briefing card opens over the board: the orders before the drop, and at
@@ -911,6 +929,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M16** | Sixth operator playtest review: swimming to any hex on the far bank beside the water and never onto the lock (a bug), a lane to the lock, points for kills and back for bodies found, the counter key reworded and moved, a ? for how to play, ghost Dakotas, faint paper, slower walks, the power going at the exchange, the knife's splat | A man beside the canal can swim to any free far-bank hex sharing its water hex, never the lock or the bridge; a man on the east bank by Canal St-Rémy can swim onto the lane and reach the exfil the next turn; a kill scores 1 and a found body takes it back; ? opens the orders at any time; the balance bot is re-run (unchanged: Normal 94/84/76 with the knife) |
 | **M15** | Fifth operator playtest review: three rules (a cut line raises the alert, anyone packs any parachute, a suppressed enemy does not spot), the garrison's turn shown, a crosshair when aiming, the counter key beside the orders, a stopwatch fuse, charge dots, the orders' head reordered, the margin reworked with the build, the Dakota's drone and rising bells, the painted enemy chips in | Cutting the line raises the alert 1; a man packs another's parachute; a man walking past a suppressed enemy is not spotted; ending a turn shows the enemies walking before the card; the key reads at 12 px beside the orders at 1280x800; the balance bot is re-run (unchanged for the naive bot, naivefight 96/96/96) |
 | **M14** | Fourth operator playtest review, no rules change: Normal toughened, an exfil that would lose the mission asked first, two bugs (a replayed bang, a passed charge not shown), bigger difficulty buttons, BURN BY DAWN in the margin, the squad's back page, lines that go when a man moves, the leader's AP in blue, a fire orange and better flames, Ferme Lebrun drawn, the exchange's lines run to its roof, the bridge's south satchel moved, a clearer sentry | Normal's shots hit from 3 hexes, Easy's from 2; cutting the line or calling the RAF never replays a bang; a hidden man handed a charge shows it; an exfil that would withdraw the mission asks first; the orders still fit at 1280x800; the balance bot is re-run (Normal 94/84/76 with the knife, from 99/90/86) |
 | **M13b** | The approved playtest rules: 110° arcs and a Road patrol, next turn's facing shown, a 60° sweep, shots from far off only pin, a stone turns sentries at once, charges left at the exfil, hiding counts double on Easy, Hard keeping the old arcs and range | A shot from more than 2 hexes pins; a stone turns a sentry before the detection check; a man leaving with a charge leaves it before the exfil; hovering an enemy outlines its next turn; the balance bot is re-run at every level |

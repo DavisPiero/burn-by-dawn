@@ -406,6 +406,12 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   it is cut or blown.
 - Fire (M14): the flames on a destroyed target and the blast's fireball, in the soft fire
   orange added to the palette for them.
+- The cut exchange (M16): the house standing with its windows dark, the lights flickering
+  out and sparks at the snapped wires as the line is cut.
+- The knife's blood (M16): a spot-red splat that bursts on the enemy's hex, and the faint
+  stain left under the body.
+- The ghost Dakotas (M16): the same aircraft, greyed and faint, flying each drop line until a
+  run is picked.
 - The parachutes: the canopy opening and drifting in the air and the spent one on the
   ground are the same green-and-cream cloth (M8e). Not worth a bitmap: they print at about
   20 px, where a painting would just be a blur, and the drawn ones now match each other.
