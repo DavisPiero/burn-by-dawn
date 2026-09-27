@@ -431,7 +431,7 @@ export const SUPPRESSED = {
 };
 
 export const MOTION = {
-  travelMsPerHex: 105, // half as slow again since M13: the eye can follow him
+  travelMsPerHex: 140, // half as slow again since M13, and a quarter slower again in M16: the eye can follow him
   blastMs: 1500,
 };
 
@@ -439,7 +439,11 @@ export const MOTION = {
 // a "!" pops on each that spotted a man or found something, and a ripple runs
 // out from each noise it heard. Display only.
 export const GARRISON_SHOW = {
-  msPerHex: 240, // slower than our men, so the whole garrison can be watched at once
+  // Slower than our men, so the whole garrison can be watched at once, and
+  // at a patrolling walk that quickens as the alarm rises (M16, the
+  // operator's: at a flat 240 it was hard to follow). Keyed by alert state id
+  // (data/rules.json), the state the garrison is in once its turn is done.
+  msPerHex: { calm: 480, suspicious: 420, alert: 360, alarmed: 300 },
   tailMs: 500, // a beat after the last step before the card
   popMs: 300,
   alarmSize: 24,

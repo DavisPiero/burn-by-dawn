@@ -1130,17 +1130,18 @@ function showCounterKey(on) {
  */
 function describeGarrisonShow(after) {
   const steps = Math.max(0, ...after.enemies.map((e) => e.walked?.length ?? 0));
+  const msPerHex = GARRISON_SHOW.msPerHex[rules.alert.states[alertIndex(after.alert.points, rules)].id];
   const alarmed = new Map();
   for (const e of after.report) {
     if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
     if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
       const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
-      alarmed.set(e.enemyId, walked * GARRISON_SHOW.msPerHex);
+      alarmed.set(e.enemyId, walked * msPerHex);
     }
   }
   const heard = after.report.filter((e) => e.kind === 'heard').map((e) => ({ q: e.q, r: e.r }));
   const busy = steps > 0 || alarmed.size > 0 || heard.length > 0;
-  return { since: performance.now(), alarmed, heard, length: busy ? steps * GARRISON_SHOW.msPerHex + GARRISON_SHOW.tailMs : 0 };
+  return { since: performance.now(), alarmed, heard, msPerHex, length: busy ? steps * msPerHex + GARRISON_SHOW.tailMs : 0 };
 }
 
 function endBangHold() {

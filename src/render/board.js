@@ -617,7 +617,9 @@ export function renderPieces(layers, state, view) {
     const mover = el('g', {});
     mover.appendChild(counter);
     layers.counters.appendChild(mover);
-    travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, GARRISON_SHOW.msPerHex);
+    // At the pace of the show that set it off; after it, only a journey
+    // already under way is carried on, at the pace it began at.
+    travel(layers, mover, enemy, now, `enemy:${enemy.id}`, enemy.walked, view.garrisonShow?.msPerHex ?? GARRISON_SHOW.msPerHex.calm);
   }
   // The enemy being aimed at (M15), over its counter.
   if (view.aim) {
@@ -954,12 +956,12 @@ function travel(layers, mover, unit, now, key, trailOf, msPerHex) {
     const from = trail.map((h) => hexKey(h.q, h.r)).lastIndexOf(last.where);
     let steps = trail.slice(from + 1);
     if (steps.length === 0 || hexKey(steps.at(-1).q, steps.at(-1).r) !== where) steps = [{ q: unit.q, r: unit.r }];
-    layers.motion.set(key, { where, since: now, path: [last.at, ...steps] });
+    layers.motion.set(key, { where, since: now, path: [last.at, ...steps], msPerHex });
   }
   layers.motion.get(key).at = { q: unit.q, r: unit.r };
 
   const journey = layers.motion.get(key);
-  const duration = (journey.path.length - 1) * msPerHex;
+  const duration = (journey.path.length - 1) * (journey.msPerHex ?? msPerHex);
   const elapsed = now - journey.since;
   if (!(duration > 0) || elapsed >= duration || typeof mover.animate !== 'function') return;
   const end = axialToPixel(unit.q, unit.r, layers.map.hexSize);
