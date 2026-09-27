@@ -1712,10 +1712,12 @@ function drawContact(layers, contact) {
 // --- detection risk pips ------------------------------------------------------
 // SPEC.md §4 and §6: a detection readout for every hex on the hover path, as
 // pips. One pip per point of the threshold; filled pips are the score. Red
-// means that hex gets him spotted. A hex no enemy can see gets no pips.
+// means that hex gets him spotted. A hex no enemy can see gets no pips. The
+// last hex with pips has a pen note saying what they are (M19).
 
 function drawRisk(layers, plan, risk) {
   const { map } = layers;
+  const noted = risk.findLastIndex((r, i) => r && i < plan.path.length);
   plan.path.forEach((hex, i) => {
     const result = risk[i];
     if (!result) return;
@@ -1761,7 +1763,30 @@ function drawRisk(layers, plan, risk) {
         'stroke-width': 1.2,
       }));
     }
+    if (i === noted) drawRiskNote(layers, at, y, width, result);
   });
+}
+
+/** "2 of 3 dots: 3 and he's spotted" beside the pips, in the player's pen. */
+function drawRiskNote(layers, at, y, width, result) {
+  const lines = result.spotted
+    ? [`${result.threshold} of ${result.threshold} dots:`, "he's spotted"]
+    : [`${Math.max(0, result.score)} of ${result.threshold} dots:`, `${result.threshold} and he's spotted`];
+  const right = at.x + width / 2 + RISK.noteGap + RISK.noteRoom <= boardEdges(layers.map).right;
+  const lead = RISK.noteSize * RISK.noteLeading;
+  const note = text('', {
+    'text-anchor': right ? 'start' : 'end', 'dominant-baseline': 'middle',
+    'font-family': SPEECH.font, 'font-weight': 'bold', 'font-size': RISK.noteSize,
+    fill: result.spotted ? RISK.noteSpotted : RISK.noteInk,
+    stroke: RISK.noteHalo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+  });
+  const x = right ? at.x + width / 2 + RISK.noteGap : at.x - width / 2 - RISK.noteGap;
+  lines.forEach((words, k) => {
+    const span = el('tspan', { x, y: y + (k - 0.5) * lead });
+    span.textContent = words;
+    note.appendChild(span);
+  });
+  layers.risk.appendChild(note);
 }
 
 // --- move range ---------------------------------------------------------------
