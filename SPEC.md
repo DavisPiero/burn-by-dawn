@@ -678,6 +678,10 @@ Results page, styled as the back page of the annual, listing all six by name and
   "turns remaining, 1 per 2 turns", which paid players to rush — playtesters did, and
   either made chaos or finished early). A man's roster rollover says whether he is
   still unseen.
+- Enemies killed by a knife or a gunner's shot (1 each), less 1 for each of their bodies
+  the garrison finds (M16, the operator's; a body is found once, so a kill nobody finds
+  is worth 1 and one they find nothing). A blast's kills leave no body and score nothing,
+  or blowing a target up beside a patrol would pay. The Knife and Kill rollovers say so.
 - Never reached Alarmed and never called the RAF diversion (+3)
 
 The page also says which difficulty the mission was played at.

@@ -34,14 +34,16 @@
   "_explosionFloor": "SPEC.md §6: once anything has exploded, the alert never decays below this state. A cut line is not an explosion.",
   "explosionFloor": "suspicious",
 
-  "_scoring": "SPEC.md §10. `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion.",
+  "_scoring": "SPEC.md §10. `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion. `perKill` for each enemy killed by a knife or a gunner's shot, and `perKillFound` (negative) when its body is found — a body is found once, so a kill nobody finds is worth 1 and one they find nothing (M16, the operator's). A blast's kills leave no body and score nothing: paying for them would pay players to blow targets up beside patrols.",
   "scoring": {
     "primary": 3,
     "secondary": 2,
     "perTrooperOut": 1,
     "perTrooperUnseen": 1,
     "clean": 3,
-    "cleanNeverReached": "alarmed"
+    "cleanNeverReached": "alarmed",
+    "perKill": 1,
+    "perKillFound": -1
   },
 
   "_mission": "SPEC.md §10. Success needs the primary destroyed and at least `minimumOut` troopers out by the end of the last turn.",

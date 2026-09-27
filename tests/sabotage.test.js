@@ -468,4 +468,13 @@ export default [
     const seen = settleMission({ ...s, units: s.units.map((u) => (u.out ? { ...u, everSpotted: true } : u)) }, rules, map);
     equal(seen.outcome.score.total, settled.outcome.score.total - 3 * rules.scoring.perTrooperUnseen, 'seen men pay once');
   }],
+  ['a kill scores, and loses it again when its body is found; a blast kill scores nothing (M16)', async () => {
+    const { rules, state } = await loadAll();
+    const base = { ...state, units: state.units.map((u) => ({ ...u, out: false })), alert: { ...state.alert, peak: 99 } };
+    const baseTotal = scoreOf(base, rules).total;
+    const body = (found) => ({ enemyId: 'e', name: 'the patrol', q: 0, r: 0, found });
+    const two = { ...base, bodies: [body(false), body(true), { unitId: 'x', name: 'X', q: 0, r: 0, found: true }] };
+    equal(scoreOf(two, rules).total - baseTotal, 2 * rules.scoring.perKill + rules.scoring.perKillFound, 'two kills, one found; our own dead count nothing');
+    assert(scoreOf(two, rules).lines.some((l) => l.points < 0), 'the found body is its own line');
+  }],
 ];

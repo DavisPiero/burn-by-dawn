@@ -718,7 +718,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
     const row = score.insertRow();
     // Each scoring line with a bullet before it (M13).
     row.insertCell().textContent = `• ${line.label}`;
-    row.insertCell().textContent = `+${line.points}`;
+    row.insertCell().textContent = line.points < 0 ? `−${-line.points}` : `+${line.points}`;
   }
   const total = score.insertRow();
   total.className = 'total';
