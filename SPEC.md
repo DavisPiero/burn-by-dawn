@@ -771,7 +771,10 @@ Desktop makes the skeuomorphism work properly, so use the room:
   with a rounded, slightly irregular edge, and the hex grid is printed over them. The
   ridge is tonal bands: dark crest, pale fall, a contour at its foot. Neighbouring
   hedgerow hexes are joined into hedges, drawn like roads. All of it is ink only: every
-  rule still reads the hex.
+  rule still reads the hex. Since M17 (after the operator's reference art) a hedge is
+  bushy clumps laid along its line, now and then a tree; a wood is crowded billowing
+  crowns; an orchard is rows of round trees running on across it; and the trees throw
+  solid ink shadows down and to the right, as the counters do.
 - **Place names** are printed on the map, art only, from `data/map.json`: the village in
   spaced capitals, water in italic on the water, the rest in italic. The turn report uses
   them ("the field by Ferme Lebrun"). Map names may be set in a serif italic; they are
@@ -808,6 +811,12 @@ Desktop makes the skeuomorphism work properly, so use the room:
   it parts. A cut exchange then stands with its windows dark, not burning as a blown one.
 - **The knife is seen** (M16, the operator's): a red splat bursts on the enemy's hex, and a
   faint stain stays under its body.
+- **The loading page** (M17, the operator's: over the web the boxes under the map were
+  drawn first, in the middle of the page, then jumped away as the rest came in). The
+  spread stays hidden until it is drawn and its supplied pictures are in (never more than
+  8 s); meanwhile the table shows BURN BY DAWN and a fuse burning down as files arrive.
+  Ready, it asks for a key or a click, and the spread fades up with the orders open. The
+  click is also what lets the browser play the title music (§11 Sound).
 - **The orders are the first thing seen** (M12): while they are up the whole spread is put
   in shade under a coarse halftone, and the card stands off it on a deep soft shadow.
   Picking a run then jumping needs **Space**, or a second click on the same run.
@@ -847,10 +856,16 @@ Desktop makes the skeuomorphism work properly, so use the room:
   own drawn with the board's own counters: one of our men with every mark labelled, the
   leader and the marks a man can wear, and an enemy with its facing, next turn's facing,
   type and marks. Since M16 it lies over the crease, as tall as what it holds and centred
-  beside the orders; WHO sits above NEXT TURN so their pointers do not cross.
+  beside the orders; WHO sits above NEXT TURN so their pointers do not cross. Since M17
+  its middle is on the crease, the orders centred in the room left of it (a 1280-wide
+  window has no room for both, so there it sits as near the crease as it can without
+  covering the orders), and WHO points at the end of the enemy's name, clear of its
+  facing wedge.
 - **How to play, at any time** (M16, the operator's): a **?** button beside KEYBOARD, and
   the `?` key, open the orders again with the counter key beside them; in play the level is
   shown but fixed and the drop's own lines are left out. Any key or click puts it away.
+  Since M17 the button and the key work over a turn card too (they did nothing there,
+  which is most of the time), and putting the orders away lays the card back down.
 - **Descriptions start with a capital** (M16): the words under a bold label in the key, in
   the rollovers and the keyboard list, after "Not now:" and "Cost:", after a trait's name,
   and each item of the hover readout. Text run into a sentence stays as it is.
@@ -893,7 +908,12 @@ the victory bells ring upward to the top bell (M15: falling, they sounded sad). 
 (M11, from playtesting): a turn with a bang plays a real explosion, close and loud, and
 the board shows it — the page flashes, the board jolts, a shock ring runs out to the edge
 of the blast under the starburst, and smoke rolls up — before that turn's card is laid
-over it. It is the payoff of the plan, and it should land. Made in code (`src/render/sound.js`, Web Audio) until files are
+over it. It is the payoff of the plan, and it should land. **Title music** (M17, the
+operator's): over the opening screens — the orders and picking a run — tense 1940s
+war-film music in D minor (tremolo strings, a cello worrying at a semitone, a side drum
+far off, timpani, a horn call every other time round) loops until the stick jumps, then
+fades under the Dakota. A new game brings it back; the orders reopened in play do not.
+`M` stops it. Made in code (`src/render/sound.js`, Web Audio) until files are
 supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
 turns it off for the session (nothing is stored, CLAUDE.md rule 9).
@@ -929,6 +949,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M17** | Seventh operator playtest review, no rules change: the new title card, chips and painted blast in; woods, hedgerows and orchards redrawn after the reference art; the counter key centred on the crease and WHO pointed at the name; ? working over a turn card; title music; a loading page | The board's woods, hedges and orchards match their references and still read at 1280x800; the key's middle is on the crease where the window has room; clicking ? over a turn card opens the orders; music plays over the orders and run choice and fades at the jump; nothing on the spread is seen being laid out |
 | **M16** | Sixth operator playtest review: swimming to any hex on the far bank beside the water and never onto the lock (a bug), a lane to the lock, points for kills and back for bodies found, the counter key reworded and moved, a ? for how to play, ghost Dakotas, faint paper, slower walks, the power going at the exchange, the knife's splat | A man beside the canal can swim to any free far-bank hex sharing its water hex, never the lock or the bridge; a man on the east bank by Canal St-Rémy can swim onto the lane and reach the exfil the next turn; a kill scores 1 and a found body takes it back; ? opens the orders at any time; the balance bot is re-run (unchanged: Normal 94/84/76 with the knife) |
 | **M15** | Fifth operator playtest review: three rules (a cut line raises the alert, anyone packs any parachute, a suppressed enemy does not spot), the garrison's turn shown, a crosshair when aiming, the counter key beside the orders, a stopwatch fuse, charge dots, the orders' head reordered, the margin reworked with the build, the Dakota's drone and rising bells, the painted enemy chips in | Cutting the line raises the alert 1; a man packs another's parachute; a man walking past a suppressed enemy is not spotted; ending a turn shows the enemies walking before the card; the key reads at 12 px beside the orders at 1280x800; the balance bot is re-run (unchanged for the naive bot, naivefight 96/96/96) |
 | **M14** | Fourth operator playtest review, no rules change: Normal toughened, an exfil that would lose the mission asked first, two bugs (a replayed bang, a passed charge not shown), bigger difficulty buttons, BURN BY DAWN in the margin, the squad's back page, lines that go when a man moves, the leader's AP in blue, a fire orange and better flames, Ferme Lebrun drawn, the exchange's lines run to its roof, the bridge's south satchel moved, a clearer sentry | Normal's shots hit from 3 hexes, Easy's from 2; cutting the line or calling the RAF never replays a bang; a hidden man handed a charge shows it; an exfil that would withdraw the mission asks first; the orders still fit at 1280x800; the balance bot is re-run (Normal 94/84/76 with the knife, from 99/90/86) |

@@ -160,12 +160,25 @@ export function applyDocumentTheme(root = document.documentElement) {
 export const PAPER_FILE = { url: 'assets/paper/paper-fibre.png', tile: 1024 };
 
 export function loadSuppliedPaper(root = document.documentElement) {
-  const probe = new Image();
-  probe.onload = () => {
+  return picture(PAPER_FILE.url).then((ok) => {
+    if (!ok) return;
     root.style.setProperty('--paper-fibre', `url("${PAPER_FILE.url}")`);
     root.style.setProperty('--paper-fibre-size', `${PAPER_FILE.tile}px`);
-  };
-  probe.src = PAPER_FILE.url;
+  });
+}
+
+/**
+ * Fetch a supplied picture. Resolves true once it has loaded, false if it is
+ * missing, never rejects: every supplied file is optional, and the page waits
+ * for them (M17) so it opens whole rather than filling in piece by piece.
+ */
+export function picture(url) {
+  return new Promise((resolve) => {
+    const probe = new Image();
+    probe.onload = () => resolve(true);
+    probe.onerror = () => resolve(false);
+    probe.src = url;
+  });
 }
 
 // A supplied aircraft (ART-ASSETS.md §6, ART-PROMPTS.md): a painted PNG at
@@ -176,16 +189,35 @@ export function loadSuppliedPaper(root = document.documentElement) {
 export const AIRCRAFT_FILE = { url: 'assets/aircraft/aircraft-dakota.png', size: 120 };
 
 export function loadSuppliedAircraft() {
-  const probe = new Image();
-  probe.onload = () => {
+  return picture(AIRCRAFT_FILE.url).then((ok) => {
+    if (!ok) return;
     const image = (extra = {}) => svg('image', {
       href: AIRCRAFT_FILE.url, x: 0, y: 0, width: AIRCRAFT_FILE.size, height: AIRCRAFT_FILE.size, ...extra,
     });
     document.getElementById('aircraft-dakota')?.replaceChildren(image());
     // One element, shown for a few seconds: a CSS filter is cheap enough here.
     document.getElementById('aircraft-dakota-shadow')?.replaceChildren(image({ style: 'filter: brightness(0)' }));
-  };
-  probe.src = AIRCRAFT_FILE.url;
+  });
+}
+
+// A supplied blast (M17, the operator's): a painted starburst PNG at
+// BLAST_FILE.url, square on transparency, replaces the drawn `marker-blast`
+// once it loads — the bang on the board and the gunner's muzzle flash alike —
+// with BOOM set over its middle in code.
+// It is shown at 400 x 400 (twice the sprite's 200, for retina); the
+// operator's full-size painting is kept beside it as marker-blast_original.png.
+// A missing file is fine: the drawn one stays.
+export const BLAST_FILE = { url: 'assets/markers/marker-blast.png', size: 200 };
+
+export function loadSuppliedBlast() {
+  return picture(BLAST_FILE.url).then((ok) => {
+    if (!ok) return;
+    // BOOM set over its empty middle, as the drawn one has it (ART-PROMPTS.md priority 10).
+    document.getElementById('marker-blast')?.replaceChildren(
+      svg('image', { href: BLAST_FILE.url, x: 0, y: 0, width: BLAST_FILE.size, height: BLAST_FILE.size }),
+      label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
+    );
+  });
 }
 
 // Supplied enemy chips (ART-ASSETS.md §3, ART-PROMPTS.md): a painted PNG per
@@ -197,16 +229,15 @@ export function loadSuppliedAircraft() {
 export const ENEMY_CHIP_FILES = { dir: 'assets/enemies', box: { x: 11, y: 3, size: 34 } };
 
 export function loadSuppliedEnemyChips(types) {
-  for (const type of types) {
+  return Promise.all(types.map((type) => {
     const id = enemySymbolId(type);
     const url = `${ENEMY_CHIP_FILES.dir}/${id}.png`;
-    const probe = new Image();
-    probe.onload = () => {
+    return picture(url).then((ok) => {
+      if (!ok) return;
       const { x, y, size } = ENEMY_CHIP_FILES.box;
       document.getElementById(id)?.replaceChildren(svg('image', { href: url, x, y, width: size, height: size }));
-    };
-    probe.src = url;
-  }
+    });
+  }));
 }
 
 // A supplied title card (ART-ASSETS.md §7, ART-PROMPTS.md): a painted JPEG at
@@ -217,8 +248,8 @@ export function loadSuppliedEnemyChips(types) {
 export const TITLE_CARD = { url: 'assets/title/title-card.jpg', width: 600, height: 150, lettered: true };
 
 export function loadSuppliedTitleCard() {
-  const probe = new Image();
-  probe.onload = () => {
+  return picture(TITLE_CARD.url).then((ok) => {
+    if (!ok) return;
     const symbol = document.getElementById('title-card');
     if (!symbol) return;
     symbol.setAttribute('overflow', 'hidden');
@@ -226,8 +257,7 @@ export function loadSuppliedTitleCard() {
       href: TITLE_CARD.url, x: 0, y: 0, width: TITLE_CARD.width, height: TITLE_CARD.height, preserveAspectRatio: 'xMidYMid slice',
     }));
     document.documentElement.classList.toggle('title-card-lettered', TITLE_CARD.lettered);
-  };
-  probe.src = TITLE_CARD.url;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -247,8 +277,10 @@ const TERRAIN_ART = {
   hedgerow: { base: 'paper', tint: ['green', 0.12], motif: 'terrain-hedgerow', variants: 3, hedge: true },
   // `area` terrain is printed as one shape across every run of neighbouring
   // hexes of it (see AREA), with its motif scattered over the shape.
-  wood: { base: 'paper', area: { fill: 'green', tone: ['ink', 20], outline: 1.8 }, motif: 'terrain-wood', variants: 3 },
-  orchard: { base: 'paper', area: { tint: ['green', 0.13], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-orchard', variants: 3 },
+  // `shadows`: each motif has a `<motif>-shadow` sprite, printed for the whole
+  // run before any motif, so no tree is darkened by its neighbour's (M17).
+  wood: { base: 'paper', area: { fill: 'green', tone: ['ink', 35], outline: 1.8 }, motif: 'terrain-wood', variants: 3, shadows: true },
+  orchard: { base: 'paper', area: { tint: ['green', 0.08], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-orchard', variants: 3, shadows: true },
   marsh: { base: 'paper', area: { tint: ['blue', 0.16] }, motif: 'terrain-marsh' },
   // High ground in tonal bands: darker at the crest, a paler band round the
   // edge where it falls away, a contour at its foot, and no symbol.
@@ -998,31 +1030,116 @@ function tuft(x, y, s = 1) {
   return line(`M${x - 3 * s} ${y} L${x - 1 * s} ${y - 6 * s} M${x} ${y} L${x} ${y - 8 * s} M${x + 3 * s} ${y} L${x + 1 * s} ${y - 6 * s}`, 1.2);
 }
 
-function bush(x, y, r) {
-  const d = `M${x - r} ${y + r * 0.4} C${x - r * 1.2} ${y - r * 0.6} ${x - r * 0.3} ${y - r * 1.2} ${x + r * 0.1} ${y - r * 0.8} C${x + r * 0.7} ${y - r * 1.3} ${x + r * 1.4} ${y - r * 0.2} ${x + r} ${y + r * 0.4} C${x + r * 0.6} ${y + r} ${x - r * 0.6} ${y + r} ${x - r} ${y + r * 0.4} Z`;
-  return [fill(d, 'green'), line(d, 1.6)];
+// --- trees and hedges (M17, redrawn after the operator's references,
+// assets/reference/Woods_, Hedgerows_ and Orchard_Reference_01.jpeg) --------
+// Crowns are billows of round scallops, inked, darker on the side away from
+// the light, with a few curls of ink inside for the leaves; each throws a
+// solid ink shadow down and to the right, as the counters do, with a fringe
+// of halftone past it. The shadows are sprites of their own so board.js can
+// print every shadow of a wood before any crown, and no crown is darkened by
+// its neighbour's shadow falling over it. The shapes are fixed by where each
+// crown stands, never rolled, so the map is the same every time.
+
+/** A billowing crown's outline: `bumps` round scallops on a circle of radius r, fixed by (x, y). */
+function billowPath(x, y, r, bumps, seed = 0) {
+  const rng = createRng((Math.round(x * 7) * 92821) ^ (Math.round(y * 7) * 68917) ^ (seed * 31337));
+  rng.next();
+  const points = [];
+  for (let i = 0; i < bumps; i++) {
+    const a = ((i + (rng.next() - 0.5) * 0.35) / bumps) * Math.PI * 2;
+    const k = 0.84 + rng.next() * 0.12;
+    points.push({ x: x + Math.cos(a) * r * k, y: y + Math.sin(a) * r * k });
+  }
+  let d = `M${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+  points.forEach((p, i) => {
+    const n = points[(i + 1) % points.length];
+    const chord = Math.hypot(n.x - p.x, n.y - p.y);
+    d += ` A${(chord * 0.58).toFixed(1)} ${(chord * 0.58).toFixed(1)} 0 0 1 ${n.x.toFixed(1)} ${n.y.toFixed(1)}`;
+  });
+  return `${d} Z`;
 }
 
-function treeCrown(x, y, r) {
-  const bumps = 7;
-  let d = '';
-  for (let i = 0; i <= bumps; i++) {
-    const a = (i / bumps) * Math.PI * 2;
-    const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
-    if (i === 0) d = `M${px.toFixed(1)} ${py.toFixed(1)}`;
-    else {
-      const m = a - Math.PI / bumps;
-      d += ` Q${(x + Math.cos(m) * r * 1.35).toFixed(1)} ${(y + Math.sin(m) * r * 1.35).toFixed(1)} ${px.toFixed(1)} ${py.toFixed(1)}`;
-    }
+// How far a crown's shadow falls, as a share of its radius: the solid shadow,
+// and the halftone fringe past it.
+export const CANOPY = { shadow: [0.26, 0.3], fringe: [0.5, 0.56], fringeTone: 50, shade: 35, orchardShade: 20, woodScale: 1.18 };
+
+// A wood is crowded crowns (M17): five a hex, [x, y, radius] in the hex's
+// 80 x 92, big enough (with CANOPY.woodScale) to meet their neighbours' and
+// hide the floor but for gaps of shade.
+const WOOD_CROWNS = [
+  [[24, 30, 14], [54, 26, 13], [40, 52, 15], [20, 66, 12], [60, 64, 13]],
+  [[36, 24, 14], [62, 40, 12], [22, 46, 13], [46, 58, 15], [30, 76, 11]],
+  [[20, 28, 12], [46, 30, 15], [28, 58, 14], [58, 60, 13], [44, 80, 11]],
+];
+
+/**
+ * A crown at (x, y), radius r: dark screen on its shaded side, the lit face
+ * over it, the ink edge and a few curls of leaf. `bumps` sets how billowy.
+ */
+function crown(x, y, r, bumps = 9, seed = 0) {
+  const d = billowPath(x, y, r, bumps, seed);
+  const lit = billowPath(x - r * 0.13, y - r * 0.15, r * 0.8, bumps, seed + 1);
+  const curls = [];
+  // Two or three curls on the shaded side: the leaf masses of the reference.
+  for (const [ax, ay, k] of [[0.28, 0.2, 0.34], [-0.22, 0.38, 0.28], [0.42, -0.2, 0.24]].slice(0, r > 9 ? 3 : 2)) {
+    const cx = x + ax * r, cy = y + ay * r, cr = r * k;
+    curls.push(line(`M${(cx - cr).toFixed(1)} ${cy.toFixed(1)} A${cr.toFixed(1)} ${cr.toFixed(1)} 0 0 0 ${(cx + cr * 0.7).toFixed(1)} ${(cy - cr * 0.7).toFixed(1)}`, Math.max(0.9, r * 0.075)));
   }
+  return [fill(d, 'green'), fill(d, toneClass('ink', CANOPY.shade)), fill(lit, 'green'), line(d, Math.max(1.1, r * 0.11)), ...curls];
+}
+
+/** The shadow a crown throws: solid ink, and a halftone fringe past it. */
+function crownShadow(x, y, r, bumps = 9, seed = 0) {
+  const [sx, sy] = CANOPY.shadow, [fx, fy] = CANOPY.fringe;
   return [
-    fill(d, 'green'), fill(d, toneClass('ink', 50)), line(d, 1.6),
-    line(`M${x - r * 0.4} ${y - r * 0.2} Q${x - r * 0.1} ${y - r * 0.55} ${x + r * 0.3} ${y - r * 0.45}`, 1.4, 'stroke-paper', { opacity: 0.4 }),
+    fill(billowPath(x + r * fx, y + r * fy, r * 0.98, bumps, seed), toneClass('ink', CANOPY.fringeTone)),
+    fill(billowPath(x + r * sx, y + r * sy, r, bumps, seed), 'ink'),
   ];
 }
 
-function appleTree(x, y) {
-  return [circle(x, y, 7, 'green'), ring(x, y, 7, 1.4)];
+/** An orchard tree: a round crown, shaded, on a lattice so the rows run on across the orchard. */
+function appleTree(x, y, r = ORCHARD.radius) {
+  return [
+    circle(x, y, r, 'green'), circle(x, y, r, toneClass('ink', CANOPY.orchardShade)),
+    circle(x - r * 0.1, y - r * 0.12, r * 0.84, 'green'),
+    ring(x, y, r, 1.3),
+  ];
+}
+
+function appleTreeShadow(x, y, r = ORCHARD.radius) {
+  return [circle(x + r * CANOPY.shadow[0] * 1.2, y + r * CANOPY.shadow[1] * 1.2, r, 'ink')];
+}
+
+// The orchard is planted in rows (the reference): trees on a lattice of
+// columns 40 apart and 23 down them, which every hex shares — its centre is
+// on a multiple of 40 across and of 69 down — so the rows run unbroken
+// across the whole orchard. Six trees a hex, small, with the grass and the
+// odd windfall apple between the rows.
+export const ORCHARD = { radius: 9, columns: [20, 60], rows: [23, 46, 69] };
+
+function orchardTrees(draw) {
+  return ORCHARD.columns.flatMap((x) => ORCHARD.rows.flatMap((y) => draw(x, y)));
+}
+
+function apple(x, y) {
+  return [circle(x, y, 1.9, 'red'), ring(x, y, 1.9, 0.7)];
+}
+
+// A hedge is a run of clumps along its line (board.js lays them), each a
+// small billow, with now and then a tree grown up out of it.
+export const HEDGE_CLUMP = { variants: 3, size: 24, spacing: 8.2, scale: [0.9, 1.15], jitter: 1.6, treeEvery: 9, treeScale: 1.5 };
+
+function hedgeClump(v) {
+  return crown(12, 12, 8, 7, v);
+}
+
+function hedgeClumpShadow(v) {
+  return crownShadow(12, 12, 8, 7, v);
+}
+
+/** Clumps along a short line for a hedgerow hex with no hedgerow beside it. */
+function hedgeRow(points) {
+  return [...points.flatMap(([x, y], i) => crownShadow(x, y, 8, 7, i)), ...points.flatMap(([x, y], i) => crown(x, y, 8, 7, i))];
 }
 
 function reeds(x, y) {
@@ -1036,19 +1153,25 @@ const TERRAIN_SPRITES = {
   'terrain-field-02': () => [tuft(36, 50, 0.9), tuft(48, 56, 0.7)].map((t) => { t.setAttribute('opacity', 0.35); return t; }),
   'terrain-field-03': () => [line('M30 38 L50 58 M40 34 L56 50', 1.2, 'stroke-ink', { opacity: 0.18 })],
 
-  'terrain-hedgerow-01': () => [...bush(12, 46, 8), ...bush(30, 44, 9), ...bush(50, 46, 9), ...bush(68, 44, 8)],
-  'terrain-hedgerow-02': () => [...bush(24, 20, 8), ...bush(32, 38, 9), ...bush(42, 56, 9), ...bush(52, 74, 8)],
-  'terrain-hedgerow-03': () => [...bush(16, 62, 8), ...bush(32, 50, 9), ...bush(48, 40, 9), ...bush(64, 28, 8)],
+  'terrain-hedgerow-01': () => hedgeRow([[10, 46], [22, 44], [34, 47], [46, 44], [58, 46], [70, 44]]),
+  'terrain-hedgerow-02': () => hedgeRow([[22, 16], [28, 30], [34, 44], [40, 58], [46, 72], [52, 84]]),
+  'terrain-hedgerow-03': () => hedgeRow([[14, 66], [25, 58], [36, 50], [47, 42], [58, 34], [69, 26]]),
 
-  'terrain-wood-01': () => [...treeCrown(30, 36, 14), ...treeCrown(52, 52, 15)],
-  'terrain-wood-02': () => [...treeCrown(42, 32, 15), ...treeCrown(30, 58, 13), ...treeCrown(56, 60, 12)],
-  'terrain-wood-03': () => [...treeCrown(28, 44, 13), ...treeCrown(50, 34, 13), ...treeCrown(46, 62, 13)],
+  'terrain-wood-01': () => WOOD_CROWNS[0].flatMap(([x, y, r]) => crown(x, y, r * CANOPY.woodScale)),
+  'terrain-wood-02': () => WOOD_CROWNS[1].flatMap(([x, y, r]) => crown(x, y, r * CANOPY.woodScale)),
+  'terrain-wood-03': () => WOOD_CROWNS[2].flatMap(([x, y, r]) => crown(x, y, r * CANOPY.woodScale)),
+  'terrain-wood-01-shadow': () => WOOD_CROWNS[0].flatMap(([x, y, r]) => crownShadow(x, y, r * CANOPY.woodScale)),
+  'terrain-wood-02-shadow': () => WOOD_CROWNS[1].flatMap(([x, y, r]) => crownShadow(x, y, r * CANOPY.woodScale)),
+  'terrain-wood-03-shadow': () => WOOD_CROWNS[2].flatMap(([x, y, r]) => crownShadow(x, y, r * CANOPY.woodScale)),
 
-  // Three trees a hex, not four (M11): enough to read as an orchard, sparse
-  // enough that the counters and markers on it still stand out.
-  'terrain-orchard-01': () => [[28, 36], [52, 36], [40, 60]].flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-02': () => [[40, 30], [26, 54], [54, 54]].flatMap(([x, y]) => appleTree(x, y)),
-  'terrain-orchard-03': () => [[32, 34], [54, 44], [34, 62]].flatMap(([x, y]) => appleTree(x, y)),
+  // Rows of trees (M17), the same lattice in every hex; the variants differ
+  // only in the grass and the apples between the rows.
+  'terrain-orchard-01': () => [tuft(40, 30, 0.7), tuft(40, 60, 0.6), tuft(4, 52, 0.6), ...apple(36, 44), ...orchardTrees(appleTree)],
+  'terrain-orchard-02': () => [tuft(40, 40, 0.7), tuft(78, 64, 0.6), tuft(41, 76, 0.5), ...apple(44, 60), ...orchardTrees(appleTree)],
+  'terrain-orchard-03': () => [tuft(40, 22, 0.6), tuft(40, 52, 0.7), tuft(2, 34, 0.5), ...orchardTrees(appleTree)],
+  'terrain-orchard-01-shadow': () => orchardTrees(appleTreeShadow),
+  'terrain-orchard-02-shadow': () => orchardTrees(appleTreeShadow),
+  'terrain-orchard-03-shadow': () => orchardTrees(appleTreeShadow),
 
   'terrain-marsh': () => [
     line('M18 40 H32 M46 56 H62 M24 68 H38', 1.4, 'stroke-blue', { opacity: 0.8 }),
@@ -1630,6 +1753,11 @@ const SPRITES = {
 
   // --- terrain (ART-ASSETS.md §4) ---
   ...Object.fromEntries(Object.entries(TERRAIN_SPRITES).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
+  // A hedge's clumps (M17): board.js lays them along each hedge, every shadow first.
+  ...Object.fromEntries(Array.from({ length: HEDGE_CLUMP.variants }, (_, i) => [
+    [`hedge-clump-0${i + 1}`, { viewBox: `0 0 ${HEDGE_CLUMP.size} ${HEDGE_CLUMP.size}`, draw: () => hedgeClump(i) }],
+    [`hedge-clump-0${i + 1}-shadow`, { viewBox: `0 0 ${HEDGE_CLUMP.size} ${HEDGE_CLUMP.size}`, draw: () => hedgeClumpShadow(i) }],
+  ]).flat()),
 
   // --- objectives (ART-ASSETS.md §5) ---
   // --- objectives (after the operator's reference art, assets/reference/) ---
@@ -2245,10 +2373,15 @@ export function portraitId(unitId, size) {
 // the manifest names it — portrait-holloway-full.png, portrait-holloway-chip.png
 // — replaces the drawn portrait of that id; nothing else needs editing. Missing
 // files are fine: the drawn one stays.
+// Since M17 the full portrait the game loads is a JPEG, 480 x 600, made from
+// the operator's painted PNG (kept beside it, not loaded): the six PNGs came
+// to 12 MB and filled in one by one for seconds after the page opened over
+// the web. Shown at most 96 x 120, so 480 x 600 is still sharp on a retina
+// screen. To remake one from a new PNG (macOS, nothing to install):
+//   sips -s format jpeg -s formatOptions 82 -z 600 480 portrait-<id>-full.png --out portrait-<id>-full.jpg
 export const PORTRAIT_FILES = {
   dir: 'assets/portraits',
-  ext: 'png',
-  sizes: { full: { width: 240, height: 300 }, chip: { width: 32, height: 32 } },
+  sizes: { full: { width: 240, height: 300, ext: 'jpg' }, chip: { width: 32, height: 32, ext: 'png' } },
 };
 
 const SUPPLIED = new Set();
@@ -2260,13 +2393,14 @@ const SUPPLIED = new Set();
  */
 export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
   const defs = document.getElementById('portrait-fallback-full')?.parentNode;
-  if (!defs) return;
+  if (!defs) return Promise.resolve();
+  const loads = [];
   for (const unitId of unitIds) {
     for (const [size, box] of Object.entries(PORTRAIT_FILES.sizes)) {
       const id = `portrait-${unitId}-${size}`;
-      const url = `${PORTRAIT_FILES.dir}/${id}.${PORTRAIT_FILES.ext}`;
-      const probe = new Image();
-      probe.onload = () => {
+      const url = `${PORTRAIT_FILES.dir}/${id}.${box.ext}`;
+      loads.push(picture(url).then((ok) => {
+        if (!ok) return;
         let symbol = document.getElementById(id);
         if (!symbol) {
           symbol = svg('symbol', { id, viewBox: `0 0 ${box.width} ${box.height}`, overflow: 'hidden' });
@@ -2278,10 +2412,10 @@ export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
         }));
         SUPPLIED.add(id);
         onLoaded(id);
-      };
-      probe.src = url;
+      }));
     }
   }
+  return Promise.all(loads);
 }
 
 /** Sprite id for a fuse token: turns left, 1 to 5; longer fuses show 5. */

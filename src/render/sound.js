@@ -305,6 +305,118 @@ const SYNTHS = {
     siren.start(at + 0.4);
     siren.stop(at + 6.1);
   },
+
+  // The opening screens (M17, the operator's): four bars of a war film's
+  // main title, tense and low, in D minor — strings trembling on the chord,
+  // a cello's spiccato worrying at the root and the semitone above it, a
+  // side drum far off, the timpani, and on every other pass a horn's call.
+  // The chords run D minor, D minor, B flat, A: the A at the end leans back
+  // to the D, so it loops without an end. Played round and round by
+  // startMusic; `v` odd brings in the horn.
+  'music-title': (ctx, destination, at, v) => {
+    const beat = MUSIC.beat;
+    const bar = beat * 4;
+    const out = ctx.createGain();
+    out.gain.value = 0.9;
+    out.connect(destination);
+    const roots = [73.42, 73.42, 58.27, 55];
+    const semitone = (f, n) => f * 2 ** (n / 12);
+    roots.forEach((root, b) => {
+      const t0 = at + b * bar;
+      // Strings: root, fifth and octave, bowed in tremolo, swelling in.
+      const tremolo = ctx.createGain();
+      tremolo.gain.value = 0.75;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 7.5;
+      const depth = ctx.createGain();
+      depth.gain.value = 0.25;
+      lfo.connect(depth).connect(tremolo.gain);
+      const swell = ctx.createGain();
+      swell.gain.setValueAtTime(0.0001, t0);
+      swell.gain.exponentialRampToValueAtTime(0.1, t0 + bar * 0.45);
+      swell.gain.setValueAtTime(0.1, t0 + bar * 0.8);
+      swell.gain.exponentialRampToValueAtTime(0.0001, t0 + bar + 0.25);
+      tremolo.connect(filter(ctx, 'lowpass', 650, 0.7)).connect(swell).connect(out);
+      for (const [ratio, detune] of [[1, -4], [1.5, 5], [2, -7], [3, 6]]) {
+        const bow = ctx.createOscillator();
+        bow.type = 'sawtooth';
+        bow.frequency.value = root * ratio;
+        bow.detune.value = detune;
+        bow.connect(tremolo);
+        bow.start(t0);
+        bow.stop(t0 + bar + 0.3);
+      }
+      lfo.start(t0);
+      lfo.stop(t0 + bar + 0.3);
+      // The cello's eighths: the root, and the semitone above it to grate.
+      const figure = b === 3 ? [0, 0, 1, 0, 0, 1, 0, 1] : [0, 0, 0, 1, 0, 0, 1, 0];
+      figure.forEach((n, i) => {
+        const t = t0 + i * beat / 2;
+        const note = ctx.createOscillator();
+        note.type = 'sawtooth';
+        note.frequency.value = semitone(root * 2, n);
+        note.connect(filter(ctx, 'lowpass', 1000, 2)).connect(envelope(ctx, t, i % 4 === 0 ? 0.16 : 0.11, 0.2, 0.006)).connect(out);
+        note.start(t);
+        note.stop(t + 0.24);
+      });
+      // The side drum, a long way off: a march's rattle on the sixteenths.
+      const drum = b === 3 ? 'x..x x.x. x.xx xxxx' : 'x..x x... x..x x.x.';
+      [...drum.replace(/ /g, '')].forEach((hit, i) => {
+        if (hit !== 'x') return;
+        const t = t0 + i * beat / 4;
+        const loud = i % 8 === 0 ? 0.11 : 0.065;
+        noiseThrough(ctx, out, t, 0.12, [filter(ctx, 'highpass', 700), filter(ctx, 'bandpass', 2300, 0.8), envelope(ctx, t, loud, 0.1, 0.002)], v * 0.13 + b * 0.31 + i * 0.047);
+      });
+      // Timpani on the first and third bars' downbeat, and a roll up to the loop's end.
+      const timp = (t, f, loud, length) => {
+        const drumhead = ctx.createOscillator();
+        drumhead.frequency.setValueAtTime(f * 1.02, t);
+        drumhead.frequency.exponentialRampToValueAtTime(f, t + 0.08);
+        drumhead.connect(envelope(ctx, t, loud, length, 0.004)).connect(out);
+        drumhead.start(t);
+        drumhead.stop(t + length + 0.05);
+        noiseThrough(ctx, out, t, 0.08, [filter(ctx, 'lowpass', 260), envelope(ctx, t, loud * 0.5, 0.07, 0.002)], b * 0.19 + t % 1);
+      };
+      if (b === 0 || b === 2) timp(t0, root, 0.34, 1.5);
+      if (b === 3) for (let i = 0; i < 8; i++) timp(t0 + bar / 2 + i * beat / 4, root, 0.06 + i * 0.03, 0.3);
+    });
+    // The horn's call, every other time round: up to the minor third, down,
+    // and at the end the raised seventh, C sharp, pulling home.
+    if (v % 2 === 1) {
+      const calls = [[293.66, 0, 3], [349.23, 3, 1], [329.63, 4, 2], [293.66, 6, 2], [349.23, 8, 3], [293.66, 11, 1], [329.63, 12, 2], [277.18, 14, 2]];
+      for (const [f, start, beats] of calls) {
+        const t = at + start * beat;
+        const length = beats * beat;
+        const brass = filter(ctx, 'lowpass', 500, 1.5);
+        brass.frequency.setValueAtTime(420, t);
+        brass.frequency.exponentialRampToValueAtTime(1500, t + 0.12);
+        brass.frequency.exponentialRampToValueAtTime(900, t + length);
+        const level = ctx.createGain();
+        level.gain.setValueAtTime(0.0001, t);
+        level.gain.exponentialRampToValueAtTime(0.085, t + 0.09);
+        level.gain.setValueAtTime(0.075, t + length - 0.12);
+        level.gain.exponentialRampToValueAtTime(0.0001, t + length + 0.08);
+        brass.connect(level).connect(out);
+        const vibrato = ctx.createOscillator();
+        vibrato.frequency.value = 5;
+        const wobble = ctx.createGain();
+        wobble.gain.value = f * 0.004;
+        vibrato.connect(wobble);
+        for (const detune of [-6, 6]) {
+          const tone = ctx.createOscillator();
+          tone.type = 'sawtooth';
+          tone.frequency.value = f;
+          tone.detune.value = detune;
+          wobble.connect(tone.frequency);
+          tone.connect(brass);
+          tone.start(t);
+          tone.stop(t + length + 0.1);
+        }
+        vibrato.start(t);
+        vibrato.stop(t + length + 0.1);
+      }
+    }
+  },
 };
 
 export const SOUND_IDS = Object.keys(SYNTHS);
@@ -329,6 +441,8 @@ const CUES = {
   kill: [['silenced-shot', 0.5, 0]],
   victory: [['church-bells', 0.9, 0.35]],
   defeat: [['bell-toll', 0.55, 0.35]],
+  // The opening screens' music (M17): one pass of it; startMusic loops it.
+  titleMusic: [['music-title', 0.5, 0]],
 };
 
 export const CUE_NAMES = Object.keys(CUES);
@@ -394,6 +508,76 @@ export function isMuted() {
 
 export function setMuted(on) {
   muted = on;
+  if (on) stopMusic();
+}
+
+// --- music (M17) --------------------------------------------------------------
+// The title music over the opening screens, played round and round until the
+// game starts. Made in code as the sounds are; a supplied
+// assets/audio/music-title.mp3 is looped instead, as it is, so it should be
+// cut to loop cleanly. `beat` is the made music's tempo (88 a minute) and
+// `phrase` one pass of it, four bars.
+export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16, lookahead: 2.5, fadeIn: 2, fadeOut: 1.6 };
+
+let music = null;
+
+/** Start the title music, if it is not playing already. Silent while muted or before the first key or click. */
+export function startMusic() {
+  if (music || muted || !unlocked) return;
+  const ctx = audio();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, ctx.currentTime);
+  out.gain.exponentialRampToValueAtTime(1, ctx.currentTime + MUSIC.fadeIn);
+  out.connect(ctx.destination);
+  const playing = { out, timer: null, source: null };
+  const [[id, gain]] = CUES[MUSIC.cue];
+  const buffer = supplied.get(id);
+  if (buffer) {
+    const level = ctx.createGain();
+    level.gain.value = gain;
+    level.connect(out);
+    playing.source = ctx.createBufferSource();
+    playing.source.buffer = buffer;
+    playing.source.loop = true;
+    playing.source.connect(level);
+    playing.source.start();
+  } else {
+    // Each pass is laid down a little before it is due, the horn every other time.
+    let next = ctx.currentTime + 0.05;
+    let pass = 0;
+    const lay = () => {
+      while (next < ctx.currentTime + MUSIC.lookahead) {
+        scheduleCue(ctx, out, MUSIC.cue, next, pass % 2);
+        next += MUSIC.phrase;
+        pass++;
+      }
+    };
+    lay();
+    playing.timer = setInterval(lay, 500);
+  }
+  music = playing;
+}
+
+/** Fade the title music out: the game has started, or the sound is off. */
+export function stopMusic() {
+  if (!music) return;
+  const { out, timer, source } = music;
+  music = null;
+  clearInterval(timer);
+  const now = context.currentTime;
+  out.gain.cancelScheduledValues(now);
+  out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), now);
+  out.gain.setTargetAtTime(0, now, MUSIC.fadeOut / 4);
+  setTimeout(() => {
+    source?.stop();
+    out.disconnect();
+  }, MUSIC.fadeOut * 1000 + 300);
+}
+
+export function isMusicPlaying() {
+  return music !== null;
 }
 
 /** Supplied files (ART-ASSETS.md §9) replace the placeholders; the first type found wins. */

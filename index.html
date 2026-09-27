@@ -808,17 +808,28 @@
     }
     /* Beside the orders, over the right page (M15): how to read a counter,
        as an insert card of its own. Any click on it carries on, as on the shade. */
-    /* M16, the operator's: moved left to lie over the crease, and as tall as
-       what it holds, centred beside the orders, so a tall window leaves no
-       gap at its foot. Never taller than the window: the drawing then scales
-       down to fit, as it did when it was stretched. */
+    /* M16, the operator's: over the crease, as tall as what it holds, centred
+       down the page. Never taller than the window: the drawing then scales
+       down to fit. M17, the operator's: its middle on the crease itself (the
+       backdrop's right edge), with the orders centred in the room left of it.
+       A window too narrow for both (1280 wide) keeps the orders whole at the
+       left and sets the key as near the crease as it can without covering
+       them. --key-w, --orders-w and --orders-gap are the three sizes. */
+    #briefing-backdrop.with-key {
+      --key-w: 344px;
+      --orders-w: min(720px, 94%);
+      --orders-gap: 16px;
+      --orders-left: max(12px, calc((100% - var(--key-w) / 2 - var(--orders-gap) - var(--orders-w)) / 2));
+      justify-content: flex-start;
+    }
+    #briefing-backdrop.with-key #briefing { margin-left: var(--orders-left); }
     #counter-key {
       position: absolute;
-      left: calc(100% - 26px);
+      left: max(calc(100% - var(--key-w) / 2), calc(var(--orders-left) + var(--orders-w) + var(--orders-gap)));
       top: 50%;
       transform: translateY(-50%);
       max-height: calc(100% - 34px);
-      width: 358px;
+      width: var(--key-w);
       box-sizing: border-box;
       padding: 0 12px 8px;
       display: flex;
@@ -955,6 +966,81 @@
       margin: 2px 9px 2px 0;
       border: 2px solid var(--ink);
     }
+
+    /* The loading page (M17): the table the annual lies on, with the title
+       and a fuse burning down as the files arrive; when all is in, a line
+       asks for a key or a click, and the spread comes up under it with the
+       orders open. Until then the spread is laid out but not shown, so
+       nothing is seen jumping into place. */
+    #spread { opacity: 0; }
+    html.opened #spread { opacity: 1; transition: opacity 450ms linear; }
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      color: var(--paper);
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 45%, rgba(242, 232, 213, 0.06), transparent),
+        #2d2b26;
+      cursor: default;
+      user-select: none;
+    }
+    html.opened #loading { opacity: 0; pointer-events: none; transition: opacity 450ms linear; }
+    html.loaded #loading { cursor: pointer; }
+    .loading-title {
+      font-family: var(--slab);
+      font-size: 54px;
+      font-weight: bold;
+      letter-spacing: 8px;
+      opacity: 0;
+      text-shadow: 3px 3px 0 var(--red);
+    }
+    /* Set in its own stencil or not at all: no flash of a stand-in face. */
+    html.fonts-ready .loading-title { opacity: 0.92; transition: opacity 400ms linear; }
+    /* The fuse: its unburnt length shortens as the files come in, a spark
+       where it burns. --loaded runs 0 to 1, set by main.js. */
+    .loading-fuse {
+      position: relative;
+      width: 300px;
+      height: 14px;
+    }
+    .loading-fuse::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: calc((1 - var(--loaded, 0)) * 100%);
+      height: 2px;
+      background: repeating-linear-gradient(to right, rgba(242, 232, 213, 0.55) 0 7px, transparent 7px 10px);
+    }
+    .loading-fuse::after {
+      content: "";
+      position: absolute;
+      top: 1px;
+      left: calc((1 - var(--loaded, 0)) * 100% - 6px);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff6d8 0 2px, var(--fire) 3px, rgba(201, 130, 73, 0) 6px);
+      animation: fuse-spark 180ms steps(2) infinite;
+    }
+    html.loaded .loading-fuse::after { display: none; }
+    @keyframes fuse-spark { 50% { transform: scale(1.35); } }
+    .loading-note {
+      font-family: var(--typewriter);
+      font-size: 14px;
+      letter-spacing: 2px;
+      opacity: 0.6;
+    }
+    .loading-note .ready { display: none; font-weight: bold; opacity: 1; }
+    html.loaded .loading-note { opacity: 0.95; }
+    html.loaded .loading-note .wait { display: none; }
+    html.loaded .loading-note .ready { display: inline; }
   </style>
 </head>
 <body>
@@ -1007,6 +1093,11 @@
       <section id="results" hidden></section>
     </aside>
   </main>
+  <div id="loading" role="status">
+    <div class="loading-title">BURN BY DAWN</div>
+    <div class="loading-fuse"></div>
+    <div class="loading-note"><span class="wait">Loading the orders…</span><span class="ready">CLICK OR PRESS ANY KEY FOR YOUR ORDERS</span></div>
+  </div>
   <div id="error" hidden></div>
   <div id="popup" hidden></div>
   <!--
