@@ -27,7 +27,7 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
-import { renderRoster } from './render/roster.js';
+import { describeUnit, renderRoster } from './render/roster.js';
 import {
   BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
@@ -1154,25 +1154,32 @@ function handleAction(id) {
 function handleHexHover(q, r) {
   state = setHover(state, { q, r });
   render();
-  showLeaderHover();
+  showManHover();
 }
 
 function handleHexLeave() {
   state = setHover(state, null);
   render();
-  showLeaderHover();
+  showManHover();
 }
 
-// The leader's rollover follows the mouse onto and off his hex (M12).
-let leaderHoverShown = false;
-function showLeaderHover() {
-  const leader = !state.targeting && !briefing && leaderAt(state.hoverHex);
-  if (leader) {
-    showPopup(layers.hexNodes.get(hexKey(leader.q, leader.r)), describeLeaderHover(leader));
-    leaderHoverShown = true;
-  } else if (leaderHoverShown) {
+// A man's rollover follows the mouse onto and off his hex: his roster card
+// (M22, the operator's: only the leader had one, since M12), and for the
+// leader what his blue rings mean. Not while aiming, which has its own words.
+let manHoverShown = false;
+function showManHover() {
+  const hex = state.hoverHex;
+  const man = !state.targeting && !briefing && !dropShow && state.phase !== 'drop' && hex
+    ? state.units.find((u) => onBoard(u) && u.q === hex.q && u.r === hex.r)
+    : null;
+  if (man) {
+    const card = describeUnit(man, state.units.indexOf(man) + 1, state, map, currentView);
+    const rings = man.leader ? ['\n\n', ...describeLeaderHover(man)] : [];
+    showPopup(layers.hexNodes.get(hexKey(man.q, man.r)), [...card, ...rings]);
+    manHoverShown = true;
+  } else if (manHoverShown) {
     hidePopup();
-    leaderHoverShown = false;
+    manHoverShown = false;
   }
 }
 
