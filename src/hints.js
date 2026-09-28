@@ -53,7 +53,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   // The win is in reach: say how far off it is.
   if (primary?.destroyed && out < rules.mission.minimumOut) {
     const need = rules.mission.minimumOut - out;
-    hints.push(`The ${primary.label.toLowerCase()} is down. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
+    hints.push(`The ${primary.label} is down. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
   }
 
   // Charges burning: the soonest on each objective.
@@ -63,7 +63,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     if (soonest === undefined || charge.fuse < soonest) burning.set(charge.objectiveId, charge.fuse);
   }
   for (const [objectiveId, fuse] of burning) {
-    const label = state.objectives.find((o) => o.id === objectiveId)?.label.toLowerCase() ?? 'objective';
+    const label = state.objectives.find((o) => o.id === objectiveId)?.label ?? 'objective';
     const when = fuse <= 1 ? 'goes off at the end of this turn' : `goes off in ${fuse} turns`;
     hints.push(`The charge on the ${label} ${when}. Get everyone clear of the blast: hover the ${label} to see how far it reaches.`);
   }
@@ -75,7 +75,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   if (cutter) {
     const { objective } = checkCutLine(state, cutter, rules);
     const seen = cutter.inContact ? ' He is in contact, so an enemy will fire on him at the end of the turn, but the line is cut all the same.' : '';
-    hints.push(`${cutter.shortName} is on a charge point of the ${objective.label.toLowerCase()}: he can cut the line now [X]. It takes his whole turn.${seen}`);
+    hints.push(`${cutter.shortName} is on a charge point of the ${objective.label}: he can cut the line now [X]. It takes his whole turn.${seen}`);
   }
 
   const inContact = men.filter((u) => u.inContact);
@@ -89,7 +89,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   }
 
   if (primary && !primary.destroyed && turnsLeft <= 5) {
-    hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and the ${primary.label.toLowerCase()} still stands.`);
+    hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and the ${primary.label} still stands.`);
   }
 
   // A man behind an enemy (M12b): the knife is there to be used.

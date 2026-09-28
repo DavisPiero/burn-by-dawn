@@ -4,14 +4,14 @@
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `tag` is one word for what the run is good for, shown beside its name. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the fields north-west of the bridge, flying in off the canal and away from it. `labelAlong` and `windAlong` (optional, 0 to 1, art only) are how far along the line its name tab and its wind arrow sit, if not at the defaults (0.3 and halfway): the east run's are lower so they clear the north run's (M12).",
+  "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `tag` is one word for what the run is good for, shown beside its name. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the fields north-west of the bridge, flying in off the canal and away from it (two hexes further west since M22, the operator's: on Hard it won 19% to West's 47%). `labelAlong` and `windAlong` (optional, 0 to 1, art only) are how far along the line its name tab and its wind arrow sit, if not at the defaults (0.3 and halfway): the east run's are lower so they clear the north run's (M12).",
   "dropRuns": [
     { "id": "west", "label": "West run", "tag": "quiet", "description": "Wood and ridge line: under cover the whole way and the fewest eyes on you, but the longest walk to the bridge, and trees make for bad landings.",
       "from": [2, 0], "to": [-4, 12], "jumpAt": 0, "spacing": 1, "wind": "E" },
     { "id": "north", "label": "North run", "tag": "steady", "description": "Hedgerow lanes: the middle way. Soft landings in the hedges and the most reliable run, with two patrol routes to cross.",
       "from": [0, 1], "to": [17, 1], "jumpAt": 3, "spacing": 1, "wind": "SE" },
     { "id": "east", "label": "East run", "tag": "fast", "description": "The fields above the bridge: down closest to the primary, the wind carrying you off the canal. Tricky: the bridge post and its patrol are close by.",
-      "from": [9, 0], "to": [2, 7], "jumpAt": 0, "spacing": 1, "wind": "NW", "labelAlong": 0.5, "windAlong": 0.79 }
+      "from": [7, 0], "to": [0, 7], "jumpAt": 0, "spacing": 1, "wind": "NW", "labelAlong": 0.5, "windAlong": 0.79 }
   ],
 
   "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes. The base patrol walks the fields south of the fuel dump, not up onto the ridge: when it did, it met the west run coming down the ridge and made that run the worst of the three for no gain (M9c).",
@@ -43,11 +43,11 @@
 
   "_objectives": "SPEC.md §7. `kind` picks the numbers in data/rules.json objectives (charges needed, blast radius, alert, whether a scout can cut it, what its hexes become when destroyed). `hexes` is the footprint the art covers; `chargeHexes` are where a trooper stands to place a charge. Exactly one objective is `primary`. `pointNudge` (M14, art only) moves a charge point's satchel, keyed \"q,r\", by [x, y] hex radii, clear of the objective's art: the bridge's south one, whose fuse crossed the pier; the exchange's east one, down off its power line, and its south one, left off its wire (M16). Charge hexes were chosen by simulating the patrols at Calm and Suspicious: the bridge's west-bank marsh is watched only when the bridge patrol passes, the exchange's north, east and south sides only when the village patrol comes round, and the dump's two ridge hexes differ (-1,6 is rarely seen, -1,7 often).",
   "objectives": [
-    { "id": "bridge", "label": "Rail bridge", "kind": "bridge", "primary": true,
+    { "id": "bridge", "label": "Rail Bridge", "kind": "bridge", "primary": true,
       "hexes": [[8, 6], [9, 6], [10, 6]], "chargeHexes": [[9, 5], [8, 7]], "pointNudge": { "8,7": [0.35, 0] } },
-    { "id": "exchange", "label": "Telephone exchange", "kind": "exchange", "primary": false,
+    { "id": "exchange", "label": "Telephone Exchange", "kind": "exchange", "primary": false,
       "hexes": [[13, 2], [14, 2], [13, 3], [14, 3]], "chargeHexes": [[13, 1], [15, 2], [14, 4]], "pointNudge": { "15,2": [0, 0.34], "14,4": [-0.33, 0.08] } },
-    { "id": "fuel-dump", "label": "Fuel dump", "kind": "fuelDump", "primary": false,
+    { "id": "fuel-dump", "label": "Fuel Dump", "kind": "fuelDump", "primary": false,
       "hexes": [[-3, 7], [-2, 7], [-3, 8]], "chargeHexes": [[-1, 6], [-1, 7]] }
   ],
 

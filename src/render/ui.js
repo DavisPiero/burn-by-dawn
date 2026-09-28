@@ -142,8 +142,11 @@ export const SPREAD = {
   marginY: 8 + 8,
   leftChromeX: 20 + 4 + 2 + 16, // outer gutter, its gap, left page padding
   leftChromeY: 10 + 10 + 8, // left page padding, gap above the captions
-  captionMin: 92,
-  captionMax: 170,
+  // Taller since M22 (92 to 170 until then), the operator's: a little more
+  // room under the map; up to all the left page has spare below a
+  // width-limited board.
+  captionMin: 140,
+  captionMax: 210,
   panelMin: 380,
   panelMax: 480,
   panelShare: 0.27,
@@ -190,7 +193,7 @@ export function placeName(map, objectives, exfil, hex) {
   const ground = terrain ? terrain.label.toLowerCase() : 'ground';
   let near = null;
   let best = Infinity;
-  const landmarks = [...objectives.map((o) => ({ label: o.label.toLowerCase(), hexes: o.hexes }))];
+  const landmarks = [...objectives.map((o) => ({ label: o.label, hexes: o.hexes }))];
   if (exfil.length) landmarks.push({ label: 'exfil', hexes: exfil });
   // Named places are proper names: no "the", and their own case. An
   // objective or the exfil wins a tie, being listed first.
@@ -431,7 +434,8 @@ function briefChoice(choice) {
 export function renderReport(element, state, place, onLocate, earlier = []) {
   element.replaceChildren();
   if (state.phase === 'drop') {
-    element.appendChild(html('li', null, 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
+    // A plain line, not a log line with a mark (M22: M21b's mark column took it, a word to a line).
+    element.appendChild(html('li', 'rep-note', 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
     return;
   }
   // A log (M21b, the operator's: it read as a wall of text): a bar for each
@@ -458,6 +462,27 @@ export function renderReport(element, state, place, onLocate, earlier = []) {
       element.appendChild(item);
     }
   });
+}
+
+/**
+ * The report's scroll buttons (M22, the operator's: the wheel alone was
+ * fiddly in so small a box): ▲ and ▼ step most of a box at a time, each
+ * greyed at its end, both hidden while everything fits. Returns the function
+ * that brings them up to date, for after each redraw.
+ */
+export function attachReportScroll(list, strip, up, down) {
+  const sync = () => {
+    const max = list.scrollHeight - list.clientHeight;
+    strip.hidden = max <= 1;
+    up.disabled = list.scrollTop <= 1;
+    down.disabled = list.scrollTop >= max - 1;
+  };
+  const step = (sign) => list.scrollBy({ top: sign * Math.max(40, list.clientHeight * 0.7), behavior: 'smooth' });
+  up.addEventListener('click', () => step(-1));
+  down.addEventListener('click', () => step(1));
+  list.addEventListener('scroll', sync);
+  window.addEventListener('resize', sync);
+  return sync;
 }
 
 // The board's own mark for a line of the report (M21b), from the sprites in
@@ -498,7 +523,7 @@ export function describeEvent(event, place) {
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
     case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for the way to the exfil.`;
-    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements after the ${event.label.toLowerCase()}: on next turn.`;
+    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements after the ${event.label}: on next turn.`;
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
@@ -507,15 +532,15 @@ export function describeEvent(event, place) {
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
     case 'landed': return describeLanding(event, at());
-    case 'explosion': return event.destroyed ? `BOOM — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
-    case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
-    case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label.toLowerCase()} — wounded.`;
-    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} and dies.`;
+    case 'explosion': return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;
+    case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label} — killed.`;
+    case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label} — wounded.`;
+    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label} and dies.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
     case 'noReserve': return event.deployed
-      ? `With the ${event.label.toLowerCase()} gone, the garrison can call up nobody more — but the reserve is already out.`
-      : `With the ${event.label.toLowerCase()} gone, the garrison cannot call up its reserve squad.`;
-    case 'withdrawn': return `The ${event.enemyLabel.toLowerCase()} leaves the field to deal with the ${event.label.toLowerCase()}.`;
+      ? `With the ${event.label} gone, the garrison can call up nobody more — but the reserve is already out.`
+      : `With the ${event.label} gone, the garrison cannot call up its reserve squad.`;
+    case 'withdrawn': return `The ${event.enemyLabel.toLowerCase()} leaves the field to deal with the ${event.label}.`;
     default: return event.kind;
   }
 }
@@ -617,7 +642,9 @@ function listOf(labels) {
  * "Bridge patrol: 3 − cover 2 − conceal 0 + close 1 = 2 of 3".
  */
 export function describeDetection(d, { dots = false } = {}) {
-  let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover} − conceal ${d.concealment}`;
+  // A term that is nought for most men is left out (M22: the readout ran off its box).
+  let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover}`;
+  if (d.concealment) sum += ` − conceal ${d.concealment}`;
   if (d.hidden) sum += ` − hidden ${d.hidden}`;
   sum += ` + close ${d.proximity}`;
   if (d.alert) sum += ` + alert ${d.alert}`;
@@ -1024,7 +1051,7 @@ export function renderReadout(element, state, map, view) {
     const raised = view.alarmed?.get(e.id);
     // In rows under its name (M21b), as a hex's readout is.
     const stamp = e.suppressed ? { word: 'SUPPRESSED', tone: 'safe' } : raised ? { word: 'RAISED THE ALARM', tone: 'danger' } : null;
-    renderRows(element, `${e.label.toUpperCase()} · ${e.typeLabel.toUpperCase()}`, stamp, [
+    renderRows(element, `${e.label.toUpperCase()} · ${e.typeLabel.toUpperCase()}`, stamp, null, [
       { label: 'DOING', text: `${doing}.${killable}` },
       raised && { label: 'ALARM', text: `raised it last turn: ${raised.map((r) => r.words).join(', and ')}.`, tone: 'danger' },
       n && { label: 'NEXT', text: `as things stand, ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).` },
@@ -1049,11 +1076,9 @@ export function renderReadout(element, state, map, view) {
     return;
   }
 
-  const parts = [
-    describeCost(terrain),
-    `cover ${terrain.cover}`,
-    terrain.blocksLOS ? 'blocks line of sight' : 'no line of sight block',
-  ];
+  // Only what the ground does, not what it does not (M22: room).
+  const parts = [describeCost(terrain), `cover ${terrain.cover}`];
+  if (terrain.blocksLOS) parts.push('blocks line of sight');
   if (terrain.spotBonus) parts.push(`spot ${terrain.spotBonus > 0 ? '+' : ''}${terrain.spotBonus}`);
   if (terrain.landing === 'bad') parts.push('bad landing');
   if (terrain.landing === 'wounds') parts.push('landing wounds');
@@ -1065,34 +1090,68 @@ export function renderReadout(element, state, map, view) {
   // one run-on line split by bars was a wall of text nobody read).
   const verdict = riskVerdict(view?.plan, view?.risk);
   const blast = view?.blastLabel;
-  renderRows(element, terrain.label.toUpperCase(), blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : verdict, [
+  // A target, the exfil or a parachute is named in the headline over the ground (M22).
+  const head = view?.site?.title ?? terrain.label;
+  // The ground's name goes beside it when the headline names what stands on it.
+  if (view?.site?.title) parts.unshift(terrain.label.toLowerCase());
+  // The ground in the headline's spare room, not a row of its own (M22: room).
+  renderRows(element, head.toUpperCase(), blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : verdict, parts.join(' · '), [
     { label: 'LANDING', text: view?.dropLabel },
     { label: 'MOVE', text: view?.moveLabel },
     blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
     { label: 'RISK', text: view?.riskLabel, tone: verdict?.tone === 'safe' ? null : verdict?.tone },
     { label: 'HIDE', text: view?.hideLabel },
-    { label: 'HERE', text: view?.siteLabel },
+    ...(view?.site?.rows ?? []),
     { label: 'HEARD', text: view?.noiseLabel?.replace(/^HEARD — /, '') },
-    { label: 'GROUND', text: parts.join(', ') },
     { label: 'ORDERS', text: view?.commandLabel },
   ]);
 }
 
 /**
  * The readout as a headline with a stamp, then one row per thing to say,
- * each under a short label (M21b). `stamp` is { word, tone } or null; rows
- * with no text are left out.
+ * each under a short label (M21b). `stamp` is { word, tone } or null; `note`
+ * is set small at the headline's right (M22: the ground); rows with no text
+ * are left out.
  */
-function renderRows(element, head, stamp, rows) {
+function renderRows(element, head, stamp, note, rows) {
   element.classList.add('rows');
-  element.replaceChildren(
-    html('div', 'ro-head', [html('span', 'ro-title', head), stamp ? html('span', `ro-stamp ${stamp.tone}`, stamp.word) : '']),
-    ...rows.filter((row) => row && row.text).map((row) => html('div', `ro-row${row.tone ? ` ${row.tone}` : ''}`, [
-      html('span', 'ro-label', row.label),
-      html('span', 'ro-text', boldKeys(capitalise(row.text))),
-    ])),
-  );
+  const kept = rows.filter((row) => row && row.text);
+  // Set at the largest size that fits the box (M22, the operator's: rows
+  // ran off the bottom where nothing could scroll to them), down to the 12px
+  // floor for type (SPEC.md §11); at the floor whatever still does not fit
+  // is cut from the end, which is the least important.
+  for (const size of READOUT_BOX.sizes) {
+    element.dataset.fit = String(size);
+    element.replaceChildren(
+      html('div', 'ro-head', [html('span', 'ro-title', head), stamp ? html('span', `ro-stamp ${stamp.tone}`, stamp.word) : '', note ? html('span', 'ro-note', capitalise(note)) : '']),
+      html('div', 'ro-body', readoutRows(kept, element.clientWidth, size)),
+    );
+    if (element.scrollHeight <= element.clientHeight) break;
+  }
 }
+
+/**
+ * The rows in two columns (M22, the operator's: the box ran out of room with
+ * half of it empty): a row short enough for one line of half the box sits
+ * beside the next short one; a longer row takes the width. The grid packs
+ * shorts into the gaps, so the order still runs most important first.
+ */
+function readoutRows(rows, width, size) {
+  const halfChars = Math.floor(((width - READOUT_BOX.padding - READOUT_BOX.gap) / 2 - READOUT_BOX.label) / (size * READOUT_BOX.charWidth));
+  return rows.map((row) => {
+    const text = capitalise(row.text);
+    const half = text.length <= halfChars;
+    return html('div', `ro-row${half ? ' half' : ''}${row.tone ? ` ${row.tone}` : ''}`, [
+      html('span', 'ro-label', row.label),
+      html('span', 'ro-text', boldKeys(text)),
+    ]);
+  });
+}
+
+// The readout's measures in px, as index.html sets them: its padding, the gap
+// between its two columns, a label's column with its gap, and a character of
+// the typewriter face (its advance, in ems); and the sizes tried, largest first.
+const READOUT_BOX = { padding: 18 + 4, gap: 16, label: 58 + 6, charWidth: 0.6, sizes: [14, 13, 12] };
 
 /** How a hovered move goes, in one word for the stamp: the worst hex on it. */
 function riskVerdict(plan, risk) {

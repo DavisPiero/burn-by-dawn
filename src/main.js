@@ -27,12 +27,12 @@ import {
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
-import { renderRoster } from './render/roster.js';
+import { describeUnit, renderRoster } from './render/roster.js';
 import {
   BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
-  attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
+  attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled,
@@ -48,6 +48,7 @@ const rosterList = document.getElementById('roster');
 const alertDial = document.getElementById('alert-dial');
 const alertCaption = document.getElementById('alert-caption');
 const reportList = document.getElementById('report');
+const reportScroll = document.getElementById('report-scroll');
 const actionBar = document.getElementById('actions');
 const diversionButton = document.getElementById('diversion');
 const missionList = document.getElementById('mission');
@@ -121,6 +122,8 @@ let menPicked = false;
 let musicOff = false;
 // The turns before this one, newest first, for the report's log (M21b): display only.
 let earlierReports = [];
+// Brings the report's ▲ ▼ up to date after a redraw (M22).
+let syncReportScroll = null;
 // Shots fired (M13): the flash and tracer of a suppress or a kill, display
 // only, cleared once it has played.
 let shotShow = null;
@@ -277,7 +280,8 @@ function deriveView() {
     hoverObjective: null,
     previewBlastArea: null,
     previewBlastKillArea: null,
-    siteLabel: null,
+    // What stands on the hovered hex (M22): { title, rows: [{ label, text }] }.
+    site: null,
     blastLabel: null,
     noiseLabel: null,
     mission: describeMissionState(),
@@ -313,15 +317,10 @@ function deriveView() {
   const objective = hex && !hoverEnemy ? objectiveAt(state.objectives, hex) : null;
   if (objective) {
     view.hoverObjective = objective;
-    view.siteLabel = describeObjective(objective);
-    if (!objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective) {
-      const wanted = chargesWanted(objective);
-      const points = objective.chargeHexes.length;
-      view.siteLabel = wanted > 0
-        ? `CHARGE POINT for the ${objective.label}, one of ${points} — a man carrying a charge stands here and places it [C]. `
-          + `It needs ${wanted} more charge${wanted === 1 ? '' : 's'}${wanted === 1 && points > 1 ? ': any one of its points will do' : ''}. ${view.siteLabel}`
-        : `The ${objective.label} has all the charges it needs. ${view.siteLabel}`;
-    }
+    // In short labelled rows under the target's own name (M22: one run-on
+    // line ran off the bottom of the box).
+    const onPoint = !objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective;
+    view.site = { title: objective.label, rows: describeObjective(objective, onPoint, Boolean(state.selectedUnitId)) };
     if (!objective.destroyed) {
       const { blastRadius, killRadius } = kindOf(objective, rules);
       view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius: blastRadius })));
@@ -329,11 +328,17 @@ function deriveView() {
     }
   } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
     const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
-    view.siteLabel = `${chute.name}'s PARACHUTE — found if an enemy comes onto or beside this hex: alert +${rules.alert.parachuteFound}. `
-      + `Any man standing here can pack it up: [U] ${rules.actions.packParachute.apCost} AP.`;
+    view.site = { title: `${chute.name}'s parachute`, rows: [
+      { label: 'HERE', text: `found by an enemy on or next to it: alert +${rules.alert.parachuteFound}` },
+      { label: 'PACK', text: `any man standing here can pack it: [U] ${rules.actions.packParachute.apCost} AP` },
+    ] };
   } else if (hex && isExfil(baseMap, hex)) {
-    view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn. `
-      + 'A man carrying a charge leaves it on the hex he steps off from, for another man to pick up [P].';
+    view.site = { title: 'Exfil', rows: [
+      { label: 'HERE', text: 'a man who ends his move here is out' },
+      { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with the ${primaryLabel()} down, by dawn` },
+      // Only for a man with a charge to leave, or nobody picked (M22: room).
+      ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it where he stepped off, for another to pick up [P]' }]),
+    ] };
   }
 
   // A noise waiting to be heard (M15: the ring on a blown fuel dump was taken
@@ -358,7 +363,8 @@ function deriveView() {
     view.commandArea = hexes;
     const { closeRadius } = rules.command;
     if (closeRadius != null) view.commandCloseArea = new Map([...hexes].filter(([, h]) => hexDistance(leader, h) <= closeRadius));
-    if (unit?.leader) view.commandLabel = `dashed blue outline: ${leaderOrdersWords(unit)}`;
+    // In the readout off the board, or over his own hex (M22: on every hex it crowded the box).
+    if (unit?.leader && (!hex || (hex.q === unit.q && hex.r === unit.r))) view.commandLabel = `blue dashes: ${leaderOrdersWords(unit)}`;
   }
   if (!unit) return view;
 
@@ -395,7 +401,9 @@ function deriveView() {
     }
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
-    if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
+    // Not where nobody can see him: hiding would add nothing (M22: room).
+    const seenHere = plan.steps === 0 && detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
+    if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
   }
   return view;
 }
@@ -491,7 +499,7 @@ function alertSources() {
 }
 
 function primaryLabel() {
-  return state.objectives.find((o) => o.primary).label.toLowerCase();
+  return state.objectives.find((o) => o.primary).label;
 }
 
 /**
@@ -535,31 +543,40 @@ function chargesOnPoints(o) {
   return `${charges}, on any ${needed === 1 ? 'one' : needed} of its ${points} charge points`;
 }
 
-/** SPEC.md §4: hovering an objective shows what it needs. */
-function describeObjective(o) {
+/**
+ * SPEC.md §4: hovering an objective shows what it needs, as the readout's
+ * rows (M22). `onPoint`: the mouse is on one of its charge points. `brief`:
+ * a man is selected, so the move and its risk come first and only what bears
+ * on acting here is added; the rest is the mission panel's rollover.
+ */
+function describeObjective(o, onPoint, brief = false) {
   const kind = kindOf(o, rules);
-  const role = o.primary ? 'PRIMARY, needed to win' : `optional, +${rules.scoring.secondary} score`;
-  if (o.destroyed) return `${o.label} (${role}) — DESTROYED${o.cut ? ', line cut' : ''}.`;
-  const set = state.charges.filter((c) => c.objectiveId === o.id);
-  const burning = set.length ? `, ${set.length} set (fuse ${set.map((c) => c.fuse).join(', ')})` : '';
-  const parts = [
-    `needs ${chargesOnPoints(o)}`,
-    `${o.detonated} gone off${burning}`,
-    `fuse ${rules.charges.fuseTurns} turns`,
-    blastWords(kind),
-    `alert +${kind.alert}`,
-  ];
-  if (kind.cutLine) parts.push(`or a scout can cut the line [X], seen or not: a whole turn, so he must start his turn on a charge point; no noise, alert +${rules.alert.lineCut}`);
+  const worth = o.primary ? 'PRIMARY: needed to win' : `optional, +${rules.scoring.secondary}`;
   const payoff = payoffWords(kind);
-  if (payoff) parts.push(`destroyed, it ${payoff}`);
-  return `${o.label} (${role}) — ${parts.join(', ')}.`;
+  if (o.destroyed) return [{ label: 'DONE', text: `DESTROYED${o.cut ? ', line cut' : ''}` }, { label: 'WORTH', text: worth }];
+  const wanted = chargesWanted(o);
+  const set = state.charges.filter((c) => c.objectiveId === o.id);
+  const burning = set.length ? `; ${set.length} set, fuse ${set.map((c) => c.fuse).join(', ')}` : '';
+  const rows = [];
+  if (onPoint) {
+    // The cut, when the rows below leave it out (M22: said twice otherwise).
+    const scout = rules.roles[selectedUnit(state)?.role]?.cutLine;
+    const cut = kind.cutLine && brief && scout ? '; or a scout here at the start of his turn cuts the line [X]' : '';
+    rows.push({ label: 'HERE', text: wanted > 0 ? `charge point: place a charge here [C]${cut}` : 'charge point: it has all the charges it needs' });
+  }
+  rows.push({ label: 'NEEDS', text: `${o.detonated || set.length ? `${wanted} more: ` : ''}${chargesOnPoints(o)}${o.detonated ? `; ${o.detonated} gone off` : ''}${burning}` });
+  if (brief) return rows;
+  rows.push({ label: 'BANG', text: `fuse ${rules.charges.fuseTurns} turns; ${blastWords(kind)}; alert +${kind.alert}` });
+  if (kind.cutLine) rows.push({ label: 'CUT', text: `or a scout cuts the line [X]: a whole turn from a charge point, seen or not; quiet, alert +${rules.alert.lineCut}` });
+  rows.push({ label: 'WORTH', text: `${worth}${payoff ? `; destroyed, it ${payoff}` : ''}` });
+  return rows;
 }
 
 /** How far a kind's blast reaches and what it does (SPEC.md §7; M20, a ring that only wounds our men). */
 function blastWords(kind) {
   const hexes = (n) => `${n} hex${n === 1 ? '' : 'es'}`;
-  if (kind.killRadius >= kind.blastRadius) return `blast ${hexes(kind.blastRadius)} from each charge, killing anyone in it, ours or theirs`;
-  return `blast ${hexes(kind.blastRadius)} from each charge (shaded): it kills enemies in all of it, and our men within ${hexes(kind.killRadius)} (darker); further out it wounds them`;
+  if (kind.killRadius >= kind.blastRadius) return `${hexes(kind.blastRadius)} round each charge: kills anyone in it, ours or theirs`;
+  return `${hexes(kind.blastRadius)} round each charge (shaded): kills enemies in all of it and our men within ${hexes(kind.killRadius)} (darker), wounds ours further out`;
 }
 
 /** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */
@@ -706,7 +723,7 @@ function hideEffect(unit) {
 // what it gives over a charge, from rules.json (the kinds a scout can cut).
 function cutLineHelp() {
   const kind = Object.values(rules.objectives).find((k) => k.cutLine);
-  const target = kind ? `the ${kind.label.toLowerCase()}` : 'the target';
+  const target = kind ? `the ${kind.label}` : 'the target';
   const payoff = kind ? payoffWords(kind) : null;
   return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, quietly. `
     + `No noise, so nobody comes to look, though the garrison notices its telephones go dead (alert +${rules.alert.lineCut}); no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
@@ -865,6 +882,7 @@ function render() {
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex, earlierReports);
+  syncReportScroll?.();
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
@@ -1136,25 +1154,32 @@ function handleAction(id) {
 function handleHexHover(q, r) {
   state = setHover(state, { q, r });
   render();
-  showLeaderHover();
+  showManHover();
 }
 
 function handleHexLeave() {
   state = setHover(state, null);
   render();
-  showLeaderHover();
+  showManHover();
 }
 
-// The leader's rollover follows the mouse onto and off his hex (M12).
-let leaderHoverShown = false;
-function showLeaderHover() {
-  const leader = !state.targeting && !briefing && leaderAt(state.hoverHex);
-  if (leader) {
-    showPopup(layers.hexNodes.get(hexKey(leader.q, leader.r)), describeLeaderHover(leader));
-    leaderHoverShown = true;
-  } else if (leaderHoverShown) {
+// A man's rollover follows the mouse onto and off his hex: his roster card
+// (M22, the operator's: only the leader had one, since M12), and for the
+// leader what his blue rings mean. Not while aiming, which has its own words.
+let manHoverShown = false;
+function showManHover() {
+  const hex = state.hoverHex;
+  const man = !state.targeting && !briefing && !dropShow && state.phase !== 'drop' && hex
+    ? state.units.find((u) => onBoard(u) && u.q === hex.q && u.r === hex.r)
+    : null;
+  if (man) {
+    const card = describeUnit(man, state.units.indexOf(man) + 1, state, map, currentView);
+    const rings = man.leader ? ['\n\n', ...describeLeaderHover(man)] : [];
+    showPopup(layers.hexNodes.get(hexKey(man.q, man.r)), [...card, ...rings]);
+    manHoverShown = true;
+  } else if (manHoverShown) {
     hidePopup();
-    leaderHoverShown = false;
+    manHoverShown = false;
   }
 }
 
@@ -1429,7 +1454,7 @@ function describeBriefing(which, view) {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
       const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
-      return `${o.label.toLowerCase()} ${needed}, ${where}`;
+      return `${o.label} ${needed}, ${where}`;
     }).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
@@ -1445,7 +1470,9 @@ function describeBriefing(which, view) {
         // The opening on a line of its own (M13), then the job.
         [
           'Tonight six men are to drop behind enemy lines.',
-          `Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL. Dawn comes at the end of turn ${rules.turnLimit}.`,
+          // Dawn on a line of its own (M22, the operator's).
+          `Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
+          `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
         ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (+${rules.scoring.secondary}pts${bonus.length === 1 ? '' : ' ea'}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
       ],
@@ -1460,7 +1487,7 @@ function describeBriefing(which, view) {
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
-            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, and quiet.` : ''),
+            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
           'Hover anything for detail; KEYBOARD lists every key, and ? brings this card back.',
         ],
       }],
@@ -1655,9 +1682,12 @@ function handleDropKey(event) {
   render();
 }
 
-/** ? on any layout, or shift and the slash key where ? is not a key of its own. */
+/**
+ * ? on any layout, or the slash key with or without shift (M22, the
+ * operator's: / is the same key, unshifted). Not in the KEYBOARD list.
+ */
 function isHelpKey(event) {
-  return event.key === '?' || (event.code === 'Slash' && event.shiftKey);
+  return event.key === '?' || event.key === '/' || event.code === 'Slash';
 }
 
 // SPEC.md §4: 1–6 select, Tab cycle, Space end turn, Esc cancel, H hold,
@@ -1910,6 +1940,7 @@ try {
     state = deselect(state);
     render();
   });
+  syncReportScroll = attachReportScroll(reportList, reportScroll, document.getElementById('report-up'), document.getElementById('report-down'));
   endTurnButton.addEventListener('click', handleEndTurn);
   undoButton.addEventListener('click', undoLast);
   attachPopup(undoButton, () => describeUndo(rules.undo.steps));
@@ -1917,6 +1948,9 @@ try {
   window.addEventListener('keydown', handleKey);
   // Browsers keep sound off until the page has been pressed or clicked.
   window.addEventListener('pointerdown', unlockSound);
+  // `?sound=off` starts the game muted (M22, the operator's: a test run in
+  // the browser played the music over their work). M still turns it on.
+  if (new URLSearchParams(window.location.search).get('sound') === 'off') setMuted(true);
   soundToggle.addEventListener('click', () => {
     soundToggle.blur();
     toggleSound();

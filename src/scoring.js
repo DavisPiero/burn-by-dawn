@@ -37,7 +37,7 @@ export function missionCheck(state, rules, { dawn = false } = {}) {
   }
   if (primaryShortfall(state, rules) > 0) {
     const primary = state.objectives.find((o) => o.primary);
-    return { kind: 'withdrawn', reason: `not enough charges left for the ${primary.label.toLowerCase()}`, withdraw: true };
+    return { kind: 'withdrawn', reason: `not enough charges left for the ${primary.label}`, withdraw: true };
   }
   return null;
 }
@@ -49,7 +49,7 @@ function succeeded(state, rules) {
 
 function failedAtDawn(state, rules) {
   const primary = state.objectives.find((o) => o.primary);
-  if (!primary.destroyed) return `dawn, and the ${primary.label.toLowerCase()} still stands`;
+  if (!primary.destroyed) return `dawn, and the ${primary.label} still stands`;
   return `dawn, and fewer than ${rules.mission.minimumOut} men got out`;
 }
 

@@ -106,8 +106,12 @@ function conditions(unit) {
   return parts;
 }
 
-/** The rollover: his portrait, who he is, where he is, what he carries, and what his traits do. */
-function describeUnit(unit, number, state, map, view) {
+/**
+ * The rollover: his portrait, who he is, where he is, what he carries, and
+ * what his traits do. His counter on the board shows it too (M22, the
+ * operator's: an enemy said plenty when hovered, our men nothing).
+ */
+export function describeUnit(unit, number, state, map, view) {
   const lines = [`${number}. ${unit.roleLabel}${unit.leader ? ' · leading the stick' : ''}`];
   if (unit.dead) lines.push('Killed.');
   else if (unit.out) lines.push('Out at the exfil: safe.');

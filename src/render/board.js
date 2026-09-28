@@ -870,21 +870,24 @@ function drawSelectCue(layers, state, now) {
   const { map } = layers;
   const men = state.units.filter((u) => u.landed && !u.dead && !u.out && u.ap > 0);
   if (!men.length) return;
-  const g = throbbing(layers, 'select', now);
   const points = men.map((u) => axialToPixel(u.q, u.r, map.hexSize));
+  // Each ring throbs about its own man (M22, the operator's: one group for
+  // all of them swelled from the group's middle, so the rings slid off the
+  // counters), at half strength.
   for (const p of points) {
+    const g = throbbing(layers, 'select', now);
+    g.setAttribute('opacity', CUE.ringOpacity);
     g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.ringRadius + 3, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.ringWidth + 4, opacity: 0.8 }));
     g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.ringRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.ringWidth }));
+    layers.effects.appendChild(g);
   }
-  layers.effects.appendChild(g);
-  // The note over the middle of the men, above the topmost, kept on the
-  // board: over one man it read as meaning him.
+  // The note in the middle of the men (M22, the operator's; over the topmost
+  // until then), kept on the board.
   const edge = boardEdges(map);
-  const top = Math.min(...points.map((p) => p.y));
-  const middle = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const middle = { x: points.reduce((sum, p) => sum + p.x, 0) / points.length, y: points.reduce((sum, p) => sum + p.y, 0) / points.length };
   const width = 'CLICK A MAN TO START'.length * CUE.noteSize * 0.5;
-  const x = Math.min(Math.max(middle, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
-  const y = Math.max(top - CUE.ringRadius - 14, edge.top + CUE.noteSize);
+  const x = Math.min(Math.max(middle.x, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
+  const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
 }
 
@@ -2210,10 +2213,11 @@ function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
   }
 
   if (isHovered) {
-    group.appendChild(el('rect', {
-      x: -2, y: -2, width: size, height: size, rx: 9,
-      fill: 'none', stroke: COUNTER.selectedStroke, 'stroke-width': COUNTER.selectedStrokeWidth,
-    }));
+    // Dashed, not the selected man's solid frame: looked at, not picked (M22).
+    const g = ENEMY.hoverGap;
+    const ring = { x: -2 - g, y: -2 - g, width: size + 2 * g, height: size + 2 * g, rx: 9 + g, fill: 'none' };
+    group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverCasing, 'stroke-width': ENEMY.hoverCasingWidth, opacity: 0.85 }));
+    group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverStroke, 'stroke-width': ENEMY.hoverWidth, 'stroke-dasharray': ENEMY.hoverDash, 'stroke-linecap': 'round' }));
   }
   if (hears) {
     group.appendChild(el('circle', {

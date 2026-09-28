@@ -961,6 +961,27 @@ Desktop makes the skeuomorphism work properly, so use the room:
   below, each line with the board's own mark for what it is (the "!", the wound cross, a
   body, the blast, a parachute) and graded — deaths, wounds and bangs in bold red, routine in
   grey.
+- **Twelfth review (M22, the operator's).** The where-to-start cues throb half as fast
+  and half as far; PICK A DROP RUN! sits higher, clear of the West and East tabs; each man's
+  ring throbs about its own counter, at half strength, and CLICK A MAN TO START is lettered
+  in the middle of the men. BOOM! has a paper outline and is tipped up 16°. A hovered enemy
+  wears a dashed red ring a little off its chip, not a selected man's solid frame, so it
+  never looks selectable. Hovering one of our men on the board shows his roster card beside
+  him (the leader's with what his rings mean). The orders are 800 wide, so the job's line
+  ends at the EXFIL and "Dawn comes…" has a line of its own; Music off has a bigger box. The
+  targets are proper names in all text: Rail Bridge, Telephone Exchange, Fuel Dump. `/`
+  opens the orders as `?` does. `?sound=off` in the address starts the game muted. The
+  East run flies two hexes further west (§9), from the north edge above La Butte's east
+  side down toward Ferme Lebrun: on Hard it won 19% of the bot's games to West's 47%, and
+  moving the line was the one change that helped East alone.
+- **The boxes under the map, fitted** (M22, the operator's: rows ran off the bottom of the
+  readout where nothing could scroll to them, with half the box empty; the log was fiddly
+  to scroll). The boxes are 140–210 px tall (92–170 until M22). A row short enough for one
+  line of half the readout sits beside another; a target, the exfil or a parachute is named
+  in the headline with its facts in short rows (HERE, NEEDS, BANG, CUT, WORTH), and only
+  HERE and NEEDS while a man is selected; the ground is a small note at the headline's right.
+  If it still does not fit, the type steps down to 13 px, then 12, before anything is cut.
+  The log has ▲ ▼ buttons down its right edge, hidden when it all fits.
 - **A man killed** (M21, the operator's): his counter floats straight up about a hex and
   fades away over his body, "floating up to heaven", before the turn's card is laid.
 - **BOOM!** over a blast is set in the comic lettering of the pen notes (M21, the
@@ -1051,6 +1072,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M22** | Twelfth operator playtest review, one map change (the East run's flight line two hexes west, the operator's pick after the bot showed Hard East at 19% to West's 47%): the boxes under the map fitted and taller, ▲ ▼ on the log, a man's card on hover, a dashed ring on a hovered enemy, the orders wider and re-broken, Music off bigger, target names capitalised, BOOM! outlined and tipped, the cues calmer and re-placed, `/` for the orders, `?sound=off` | Hovering any hex with any man selected, or none, at 1280x800, nothing in the readout is cut off; the log scrolls by its buttons; hovering a man shows his card; a hovered enemy's ring is dashed; the orders' job line ends at the EXFIL and the bonus paragraph at "before dawn!"; `/` opens the orders; the balance bot is re-run (Easy 100/100/97, Normal 93/83/88, Hard 47/33/38) |
 | **M21c** | Recorded sounds for every sound and the title music, from free libraries, cut and levelled to the made ones; the title music back to one speed | Every sound plays its recording with no console error; each is as loud against the others as its made sound was; the music is the same speed on every level |
 | **M21b** | Rules from the eleventh review: Normal's shots hit from 4 hexes; on Hard a bang calls up reinforcements to guard the way out; the boxes under the map in rows and a log | A man spotted 4 hexes off on Normal is hit in the open; on Hard the bridge going up brings two squads on at the road's south end the next enemy phase, marching to their posts, and none come once the exchange is down; the rings, hovers and panel say so; the readout shows a stamp and labelled rows; the report shows a bar per turn and marks per line; the balance bot is re-run (Normal 93/83/74, Hard 47/33/19) |
 | **M21** | Eleventh operator playtest review, no rules change: where to start (PICK A DROP RUN!, SPACE TO JUMP!, the men ringed until one is selected), a man killed floats away, BOOM! in the lettering, the hidden mark clearer, the counter key's blue AP and spacing, music off on the orders, the music's pace by level | Before a run is picked the board says PICK A DROP RUN!, after it SPACE TO JUMP!, and the JUMP! button is red; after the landing the men who can act are ringed until one is clicked; a man killed floats up and fades; the hidden mark reads on a hidden man; the key's BLUE AP pointer ends in blue beside the dot; Music off stops the music and leaves the orders up; Easy's music is slower and Hard's quicker; the orders and key still fit at 1280x800 |
