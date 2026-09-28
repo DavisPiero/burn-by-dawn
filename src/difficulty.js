@@ -18,6 +18,7 @@ export function validateDifficulty(json, rules, enemies, url = 'data/difficulty.
     if (ids.has(level.id)) throw new Error(`${where} id "${level.id}" is used twice`);
     ids.add(level.id);
     if (typeof level.label !== 'string' || !level.label) throw new Error(`${where} needs a "label"`);
+    if ('musicTempo' in level && !(typeof level.musicTempo === 'number' && level.musicTempo > 0)) throw new Error(`${where} "musicTempo" must be a number above 0`);
     requireKnownKeys(level.rules ?? {}, rules, `${where}.rules`);
     requireKnownKeys(level.enemies ?? {}, enemies, `${where}.enemies`);
   }

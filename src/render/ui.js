@@ -366,8 +366,9 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     box.type = 'checkbox';
     box.checked = briefing.toggle.on;
     box.addEventListener('click', (event) => event.stopPropagation());
-    box.addEventListener('change', () => onToggle(box.checked));
-    const label = html('label', null, [box, ' Brief me at the start of every turn']);
+    box.addEventListener('change', () => (briefing.toggle.onChange ?? onToggle)(box.checked));
+    // The turn cards' box, or another card's own (M21: music off, on the orders).
+    const label = html('label', null, [box, briefing.toggle.label ?? ' Brief me at the start of every turn']);
     label.addEventListener('click', (event) => event.stopPropagation());
     foot.appendChild(label);
   } else if (briefing.choice && !briefing.choice.top) {
@@ -652,9 +653,12 @@ export function renderDawnStrip(svg, state, rules) {
 export function renderEndTurnButton(button, state, rules) {
   if (state.phase === 'drop') {
     button.disabled = state.dropRunId === null;
-    setText(button, state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP  [SPACE]');
+    // Once a run is picked, the jump is the one thing to do: in red (M21).
+    button.classList.toggle('jump', state.dropRunId !== null);
+    setText(button, state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP!  [SPACE]');
     return;
   }
+  button.classList.remove('jump');
   button.disabled = Boolean(state.outcome);
   if (state.outcome) setText(button, 'MISSION OVER');
   else if (state.turn >= rules.turnLimit) setText(button, 'END THE LAST TURN — DAWN  [SPACE]');
@@ -793,7 +797,13 @@ export function renderDropRuns(element, runs, onChoose) {
 
 /** A drop run's rollover, on its button and on its tab on the board. */
 export function describeRun(run) {
-  return [html('b', null, `${run.label.toUpperCase()} · ${run.tag.toUpperCase()}`), `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\n${run.selected ? 'Press SPACE to jump, or click again.' : 'Click to pick this run.'}`];
+  // What to do next in red capitals of its own (M21, from playtesting: the
+  // jump was easy to miss at the end of the description).
+  return [
+    html('b', null, `${run.label.toUpperCase()} · ${run.tag.toUpperCase()}`),
+    `\n${run.description}\nWind ${run.wind}: the scatter leans that way.\n`,
+    html('b', 'popup-cue', run.selected ? 'PRESS SPACE TO JUMP, OR CLICK AGAIN' : 'CLICK TO PICK THIS RUN'),
+  ];
 }
 
 /** Restart, in the margin under the sound: a first click arms it and says so (M12). */

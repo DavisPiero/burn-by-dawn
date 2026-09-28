@@ -339,7 +339,7 @@ board.
 | File | `assets/markers/marker-blast.png` (hooked up in M17: shown from a 400 × 400 copy; the full painting is kept as `marker-blast_original.png`) |
 | Size | **1:1, 512 × 512 px**, PNG, **transparent background** |
 | Shown at | About 110 px, stepped in over three frames, then gone (code does the timing). |
-| Content | A comic-book explosion starburst, jagged spikes, red and yellow-cream with black ink outline and Ben-Day dots. **Leave the middle empty**: code sets BOOM over it in the stencil face. |
+| Content | A comic-book explosion starburst, jagged spikes, red and yellow-cream with black ink outline and Ben-Day dots. **Leave the middle empty**: code sets BOOM! over it in the comic lettering (the stencil until M21). |
 
 > Comic-book explosion starburst, jagged irregular spikes, bright red outer burst with a
 > cream-yellow core, thick black ink outline, Ben-Day halftone dots, 1980s British war
@@ -393,6 +393,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   since M20 the orchard's trees are small billowing crowns like the wood's (flat round ones
   read as oil drums), and a windfall apple has a stalk.
 - Place names on the map (they are type, set from `data/map.json`).
+- The where-to-start cues (M21): PICK A DROP RUN! and SPACE TO JUMP! in the pen lettering
+  among the runs' names, and red pen rings round the men until one is first selected.
+  They are type and strokes, not pictures.
 - The green counter frames, their AP figure and card edge.
 - The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the
   reference art, intact and destroyed.

@@ -26,10 +26,10 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
-import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
+import { isMuted, loadSuppliedSounds, playCue, setMusicTempo, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
-  BLAST, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -113,6 +113,12 @@ let bangTimer = null;
 // The garrison's turn shown on the board before its card (M15): who walked,
 // who raised the alarm, what was heard. Display only.
 let garrisonShow = null;
+// Whether the player has picked out a man yet this game (M21): until then,
+// once the stick is down, the men who can act are ringed as where to start.
+let menPicked = false;
+// The title music turned off from the orders (M21, the operator's): music
+// only, for the session; M still turns every sound off.
+let musicOff = false;
 // Shots fired (M13): the flash and tracer of a suppress or a kill, display
 // only, cleared once it has played.
 let shotShow = null;
@@ -281,9 +287,16 @@ function deriveView() {
     shotShow,
     strikeShow,
     targetRings: null,
+    dropCue: null,
+    selectCue: false,
   };
 
   if (state.phase === 'drop') return deriveDrop(view, hex);
+
+  // Where to start (M21, from playtesting: a first-timer spent minutes trying
+  // to move the Germans). Ringed until the player first selects a man.
+  if (state.selectedUnitId) menPicked = true;
+  view.selectCue = !menPicked && !dropShow && !state.outcome;
 
   const next = forecast();
   if (next) {
@@ -413,6 +426,8 @@ function deriveDrop(view, hex) {
   // showed through the title card as if it were part of the picture, and the
   // rings are drawn on as the card is put away, where they can be seen.
   if (briefing?.kind === 'orders') return view;
+  // What to do next, in big pen lettering among the runs' names (M21).
+  view.dropCue = selected ? 'jump' : 'pick';
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
       id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, windAlong: run.windAlong ?? null,
@@ -929,7 +944,9 @@ function toggleSound() {
  * the top.
  */
 function syncMusic() {
-  if (!opened || state.phase !== 'drop' || state.outcome || isMuted()) stopMusic();
+  // Slower on Easy, quicker on Hard (M21, the operator's): the level's number.
+  setMusicTempo(level.musicTempo ?? 1);
+  if (!opened || state.phase !== 'drop' || state.outcome || isMuted() || musicOff) stopMusic();
   else startMusic({ resume: briefing?.opening !== true });
 }
 
@@ -1155,12 +1172,18 @@ function handleEndTurn() {
 
 function endTurnNow() {
   undoStack = [];
+  const before = new Map(state.units.map((u) => [u.id, u.dead]));
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
   garrisonShow = describeGarrisonShow(state);
   // The card waits for the garrison's moves and any bang to be seen (M11, M15);
   // any key or click brings it at once.
-  const hold = Math.max(garrisonShow.length, state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0);
+  const hold = Math.max(
+    garrisonShow.length,
+    state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0,
+    // A man killed floats away before the card (M21).
+    state.units.some((u) => u.dead && !before.get(u.id)) ? DEATH.delayMs + DEATH.floatMs : 0,
+  );
   if (!state.outcome && briefingsOn) {
     if (hold > 0) {
       clearTimeout(bangTimer);
@@ -1343,6 +1366,7 @@ function startMission(nextLevel, seed) {
   map = baseMap;
   state = createInitialState(roster, traits, rules, baseMap, seed);
   undoStack = [];
+  menPicked = false;
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 
@@ -1441,6 +1465,15 @@ function describeBriefing(which, view) {
         options: difficulty.levels.map((l) => ({ id: l.id, label: l.label, summary: l.summary, selected: l.id === level.id })),
         onChoose: handleChooseLevel,
       },
+      // Bottom left (M21, the operator's): the music plays only before the jump.
+      toggle: before ? {
+        on: musicOff,
+        label: ' Music off',
+        onChange: (on) => {
+          musicOff = on;
+          syncMusic();
+        },
+      } : null,
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);

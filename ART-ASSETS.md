@@ -171,7 +171,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-open-kill.svg` | 28 x 28 (M15: a red crosshair in a paper disc — the turn after suppression, when a gunner can still kill it) |
 | `marker-aim.svg`, `marker-aim-no.svg` | 100 x 100 (M15: the crosshair over an enemy while aiming a suppress, kill or knife — red if it can be done, grey if not) |
 | `marker-spotted.svg` | 28 x 28 |
-| `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide) |
+| `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide; paper with an ink eye since M21, printed at full strength over the faint counter) |
 | `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
 | `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
 | `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
@@ -181,7 +181,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-heal.svg`, `marker-heal-no.svg` | 100 x 100 (M18: a big red cross on a paper disc over the man under the mouse while aiming Aid — red if he can be stabilised, grey if not. *Drawn by code.*) |
 | `marker-stone-target.svg` | 100 x 100 (M18: where a thrown stone will land, a pebble in an ink target ring; no lob is drawn. *Drawn by code.*) |
 | `effect-spark.svg` | 100 x 100 (M16: a spark where a cut telephone wire parts, a small paper starburst. *Drawn by code.*) |
-| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14). **Or a painted PNG**, `/assets/markers/marker-blast.png`, square on transparency, shown from a 400 x 400 copy (M17, the operator's; the full painting is `marker-blast_original.png`, not loaded). It replaces the drawn one on load, the muzzle flash too, and code sets BOOM over its middle |
+| `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14). **Or a painted PNG**, `/assets/markers/marker-blast.png`, square on transparency, shown from a 400 x 400 copy (M17, the operator's; the full painting is `marker-blast_original.png`, not loaded). It replaces the drawn one on load, the muzzle flash too, and code sets BOOM! over its middle, in the comic lettering since M21 |
 | `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
 | `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs one long sagging wire from its crossarm to the exchange's roof standard, M12; M14) |

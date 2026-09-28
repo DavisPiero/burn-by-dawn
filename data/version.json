@@ -1,4 +1,4 @@
 {
   "_comment": "The build the game shows in the margin, beside the seed and the level (M15, the operator's). The milestone it was made in (SPEC.md §12); bumped at every milestone. The game cannot read the git branch once it is served from GitHub Pages, so it lives here.",
-  "version": "M20"
+  "version": "M21"
 }

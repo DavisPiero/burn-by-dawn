@@ -319,8 +319,9 @@ const SYNTHS = {
   // The chords run D minor, D minor, B flat, A: the A at the end leans back
   // to the D, so it loops without an end. Played round and round by
   // startMusic; `v` odd brings in the horn.
-  'music-title': (ctx, destination, at, v) => {
-    const beat = MUSIC.beat;
+  'music-title': (ctx, destination, at, v, rate = 1) => {
+    // `rate` quickens or slows it without changing its pitch (M21: by level).
+    const beat = MUSIC.beat / rate;
     const bar = beat * 4;
     const out = ctx.createGain();
     out.gain.value = 0.9;
@@ -479,7 +480,7 @@ export function playCue(name) {
  * stretch of noise. Exported so the tests can play every cue into an
  * OfflineAudioContext and measure it.
  */
-export function scheduleCue(ctx, destination, name, start, variant = 0) {
+export function scheduleCue(ctx, destination, name, start, variant = 0, rate = 1) {
   for (const [i, [id, gain, delay]] of CUES[name].entries()) {
     const out = ctx.createGain();
     out.gain.value = gain;
@@ -493,7 +494,7 @@ export function scheduleCue(ctx, destination, name, start, variant = 0) {
       source.start(at);
     } else {
       // Each part of a cue from its own stretch, so the diversion's three crumps differ.
-      SYNTHS[id](ctx, out, at, (variant + i) % 7);
+      SYNTHS[id](ctx, out, at, (variant + i) % 7, rate);
     }
   }
 }
@@ -526,6 +527,9 @@ export function setMuted(on) {
 export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16, lookahead: 2.5, fadeIn: 2, fadeOut: 1.6 };
 
 let music = null;
+// How fast the music goes against its own tempo (M21, the operator's): the
+// level sets it from data/difficulty.json, slower on Easy and quicker on Hard.
+let tempo = 1;
 // Where the music got to when it last faded (M19): the pass of the made music
 // to lay next, or the seconds into a supplied file. Between turns it carries
 // on from there, so the same opening bars are not heard every turn.
@@ -556,6 +560,8 @@ export function startMusic({ resume = false } = {}) {
     playing.source = ctx.createBufferSource();
     playing.source.buffer = buffer;
     playing.source.loop = true;
+    // A supplied file can only be played faster or slower, pitch and all.
+    playing.source.playbackRate.value = tempo;
     playing.source.connect(level);
     playing.offset = resumeAt.seconds % buffer.duration;
     playing.source.start(0, playing.offset);
@@ -564,8 +570,8 @@ export function startMusic({ resume = false } = {}) {
     let next = ctx.currentTime + 0.05;
     const lay = () => {
       while (next < ctx.currentTime + MUSIC.lookahead) {
-        scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2);
-        next += MUSIC.phrase;
+        scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2, tempo);
+        next += MUSIC.phrase / tempo;
         playing.pass++;
       }
     };
@@ -591,6 +597,24 @@ export function stopMusic() {
     source?.stop();
     out.disconnect();
   }, MUSIC.fadeOut * 1000 + 300);
+}
+
+/**
+ * Set the music's pace against its own (1 as written). Playing, a supplied
+ * file changes speed at once; the made music, whose passes are laid down
+ * ahead, fades across into the next pass at the new pace, so the change is
+ * heard as the level is picked, not a pass later.
+ */
+export function setMusicTempo(rate) {
+  if (!(rate > 0) || rate === tempo) return;
+  tempo = rate;
+  if (!music) return;
+  if (music.source) {
+    music.source.playbackRate.value = rate;
+    return;
+  }
+  stopMusic();
+  startMusic({ resume: true });
 }
 
 export function isMusicPlaying() {
