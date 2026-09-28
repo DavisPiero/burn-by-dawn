@@ -777,7 +777,7 @@ Desktop makes the skeuomorphism work properly, so use the room:
 - Deliberate 0.5px colour misregistration on fills against their ink outlines.
 - Units are **counters**: rounded squares, a soft drop shadow down-right, symbol, name strip. A man who
   moves travels his path quickly at a steady pace and stops dead at the end: no wobble,
-  no easing in or out (140 ms a hex since M16, a quarter slower). A man with no AP left stays fully printed; his counter's edge goes
+  no easing in or out (190 ms a hex since M24, 140 from M16, so each hex's slide is heard apart). A man with no AP left stays fully printed; his counter's edge goes
   grey. Halftone is printed faint, close to the colour beneath it.
 - Speech bubbles for dialogue on the board, tail pointing at the man's counter, shown for
   the man selected or under the mouse (on the board or in the roster). A line is heard
@@ -943,9 +943,10 @@ Desktop makes the skeuomorphism work properly, so use the room:
   box on the card turns the turn updates off for the rest of the session; the orders
   still open on a new game.
 - **Where to start** (M21, from playtesting: a first-timer "spent 3 minutes trying to move
-  the Germans"). Until a run is picked, **PICK A DROP RUN!** is lettered big in the
-  player's red pen among the three runs' names, throbbing gently; once one is picked it
-  reads **SPACE TO JUMP!**, "or click the run again", the JUMP! button on the right page
+  the Germans"). Until a run is picked, **PICK A DROP DIRECTION** (PICK A DROP RUN! until
+  M24) is lettered big in the player's red pen among the three runs' names, still since
+  M24 (it throbbed gently until then); once one is picked it reads **HIT SPACE TO JUMP**
+  (SPACE TO JUMP! until M24), "or click the run again", the JUMP! button on the right page
   turns danger red and throbs, and the run's rollover ends in red capitals, PRESS SPACE
   TO JUMP, OR CLICK AGAIN. Once the stick is down, every man who can act wears a red pen
   ring, with CLICK A MAN TO START over them, until the player first selects a man; after
@@ -995,6 +996,13 @@ Desktop makes the skeuomorphism work properly, so use the room:
   selects him; any other click only puts it away, so a click meant to clear the card never
   moves the man still selected. A move slides: a soft scuff for each hex as the counter
   crosses it, then the snap as it is set down.
+- **Fourteenth review (M24, the operator's).** With the East run two hexes west (M22) the
+  run tabs are re-placed: NORTH RUN between the West and East lines, WEST RUN a little left
+  and up level with EAST RUN, and EAST RUN a little right, apart from it (map.json
+  `labelAlong`, `labelNudge`). The drop's lettering reads PICK A DROP DIRECTION and HIT
+  SPACE TO JUMP and no longer throbs; it sits a little right of the tabs' middle so the
+  longer line stays on the map. A man's steps are quieter and softer, a little further
+  apart (his walk 190 ms a hex, from 140), and he comes to rest on a last slide, not the snap.
 - **A man killed** (M21, the operator's): his counter floats straight up about a hex and
   fades away over his body, "floating up to heaven", before the turn's card is laid.
 - **BOOM!** over a blast is set in the comic lettering of the pen notes (M21, the
@@ -1027,7 +1035,7 @@ by changing one registry file and nothing else. No inline path data in game logi
 **Sound** (M10). The back page has its own since M12: the village church's bells for a
 mission accomplished, and a single bell tolling with a siren far off for a mission
 withdrawn or failed (`church-bells`, `bell-toll`). The sounds of the table, not the battlefield (ART-ASSETS.md §9): a
-counter slid across the paper a hex at a time and snapped down when a man moves (M23), snapped when a move is undone, a pencil for every other
+counter slid across the paper a hex at a time when a man moves (M23; softer since M24, with a last slide as he comes to rest where a snap cracked like a whip), snapped down when a move is undone, a pencil for every other
 action, a card's rustle when a briefing card or the back page opens, a dog a long way off
 when the alert rises, and three far-off crumps for the RAF diversion. The Dakota drones
 over the drop and the RAF flyover (M15, `aircraft`), cut short if the drop is skipped;
@@ -1085,6 +1093,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M24** | Fourteenth operator playtest review, no rules change: the run tabs re-placed round the moved East run, the drop's lettering reworded and still, softer steps further apart with no snap at the end | NORTH RUN sits between the West and East lines and WEST RUN is level with EAST RUN; PICK A DROP DIRECTION and HIT SPACE TO JUMP are still and on the map at 1280x800; a move is heard as quiet slides a hex apart and ends on one, not a snap |
 | **M23** | Thirteenth operator playtest review, no rules change: the music bug (the made music giving way to the recording, several copies at once), the readout in one column and shorter, a man's particulars in the readout with a dashed ring instead of his card, a slide per hex of a move, a click on a man through a turn card | The title music plays the recording once, looped, from the first note, and never two at once; the readout's rows line up in one column at 1280x800 and a move's risk and its sum are rows of their own; hovering a man shows his particulars in the readout and a dashed ring on his chip, no popup; a move is heard a hex at a time; with a turn card up, one click on a man puts it away and selects him |
 | **M22** | Twelfth operator playtest review, one map change (the East run's flight line two hexes west, the operator's pick after the bot showed Hard East at 19% to West's 47%): the boxes under the map fitted and taller, ▲ ▼ on the log, a man's card on hover, a dashed ring on a hovered enemy, the orders wider and re-broken, Music off bigger, target names capitalised, BOOM! outlined and tipped, the cues calmer and re-placed, `/` for the orders, `?sound=off` | Hovering any hex with any man selected, or none, at 1280x800, nothing in the readout is cut off; the log scrolls by its buttons; hovering a man shows his card; a hovered enemy's ring is dashed; the orders' job line ends at the EXFIL and the bonus paragraph at "before dawn!"; `/` opens the orders; the balance bot is re-run (Easy 100/100/97, Normal 93/83/88, Hard 47/33/38) |
 | **M21c** | Recorded sounds for every sound and the title music, from free libraries, cut and levelled to the made ones; the title music back to one speed | Every sound plays its recording with no console error; each is as loud against the others as its made sound was; the music is the same speed on every level |
