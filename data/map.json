@@ -1,6 +1,7 @@
 {
   "_comment": "The map. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i (see src/hex.js). Terrain ids must exist in data/terrain.json. Enemy placements, patrol routes, objectives and exfil are below.",
-  "name": "Night Drop — first pass",
+  "_name": "What the map is called. Nothing shows it yet; missions (ROADMAP.md, M27) will name it where the mission is chosen. It was \"Night Drop — first pass\", the working title, until M25.",
+  "name": "The rail bridge at Canal St-Rémy",
   "width": 18,
   "height": 13,
   "hexSize": 46,
