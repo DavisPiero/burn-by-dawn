@@ -406,7 +406,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the
   exchange.
 - The eleven sounds (M10, the explosion M11, the back page's bells M12, the gunfire M13, the Dakota M15), made with Web Audio in `src/render/sound.js` until the MP3s of
-  priority 11 are supplied, and the title music over the opening screens (M17,
+  priority 11 are supplied (all supplied since M21c), and the counter's slide, one per hex
+  of a move (M23, `counter-slide.m4a` or `.mp3` would replace it; ~0.12 s, a card counter
+  pushed over paper, soft, trimmed tight), and the title music over the opening screens (M17,
   `music-title.mp3` replaces it; cut it to loop cleanly, about a minute, under 1 MB).
 - The role symbols on the counters (redrawn bolder M13), the AP dots (the leader's orders in blue, M14), the shots' flash and
   tracer, and the suppressed band.

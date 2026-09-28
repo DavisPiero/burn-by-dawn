@@ -271,7 +271,8 @@ names say `.mp3`; the same name in `.m4a` does as well.
 |---|---|---|
 | `paper-rustle.mp3` | a briefing card opens, the back page turns over | ~0.4 s |
 | `pencil-scratch.mp3` | any action but a move: hide, a charge, a stone, suppress… | ~0.3 s |
-| `counter-snap.mp3` | a man moves, or a move is undone | ~0.1 s |
+| `counter-snap.mp3` | a man is set down at the end of his move, or a move is undone | ~0.1 s |
+| `counter-slide.mp3` | each hex of a man's move as his counter crosses it, 140 ms apart (M23): a card counter pushed a short way over paper. *Made in code only so far; no file yet* | ~0.12 s |
 | `gunfire.mp3` | a gunner suppresses: a short burst of four shots (M13) | ~0.5 s |
 | `silenced-shot.mp3` | a gunner's kill: one muffled shot from a silenced Sten and the bolt's click (M13) | ~0.2 s |
 | `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
