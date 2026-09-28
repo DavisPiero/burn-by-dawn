@@ -400,7 +400,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The fuel dump, telephone exchange (with the church) and rail bridge, redrawn after the
   reference art, intact and destroyed.
 - Ferme Lebrun's farm (M14), after the operator's reference: the farmhouse hex.
-- Improved drawn portraits and chips: the fallback when no PNG is supplied.
+- One drawn stand-in portrait and chip, for a man with no files of his own (M25: the six
+  men's own drawn faces were taken out, as every one of them is painted).
 - A plain night scene for the title card (moon, Dakota, canopies, skyline), with the title
   set over it in type: the fallback if `assets/title/title-card.jpg` is missing.
 - The exfil barn with the pick-up party's green lamp (M8e), in the same view as the

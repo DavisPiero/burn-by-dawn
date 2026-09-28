@@ -1523,34 +1523,16 @@ function church() {
 
 // --- portraits ----------------------------------------------------------------
 // ART-ASSETS.md §2: head and shoulders for the roster rail (240 x 300) and a
-// silhouette chip for the counter (32 x 32). Built from one parametric head:
-// each man's entry below says only what sets him apart. A trooper with no
-// entry gets the fallback, so a seventh man is still one JSON entry.
-
-const FACES = {
-  holloway: { faceW: 46, jawW: 36, brows: 7, moustache: true, mouth: 'set', chevrons: true, shade: 20 },
-  fitch: { faceW: 42, jawW: 30, ears: 10, mouth: 'grin', freckles: true, cigarette: true },
-  vance: { faceW: 40, jawW: 28, eyes: 'squint', mouth: 'set', net: true, binoculars: true },
-  barrow: { faceW: 44, jawW: 32, ears: 11, mouth: 'open', twig: true },
-  speers: { faceW: 45, jawW: 35, stubble: true, scar: true, scarf: true, mouth: 'set', brows: 5 },
-  nunn: { faceW: 54, jawW: 48, brows: 8, nose: 'broken', neck: 30, mouth: 'set', shade: 20 },
-};
-
-const CHIPS = {
-  holloway: 'moustache',
-  fitch: 'cigarette',
-  vance: 'net',
-  barrow: 'twig',
-  speers: 'scarf',
-  nunn: 'broad',
-};
+// silhouette chip for the counter (32 x 32). Every man's portrait is supplied
+// (assets/portraits); this is the stand-in for a man with none, so a seventh
+// man is still one JSON entry. Until M25 each of the six had a drawn face of
+// his own here, kept long after the painted ones replaced them.
 
 // Printed flat, not screened (M7b): each tone is its spot colour at an
 // opacity, lit from the left by the moon, with a heavy ink line round it.
-function portrait(id, f = {}) {
-  const cx = 120;
-  const faceW = f.faceW ?? 44, jawW = f.jawW ?? 32, chinY = 214, neck = f.neck ?? 22;
-  const shade = (d) => fill(d, 'ink', { 'fill-opacity': 0.16 + (f.shade ?? 0) / 200 });
+function fallbackPortrait() {
+  const cx = 120, faceW = 44, jawW = 32, chinY = 214, neck = 22;
+  const shade = (d) => fill(d, 'ink', { 'fill-opacity': 0.16 });
   const parts = [
     svg('rect', { x: 0, y: 0, width: 240, height: 300, class: 'blue' }),
     // Moonlight behind his head, so the silhouette reads at thumbnail size.
@@ -1562,24 +1544,14 @@ function portrait(id, f = {}) {
   parts.push(fill('M40 262 Q60 240 88 250 Q92 270 66 280 Q44 284 40 262 Z M150 248 Q180 236 196 260 Q190 280 164 274 Q146 266 150 248 Z M100 280 Q120 266 140 284 L136 300 H104 Z', 'ink', { 'fill-opacity': 0.3 }));
   parts.push(fill('M150 222 C190 232 222 252 230 300 H160 Z', 'ink', { 'fill-opacity': 0.18 }));
   parts.push(line(smock, 4));
-  if (f.chevrons) {
-    for (let i = 0; i < 3; i++) parts.push(line(`M34 ${258 + i * 11} L48 ${248 + i * 11} L62 ${258 + i * 11}`, 5.5, 'stroke-leader'));
-  }
-  if (f.scarf) parts.push(...inked(`M${cx - neck - 16} 224 Q${cx} 250 ${cx + neck + 16} 224 L${cx + neck + 10} 244 Q${cx} 262 ${cx - neck - 10} 244 Z`, 'blue', 3));
   // Neck.
   parts.push(...inked(`M${cx - neck} 196 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 196 Z`, 'paper', 3.5));
   parts.push(shade(`M${cx - neck} 200 L${cx - neck} 230 Q${cx} 242 ${cx + neck} 230 L${cx + neck} 214 Z`));
-  if (f.binoculars) {
-    parts.push(line(`M${cx - neck} 228 L${cx - 18} 250 M${cx + neck} 228 L${cx + 18} 250`, 3));
-    parts.push(...inked('M92 248 h24 v34 h-24 Z', 'ink', 2), ...inked('M124 248 h24 v34 h-24 Z', 'ink', 2));
-    parts.push(svg('rect', { x: 114, y: 256, width: 12, height: 8, class: 'ink' }));
-  }
   // Ears, behind the face.
-  const earR = f.ears ?? 7;
   for (const side of [-1, 1]) {
     const x = cx + side * (faceW + 2);
-    parts.push(svg('ellipse', { cx: x, cy: 150, rx: earR, ry: 13, class: 'paper' }));
-    parts.push(svg('ellipse', { cx: x, cy: 150, rx: earR, ry: 13, fill: 'none', class: 'stroke-ink', 'stroke-width': 3.5 }));
+    parts.push(svg('ellipse', { cx: x, cy: 150, rx: 7, ry: 13, class: 'paper' }));
+    parts.push(svg('ellipse', { cx: x, cy: 150, rx: 7, ry: 13, fill: 'none', class: 'stroke-ink', 'stroke-width': 3.5 }));
   }
   // Face: paper warmed a touch, the right side in shadow, and burnt cork
   // smudged across the cheeks for the night.
@@ -1588,80 +1560,39 @@ function portrait(id, f = {}) {
   parts.push(fill(face, 'red', { 'fill-opacity': 0.1 }));
   parts.push(shade(`M${cx + 8} 112 C${cx + 14} 150 ${cx + 4} 190 ${cx + 8} ${chinY - 2} C${cx + jawW} ${chinY - 12} ${cx + faceW} 180 ${cx + faceW} 112 Z`));
   parts.push(fill(`M${cx - faceW + 6} 166 Q${cx - 24} 158 ${cx - 12} 170 Q${cx - 26} 176 ${cx - faceW + 8} 178 Z M${cx + faceW - 6} 166 Q${cx + 24} 158 ${cx + 12} 170 Q${cx + 26} 176 ${cx + faceW - 8} 178 Z`, 'ink', { 'fill-opacity': 0.13 }));
-  if (f.stubble) parts.push(fill(`M${cx - jawW - 6} 176 C${cx - jawW} 200 ${cx - 10} ${chinY} ${cx} ${chinY} C${cx + 10} ${chinY} ${cx + jawW} 200 ${cx + jawW + 6} 176 Q${cx} 196 ${cx - jawW - 6} 176 Z`, 'ink', { 'fill-opacity': 0.3 }));
   parts.push(line(face, 3.5));
   // Eyes and brows.
-  const browW = f.brows ?? 4.5;
-  parts.push(line(`M${cx - 33} 141 Q${cx - 22} 136 ${cx - 10} 139 M${cx + 10} 139 Q${cx + 22} 136 ${cx + 33} 141`, browW));
-  if (f.eyes === 'squint') parts.push(line(`M${cx - 29} 154 L${cx - 11} 152 M${cx + 11} 152 L${cx + 29} 154`, 3.5));
-  else {
-    for (const side of [-1, 1]) {
-      const x = cx + side * 19;
-      parts.push(svg('ellipse', { cx: x, cy: 154, rx: 7, ry: 4, class: 'paper' }));
-      parts.push(circle(x + 1, 154, 3, 'ink'));
-      parts.push(line(`M${x - 8} 153 Q${x} 147 ${x + 8} 153`, 3));
-    }
+  parts.push(line(`M${cx - 33} 141 Q${cx - 22} 136 ${cx - 10} 139 M${cx + 10} 139 Q${cx + 22} 136 ${cx + 33} 141`, 4.5));
+  for (const side of [-1, 1]) {
+    const x = cx + side * 19;
+    parts.push(svg('ellipse', { cx: x, cy: 154, rx: 7, ry: 4, class: 'paper' }));
+    parts.push(circle(x + 1, 154, 3, 'ink'));
+    parts.push(line(`M${x - 8} 153 Q${x} 147 ${x + 8} 153`, 3));
   }
-  // Nose.
-  parts.push(line(f.nose === 'broken' ? `M${cx} 150 L${cx + 7} 164 L${cx - 6} 182 L${cx + 6} 185` : `M${cx + 2} 150 L${cx - 6} 181 L${cx + 6} 184`, 3.5));
-  // Mouth, and what is around it.
-  if (f.moustache) parts.push(fill(`M${cx - 28} 198 Q${cx - 18} 180 ${cx} 186 Q${cx + 18} 180 ${cx + 28} 198 Q${cx + 12} 192 ${cx} 197 Q${cx - 12} 192 ${cx - 28} 198 Z`, 'ink'));
-  const mouth = {
-    set: `M${cx - 12} 199 L${cx + 12} 199`,
-    grin: `M${cx - 18} 194 Q${cx} 212 ${cx + 18} 194`,
-    open: `M${cx - 9} 197 Q${cx} 208 ${cx + 9} 197 Z`,
-  }[f.mouth ?? 'set'];
-  parts.push(line(mouth, 3.5));
-  if (f.cigarette) parts.push(line(`M${cx + 14} 200 L${cx + 38} 209`, 6, 'stroke-ink'), line(`M${cx + 14} 200 L${cx + 38} 209`, 3.5, 'stroke-paper'), circle(cx + 39, 209.5, 3, 'red'));
-  if (f.freckles) for (const [x, y] of [[-24, 170], [-18, 176], [-28, 177], [22, 172], [28, 177], [18, 178]]) parts.push(circle(cx + x, y, 1.8, 'ink'));
-  if (f.scar) parts.push(line(`M${cx + 26} 158 L${cx + 34} 188`, 2.6, 'stroke-red'));
+  // Nose and mouth.
+  parts.push(line(`M${cx + 2} 150 L${cx - 6} 181 L${cx + 6} 184`, 3.5));
+  parts.push(line(`M${cx - 12} 199 L${cx + 12} 199`, 3.5));
   // The para helmet, rimless, shaded on the right, and its chin strap.
   const hw = faceW + 13;
   const helm = `M${cx - hw} 132 C${cx - hw - 4} 52 ${cx + hw + 4} 52 ${cx + hw} 132 Q${cx} 116 ${cx - hw} 132 Z`;
   parts.push(fill(helm, 'green'));
   parts.push(fill(`M${cx + 10} 58 C${cx + hw} 60 ${cx + hw + 4} 100 ${cx + hw} 132 Q${cx + 30} 122 ${cx + 12} 121 Z`, 'ink', { 'fill-opacity': 0.25 }));
-  if (f.net) {
-    let net = '';
-    for (let i = -6; i <= 6; i++) net += `M${cx + i * 12 - 30} 56 L${cx + i * 12 + 30} 134 M${cx + i * 12 + 30} 56 L${cx + i * 12 - 30} 134 `;
-    const clipId = `${id}-helmet-clip`;
-    parts.push(svg('clipPath', { id: clipId }, [fill(helm, 'ink')]));
-    parts.push(line(net, 1.8, 'stroke-ink', { 'clip-path': `url(#${clipId})` }));
-  }
   parts.push(line(`M${cx - hw + 16} 84 Q${cx - 22} 62 ${cx + 2} 64`, 5, 'stroke-paper', { opacity: 0.6 }));
   parts.push(line(helm, 4));
   parts.push(line(`M${cx - faceW + 4} 128 L${cx - jawW + 2} ${chinY - 14} Q${cx} ${chinY + 6} ${cx + jawW - 2} ${chinY - 14} L${cx + faceW - 4} 128`, 2.6, 'stroke-ink', { opacity: 0.85 }));
-  if (f.twig) {
-    parts.push(line(`M${cx + 20} 76 L${cx + 44} 20 M${cx + 34} 44 L${cx + 58} 32 M${cx + 38} 34 L${cx + 26} 18`, 4));
-    for (const [x, y] of [[44, 16], [60, 28], [24, 14], [52, 42]]) {
-      parts.push(svg('g', { transform: `rotate(-30 ${cx + x} ${y})` }, [
-        svg('ellipse', { cx: cx + x, cy: y, rx: 8, ry: 4.5, class: 'green' }),
-        svg('ellipse', { cx: cx + x, cy: y, rx: 8, ry: 4.5, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
-      ]));
-    }
-  }
   parts.push(svg('rect', { x: 1.5, y: 1.5, width: 237, height: 297, fill: 'none', class: 'stroke-ink', 'stroke-width': 3 }));
-  return parts;
-}
-
-function chip(id, feature) {
-  const helm = 'M3 17 C2 3 30 3 29 17 Q16 13 3 17 Z';
-  const faceW = feature === 'broad' ? 11 : 8.5;
-  const face = `M${16 - faceW} 15 C${16 - faceW} 26 ${16 - faceW / 2} 30 16 30 C${16 + faceW / 2} 30 ${16 + faceW} 26 ${16 + faceW} 15 Z`;
-  const parts = [...inked(face, 'paper', 1.4), fill(face, toneClass('red', 10))];
-  parts.push(circle(12.5, 20, 1.1, 'ink'), circle(19.5, 20, 1.1, 'ink'));
-  if (feature === 'moustache') parts.push(fill('M11 25.5 Q16 22.5 21 25.5 Q16 24.5 11 25.5 Z', 'ink', { 'stroke-width': 1.6, class: 'ink stroke-ink' }));
-  if (feature === 'cigarette') parts.push(line('M18 26 L25 28', 2, 'stroke-paper'), line('M18 26 L25 28', 0.6), circle(25.5, 28.2, 1.1, 'red'));
-  if (feature === 'scarf') parts.push(...inked('M8 28 Q16 33 24 28 L24 31.5 Q16 35 8 31.5 Z', 'blue', 1));
-  parts.push(...inked(helm, 'green', 1.6), fill(helm, toneClass('ink', 35)));
-  if (feature === 'net') parts.push(line('M7 7 L13 15 M13 5 L19 15 M19 5 L25 15 M25 7 L19 15 M19 5 L13 15 M13 5 L7 13', 0.8));
-  if (feature === 'twig') parts.push(line('M20 7 L26 0 M23 3 L29 3', 1.6), circle(27, 0.5, 1.6, 'green'), circle(29.5, 3, 1.5, 'green'));
-  return parts;
-}
-
-function fallbackPortrait() {
-  const parts = portrait('portrait-fallback-full', { mouth: 'set' });
   parts.push(label('?', { x: 120, y: 280, 'font-size': 30, class: 'paper' }));
   return parts;
+}
+
+function fallbackChip() {
+  const helm = 'M3 17 C2 3 30 3 29 17 Q16 13 3 17 Z';
+  const face = 'M7.5 15 C7.5 26 11.75 30 16 30 C20.25 30 24.5 26 24.5 15 Z';
+  return [
+    ...inked(face, 'paper', 1.4), fill(face, toneClass('red', 10)),
+    circle(12.5, 20, 1.1, 'ink'), circle(19.5, 20, 1.1, 'ink'),
+    ...inked(helm, 'green', 1.6), fill(helm, toneClass('ink', 35)),
+  ];
 }
 
 // --- chrome -------------------------------------------------------------------
@@ -1824,15 +1755,9 @@ const SPRITES = {
   'counter-enemy-patrol': { viewBox: '0 0 56 56', draw: () => [...helmet(6, 11, 0.85), ...helmet(26, 19, 0.85)] },
   'counter-enemy-reserve': { viewBox: '0 0 56 56', draw: () => [...helmet(4, 8, 0.7), ...helmet(29, 8, 0.7), ...helmet(16, 22, 0.7)] },
 
-  // --- the six (ART-ASSETS.md §2) ---
-  ...Object.fromEntries(Object.entries(FACES).map(([name, face]) => [`portrait-${name}-full`, {
-    viewBox: '0 0 240 300', draw: () => portrait(`portrait-${name}-full`, face),
-  }])),
-  ...Object.fromEntries(Object.entries(CHIPS).map(([name, feature]) => [`portrait-${name}-chip`, {
-    viewBox: '0 0 32 32', draw: () => chip(`portrait-${name}-chip`, feature),
-  }])),
+  // --- portraits (ART-ASSETS.md §2): the stand-in; each man's own is supplied ---
   'portrait-fallback-full': { viewBox: '0 0 240 300', draw: fallbackPortrait },
-  'portrait-fallback-chip': { viewBox: '0 0 32 32', draw: () => chip('portrait-fallback-chip', null) },
+  'portrait-fallback-chip': { viewBox: '0 0 32 32', draw: fallbackChip },
 
   // --- terrain (ART-ASSETS.md §4) ---
   ...Object.fromEntries(Object.entries(TERRAIN_SPRITES).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
@@ -2488,8 +2413,8 @@ export function portraitId(unitId, size) {
 
 // Supplied portraits (ART-ASSETS.md §2). A PNG in PORTRAIT_FILES.dir named as
 // the manifest names it — portrait-holloway-full.png, portrait-holloway-chip.png
-// — replaces the drawn portrait of that id; nothing else needs editing. Missing
-// files are fine: the drawn one stays.
+// — becomes that man's portrait; nothing else needs editing. A missing file is
+// fine: he wears the drawn stand-in.
 // Since M17 the full portrait the game loads is a JPEG, 480 x 600, made from
 // the operator's painted PNG (kept beside it, not loaded): the six PNGs came
 // to 12 MB and filled in one by one for seconds after the page opened over

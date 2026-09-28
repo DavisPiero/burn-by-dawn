@@ -67,14 +67,15 @@ code change, and uses its own drawn portrait for any file that is missing.
 | Asset | Size | Notes |
 |---|---|---|
 | `portrait-<name>-full.png` x6 | **4:5**, 960 x 1200 px (no smaller than 480 x 600). Since M17 the game loads `portrait-<name>-full.jpg`, a 480 x 600 JPEG made from it (the six PNGs were 12 MB over the web); the PNG stays as the source, and a new one needs its JPEG remade (`assets/portraits/README.md`) | Head and shoulders. 8-bit sRGB, opaque, a plain or simple background, no border and no text (code draws the frame, number and name). The roster rail crops to the middle — keep the face and helmet inside the central **80% of the width** and between **12% and 92% of the height**; eyes about 40% down. Shown at roughly 55 x 70 in the rail and 96 x 120 in the rollover, so it must read small: strong silhouette, clear light and dark. Code greys it out when the man is killed. |
-| `portrait-<name>-chip.png` x6 | **1:1**, 128 x 128 px | Optional. On the counter, about 15 px on screen. Helmet and face only, filling the frame, transparent background. Silhouette-level simplicity, one distinguishing feature. Without it the drawn chip is used, which will not match painted portraits. |
+| `portrait-<name>-chip.png` x6 | **1:1**, 128 x 128 px | Optional. On the counter, about 15 px on screen. Helmet and face only, filling the frame, transparent background. Silhouette-level simplicity, one distinguishing feature. Without it the drawn stand-in chip is used, which will not match painted portraits. |
 
 Names: holloway, fitch, vance, barrow, speers, nunn — the trooper's `id` in
 `data/roster.json`, so a seventh man's portrait is named after his id.
 
 A trooper with no portrait of his own is drawn with `portrait-fallback-full` and
 `portrait-fallback-chip`, which live in code and are not to be supplied: they are what
-keeps a seventh man a JSON entry until someone draws him.
+keeps a seventh man a JSON entry until someone draws him. (Until M25 each of the six
+also had a drawn face of his own in code; the painted ones replaced them, so they went.)
 
 ---
 
