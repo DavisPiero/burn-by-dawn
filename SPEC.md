@@ -888,6 +888,10 @@ board must read at a glance.
 - A noise waiting to be heard is ringed and labelled (STONE, SHOTS, SHOT, FOUND), and its
   hex's hover says who it will bring. A bang has no ring: the blast, the smoke and the
   DESTROYED stamp mark it.
+- A hex the garrison is on its way to search wears a dashed ring with a **?**: where a
+  patrol is going to look, or the last known contact while it is hunted at Alarmed. Its
+  hover says who is coming. Below Alarmed a last known contact is not marked, as nobody
+  goes to it.
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
   its counter flashing. A kill is one dim shot.
 - **A bang lands**: the page flashes, the board jolts, a shock ring runs out to the edge of

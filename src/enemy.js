@@ -459,6 +459,17 @@ export function listeners(enemies, kind, hex, alertPoints, rules) {
 }
 
 /**
+ * The last known contact while the garrison is hunting it (SPEC.md §6: every
+ * patrol goes to it at Alarmed until one gets there), or null. Below Alarmed
+ * it is only remembered, and nobody goes to it unless a noise sends them.
+ */
+export function huntedContact(state, rules) {
+  const { contact } = state;
+  if (!contact || contact.searched) return null;
+  return alertStateOf(state.alert.points, rules).id === 'alarmed' ? contact : null;
+}
+
+/**
  * Queue a noise for the next enemy phase and raise the alert for it. The
  * actions of the player phase (a stone, gunfire) call this.
  */
