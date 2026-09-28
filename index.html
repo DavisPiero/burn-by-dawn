@@ -258,6 +258,47 @@
       line-height: 1.35;
     }
     #report li { padding: 0 3px; }
+    /* The hover readout in rows (M21b): a headline and a stamp, then each
+       thing under a short label. */
+    #coord-readout.rows { font-size: 14px; line-height: 18px; }
+    #coord-readout .ro-head { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+    #coord-readout .ro-title { font-family: var(--slab); font-size: 16px; font-weight: bold; letter-spacing: 1.5px; }
+    #coord-readout .ro-stamp {
+      padding: 0 5px;
+      border: 2px solid currentColor;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      line-height: 15px;
+      transform: rotate(-2deg);
+    }
+    #coord-readout .ro-stamp.safe { color: var(--green); }
+    #coord-readout .ro-stamp.warn { color: var(--ink); }
+    #coord-readout .ro-stamp.danger { color: var(--red); }
+    #coord-readout .ro-row { display: grid; grid-template-columns: 58px 1fr; column-gap: 6px; }
+    #coord-readout .ro-label { font-size: 12px; font-weight: bold; letter-spacing: 1px; opacity: 0.6; }
+    #coord-readout .ro-row.danger .ro-text { color: var(--red); }
+    #coord-readout .ro-row.danger .ro-label { color: var(--red); opacity: 1; }
+    /* The report as a log (M21b): a bar per turn, a mark per line, the news
+       graded by colour, the turns before faded. */
+    #report li.rep-turn {
+      margin: 0 0 3px;
+      padding: 1px 5px;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      color: var(--paper);
+      background: var(--ink);
+    }
+    #report li.rep-turn.old { margin-top: 6px; }
+    #report li + li.rep-turn { margin-top: 6px; }
+    #report li:not(.rep-turn) { display: grid; grid-template-columns: 16px 1fr; column-gap: 5px; align-items: start; }
+    #report li.rep-none { display: block; color: rgba(26, 26, 24, 0.62); }
+    #report .rep-mark { width: 16px; height: 16px; margin-top: 1px; }
+    #report .rep-dot { fill: var(--ink); opacity: 0.5; }
+    #report li.rep-grave .rep-text { color: var(--red); font-weight: bold; }
+    #report li.rep-quiet .rep-text { color: rgba(26, 26, 24, 0.62); }
+    #report li.old { opacity: 0.5; }
     /* One of ours dead, in the report and on the turn card (M13). */
     b.killed { color: var(--red); }
     #report li + li { margin-top: 2px; }

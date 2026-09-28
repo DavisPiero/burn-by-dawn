@@ -119,6 +119,8 @@ let menPicked = false;
 // The title music turned off from the orders (M21, the operator's): music
 // only, for the session; M still turns every sound off.
 let musicOff = false;
+// The turns before this one, newest first, for the report's log (M21b): display only.
+let earlierReports = [];
 // Shots fired (M13): the flash and tracer of a suppress or a kill, display
 // only, cleared once it has played.
 let shotShow = null;
@@ -443,7 +445,7 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         hexes: o.hexes, primary: o.primary, colour: 'red',
         // The charges it takes, so three dashed points never read as three charges.
-        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
+        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
       { hexes: view.exfil, primary: false, colour: 'green', beside: true, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
@@ -564,17 +566,23 @@ function blastWords(kind) {
 function payoffWords(kind) {
   const { noReserve, withdrawPatrols } = kind.payoff;
   const words = [];
-  if (noReserve) words.push('keeps the reserve squad from being called up');
+  // On a level where bangs call up reinforcements (M21b, Hard), the telephones stop those too.
+  const anyCalled = Object.values(rules.objectives).some((k) => k.reinforcements > 0);
+  if (noReserve) words.push(`keeps the reserve squad${anyCalled ? ' and any reinforcements' : ''} from being called up`);
   if (withdrawPatrols > 0) words.push(`draws the nearest ${withdrawPatrols === 1 ? 'patrol' : `${withdrawPatrols} patrols`} off the board`);
+  if (kind.reinforcements > 0) words.push(`calls up ${kind.reinforcements === 1 ? 'a squad' : `${kind.reinforcements} squads`} of reinforcements to guard the way to the exfil, unless the telephones are already down`);
   return words.length ? words.join(' and ') : null;
 }
 
-/** The same, lettered on its target ring before the drop: "STOPS THE RESERVE", "MAKES A PATROL LEAVE". */
+/** The same, lettered on its target ring before the drop: "STOPS THE RESERVE", "MAKES A PATROL LEAVE", "CALLS UP 2 SQUADS". */
 function payoffNote(kind) {
   const { noReserve, withdrawPatrols } = kind.payoff;
-  if (noReserve) return 'STOPS THE RESERVE';
-  if (withdrawPatrols > 0) return withdrawPatrols === 1 ? 'MAKES A PATROL LEAVE' : `MAKES ${withdrawPatrols} PATROLS LEAVE`;
-  return null;
+  const notes = [];
+  if (noReserve) notes.push('STOPS THE RESERVE');
+  if (withdrawPatrols > 0) notes.push(withdrawPatrols === 1 ? 'MAKES A PATROL LEAVE' : `MAKES ${withdrawPatrols} PATROLS LEAVE`);
+  // Hard (M21b): what it calls up, on the ring before the drop.
+  if (kind.reinforcements > 0) notes.push(`CALLS UP ${kind.reinforcements === 1 ? 'A SQUAD' : `${kind.reinforcements} SQUADS`}`);
+  return notes;
 }
 
 /** The mission at a glance for the panel: objectives, men out, the diversion. */
@@ -856,7 +864,7 @@ function render() {
   noteHeard();
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
-  renderReport(reportList, state, view.place, locateHex);
+  renderReport(reportList, state, view.place, locateHex, earlierReports);
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
@@ -1173,6 +1181,7 @@ function handleEndTurn() {
 function endTurnNow() {
   undoStack = [];
   const before = new Map(state.units.map((u) => [u.id, u.dead]));
+  earlierReports = [{ turn: state.turn, events: state.report }, ...earlierReports].slice(0, 2);
   state = endTurn(state, rules, baseMap);
   cueReport(state.report);
   garrisonShow = describeGarrisonShow(state);
@@ -1367,6 +1376,7 @@ function startMission(nextLevel, seed) {
   state = createInitialState(roster, traits, rules, baseMap, seed);
   undoStack = [];
   menPicked = false;
+  earlierReports = [];
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 

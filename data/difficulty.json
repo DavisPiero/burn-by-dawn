@@ -33,9 +33,10 @@
       "id": "hard",
       "label": "Hard",
       "musicTempo": 1.1,
-      "summary": "Four men must get out, and every sentry and patrol sees a hex further and wider.",
+      "summary": "Four men must get out, every sentry and patrol sees a hex further and wider, and blowing a target calls up reinforcements to guard the way out: two squads for the bridge, one for the fuel dump, none once the telephone exchange is down.",
       "rules": {
-        "mission": { "minimumOut": 4 }
+        "mission": { "minimumOut": 4 },
+        "objectives": { "bridge": { "reinforcements": 2 }, "fuelDump": { "reinforcements": 1 } }
       },
       "enemies": {
         "types": {

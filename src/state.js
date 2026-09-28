@@ -61,6 +61,9 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     reserveDeployed: false,
     // A bonus target's payoff has kept the reserve away (SPEC.md §7, M11b).
     reserveCancelled: false,
+    // Squads called up by a bang and not yet on, and how many posts are taken (M21b).
+    reinforcementsDue: 0,
+    reinforcementsSent: 0,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
     // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
     // explosion floor (§6).

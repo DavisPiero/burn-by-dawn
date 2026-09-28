@@ -365,6 +365,32 @@ export default [
     equal(reserve.facing, reserve.homeFacing, 'facing its guard facing');
   }],
 
+  ['reinforcements (M21b, Hard): a bang calls up its kind\'s squads, who come on next enemy phase and march to the posts in order; none once the exchange is down', async () => {
+    const { map, rules: base, state } = await loadAll();
+    const bridge = state.objectives.find((o) => o.primary);
+    const rules = { ...base, objectives: { ...base.objectives, [bridge.kind]: { ...base.objectives[bridge.kind], reinforcements: 2 } } };
+    const charges = bridge.chargeHexes.map((h) => ({ objectiveId: bridge.id, q: h.q, r: h.r, fuse: 1, unitId: null }));
+    const s = { ...scenario(state, {}), charges };
+    const blown = runFusePhase(s, rules);
+    equal(blown.state.reinforcementsDue, 2, 'two squads called');
+    assert(blown.events.some((e) => e.kind === 'reinforcementsCalled' && e.count === 2), 'said in the report');
+    const on = runEnemyPhase(blown.state, map, rules);
+    const squads = on.state.enemies.filter((e) => e.id.startsWith(map.reinforcements.id));
+    equal(squads.length, 2, 'both come on at once, one per free road hex');
+    equal(on.state.reinforcementsDue, 0, 'none left due');
+    equal(squads.map((e) => `${e.guard.q},${e.guard.r}`).join(' '), map.reinforcements.posts.slice(0, 2).map((p) => p.guardHex.join(',')).join(' '), 'the first two posts, in order');
+    assert(squads.every((e) => e.killable), 'patrols: a gunner can kill them');
+    let later = on.state;
+    for (let i = 0; i < 12; i++) later = { ...runEnemyPhase(later, map, rules).state, turn: later.turn + 1 };
+    const first = later.enemies.find((e) => e.id === squads[0].id);
+    equal(`${first.q},${first.r}`, map.reinforcements.posts[0].guardHex.join(','), 'at its post');
+    equal(first.facing, first.homeFacing, 'facing its post\'s way');
+
+    const quiet = runFusePhase({ ...s, reserveCancelled: true }, rules);
+    equal(quiet.state.reinforcementsDue ?? 0, 0, 'the telephones are down: nobody is called');
+    equal(runFusePhase(s, base).state.reinforcementsDue ?? 0, 0, 'Normal calls none');
+  }],
+
   ['passing a charge: to a man beside him who can carry it, for the giver\'s AP only (M11b)', async () => {
     const { rules, state } = await loadAll();
     const [a, b] = state.units.filter((u) => u.role === 'sapper');

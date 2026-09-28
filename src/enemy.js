@@ -580,6 +580,20 @@ export function runEnemyPhase(state, map, rules) {
     }
   }
 
+  // Squads a bang called up (M21b): on down the road, one to each post in turn.
+  let reinforcementsDue = state.reinforcementsDue ?? 0;
+  let reinforcementsSent = state.reinforcementsSent ?? 0;
+  const help = map.reinforcements;
+  while (help && reinforcementsDue > 0 && reinforcementsSent < help.posts.length) {
+    const placed = deployReinforcement(help, reinforcementsSent, map, living, enemies);
+    if (!placed) break;
+    enemies = [...enemies, placed];
+    reinforcementsSent++;
+    reinforcementsDue--;
+    events.push({ kind: 'reinforcements', label: placed.label, q: placed.q, r: placed.r });
+  }
+  if (!help || reinforcementsSent >= help.posts.length) reinforcementsDue = 0;
+
   const heard = hearNoises(enemies, state.noises, state.contact, state.alert.points, rules);
   enemies = heard.enemies;
   let contact = heard.contact;
@@ -678,7 +692,7 @@ export function runEnemyPhase(state, map, rules) {
   enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false, openToKill: true } : e));
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
-    state: { ...state, enemies, contact, reserveDeployed, alert, bodies, parachutes, noises },
+    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, alert, bodies, parachutes, noises },
     events,
   };
 }
@@ -688,6 +702,16 @@ function deployReserve(map, units, enemies) {
   const taken = blockedFor(units, enemies, null);
   const free = reserve.entryHexes.find(([q, r]) => !taken.has(hexKey(q, r)));
   return free ? makeEnemy(reserve, map.enemyTypes[reserve.type], free) : null;
+}
+
+/** The `index`-th squad of reinforcements, for the post of that number (M21b), or null if the road is blocked. */
+function deployReinforcement(help, index, map, units, enemies) {
+  const taken = blockedFor(units, enemies, null);
+  const free = help.entryHexes.find(([q, r]) => !taken.has(hexKey(q, r)));
+  if (!free) return null;
+  const post = help.posts[index];
+  const placement = { id: `${help.id}-${index + 1}`, label: help.label, type: help.type, facing: help.facing, guardHex: post.guardHex, guardFacing: post.guardFacing };
+  return makeEnemy(placement, map.enemyTypes[help.type], free);
 }
 
 /** Hexes this enemy may not enter: every living trooper and every other enemy. */
