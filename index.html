@@ -317,6 +317,9 @@
     #coord-readout .ro-label { font-size: 12px; font-weight: bold; letter-spacing: 1px; opacity: 0.6; }
     #coord-readout .ro-row.danger .ro-text { color: var(--red); }
     #coord-readout .ro-row.danger .ro-label { color: var(--red); opacity: 1; }
+    /* A use open right now, Stabilise or Pass (M26): in the orders' blue. */
+    #coord-readout .ro-row.prompt .ro-text { color: var(--blue); font-weight: bold; }
+    #coord-readout .ro-row.prompt .ro-label { color: var(--blue); opacity: 1; }
     /* The report as a log (M21b): a bar per turn, a mark per line, the news
        graded by colour, the turns before faded. */
     #report li.rep-turn {
@@ -492,6 +495,15 @@
       color: var(--paper);
       background: var(--blue);
     }
+    /* Stabilise or Pass is open to this man right now (M26): the End turn
+       button's red dots, so it reads as "this one". Still until pressed. */
+    .action.suggest:not(.active) {
+      background-image: var(--dots-red);
+      background-color: var(--paper);
+      border-color: var(--red);
+      box-shadow: 2px 2px 0 var(--red);
+    }
+    .action.suggest:not(.active) .action-key { background: var(--red); }
     .action-key {
       flex: 0 0 auto;
       min-width: 11px;
@@ -665,6 +677,18 @@
       background: var(--ink);
     }
     .slot.leader .slot-num { background: var(--leader); }
+    /* Stabilise or Pass is open to him (M26): its key, in red, on his portrait. */
+    .slot-aid {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      padding: 0 4px;
+      font-weight: bold;
+      font-size: 12px;
+      line-height: 15px;
+      color: var(--paper);
+      background: var(--red);
+    }
     .slot-text {
       flex: 1 1 auto;
       min-width: 0;

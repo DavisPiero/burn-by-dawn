@@ -55,7 +55,9 @@ export function renderRoster(element, state, map, view, handlers) {
     // a name (CLAUDE.md rule 6).
     if (unit.leader) slot.classList.add('leader');
 
-    const portrait = html('div', 'slot-face', [face(unit.id), html('span', 'slot-num', String(i + 1))]);
+    // The key of Stabilise or Pass on his portrait, while either is open to him (M26).
+    const keys = (view.aid ?? []).filter((p) => p.unitId === unit.id).map((p) => AID_KEYS[p.kind]);
+    const portrait = html('div', 'slot-face', [face(unit.id), html('span', 'slot-num', String(i + 1)), ...(keys.length ? [html('span', 'slot-aid', keys.join(' '))] : [])]);
     const effects = view.traitEffectsById.get(unit.id) ?? [];
     const text = html('div', 'slot-text', [
       html('div', 'slot-name', [html('span', null, unit.name), html('span', null, apText(unit))]),
@@ -71,6 +73,9 @@ export function renderRoster(element, state, map, view, handlers) {
     element.appendChild(slot);
   });
 }
+
+/** The action each prompt is for (SPEC.md §4 keys). */
+const AID_KEYS = { stabilise: 'A', pass: 'E' };
 
 function apText(unit) {
   if (unit.dead || unit.out || !unit.landed) return '';
@@ -125,6 +130,7 @@ export function describeUnit(unit, number, state, map, view) {
     if (!unit.everSpotted) lines.push(`Never seen yet: +${view.unseenPoints} score if he gets out unseen.`);
     else lines.push('Seen by the garrison: no stealth bonus for him.');
     if (unit.inContact) lines.push('In contact: if he is seen again at the end of this turn, he is fired on. Break contact: out of sight, hide, or suppress.');
+    lines.push(...aidLines(unit, state, view));
     const chute = state.parachutes.find((p) => p.q === unit.q && p.r === unit.r);
     if (chute) {
       lines.push(`Standing on ${chute.unitId === unit.id ? 'his' : `${chute.name}'s`} parachute: [U] to pack it.`);
@@ -155,6 +161,7 @@ export function describeUnitReadout(unit, number, state, map, view) {
     status.length > 1 && { label: 'STATE', text: status.join(' · ').toLowerCase() },
     unit.inContact && { label: 'CONTACT', text: 'seen again at the turn\'s end, he is fired on: get out of sight, hide [H] or suppress [S]', tone: 'danger' },
     { label: 'WHERE', text: `${view.place(unit)}${terrain ? ` · cover ${terrain.cover}` : ''}` },
+    ...aidLines(unit, state, view).map((text) => ({ label: 'AID', text, tone: 'prompt' })),
     chute && { label: 'CHUTE', text: `on ${chute.unitId === unit.id ? 'his' : `${chute.name}'s`} parachute: [U] to pack it` },
     ...(view.traitEffectsById.get(unit.id) ?? []).map((effect) => ({ label: 'TRAIT', text: `${effect.name}: ${describeEffect(effect)}` })),
     { label: 'SCORE', text: unit.everSpotted ? 'seen already: no stealth bonus' : `never seen: +${view.unseenPoints} if he gets out unseen` },
@@ -167,6 +174,24 @@ export function describeUnitReadout(unit, number, state, map, view) {
     );
   }
   return { head: unit.name, note: `${number} · ${unit.roleLabel}${unit.leader ? ' · leader' : ''}`, stamp, rows };
+}
+
+/**
+ * Stabilise and Pass a charge, wherever one is open to this man or to someone
+ * beside him (M26): what he can do, or what a neighbour can do for him.
+ */
+function aidLines(unit, state, view) {
+  const name = (id) => state.units.find((u) => u.id === id)?.shortName;
+  const lines = [];
+  for (const p of view.aid ?? []) {
+    if (p.unitId === unit.id) lines.push(p.words);
+    else if (p.otherId === unit.id) {
+      lines.push(p.kind === 'stabilise'
+        ? `${name(p.unitId)} is beside him and can stabilise him: select ${name(p.unitId)}, then [A].`
+        : `${name(p.unitId)} is beside him and can pass him a charge: select ${name(p.unitId)}, then [E].`);
+    }
+  }
+  return lines;
 }
 
 const STAMP_TONE = { 'IN CONTACT': 'danger', WOUNDED: 'danger', HIDDEN: 'safe' };

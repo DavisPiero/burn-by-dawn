@@ -927,8 +927,15 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-None in progress. The next milestone is M26, the active-play pass in `ROADMAP.md`: agree
-its scope with the operator and write its row here before building it.
+**M26, the active-play pass** (`ROADMAP.md`), on branch `m26-active-play`. Three pieces,
+no rules changes:
+
+1. **Prompts for Stabilise and Pass a charge**, live while either is valid (§4, §11).
+2. **Dialogue for a kill, being spotted and going to ground** (§5): data in `roster.json`.
+3. **A "hunter" style for the balance bot**, to check that kill-everything is never the
+   best way to play (§10 Balance).
+
+Left for after the operator's next playtest: re-setting the balance targets.
 
 ### Done
 
