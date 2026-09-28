@@ -23,6 +23,9 @@
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
 //
+// PACK=1 has every man pack the parachute he landed on, first thing on turn 1.
+// Without it the bot never packs, so `chutes found` is what packing would save.
+//
 // The `hunter` style (M26) is the exception: it goes looking for kills, to
 // check that kill-everything is never the best way to play. Each hunter walks
 // to a hex behind the nearest killable enemy and knifes it; a gunner closes to
@@ -89,6 +92,7 @@ const OPTS = {
 }[STRATEGY];
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
 const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
+const PACK = process.env.PACK === '1';
 const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
 const HUNTERS = process.env.HUNTERS ?? 'free';
 if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
@@ -227,6 +231,9 @@ function actFor(state, unit, map) {
     for (const e of state.enemies) if (U.checkKnife(unit, e, rules).ok) return S.knifeEnemy(state, unit.id, e.id, rules);
   }
   if (unit.ap <= 0) return null;
+  // PACK=1 (m26b): on turn 1 a man packs the parachute he stands on before
+  // he moves, as a careful player would. Without it the bot never packs.
+  if (PACK && state.turn === 1 && U.checkPackParachute(state.parachutes, unit, rules).ok) return S.packParachute(state, unit.id, rules);
 
   const goals = goalFor(state, unit, map, assign);
   const dist = distanceField(map, goals);
@@ -303,7 +310,7 @@ function play(seed, runId) {
   let state = S.createInitialState(roster, traits, rules, map0, seed);
   state = S.jump(S.chooseDropRun(state, map0, runId), map0, rules);
   let bridgeTurn = null;
-  const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0, reinforced: 0 };
+  const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0, chutes: 0, reinforced: 0 };
   // How the stick came down: hurt in the water, or a bad landing that costs turns.
   const landings = state.report.filter((e) => e.kind === 'landed');
   ev.wet = landings.filter((e) => e.outcome === 'wounds').length;
@@ -316,6 +323,9 @@ function play(seed, runId) {
       if (e.kind === 'wounded') ev.wounded++;
       if (e.kind === 'killed') ev.killed++;
       if (e.kind === 'bodyFound' || e.kind === 'parachuteFound') ev.found++;
+      // Parachutes found on their own: the bot never packs one, so this is how
+      // many of the stick's six a patrol comes across.
+      if (e.kind === 'parachuteFound') ev.chutes++;
       // Squads a bang called up coming on (M21b, Hard).
       if (e.kind === 'reinforcements') ev.reinforced++;
     }
@@ -349,7 +359,7 @@ for (const run of runs) {
     win: `${((100 * count('success')) / N).toFixed(0)}%`, withdrawn: count('withdrawn'), failed: count('failed'), stuck: count('stuck'),
     avgScore: avg((r) => r.score), avgDead: avg((r) => r.dead), avgPeak: avg((r) => r.peak ?? 0),
     avgBridgeTurn: (() => { const down = res.filter((r) => r.bridgeTurn); return down.length ? (down.reduce((n, r) => n + r.bridgeTurn, 0) / down.length).toFixed(2) : '-'; })(), kills: avg((r) => r.kills), secondaries: avg((r) => r.secondaries), reasons,
-    endTurn: avg((r) => r.turn ?? 0), spotted: avg((r) => r.spotted), pinned: avg((r) => r.pinned), wounded: avg((r) => r.wounded), killedMen: avg((r) => r.killed), found: avg((r) => r.found),
+    endTurn: avg((r) => r.turn ?? 0), spotted: avg((r) => r.spotted), pinned: avg((r) => r.pinned), wounded: avg((r) => r.wounded), killedMen: avg((r) => r.killed), found: avg((r) => r.found), chutes: avg((r) => r.chutes),
     landedWet: avg((r) => r.wet), landedBad: avg((r) => r.bad), reinforced: avg((r) => r.reinforced),
     // How often each bonus target went up, as a share of games.
     bonusPct: Object.fromEntries(map0.objectives.filter((o) => !o.primary).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
@@ -362,7 +372,7 @@ if (AS_JSON) {
   console.log(`${STRATEGY}, ${N} seeds per drop run${DATA_OVERRIDE ? `, rules patch ${JSON.stringify(DATA_OVERRIDE)}` : ''}`);
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
-      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  kills ${v.kills}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
+      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
   }
 }

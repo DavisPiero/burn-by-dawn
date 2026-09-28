@@ -4,7 +4,7 @@
 // particular put one there in memory rather than editing map.json.
 
 import {
-  alertIndex, canSee, decayAlert, detectionAt, detectionScore, raiseAlert, runDetection,
+  alertIndex, canSee, decayAlert, detectionAt, detectionScore, huntedContact, raiseAlert, runDetection,
   runEnemyPhase, visibleHexes, walkRoute,
 } from '../src/enemy.js';
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, hexDistance, hexLine, inArc } from '../src/hex.js';
@@ -305,5 +305,18 @@ export default [
     assert(first.state.reserveDeployed, 'flagged');
     const second = runEnemyPhase(first.state, map, rules);
     equal(second.state.enemies.length, first.state.enemies.length, 'not added twice');
+  }],
+
+  // m26b: a sighting below Alarmed left a "?" on its hex for good, though
+  // nobody was going there. Only a contact being hunted is marked.
+  ['the last known contact is hunted only at Alarmed, and only until searched', async () => {
+    const { rules, state } = await loadAll();
+    const contact = { q: 3, r: 5, searched: false };
+    const at = (points, c) => huntedContact({ ...state, contact: c, alert: { ...state.alert, points } }, rules);
+    equal(at(0, contact), null, 'calm');
+    equal(at(rules.alert.states[2].from, contact), null, 'alert');
+    equal(at(rules.alert.states[3].from, contact), contact, 'alarmed');
+    equal(at(rules.alert.states[3].from, { ...contact, searched: true }), null, 'searched');
+    equal(at(rules.alert.states[3].from, null), null, 'none');
   }],
 ];

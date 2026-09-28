@@ -3,7 +3,7 @@
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
 import {
-  alertIndex, decayTarget, detectionAt, hearingRadius, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
+  alertIndex, decayTarget, detectionAt, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
 } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
@@ -201,10 +201,13 @@ function deriveView() {
     .map((e) => routePath(map, e))
     .filter(Boolean);
   // Every hex the garrison is on its way to search, plus the last known
-  // contact while nobody has searched it. One "?" ring each.
+  // contact while it is being hunted. One "?" ring each. Below Alarmed nobody
+  // goes to the last contact, so it is not marked (m26b, the operator's: a
+  // sighting left a "?" under a man, found when he moved off it, for good).
   const searchHexes = new Map();
   for (const e of state.enemies) if (e.investigating && !e.investigating.searched) searchHexes.set(hexKey(e.investigating.q, e.investigating.r), e.investigating);
-  if (state.contact && !state.contact.searched) searchHexes.set(hexKey(state.contact.q, state.contact.r), state.contact);
+  const hunted = huntedContact(state, rules);
+  if (hunted) searchHexes.set(hexKey(hunted.q, hunted.r), hunted);
 
   const exfil = baseMap.exfil.map(([q, r]) => ({ q, r }));
   const view = {
@@ -290,6 +293,7 @@ function deriveView() {
     manReadout: null,
     blastLabel: null,
     noiseLabel: null,
+    searchLabel: null,
     mission: describeMissionState(),
     drop: null,
     dropRuns: null,
@@ -354,6 +358,14 @@ function deriveView() {
     const what = { explosion: 'a bang', stone: 'a thrown stone', gunfire: 'gunfire', silenced: 'a silenced shot', found: 'something found here' }[noise.kind] ?? 'a noise';
     const radius = hearingRadius(noise.kind, state.alert.points, rules);
     view.noiseLabel = `HEARD — ${what}: in the enemy phase, patrols within ${radius} hexes come here to look, and sentries in earshot turn to face it`;
+  }
+  // The "?" ring (m26b): who is on the way to search here.
+  const searchHere = hex && searchHexes.get(hexKey(hex.q, hex.r));
+  if (searchHere) {
+    const coming = state.enemies.filter((e) => e.investigating && !e.investigating.searched && e.investigating.q === hex.q && e.investigating.r === hex.r);
+    view.searchLabel = searchHere === hunted
+      ? 'last known contact: at Alarmed every patrol hunts it until one gets here'
+      : `the ${coming.map((e) => e.label.toLowerCase()).join(' and the ')} ${coming.length === 1 ? 'is' : 'are'} on the way to look here`;
   }
 
   const unit = selectedUnit(state);
@@ -680,9 +692,9 @@ function actionsFor(unit) {
     },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
-      id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
+      id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, rules.actions.knife.fullTurn ? () => 'full turn' : ap),
       help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
-        + `but it leaves a body, and it ends his turn. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
+        + `but it leaves a body, and ${knifeTurnWords()}. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
     },
     { id: 'kill', key: 'K', label: 'Kill', help: `Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed. ${killScoreWords()}`, ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
@@ -691,7 +703,7 @@ function actionsFor(unit) {
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
-    { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
+    { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
@@ -712,6 +724,14 @@ function aidFor(unit, kind) {
 function apLabel(action) {
   const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
   return wholeTurn ? 'all AP' : `${action.apCost} AP`;
+}
+
+// What the knife takes of his turn (m26b): all of it, from a standing start,
+// while `knife.fullTurn` is on; otherwise its AP, and it ends his turn.
+function knifeTurnWords() {
+  return rules.actions.knife.fullTurn
+    ? 'it takes his whole turn: he must start the turn beside it, before he moves'
+    : 'it ends his turn';
 }
 
 // What a kill is worth on the back page (M16), from rules.json scoring.
@@ -762,7 +782,7 @@ function passChargeAction(unit) {
   const check = checks.find((c) => c.ok) ?? checks[0] ?? checkPassCharge(unit, null, rules);
   const reason = check.reason === 'pick a man beside him' ? 'nobody beside him' : check.reason;
   return {
-    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`, apCost: check.cost, suggest: aidFor(unit, 'pass'),
+    id: 'pass', key: 'E', label: 'Pass charge', lines: ['Pass', 'charge'], ok: check.ok, reason, cost: `${check.cost} AP`, apCost: check.cost, suggest: aidFor(unit, 'pass'),
     help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing. Press E, then click the man.`,
   };
 }
@@ -833,7 +853,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const check = checkKnife(unit, hoverEnemy, rules);
       view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
-        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP and the rest of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
+        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${rules.actions.knife.fullTurn ? 'all' : `${check.cost} AP and the rest`} of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
         : `Knife: ${check.reason}.`;
     } else {
       view.targetLabel = `Knife: click an enemy beside ${unit.shortName} that is looking the other way. Esc to cancel.`;

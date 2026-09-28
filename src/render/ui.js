@@ -940,8 +940,12 @@ export function renderActions(element, actions, onAction) {
     // and why not, are the rollover, which has the full name where the
     // button has a short one. Four across, one shorter still, as a name
     // there has a line to itself and no more (M19: it had two).
-    const words = [html('span', 'action-name', (four && action.tight) || action.short || action.label)];
-    if (action.apLabel) words.push(html('span', 'action-cost', action.apLabel));
+    const words = [html('span', 'action-name', action.lines?.[0] ?? ((four && action.tight) || action.short || action.label))];
+    // A name too long for one line (m26b, the operator's: "Pass" alone read
+    // as passing the turn) ends on the cost's line, "charge 2 AP"; four
+    // across there is no room for both, and the rollover keeps the cost.
+    if (action.lines) words.push(html('span', 'action-cost', [html('b', null, action.lines[1]), four ? '' : ` ${action.apLabel}`]));
+    else if (action.apLabel) words.push(html('span', 'action-cost', action.apLabel));
     const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-words', words)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
@@ -1121,6 +1125,7 @@ export function renderReadout(element, state, map, view) {
     { label: 'HIDE', text: view?.hideLabel },
     ...(view?.site?.rows ?? []),
     { label: 'HEARD', text: view?.noiseLabel?.replace(/^HEARD — /, '') },
+    { label: 'SEARCH', text: view?.searchLabel },
     { label: 'ORDERS', text: view?.commandLabel },
   ]);
 }

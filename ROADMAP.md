@@ -68,6 +68,8 @@ turn is spent. That is the spine again, in miniature.
 - Re-set the balance targets for what players now enjoy, e.g. Normal won by most
   people within three tries, and Hard as the real test.
 
+**M26b Review of M26** ✅ built 2026-09-29 on `m26b-review`. The operator's call on the hunter finding: the knife takes a whole turn, and a Wood patrol walks the landing grounds so packing chutes matters (numbers in DECISIONS.md, SPEC §10 Balance); Pick up charge and Pass charge named in full; the "?" search ring fixed. The balance targets still wait for the next playtest.
+
 **Gate to v1.0.** A playtest round with 3–5 people new to the game, with no rules changes
 asked for, the game working in Chrome, Safari and Firefox, and the bot numbers noted.
 Then tag it `v1.0`.
