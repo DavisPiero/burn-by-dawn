@@ -1972,7 +1972,7 @@ try {
   // Sound files dropped into assets/audio replace the placeholders (ART-ASSETS.md §9).
   loadSuppliedSounds();
 
-  // Portrait art dropped into assets/portraits replaces the drawn portraits
+  // Portrait art dropped into assets/portraits replaces the drawn stand-in
   // as each file arrives (ART-ASSETS.md §2). So do a painted title card in
   // assets/title (§7), a painted aircraft in assets/aircraft and a painted
   // blast in assets/markers (§6). The page waits for them (M17), so it opens

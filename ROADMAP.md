@@ -38,16 +38,18 @@ turn is spent. That is the spine again, in miniature.
 
 ## Phase 1 — Lock the base game (target: v1.0)
 
-**M25 Housekeeping (no gameplay change)**
+**M25 Housekeeping (no gameplay change)** ✅ done 2026-09-29
 - Consolidate SPEC.md. It should describe the current rules only, not the history of
   each one ("110°, was 120° until M13b…"). The history already lives in DECISIONS.md.
   Target: well under half its current 1,100 lines. Also fix the out-of-date file
   layout, the out-of-order milestone table and the stale "1 in 3" balance target.
 - (Done at the stocktake: the "Hunter and hunted" pillar is in SPEC.md's opening, and
   the six names are kept, no longer placeholders.)
-- Shrink the images the game downloads (about 5.5 MB per first visit):
-  paper-fibre.png 1.8 MB → JPEG about 0.3 MB; title-card.jpg 750 KB → about 250 KB.
-  This roughly halves load time with no build step.
+- Shrink the images the game downloads (about 5.5 MB per first visit). Done for the
+  title card (750 KB → 200 KB, 1600 × 400). The paper texture (1.8 MB) could not become a
+  JPEG, because all its texture is in its transparency; halving its size would save
+  1.1 MB but visibly soften the grain on a retina screen. The operator's call: keep it at
+  full resolution (it looks too soft halved).
 - Remove dead code: the drawn faces for each named man in theme.js (painted
   portraits replaced them; keep one generic fallback) and anything else only kept as a
   fallback for supplied files.
