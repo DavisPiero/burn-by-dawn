@@ -260,9 +260,12 @@ them are made in code (`src/render/sound.js`) as
 placeholders; a file dropped into `/assets/audio/` with the name below replaces its
 placeholder on the next reload, with no code change. A missing file is fine.
 
-**MP3**, mono, 44.1 kHz, under 200 KB each, trimmed tight (no silence before the sound —
-it is played the moment its event happens). One format only: every current browser plays
-MP3, and a second would double the requests for files that are not there.
+**M4A (AAC) or MP3**, mono, 44.1 kHz, under 200 KB each, trimmed tight (no silence before
+the sound — it is played the moment its event happens). `.m4a` is tried first, then `.mp3`
+(M21c: the supplied set is AAC, which macOS's `afconvert` can write and MP3 it cannot).
+**Since M21c every sound below is supplied**, cut and levelled from free libraries; where
+each came from, its licence and how it was cut are in `assets/audio/README.md`. The table's
+names say `.mp3`; the same name in `.m4a` does as well.
 
 | File | Heard when | Length |
 |---|---|---|

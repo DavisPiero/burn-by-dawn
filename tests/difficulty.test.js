@@ -24,6 +24,11 @@ async function loadAll() {
 }
 
 export default [
+  ['data/version.json names the build the margin shows (M21c: an empty one stopped the game loading)', async () => {
+    const { version } = await loadJson('data/version.json');
+    assert(typeof version === 'string' && /^M\d+[a-z]?$/.test(version), `a milestone like M21c, got ${JSON.stringify(version)}`);
+  }],
+
   ['the default level is the files as they are', async () => {
     const { map, rules, json } = await loadAll();
     const normal = applyDifficulty(levelById(json, json.default), rules, map);

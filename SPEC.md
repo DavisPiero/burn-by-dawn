@@ -1011,12 +1011,12 @@ away and played it again between turns; the operator found the between-turns mus
 enjoyable, and wanted it longer at the start. A new game brings it back from the top;
 sound turned back on before the jump carries on where it faded.
 `M` stops it, and so does **Music off** at the foot of the orders (M21, the operator's:
-music only, for the session). It plays **slower on Easy and quicker on Hard** (M21, the
-operator's): `musicTempo` per level in `data/difficulty.json`, 0.9 and 1.1 of its own
-pace; the made music changes tempo and not pitch, fading across into the next pass when
-the level is picked, while a supplied file can only be played faster or slower, pitch
-and all. Made in code (`src/render/sound.js`, Web Audio) until files are
-supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
+music only, for the session). From M21 to M21c it played slower on Easy and quicker on
+Hard; the operator found it weird and no help, so it is one speed again. Made in code (`src/render/sound.js`, Web Audio) until files are
+supplied in `assets/audio/`, as the art is drawn until pictures are; since M21c every sound
+and the title music are supplied recordings (the operator's pick from free libraries,
+`assets/audio/README.md`), the made ones kept as the fallback. The title music is now a
+recorded war-film main title, "War Epic", looped. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
 turns it off for the session (nothing is stored, CLAUDE.md rule 9).
 
@@ -1051,6 +1051,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M21c** | Recorded sounds for every sound and the title music, from free libraries, cut and levelled to the made ones; the title music back to one speed | Every sound plays its recording with no console error; each is as loud against the others as its made sound was; the music is the same speed on every level |
 | **M21b** | Rules from the eleventh review: Normal's shots hit from 4 hexes; on Hard a bang calls up reinforcements to guard the way out; the boxes under the map in rows and a log | A man spotted 4 hexes off on Normal is hit in the open; on Hard the bridge going up brings two squads on at the road's south end the next enemy phase, marching to their posts, and none come once the exchange is down; the rings, hovers and panel say so; the readout shows a stamp and labelled rows; the report shows a bar per turn and marks per line; the balance bot is re-run (Normal 93/83/74, Hard 47/33/19) |
 | **M21** | Eleventh operator playtest review, no rules change: where to start (PICK A DROP RUN!, SPACE TO JUMP!, the men ringed until one is selected), a man killed floats away, BOOM! in the lettering, the hidden mark clearer, the counter key's blue AP and spacing, music off on the orders, the music's pace by level | Before a run is picked the board says PICK A DROP RUN!, after it SPACE TO JUMP!, and the JUMP! button is red; after the landing the men who can act are ringed until one is clicked; a man killed floats up and fades; the hidden mark reads on a hidden man; the key's BLUE AP pointer ends in blue beside the dot; Music off stops the music and leaves the orders up; Easy's music is slower and Hard's quicker; the orders and key still fit at 1280x800 |
 | **M20** | Tenth operator playtest review, two rules changes (the fuel dump's outer ring wounds rather than kills; hedgerows and orchards block sight): the title music until the jump and not between turns, orchard trees as crowns with stalked apples, the edge wash softened, the canal's name moved, a swim's landing shows its risk, the cut line explained, the alarm "!" explained, RESERVES on the chip | The music plays over the orders and run choice and stops at the jump, never between turns; a man two hexes from the fuel dump's charge is wounded, not killed, and the ring is shaded lighter; the base post sees neither past the hedges on Hard nor into the orchard; aiming a swim shows the far bank's dots; hovering an enemy's "!" says what it saw or found; the balance bot is re-run (Normal 93/85/76, Hard 53/38/23) |

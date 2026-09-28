@@ -7,17 +7,21 @@
 // is told what happened and never looks at a rule.
 //
 // Each sound is made in code with Web Audio until a file is supplied, the way
-// theme.js draws art until a picture is: drop assets/audio/<id>.mp3 in and it
-// is played instead. A missing file is fine.
+// theme.js draws art until a picture is: drop assets/audio/<id>.m4a (or .mp3)
+// in and it is played instead. A missing file is fine. Since M21c every sound
+// has a supplied file (assets/audio/README.md); the made ones stay as the
+// fallback and are what the tests measure.
 //
 // The noise the placeholders are made from comes from a fixed seed through
 // rng.js (CLAUDE.md rule 4), so every rustle is drawn from the same sheet.
 
 import { createRng } from '../rng.js';
 
-// One format, MP3, which every current browser plays: a second would double the
-// requests for files that are not there yet.
-export const SOUND_FILES = { dir: 'assets/audio', types: ['mp3'] };
+// The first type found wins. M4A (AAC) first since M21c: the supplied sounds
+// are cut and levelled here with macOS's afconvert, which writes AAC but not
+// MP3, and every current browser plays both. An MP3 of the same name is still
+// played if there is no M4A.
+export const SOUND_FILES = { dir: 'assets/audio', types: ['m4a', 'mp3'] };
 
 const NOISE_SEED = 1944;
 
@@ -319,9 +323,8 @@ const SYNTHS = {
   // The chords run D minor, D minor, B flat, A: the A at the end leans back
   // to the D, so it loops without an end. Played round and round by
   // startMusic; `v` odd brings in the horn.
-  'music-title': (ctx, destination, at, v, rate = 1) => {
-    // `rate` quickens or slows it without changing its pitch (M21: by level).
-    const beat = MUSIC.beat / rate;
+  'music-title': (ctx, destination, at, v) => {
+    const beat = MUSIC.beat;
     const bar = beat * 4;
     const out = ctx.createGain();
     out.gain.value = 0.9;
@@ -480,7 +483,7 @@ export function playCue(name) {
  * stretch of noise. Exported so the tests can play every cue into an
  * OfflineAudioContext and measure it.
  */
-export function scheduleCue(ctx, destination, name, start, variant = 0, rate = 1) {
+export function scheduleCue(ctx, destination, name, start, variant = 0) {
   for (const [i, [id, gain, delay]] of CUES[name].entries()) {
     const out = ctx.createGain();
     out.gain.value = gain;
@@ -494,7 +497,7 @@ export function scheduleCue(ctx, destination, name, start, variant = 0, rate = 1
       source.start(at);
     } else {
       // Each part of a cue from its own stretch, so the diversion's three crumps differ.
-      SYNTHS[id](ctx, out, at, (variant + i) % 7, rate);
+      SYNTHS[id](ctx, out, at, (variant + i) % 7);
     }
   }
 }
@@ -527,9 +530,6 @@ export function setMuted(on) {
 export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16, lookahead: 2.5, fadeIn: 2, fadeOut: 1.6 };
 
 let music = null;
-// How fast the music goes against its own tempo (M21, the operator's): the
-// level sets it from data/difficulty.json, slower on Easy and quicker on Hard.
-let tempo = 1;
 // Where the music got to when it last faded (M19): the pass of the made music
 // to lay next, or the seconds into a supplied file. Between turns it carries
 // on from there, so the same opening bars are not heard every turn.
@@ -560,8 +560,6 @@ export function startMusic({ resume = false } = {}) {
     playing.source = ctx.createBufferSource();
     playing.source.buffer = buffer;
     playing.source.loop = true;
-    // A supplied file can only be played faster or slower, pitch and all.
-    playing.source.playbackRate.value = tempo;
     playing.source.connect(level);
     playing.offset = resumeAt.seconds % buffer.duration;
     playing.source.start(0, playing.offset);
@@ -570,8 +568,8 @@ export function startMusic({ resume = false } = {}) {
     let next = ctx.currentTime + 0.05;
     const lay = () => {
       while (next < ctx.currentTime + MUSIC.lookahead) {
-        scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2, tempo);
-        next += MUSIC.phrase / tempo;
+        scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2);
+        next += MUSIC.phrase;
         playing.pass++;
       }
     };
@@ -597,24 +595,6 @@ export function stopMusic() {
     source?.stop();
     out.disconnect();
   }, MUSIC.fadeOut * 1000 + 300);
-}
-
-/**
- * Set the music's pace against its own (1 as written). Playing, a supplied
- * file changes speed at once; the made music, whose passes are laid down
- * ahead, fades across into the next pass at the new pace, so the change is
- * heard as the level is picked, not a pass later.
- */
-export function setMusicTempo(rate) {
-  if (!(rate > 0) || rate === tempo) return;
-  tempo = rate;
-  if (!music) return;
-  if (music.source) {
-    music.source.playbackRate.value = rate;
-    return;
-  }
-  stopMusic();
-  startMusic({ resume: true });
 }
 
 export function isMusicPlaying() {
