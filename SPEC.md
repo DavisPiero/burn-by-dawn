@@ -923,6 +923,25 @@ Desktop makes the skeuomorphism work properly, so use the room:
   `data/rules.json`). Any key or click puts it away, and that key does nothing else. A
   box on the card turns the turn updates off for the rest of the session; the orders
   still open on a new game.
+- **Where to start** (M21, from playtesting: a first-timer "spent 3 minutes trying to move
+  the Germans"). Until a run is picked, **PICK A DROP RUN!** is lettered big in the
+  player's red pen among the three runs' names, throbbing gently; once one is picked it
+  reads **SPACE TO JUMP!**, "or click the run again", the JUMP! button on the right page
+  turns danger red and throbs, and the run's rollover ends in red capitals, PRESS SPACE
+  TO JUMP, OR CLICK AGAIN. Once the stick is down, every man who can act wears a red pen
+  ring, with CLICK A MAN TO START over them, until the player first selects a man; after
+  that, never again that game. It is the pen, like the target rings, so it is lettering,
+  not print.
+- **A man killed** (M21, the operator's): his counter floats straight up about a hex and
+  fades away over his body, "floating up to heaven", before the turn's card is laid.
+- **BOOM!** over a blast is set in the comic lettering of the pen notes (M21, the
+  operator's), not the stencil.
+- **The hidden mark** (M21, from playtesting: it was very hard to see) is paper with an ink
+  eye, sits a little higher on the counter, and is printed at full strength while the
+  hidden man's counter is printed faint. The counter key shows the same mark.
+- **The counter key** (M21): BLUE AP's pointer ends in a blue dot just off the blue AP it
+  means, not a red one on top of it; more room above THE GARRISON and under the last line,
+  the card a little taller for it.
 - **Type is set for reading.** The right page is set at 13–15px at 1280x800, never below
   12. It carries only what the player needs every turn: detail goes into rollovers.
 
@@ -962,7 +981,12 @@ choice and fades at the jump (M20, the operator's). M19 faded it as the orders w
 away and played it again between turns; the operator found the between-turns music not
 enjoyable, and wanted it longer at the start. A new game brings it back from the top;
 sound turned back on before the jump carries on where it faded.
-`M` stops it. Made in code (`src/render/sound.js`, Web Audio) until files are
+`M` stops it, and so does **Music off** at the foot of the orders (M21, the operator's:
+music only, for the session). It plays **slower on Easy and quicker on Hard** (M21, the
+operator's): `musicTempo` per level in `data/difficulty.json`, 0.9 and 1.1 of its own
+pace; the made music changes tempo and not pitch, fading across into the next pass when
+the level is picked, while a supplied file can only be played faster or slower, pitch
+and all. Made in code (`src/render/sound.js`, Web Audio) until files are
 supplied in `assets/audio/`, as the art is drawn until pictures are. Silent until the
 player first presses a key or clicks, as browsers require; `M` or the word under the seed
 turns it off for the session (nothing is stored, CLAUDE.md rule 9).
@@ -998,6 +1022,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M21** | Eleventh operator playtest review, no rules change: where to start (PICK A DROP RUN!, SPACE TO JUMP!, the men ringed until one is selected), a man killed floats away, BOOM! in the lettering, the hidden mark clearer, the counter key's blue AP and spacing, music off on the orders, the music's pace by level | Before a run is picked the board says PICK A DROP RUN!, after it SPACE TO JUMP!, and the JUMP! button is red; after the landing the men who can act are ringed until one is clicked; a man killed floats up and fades; the hidden mark reads on a hidden man; the key's BLUE AP pointer ends in blue beside the dot; Music off stops the music and leaves the orders up; Easy's music is slower and Hard's quicker; the orders and key still fit at 1280x800 |
 | **M20** | Tenth operator playtest review, two rules changes (the fuel dump's outer ring wounds rather than kills; hedgerows and orchards block sight): the title music until the jump and not between turns, orchard trees as crowns with stalked apples, the edge wash softened, the canal's name moved, a swim's landing shows its risk, the cut line explained, the alarm "!" explained, RESERVES on the chip | The music plays over the orders and run choice and stops at the jump, never between turns; a man two hexes from the fuel dump's charge is wounded, not killed, and the ring is shaded lighter; the base post sees neither past the hedges on Hard nor into the orchard; aiming a swim shows the far bank's dots; hovering an enemy's "!" says what it saw or found; the balance bot is re-run (Normal 93/85/76, Hard 53/38/23) |
 | **M19** | Ninth operator playtest review, no rules change: the title music fading as the orders are put away and playing between turns, each action's AP on its button, the risk dots explained | The music fades as the orders are cleared, is silent over the run choice and the drop, and plays while the garrison moves and its card is up; every action button shows its AP and all fit at 1280x800, four across included; hovering a seen hex puts a note beside its dots saying what they count |
 | **M18** | Eighth operator playtest review, one scoring change (the bridge 10, bonus targets 4, a man out 2 unhurt or 1 wounded): the exchange's satchels and the wood's name moved, the knife's stain spreading slowly, a stone's landing marked alone, the cut exchange flashing bright and fast, a red cross when aiming aid, the RAF heard first, a lower slower bang, no ring on a bang | The exchange's satchels touch no wire or dashed edge; Bois des Moines clears the north run's line; a knifed enemy's stain spreads from under the body; aiming a stone draws nothing from the man; aiming aid crosses the man under the mouse; no ring stands on a blown target |
