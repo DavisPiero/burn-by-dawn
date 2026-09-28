@@ -154,7 +154,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
 | `objective-rally-point.svg` | 80 x 92 | the exfil barn, from the south-west like the exchange, with the pick-up party's hooded green lamp. *Drawn by code (M8e).* |
-| `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art places this symbol inside itself, beside the building; the church stands whether or not the exchange does. |
+| `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art draws the church inside itself, beside the building (`church()` in theme.js; M25 took out the stand-alone `landmark-church` sprite nothing used); the church stands whether or not the exchange does. |
 
 ---
 
@@ -205,7 +205,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
 | `ui-gutter-note.svg` | 60 x 900 | the margin note in the middle of the margin: scissors, the dashed cut line and "CUT OUT AND PLAY", as outlines (BURN BY DAWN above it is type, M15) |
-| `logo-burn-by-dawn.svg` | 800 x 300 | *Not used since M9b: the results page is headed by the title card. The drawn sprite is kept in theme.js.* |
+| `logo-burn-by-dawn.svg` | 800 x 300 | *Not used since M9b: the results page is headed by the title card. The drawn sprite was taken out of theme.js in M25.* |
 | `title-card.jpg` | 4:1, **2400 x 600** px (no smaller than 1200 x 300) | **JPEG**, not SVG or PNG — see below. The painted picture across the top of the orders card, under the title, and smaller across the top of the results page. Drop into `/assets/title/`. |
 
 **The title card** is the one painted picture outside the portraits, so like them it is

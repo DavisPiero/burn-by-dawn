@@ -1905,7 +1905,6 @@ const SPRITES = {
       ];
     },
   },
-  'landmark-church': { viewBox: '0 0 80 92', draw: () => [svg('g', { transform: 'translate(2 8)' }, church())] },
 
   // --- the drop shown (ART-ASSETS.md §6) ---
   // A C-47 Dakota from above, nose to the east (+x): board.js turns it to the
@@ -2357,24 +2356,6 @@ const SPRITES = {
         fill(skyline, 'ink'),
       ];
     },
-  },
-  'logo-burn-by-dawn': {
-    viewBox: '0 0 800 300',
-    draw: () => [
-      svg('rect', { x: 0, y: 60, width: 800, height: 180, class: toneClass('blue', 35) }),
-      // A canopy and its man, top right.
-      fill('M560 70 Q640 -6 720 70 Q700 60 680 66 Q660 58 640 66 Q620 58 600 66 Q580 60 560 70 Z', 'paper'),
-      line('M560 70 Q640 -6 720 70 Q700 60 680 66 Q660 58 640 66 Q620 58 600 66 Q580 60 560 70 Z', 4),
-      line('M562 70 L636 146 M640 66 L640 146 M718 70 L644 146', 2),
-      fill('M630 146 h20 v24 h-20 Z M634 170 l-6 26 M646 170 l6 26', 'ink'),
-      line('M634 170 l-6 26 M646 170 l6 26', 5),
-      circle(640, 138, 9, 'green'), ring(640, 138, 9, 2),
-      svg('g', { transform: 'translate(5 4)' }, [label('BURN', { x: 290, y: 132, 'font-size': 124, 'font-family': TYPE.slab, class: 'red', 'letter-spacing': 4 })]),
-      label('BURN', { x: 290, y: 132, 'font-size': 124, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 4 }),
-      svg('g', { transform: 'translate(5 4)' }, [label('BY DAWN', { x: 400, y: 244, 'font-size': 124, 'font-family': TYPE.slab, class: 'red', 'letter-spacing': 4 })]),
-      label('BY DAWN', { x: 400, y: 244, 'font-size': 124, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 4 }),
-      label('SIX MEN · ONE BRIDGE · DAWN AT TWENTY', { x: 400, y: 288, 'font-size': 20, class: 'ink', 'letter-spacing': 3 }),
-    ],
   },
 };
 
