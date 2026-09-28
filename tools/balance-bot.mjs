@@ -23,6 +23,16 @@
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
 //
+// The `hunter` style (M26) is the exception: it goes looking for kills, to
+// check that kill-everything is never the best way to play. Each hunter walks
+// to a hex behind the nearest killable enemy and knifes it; a gunner closes to
+// spot range, suppresses, and kills. It is the `careful` mover with the knife
+// on. By default only the men with no charge to place hunt ("free"); HUNTERS=all
+// has every man hunt, sappers too, and the charges wait. They hunt until the
+// primary is down or turn HUNT_TURNS (default 12) has passed, then play the
+// mission as `careful` does. Compare its win %, score and kills with `careful`
+// and `fight`.
+//
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -53,6 +63,7 @@ const M = await mod('src/map.js');
 const SB = await mod('src/sabotage.js');
 const T = await mod('src/traits.js');
 const D = await mod('src/difficulty.js');
+const H = await mod('src/hex.js');
 
 const loadedMap = await M.loadMap();
 const loadedRules = await M.loadJson('data/rules.json');
@@ -74,9 +85,13 @@ const OPTS = {
   naive: { fight: false, secondaries: false, naive: true },
   naivegreedy: { fight: false, secondaries: true, naive: true },
   naivefight: { fight: true, secondaries: true, naive: true },
+  hunter: { fight: true, secondaries: false, hunt: true },
 }[STRATEGY];
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
-const KNIFE = process.env.KNIFE === '1';
+const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
+const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
+const HUNTERS = process.env.HUNTERS ?? 'free';
+if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
 
 function distanceField(map, goals) {
   // Cost to walk from any hex to the nearest goal (entering-cost of hexes on the way).
@@ -108,7 +123,32 @@ function risk(map, state, unit, path, endHidden) {
   return { spotted, shot };
 }
 
+// The hunter's target and where to stand to take it (M26): the nearest killable
+// enemy; for a gunner, the enemy's own hex (the distance field leads him to it
+// and he fires as soon as he is in range); for anyone else, the hexes beside it
+// that it cannot see, where the knife works. Null when there is nothing to hunt.
+function huntGoals(state, unit, map) {
+  const prey = state.enemies.filter((e) => e.killable)
+    .sort((a, b) => H.hexDistance(unit, a) - H.hexDistance(unit, b))[0];
+  if (!prey) return null;
+  if (rules.roles[unit.role].kill) return [{ q: prey.q, r: prey.r }];
+  const behind = H.neighbors(prey.q, prey.r)
+    .filter((h) => M.isInPlay(map, h.q, h.r) && M.enterCost(map, h.q, h.r, null) !== null && !H.inArc(prey, prey.facing, h, prey.arcDegrees));
+  return behind.length ? behind : [{ q: prey.q, r: prey.r }];
+}
+
+// Is this man hunting now? Until the primary is down or HUNT_TURNS is up; the
+// free men by default, everyone with HUNTERS=all.
+function isHunting(state, unit, assign) {
+  if (!OPTS.hunt) return false;
+  const primary = state.objectives.find((o) => o.primary);
+  if (primary.destroyed || state.turn > HUNT_TURNS) return false;
+  if (HUNTERS === 'free' && assign.has(unit.id)) return false;
+  return state.enemies.some((e) => e.killable);
+}
+
 function goalFor(state, unit, map, assign) {
+  if (isHunting(state, unit, assign)) return huntGoals(state, unit, map);
   if (assign.has(unit.id)) return [assign.get(unit.id)];
   // A spare man who can still carry a charge stands by near the primary until
   // its charges are all set, in case a carrier falls.
@@ -164,7 +204,8 @@ function actFor(state, unit, map) {
   const assign = assignCharges(state, map);
   // At his goal: place or cut.
   const goal = assign.get(unit.id);
-  if (goal && goal.q === unit.q && goal.r === unit.r) {
+  const hunting = isHunting(state, unit, assign);
+  if (goal && !hunting && goal.q === unit.q && goal.r === unit.r) {
     if (goal.pickUp) {
       if (U.checkPickUpCharge(state.droppedCharges, unit, rules).ok) return S.pickUpCharge(state, unit.id, rules);
     } else if (goal.cut) {
@@ -175,9 +216,9 @@ function actFor(state, unit, map) {
   }
   if (OPTS.fight && rules.roles[unit.role].kill) {
     for (const e of state.enemies) if (U.checkKill(map, unit, e, rules).ok) return S.killEnemy(state, unit.id, e.id, map, rules);
-    // Suppress whoever has one of ours in its sights.
+    // Suppress whoever has one of ours in its sights; a hunter, anything he could then kill.
     for (const e of state.enemies) {
-      if (e.watching && U.checkSuppress(map, unit, e, rules).ok) return S.suppressEnemy(state, unit.id, e.id, map, rules);
+      if ((e.watching || (hunting && e.killable)) && U.checkSuppress(map, unit, e, rules).ok) return S.suppressEnemy(state, unit.id, e.id, map, rules);
     }
   }
   // KNIFE=1 (M12b): any man beside an enemy that cannot see him knifes it,
@@ -215,7 +256,7 @@ function actFor(state, unit, map) {
       const r = risk(map, state, unit, path, hide || (c === here && unit.hidden));
       let d = dist.get(M.hexKey(c.q, c.r)) ?? 999;
       if (goals[0]?.standby) d = Math.max(0, d - 4); // near enough: wait in cover
-      const exfil = SB.isExfil(map, c) && !assign.has(unit.id);
+      const exfil = SB.isExfil(map, c) && !assign.has(unit.id) && !hunting;
       let score = d * 10;
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
       const left = rules.turnLimit - state.turn;
