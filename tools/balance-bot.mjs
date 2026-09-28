@@ -23,6 +23,9 @@
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
 //
+// PACK=1 has every man pack the parachute he landed on, first thing on turn 1.
+// Without it the bot never packs, so `chutes found` is what packing would save.
+//
 // The `hunter` style (M26) is the exception: it goes looking for kills, to
 // check that kill-everything is never the best way to play. Each hunter walks
 // to a hex behind the nearest killable enemy and knifes it; a gunner closes to
@@ -89,6 +92,7 @@ const OPTS = {
 }[STRATEGY];
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
 const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
+const PACK = process.env.PACK === '1';
 const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
 const HUNTERS = process.env.HUNTERS ?? 'free';
 if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
@@ -227,6 +231,9 @@ function actFor(state, unit, map) {
     for (const e of state.enemies) if (U.checkKnife(unit, e, rules).ok) return S.knifeEnemy(state, unit.id, e.id, rules);
   }
   if (unit.ap <= 0) return null;
+  // PACK=1 (m26b): on turn 1 a man packs the parachute he stands on before
+  // he moves, as a careful player would. Without it the bot never packs.
+  if (PACK && state.turn === 1 && U.checkPackParachute(state.parachutes, unit, rules).ok) return S.packParachute(state, unit.id, rules);
 
   const goals = goalFor(state, unit, map, assign);
   const dist = distanceField(map, goals);

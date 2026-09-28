@@ -692,9 +692,9 @@ function actionsFor(unit) {
     },
     { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
-      id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, ap),
+      id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, rules.actions.knife.fullTurn ? () => 'full turn' : ap),
       help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
-        + `but it leaves a body, and it ends his turn. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
+        + `but it leaves a body, and ${knifeTurnWords()}. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
     },
     { id: 'kill', key: 'K', label: 'Kill', help: `Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed. ${killScoreWords()}`, ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
@@ -724,6 +724,14 @@ function aidFor(unit, kind) {
 function apLabel(action) {
   const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
   return wholeTurn ? 'all AP' : `${action.apCost} AP`;
+}
+
+// What the knife takes of his turn (m26b): all of it, from a standing start,
+// while `knife.fullTurn` is on; otherwise its AP, and it ends his turn.
+function knifeTurnWords() {
+  return rules.actions.knife.fullTurn
+    ? 'it takes his whole turn: he must start the turn beside it, before he moves'
+    : 'it ends his turn';
 }
 
 // What a kill is worth on the back page (M16), from rules.json scoring.
@@ -845,7 +853,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const check = checkKnife(unit, hoverEnemy, rules);
       view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
-        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP and the rest of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
+        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${rules.actions.knife.fullTurn ? 'all' : `${check.cost} AP and the rest`} of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
         : `Knife: ${check.reason}.`;
     } else {
       view.targetLabel = `Knife: click an enemy beside ${unit.shortName} that is looking the other way. Esc to cancel.`;

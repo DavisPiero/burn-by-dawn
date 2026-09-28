@@ -182,11 +182,13 @@ gives the full cost and, when it cannot be used, why not.
   to gunfire). So a kill from cold costs +3 alert, leaving the garrison Suspicious; the
   body, once found, is the step to Alert. There are no dice: a legal kill always kills.
   The enemy is gone, stops holding anyone in contact, and leaves a **body** (§5 Wounds).
-- **Knife** (any trooper) — 2 AP, and **ends his turn**. The target must be **beside him**
-  and **unable to see him** (he is outside its arc), and he must **not be in contact**.
-  It is silent — **no alert, no noise** — but it leaves a **body**, found like any other.
-  The turn card hints at it when a man starts his turn behind an enemy. `knife.fullTurn`
-  makes it a full turn instead, a lever if it proves too strong.
+- **Knife** (any trooper) — a **full turn**: he must not have spent any AP yet. The
+  target must be **beside him** and **unable to see him** (he is outside its arc), and he
+  must **not be in contact**. So he has to end a turn behind an enemy and still be there,
+  unseen, when his next turn starts: the risk is the enemy phase in between. It is silent
+  — **no alert, no noise** — but it leaves a **body**, found like any other. The turn
+  card hints at it when a man starts his turn behind an enemy. (`knife.fullTurn` false
+  makes it 2 AP that ends his turn instead.)
 - An enemy type marked `killable: false` in `enemies.json` (the reserve squad, §6 Exfil
   watched) can be suppressed but never killed or knifed. It is never outlined as a target,
   and its hover and the Kill and Knife buttons say so.
@@ -550,20 +552,24 @@ The map supports **three viable approaches**, each with a distinct cost:
 
 - **Canal towpath** — heavy cover, slow, marsh, but runs directly under the bridge.
 - **Hedgerow lanes** — the middle path. Balanced, crosses two patrol routes.
-- **Wood and ridge line** — fast and good spotting, and the quiet one: the base patrol
-  walks the fields south of the fuel dump, not up onto the ridge.
+- **Wood and ridge line** — fast and good spotting: the base patrol walks the fields
+  south of the fuel dump, not up onto the ridge, but the wood patrol walks the wood.
 
 A **Road patrol** walks the road that runs north–south through the middle of the board,
 from the south fields to the north edge and back. A **lane** runs east from the road's
 south end to the lock, so a man swimming back near the exfil lands on firm ground; it is
 not a crossing (the lock meets only the west bank).
 
-Seven enemies in all: the bridge post and the base post (sentries), and the bridge,
-lanes, village, base and road patrols.
+A **Wood patrol** walks up from the field below the fuel dump, through the Bois des
+Moines, and east along the north edge, and back: it reaches the landing grounds of the
+west and north runs a few turns after the drop, so a parachute left lying there is found.
+
+Eight enemies in all: the bridge post and the base post (sentries), and the bridge,
+lanes, village, base, road and wood patrols.
 
 No route reaches all three objectives efficiently. The drop runs are told apart by what
 they are good for, one word each (`tag` in `map.json`), shown with the run's name:
-**West · QUIET** (under cover the whole way, the fewest sightings, the longest walk),
+**West · QUIET** (under cover the whole way, the longest walk),
 **North · STEADY** (soft landings, the most reliable), **East · FAST** (down closest to the
 bridge; its description says it is tricky, as it is the hardest run for a first-timer).
 
@@ -667,16 +673,19 @@ beside the seed and on the back page, and `?difficulty=easy|hard` picks it.
 The balance bot (`node tools/balance-bot.mjs 300 naive`, with `KNIFE=1`) plays whole
 missions through the rule functions. Its win rates show which way a change pushes, not
 the absolute answer; it never calls the diversion or stabilises, and only its `hunter`
-style goes looking for kills, so a person does better. Current baselines, win % west / north / east: **Easy 100 / 100 / 97,
-Normal 93 / 83 / 88, Hard 47 / 33 / 38**. Easy and Normal are meant to be kind to casual
-players; Hard is the real test. Any rules, map or enemy change is re-run against these and
+style goes looking for kills, and it packs no parachutes unless run with `PACK=1`, so a
+person does better. Current baselines, win % west / north / east: **Easy 99 / 100 / 97,
+Normal 80 / 82 / 88, Hard 24 / 36 / 36**; packing every chute on turn 1 (`PACK=1`):
+Easy 100 / 99 / 97, Normal 90 / 85 / 94, Hard 41 / 32 / 33. Easy and Normal are meant to
+be kind to casual players; Hard is the real test. Any rules, map or enemy change is re-run against these and
 the shift logged in DECISIONS.md.
 
 The `hunter` style (`node tools/balance-bot.mjs 300 hunter`) walks each man behind the
 nearest killable enemy to knife it, and closes a gunner to suppress and kill. By default
 only the men with no charge to place hunt; `HUNTERS=all` sends everyone, until the bridge
 is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-everything
-must not be the best way to play. Its numbers, against the baselines, are in DECISIONS.md.
+must not be the best way to play, and with the whole-turn knife it is not (Normal
+72 / 77 / 73, Hard 23 / 18 / 22). Its numbers, against the baselines, are in DECISIONS.md.
 
 ---
 
@@ -705,7 +714,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M25", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M26b", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -949,15 +958,15 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M26, the active-play pass** (`ROADMAP.md`), on branch `m26-active-play`. Three pieces,
-no rules changes, all built:
+**M26b, the operator's review of M26**, on branch `m26b-review`:
 
-1. **Prompts for Stabilise and Pass a charge**, live while either is valid (§4).
-2. **Dialogue for a kill, being spotted and going to ground** (§5): data in `roster.json`.
-3. **A "hunter" style for the balance bot** (§10 Balance). It found that clearing the
-   garrison first *is* the best way to play (DECISIONS.md), which is the operator's call.
+1. **Killing costs a turn**: the knife is a full turn (§4), the operator's answer to the
+   M26 finding that clearing the garrison first was the best way to play.
+2. **The Wood patrol** (§8) walks the landing grounds, so packing a parachute matters.
+3. **Pick up charge** and **Pass charge** named in full on their buttons.
+4. The "?" search ring only where someone is going (§11), with a hover.
 
-Left for after that call and the operator's next playtest: re-setting the balance targets.
+Left for the operator's next playtest: re-setting the balance targets.
 
 ### Done
 
@@ -989,3 +998,4 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M23 | Playtest review; the music bug; the readout in one column; a man's particulars on hover |
 | M24 | Playtest review; the run tabs re-placed; the drop's lettering reworded and still; a move made silent |
 | M25 | Housekeeping: this spec cut to current rules; a lighter title card; the drawn faces and unused sprites out; the map named |
+| M26 | Active play: prompts for Stabilise and Pass a charge, lines for a kill, a sighting and hiding, the bot's hunter style |

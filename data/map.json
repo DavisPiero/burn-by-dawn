@@ -7,7 +7,7 @@
   "hexSize": 46,
   "_dropRuns": "SPEC.md \u00a79. The three drop runs, one per approach of \u00a78, all landing west of the canal so nobody starts on the wrong side of the bridge. `from` and `to` are the flight line as drawn; the men jump in roster order from its `jumpAt`-th hex, one every `spacing` hexes, so a seventh man jumps one further along and needs no edit here. `tag` is one word for what the run is good for, shown beside its name. `wind` is the way it blows (NW NE E SE SW W): scatter leans that way (data/rules.json landing). West drops on the wood and ridge line, north on the hedgerow lanes, east on the fields north-west of the bridge, flying in off the canal and away from it (two hexes further west since M22, the operator's: on Hard it won 19% to West's 47%). `labelAlong` and `windAlong` (optional, 0 to 1, art only) are how far along the line its name tab and its wind arrow sit, if not at the defaults (0.3 and halfway): the east run's are lower so they clear the north run's (M12). `labelAlong` (0 to 1) is how far along its line a run's name tab sits, and `labelNudge` (M24, art only) moves the tab off the line by [x, y] hex radii: since the East run moved west (M22) the North tab sits between the West and East lines, and the West and East tabs level with each other and a little further apart.",
   "dropRuns": [
-    { "id": "west", "label": "West run", "tag": "quiet", "description": "Wood and ridge line: under cover the whole way and the fewest eyes on you, but the longest walk to the bridge, and trees make for bad landings.",
+    { "id": "west", "label": "West run", "tag": "quiet", "description": "Wood and ridge line: under cover the whole way, but the longest walk to the bridge, and trees make for bad landings. A patrol walks the wood: pack your chutes.",
       "from": [2, 0], "to": [-4, 12], "jumpAt": 0, "spacing": 1, "wind": "E", "labelAlong": 0.2917, "labelNudge": [-0.3, 0] },
     { "id": "north", "label": "North run", "tag": "steady", "description": "Hedgerow lanes: the middle way. Soft landings in the hedges and the most reliable run, with two patrol routes to cross.",
       "from": [0, 1], "to": [17, 1], "jumpAt": 3, "spacing": 1, "wind": "SE", "labelAlong": 0.22 },
@@ -15,7 +15,7 @@
       "from": [7, 0], "to": [0, 7], "jumpAt": 0, "spacing": 1, "wind": "NW", "labelAlong": 0.5, "windAlong": 0.79, "labelNudge": [0.35, 0] }
   ],
 
-  "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes. The base patrol walks the fields south of the fuel dump, not up onto the ridge: when it did, it met the west run coming down the ridge and made that run the worst of the three for no gain (M9c).",
+  "_enemies": "SPEC.md §6 and §8. A post has `at` and never moves; a patrol has `route`, starts on its first waypoint and walks the rest, `loop` true going round and false walking back. `type` is an id in data/enemies.json. `facing` is where it looks at the start, one of NW NE E SE SW W (pointy-top hexes have no straight north). The two track patrols are the two routes the hedgerow lanes cross (§8); the south-west post and its patrol are the patrol base the wood and ridge line passes. The base patrol walks the fields south of the fuel dump, not up onto the ridge: when it did, it met the west run coming down the ridge and made that run the worst of the three for no gain (M9c). The wood patrol (m26b, the operator's: too few patrols came near the landing grounds for packing a parachute to matter) starts in the field below the fuel dump (out of sight of the west run's jump points), walks north past it through the Bois des Moines and east along the north edge, and back: it reaches the west and north runs' chutes a few turns after the drop, so a man who packs his loses 1 AP and a man who does not is found out.",
   "enemies": [
     { "id": "post-bridge", "label": "Bridge post", "type": "sentry", "at": [12, 4], "facing": "W" },
     { "id": "post-base", "label": "Base post", "type": "sentry", "at": [-4, 10], "facing": "NE" },
@@ -27,7 +27,8 @@
       "route": [[12, 2], [16, 1], [15, 3], [13, 4]] },
     { "id": "patrol-base", "label": "Base patrol", "type": "patrol", "facing": "NE", "loop": false,
       "route": [[-3, 9], [-1, 10]] },
-    { "id": "patrol-road", "label": "Road patrol", "type": "patrol", "facing": "NE", "loop": false, "route": [[4, 11], [6, 7], [6, 5], [8, 0]] }
+    { "id": "patrol-road", "label": "Road patrol", "type": "patrol", "facing": "NE", "loop": false, "route": [[4, 11], [6, 7], [6, 5], [8, 0]] },
+    { "id": "patrol-wood", "label": "Wood patrol", "type": "patrol", "facing": "NE", "loop": false, "route": [[-2, 8], [-1, 6], [0, 1], [4, 0]] }
   ],
 
   "_reserve": "The reserve squad (SPEC.md §6). It enters once, on the first free entryHexes hex, the first enemy phase the alert is at Alarmed. The road leaves the map at the north edge, so that is where it comes in. It does not hunt: it marches to guardHex and stands there as a sentry facing guardFacing, toward the exfil. A man is out the moment he ends a move on exfil, so the guard watches the last stretch before it, not the exfil hexes themselves.",
