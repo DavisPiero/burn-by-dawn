@@ -190,7 +190,7 @@ export function placeName(map, objectives, exfil, hex) {
   const ground = terrain ? terrain.label.toLowerCase() : 'ground';
   let near = null;
   let best = Infinity;
-  const landmarks = [...objectives.map((o) => ({ label: o.label.toLowerCase(), hexes: o.hexes }))];
+  const landmarks = [...objectives.map((o) => ({ label: o.label, hexes: o.hexes }))];
   if (exfil.length) landmarks.push({ label: 'exfil', hexes: exfil });
   // Named places are proper names: no "the", and their own case. An
   // objective or the exfil wins a tie, being listed first.
@@ -431,7 +431,8 @@ function briefChoice(choice) {
 export function renderReport(element, state, place, onLocate, earlier = []) {
   element.replaceChildren();
   if (state.phase === 'drop') {
-    element.appendChild(html('li', null, 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
+    // A plain line, not a log line with a mark (M22: M21b's mark column took it, a word to a line).
+    element.appendChild(html('li', 'rep-note', 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
     return;
   }
   // A log (M21b, the operator's: it read as a wall of text): a bar for each
@@ -498,7 +499,7 @@ export function describeEvent(event, place) {
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
     case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for the way to the exfil.`;
-    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements after the ${event.label.toLowerCase()}: on next turn.`;
+    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements after the ${event.label}: on next turn.`;
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
@@ -507,15 +508,15 @@ export function describeEvent(event, place) {
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
     case 'landed': return describeLanding(event, at());
-    case 'explosion': return event.destroyed ? `BOOM — the ${event.label.toLowerCase()} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label.toLowerCase()}. It still stands.`;
-    case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label.toLowerCase()} — killed.`;
-    case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label.toLowerCase()} — wounded.`;
-    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label.toLowerCase()} and dies.`;
+    case 'explosion': return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;
+    case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label} — killed.`;
+    case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label} — wounded.`;
+    case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label} and dies.`;
     case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
     case 'noReserve': return event.deployed
-      ? `With the ${event.label.toLowerCase()} gone, the garrison can call up nobody more — but the reserve is already out.`
-      : `With the ${event.label.toLowerCase()} gone, the garrison cannot call up its reserve squad.`;
-    case 'withdrawn': return `The ${event.enemyLabel.toLowerCase()} leaves the field to deal with the ${event.label.toLowerCase()}.`;
+      ? `With the ${event.label} gone, the garrison can call up nobody more — but the reserve is already out.`
+      : `With the ${event.label} gone, the garrison cannot call up its reserve squad.`;
+    case 'withdrawn': return `The ${event.enemyLabel.toLowerCase()} leaves the field to deal with the ${event.label}.`;
     default: return event.kind;
   }
 }

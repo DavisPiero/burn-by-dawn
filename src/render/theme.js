@@ -556,6 +556,15 @@ export const ENEMY = {
   facingSize: 7,
   // Next turn's facing, when it differs (M13b): hollow, dashed in red.
   nextFill: PALETTE.paper,
+  // Hovered (M22, the operator's: the solid red frame of a selected man made
+  // an enemy look selectable): a dashed red ring a little off the chip, on a
+  // paper casing so the dashes read over the map.
+  hoverStroke: PALETTE.red,
+  hoverWidth: 2.5,
+  hoverDash: '5 4',
+  hoverCasing: PALETTE.paper,
+  hoverCasingWidth: 5.5,
+  hoverGap: 4,
 };
 
 export const VISION = {
@@ -909,10 +918,12 @@ export const CUE = {
   halo: PALETTE.paper,
   size: 54,
   subSize: 25,
-  nudge: { x: 0, y: -18 }, // from the middle of the three runs' names
-  pulseMs: 1400,
+  nudge: { x: 0, y: -44 }, // from the middle of the three runs' names (−18 until M22: it sat on the west and east tabs)
+  pulseMs: 2800, // half the speed of M21's 1400 (M22, the operator's)
+  pulseScale: 1.035, // half M21's swell of 1.07
   ringRadius: 40, // round a counter's middle, in board units
   ringWidth: 4.5,
+  ringOpacity: 0.5, // M22, the operator's: the rings at full strength were loud
   noteSize: 22,
 };
 
@@ -1023,8 +1034,13 @@ const ring = (cx, cy, r, width = 2, cls = 'stroke-ink') => svg('circle', { cx, c
  * BOOM over the blast, in the comic lettering of the pen notes on the map
  * (M21, the operator's: the stencil read as print, not as a bang).
  */
+// BOOM! in ink with a paper outline, so it reads over the painted blast, and
+// tipped up off the level like a comic's sound effect (M22, the operator's).
 function boomLabel() {
-  return label('BOOM!', { x: 100, y: 104, 'font-size': 40, 'font-family': TYPE.lettering, class: 'ink', 'letter-spacing': 1 });
+  return label('BOOM!', {
+    x: 100, y: 104, 'font-size': 40, 'font-family': TYPE.lettering, class: 'ink stroke-paper', 'letter-spacing': 1,
+    'stroke-width': 5, 'stroke-linejoin': 'round', 'paint-order': 'stroke', transform: 'rotate(-16 100 104)',
+  });
 }
 
 function label(content, attrs) {
@@ -2570,7 +2586,7 @@ function printCss() {
     '@keyframes nd-blast{0%{transform:scale(0.35)}12%{transform:scale(0.75)}24%{transform:scale(1)}85%{opacity:1;transform:scale(1)}100%{opacity:0}}',
     `.nd-blast{animation:nd-blast ${MOTION.blastMs}ms step-end both;transform-box:fill-box;transform-origin:center}`,
     // The where-to-start cues throb gently, so the eye goes to them (M21).
-    '@keyframes nd-throb{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}',
+    `@keyframes nd-throb{0%,100%{transform:scale(1)}50%{transform:scale(${CUE.pulseScale})}}`,
     `.nd-throb{animation:nd-throb ${CUE.pulseMs}ms ease-in-out infinite;transform-box:fill-box;transform-origin:center}`,
   ];
   return [...colours, ...tones, misregister, ...motion].join('\n');

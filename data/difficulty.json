@@ -29,7 +29,7 @@
     {
       "id": "hard",
       "label": "Hard",
-      "summary": "Four men must get out, every sentry and patrol sees a hex further and wider, and blowing a target calls up reinforcements to guard the way out: two squads for the bridge, one for the fuel dump, none once the telephone exchange is down.",
+      "summary": "Four men must get out, every sentry and patrol sees a hex further and wider, and blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, none once the Telephone Exchange is down.",
       "rules": {
         "mission": { "minimumOut": 4 },
         "objectives": { "bridge": { "reinforcements": 2 }, "fuelDump": { "reinforcements": 1 } }

@@ -294,6 +294,7 @@
     #report li + li.rep-turn { margin-top: 6px; }
     #report li:not(.rep-turn) { display: grid; grid-template-columns: 16px 1fr; column-gap: 5px; align-items: start; }
     #report li.rep-none { display: block; color: rgba(26, 26, 24, 0.62); }
+    #report li.rep-note { display: block; }
     #report .rep-mark { width: 16px; height: 16px; margin-top: 1px; }
     #report .rep-dot { fill: var(--ink); opacity: 0.5; }
     #report li.rep-grave .rep-text { color: var(--red); font-weight: bold; }
@@ -768,9 +769,11 @@
       background-image: radial-gradient(circle, rgba(10, 8, 5, 0.38) 0.9px, transparent 1.5px);
       background-size: 5px 5px;
     }
-    /* The orders: wider than a turn card, with more air between its parts (M13). */
+    /* The orders: wider than a turn card, with more air between its parts (M13).
+       800 since M22 (720 until then), the operator's: the job's line ends
+       at the EXFIL and the bonus paragraph at "before dawn!" unbroken. */
     #briefing-backdrop.orders #briefing {
-      width: min(720px, 94%);
+      width: min(800px, 94%);
       position: relative;
       box-shadow: 6px 6px 0 var(--ink), 0 16px 70px 12px rgba(0, 0, 0, 0.6);
     }
@@ -869,7 +872,7 @@
        them. --key-w, --orders-w and --orders-gap are the three sizes. */
     #briefing-backdrop.with-key {
       --key-w: 344px;
-      --orders-w: min(720px, 94%);
+      --orders-w: min(800px, 94%);
       --orders-gap: 16px;
       --orders-left: max(12px, calc((100% - var(--key-w) / 2 - var(--orders-gap) - var(--orders-w)) / 2));
       justify-content: flex-start;
@@ -991,6 +994,11 @@
     #briefing .brief-foot label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
     /* The palette's army green, not the browser's blue. */
     #briefing .brief-foot input { margin: 0; accent-color: var(--green); }
+    /* Music off on the orders (M22, the operator's: a near miss on the small
+       box carried on and put the orders away): a bigger box, and the label
+       padded out so the click lands on it. */
+    #briefing-backdrop.orders #briefing .brief-foot label { padding: 4px 14px 4px 0; font-size: 14px; font-weight: bold; }
+    #briefing-backdrop.orders #briefing .brief-foot input { width: 20px; height: 20px; }
     #briefing .brief-go {
       font-weight: bold;
       letter-spacing: 1px;

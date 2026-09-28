@@ -207,7 +207,7 @@ export function checkCutLine(state, unit, rules) {
   const objective = objectiveForChargeHex(state.objectives, unit);
   if (!objective || !kindOf(objective, rules).cutLine) {
     const cuttable = state.objectives.find((o) => kindOf(o, rules).cutLine);
-    return result(cost, `not on a charge point of ${cuttable ? `the ${cuttable.label.toLowerCase()}` : 'anything he can cut'}`);
+    return result(cost, `not on a charge point of ${cuttable ? `the ${cuttable.label}` : 'anything he can cut'}`);
   }
   if (objective.destroyed) return result(cost, `${objective.label} is already destroyed`);
   if (state.charges.some((c) => c.objectiveId === objective.id)) return result(cost, 'a charge is already set on it');
@@ -272,7 +272,7 @@ export function checkSwim(map, state, unit, target, rules) {
   const cost = unit ? unit.apMax : 0;
   const needed = rules.actions.swim.requiresDestroyed;
   if (needed && !state.objectives.some((o) => o.kind === needed && o.destroyed)) {
-    return result(cost, `only once the ${rules.objectives[needed].label.toLowerCase()} is down`);
+    return result(cost, `only once the ${rules.objectives[needed].label} is down`);
   }
   const busy = fullTurn(unit);
   if (busy) return result(cost, busy);

@@ -491,7 +491,7 @@ function alertSources() {
 }
 
 function primaryLabel() {
-  return state.objectives.find((o) => o.primary).label.toLowerCase();
+  return state.objectives.find((o) => o.primary).label;
 }
 
 /**
@@ -706,7 +706,7 @@ function hideEffect(unit) {
 // what it gives over a charge, from rules.json (the kinds a scout can cut).
 function cutLineHelp() {
   const kind = Object.values(rules.objectives).find((k) => k.cutLine);
-  const target = kind ? `the ${kind.label.toLowerCase()}` : 'the target';
+  const target = kind ? `the ${kind.label}` : 'the target';
   const payoff = kind ? payoffWords(kind) : null;
   return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, quietly. `
     + `No noise, so nobody comes to look, though the garrison notices its telephones go dead (alert +${rules.alert.lineCut}); no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
@@ -1429,7 +1429,7 @@ function describeBriefing(which, view) {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
       const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
-      return `${o.label.toLowerCase()} ${needed}, ${where}`;
+      return `${o.label} ${needed}, ${where}`;
     }).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
@@ -1445,7 +1445,9 @@ function describeBriefing(which, view) {
         // The opening on a line of its own (M13), then the job.
         [
           'Tonight six men are to drop behind enemy lines.',
-          `Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL. Dawn comes at the end of turn ${rules.turnLimit}.`,
+          // Dawn on a line of its own (M22, the operator's).
+          `Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
+          `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
         ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (+${rules.scoring.secondary}pts${bonus.length === 1 ? '' : ' ea'}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
       ],
@@ -1460,7 +1462,7 @@ function describeBriefing(which, view) {
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
-            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label.toLowerCase()}’s lines [X]: a whole turn, and quiet.` : ''),
+            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
           'Hover anything for detail; KEYBOARD lists every key, and ? brings this card back.',
         ],
       }],
@@ -1655,9 +1657,12 @@ function handleDropKey(event) {
   render();
 }
 
-/** ? on any layout, or shift and the slash key where ? is not a key of its own. */
+/**
+ * ? on any layout, or the slash key with or without shift (M22, the
+ * operator's: / is the same key, unshifted). Not in the KEYBOARD list.
+ */
 function isHelpKey(event) {
-  return event.key === '?' || (event.code === 'Slash' && event.shiftKey);
+  return event.key === '?' || event.key === '/' || event.code === 'Slash';
 }
 
 // SPEC.md §4: 1–6 select, Tab cycle, Space end turn, Esc cancel, H hold,
@@ -1917,6 +1922,9 @@ try {
   window.addEventListener('keydown', handleKey);
   // Browsers keep sound off until the page has been pressed or clicked.
   window.addEventListener('pointerdown', unlockSound);
+  // `?sound=off` starts the game muted (M22, the operator's: a test run in
+  // the browser played the music over their work). M still turns it on.
+  if (new URLSearchParams(window.location.search).get('sound') === 'off') setMuted(true);
   soundToggle.addEventListener('click', () => {
     soundToggle.blur();
     toggleSound();
