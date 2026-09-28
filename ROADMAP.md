@@ -55,7 +55,7 @@ turn is spent. That is the spine again, in miniature.
   fallback for supplied files.
 - Rename the map from "Night Drop — first pass".
 
-**M26 Active-play pass (pick from playtest evidence, not all of these)**
+**M26 Active-play pass** ✅ built 2026-09-29 on `m26-active-play`, not yet merged. Done: the prompts, the dialogue and the hunter bot style (below); the balance targets wait for the operator's call on the hunter finding (DECISIONS.md, SPEC §10 Balance) and the next playtest. Kept as written for the record:
 - More dialogue: lines for a kill, being spotted and hiding. Data only, and the six men
   are the heart of the game.
 - A "hunter" balance-bot style that goes looking for kills, to check that

@@ -237,6 +237,14 @@ to be casual while still being strategic.
 - **Hover an enemy**: its vision arc and patrol route, and what it will see next turn.
 - **Hover an objective**: what it needs (charges, fuse, blast radius) and what it pays.
 - **Hover one of our men**: his particulars in the readout (§11).
+- **A prompt while Stabilise or Pass a charge is open.** Both are used only now and then
+  and were hard to find, so while a man could take either right now (the same check the
+  button makes: for Stabilise a wounded man beside him and his whole pool unspent; for
+  Pass a man beside him with room, while the primary still wants a charge) it is pointed
+  out four ways: the button is set in the End turn button's red dots; his roster portrait
+  wears the action's key in red; the readout says what to press, in the orders' blue; and
+  the wounded man's, or the taker's, hover names who can help. The turn card's wounded
+  hint names the helper. No prompt outlives its use.
 - **Right-click**: deselect / cancel.
 - **Undo**: the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last move
   or action. How far back it goes is `undo.steps`: one step on Normal and Hard, every step
@@ -360,9 +368,13 @@ the same way as a parachute (§9): alert +1, once.
 ### Dialogue
 
 Each character has lines in `roster.json` keyed to `onLand`, `onPlaceCharge` and
-`onWounded`, and may have `onWoundedCarrying`, said instead of `onWounded` when he is hit
-still carrying a charge. They show as speech bubbles on the board (§11). This is data and
-costs nothing mechanically, and it is most of what makes the six feel like six people.
+`onWounded` (all three required), and may have four more, each optional (a man without
+one is silent): `onWoundedCarrying`, said instead of `onWounded` when he is hit still
+carrying a charge; `onKill`, after a gunner's kill or anyone's knife; `onSpotted`, the
+first time he is seen (not each turn he stays in view, and never on top of a wound: a man
+hit says his wounded line); and `onHide`, going to ground. They show as speech bubbles on
+the board (§11). This is data and costs nothing mechanically, and it is most of what makes
+the six feel like six people.
 
 ---
 
@@ -654,11 +666,17 @@ beside the seed and on the back page, and `?difficulty=easy|hard` picks it.
 
 The balance bot (`node tools/balance-bot.mjs 300 naive`, with `KNIFE=1`) plays whole
 missions through the rule functions. Its win rates show which way a change pushes, not
-the absolute answer; it never calls the diversion, stabilises or hunts for kills, so a
-person does better. Current baselines, win % west / north / east: **Easy 100 / 100 / 97,
+the absolute answer; it never calls the diversion or stabilises, and only its `hunter`
+style goes looking for kills, so a person does better. Current baselines, win % west / north / east: **Easy 100 / 100 / 97,
 Normal 93 / 83 / 88, Hard 47 / 33 / 38**. Easy and Normal are meant to be kind to casual
 players; Hard is the real test. Any rules, map or enemy change is re-run against these and
 the shift logged in DECISIONS.md.
+
+The `hunter` style (`node tools/balance-bot.mjs 300 hunter`) walks each man behind the
+nearest killable enemy to knife it, and closes a gunner to suppress and kill. By default
+only the men with no charge to place hunt; `HUNTERS=all` sends everyone, until the bridge
+is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-everything
+must not be the best way to play. Its numbers, against the baselines, are in DECISIONS.md.
 
 ---
 
@@ -928,14 +946,14 @@ comes after the current milestone is in `ROADMAP.md`.
 ### Current
 
 **M26, the active-play pass** (`ROADMAP.md`), on branch `m26-active-play`. Three pieces,
-no rules changes:
+no rules changes, all built:
 
-1. **Prompts for Stabilise and Pass a charge**, live while either is valid (§4, §11).
+1. **Prompts for Stabilise and Pass a charge**, live while either is valid (§4).
 2. **Dialogue for a kill, being spotted and going to ground** (§5): data in `roster.json`.
-3. **A "hunter" style for the balance bot**, to check that kill-everything is never the
-   best way to play (§10 Balance).
+3. **A "hunter" style for the balance bot** (§10 Balance). It found that clearing the
+   garrison first *is* the best way to play (DECISIONS.md), which is the operator's call.
 
-Left for after the operator's next playtest: re-setting the balance targets.
+Left for after that call and the operator's next playtest: re-setting the balance targets.
 
 ### Done
 
