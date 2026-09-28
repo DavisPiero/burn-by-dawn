@@ -5,8 +5,8 @@
 // code: the leader is whoever carries the flag (rule 6).
 
 import { alertIndex } from './enemy.js';
-import { onBoard } from './units.js';
-import { checkCutLine } from './sabotage.js';
+import { checkPassCharge, checkStabilise, onBoard } from './units.js';
+import { checkCutLine, kindOf } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
 
 const plural = (n, one, many) => (n === 1 ? one : many);
@@ -34,6 +34,41 @@ export function ordersWords(command) {
 export function callsLeft(state, rules) {
   const left = Math.max(0, rules.diversion.uses - state.diversionsCalled);
   return left === 1 ? (rules.diversion.uses === 1 ? 'once only' : 'one call left') : `${left} calls left`;
+}
+
+/**
+ * The two actions players do not find by themselves (M26, the operator's:
+ * Stabilise and Pass a charge stay, so they must be easy to see): who could
+ * take one right now, and beside whom. "Right now" is the same check the
+ * button makes, so a man who has already spent AP is not offered a full-turn
+ * stabilise, and no prompt outlives its use. Passing is only worth prompting
+ * while the primary still wants a charge (none set or gone off for it yet).
+ * One prompt per man per kind.
+ * @returns {{ kind: 'stabilise' | 'pass', unitId: string, otherId: string }[]}
+ */
+export function aidPrompts(state, rules) {
+  if (state.outcome) return [];
+  const men = state.units.filter(onBoard);
+  const primary = state.objectives.find((o) => o.primary);
+  const set = primary ? state.charges.filter((c) => c.objectiveId === primary.id).length : 0;
+  const wanted = primary && !primary.destroyed && kindOf(primary, rules).chargesNeeded - primary.detonated - set > 0;
+  const prompts = [];
+  for (const man of men) {
+    const patient = men.find((u) => checkStabilise(man, u).ok);
+    if (patient) prompts.push({ kind: 'stabilise', unitId: man.id, otherId: patient.id });
+    const taker = wanted && men.find((u) => checkPassCharge(man, u, rules).ok);
+    if (taker) prompts.push({ kind: 'pass', unitId: man.id, otherId: taker.id });
+  }
+  return prompts;
+}
+
+/** A prompt in words, from the helper's side: "Barrow is wounded beside him: dress it [A]…". */
+export function aidWords(prompt, units, rules) {
+  const other = units.find((u) => u.id === prompt.otherId);
+  if (prompt.kind === 'stabilise') {
+    return `${other.shortName} is wounded, right beside him: [A] to stabilise him. It takes the whole turn, and ${other.shortName} gets his full AP back.`;
+  }
+  return `${other.shortName} is beside him and can take a charge: [E] to pass one over, ${rules.actions.passCharge.apCost} AP of his own.`;
 }
 
 /**
@@ -85,7 +120,13 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
 
   const wounded = men.filter((u) => u.hits > 0 && !u.stabilised);
   if (wounded.length) {
-    hints.push(`${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded. A man beside ${plural(wounded.length, 'him', 'them')} can stabilise [A]; it takes his whole turn.`);
+    // Who can do it now, if anyone (M26); otherwise the general advice.
+    const aiders = aidPrompts(state, rules).filter((p) => p.kind === 'stabilise');
+    const who = names(aiders.map((p) => state.units.find((u) => u.id === p.unitId)));
+    const help = aiders.length
+      ? `${who} can stabilise ${plural(wounded.length, 'him', 'them')} [A]`
+      : `A man beside ${plural(wounded.length, 'him', 'them')} can stabilise [A]`;
+    hints.push(`${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded. ${help}; it takes his whole turn.`);
   }
 
   if (primary && !primary.destroyed && turnsLeft <= 5) {

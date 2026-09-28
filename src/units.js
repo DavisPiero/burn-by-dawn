@@ -27,8 +27,11 @@ export const DIALOGUE_KEYS = ['onLand', 'onPlaceCharge', 'onWounded'];
  * Lines a trooper may have but need not. onWoundedCarrying is said in place of
  * onWounded when he is hit still carrying a charge, which drops on his hex:
  * so a line about the charge is only ever said when there is one to fetch.
+ * M26 added three more, said by the man himself as he acts: onKill (a gunner's
+ * kill, or anyone's knife), onSpotted (the first sighting of him, not each turn
+ * he stays in view) and onHide (going to ground). A man with none is silent.
  */
-export const OPTIONAL_DIALOGUE_KEYS = ['onWoundedCarrying'];
+export const OPTIONAL_DIALOGUE_KEYS = ['onWoundedCarrying', 'onKill', 'onSpotted', 'onHide'];
 
 /** What a man says when he is wounded; `unit` as he was just before the hit. */
 export function woundedLine(unit) {

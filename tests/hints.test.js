@@ -1,9 +1,10 @@
 // M7b: the briefing card's hints (SPEC.md §11), a pure function of the state.
 
-import { hintsFor } from '../src/hints.js';
+import { aidPrompts, aidWords, hintsFor } from '../src/hints.js';
 import { orderReport } from '../src/render/ui.js';
 import { loadJson, loadMap } from '../src/map.js';
 import { validateTraits } from '../src/traits.js';
+import { chargeCapacity } from '../src/units.js';
 import { landedState } from './fixtures.js';
 
 function assert(condition, message) {
@@ -18,6 +19,7 @@ async function start() {
 }
 
 const has = (hints, words) => hints.some((h) => h.includes(words));
+const chargeRoom = (unit, rules) => chargeCapacity(unit, rules);
 
 export default [
   ['never more than three hints, and always at least one', async () => {
@@ -59,6 +61,49 @@ export default [
     assert(has(hints, `${scout.shortName} is on a charge point`) && has(hints, 'cut all the same'), hints.join(' | '));
     const spent = units.map((u) => (u.id === scout.id ? { ...u, ap: 0 } : u));
     assert(!has(hintsFor({ ...state, turn: 9, parachutes: [], units: spent }, rules), 'is on a charge point'), 'not once he has spent his AP');
+  }],
+  ['Stabilise is prompted to the man beside a wounded one, only while he has his whole turn (M26)', async () => {
+    const { rules, state } = await start();
+    const [a, b, c] = state.units;
+    const place = (unit, q, r, extra = {}) => ({ ...unit, q, r, ap: unit.apMax, ...extra });
+    const units = state.units.map((u) => {
+      if (u.id === a.id) return place(u, 5, 5);
+      if (u.id === b.id) return place(u, 6, 5, { hits: 1, stabilised: false });
+      if (u.id === c.id) return place(u, 5, 9);
+      return { ...u, q: 20 + state.units.indexOf(u), r: 0 };
+    });
+    const stabilise = (units) => aidPrompts({ ...state, units }, rules).filter((p) => p.kind === 'stabilise');
+    const open = stabilise(units);
+    assert(open.length === 1 && open[0].unitId === a.id && open[0].otherId === b.id, `beside him: ${JSON.stringify(open)}`);
+    assert(aidWords(open[0], units, rules).includes(`${b.shortName} is wounded`), aidWords(open[0], units, rules));
+    assert(stabilise(units.map((u) => (u.id === a.id ? { ...u, ap: u.apMax - 1 } : u))).length === 0, 'not once he has spent AP');
+    assert(stabilise(units.map((u) => (u.id === a.id ? { ...u, q: 4, r: 8 } : u))).length === 0, 'not when he is not beside him');
+    assert(stabilise(units.map((u) => (u.id === b.id ? { ...u, stabilised: true } : u))).length === 0, 'not once he is dressed');
+    assert(aidPrompts({ ...state, units, outcome: { kind: 'success' } }, rules).length === 0, 'none once the mission is over');
+    const hints = hintsFor({ ...state, turn: 3, parachutes: [], units }, rules);
+    assert(has(hints, `${a.shortName} can stabilise`), `the turn card names who can: ${hints.join(' | ')}`);
+  }],
+  ['Pass is prompted to a carrier beside a man with room, while the primary stands (M26)', async () => {
+    const { rules, state } = await start();
+    const giver = state.units.find((u) => u.charges > 0);
+    const taker = state.units.find((u) => u.id !== giver.id && chargeCapacity(u, rules) > 0);
+    const far = (u, i) => ({ ...u, q: 20 + i, r: 0, ap: u.apMax });
+    const units = state.units.map((u, i) => {
+      if (u.id === giver.id) return { ...u, q: 5, r: 5, ap: u.apMax, charges: 1 };
+      if (u.id === taker.id) return { ...u, q: 6, r: 5, ap: u.apMax, charges: 0 };
+      return far(u, i);
+    });
+    const pass = (s) => aidPrompts(s, rules).filter((p) => p.kind === 'pass');
+    const open = pass({ ...state, units });
+    assert(open.length === 1 && open[0].unitId === giver.id && open[0].otherId === taker.id, `beside a man with room: ${JSON.stringify(open)}`);
+    assert(aidWords(open[0], units, rules).includes(`${taker.shortName} is beside him`), aidWords(open[0], units, rules));
+    assert(pass({ ...state, units: units.map((u) => (u.id === taker.id ? { ...u, charges: chargeRoom(u, rules) } : u)) }).length === 0, 'not when he has no room');
+    assert(pass({ ...state, units: units.map((u) => (u.id === taker.id ? { ...u, hits: 1, stabilised: false } : u)) }).length === 0, 'not to a wounded man');
+    const objectives = state.objectives.map((o) => (o.primary ? { ...o, destroyed: true } : o));
+    assert(pass({ ...state, units, objectives }).length === 0, 'not once the primary is down');
+    const bridge = state.objectives.find((o) => o.primary);
+    const full = Array.from({ length: rules.objectives[bridge.kind].chargesNeeded }, (_, i) => ({ objectiveId: bridge.id, q: 9, r: 5 + i, fuse: 3 }));
+    assert(pass({ ...state, units, charges: full }).length === 0, 'not once it has every charge it wants');
   }],
   ['the turn report keeps each man together, worst news first, his death last (M13)', async () => {
     const events = [

@@ -366,6 +366,8 @@ export function runDetection(state, map, rules) {
       // Gone to ground and seen anyway, so the report can say why (M11):
       // 'here' on his hiding hex, 'before' on a hex crossed before he hid.
       hid: !unit.hidden ? null : seenAt.hex.q === unit.q && seenAt.hex.r === unit.r ? 'here' : 'before',
+      // Not in contact until now (M26): the sighting he speaks on, not each turn he stays seen.
+      first: !unit.inContact,
     });
     // Seeing a man spoils a quiet turn even when he is not counted again: the
     // garrison does not settle while it has someone in its sights (SPEC.md §6).

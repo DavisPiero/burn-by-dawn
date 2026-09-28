@@ -945,6 +945,8 @@ export function renderActions(element, actions, onAction) {
     const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-words', words)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
+    // A use is open right now (M26): Stabilise or Pass, marked on the button.
+    if (action.suggest && action.ok) button.classList.add('suggest');
     button.disabled = !action.ok && !action.active;
     button.addEventListener('click', () => onAction(action.id));
     // A disabled button gets no mouse events in some browsers, and "why not"
@@ -952,7 +954,7 @@ export function renderActions(element, actions, onAction) {
     const wrap = html('div', 'action-wrap', button);
     attachPopup(wrap, () => [
       html('b', null, action.label.toUpperCase()),
-      `\n${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
+      `\n${action.suggest && action.ok ? `${action.suggest}\n` : ''}${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
     ]);
     element.appendChild(wrap);
   }
@@ -1079,7 +1081,7 @@ export function renderReadout(element, state, map, view) {
       return;
     }
     setText(element, state.selectedUnitId
-      ? `Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? `${READOUT_GAP}${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
+      ? `${view?.aidLabel ? `${view.aidLabel}${READOUT_GAP}` : ''}Hover a hex to preview the move. Right-click or Esc to cancel.${view?.commandLabel ? `${READOUT_GAP}${view.commandLabel[0].toUpperCase()}${view.commandLabel.slice(1)}.` : ''}`
       : 'Click a man to select him, or a hex to see what it is.');
     return;
   }
@@ -1114,6 +1116,8 @@ export function renderReadout(element, state, map, view) {
     { label: 'MOVE', text: view?.moveLabel },
     blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
     ...riskRows(view?.riskLabel, verdict),
+    // Stabilise or Pass is open to him (M26); only while he is not off on a move.
+    { label: 'AID', text: !view?.plan || view.plan.steps === 0 ? view?.aidLabel : null, tone: 'prompt' },
     { label: 'HIDE', text: view?.hideLabel },
     ...(view?.site?.rows ?? []),
     { label: 'HEARD', text: view?.noiseLabel?.replace(/^HEARD — /, '') },

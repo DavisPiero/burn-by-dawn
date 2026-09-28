@@ -19,7 +19,7 @@ import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
-import { hintsFor, ordersWords } from './hints.js';
+import { aidPrompts, aidWords, hintsFor, ordersWords } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
@@ -277,6 +277,9 @@ function deriveView() {
     diversionUses: rules.diversion.uses,
     // The stealth score (SPEC.md §10, M11b), for each man's roster rollover.
     unseenPoints: rules.scoring.perTrooperUnseen,
+    // Stabilise and Pass a charge, wherever one could be taken now (M26): the
+    // roster, the readout and the man's own rows all point at them.
+    aid: aidPrompts(state, rules).map((p) => ({ ...p, words: aidWords(p, state.units, rules) })),
     hoverObjective: null,
     previewBlastArea: null,
     previewBlastKillArea: null,
@@ -382,6 +385,7 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
+  view.aidLabel = ['stabilise', 'pass'].map((kind) => aidFor(unit, kind)).filter(Boolean).join(' ');
   if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
@@ -685,7 +689,7 @@ function actionsFor(unit) {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
-    { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', ...withCost(stabilise, () => 'full turn') },
+    { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up', help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
@@ -693,6 +697,13 @@ function actionsFor(unit) {
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
+}
+
+// Stabilise or Pass, if this man could take it right now (M26): the words for
+// the button's mark and the readout, or null.
+function aidFor(unit, kind) {
+  const prompt = aidPrompts(state, rules).find((p) => p.unitId === unit.id && p.kind === kind);
+  return prompt ? aidWords(prompt, state.units, rules) : null;
 }
 
 // What an action costs, under its name on the button (M19, the operator's):
@@ -751,7 +762,7 @@ function passChargeAction(unit) {
   const check = checks.find((c) => c.ok) ?? checks[0] ?? checkPassCharge(unit, null, rules);
   const reason = check.reason === 'pick a man beside him' ? 'nobody beside him' : check.reason;
   return {
-    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`, apCost: check.cost,
+    id: 'pass', key: 'E', label: 'Pass charge', short: 'Pass', ok: check.ok, reason, cost: `${check.cost} AP`, apCost: check.cost, suggest: aidFor(unit, 'pass'),
     help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing. Press E, then click the man.`,
   };
 }

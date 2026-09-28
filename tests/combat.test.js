@@ -16,7 +16,7 @@ import {
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
 import {
-  checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById,
+  checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById, woundedLine,
 } from '../src/units.js';
 
 function assert(condition, message) {
@@ -457,6 +457,51 @@ export default [
     equal(`${noise.kind} ${noise.q},${noise.r}`, `silenced ${row.q + 1},${row.r}`, 'a muffled shot, heard from the gunner');
     const body = killed.bodies.at(-1);
     equal(`${body.enemyId} ${body.q},${body.r} ${body.found}`, `${target.id} ${target.q},${target.r} false`, 'a body where it fell');
+  }],
+
+  ['M26 dialogue: a kill or a knife says onKill, going to ground says onHide, a man with no line stays silent', async () => {
+    const { map, rules, state } = await loadAll();
+    const lineOf = (s, id) => s.speech.find((l) => l.unitId === id)?.line ?? null;
+    const row = openRow(map, 5);
+    // A gunner's kill.
+    const target = enemy(row.q + 2, row.r, 'W');
+    const { state: pair, ids: [first, second] } = twoGunners(state, row, [target]);
+    const killed = killEnemy(suppressEnemy(pair, first, target.id, map, rules), second, target.id, map, rules);
+    equal(lineOf(killed, second), unitIn(killed, second).dialogue.onKill, 'the killer says his kill line');
+    equal(lineOf(killed, first), null, 'the other gunner says nothing');
+    // Anyone's knife.
+    const behind = enemy(row.q + 1, row.r, 'E');
+    const { state: k, unitId: knifer } = scenario(state, 'sapper', row, [behind]);
+    equal(lineOf(knifeEnemy(k, knifer, behind.id, rules), knifer), unitIn(k, knifer).dialogue.onKill, 'the knife says it too');
+    // Going to ground.
+    const { state: h, unitId: hider } = scenario(state, 'sapper', { q: row.q + 3, r: row.r }, [enemy(row.q, row.r, 'E')]);
+    equal(lineOf(hideUnit(h, hider, rules), hider), unitIn(h, hider).dialogue.onHide, 'hiding says his hide line');
+    // No line, no words.
+    const mute = (s, id) => ({ ...s, units: s.units.map((u) => (u.id === id ? { ...u, dialogue: { ...u.dialogue, onKill: undefined, onHide: undefined } } : u)) });
+    equal(lineOf(knifeEnemy(mute(k, knifer), knifer, behind.id, rules), knifer), null, 'a man with no kill line is silent');
+    equal(lineOf(hideUnit(mute(h, hider), hider, rules), hider), null, 'a man with no hide line is silent');
+  }],
+
+  ['M26 dialogue: a man first seen says onSpotted at the turn; seen again in contact he does not; hit, he says his wounded line', async () => {
+    const { map, rules, state } = await loadAll();
+    const lineOf = (s, id) => s.speech.find((l) => l.unitId === id)?.line ?? null;
+    const row = openRow(map, 5);
+    const e = enemy(row.q, row.r, 'E');
+    const at = { q: row.q + 2, r: row.r };
+    const { state: fresh, unitId } = scenario(state, 'sapper', at, [e]);
+    const man = unitIn(fresh, unitId);
+    const first = runDetection(fresh, map, rules).events.find((ev) => ev.kind === 'spotted');
+    equal(first.first, true, 'the sighting is marked as his first');
+    equal(lineOf(endTurn(fresh, rules, map), unitId), man.dialogue.onSpotted, 'he says his spotted line');
+    // Already in contact: seen again is not a new sighting, so no spotted line. If the
+    // shot lands he says his wounded line, as before M26.
+    const { state: held } = scenario(state, 'sapper', at, [e], { inContact: true });
+    equal(runDetection(held, map, rules).events.find((ev) => ev.kind === 'spotted').first, false, 'seen again is not first');
+    const shot = endTurn(held, rules, map);
+    assert(shot.report.some((ev) => ev.kind === 'wounded' && ev.unitId === unitId), 'a man in contact and seen again is hit');
+    equal(lineOf(shot, unitId), woundedLine(unitIn(held, unitId)), 'he says his wounded line, not his spotted one');
+    const pinned = endTurn(scenario(state, 'sapper', at, [{ ...e, q: row.q - 1 }], { inContact: true }).state, rules, map);
+    assert(lineOf(pinned, unitId) !== man.dialogue.onSpotted, 'never the spotted line for a man already in contact');
   }],
 
   ['a shot from beyond hitRange pins a man in the open; within it, it hits (M13b)', async () => {
