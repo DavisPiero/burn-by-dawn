@@ -466,7 +466,7 @@ export const SUPPRESSED = {
 };
 
 export const MOTION = {
-  travelMsPerHex: 190, // half as slow again since M13, a quarter slower again in M16, and 190 from 140 in M24 so his steps, heard a hex apart, are further apart
+  travelMsPerHex: 190, // half as slow again since M13, a quarter slower again in M16, and 190 from 140 in M24 (for steps a hex apart, since taken out; the pace was kept)
   blastMs: 1500,
 };
 

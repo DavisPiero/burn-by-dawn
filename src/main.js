@@ -26,10 +26,10 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
-import { isMuted, loadSuppliedSounds, playCue, playTravel, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
+import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, MOTION, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -973,11 +973,9 @@ function commit(next, cue = 'action') {
   if (cue) playCue(cue);
 }
 
-/** A move, heard hex by hex as his counter walks (M23). */
+/** A move, in silence (M24, the operator's: neither M23's slides nor the snap before them suited it). */
 function commitMove(unitId, plan) {
-  const before = state;
   commit(moveUnit(state, unitId, plan, baseMap), null);
-  if (state !== before) playTravel(plan.steps, MOTION.travelMsPerHex);
 }
 
 /** Sound on or off (M, or the word in the margin). Not remembered: the game stores nothing (CLAUDE.md rule 9). */

@@ -135,14 +135,6 @@ const SYNTHS = {
     tone.stop(at + 0.08);
   },
 
-  // A counter pushed across the paper (M23, the operator's): a soft scuff of
-  // noise, one per hex of a move. Gentler since M24 (the operator's): lower,
-  // duller and eased in, with no bright edge.
-  'counter-slide': (ctx, out, at, v) => {
-    const band = filter(ctx, 'bandpass', 650 + v * 40, 0.7);
-    noiseThrough(ctx, out, at, 0.17, [filter(ctx, 'lowpass', 1300), band, envelope(ctx, at, 0.8, 0.16, 0.06)], 0.4 + v * 0.11);
-  },
-
   // A page or card handled: bright noise in a handful of uneven swells.
   'paper-rustle': (ctx, out, at, v) => {
     const rng = createRng(NOISE_SEED + v);
@@ -444,10 +436,8 @@ export const SOUND_IDS = Object.keys(SYNTHS);
 // main.js names a cue; it never names a sound, so a cue can be re-scored here.
 
 const CUES = {
+  // A move taken back (M24: a move itself is silent, the operator's).
   move: [['counter-snap', 0.5, 0]],
-  // Each hex of a move as the counter passes over it (M23); playTravel lays
-  // them. Quieter since M24 (the operator's).
-  step: [['counter-slide', 0.17, 0]],
   action: [['pencil-scratch', 0.35, 0]],
   card: [['paper-rustle', 0.35, 0]],
   alertRise: [['dog-distant', 0.18, 0.25]],
@@ -487,26 +477,6 @@ export function playCue(name) {
   scheduleCue(ctx, out, name, ctx.currentTime + 0.01, nextVariant);
   nextVariant = (nextVariant + 1) % 7;
   return { stop: () => out.gain.setTargetAtTime(0, ctx.currentTime, 0.08) };
-}
-
-/**
- * A man's move heard as it is seen (M23, the operator's): a slide for each
- * hex as his counter crosses it, `msPerHex` apart as board.js walks him, and
- * one more as he comes to rest (M24, the operator's: the snap there cracked
- * like a whip).
- */
-export function playTravel(hexes, msPerHex) {
-  if (muted || !unlocked || hexes < 1) return;
-  const ctx = audio();
-  if (!ctx) return;
-  if (ctx.state === 'suspended') ctx.resume();
-  const out = ctx.createGain();
-  out.connect(ctx.destination);
-  const start = ctx.currentTime + 0.01;
-  for (let i = 0; i <= hexes; i++) {
-    scheduleCue(ctx, out, 'step', start + (i * msPerHex) / 1000, nextVariant);
-    nextVariant = (nextVariant + 1) % 7;
-  }
 }
 
 /**
