@@ -71,6 +71,10 @@ export function validateDrop(map, rules, count, mapUrl = 'data/map.json', rulesU
         throw new Error(`${where} "${key}" must be a number from 0 to 1, got ${JSON.stringify(run[key])}`);
       }
     }
+    const nudge = run.labelNudge;
+    if (nudge !== undefined && !(Array.isArray(nudge) && nudge.length === 2 && nudge.every((n) => typeof n === 'number'))) {
+      throw new Error(`${where} "labelNudge" must be [x, y] in hex radii, got ${JSON.stringify(nudge)}`);
+    }
     const line = flightLine(run);
     const last = run.jumpAt + (count - 1) * run.spacing;
     if (last >= line.length) {

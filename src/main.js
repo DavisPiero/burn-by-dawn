@@ -453,7 +453,7 @@ function deriveDrop(view, hex) {
   view.dropCue = selected ? 'jump' : 'pick';
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
-      id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, windAlong: run.windAlong ?? null,
+      id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, labelNudge: run.labelNudge ?? null, windAlong: run.windAlong ?? null,
       from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
       jumps: jumpPoints(run, count), selected: run.id === state.dropRunId,
     })),

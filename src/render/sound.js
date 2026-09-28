@@ -136,12 +136,11 @@ const SYNTHS = {
   },
 
   // A counter pushed across the paper (M23, the operator's): a soft scuff of
-  // noise, rising a little as it goes; one per hex of a move.
+  // noise, one per hex of a move. Gentler since M24 (the operator's): lower,
+  // duller and eased in, with no bright edge.
   'counter-slide': (ctx, out, at, v) => {
-    const band = filter(ctx, 'bandpass', 1100 + v * 90, 0.9);
-    band.frequency.setValueAtTime(band.frequency.value, at);
-    band.frequency.linearRampToValueAtTime(band.frequency.value * 1.35, at + 0.1);
-    noiseThrough(ctx, out, at, 0.13, [filter(ctx, 'highpass', 400), band, envelope(ctx, at, 0.7, 0.12, 0.035)], 0.4 + v * 0.11);
+    const band = filter(ctx, 'bandpass', 650 + v * 40, 0.7);
+    noiseThrough(ctx, out, at, 0.17, [filter(ctx, 'lowpass', 1300), band, envelope(ctx, at, 0.8, 0.16, 0.06)], 0.4 + v * 0.11);
   },
 
   // A page or card handled: bright noise in a handful of uneven swells.
@@ -446,8 +445,9 @@ export const SOUND_IDS = Object.keys(SYNTHS);
 
 const CUES = {
   move: [['counter-snap', 0.5, 0]],
-  // Each hex of a move as the counter passes over it (M23); playTravel lays them.
-  step: [['counter-slide', 0.3, 0]],
+  // Each hex of a move as the counter passes over it (M23); playTravel lays
+  // them. Quieter since M24 (the operator's).
+  step: [['counter-slide', 0.17, 0]],
   action: [['pencil-scratch', 0.35, 0]],
   card: [['paper-rustle', 0.35, 0]],
   alertRise: [['dog-distant', 0.18, 0.25]],
@@ -492,7 +492,8 @@ export function playCue(name) {
 /**
  * A man's move heard as it is seen (M23, the operator's): a slide for each
  * hex as his counter crosses it, `msPerHex` apart as board.js walks him, and
- * the snap as he is put down at the end.
+ * one more as he comes to rest (M24, the operator's: the snap there cracked
+ * like a whip).
  */
 export function playTravel(hexes, msPerHex) {
   if (muted || !unlocked || hexes < 1) return;
@@ -503,7 +504,7 @@ export function playTravel(hexes, msPerHex) {
   out.connect(ctx.destination);
   const start = ctx.currentTime + 0.01;
   for (let i = 0; i <= hexes; i++) {
-    scheduleCue(ctx, out, i < hexes ? 'step' : 'move', start + (i * msPerHex) / 1000, nextVariant);
+    scheduleCue(ctx, out, 'step', start + (i * msPerHex) / 1000, nextVariant);
     nextVariant = (nextVariant + 1) % 7;
   }
 }
