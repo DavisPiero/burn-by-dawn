@@ -927,9 +927,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-| # | Goal | Done when |
-|---|---|---|
-| **M25** | Housekeeping, no gameplay change: this spec cut to how the game works now, the history left to DECISIONS.md; the title card loaded at 1600 x 400; the six drawn faces and other unused sprites taken out; the map named | This spec states every current rule once, with no milestone history in §1–§11; the game plays exactly as at M24 (tests pass; the balance bot is unchanged); the title card is sharp on the orders and under 250 KB; the orders and key still fit at 1280x800 |
+None in progress. The next milestone is M26, the active-play pass in `ROADMAP.md`: agree
+its scope with the operator and write its row here before building it.
 
 ### Done
 
@@ -960,3 +959,4 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M22 | Playtest review; the boxes under the map fitted; the East run moved two hexes west |
 | M23 | Playtest review; the music bug; the readout in one column; a man's particulars on hover |
 | M24 | Playtest review; the run tabs re-placed; the drop's lettering reworded and still; a move made silent |
+| M25 | Housekeeping: this spec cut to current rules; a lighter title card; the drawn faces and unused sprites out; the map named |
