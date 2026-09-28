@@ -215,7 +215,7 @@ export function loadSuppliedBlast() {
     // BOOM set over its empty middle, as the drawn one has it (ART-PROMPTS.md priority 10).
     document.getElementById('marker-blast')?.replaceChildren(
       svg('image', { href: BLAST_FILE.url, x: 0, y: 0, width: BLAST_FILE.size, height: BLAST_FILE.size }),
-      label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
+      boomLabel(),
     );
   });
 }
@@ -470,6 +470,15 @@ export const MOTION = {
   blastMs: 1500,
 };
 
+// A man killed (M21, the operator's): his counter floats up about a hex and
+// fades away, over the body he leaves. Display only; the turn's card waits
+// for it as it does for a bang.
+export const DEATH = {
+  delayMs: 250, // a beat on his hex first, so the eye finds him
+  floatMs: 1700,
+  riseHexes: 1, // in hex heights (1.5 radii), straight up
+};
+
 // The garrison's turn shown before its card (M15): each enemy walks its steps,
 // a "!" pops on each that spotted a man or found something, and a ripple runs
 // out from each noise it heard. Display only.
@@ -638,6 +647,10 @@ export const HIGHLIGHT = {
 export const MARKER = {
   size: 22,
   hiddenOpacity: 0.6,
+  // The hidden mark's corner on a counter: bottom right, lifted off the foot
+  // of the name strip (M21, the operator's), and printed at full strength
+  // over the faint counter.
+  hiddenAt: { x: 38, y: 33 },
   groundSize: 26,
   fuseSize: 34, // the stopwatch on a burning charge (M15)
   ordersScale: 0.6, // the orders chevrons on a counter, against MARKER.size (M15)
@@ -888,6 +901,21 @@ export const DROP_GHOST = {
 // The marker-pen rings round the targets before the drop (SPEC.md §11): a
 // loop that overshoots where it started, twice round the primary, drawn on
 // once and then left; a note beside each in the lettering.
+// Where to start (M21, from playtesting): big pen lettering among the drop
+// runs' names — PICK A DROP RUN!, then SPACE TO JUMP! — and, once the stick
+// is down, a pen ring round each man who can act until one is selected.
+export const CUE = {
+  colour: PALETTE.red,
+  halo: PALETTE.paper,
+  size: 54,
+  subSize: 25,
+  nudge: { x: 0, y: -18 }, // from the middle of the three runs' names
+  pulseMs: 1400,
+  ringRadius: 40, // round a counter's middle, in board units
+  ringWidth: 4.5,
+  noteSize: 22,
+};
+
 export const RINGS = {
   red: PALETTE.red,
   green: PALETTE.green,
@@ -991,6 +1019,14 @@ const line = (d, width = 2, cls = 'stroke-ink', extra = {}) => svg('path', {
 const inked = (d, cls, width = 2) => [fill(d, cls), line(d, width)];
 const circle = (cx, cy, r, cls, extra = {}) => svg('circle', { cx, cy, r, class: cls, ...extra });
 const ring = (cx, cy, r, width = 2, cls = 'stroke-ink') => svg('circle', { cx, cy, r, fill: 'none', class: cls, 'stroke-width': width });
+/**
+ * BOOM over the blast, in the comic lettering of the pen notes on the map
+ * (M21, the operator's: the stencil read as print, not as a bang).
+ */
+function boomLabel() {
+  return label('BOOM!', { x: 100, y: 104, 'font-size': 40, 'font-family': TYPE.lettering, class: 'ink', 'letter-spacing': 1 });
+}
+
 function label(content, attrs) {
   const node = svg('text', { 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-family': TYPE.typewriter, 'font-weight': 'bold', ...attrs });
   node.textContent = content;
@@ -2083,12 +2119,14 @@ const SPRITES = {
       ring(14, 14, 12),
     ],
   },
+  // Paper with an ink eye since M21 (the operator's): green on the green
+  // counter, printed faint with the hidden man, was very hard to see.
   'marker-hidden': {
     viewBox: '0 0 28 28',
     draw: () => [
-      circle(14, 14, 12, 'green'),
-      line('M6 13 Q14 21 22 13', 2.4, 'stroke-paper'),
-      line('M9 17 L7.5 20 M14 18.5 L14 22 M19 17 L20.5 20', 1.8, 'stroke-paper'),
+      circle(14, 14, 12, 'paper'),
+      line('M6 12 Q14 20 22 12', 2.6),
+      line('M9 16 L7.5 19.5 M14 17.5 L14 21.5 M19 16 L20.5 19.5', 2),
       ring(14, 14, 12),
     ],
   },
@@ -2266,7 +2304,7 @@ const SPRITES = {
       // The fireball inside the burst (M14): orange, then the paper core.
       starburst(100, 100, 11, 78, 48, 'fire'),
       starburst(100, 100, 10, 62, 36, 'paper'),
-      label('BOOM', { x: 100, y: 102, 'font-size': 30, 'font-family': TYPE.slab, class: 'ink', 'letter-spacing': 1 }),
+      boomLabel(),
     ],
   },
   // Wider since M13: the stencil was squeezed to fit and looked squashed. It
@@ -2531,6 +2569,9 @@ function printCss() {
     `.counter-edge{stroke:var(--counter-edge,${COUNTER.edge})}`,
     '@keyframes nd-blast{0%{transform:scale(0.35)}12%{transform:scale(0.75)}24%{transform:scale(1)}85%{opacity:1;transform:scale(1)}100%{opacity:0}}',
     `.nd-blast{animation:nd-blast ${MOTION.blastMs}ms step-end both;transform-box:fill-box;transform-origin:center}`,
+    // The where-to-start cues throb gently, so the eye goes to them (M21).
+    '@keyframes nd-throb{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}',
+    `.nd-throb{animation:nd-throb ${CUE.pulseMs}ms ease-in-out infinite;transform-box:fill-box;transform-origin:center}`,
   ];
   return [...colours, ...tones, misregister, ...motion].join('\n');
 }

@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -172,6 +172,7 @@ export function createBoard(svg, map, handlers) {
     svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
+    deaths: new Map(), // unit id -> { since, q, r }: a man seen alive, then dead (M21)
     blasts: { bangs: null, list: [] },
   };
 }
@@ -179,8 +180,10 @@ export function createBoard(svg, map, handlers) {
 /** Forget what was last drawn where, for a new game on the same board (M12 restart). */
 export function resetBoardMemory(layers) {
   layers.motion = new Map();
+  layers.deaths = new Map();
   layers.blasts = { bangs: null, list: [] };
   layers.ringsSince = null;
+  layers.cueSince = null;
 }
 
 // --- area terrain (SPEC.md §11) --------------------------------------------------
@@ -591,7 +594,7 @@ export function renderPieces(layers, state, view) {
     drawAreaEdge(layers, layers.vision, view.hoverEnemyNextArea, [[VISION.nextEdge, VISION.nextEdgeWidth]], { 'stroke-dasharray': VISION.nextDash });
   }
   drawSites(layers, state, view);
-  if (view.drop) drawDrop(layers, view.drop);
+  const runNames = view.drop ? drawDrop(layers, view.drop) : [];
   if (view.drop && !view.drop.runs.some((r) => r.selected)) drawGhostPlanes(layers, view.drop.runs, now);
 
   // Where he can go and the leader's orders: every outline's paper casing
@@ -692,6 +695,9 @@ export function renderPieces(layers, state, view) {
 
   state.units.forEach((unit, i) => {
     if (!unit.landed || unit.dead || unit.out) {
+      // Drawn alive last time and dead now: he has just been killed.
+      if (unit.dead && layers.motion.has(`unit:${unit.id}`)) layers.deaths.set(unit.id, { since: now, q: unit.q, r: unit.r });
+      if (unit.dead) drawDeath(layers, unit, i + 1, now);
       layers.motion.delete(`unit:${unit.id}`);
       return;
     }
@@ -703,7 +709,7 @@ export function renderPieces(layers, state, view) {
     // Each marker has a rollover saying what it means (M11).
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
-    if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', 38, 40, unit));
+    if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', MARKER.hiddenAt.x, MARKER.hiddenAt.y, unit));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
     // One chevron for the ordinary orders, two for the strongest, beside him.
     // Smaller since M14's blue AP dots say the same (M15: it outshone Dutch's own rank flash),
@@ -722,6 +728,8 @@ export function renderPieces(layers, state, view) {
   drawBlasts(layers, state, now);
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
+  if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames, now);
+  if (view.selectCue) drawSelectCue(layers, state, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.strikeShow?.kind === 'cut') {
     const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
@@ -811,6 +819,73 @@ function drawTargetRings(layers, rings, now) {
     layers.effects.appendChild(note);
     playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
   });
+}
+
+// --- where to start (M21) --------------------------------------------------------
+
+/** Pen lettering, haloed in paper so it reads over the map. */
+function penLetters(lines, x, y, sizes) {
+  const note = text('', {
+    'font-family': SPEECH.font, 'font-weight': 'bold', fill: CUE.colour,
+    stroke: CUE.halo, 'stroke-width': 6, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+  });
+  let dy = 0;
+  lines.forEach((words, k) => {
+    const span = el('tspan', { x, y: y + dy, 'font-size': sizes[k] ?? sizes.at(-1) });
+    span.textContent = words;
+    note.appendChild(span);
+    dy += (sizes[k] ?? sizes.at(-1)) * 0.55 + (sizes[k + 1] ?? sizes.at(-1)) * 0.6;
+  });
+  return note;
+}
+
+/** A group that throbs from where it began, so a redraw does not restart it. */
+function throbbing(layers, key, now) {
+  const g = el('g', { class: 'nd-throb', 'pointer-events': 'none' });
+  layers.cueSince ??= {};
+  layers.cueSince[key] ??= now;
+  g.style.animationDelay = `${-Math.round(now - layers.cueSince[key])}ms`;
+  return g;
+}
+
+/**
+ * Before the jump (M21, from playtesting: a first-timer did not know where to
+ * begin): PICK A DROP RUN! among the runs' names until one is picked, then
+ * SPACE TO JUMP!, in the player's pen.
+ */
+function drawDropCue(layers, cue, names, now) {
+  const x = names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
+  const y = names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
+  const lines = cue === 'pick' ? ['PICK A DROP RUN!', 'click a run\'s name, or press 1-3'] : ['SPACE TO JUMP!', 'or click the run again'];
+  const g = throbbing(layers, cue, now);
+  g.appendChild(penLetters(lines, x, y, [CUE.size, CUE.subSize]));
+  layers.effects.appendChild(g);
+}
+
+/**
+ * Once the stick is down (M21): a pen ring round each man who can act, until
+ * the player first selects one, and a note over the topmost saying so.
+ */
+function drawSelectCue(layers, state, now) {
+  const { map } = layers;
+  const men = state.units.filter((u) => u.landed && !u.dead && !u.out && u.ap > 0);
+  if (!men.length) return;
+  const g = throbbing(layers, 'select', now);
+  const points = men.map((u) => axialToPixel(u.q, u.r, map.hexSize));
+  for (const p of points) {
+    g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.ringRadius + 3, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.ringWidth + 4, opacity: 0.8 }));
+    g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.ringRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.ringWidth }));
+  }
+  layers.effects.appendChild(g);
+  // The note over the middle of the men, above the topmost, kept on the
+  // board: over one man it read as meaning him.
+  const edge = boardEdges(map);
+  const top = Math.min(...points.map((p) => p.y));
+  const middle = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const width = 'CLICK A MAN TO START'.length * CUE.noteSize * 0.5;
+  const x = Math.min(Math.max(middle, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
+  const y = Math.max(top - CUE.ringRadius - 14, edge.top + CUE.noteSize);
+  layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
 }
 
 // --- the drop shown (SPEC.md §11) ----------------------------------------------
@@ -1122,6 +1197,32 @@ function travel(layers, mover, unit, now, key, trailOf, msPerHex) {
   });
   const animation = mover.animate(frames, { duration, easing: 'linear' });
   animation.currentTime = elapsed;
+}
+
+/**
+ * A man just killed (M21, the operator's): his counter, as it was, floats up
+ * about a hex and fades out over his body. Drawing memory like a move, so a
+ * redraw part-way carries on; it is forgotten once done.
+ */
+function drawDeath(layers, unit, number, now) {
+  const death = layers.deaths.get(unit.id);
+  if (!death) return;
+  const elapsed = now - death.since;
+  if (elapsed >= DEATH.delayMs + DEATH.floatMs) {
+    layers.deaths.delete(unit.id);
+    return;
+  }
+  const ghost = drawCounter({ ...unit, dead: false, hidden: false, q: death.q, r: death.r }, number, layers.map, false);
+  ghost.setAttribute('pointer-events', 'none');
+  const holder = el('g', {});
+  holder.appendChild(ghost);
+  layers.effects.appendChild(holder);
+  const rise = layers.map.hexSize * 1.5 * DEATH.riseHexes;
+  playFrom(holder, [
+    { transform: 'translate(0px, 0px)', opacity: 1 },
+    { transform: 'translate(0px, 0px)', opacity: 1, offset: DEATH.delayMs / (DEATH.delayMs + DEATH.floatMs) },
+    { transform: `translate(0px, ${-rise}px)`, opacity: 0 },
+  ], { duration: DEATH.delayMs + DEATH.floatMs, easing: 'ease-in' }, elapsed);
 }
 
 // The garrison's turn (M15): a ripple out from each noise it heard, twice,
@@ -1587,6 +1688,7 @@ function drawDrop(layers, drop) {
   }
   // The tabs go over every line, and are never faded: they are what to click.
   for (const tab of tabs) layers.routes.appendChild(tab);
+  return tabs.map((t) => t.at);
 }
 
 /**
@@ -1611,6 +1713,7 @@ function runTab(layers, run, at) {
   tab.addEventListener('mouseenter', () => layers.handlers.onRunHover?.(run.id, tab));
   tab.addEventListener('mouseleave', () => layers.handlers.onRunLeave?.());
   tab.addEventListener('click', () => layers.handlers.onRunChoose?.(run.id));
+  tab.at = at;
   return tab;
 }
 
@@ -1972,16 +2075,18 @@ function counterPlace(center) {
 function drawCounter(unit, number, map, isSelected) {
   const center = axialToPixel(unit.q, unit.r, map.hexSize);
   const size = COUNTER.size;
-  const group = el('g', {
-    transform: counterPlace(center),
-    opacity: unit.hidden ? MARKER.hiddenOpacity : 1,
-  });
+  const group = el('g', { transform: counterPlace(center) });
   // A man with no AP left is done for the turn: his die-cut edge goes grey.
   if (unit.ap === 0) group.style.setProperty('--counter-edge', COUNTER.spentEdge);
+  // A hidden man is printed faint, the counter and its shadow as one; the
+  // marks added to `group` after it stay at full strength (M21: the hidden
+  // mark faded with him and was hard to see).
+  const print = el('g', { opacity: unit.hidden ? MARKER.hiddenOpacity : 1 });
+  group.appendChild(print);
   const body = el('g', {});
-  group.appendChild(body);
+  print.appendChild(body);
 
-  group.insertBefore(el('use', { href: '#counter-shadow', width: size, height: size }), body);
+  print.insertBefore(el('use', { href: '#counter-shadow', width: size, height: size }), body);
   body.appendChild(el('use', { href: `#${counterFrameId(unit)}`, width: size, height: size }));
   body.appendChild(el('use', {
     href: `#${portraitId(unit.id, 'chip')}`, x: COUNTER.chip.x, y: COUNTER.chip.y, width: COUNTER.chip.size, height: COUNTER.chip.size,
@@ -2195,9 +2300,13 @@ export function drawCounterKey(svg, examples, numbers) {
     });
     svg.appendChild(t);
   };
-  const pointer = (from, to) => {
-    svg.appendChild(el('path', { d: `M${from.x} ${from.y} L${to.x} ${to.y}`, stroke: PALETTE.ink, 'stroke-width': 1, fill: 'none' }));
-    svg.appendChild(el('circle', { cx: to.x, cy: to.y, r: 2.2, fill: PALETTE.red, stroke: PALETTE.paper, 'stroke-width': 1 }));
+  // `short` stops the line that far before what it points at, so the thing
+  // itself shows (M21: the blue AP dot was hidden under the red end).
+  const pointer = (from, to, { tip = PALETTE.red, short = 0 } = {}) => {
+    const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    const end = { x: to.x - ((to.x - from.x) / len) * short, y: to.y - ((to.y - from.y) / len) * short };
+    svg.appendChild(el('path', { d: `M${from.x} ${from.y} L${end.x} ${end.y}`, stroke: PALETTE.ink, 'stroke-width': 1, fill: 'none' }));
+    svg.appendChild(el('circle', { cx: end.x, cy: end.y, r: 2.2, fill: tip, stroke: PALETTE.paper, 'stroke-width': 1 }));
   };
   const heading = (y, content) => {
     svg.appendChild(el('path', { d: `M0 ${y + 5} H336`, stroke: PALETTE.ink, 'stroke-width': 2 }));
@@ -2230,14 +2339,16 @@ export function drawCounterKey(svg, examples, numbers) {
     pointer({ x: 100, y: y - 4 }, on(cx, cy, k, p));
     words(96, y, lines, 'end');
   }
-  // [point on the counter, y, lines, how many of them are the bold label]
+  // [point on the counter, y, lines, how many of them are the bold label, pointer]
+  // BLUE AP ends in a blue dot just off the one it means (M21, the operator's).
   const right = [
     [{ x: dots.x, y: dots.y }, 50, ['ACTION POINTS', 'REMAINING', 'Hollow when', 'spent'], 2],
-    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 118, ['BLUE AP', 'Bonus from', `${lead}'s orders`], 1],
+    [{ x: dots.x + (firstBlue % dots.columns) * dots.pitch, y: dots.y + Math.floor(firstBlue / dots.columns) * dots.pitch }, 118, ['BLUE AP', 'Bonus from', `${lead}'s orders`], 1,
+      { tip: COUNTER.apOrdersFill, short: (dots.radius * scale + 2.5) * k }],
     [{ x: 51, y: 31 }, 176, [`${lead.toUpperCase()}'S`, 'ORDERS', 'This turn'], 2],
   ];
-  for (const [p, y, lines, heads] of right) {
-    pointer({ x: 230, y: y - 4 }, on(cx, cy, k, p));
+  for (const [p, y, lines, heads, style] of right) {
+    pointer({ x: 230, y: y - 4 }, on(cx, cy, k, p), style);
     words(234, y, lines, 'start', heads);
   }
 
@@ -2251,11 +2362,13 @@ export function drawCounterKey(svg, examples, numbers) {
   row(318, markerAt('marker-wounded', 318), ['WOUNDED', '1 AP; killed if hit again']);
   row(352, markerAt('marker-hidden', 352), ['HIDDEN', 'Gone to ground, harder to see']);
 
-  // The garrison.
-  heading(390, 'THE GARRISON');
+  // The garrison, with more air above its heading since M21 (the operator's);
+  // the key's viewBox (index.html) has as much again under the last line.
+  const air = 14;
+  heading(390 + air, 'THE GARRISON');
   const east = 2, southEast = 3;
   const enemy = { ...examples.enemy, q: 0, r: 0, facing: east, suppressed: false, openToKill: false };
-  const ex = 92, ey = 482, ek = 1.7;
+  const ex = 92, ey = 482 + air, ek = 1.7;
   place(drawEnemy(enemy, unitMap, false, false, southEast), ex, ey, ek);
   const size = COUNTER.size;
   const tip = (facing) => {
@@ -2273,19 +2386,19 @@ export function drawCounterKey(svg, examples, numbers) {
   const nameSize = Math.min(ENEMY.labelSize, nameRoom / Math.max(1, name.length * COUNTER.nameAspect));
   const nameEnd = (ENEMY.labelBoxLeft + ENEMY.labelBoxRight) / 2 + (name.length * nameSize * COUNTER.nameAspect) / 2 + 1.5;
   const enemyLabels = [
-    [tip(east), 428, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
+    [tip(east), 428 + air, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
     // WHO above NEXT TURN (M16): the other way round, their pointers crossed.
-    [{ x: nameEnd, y: 45.5 }, 500, ['WHO', 'Sentry, patrol', 'or reserve']],
-    [tip(southEast), 552, ['NEXT TURN', 'It will face', 'here (dashed)']],
+    [{ x: nameEnd, y: 45.5 }, 500 + air, ['WHO', 'Sentry, patrol', 'or reserve']],
+    [tip(southEast), 552 + air, ['NEXT TURN', 'It will face', 'here (dashed)']],
   ];
   for (const [p, y, lines] of enemyLabels) {
     pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
     words(220, y, lines);
   }
-  const mini = el('g', { transform: 'translate(30 606) scale(0.8)' });
+  const mini = el('g', { transform: `translate(30 ${606 + air}) scale(0.8)` });
   mini.appendChild(drawEnemy({ ...enemy, suppressed: true }, unitMap, false, false));
-  row(602, mini, ['SUPPRESSED', 'Head down this turn: it', 'does not see, fire or move'], 76);
-  row(656, markerAt('marker-open-kill', 656), ['OPEN TO A KILL [K]', 'The turn after: it sees again']);
-  row(692, markerAt('marker-no-kill', 692), ['CANNOT BE KILLED', 'The reserve squad']);
-  row(728, markerAt('marker-spotted', 728), ['RAISED THE ALARM', 'It saw or found something']);
+  row(602 + air, mini, ['SUPPRESSED', 'Head down this turn: it', 'does not see, fire or move'], 76);
+  row(656 + air, markerAt('marker-open-kill', 656 + air), ['OPEN TO A KILL [K]', 'The turn after: it sees again']);
+  row(692 + air, markerAt('marker-no-kill', 692 + air), ['CANNOT BE KILLED', 'The reserve squad']);
+  row(728 + air, markerAt('marker-spotted', 728 + air), ['RAISED THE ALARM', 'It saw or found something']);
 }
