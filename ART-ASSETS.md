@@ -220,6 +220,13 @@ sky), since the title sits there; put the aircraft and canopies toward the left 
 and the ground along the bottom fifth. Without the file, code draws its own night scene
 (`title-card` in `src/render/theme.js`).
 
+Since M25 the file the game loads is a **1600 x 400** copy at quality 90 (about 200 KB),
+made from the painted 2400 x 600, which is kept beside it as `title-card_full.jpg` and
+not loaded: the full size was 750 KB, and 1600 across is still sharp on a retina screen
+at the card's size. Supply at 2400 x 600 as ever; to remake the game's copy (macOS,
+nothing to install):
+`sips -s format jpeg -s formatOptions 90 -z 400 1600 title-card_full.jpg --out title-card.jpg`
+
 ---
 
 ## 8. Type

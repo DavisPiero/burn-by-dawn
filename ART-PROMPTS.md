@@ -133,7 +133,7 @@ when the game opens.
 |---|---|
 | File | `assets/title/title-card.jpg` |
 | Size | **4:1, 2400 × 600 px** (never below 1200 × 300) |
-| Format | **JPEG**, sRGB, quality about 85, opaque |
+| Format | **JPEG**, sRGB, quality about 85, opaque (the game loads a 1600 × 400 copy, M25; ART-ASSETS.md §7) |
 | Shown at | 600 × 150 px across the top of the orders card. Another shape is cropped from its middle. |
 | Composition | The title goes **across the middle**: keep the central 60% of the width and height open and fairly dark — night sky. Aircraft and canopies toward the left and right; fields, hedges and the skyline along the bottom fifth. |
 | Code does | The title lettering, the frame, and a soft dark scrim behind the title. Don't put any text in the picture. |
