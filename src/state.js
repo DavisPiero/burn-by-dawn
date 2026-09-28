@@ -236,6 +236,8 @@ export function jump(state, map, rules) {
  * his wounded line (units.js woundedLine: onWoundedCarrying if he still had a
  * charge and has that line). The event carries the line, chosen when it
  * happened, as by now his charge is already on the ground. The dead say nothing.
+ * A man first seen says his onSpotted line (M26); if he was also hit it comes
+ * later in the events than his sighting, so his wounded line replaces it.
  */
 function speechFrom(events, units) {
   let speech = [];
@@ -244,6 +246,7 @@ function speechFrom(events, units) {
     if (!unit || !onBoard(unit)) continue;
     let line = null;
     if (event.kind === 'landed' || event.kind === 'wounded' || event.kind === 'blastWounded') line = event.line;
+    else if (event.kind === 'spotted' && event.first) line = unit.dialogue?.onSpotted ?? null;
     if (line) speech = say(speech, unit.id, line);
   }
   return speech;
@@ -365,7 +368,8 @@ function spend(state, unitId, cost, changes = {}) {
 export function hideUnit(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
   if (!checkHide(unit, rules).ok) return state;
-  return spend(state, unitId, unit.ap, { hidden: true });
+  const hidden = spend(state, unitId, unit.ap, { hidden: true });
+  return { ...hidden, speech: say(hidden.speech, unitId, unit.dialogue?.onHide ?? null) };
 }
 
 /**
@@ -404,7 +408,8 @@ export function killEnemy(state, unitId, enemyId, map, rules) {
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
   };
-  return makeNoise(fired, 'silenced', unit, alert, rules).state;
+  const shot = makeNoise(fired, 'silenced', unit, alert, rules).state;
+  return { ...shot, speech: say(shot.speech, unitId, unit.dialogue?.onKill ?? null) };
 }
 
 /**
@@ -418,8 +423,10 @@ export function knifeEnemy(state, unitId, enemyId, rules) {
   const check = checkKnife(unit, enemy, rules);
   if (!check.ok) return state;
   // `knifed` is for the board only (M16): a stain is drawn under the body.
+  const spent = spend(state, unitId, unit.ap);
   return {
-    ...spend(state, unitId, unit.ap),
+    ...spent,
+    speech: say(spent.speech, unitId, unit.dialogue?.onKill ?? null),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, knifed: true }],
   };

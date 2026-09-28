@@ -5,7 +5,7 @@
 
   "_shortName": "What fits on the counter's name strip. It is not required to be the surname: Holloway goes by his nickname.",
 
-  "_dialogue": "Three lines each, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5). Every key is required, even for a man who will never place a charge. onWoundedCarrying is optional: said instead of onWounded when he is hit still carrying a charge, which then drops on his hex, so a line about the charge is only said when there is one to fetch. Give it to the men who start with charges; onWounded must then not mention one. These are PLACEHOLDER lines, written to be replaced.",
+  "_dialogue": "Three lines every man must have, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5), even a man who will never place a charge. The rest are optional, and a man without one is silent. onWoundedCarrying: said instead of onWounded when he is hit still carrying a charge, which then drops on his hex, so a line about the charge is only said when there is one to fetch; give it to the men who start with charges, and onWounded must then not mention one. onKill: after a gunner's kill or anyone's knife. onSpotted: the first time he is seen, not each turn he stays in view. onHide: going to ground. These are PLACEHOLDER lines, written to be replaced.",
 
   "troopers": [
     {
@@ -15,7 +15,10 @@
         "onLand": "Right. Nobody wanders off till I've found the rest of you.",
         "onPlaceCharge": "Set. Walk away from it — then run.",
         "onWounded": "Only a scratch. Keep the lads moving.",
-        "onWoundedCarrying": "Charge is by my boots. Somebody fetch it — I'll catch you up."
+        "onWoundedCarrying": "Charge is by my boots. Somebody fetch it — I'll catch you up.",
+        "onKill": "One fewer. Now keep your heads down.",
+        "onSpotted": "We've been seen. Nobody panic.",
+        "onHide": "Down, and stay down. That's an order."
       }
     },
     {
@@ -25,7 +28,10 @@
         "onLand": "Down soft as you like. Whose cabbages are these?",
         "onPlaceCharge": "Done. You'd not have got the wrapper off.",
         "onWounded": "Oh, that's torn it.",
-        "onWoundedCarrying": "Oh, that's torn it. Charge is on the deck — mind how you lift it."
+        "onWoundedCarrying": "Oh, that's torn it. Charge is on the deck — mind how you lift it.",
+        "onKill": "Sorry, pal. Nothing personal.",
+        "onSpotted": "Uh-oh. He's looking right at me.",
+        "onHide": "Nice and snug in the dirt."
       }
     },
     {
@@ -34,7 +40,10 @@
       "dialogue": {
         "onLand": "I can see the church from here. We're about right.",
         "onPlaceCharge": "Not my trade, this. Hope it goes bang.",
-        "onWounded": "Should've kept my head down. Go on, I'll catch up."
+        "onWounded": "Should've kept my head down. Go on, I'll catch up.",
+        "onKill": "Didn't hear a thing, did he?",
+        "onSpotted": "Spotted. I'll have to be quick about it.",
+        "onHide": "Not a sound. Not a movement."
       }
     },
     {
@@ -43,7 +52,10 @@
       "dialogue": {
         "onLand": "Missed every tree in France. Told you I would.",
         "onPlaceCharge": "Which end's the dangerous one?",
-        "onWounded": "Leave it. Get to the bridge."
+        "onWounded": "Leave it. Get to the bridge.",
+        "onKill": "Hope nobody was fond of him.",
+        "onSpotted": "He's seen me. Ask me how I know.",
+        "onHide": "Down in the mud, where I belong."
       }
     },
     {
@@ -52,7 +64,10 @@
       "dialogue": {
         "onLand": "Bren's in one piece. That's all that matters.",
         "onPlaceCharge": "Don't ask me to do that again.",
-        "onWounded": "Bit of bother. Still got one good arm."
+        "onWounded": "Bit of bother. Still got one good arm.",
+        "onKill": "One down. Quietly, mind.",
+        "onSpotted": "Been made. Somebody get his head down.",
+        "onHide": "Head down. Bren's quiet."
       }
     },
     {
@@ -62,7 +77,10 @@
         "onLand": "Carried the spare all the way down, Sarge.",
         "onPlaceCharge": "Heavy old thing. Glad to be shot of it.",
         "onWounded": "Takes more than that to put an ox down.",
-        "onWoundedCarrying": "Somebody take the charge off me."
+        "onWoundedCarrying": "Somebody take the charge off me.",
+        "onKill": "That's him seen to.",
+        "onSpotted": "Bit hard to hide, a man my size.",
+        "onHide": "Small as I can make myself. Which isn't small."
       }
     }
   ]
