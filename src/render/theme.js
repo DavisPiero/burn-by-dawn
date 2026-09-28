@@ -466,7 +466,7 @@ export const SUPPRESSED = {
 };
 
 export const MOTION = {
-  travelMsPerHex: 140, // half as slow again since M13, and a quarter slower again in M16: the eye can follow him
+  travelMsPerHex: 190, // half as slow again since M13, a quarter slower again in M16, and 190 from 140 in M24 (for steps a hex apart, since taken out; the pace was kept)
   blastMs: 1500,
 };
 
@@ -918,8 +918,8 @@ export const CUE = {
   halo: PALETTE.paper,
   size: 54,
   subSize: 25,
-  nudge: { x: 0, y: -44 }, // from the middle of the three runs' names (−18 until M22: it sat on the west and east tabs)
-  pulseMs: 2800, // half the speed of M21's 1400 (M22, the operator's)
+  nudge: { x: 92, y: -44 }, // from the middle of the three runs' names (y −18 until M22: it sat on the west and east tabs; x 0 until M24, when the North tab moved left and PICK A DROP DIRECTION ran off the map's left edge)
+  pulseMs: 2800, // the men's rings' throb: half the speed of M21's 1400 (M22, the operator's); the drop's lettering is still since M24
   pulseScale: 1.035, // half M21's swell of 1.07
   ringRadius: 40, // round a counter's middle, in board units
   ringWidth: 4.5,

@@ -732,7 +732,7 @@ export function renderPieces(layers, state, view) {
   drawBlasts(layers, state, now);
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
-  if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames, now);
+  if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
   if (view.selectCue) drawSelectCue(layers, state, now);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.strikeShow?.kind === 'cut') {
@@ -854,14 +854,15 @@ function throbbing(layers, key, now) {
 
 /**
  * Before the jump (M21, from playtesting: a first-timer did not know where to
- * begin): PICK A DROP RUN! among the runs' names until one is picked, then
- * SPACE TO JUMP!, in the player's pen.
+ * begin): PICK A DROP DIRECTION among the runs' names until one is picked,
+ * then HIT SPACE TO JUMP, in the player's pen. Still since M24 (the
+ * operator's): the throb is kept for the men's rings.
  */
-function drawDropCue(layers, cue, names, now) {
+function drawDropCue(layers, cue, names) {
   const x = names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
   const y = names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
-  const lines = cue === 'pick' ? ['PICK A DROP RUN!', 'click a run\'s name, or press 1-3'] : ['SPACE TO JUMP!', 'or click the run again'];
-  const g = throbbing(layers, cue, now);
+  const lines = cue === 'pick' ? ['PICK A DROP DIRECTION', 'click a run\'s name, or press 1-3'] : ['HIT SPACE TO JUMP', 'or click the run again'];
+  const g = el('g', { 'pointer-events': 'none' });
   g.appendChild(penLetters(lines, x, y, [CUE.size, CUE.subSize]));
   layers.effects.appendChild(g);
 }
@@ -1683,8 +1684,10 @@ function drawDrop(layers, drop) {
     // close together in the north-west corner and their names would collide.
     // Centred on the line, so the line runs through its middle (M12); a run
     // may set how far along (`labelAlong` in map.json).
+    // Nudged off the line where map.json says (M24), as a charge point's satchel is.
     const along = run.labelAlong ?? DROP.labelAlong;
-    const at = { x: a.x + (b.x - a.x) * along, y: a.y + (b.y - a.y) * along };
+    const [nx, ny] = run.labelNudge ?? [0, 0];
+    const at = { x: a.x + (b.x - a.x) * along + nx * map.hexSize, y: a.y + (b.y - a.y) * along + ny * map.hexSize };
     tabs.push(runTab(layers, run, at));
 
     if (run.selected) {
