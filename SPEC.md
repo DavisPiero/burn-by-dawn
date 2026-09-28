@@ -11,6 +11,15 @@ the mission harder.* Charges have fuse timers, explosions raise the garrison ale
 and alert sends patrols toward your last known position. The order and timing of your
 demolitions is the strategy.
 
+**Second pillar — hunter and hunted** (the operator's, from playtesting: the game became
+fun once the stick could act — narrower arcs, the knife, kills that score — rather than
+spend the mission avoiding mistakes). The player is both at once. Every turn should offer
+at least one active move worth making — a kill, a lure, a charge, a dash — and the
+garrison should still be something to fear. Every new threat comes with a verb that
+answers it, and every active move pays now and costs later (a body is found, a bang
+raises the alert, a gunner's turn is spent): the spine again, in miniature. A new feature
+should give the player something to *do*, not only something to *avoid*.
+
 **Players:** single-player. The garrison is not an opponent; it follows the rules in §6,
 so the hover readout can show exactly what it will do.
 
@@ -317,7 +326,7 @@ alert his gunfire raises**, every time: +1 instead of +2 at the current numbers.
 
 ### The six
 
-Names are placeholders and will be replaced.
+The names are kept (the operator's, at the M24 stocktake).
 
 | # | Name | Role | Trait | Hook | Effect |
 |---|---|---|---|---|---|
