@@ -218,7 +218,7 @@ gives the full cost and, when it cannot be used, why not.
   so the telephone exchange can be reached without crossing the watched bridge deck: the
   bridge guards the bonus, never the mission. `requiresDestroyed` can gate it on an
   objective.
-- **Pack a parachute** — 1 AP, standing on one (§9).
+- **Pack a parachute** — 1 AP, standing on one, his own or anyone's (§9).
 - **RAF diversion** (once per mission, while the leader is alive) — no AP, called at any
   point in the player phase. A raid on the town pulls the garrison's attention: the
   **alert drops one state** (to the start of the state below), **every enemy abandons
@@ -248,7 +248,7 @@ to be casual while still being strategic.
   `R` patrol-route overlay, `?` or `/` how to play (§11), `M` sound on or off. Actions:
   `H` hide, `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid),
   `P` pick up a charge, `E` pass a charge, `C` place a charge, `X` cut the line, `W` swim,
-  `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
+  `U` pack a parachute, `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
   for a click; `Esc` backs out of it.
 
 ---

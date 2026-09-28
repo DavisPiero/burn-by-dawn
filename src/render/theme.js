@@ -2389,7 +2389,7 @@ export function roleSymbolId(role) {
  */
 export function portraitId(unitId, size) {
   const id = `portrait-${unitId}-${size}`;
-  return hasSprite(id) || SUPPLIED.has(id) ? id : `portrait-fallback-${size}`;
+  return PLACED.has(id) ? id : `portrait-fallback-${size}`;
 }
 
 // Supplied portraits (ART-ASSETS.md §2). A PNG in PORTRAIT_FILES.dir named as
@@ -2407,7 +2407,10 @@ export const PORTRAIT_FILES = {
   sizes: { full: { width: 240, height: 300, ext: 'jpg' }, chip: { width: 32, height: 32, ext: 'png' } },
 };
 
-const SUPPLIED = new Set();
+// Each man's own portrait symbols, made by loadSuppliedPortraits before
+// anything is drawn: the stand-in at first, his picture once it arrives. So
+// art drawn once, before the files are in (the counter key), still shows it.
+const PLACED = new Set();
 
 /**
  * Look for a supplied portrait for each trooper id and swap each one found
@@ -2422,18 +2425,20 @@ export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
     for (const [size, box] of Object.entries(PORTRAIT_FILES.sizes)) {
       const id = `portrait-${unitId}-${size}`;
       const url = `${PORTRAIT_FILES.dir}/${id}.${box.ext}`;
+      let symbol = document.getElementById(id);
+      if (!symbol) {
+        const { width, height } = spriteSize(`portrait-fallback-${size}`);
+        symbol = svg('symbol', { id, viewBox: `0 0 ${width} ${height}`, overflow: 'hidden' });
+        symbol.appendChild(svg('use', { href: `#portrait-fallback-${size}`, width, height }));
+        defs.appendChild(symbol);
+        PLACED.add(id);
+      }
       loads.push(picture(url).then((ok) => {
         if (!ok) return;
-        let symbol = document.getElementById(id);
-        if (!symbol) {
-          symbol = svg('symbol', { id, viewBox: `0 0 ${box.width} ${box.height}`, overflow: 'hidden' });
-          defs.appendChild(symbol);
-        }
-        symbol.setAttribute('overflow', 'hidden');
+        symbol.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
         symbol.replaceChildren(svg('image', {
           href: url, x: 0, y: 0, width: box.width, height: box.height, preserveAspectRatio: 'xMidYMid slice',
         }));
-        SUPPLIED.add(id);
         onLoaded(id);
       }));
     }
