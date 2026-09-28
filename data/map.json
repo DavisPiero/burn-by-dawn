@@ -33,6 +33,14 @@
   "reserve": { "id": "reserve", "label": "Reserve squad", "type": "reserve", "facing": "SE", "entryHexes": [[8, 0], [8, 1], [7, 1]],
     "guardHex": [4, 9], "guardFacing": "SE" },
 
+  "_reinforcements": "Squads called up when a target goes up (M21b, SPEC.md §6 Reinforcements), as many as its kind's `reinforcements` in data/rules.json (0 except on Hard). Each comes on at the first free entryHexes hex in the enemy phase after the bang — the road's south end, by lorry from the town, beside the exfil: from the north edge, like the reserve, they took three turns to arrive and the stick was nearly always out by then — and marches to the next unused post in `posts`, where it stands as a sentry facing guardFacing. They are patrols, so a gunner can kill them. The posts are in order: the first to come takes the first. Once every post is taken no more come.",
+  "reinforcements": { "id": "reinforcements", "label": "Reinforcements", "type": "patrol", "facing": "SE", "entryHexes": [[4, 11], [5, 11], [4, 10]],
+    "posts": [
+      { "guardHex": [5, 10], "guardFacing": "SE" },
+      { "guardHex": [-1, 11], "guardFacing": "E" },
+      { "guardHex": [1, 10], "guardFacing": "SE" }
+    ] },
+
   "_objectives": "SPEC.md §7. `kind` picks the numbers in data/rules.json objectives (charges needed, blast radius, alert, whether a scout can cut it, what its hexes become when destroyed). `hexes` is the footprint the art covers; `chargeHexes` are where a trooper stands to place a charge. Exactly one objective is `primary`. `pointNudge` (M14, art only) moves a charge point's satchel, keyed \"q,r\", by [x, y] hex radii, clear of the objective's art: the bridge's south one, whose fuse crossed the pier; the exchange's east one, down off its power line, and its south one, left off its wire (M16). Charge hexes were chosen by simulating the patrols at Calm and Suspicious: the bridge's west-bank marsh is watched only when the bridge patrol passes, the exchange's north, east and south sides only when the village patrol comes round, and the dump's two ridge hexes differ (-1,6 is rarely seen, -1,7 often).",
   "objectives": [
     { "id": "bridge", "label": "Rail bridge", "kind": "bridge", "primary": true,

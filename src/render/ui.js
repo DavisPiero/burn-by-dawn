@@ -281,7 +281,7 @@ export function describeAlertStates(alert) {
 // How much a line of the turn report matters, lowest first: the card puts the
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
-  killed: 0, blastKilled: 0, wounded: 1, blastWounded: 1, explosion: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reserve: 2, spotted: 2, diversion: 2,
+  killed: 0, blastKilled: 0, wounded: 1, blastWounded: 1, explosion: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reinforcementsCalled: 1, reserve: 2, reinforcements: 2, spotted: 2, diversion: 2,
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
@@ -428,26 +428,66 @@ function briefChoice(choice) {
  * What happened at the last turn boundary, in words. A line about a place
  * rings that hex on the board while it is hovered: `onLocate(hex | null)`.
  */
-export function renderReport(element, state, place, onLocate) {
+export function renderReport(element, state, place, onLocate, earlier = []) {
   element.replaceChildren();
-  const events = state.report;
   if (state.phase === 'drop') {
     element.appendChild(html('li', null, 'The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.'));
     return;
   }
-  if (events.length === 0) {
-    element.appendChild(html('li', null, state.turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.'));
-    return;
-  }
-  for (const event of orderReport(events)) {
-    const item = html('li', null, boldNames(describeEvent(event, place), state.units.map((u) => u.shortName)));
-    if (Number.isInteger(event.q) && Number.isInteger(event.r)) {
-      item.classList.add('located');
-      item.addEventListener('mouseenter', () => onLocate({ q: event.q, r: event.r }));
-      item.addEventListener('mouseleave', () => onLocate(null));
+  // A log (M21b, the operator's: it read as a wall of text): a bar for each
+  // turn, this one first and the two before it faded under it; each line
+  // with the board's mark for what it is, bad news in red, routine in grey.
+  const names = state.units.map((u) => u.shortName);
+  const turns = [{ turn: state.turn, events: state.report }, ...earlier.slice(0, 2)];
+  turns.forEach(({ turn, events }, k) => {
+    const old = k > 0 ? ' old' : '';
+    element.appendChild(html('li', `rep-turn${old}`, turn === 1 ? 'THE DROP · TURN 1' : `END OF TURN ${turn - 1} · TURN ${turn}`));
+    if (events.length === 0) {
+      element.appendChild(html('li', `rep-none${old}`, turn === 1 ? 'No reports yet.' : 'A quiet night. Nothing seen.'));
+      return;
     }
-    element.appendChild(item);
+    for (const event of orderReport(events)) {
+      const weight = EVENT_WEIGHT[event.kind] ?? 4;
+      const tone = weight <= 1 ? 'grave' : weight <= 3 ? 'warn' : 'quiet';
+      const item = html('li', `rep-${tone}${old}`, [reportMark(event.kind), html('span', 'rep-text', boldNames(describeEvent(event, place), names))]);
+      if (!old && Number.isInteger(event.q) && Number.isInteger(event.r)) {
+        item.classList.add('located');
+        item.addEventListener('mouseenter', () => onLocate({ q: event.q, r: event.r }));
+        item.addEventListener('mouseleave', () => onLocate(null));
+      }
+      element.appendChild(item);
+    }
+  });
+}
+
+// The board's own mark for a line of the report (M21b), from the sprites in
+// the board's defs; a plain dot for the rest.
+const REPORT_MARKS = {
+  spotted: 'marker-spotted', pinned: 'marker-spotted', wounded: 'marker-wounded', blastWounded: 'marker-wounded',
+  killed: 'marker-body', blastKilled: 'marker-body', explosion: 'marker-blast', enemyBlastKilled: 'marker-blast',
+  bodyFound: 'marker-body', parachuteFound: 'marker-parachute', landed: 'marker-parachute',
+};
+
+function reportMark(kind) {
+  const box = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  box.setAttribute('class', 'rep-mark');
+  box.setAttribute('viewBox', '0 0 20 20');
+  const id = REPORT_MARKS[kind];
+  if (id) {
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', `#${id}`);
+    use.setAttribute('width', 20);
+    use.setAttribute('height', 20);
+    box.appendChild(use);
+  } else {
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', 10);
+    dot.setAttribute('cy', 10);
+    dot.setAttribute('r', 3);
+    dot.setAttribute('class', 'rep-dot');
+    box.appendChild(dot);
   }
+  return box;
 }
 
 export function describeEvent(event, place) {
@@ -457,6 +497,8 @@ export function describeEvent(event, place) {
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
+    case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for the way to the exfil.`;
+    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements after the ${event.label.toLowerCase()}: on next turn.`;
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;
@@ -963,6 +1005,7 @@ const READOUT_GAP = '  |  ';
  */
 export function renderReadout(element, state, map, view) {
   const hex = state.hoverHex ?? state.selectedHex;
+  element.classList.remove('rows');
   if (view?.targetLabel) {
     setText(element, view.targetLabel);
     return;
@@ -977,11 +1020,16 @@ export function renderReadout(element, state, map, view) {
     const killable = e.killable ? '' : ' CANNOT BE KILLED — suppress it to get past.';
     // What it will do if the turn ended now (M13b), which the dashed outline shows.
     const n = view.hoverEnemyNext;
-    const next = !n ? '' : `${READOUT_GAP}Next turn, as things stand: ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).`;
     // What put the "!" on its chip (M20).
     const raised = view.alarmed?.get(e.id);
-    const alarm = raised ? `${READOUT_GAP}Raised the alarm last turn: ${raised.map((r) => r.words).join(', and ')}.` : '';
-    setText(element, `${e.label} — ${e.typeLabel}, vision ${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}, ${doing}.${alarm} Detection base ${e.detection}.${killable}${next}`);
+    // In rows under its name (M21b), as a hex's readout is.
+    const stamp = e.suppressed ? { word: 'SUPPRESSED', tone: 'safe' } : raised ? { word: 'RAISED THE ALARM', tone: 'danger' } : null;
+    renderRows(element, `${e.label.toUpperCase()} · ${e.typeLabel.toUpperCase()}`, stamp, [
+      { label: 'DOING', text: `${doing}.${killable}` },
+      raised && { label: 'ALARM', text: `raised it last turn: ${raised.map((r) => r.words).join(', and ')}.`, tone: 'danger' },
+      n && { label: 'NEXT', text: `as things stand, ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).` },
+      { label: 'SEES', text: `${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}; detection base ${e.detection}.` },
+    ]);
     return;
   }
   if (!hex) {
@@ -1012,9 +1060,49 @@ export function renderReadout(element, state, map, view) {
 
   // Most important first: the readout is a fixed height (index.html), and
   // whatever does not fit is cut from the end. The move, a blast and the
-  // detection risk must never be what gets cut.
-  const pieces = [view?.dropLabel, view?.moveLabel, view?.blastLabel, view?.riskLabel, view?.hideLabel, view?.siteLabel, view?.noiseLabel, parts.join(', '), view?.commandLabel];
-  setText(element, `${terrain.label.toUpperCase()} — ${pieces.filter(Boolean).map(capitalise).join(READOUT_GAP)}`);
+  // detection risk must never be what gets cut. One labelled row each under
+  // the ground's name and a stamp saying how it goes (M21b, the operator's:
+  // one run-on line split by bars was a wall of text nobody read).
+  const verdict = riskVerdict(view?.plan, view?.risk);
+  const blast = view?.blastLabel;
+  renderRows(element, terrain.label.toUpperCase(), blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : verdict, [
+    { label: 'LANDING', text: view?.dropLabel },
+    { label: 'MOVE', text: view?.moveLabel },
+    blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
+    { label: 'RISK', text: view?.riskLabel, tone: verdict?.tone === 'safe' ? null : verdict?.tone },
+    { label: 'HIDE', text: view?.hideLabel },
+    { label: 'HERE', text: view?.siteLabel },
+    { label: 'HEARD', text: view?.noiseLabel?.replace(/^HEARD — /, '') },
+    { label: 'GROUND', text: parts.join(', ') },
+    { label: 'ORDERS', text: view?.commandLabel },
+  ]);
+}
+
+/**
+ * The readout as a headline with a stamp, then one row per thing to say,
+ * each under a short label (M21b). `stamp` is { word, tone } or null; rows
+ * with no text are left out.
+ */
+function renderRows(element, head, stamp, rows) {
+  element.classList.add('rows');
+  element.replaceChildren(
+    html('div', 'ro-head', [html('span', 'ro-title', head), stamp ? html('span', `ro-stamp ${stamp.tone}`, stamp.word) : '']),
+    ...rows.filter((row) => row && row.text).map((row) => html('div', `ro-row${row.tone ? ` ${row.tone}` : ''}`, [
+      html('span', 'ro-label', row.label),
+      html('span', 'ro-text', boldKeys(capitalise(row.text))),
+    ])),
+  );
+}
+
+/** How a hovered move goes, in one word for the stamp: the worst hex on it. */
+function riskVerdict(plan, risk) {
+  if (!plan || !risk) return null;
+  const tested = plan.steps === 0 ? [0] : plan.path.map((_, i) => i).slice(1);
+  const seen = tested.filter((i) => risk[i]);
+  if (seen.some((i) => risk[i].shot)) return seen.some((i) => risk[i].shot && risk[i].shotResult === 'hit') ? { word: 'SHOT', tone: 'danger' } : { word: 'FIRED ON', tone: 'warn' };
+  if (seen.some((i) => risk[i].spotted)) return { word: 'SPOTTED', tone: 'danger' };
+  if (seen.length) return { word: 'SEEN', tone: 'warn' };
+  return { word: 'UNSEEN', tone: 'safe' };
 }
 
 /** What the hover path costs, in words. Derived in main.js, worded here. */

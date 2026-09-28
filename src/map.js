@@ -192,6 +192,25 @@ function validateEnemies(map, types, mapUrl, enemiesUrl) {
   if (!findPath(map, { q: reserve.entryHexes[0][0], r: reserve.entryHexes[0][1] }, { q: reserve.guardHex[0], r: reserve.guardHex[1] }, null)) {
     throw new Error(`${where} cannot walk from entryHexes[0] to guardHex`);
   }
+
+  // Reinforcements (M21b, SPEC.md §6): optional; squads called up when a target goes up.
+  const help = map.reinforcements;
+  if (help === undefined) return;
+  const at = `${mapUrl}: reinforcements`;
+  if (typeof help.id !== 'string' || ids.has(help.id) || help.id === reserve.id) throw new Error(`${at} needs a unique "id"`);
+  if (typeof help.label !== 'string' || help.label === '') throw new Error(`${at} needs a "label"`);
+  if (!types[help.type]) throw new Error(`${at} has type "${help.type}", which ${enemiesUrl} does not define`);
+  checkFacing(help.facing, at);
+  if (!Array.isArray(help.entryHexes) || help.entryHexes.length === 0) throw new Error(`${at} needs at least one "entryHexes" [q, r]`);
+  help.entryHexes.forEach((hex, i) => checkHex(hex, `${at} entryHexes[${i}]`, true));
+  if (!Array.isArray(help.posts) || help.posts.length === 0) throw new Error(`${at} needs at least one of "posts"`);
+  help.posts.forEach((post, i) => {
+    checkHex(post.guardHex, `${at} posts[${i}] guardHex`, true);
+    checkFacing(post.guardFacing, `${at} posts[${i}] guard`);
+    if (!findPath(map, { q: help.entryHexes[0][0], r: help.entryHexes[0][1] }, { q: post.guardHex[0], r: post.guardHex[1] }, null)) {
+      throw new Error(`${at} cannot walk from entryHexes[0] to posts[${i}]`);
+    }
+  });
 }
 
 // Column index of an axial coord within its row. Rows are shifted so the

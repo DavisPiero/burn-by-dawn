@@ -78,6 +78,9 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
     if (!payoff || typeof payoff.noReserve !== 'boolean' || !Number.isInteger(payoff.withdrawPatrols) || payoff.withdrawPatrols < 0) {
       throw new Error(`${rulesUrl}: objectives.${id}.payoff needs "noReserve" (true or false) and "withdrawPatrols" (a whole number, 0 for none)`);
     }
+    if (!Number.isInteger(kind.reinforcements) || kind.reinforcements < 0) {
+      throw new Error(`${rulesUrl}: objectives.${id} needs "reinforcements" (a whole number, 0 for none)`);
+    }
   }
 
   const swim = rules.actions?.swim;
@@ -378,10 +381,13 @@ export function runFusePhase(state, rules) {
  * its kind's `payoff` in rules.json — never a branch for one objective. Called
  * once, when it is destroyed, whether blown or cut. `noReserve`: the reserve
  * is never called up (one already out stays). `withdrawPatrols`: that many
- * patrols, nearest the objective first, leave the board.
+ * patrols, nearest the objective first, leave the board. And its cost
+ * (M21b, Hard): `reinforcements` squads are called up, to come on in the next
+ * enemy phase — none once the exchange's noReserve has cut the telephones.
  */
 export function applyPayoff(state, objective, rules) {
   const { noReserve, withdrawPatrols } = kindOf(objective, rules).payoff;
+  const calls = kindOf(objective, rules).reinforcements ?? 0;
   const events = [];
   let next = state;
   const centre = objective.hexes[Math.floor(objective.hexes.length / 2)];
@@ -398,6 +404,10 @@ export function applyPayoff(state, objective, rules) {
       next = { ...next, enemies: next.enemies.filter((e) => !leaving.includes(e)) };
       for (const e of leaving) events.push({ kind: 'withdrawn', enemyId: e.id, enemyLabel: e.label, label: objective.label, q: e.q, r: e.r });
     }
+  }
+  if (calls > 0 && !next.reserveCancelled) {
+    next = { ...next, reinforcementsDue: (next.reinforcementsDue ?? 0) + calls };
+    events.push({ kind: 'reinforcementsCalled', count: calls, label: objective.label, q: centre.q, r: centre.r });
   }
   return { state: next, events };
 }

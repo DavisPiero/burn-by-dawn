@@ -378,8 +378,9 @@ he is shot on (`combat.shotResult` in `rules.json`):
 | heavy (hedgerow, wood, farmhouse) | **Pinned** — no hit, but his next turn's pool is 1 AP smaller (never below 1), and he stays in contact |
 
 **Range** (M13b, from playtesting — a spotted man had no way out): a shot hits only if an
-enemy firing on him is within **3 hexes** (`combat.hitRange`; 2 until M14, when the
-operator found Normal played like Easy — Easy keeps 2); from further off, every shot only
+enemy firing on him is within **4 hexes** (`combat.hitRange`; 2 until M14, when the
+operator found Normal played like Easy — Easy keeps 2 — and 3 until M21b, when Normal
+wanted to be harder again; Hard has it too); from further off, every shot only
 pins, whatever the cover. Getting distance is a way out, and the readout shows it before
 he moves.
 
@@ -512,6 +513,24 @@ The reserve squad **cannot be killed** (`killable: false`): it is a squad, not o
 at Alarmed the alert is already at its cap, so a kill would cost nothing and reopen the
 exfil for free. It can be suppressed for a turn to slip past it. Its counter and hover say
 it cannot be killed.
+
+### Reinforcements (M21b, the operator's, Hard only)
+
+On Hard, blowing a target makes the garrison call up **reinforcements**: its kind's
+`reinforcements` in `rules.json` (0 on Easy and Normal; on Hard the bridge 2 and the fuel
+dump 1). They come on in the **enemy phase after the bang**, at the road's south end beside
+the exfil (by lorry from the town; `reinforcements.entryHexes` in `map.json`), and march to
+**posts** on the ways into the exfil — by the lane from the lock, over the west fields,
+north of the exfil — each squad the next post in order, where it stands as a sentry. So
+getting out after the bridge takes a detour, or a gunner. They are **patrols**, so they can
+be suppressed and killed. The call goes by telephone: **none come once the telephone
+exchange is down** (its `noReserve` payoff), which makes the exchange the first job on Hard.
+The target rings say CALLS UP 2 SQUADS, the hovers and the mission panel say it, and the
+turn report says when they are called and when they come on.
+
+The balance bot does not feel them (Hard 47/33/19 either way): its men are nearly always out
+within a turn or two of the bang, and its greedy strategy cuts the exchange first. They are
+aimed at a person who lingers or goes on to the fuel dump after the bridge.
 
 ---
 
@@ -724,7 +743,7 @@ as `?seed=` picks the seed.
 |---|---|
 | **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF diversion can be called twice; the leader's orders reach 3 hexes; undo goes back as far as the start of the turn (M11b); hiding gives +2 concealment, not +1 (M13b); shots hit only from 2 hexes off, not 3 (M14) |
 | **Normal** | The mission as above |
-| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3, and keeps the old 120° arc (M13b) |
+| **Hard** | 4 men must get out; every sentry, patrol and the reserve sees 4 hexes, not 3, and keeps the old 120° arc (M13b); blowing the bridge calls up 2 squads of reinforcements and the fuel dump 1, none once the exchange is down (M21b, §6) |
 
 The score is the same sum at every level.
 
@@ -932,6 +951,16 @@ Desktop makes the skeuomorphism work properly, so use the room:
   ring, with CLICK A MAN TO START over them, until the player first selects a man; after
   that, never again that game. It is the pen, like the target rings, so it is lettering,
   not print.
+- **The boxes under the map** (M21b, the operator's: a wall of undifferentiated text, and
+  little read). The hover readout is a headline — the ground's name in the stencil, or an
+  enemy's name and type — with a stamp saying how the hovered move goes (UNSEEN in green,
+  SEEN in ink, SPOTTED or SHOT in red; KILLED if a blast would), then one row per thing
+  under a short label: LANDING, MOVE, BLAST, RISK, HIDE, HERE, HEARD, GROUND, ORDERS for a
+  hex; DOING, ALARM, NEXT, SEES for an enemy. Trouble is set in red. The turn report is a
+  log: a black bar per turn, this turn's lines under it and the two turns before faded
+  below, each line with the board's own mark for what it is (the "!", the wound cross, a
+  body, the blast, a parachute) and graded — deaths, wounds and bangs in bold red, routine in
+  grey.
 - **A man killed** (M21, the operator's): his counter floats straight up about a hex and
   fades away over his body, "floating up to heaven", before the turn's card is laid.
 - **BOOM!** over a blast is set in the comic lettering of the pen notes (M21, the
@@ -1022,6 +1051,7 @@ One Claude Code session each. Each must end in something playable in the browser
 | **M11b** | Operator playtest rules: undo steps by level, swimming while the bridge stands, passing a charge, a score for stealth instead of speed, in-play payoffs for the bonus targets | Easy undoes any step of the turn; a man can swim with the bridge up; a charge can be passed to the man beside him; the back page pays for men never spotted, not turns left; the exchange keeps the reserve away and the fuel dump takes a patrol off; the balance bot is re-run and compared |
 | **M11c** | The Cut the line rollover says what it takes and why it is worth a turn | Hovering X says scouts only, a full turn on a charge point, silent, no charge used, the same bonus, and the exchange's payoff; its "not now" names the charge point; no rules change |
 | **M11d** | Cat's Eyes one harder to spot; each trait's effect printed on the roster row | Cat's Eyes changes the detection sum, not the spot radius a scout never uses; each roster row reads like "Steady Hands: fuse 3 → 2 turns" and fits at 1280x800; the balance bot is re-run (Normal 81/78/69, from 80/66/57) |
+| **M21b** | Rules from the eleventh review: Normal's shots hit from 4 hexes; on Hard a bang calls up reinforcements to guard the way out; the boxes under the map in rows and a log | A man spotted 4 hexes off on Normal is hit in the open; on Hard the bridge going up brings two squads on at the road's south end the next enemy phase, marching to their posts, and none come once the exchange is down; the rings, hovers and panel say so; the readout shows a stamp and labelled rows; the report shows a bar per turn and marks per line; the balance bot is re-run (Normal 93/83/74, Hard 47/33/19) |
 | **M21** | Eleventh operator playtest review, no rules change: where to start (PICK A DROP RUN!, SPACE TO JUMP!, the men ringed until one is selected), a man killed floats away, BOOM! in the lettering, the hidden mark clearer, the counter key's blue AP and spacing, music off on the orders, the music's pace by level | Before a run is picked the board says PICK A DROP RUN!, after it SPACE TO JUMP!, and the JUMP! button is red; after the landing the men who can act are ringed until one is clicked; a man killed floats up and fades; the hidden mark reads on a hidden man; the key's BLUE AP pointer ends in blue beside the dot; Music off stops the music and leaves the orders up; Easy's music is slower and Hard's quicker; the orders and key still fit at 1280x800 |
 | **M20** | Tenth operator playtest review, two rules changes (the fuel dump's outer ring wounds rather than kills; hedgerows and orchards block sight): the title music until the jump and not between turns, orchard trees as crowns with stalked apples, the edge wash softened, the canal's name moved, a swim's landing shows its risk, the cut line explained, the alarm "!" explained, RESERVES on the chip | The music plays over the orders and run choice and stops at the jump, never between turns; a man two hexes from the fuel dump's charge is wounded, not killed, and the ring is shaded lighter; the base post sees neither past the hedges on Hard nor into the orchard; aiming a swim shows the far bank's dots; hovering an enemy's "!" says what it saw or found; the balance bot is re-run (Normal 93/85/76, Hard 53/38/23) |
 | **M19** | Ninth operator playtest review, no rules change: the title music fading as the orders are put away and playing between turns, each action's AP on its button, the risk dots explained | The music fades as the orders are cleared, is silent over the run choice and the drop, and plays while the garrison moves and its card is up; every action button shows its AP and all fit at 1280x800, four across included; hovering a seen hex puts a note beside its dots saying what they count |
