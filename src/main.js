@@ -32,7 +32,7 @@ import {
   BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
-  attachPopup, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
+  attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled,
@@ -48,6 +48,7 @@ const rosterList = document.getElementById('roster');
 const alertDial = document.getElementById('alert-dial');
 const alertCaption = document.getElementById('alert-caption');
 const reportList = document.getElementById('report');
+const reportScroll = document.getElementById('report-scroll');
 const actionBar = document.getElementById('actions');
 const diversionButton = document.getElementById('diversion');
 const missionList = document.getElementById('mission');
@@ -121,6 +122,8 @@ let menPicked = false;
 let musicOff = false;
 // The turns before this one, newest first, for the report's log (M21b): display only.
 let earlierReports = [];
+// Brings the report's ▲ ▼ up to date after a redraw (M22).
+let syncReportScroll = null;
 // Shots fired (M13): the flash and tracer of a suppress or a kill, display
 // only, cleared once it has played.
 let shotShow = null;
@@ -277,7 +280,8 @@ function deriveView() {
     hoverObjective: null,
     previewBlastArea: null,
     previewBlastKillArea: null,
-    siteLabel: null,
+    // What stands on the hovered hex (M22): { title, rows: [{ label, text }] }.
+    site: null,
     blastLabel: null,
     noiseLabel: null,
     mission: describeMissionState(),
@@ -313,15 +317,10 @@ function deriveView() {
   const objective = hex && !hoverEnemy ? objectiveAt(state.objectives, hex) : null;
   if (objective) {
     view.hoverObjective = objective;
-    view.siteLabel = describeObjective(objective);
-    if (!objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective) {
-      const wanted = chargesWanted(objective);
-      const points = objective.chargeHexes.length;
-      view.siteLabel = wanted > 0
-        ? `CHARGE POINT for the ${objective.label}, one of ${points} — a man carrying a charge stands here and places it [C]. `
-          + `It needs ${wanted} more charge${wanted === 1 ? '' : 's'}${wanted === 1 && points > 1 ? ': any one of its points will do' : ''}. ${view.siteLabel}`
-        : `The ${objective.label} has all the charges it needs. ${view.siteLabel}`;
-    }
+    // In short labelled rows under the target's own name (M22: one run-on
+    // line ran off the bottom of the box).
+    const onPoint = !objective.destroyed && objectiveForChargeHex(state.objectives, hex) === objective;
+    view.site = { title: objective.label, rows: describeObjective(objective, onPoint, Boolean(state.selectedUnitId)) };
     if (!objective.destroyed) {
       const { blastRadius, killRadius } = kindOf(objective, rules);
       view.previewBlastArea = areaAround(objective.chargeHexes.map((h) => ({ ...h, radius: blastRadius })));
@@ -329,11 +328,17 @@ function deriveView() {
     }
   } else if (hex && state.parachutes.some((p) => p.q === hex.q && p.r === hex.r)) {
     const chute = state.parachutes.find((p) => p.q === hex.q && p.r === hex.r);
-    view.siteLabel = `${chute.name}'s PARACHUTE — found if an enemy comes onto or beside this hex: alert +${rules.alert.parachuteFound}. `
-      + `Any man standing here can pack it up: [U] ${rules.actions.packParachute.apCost} AP.`;
+    view.site = { title: `${chute.name}'s parachute`, rows: [
+      { label: 'HERE', text: `found by an enemy on or next to it: alert +${rules.alert.parachuteFound}` },
+      { label: 'PACK', text: `any man standing here can pack it: [U] ${rules.actions.packParachute.apCost} AP` },
+    ] };
   } else if (hex && isExfil(baseMap, hex)) {
-    view.siteLabel = `EXFIL — a man who ends his move here is out. ${rules.mission.minimumOut} must get out, with the ${primaryLabel()} down, by dawn. `
-      + 'A man carrying a charge leaves it on the hex he steps off from, for another man to pick up [P].';
+    view.site = { title: 'Exfil', rows: [
+      { label: 'HERE', text: 'a man who ends his move here is out' },
+      { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with the ${primaryLabel()} down, by dawn` },
+      // Only for a man with a charge to leave, or nobody picked (M22: room).
+      ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it where he stepped off, for another to pick up [P]' }]),
+    ] };
   }
 
   // A noise waiting to be heard (M15: the ring on a blown fuel dump was taken
@@ -358,7 +363,8 @@ function deriveView() {
     view.commandArea = hexes;
     const { closeRadius } = rules.command;
     if (closeRadius != null) view.commandCloseArea = new Map([...hexes].filter(([, h]) => hexDistance(leader, h) <= closeRadius));
-    if (unit?.leader) view.commandLabel = `dashed blue outline: ${leaderOrdersWords(unit)}`;
+    // In the readout off the board, or over his own hex (M22: on every hex it crowded the box).
+    if (unit?.leader && (!hex || (hex.q === unit.q && hex.r === unit.r))) view.commandLabel = `blue dashes: ${leaderOrdersWords(unit)}`;
   }
   if (!unit) return view;
 
@@ -395,7 +401,9 @@ function deriveView() {
     }
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
-    if (plan.steps === 0 && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
+    // Not where nobody can see him: hiding would add nothing (M22: room).
+    const seenHere = plan.steps === 0 && detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
+    if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
   }
   return view;
 }
@@ -535,31 +543,40 @@ function chargesOnPoints(o) {
   return `${charges}, on any ${needed === 1 ? 'one' : needed} of its ${points} charge points`;
 }
 
-/** SPEC.md §4: hovering an objective shows what it needs. */
-function describeObjective(o) {
+/**
+ * SPEC.md §4: hovering an objective shows what it needs, as the readout's
+ * rows (M22). `onPoint`: the mouse is on one of its charge points. `brief`:
+ * a man is selected, so the move and its risk come first and only what bears
+ * on acting here is added; the rest is the mission panel's rollover.
+ */
+function describeObjective(o, onPoint, brief = false) {
   const kind = kindOf(o, rules);
-  const role = o.primary ? 'PRIMARY, needed to win' : `optional, +${rules.scoring.secondary} score`;
-  if (o.destroyed) return `${o.label} (${role}) — DESTROYED${o.cut ? ', line cut' : ''}.`;
-  const set = state.charges.filter((c) => c.objectiveId === o.id);
-  const burning = set.length ? `, ${set.length} set (fuse ${set.map((c) => c.fuse).join(', ')})` : '';
-  const parts = [
-    `needs ${chargesOnPoints(o)}`,
-    `${o.detonated} gone off${burning}`,
-    `fuse ${rules.charges.fuseTurns} turns`,
-    blastWords(kind),
-    `alert +${kind.alert}`,
-  ];
-  if (kind.cutLine) parts.push(`or a scout can cut the line [X], seen or not: a whole turn, so he must start his turn on a charge point; no noise, alert +${rules.alert.lineCut}`);
+  const worth = o.primary ? 'PRIMARY: needed to win' : `optional, +${rules.scoring.secondary}`;
   const payoff = payoffWords(kind);
-  if (payoff) parts.push(`destroyed, it ${payoff}`);
-  return `${o.label} (${role}) — ${parts.join(', ')}.`;
+  if (o.destroyed) return [{ label: 'DONE', text: `DESTROYED${o.cut ? ', line cut' : ''}` }, { label: 'WORTH', text: worth }];
+  const wanted = chargesWanted(o);
+  const set = state.charges.filter((c) => c.objectiveId === o.id);
+  const burning = set.length ? `; ${set.length} set, fuse ${set.map((c) => c.fuse).join(', ')}` : '';
+  const rows = [];
+  if (onPoint) {
+    // The cut, when the rows below leave it out (M22: said twice otherwise).
+    const scout = rules.roles[selectedUnit(state)?.role]?.cutLine;
+    const cut = kind.cutLine && brief && scout ? '; or a scout here at the start of his turn cuts the line [X]' : '';
+    rows.push({ label: 'HERE', text: wanted > 0 ? `charge point: place a charge here [C]${cut}` : 'charge point: it has all the charges it needs' });
+  }
+  rows.push({ label: 'NEEDS', text: `${o.detonated || set.length ? `${wanted} more: ` : ''}${chargesOnPoints(o)}${o.detonated ? `; ${o.detonated} gone off` : ''}${burning}` });
+  if (brief) return rows;
+  rows.push({ label: 'BANG', text: `fuse ${rules.charges.fuseTurns} turns; ${blastWords(kind)}; alert +${kind.alert}` });
+  if (kind.cutLine) rows.push({ label: 'CUT', text: `or a scout cuts the line [X]: a whole turn from a charge point, seen or not; quiet, alert +${rules.alert.lineCut}` });
+  rows.push({ label: 'WORTH', text: `${worth}${payoff ? `; destroyed, it ${payoff}` : ''}` });
+  return rows;
 }
 
 /** How far a kind's blast reaches and what it does (SPEC.md §7; M20, a ring that only wounds our men). */
 function blastWords(kind) {
   const hexes = (n) => `${n} hex${n === 1 ? '' : 'es'}`;
-  if (kind.killRadius >= kind.blastRadius) return `blast ${hexes(kind.blastRadius)} from each charge, killing anyone in it, ours or theirs`;
-  return `blast ${hexes(kind.blastRadius)} from each charge (shaded): it kills enemies in all of it, and our men within ${hexes(kind.killRadius)} (darker); further out it wounds them`;
+  if (kind.killRadius >= kind.blastRadius) return `${hexes(kind.blastRadius)} round each charge: kills anyone in it, ours or theirs`;
+  return `${hexes(kind.blastRadius)} round each charge (shaded): kills enemies in all of it and our men within ${hexes(kind.killRadius)} (darker), wounds ours further out`;
 }
 
 /** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */
@@ -865,6 +882,7 @@ function render() {
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex, earlierReports);
+  syncReportScroll?.();
   renderTurnCounter(turnCounter, state, rules);
   renderDawnStrip(dawnStrip, state, rules);
   renderEndTurnButton(endTurnButton, state, rules);
@@ -1915,6 +1933,7 @@ try {
     state = deselect(state);
     render();
   });
+  syncReportScroll = attachReportScroll(reportList, reportScroll, document.getElementById('report-up'), document.getElementById('report-down'));
   endTurnButton.addEventListener('click', handleEndTurn);
   undoButton.addEventListener('click', undoLast);
   attachPopup(undoButton, () => describeUndo(rules.undo.steps));
