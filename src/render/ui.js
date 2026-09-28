@@ -646,39 +646,38 @@ export function describeDetection(d, { dots = false } = {}) {
   let sum = `${d.enemyLabel}: ${d.base} − cover ${d.cover}`;
   if (d.concealment) sum += ` − conceal ${d.concealment}`;
   if (d.hidden) sum += ` − hidden ${d.hidden}`;
-  sum += ` + close ${d.proximity}`;
+  if (d.proximity) sum += ` + close ${d.proximity}`;
   if (d.alert) sum += ` + alert ${d.alert}`;
   if (d.trait) sum += ` ${d.trait > 0 ? '+' : '−'} trait ${Math.abs(d.trait)}`;
   return `${sum} = ${d.score} of ${d.threshold}${dots ? ' dots' : ''}`;
 }
 
 /**
- * The whole hover path's risk in one phrase. The pips on the board say which
- * hex, and the sum ends "of 3 dots" so the two are read together (M19).
+ * The whole hover path's risk: { text, sum }, where the text says how it goes
+ * and where, and `sum` is the worst hex's detection sum, which the readout
+ * sets on a row of its own beside the dots (M23: the two on one row were the
+ * readout's longest line). `sum` is null when nobody sees him.
  */
 export function describeRisk(plan, risk, place) {
-  const sum = (d) => describeDetection(d, { dots: true });
   if (!plan || !risk) return null;
   const tested = plan.steps === 0 ? [0] : plan.path.map((_, i) => i).slice(1);
   const seen = tested.filter((i) => risk[i]);
-  if (seen.length === 0) return plan.steps === 0 ? 'unseen here' : 'unseen all the way';
+  if (seen.length === 0) return { text: plan.steps === 0 ? 'unseen here' : 'unseen all the way', sum: null };
   const spotted = seen.filter((i) => risk[i].spotted);
   const shot = seen.filter((i) => risk[i].shot);
   const worstAt = seen.reduce((a, b) => (risk[b].score > risk[a].score ? b : a));
-  const where = place(plan.path[worstAt]);
   if (shot.length > 0) {
     // The shot lands on the most exposed hex he would be shot on (SPEC.md §5).
     const worst = shot.find((i) => risk[i].shotResult === 'hit') ?? shot[0];
     const cover = risk[worst].coverLabel;
-    const outcome = risk[worst].shotResult === 'hit'
-      ? `SHOT — HIT ${cover === 'none' ? 'in the open' : `through ${cover} cover`}`
-      : `SHOT — PINNED in ${cover} cover, not hit`;
-    return `${outcome}: he is in contact and ${risk[worst].enemyLabel} would see him again in ${place(plan.path[worst])}: ${sum(risk[worst])}`;
+    const outcome = risk[worst].shotResult === 'hit' ? `HIT ${cover === 'none' ? 'in the open' : `through ${cover} cover`}` : `PINNED in ${cover} cover`;
+    return { text: `${outcome}: in contact, and seen again in ${place(plan.path[worst])}`, sum: describeDetection(risk[worst]) };
   }
-  if (spotted.length > 0) {
-    return `SPOTTED on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'} — worst in ${where}: ${sum(risk[worstAt])}`;
-  }
-  return `seen, not spotted — worst in ${where}: ${sum(risk[worstAt])}`;
+  const where = place(plan.path[worstAt]);
+  const text = spotted.length > 0
+    ? `spotted on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'}, worst in ${where}`
+    : `seen, not spotted, worst in ${where}`;
+  return { text, sum: describeDetection(risk[worstAt]) };
 }
 
 function describeCost(terrain) {
@@ -1054,8 +1053,23 @@ export function renderReadout(element, state, map, view) {
     renderRows(element, `${e.label.toUpperCase()} · ${e.typeLabel.toUpperCase()}`, stamp, null, [
       { label: 'DOING', text: `${doing}.${killable}` },
       raised && { label: 'ALARM', text: `raised it last turn: ${raised.map((r) => r.words).join(', and ')}.`, tone: 'danger' },
-      n && { label: 'NEXT', text: `as things stand, ${n.moves ? `moves to ${view.place(n)}, ` : ''}facing ${n.facing} (dashed outline).` },
-      { label: 'SEES', text: `${view.hoverEnemyVision} hexes, facing ${view.hoverEnemyFacing}; detection base ${e.detection}.` },
+      n && { label: 'NEXT', text: `${n.moves ? `moves to ${view.place(n)}, ` : ''}faces ${n.facing} (dashed outline)` },
+      { label: 'SEES', text: `${view.hoverEnemyVision} hexes facing ${view.hoverEnemyFacing} · detection base ${e.detection}` },
+    ]);
+    return;
+  }
+  // A man under the mouse (M23): his particulars, and over the selected man's
+  // own hex what standing there means this turn.
+  if (view?.manReadout) {
+    const m = view.manReadout;
+    const own = view.plan?.steps === 0;
+    const verdict = own ? riskVerdict(view.plan, view.risk) : null;
+    const blast = own ? view.blastLabel : null;
+    renderRows(element, m.head.toUpperCase(), m.stamp ?? verdict, m.note, [
+      blast && { label: 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
+      ...(own ? riskRows(view.riskLabel, verdict) : []),
+      own && { label: 'HIDE', text: view.hideLabel },
+      ...m.rows,
     ]);
     return;
   }
@@ -1099,7 +1113,7 @@ export function renderReadout(element, state, map, view) {
     { label: 'LANDING', text: view?.dropLabel },
     { label: 'MOVE', text: view?.moveLabel },
     blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
-    { label: 'RISK', text: view?.riskLabel, tone: verdict?.tone === 'safe' ? null : verdict?.tone },
+    ...riskRows(view?.riskLabel, verdict),
     { label: 'HIDE', text: view?.hideLabel },
     ...(view?.site?.rows ?? []),
     { label: 'HEARD', text: view?.noiseLabel?.replace(/^HEARD — /, '') },
@@ -1118,26 +1132,36 @@ function renderRows(element, head, stamp, note, rows) {
   const kept = rows.filter((row) => row && row.text);
   // Set at the largest size that fits the box (M22, the operator's: rows
   // ran off the bottom where nothing could scroll to them), down to the 12px
-  // floor for type (SPEC.md §11); at the floor whatever still does not fit
-  // is cut from the end, which is the least important.
-  for (const size of READOUT_BOX.sizes) {
+  // floor for type (SPEC.md §11). One column, every row's words starting
+  // at the same place (M23, the operator's: two columns of rows read as
+  // clutter); two only at the floor if one will not fit, and whatever still
+  // does not fit is cut from the end, which is the least important.
+  const tries = [...READOUT_BOX.sizes.map((size) => [size, false]), [READOUT_BOX.sizes.at(-1), true]];
+  for (const [size, paired] of tries) {
     element.dataset.fit = String(size);
     element.replaceChildren(
       html('div', 'ro-head', [html('span', 'ro-title', head), stamp ? html('span', `ro-stamp ${stamp.tone}`, stamp.word) : '', note ? html('span', 'ro-note', capitalise(note)) : '']),
-      html('div', 'ro-body', readoutRows(kept, element.clientWidth, size)),
+      html('div', 'ro-body', readoutRows(kept, paired ? element.clientWidth : 0, size)),
     );
     if (element.scrollHeight <= element.clientHeight) break;
   }
 }
 
+/** A move's risk as two rows: how it goes, then the sum beside the dots. */
+function riskRows(risk, verdict) {
+  if (!risk) return [];
+  const tone = verdict?.tone === 'safe' ? null : verdict?.tone;
+  return [{ label: 'RISK', text: risk.text, tone }, { label: 'DOTS', text: risk.sum }];
+}
+
 /**
- * The rows in two columns (M22, the operator's: the box ran out of room with
- * half of it empty): a row short enough for one line of half the box sits
- * beside the next short one; a longer row takes the width. The grid packs
- * shorts into the gaps, so the order still runs most important first.
+ * The rows, one to a line where they fit. With `width` (M22, the last resort
+ * since M23) a row short enough for half the box sits beside the next short
+ * one; the grid packs shorts into the gaps, so the order still runs most
+ * important first.
  */
 function readoutRows(rows, width, size) {
-  const halfChars = Math.floor(((width - READOUT_BOX.padding - READOUT_BOX.gap) / 2 - READOUT_BOX.label) / (size * READOUT_BOX.charWidth));
+  const halfChars = width ? Math.floor(((width - READOUT_BOX.padding - READOUT_BOX.gap) / 2 - READOUT_BOX.label) / (size * READOUT_BOX.charWidth)) : 0;
   return rows.map((row) => {
     const text = capitalise(row.text);
     const half = text.length <= halfChars;
@@ -1151,7 +1175,7 @@ function readoutRows(rows, width, size) {
 // The readout's measures in px, as index.html sets them: its padding, the gap
 // between its two columns, a label's column with its gap, and a character of
 // the typewriter face (its advance, in ems); and the sizes tried, largest first.
-const READOUT_BOX = { padding: 18 + 4, gap: 16, label: 58 + 6, charWidth: 0.6, sizes: [14, 13, 12] };
+const READOUT_BOX = { padding: 18 + 4, gap: 16, label: 62 + 6, charWidth: 0.6, sizes: [14, 13, 12] };
 
 /** How a hovered move goes, in one word for the stamp: the worst hex on it. */
 function riskVerdict(plan, risk) {
@@ -1170,9 +1194,11 @@ export function describePlan(plan, unit) {
   if (!plan) return 'no route there';
   if (plan.steps === 0) return `${unit.shortName} is already here`;
   const route = `${plan.steps} hex${plan.steps === 1 ? '' : 'es'}, ${plan.total} AP`;
-  if (plan.affordable && plan.minimumStep) return `${route} — one step, spends all ${unit.apMax} AP`;
-  if (plan.affordable) return `${route} — click to move`;
-  return `${route} — ${plan.reason}`;
+  if (plan.affordable && plan.minimumStep) return `${route} · one step, spends all ${unit.apMax} AP`;
+  if (plan.affordable) return `${route} · click to move`;
+  // "needs 12 AP, has 6" said the 12 twice (M23).
+  if (unit.ap > 0 && plan.total > unit.ap) return `${route} · he has ${unit.ap}`;
+  return `${route} · ${plan.reason}`;
 }
 
 /** Data problems have to be loud, or a data-driven map is a guessing game. */

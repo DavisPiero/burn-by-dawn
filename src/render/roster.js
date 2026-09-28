@@ -138,6 +138,40 @@ export function describeUnit(unit, number, state, map, view) {
 }
 
 /**
+ * A man's particulars for the readout under the map, while the mouse is on
+ * his counter (M23, the operator's: his card in a popup over the board was
+ * too busy). { head, note, stamp, rows } for ui.js renderReadout: his name,
+ * his number and role, his worst condition as the stamp, and a short row for
+ * each thing worth knowing.
+ */
+export function describeUnitReadout(unit, number, state, map, view) {
+  const status = conditions(unit);
+  const stamp = status.length ? { word: status[0], tone: STAMP_TONE[status[0]] ?? 'warn' } : null;
+  const terrain = terrainAt(map, unit.q, unit.r);
+  const charges = unit.charges === 0 ? 'no charges' : `${unit.charges} charge${unit.charges === 1 ? '' : 's'}`;
+  const chute = state.parachutes.find((p) => p.q === unit.q && p.r === unit.r);
+  const rows = [
+    { label: 'HAS', text: `${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders)` : ''} · ${charges}` },
+    status.length > 1 && { label: 'STATE', text: status.join(' · ').toLowerCase() },
+    unit.inContact && { label: 'CONTACT', text: 'seen again at the turn\'s end, he is fired on: get out of sight, hide [H] or suppress [S]', tone: 'danger' },
+    { label: 'WHERE', text: `${view.place(unit)}${terrain ? ` · cover ${terrain.cover}` : ''}` },
+    chute && { label: 'CHUTE', text: `on ${chute.unitId === unit.id ? 'his' : `${chute.name}'s`} parachute: [U] to pack it` },
+    ...(view.traitEffectsById.get(unit.id) ?? []).map((effect) => ({ label: 'TRAIT', text: `${effect.name}: ${describeEffect(effect)}` })),
+    { label: 'SCORE', text: unit.everSpotted ? 'seen already: no stealth bonus' : `never seen: +${view.unseenPoints} if he gets out unseen` },
+  ];
+  if (unit.leader) {
+    const led = state.units.filter((u) => u.commandBonus > 0).length;
+    rows.push(
+      { label: 'ORDERS', text: `${ordersWords(view.command).replace(/ of him$/, '').replace(/, \+(\d+) AP/, ', +$1')} · ${led === 0 ? 'nobody has' : led === 1 ? '1 has' : `${led} have`} them` },
+      { label: 'RADIO', text: `RAF diversion [D], ${timesWord(view.diversionUses)} a mission${state.diversionsCalled >= view.diversionUses ? ' · called' : ''}` },
+    );
+  }
+  return { head: unit.name, note: `${number} · ${unit.roleLabel}${unit.leader ? ' · leader' : ''}`, stamp, rows };
+}
+
+const STAMP_TONE = { 'IN CONTACT': 'danger', WOUNDED: 'danger', HIDDEN: 'safe' };
+
+/**
  * What the ranking man gives the stick (SPEC.md §5 Command, §4 RAF diversion):
  * his orders, and the radio. Keyed to the `leader` flag, never a name
  * (CLAUDE.md rule 6); the numbers are rules.json's `command` and `diversion.uses`.
