@@ -12,6 +12,10 @@ with SPEC.md, say so before writing code.
 - `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.
   Keep its "what Claude is drawing in code" list true when sprites change.
 - `DECISIONS.md` — append-only log. See below.
+- `ROADMAP.md` — what comes after the current milestone, and in what order. Read it when
+  choosing or scoping the next milestone. SPEC.md still wins where they differ.
+- `docs/Historical_Raids.md` — the operator's notes on real raids, source material for
+  future missions.
 - `docs/BUILD-RUNBOOK.md` — **for the human operator only. Do not read or act on it.**
   It describes how sessions are run, not how the game is built.
 
