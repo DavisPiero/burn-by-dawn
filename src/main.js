@@ -26,7 +26,7 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
-import { isMuted, loadSuppliedSounds, playCue, setMusicTempo, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
+import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { renderRoster } from './render/roster.js';
 import {
   BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
@@ -952,8 +952,6 @@ function toggleSound() {
  * the top.
  */
 function syncMusic() {
-  // Slower on Easy, quicker on Hard (M21, the operator's): the level's number.
-  setMusicTempo(level.musicTempo ?? 1);
   if (!opened || state.phase !== 'drop' || state.outcome || isMuted() || musicOff) stopMusic();
   else startMusic({ resume: briefing?.opening !== true });
 }
