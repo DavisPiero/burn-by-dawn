@@ -604,3 +604,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-09-28 | M25 | Balance bot unchanged (KNIFE=1, 300 naive, Normal): north 83, east 88, as at M22
 2026-09-28 | M25 | Portraits: with the six drawn faces gone, portraitId fell back to the stand-in for any art drawn before the files were in, and the counter key (drawn once per game) kept stand-in chips for Fitch and Dutch. loadSuppliedPortraits now makes each man's own symbols at once, holding a <use> of the stand-in, and swaps his picture in when it arrives, so everything drawn with his id updates; checked in the browser (key, counters, roster)
 2026-09-28 | M25 | The spec's key list lacked U, pack a parachute (in the game since M6's key set); added
+2026-09-29 | M25 | The operator saw the paper side by side and chose to keep paper-fibre.png at full 2048 resolution (half size looks too soft); it is not to be shrunk
