@@ -312,7 +312,7 @@
     #coord-readout .ro-stamp.warn { color: var(--ink); }
     #coord-readout .ro-stamp.danger { color: var(--red); }
     #coord-readout .ro-body { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: row dense; column-gap: 16px; row-gap: 1px; }
-    #coord-readout .ro-row { grid-column: 1 / -1; display: grid; grid-template-columns: 58px 1fr; column-gap: 6px; }
+    #coord-readout .ro-row { grid-column: 1 / -1; display: grid; grid-template-columns: 62px 1fr; column-gap: 6px; }
     #coord-readout .ro-row.half { grid-column: auto; }
     #coord-readout .ro-label { font-size: 12px; font-weight: bold; letter-spacing: 1px; opacity: 0.6; }
     #coord-readout .ro-row.danger .ro-text { color: var(--red); }
@@ -777,6 +777,10 @@
        where the men seldom go, narrower and with nothing darkened, so what it
        reports can be seen beside it (M13). Any click still puts it away. */
     #briefing-backdrop:not(.orders) { background: none; }
+    /* The board under a turn card takes the mouse (M23): a click on a man
+       puts the card away and selects him (main.js clickThroughCard). */
+    #briefing-backdrop.click-through { pointer-events: none; }
+    #briefing-backdrop.click-through #briefing { pointer-events: auto; }
     /* Its foot 14 px above the board's (the left page's 10 px padding, then
        the board), its right 30 px in from the page's edge. */
     #briefing-backdrop:not(.orders) #briefing {

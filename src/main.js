@@ -26,10 +26,10 @@ import {
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
-import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
-import { describeUnit, renderRoster } from './render/roster.js';
+import { isMuted, loadSuppliedSounds, playCue, playTravel, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
+import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, MOTION, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -282,6 +282,9 @@ function deriveView() {
     previewBlastKillArea: null,
     // What stands on the hovered hex (M22): { title, rows: [{ label, text }] }.
     site: null,
+    // The man under the mouse (M23): his id for the ring, his rows for the readout.
+    hoverManId: null,
+    manReadout: null,
     blastLabel: null,
     noiseLabel: null,
     mission: describeMissionState(),
@@ -366,6 +369,16 @@ function deriveView() {
     // In the readout off the board, or over his own hex (M22: on every hex it crowded the box).
     if (unit?.leader && (!hex || (hex.q === unit.q && hex.r === unit.r))) view.commandLabel = `blue dashes: ${leaderOrdersWords(unit)}`;
   }
+  // A man under the mouse (M23, the operator's): his particulars in the readout
+  // and a dashed ring on his counter, where M22 put his card in a popup over
+  // the board. Not while aiming, which has its own words.
+  const hoverMan = hex && !state.targeting && !dropShow && (!briefing || CARDS_CLICKED_THROUGH.has(briefing.kind))
+    ? unitAt(state.units, hex.q, hex.r)
+    : null;
+  if (hoverMan) {
+    view.hoverManId = hoverMan.id;
+    view.manReadout = describeUnitReadout(hoverMan, state.units.indexOf(hoverMan) + 1, state, map, view);
+  }
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
@@ -395,15 +408,15 @@ function deriveView() {
     const end = plan.path[plan.path.length - 1];
     const blast = isExfil(baseMap, end) ? null : blastEffect(blastHexesThisTurn(state, rules), end);
     if (blast === 'killed' || (blast === 'wounded' && unit.hits > 0)) {
-      view.blastLabel = `BLAST — a charge goes off at the end of this turn and he would be inside it: KILLED${blast === 'wounded' ? ' (at its edge, but he is already wounded)' : ''}`;
+      view.blastLabel = `BLAST — a charge goes off this turn with him in it: KILLED${blast === 'wounded' ? ' (at its edge, but already wounded)' : ''}`;
     } else if (blast === 'wounded') {
-      view.blastLabel = 'BLAST — a charge goes off at the end of this turn and he would be at the edge of it: WOUNDED';
+      view.blastLabel = 'BLAST — a charge goes off this turn with him at its edge: WOUNDED';
     }
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
     // Not where nobody can see him: hiding would add nothing (M22: room).
     const seenHere = plan.steps === 0 && detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
-    if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `hide here [H]: ${hideEffect(unit)}`;
+    if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `[H] ${hideEffect(unit)}`;
   }
   return view;
 }
@@ -417,7 +430,7 @@ function exfilFailure(unit, plan) {
 function confirmExfil() {
   const { unitId, plan } = briefing;
   briefing = null;
-  commit(moveUnit(state, unitId, plan, baseMap), 'move');
+  commitMove(unitId, plan);
   render();
 }
 
@@ -551,7 +564,7 @@ function chargesOnPoints(o) {
  */
 function describeObjective(o, onPoint, brief = false) {
   const kind = kindOf(o, rules);
-  const worth = o.primary ? 'PRIMARY: needed to win' : `optional, +${rules.scoring.secondary}`;
+  const worth = o.primary ? 'PRIMARY: needed to win' : `bonus, +${rules.scoring.secondary} score`;
   const payoff = payoffWords(kind);
   if (o.destroyed) return [{ label: 'DONE', text: `DESTROYED${o.cut ? ', line cut' : ''}` }, { label: 'WORTH', text: worth }];
   const wanted = chargesWanted(o);
@@ -561,22 +574,23 @@ function describeObjective(o, onPoint, brief = false) {
   if (onPoint) {
     // The cut, when the rows below leave it out (M22: said twice otherwise).
     const scout = rules.roles[selectedUnit(state)?.role]?.cutLine;
-    const cut = kind.cutLine && brief && scout ? '; or a scout here at the start of his turn cuts the line [X]' : '';
-    rows.push({ label: 'HERE', text: wanted > 0 ? `charge point: place a charge here [C]${cut}` : 'charge point: it has all the charges it needs' });
+    const cut = kind.cutLine && brief && scout ? ', or a scout cuts the line [X]' : '';
+    rows.push({ label: 'HERE', text: wanted > 0 ? `charge point: place a charge [C]${cut}` : 'charge point: it has all the charges it needs' });
   }
   rows.push({ label: 'NEEDS', text: `${o.detonated || set.length ? `${wanted} more: ` : ''}${chargesOnPoints(o)}${o.detonated ? `; ${o.detonated} gone off` : ''}${burning}` });
   if (brief) return rows;
-  rows.push({ label: 'BANG', text: `fuse ${rules.charges.fuseTurns} turns; ${blastWords(kind)}; alert +${kind.alert}` });
-  if (kind.cutLine) rows.push({ label: 'CUT', text: `or a scout cuts the line [X]: a whole turn from a charge point, seen or not; quiet, alert +${rules.alert.lineCut}` });
-  rows.push({ label: 'WORTH', text: `${worth}${payoff ? `; destroyed, it ${payoff}` : ''}` });
+  rows.push({ label: 'BANG', text: `fuse ${rules.charges.fuseTurns} turns · ${blastWords(kind)} · alert +${kind.alert}` });
+  if (kind.cutLine) rows.push({ label: 'CUT', text: `or a scout cuts the line [X]: a whole turn on a charge point, quiet, alert +${rules.alert.lineCut}` });
+  rows.push({ label: 'WORTH', text: worth });
+  if (payoff) rows.push({ label: 'DOWN', text: `it ${payoff}` });
   return rows;
 }
 
 /** How far a kind's blast reaches and what it does (SPEC.md §7; M20, a ring that only wounds our men). */
 function blastWords(kind) {
   const hexes = (n) => `${n} hex${n === 1 ? '' : 'es'}`;
-  if (kind.killRadius >= kind.blastRadius) return `${hexes(kind.blastRadius)} round each charge: kills anyone in it, ours or theirs`;
-  return `${hexes(kind.blastRadius)} round each charge (shaded): kills enemies in all of it and our men within ${hexes(kind.killRadius)} (darker), wounds ours further out`;
+  if (kind.killRadius >= kind.blastRadius) return `kills anyone within ${hexes(kind.blastRadius)}`;
+  return `kills all within ${hexes(kind.killRadius)} (darker); to ${hexes(kind.blastRadius)} kills enemies, wounds ours`;
 }
 
 /** What destroying an objective of this kind does for the stick (SPEC.md §7 payoffs), or null. */
@@ -707,16 +721,16 @@ function hideEffect(unit) {
     .map((h) => ({ h, d: detectionAt(map, rules, state.enemies, state.alert.points, unit, h) }))
     .find(({ d }) => d?.spotted);
   if (seenOnTheWay) {
-    return `too late to help — the ${seenOnTheWay.d.enemyLabel.toLowerCase()} already sees him in ${placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), seenOnTheWay.h)}, on his way here${unit.inContact ? ', and will fire' : ''}.`;
+    return `too late: the ${seenOnTheWay.d.enemyLabel.toLowerCase()} sees him on his way, in ${placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), seenOnTheWay.h)}${unit.inContact ? ', and will fire' : ''}`;
   }
   const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
   const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
-  if (!hidden) return 'no enemy can see this hex, so hiding adds nothing.';
+  if (!hidden) return 'no enemy can see this hex: hiding adds nothing';
   if (hidden.spotted) {
-    return `still SPOTTED, hidden or not — too little cover this close (${describeDetection(hidden)})${unit.inContact && hidden.firing ? '. He will be fired on' : ''}. Get further away or into heavier cover.`;
+    return `still SPOTTED hidden, too close for this cover${unit.inContact && hidden.firing ? ', and fired on' : ''}: ${describeDetection(hidden)}`;
   }
-  if (open?.spotted) return `NOT spotted once hidden — hiding here ${unit.inContact ? 'breaks contact' : 'keeps him out of sight'} (${describeDetection(hidden)}).`;
-  return `not spotted either way (${describeDetection(hidden)}).`;
+  if (open?.spotted) return `NOT spotted once hidden${unit.inContact ? ', which breaks contact' : ''}: ${describeDetection(hidden)}`;
+  return `not spotted either way: ${describeDetection(hidden)}`;
 }
 
 // Cut the line, in words that say why it is worth a turn: what it takes, and
@@ -847,7 +861,10 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const risk = [null, result && { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null }];
       view.landing = { plan, risk };
       let seen = 'Unseen on the far bank.';
-      if (risk[1]?.shot) seen = `${describeRisk(plan, risk, view.place)}.`;
+      if (risk[1]?.shot) {
+        const { text, sum } = describeRisk(plan, risk, view.place);
+        seen = `${text}: ${sum}.`;
+      }
       else if (result?.spotted) seen = `SPOTTED as he comes out: ${describeDetection(result, { dots: true })}.`;
       else if (result) seen = `Seen, not spotted, as he comes out: ${describeDetection(result, { dots: true })}.`;
       view.targetLabel = `Swim across to ${view.place(hex)} — ${unit.shortName}'s whole turn. ${seen} Click to swim.`;
@@ -898,6 +915,7 @@ function render() {
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
   showCounterKey(briefing?.kind === 'orders');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
+  briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
@@ -953,6 +971,13 @@ function commit(next, cue = 'action') {
   if (steps !== null && undoStack.length > steps) undoStack = undoStack.slice(-steps);
   state = settleMission(next, rules, baseMap);
   if (cue) playCue(cue);
+}
+
+/** A move, heard hex by hex as his counter walks (M23). */
+function commitMove(unitId, plan) {
+  const before = state;
+  commit(moveUnit(state, unitId, plan, baseMap), null);
+  if (state !== before) playTravel(plan.steps, MOTION.travelMsPerHex);
 }
 
 /** Sound on or off (M, or the word in the margin). Not remembered: the game stores nothing (CLAUDE.md rule 9). */
@@ -1032,7 +1057,7 @@ function handleHexClick(q, r) {
       // Out now and the mission is lost: ask first (M14).
       const failure = exfilFailure(mover, plan);
       if (failure) briefing = { kind: 'exfil', unitId: mover.id, plan, failure };
-      else commit(moveUnit(state, mover.id, plan, baseMap), 'move');
+      else commitMove(mover.id, plan);
     } else if (!mover) {
       state = selectHex(state, q, r);
     }
@@ -1154,36 +1179,16 @@ function handleAction(id) {
 function handleHexHover(q, r) {
   state = setHover(state, { q, r });
   render();
-  showManHover();
 }
 
 function handleHexLeave() {
   state = setHover(state, null);
   render();
-  showManHover();
-}
-
-// A man's rollover follows the mouse onto and off his hex: his roster card
-// (M22, the operator's: only the leader had one, since M12), and for the
-// leader what his blue rings mean. Not while aiming, which has its own words.
-let manHoverShown = false;
-function showManHover() {
-  const hex = state.hoverHex;
-  const man = !state.targeting && !briefing && !dropShow && state.phase !== 'drop' && hex
-    ? state.units.find((u) => onBoard(u) && u.q === hex.q && u.r === hex.r)
-    : null;
-  if (man) {
-    const card = describeUnit(man, state.units.indexOf(man) + 1, state, map, currentView);
-    const rings = man.leader ? ['\n\n', ...describeLeaderHover(man)] : [];
-    showPopup(layers.hexNodes.get(hexKey(man.q, man.r)), [...card, ...rings]);
-    manHoverShown = true;
-  } else if (manHoverShown) {
-    hidePopup();
-    manHoverShown = false;
-  }
 }
 
 function handleRosterClick(unitId) {
+  // A turn card is put away by picking a man from the roster too (M23).
+  if (CARDS_CLICKED_THROUGH.has(briefing?.kind)) briefing = null;
   if (dropShow) return endDropShow();
   if (flyShow) return endFlyShow();
   if (bangTimer) return endBangHold();
@@ -1385,6 +1390,21 @@ function openHelp() {
 function closeBriefing() {
   briefing = briefing?.under ?? null;
   render();
+}
+
+// A turn card, or the diversion's, lets the board be seen and clicked round
+// it (M23, the operator's: the first click of every turn only put the card
+// away). A click on one of our men puts it away and selects him; any other
+// click off the card only puts it away, as before, so a click meant to clear
+// the card never moves the man still selected from last turn.
+const CARDS_CLICKED_THROUGH = new Set(['turn', 'diversion']);
+
+function clickThroughCard(event) {
+  if (!CARDS_CLICKED_THROUGH.has(briefing?.kind) || briefingCard.contains(event.target)) return;
+  const at = event.target.closest?.('#board [data-q]');
+  const man = at && unitAt(state.units, Number(at.dataset.q), Number(at.dataset.r));
+  closeBriefing();
+  if (!man) event.stopPropagation();
 }
 
 /**
@@ -1598,15 +1618,6 @@ function leaderOrdersWords(leader) {
   return `${leader.shortName}'s orders — at the start of a turn, ${ordersWords(rules.command)}`;
 }
 
-/** The leader's rollover on the board: his orders, and who has them this turn. */
-function describeLeaderHover(leader) {
-  const led = state.units.filter((u) => onBoard(u) && u.commandBonus > 0).length;
-  const inner = rules.command.closeRadius != null ? ' (the finer dash is the inner ring)' : '';
-  return titled(`${leader.shortName.toUpperCase()}'S ORDERS`,
-    `The dashed blue rings${inner}: a man inside them at the start of a turn gets ${ordersWords(rules.command)}. `
-    + `${led === 0 ? 'Nobody has' : led === 1 ? '1 man has' : `${led} men have`} them this turn.`);
-}
-
 /** Jump, and show the stick going out and coming down. */
 function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
@@ -1719,8 +1730,10 @@ function handleKey(event) {
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     // ? over a turn card swaps it for the orders (M17), as the button does.
     if (isHelpKey(event) && briefing.kind !== 'orders' && briefing.kind !== 'exfil') return openHelp();
+    const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
     closeBriefing();
-    return;
+    // A man's number, or Tab, puts a turn card away and picks him (M23), as a click on him does.
+    if (!picksMan) return;
   }
   if (dropShow) {
     event.preventDefault();
@@ -1984,6 +1997,7 @@ try {
   // the title music over them.
   briefing = { kind: 'orders', opening: true };
   briefingBackdrop.addEventListener('click', () => closeBriefing());
+  briefingBackdrop.parentElement.addEventListener('click', clickThroughCard, true);
   loadingProgress(pictures);
   // Speech bubbles are measured in the face they are set in: wait for it.
   await fontsLoaded;

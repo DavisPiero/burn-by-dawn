@@ -38,23 +38,23 @@ let unlocked = false;
 let muted = false;
 // Supplied files: fetched at load, decoded once there is an audio context
 // (there is none until the player has pressed something), then played.
-const fetched = new Map();
 const supplied = new Map();
+// Each sound's file on its way (M23): a promise of the decoded file, or of null
+// if there is none. The music waits on it rather than starting the made music
+// and then being overtaken by the file.
+const arriving = new Map();
+let contextMade;
+const contextReady = new Promise((resolve) => {
+  contextMade = resolve;
+});
 
 function audio() {
   if (context) return context;
   const Context = window.AudioContext ?? window.webkitAudioContext;
   if (!Context) return null;
   context = new Context();
-  for (const [id, bytes] of fetched) decode(id, bytes);
-  fetched.clear();
+  contextMade(context);
   return context;
-}
-
-function decode(id, bytes) {
-  context.decodeAudioData(bytes).then((buffer) => supplied.set(id, buffer), () => {
-    // Not a sound this browser can play: keep the placeholder.
-  });
 }
 
 // --- building blocks ----------------------------------------------------------
@@ -133,6 +133,15 @@ const SYNTHS = {
     tone.connect(body).connect(out);
     tone.start(at);
     tone.stop(at + 0.08);
+  },
+
+  // A counter pushed across the paper (M23, the operator's): a soft scuff of
+  // noise, rising a little as it goes; one per hex of a move.
+  'counter-slide': (ctx, out, at, v) => {
+    const band = filter(ctx, 'bandpass', 1100 + v * 90, 0.9);
+    band.frequency.setValueAtTime(band.frequency.value, at);
+    band.frequency.linearRampToValueAtTime(band.frequency.value * 1.35, at + 0.1);
+    noiseThrough(ctx, out, at, 0.13, [filter(ctx, 'highpass', 400), band, envelope(ctx, at, 0.7, 0.12, 0.035)], 0.4 + v * 0.11);
   },
 
   // A page or card handled: bright noise in a handful of uneven swells.
@@ -437,6 +446,8 @@ export const SOUND_IDS = Object.keys(SYNTHS);
 
 const CUES = {
   move: [['counter-snap', 0.5, 0]],
+  // Each hex of a move as the counter passes over it (M23); playTravel lays them.
+  step: [['counter-slide', 0.3, 0]],
   action: [['pencil-scratch', 0.35, 0]],
   card: [['paper-rustle', 0.35, 0]],
   alertRise: [['dog-distant', 0.18, 0.25]],
@@ -479,17 +490,38 @@ export function playCue(name) {
 }
 
 /**
+ * A man's move heard as it is seen (M23, the operator's): a slide for each
+ * hex as his counter crosses it, `msPerHex` apart as board.js walks him, and
+ * the snap as he is put down at the end.
+ */
+export function playTravel(hexes, msPerHex) {
+  if (muted || !unlocked || hexes < 1) return;
+  const ctx = audio();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const out = ctx.createGain();
+  out.connect(ctx.destination);
+  const start = ctx.currentTime + 0.01;
+  for (let i = 0; i <= hexes; i++) {
+    scheduleCue(ctx, out, i < hexes ? 'step' : 'move', start + (i * msPerHex) / 1000, nextVariant);
+    nextVariant = (nextVariant + 1) % 7;
+  }
+}
+
+/**
  * Schedule a cue's sounds into `destination` from `start`; `variant` picks the
  * stretch of noise. Exported so the tests can play every cue into an
  * OfflineAudioContext and measure it.
  */
-export function scheduleCue(ctx, destination, name, start, variant = 0) {
+export function scheduleCue(ctx, destination, name, start, variant = 0, { made = false } = {}) {
   for (const [i, [id, gain, delay]] of CUES[name].entries()) {
     const out = ctx.createGain();
     out.gain.value = gain;
     out.connect(destination);
     const at = start + delay;
-    const buffer = ctx === context ? supplied.get(id) : null;
+    // `made` keeps to the made sound: the made music's passes never lay the
+    // whole recording (M23, the bug: a 93 s file started every 11 s).
+    const buffer = ctx === context && !made ? supplied.get(id) : null;
     if (buffer) {
       const source = ctx.createBufferSource();
       source.buffer = buffer;
@@ -550,44 +582,55 @@ export function startMusic({ resume = false } = {}) {
   out.gain.setValueAtTime(0.0001, ctx.currentTime);
   out.gain.exponentialRampToValueAtTime(1, ctx.currentTime + MUSIC.fadeIn);
   out.connect(ctx.destination);
-  const playing = { out, timer: null, source: null, pass: resumeAt.pass, startedAt: ctx.currentTime, offset: 0 };
-  const [[id, gain]] = CUES[MUSIC.cue];
+  const playing = { out, timer: null, source: null, pass: resumeAt.pass, startedAt: ctx.currentTime, offset: resumeAt.seconds, begun: false };
+  music = playing;
+  const [[id]] = CUES[MUSIC.cue];
   const buffer = supplied.get(id);
+  if (buffer || !arriving.has(id)) begin(ctx, playing, buffer);
+  // The file is still on its way (M23): nothing until it is here, then it, or
+  // the made music if it never comes; not both.
+  else arriving.get(id).then((file) => music === playing && begin(ctx, playing, file));
+}
+
+function begin(ctx, playing, buffer) {
+  const { out } = playing;
+  playing.begun = true;
+  playing.startedAt = ctx.currentTime;
   if (buffer) {
     const level = ctx.createGain();
-    level.gain.value = gain;
+    level.gain.value = CUES[MUSIC.cue][0][1];
     level.connect(out);
     playing.source = ctx.createBufferSource();
     playing.source.buffer = buffer;
     playing.source.loop = true;
     playing.source.connect(level);
-    playing.offset = resumeAt.seconds % buffer.duration;
+    playing.offset %= buffer.duration;
     playing.source.start(0, playing.offset);
-  } else {
-    // Each pass is laid down a little before it is due, the horn every other time.
-    let next = ctx.currentTime + 0.05;
-    const lay = () => {
-      while (next < ctx.currentTime + MUSIC.lookahead) {
-        scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2);
-        next += MUSIC.phrase;
-        playing.pass++;
-      }
-    };
-    lay();
-    playing.timer = setInterval(lay, 500);
+    return;
   }
-  music = playing;
+  // Each pass is laid down a little before it is due, the horn every other time.
+  playing.offset = 0;
+  let next = ctx.currentTime + 0.05;
+  const lay = () => {
+    while (next < ctx.currentTime + MUSIC.lookahead) {
+      scheduleCue(ctx, out, MUSIC.cue, next, playing.pass % 2, { made: true });
+      next += MUSIC.phrase;
+      playing.pass++;
+    }
+  };
+  lay();
+  playing.timer = setInterval(lay, 500);
 }
 
 /** Fade the title music out: the orders are put away, a turn begins, or the sound is off. */
 export function stopMusic() {
   if (!music) return;
-  const { out, timer, source, pass, startedAt, offset } = music;
+  const { out, timer, source, pass, startedAt, offset, begun } = music;
   music = null;
   clearInterval(timer);
   const now = context.currentTime;
   // The passes already laid play out under the fade; the next time starts after them.
-  resumeAt = { pass, seconds: offset + (now - startedAt) };
+  resumeAt = { pass, seconds: offset + (begun ? now - startedAt : 0) };
   out.gain.cancelScheduledValues(now);
   out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), now);
   out.gain.setTargetAtTime(0, now, MUSIC.fadeOut / 4);
@@ -604,19 +647,27 @@ export function isMusicPlaying() {
 /** Supplied files (ART-ASSETS.md §9) replace the placeholders; the first type found wins. */
 export function loadSuppliedSounds() {
   for (const id of SOUND_IDS) {
-    (async () => {
+    arriving.set(id, (async () => {
       for (const type of SOUND_FILES.types) {
+        let bytes;
         try {
           const response = await fetch(`${SOUND_FILES.dir}/${id}.${type}`);
           if (!response.ok) continue;
-          const bytes = await response.arrayBuffer();
-          if (context) decode(id, bytes);
-          else fetched.set(id, bytes);
-          return;
+          bytes = await response.arrayBuffer();
         } catch {
-          // Not there: keep the placeholder.
+          continue; // Not there: try the next type, then keep the placeholder.
+        }
+        // Decoded once there is an audio context, after the first key or click.
+        const ctx = await contextReady;
+        try {
+          const buffer = await ctx.decodeAudioData(bytes);
+          supplied.set(id, buffer);
+          return buffer;
+        } catch {
+          return null; // Not a sound this browser can play: keep the placeholder.
         }
       }
-    })();
+      return null;
+    })());
   }
 }

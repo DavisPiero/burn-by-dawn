@@ -671,6 +671,8 @@ export function renderPieces(layers, state, view) {
     } else if (view.alarmed?.has(enemy.id)) {
       const node = marker('marker-spotted', ...alarmAt, GARRISON_SHOW.alarmSize);
       node.setAttribute('pointer-events', 'all');
+      node.dataset.q = enemy.q;
+      node.dataset.r = enemy.r;
       node.addEventListener('mouseenter', () => layers.handlers.onEnemyMarkerHover?.(enemy.id, node));
       node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
       node.addEventListener('click', () => layers.handlers.onHexClick(enemy.q, enemy.r));
@@ -705,6 +707,8 @@ export function renderPieces(layers, state, view) {
     // also his 1-6 hotkey and his position in the panel. One ordering, shown
     // in three places.
     const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
+    // Under the mouse (M23): the dashed ring a hovered enemy wears, his card in the readout.
+    if (unit.id === view.hoverManId && unit.id !== state.selectedUnitId) hoverRing(counter);
     // In contact top right, where the eye goes first; his condition top left.
     // Each marker has a rollover saying what it means (M11).
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
@@ -1595,6 +1599,9 @@ function marker(id, x, y, size = MARKER.size) {
 function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
   const node = marker(id, x, y, size);
   node.setAttribute('pointer-events', 'all');
+  // Where it stands, as a hex does, so a click on it can be told apart (M23).
+  node.dataset.q = unit.q;
+  node.dataset.r = unit.r;
   node.addEventListener('mouseenter', () => layers.handlers.onMarkerHover?.(id, unit.id, node));
   node.addEventListener('mouseleave', () => layers.handlers.onMarkerLeave?.());
   node.addEventListener('click', () => layers.handlers.onHexClick(unit.q, unit.r));
@@ -2212,13 +2219,7 @@ function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
     body.appendChild(band);
   }
 
-  if (isHovered) {
-    // Dashed, not the selected man's solid frame: looked at, not picked (M22).
-    const g = ENEMY.hoverGap;
-    const ring = { x: -2 - g, y: -2 - g, width: size + 2 * g, height: size + 2 * g, rx: 9 + g, fill: 'none' };
-    group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverCasing, 'stroke-width': ENEMY.hoverCasingWidth, opacity: 0.85 }));
-    group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverStroke, 'stroke-width': ENEMY.hoverWidth, 'stroke-dasharray': ENEMY.hoverDash, 'stroke-linecap': 'round' }));
-  }
+  if (isHovered) hoverRing(group);
   if (hears) {
     group.appendChild(el('circle', {
       cx: size / 2, cy: size / 2, r: size / 2 + 6,
@@ -2226,6 +2227,18 @@ function drawEnemy(enemy, map, isHovered, hears, nextFacing = null) {
     }));
   }
   return group;
+}
+
+/**
+ * A counter under the mouse: dashed, not the selected man's solid frame,
+ * looked at, not picked (M22 for an enemy, M23 for our men too).
+ */
+function hoverRing(group) {
+  const size = COUNTER.size;
+  const g = ENEMY.hoverGap;
+  const ring = { x: -2 - g, y: -2 - g, width: size + 2 * g, height: size + 2 * g, rx: 9 + g, fill: 'none', 'pointer-events': 'none' };
+  group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverCasing, 'stroke-width': ENEMY.hoverCasingWidth, opacity: 0.85 }));
+  group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverStroke, 'stroke-width': ENEMY.hoverWidth, 'stroke-dasharray': ENEMY.hoverDash, 'stroke-linecap': 'round' }));
 }
 
 /**
