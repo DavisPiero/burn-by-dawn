@@ -73,6 +73,8 @@ turn is spent. That is the spine again, in miniature.
 **Gate to v1.0.** A playtest round with 3–5 people new to the game, with no rules changes
 asked for, the game working in Chrome, Safari and Firefox, and the bot numbers noted.
 Then tag it `v1.0`.
+Prepared 2026-09-29 (build M26c): the playtest sheet is `docs/PLAYTEST.md`, and the
+proposed balance targets are in SPEC.md §10.
 
 ---
 
