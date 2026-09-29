@@ -631,6 +631,9 @@ export const TARGET = {
   casingWidth: 8,
   hearsStroke: PALETTE.red,
   hearsWidth: 3,
+  // A man an aid can go to (M26d, the operator's: the hex outline under his
+  // counter did not show who a charge would be passed to): a ring round him.
+  manGap: 8,
 };
 
 // A stone being aimed (SPEC.md §4): the lob drawn as a dashed arc from the man,

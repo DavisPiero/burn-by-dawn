@@ -6,7 +6,7 @@
 
 import { timesWord } from '../hints.js';
 import { hexDistance } from '../hex.js';
-import { columnOf, terrainAt } from '../map.js';
+import { columnOf, moveCostAt, terrainAt } from '../map.js';
 import { ALERT_STATE, DAWN, DIAL, portraitId } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -680,8 +680,8 @@ export function describeRisk(plan, risk, place) {
   return { text, sum: describeDetection(risk[worstAt]) };
 }
 
-function describeCost(terrain) {
-  return terrain.moveCost === null ? 'impassable' : `move ${terrain.moveCost}`;
+function describeCost(terrain, cost = terrain.moveCost) {
+  return cost === null ? 'impassable' : `move ${cost}`;
 }
 
 // --- the clock and End turn ---------------------------------------------------
@@ -778,7 +778,10 @@ export function renderMission(element, mission) {
 /** The RAF diversion (SPEC.md §4): one button for the whole stick, not a trooper action. */
 export function renderDiversion(button, check) {
   button.disabled = !check.ok;
-  button.replaceChildren('RAF DIVERSION', html('small', null, boldKeys(check.ok ? `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP` : capitalise(check.reason))));
+  // In a pickle (M26d): red, and saying so.
+  button.classList.toggle('suggest', Boolean(check.ok && check.suggest));
+  const small = !check.ok ? capitalise(check.reason) : check.suggest ? '[D] Call it now!' : `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP`;
+  button.replaceChildren('RAF DIVERSION', html('small', null, boldKeys(small)));
 }
 
 /** The diversion's rollover; `uses` is how many calls the mission allows. */
@@ -1059,6 +1062,8 @@ export function renderReadout(element, state, map, view) {
     renderRows(element, `${e.label.toUpperCase()} · ${e.typeLabel.toUpperCase()}`, stamp, null, [
       { label: 'DOING', text: `${doing}.${killable}` },
       raised && { label: 'ALARM', text: `raised it last turn: ${raised.map((r) => r.words).join(', and ')}.`, tone: 'danger' },
+      // What the selected man can do to it (M26d), before its movements.
+      ...(view.enemyActs ?? []),
       n && { label: 'NEXT', text: `${n.moves ? `moves to ${view.place(n)}, ` : ''}faces ${n.facing} (dashed outline)` },
       { label: 'SEES', text: `${view.hoverEnemyVision} hexes facing ${view.hoverEnemyFacing} · detection base ${e.detection}` },
     ]);
@@ -1097,7 +1102,7 @@ export function renderReadout(element, state, map, view) {
   }
 
   // Only what the ground does, not what it does not (M22: room).
-  const parts = [describeCost(terrain), `cover ${terrain.cover}`];
+  const parts = [describeCost(terrain, moveCostAt(map, hex.q, hex.r)), `cover ${terrain.cover}`];
   if (terrain.blocksLOS) parts.push('blocks line of sight');
   if (terrain.spotBonus) parts.push(`spot ${terrain.spotBonus > 0 ? '+' : ''}${terrain.spotBonus}`);
   if (terrain.landing === 'bad') parts.push('bad landing');

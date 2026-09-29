@@ -709,6 +709,7 @@ export function renderPieces(layers, state, view) {
     const counter = drawCounter(unit, i + 1, map, unit.id === state.selectedUnitId);
     // Under the mouse (M23): the dashed ring a hovered enemy wears, his card in the readout.
     if (unit.id === view.hoverManId && unit.id !== state.selectedUnitId) hoverRing(counter);
+    if (view.aidTargetIds?.has(unit.id)) targetRing(counter);
     // In contact top right, where the eye goes first; his condition top left.
     // Each marker has a rollover saying what it means (M11).
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
@@ -1480,6 +1481,8 @@ function drawSites(layers, state, view) {
     // Every charge it needs is set: nowhere left to put one.
     if (view.chargedObjectiveIds.has(objective.id)) continue;
     for (const h of objective.chargeHexes) {
+      // A charge set here is drawn in the point's place, below (M26d).
+      if (state.charges.some((c) => c.q === h.q && c.r === h.r)) continue;
       const p = axialToPixel(h.q, h.r, map.hexSize);
       const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
       const point = el('g', { opacity: hovered ? OBJECTIVE.pointHoverOpacity : OBJECTIVE.pointOpacity });
@@ -1488,27 +1491,38 @@ function drawSites(layers, state, view) {
         points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth,
         'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
       }));
-      // The satchel sits toward the target it is for, not dead centre (M12).
       const size = OBJECTIVE.pointIconSize;
-      const v = towardObjective(map, h, objective);
-      const shift = map.hexSize * OBJECTIVE.pointIconShift;
-      // Nudged clear of the objective's own art where map.json says (M14).
-      const [nx, ny] = map.objectives.find((o) => o.id === objective.id)?.pointNudge?.[`${h.q},${h.r}`] ?? [0, 0];
-      const x = p.x + v.x * shift + nx * map.hexSize, y = p.y + v.y * shift + ny * map.hexSize;
+      const { x, y } = pointIconAt(map, objective, h);
       point.appendChild(el('use', { href: '#marker-charge-point', x: x - size / 2, y: y - size / 2, width: size, height: size }));
       layers.sites.appendChild(point);
     }
   }
   for (const label of labels) layers.sites.appendChild(label);
 
-  // A charge set and burning: the satchel, and a token with the turns left.
+  // A charge set and burning: the satchel, solid, where the point's empty one
+  // was (M26d, the operator's: on the bridge, with a second point still
+  // open, the set one read as unchanged), and a token with the turns left.
   for (const charge of state.charges) {
-    const p = axialToPixel(charge.q, charge.r, map.hexSize);
-    const size = MARKER.groundSize;
-    layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - 30, y: p.y + 20, width: size, height: size }));
+    const objective = state.objectives.find((o) => o.id === charge.objectiveId);
+    const at = objective ? pointIconAt(map, objective, charge) : axialToPixel(charge.q, charge.r, map.hexSize);
+    const size = OBJECTIVE.pointIconSize;
+    layers.tokens.appendChild(el('use', { href: '#marker-charge', x: at.x - size / 2, y: at.y - size / 2, width: size, height: size }));
     const watch = MARKER.fuseSize;
-    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: p.x - 14, y: p.y + 16, width: watch, height: watch }));
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: at.x + size * 0.15, y: at.y - size * 0.2, width: watch, height: watch }));
   }
+}
+
+/**
+ * Where a charge point's satchel sits on its hex: toward the target it is for,
+ * not dead centre (M12), nudged clear of the objective's own art where
+ * map.json says (M14). A charge set on the point is drawn in the same place.
+ */
+function pointIconAt(map, objective, h) {
+  const p = axialToPixel(h.q, h.r, map.hexSize);
+  const v = towardObjective(map, h, objective);
+  const shift = map.hexSize * OBJECTIVE.pointIconShift;
+  const [nx, ny] = map.objectives.find((o) => o.id === objective.id)?.pointNudge?.[`${h.q},${h.r}`] ?? [0, 0];
+  return { x: p.x + v.x * shift + nx * map.hexSize, y: p.y + v.y * shift + ny * map.hexSize };
 }
 
 /**
@@ -2250,6 +2264,14 @@ function hoverRing(group) {
   const ring = { x: -2 - g, y: -2 - g, width: size + 2 * g, height: size + 2 * g, rx: 9 + g, fill: 'none', 'pointer-events': 'none' };
   group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverCasing, 'stroke-width': ENEMY.hoverCasingWidth, opacity: 0.85 }));
   group.appendChild(el('rect', { ...ring, stroke: ENEMY.hoverStroke, 'stroke-width': ENEMY.hoverWidth, 'stroke-dasharray': ENEMY.hoverDash, 'stroke-linecap': 'round' }));
+}
+
+// A man the action being aimed can go to (M26d): a ring in the targets' blue.
+function targetRing(group) {
+  const size = COUNTER.size;
+  const ring = { cx: size / 2 - 2, cy: size / 2 - 2, r: size / 2 + TARGET.manGap, fill: 'none', 'pointer-events': 'none' };
+  group.appendChild(el('circle', { ...ring, stroke: TARGET.casing, 'stroke-width': TARGET.casingWidth }));
+  group.appendChild(el('circle', { ...ring, stroke: TARGET.stroke, 'stroke-width': TARGET.width }));
 }
 
 /**

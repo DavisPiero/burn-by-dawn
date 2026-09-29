@@ -302,7 +302,16 @@ export function enterCost(map, q, r, blocked, adjust = null) {
   if (!isInPlay(map, q, r)) return null;
   const terrain = terrainAt(map, q, r);
   if (!isPassable(terrain)) return null;
-  return adjust ? adjust(terrain.moveCost) : terrain.moveCost;
+  // A charge point may cost less than its ground (sabotage.js effectiveMap).
+  const cost = map.moveCosts?.get(hexKey(q, r)) ?? terrain.moveCost;
+  return adjust ? adjust(cost) : cost;
+}
+
+/** What entering this hex costs before any trait: its ground's, or a charge point's own. */
+export function moveCostAt(map, q, r) {
+  const terrain = terrainAt(map, q, r);
+  if (!isPassable(terrain)) return null;
+  return map.moveCosts?.get(hexKey(q, r)) ?? terrain.moveCost;
 }
 
 /**
