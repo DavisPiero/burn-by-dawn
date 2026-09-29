@@ -3,8 +3,10 @@
 The game is called **Burn by Dawn**. *Night Drop* was its working title, and the repo,
 branch history and some internal ids (`night-drop-ready`) keep that name.
 
-A single-mission, turn-based, hex tactical game. Six named British paratroopers land in
-occupied France and sabotage German infrastructure before dawn.
+A turn-based, hex tactical game. Six named British paratroopers land behind enemy lines
+and sabotage German infrastructure before dawn. It is an engine plus missions (§12 M27):
+mission 1, the rail bridge in occupied France, is the one playable today, and is the
+mission this spec describes.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -69,6 +71,7 @@ tests.html        every test suite, in the browser
   scoring.js      win, withdraw, lose, score
   hints.js        the turn card's hints (§11)
   difficulty.js   the difficulty patches (§10)
+  missions.js     the missions and their win conditions (§10)
   rng.js
   render/
     board.js      the map, counters, markers, overlays, motion
@@ -77,6 +80,7 @@ tests.html        every test suite, in the browser
     theme.js      colour tokens, halftone, the sprite registry, supplied art
     sound.js      cues, supplied recordings, made fallbacks, title music
 /data
+  missions.json   the missions: files, patches, win condition, words, title card (§10)
   map.json        terrain rows, drop runs, enemies, routes, objectives, exfil, names
   terrain.json    terrain types (§3)
   roster.json     the six, their traits and dialogue (§5)
@@ -673,6 +677,28 @@ The bridge is worth 10 so that the job done with three men out (22 on a clean ru
 out the best retreat (21); a full success tops out at 39 before kills. The score is the
 same sum at every level.
 
+### Missions
+
+The game is an engine plus missions, listed in `data/missions.json` in the order the
+contents page prints them. A mission is data only, and no code asks which is on:
+
+- A **playable** mission names its `map` and `roster` files, and a `rules` and `enemies`
+  patch merged over `rules.json` and `enemies.json` the way a difficulty level's is; the
+  mission's go first, then the level's. A patch key must already exist, except that a
+  mission may add a new objective kind or enemy type. France's patches are empty: it is
+  the files as they are, and the bot's numbers for it are unchanged by missions existing.
+- Its **win condition** is one of a short fixed list in `missions.js`, in the spirit of the
+  trait hooks: `destroyPrimary` (the objective `map.json` marks primary; France) or
+  `destroyCount` (any `count` objectives of one `kind`). Success is the win condition met
+  and `minimumOut` men out by dawn; withdrawal counts the charges short of it.
+- Its own words live with it: the orders' opening line, the tagline under the title card,
+  the phrases for its cut line, its title card and its back-page sounds.
+- A **coming** mission is printed on the contents page but stamped NEXT YEAR'S ANNUAL,
+  and cannot be picked.
+
+`?mission=<id>` in the address picks a playable mission and goes straight to its orders;
+`MISSION=<id>` does the same for the balance bot. Every mission keeps the 18×13 board.
+
 ### Difficulty
 
 Three levels, chosen on the orders before the drop and fixed once the stick jumps. The
@@ -744,7 +770,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M26d", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M27", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -865,7 +891,13 @@ board must read at a glance.
 
 ### Cards
 
-- **The orders are the first thing seen.** The orders card opens under the title card (a
+- **The contents page comes first** (§10 Missions), as the annual's contents: the title
+  card with PARACHUTE RAIDS BEHIND THE LINES, then each mission as a contents line, its
+  title run to its page number with a dotted leader, its place in italic and a line about
+  it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
+  askew; a click on it does nothing. Clicking a playable one, or any key, opens its
+  orders. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
+- **The orders are the first thing seen** after it. The orders card opens under the title card (a
   painted picture of the drop with the title lettered in; drawn in code if the file is
   missing), 800 wide, centred, standing off the page on a deep soft shadow while the
   whole spread is put in shade under a coarse halftone. The difficulty is in the black bar
@@ -992,18 +1024,20 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M26d, the operator's playtest notes**, on branch `m26d-playtest`:
+**M27, missions architecture** (ROADMAP Phase 2, no gameplay change), on branch
+`m27-missions`:
 
-1. **Smoother on Safari**: a hover redraws only the board and the readout, not the whole
-   page, and speech bubbles keep their measured widths.
-2. **Why a man can or cannot kill**: an enemy's hover says, for the selected man.
-3. **The fuel dump's charge points cost 1 AP** to step onto (§7), for the men only.
-4. **Pass charge** rings the men it could go to, and hands it straight over when only one
-   man beside him can take it.
-5. **The RAF diversion is urged in a pickle** (§4): the button red, the turn card first.
-6. **An enemy fires at one man a turn** (§6), so a man can draw its fire.
-7. **A set charge is a solid green satchel** where its point's empty one was (§11).
-8. **The bridge's ring reads PRIMARY TARGET! / BLOW IT WITH TWO CHARGES!**
+1. **`data/missions.json`**: France is mission 1, its map, roster, patches, win
+   condition, words, title card and end sounds named there (§10 Missions).
+2. **Win conditions** as a fixed list: `destroyPrimary`, `destroyCount`.
+3. **France's words out of code**: the tagline, the cut line's telephones, the orders'
+   opening line; the swim's water is named from the terrain it crosses.
+4. **`?mission=`** in the address and **`MISSION=`** for the bot.
+5. **The contents page** (§11 Cards), with the airfield and the aqueduct stamped NEXT
+   YEAR'S ANNUAL.
+
+Proof nothing changed: the bot's output for France (naive at every level, hunter on
+Hard, 300 seeds) is byte-for-byte what it was before.
 
 ### Done
 
@@ -1038,3 +1072,4 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M26 | Active play: prompts for Stabilise and Pass a charge, lines for a kill, a sighting and hiding, the bot's hunter style |
 | M26b | Review of M26: the knife a whole turn, the Wood patrol, Pick up charge and Pass charge in full, the search ring |
 | M26c | The v1.0 gate prepared: Dutch's chute line, the playtest sheet, the balance targets proposed |
+| M26d | The operator's playtest notes: the fuel dump's points 1 AP, one shot per enemy a turn, the RAF urged in a pickle, pass rings, a smoother hover |

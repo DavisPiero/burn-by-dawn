@@ -221,6 +221,11 @@ sky), since the title sits there; put the aircraft and canopies toward the left 
 and the ground along the bottom fifth. Without the file, code draws its own night scene
 (`title-card` in `src/render/theme.js`).
 
+Since M27 each playable mission names its own title card in `data/missions.json`
+(`titleCard`); France's is `assets/title/title-card.jpg`. A new mission's is the same
+size and format, dropped beside it under its own name. The contents page opens under
+the game's card, France's.
+
 Since M25 the file the game loads is a **1600 x 400** copy at quality 90 (about 200 KB),
 made from the painted 2400 x 600, which is kept beside it as `title-card_full.jpg` and
 not loaded: the full size was 750 KB, and 1600 across is still sharp on a retina screen

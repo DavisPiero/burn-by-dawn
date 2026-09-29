@@ -20,6 +20,10 @@
 // DIFFICULTY=<id> plays at a level from data/difficulty.json, as the game
 // does: its patches over the files (and over any *_PATCH above).
 //
+// MISSION=<id> plays a playable mission from data/missions.json (M27), as
+// ?mission= does in the game; the default one otherwise. Its patches go over
+// the files first, then the level's. The bot's plan aims at the map's primary.
+//
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
 //
@@ -67,14 +71,19 @@ const SB = await mod('src/sabotage.js');
 const T = await mod('src/traits.js');
 const D = await mod('src/difficulty.js');
 const H = await mod('src/hex.js');
+const MI = await mod('src/missions.js');
 
-const loadedMap = await M.loadMap();
-const loadedRules = await M.loadJson('data/rules.json');
+// The mission (M27): MISSION=<id>, as ?mission= in the address; the default otherwise.
+const missions = MI.validateMissions(await M.loadJson('data/missions.json'));
+if (process.env.MISSION && MI.missionFromQuery(`?mission=${process.env.MISSION}`, missions) === null) throw new Error(`unknown or unplayable mission "${process.env.MISSION}"`);
+const mission = MI.missionById(missions, process.env.MISSION ?? null);
+const loadedMap = await M.loadMap(mission.map, undefined, undefined, (types) => MI.missionEnemyTypes(mission, types));
+const loadedRules = MI.missionRules(mission, await M.loadJson('data/rules.json'));
 const difficulty = D.validateDifficulty(await M.loadJson('data/difficulty.json'), loadedRules, { types: loadedMap.enemyTypes });
 if (process.env.DIFFICULTY && !difficulty.levels.some((l) => l.id === process.env.DIFFICULTY)) throw new Error(`unknown difficulty "${process.env.DIFFICULTY}"`);
 const { rules, map: map0 } = D.applyDifficulty(D.levelById(difficulty, process.env.DIFFICULTY ?? null), loadedRules, loadedMap);
 const traits = T.validateTraits(await M.loadJson('data/traits.json'));
-const roster = await M.loadJson('data/roster.json');
+const roster = await M.loadJson(mission.roster);
 
 const args = process.argv.slice(2).filter((a) => a !== '--json');
 const AS_JSON = process.argv.includes('--json');

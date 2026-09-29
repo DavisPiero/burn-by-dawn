@@ -14,9 +14,10 @@ import {
   swimAcross,
 } from '../src/state.js';
 import {
-  blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, primaryShortfall, runFusePhase,
+  blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, runFusePhase,
   swimTargets,
 } from '../src/sabotage.js';
+import { winShortfall } from '../src/missions.js';
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
@@ -477,7 +478,7 @@ export default [
     equal(withdrawn.fates.filter((f) => f.fate === 'out').length, 2, 'the two left get out');
 
     const noCharges = { ...state, units: state.units.map((u) => ({ ...u, charges: 0 })) };
-    assert(primaryShortfall(noCharges, rules) > 0, 'short');
+    assert(winShortfall(noCharges, rules) > 0, 'short');
     equal(settleMission(noCharges, rules, map).outcome.kind, 'withdrawn', 'too few charges');
 
     // M13: charges on the ground with nobody left who could carry one.
@@ -488,10 +489,10 @@ export default [
       units: state.units.map((u) => (carriers(u) ? { ...u, dead: true, charges: 0 } : u)),
       droppedCharges: dropped,
     };
-    assert(primaryShortfall(stranded, rules) > 0, 'charges nobody can carry do not count');
+    assert(winShortfall(stranded, rules) > 0, 'charges nobody can carry do not count');
     equal(settleMission(stranded, rules, map).outcome.kind, 'withdrawn', 'withdrawn at once');
     const oneLeft = { ...stranded, units: stranded.units.map((u) => (u.role === 'sapper' && u.leader ? { ...u, dead: false } : u)) };
-    equal(primaryShortfall(oneLeft, rules), 0, 'with a sapper alive they count again');
+    equal(winShortfall(oneLeft, rules), 0, 'with a sapper alive they count again');
 
     let dawn = { ...state, turn: rules.turnLimit };
     dawn = endTurn(dawn, rules, map);

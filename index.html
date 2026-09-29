@@ -777,6 +777,7 @@
       letter-spacing: 1px;
     }
     #results .again { margin-top: 34px; text-align: center; }
+    #results .again .btn + .btn { margin-left: 12px; }
     /* Set as SCORE and the result are (M12). */
     #results button {
       padding: 6px 24px;
@@ -1070,6 +1071,54 @@
     #briefing .brief-go {
       font-weight: bold;
       letter-spacing: 1px;
+    }
+    /* The contents page (M27): the annual's contents, one line a mission,
+       its title run to its page number with a dotted leader. A mission not
+       yet written is printed faint and stamped in red rubber, askew. */
+    #briefing .contents { margin: 4px 0 0; padding: 0; list-style: none; }
+    #briefing .contents-entry { position: relative; padding: 0; margin: 0 0 10px; }
+    #briefing .contents-entry::before { content: none; }
+    #briefing .contents-pick {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 7px 10px 8px;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: 2px solid transparent;
+    }
+    #briefing button.contents-pick { cursor: pointer; }
+    #briefing button.contents-pick:hover,
+    #briefing button.contents-pick:focus-visible { border-color: var(--ink); box-shadow: 3px 3px 0 var(--red); outline: none; }
+    #briefing .contents-line { display: flex; align-items: baseline; gap: 8px; }
+    #briefing .contents-title,
+    #briefing .contents-page {
+      font-family: var(--slab);
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    #briefing .contents-leader { flex: 1; border-bottom: 3px dotted var(--ink); transform: translateY(-5px); }
+    #briefing .contents-place { display: block; font-style: italic; font-weight: bold; }
+    #briefing .contents-blurb { display: block; }
+    #briefing .contents-entry.coming .contents-pick { opacity: 0.45; }
+    #briefing .contents-stamp {
+      position: absolute;
+      right: 70px;
+      top: 50%;
+      padding: 2px 10px 0;
+      font-family: var(--lettering);
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: var(--red);
+      border: 3px solid var(--red);
+      border-radius: 4px;
+      transform: translateY(-50%) rotate(-7deg);
+      opacity: 0.85;
+      pointer-events: none;
     }
 
     /* Rollovers (SPEC.md §11): detail kept off the page until asked for. */

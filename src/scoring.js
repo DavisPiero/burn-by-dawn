@@ -1,10 +1,11 @@
 // The end of the mission: whether it is over, how it came out, who got home,
 // and the score (SPEC.md §10).
 //
-// Pure functions. Numbers are rules.json scoring and mission; which objective
-// is the primary is map.json. state.js decides when to ask.
+// Pure functions. Numbers are rules.json scoring and mission; what has to be
+// destroyed is the mission's win condition (missions.js). state.js decides
+// when to ask.
 
-import { primaryShortfall } from './sabotage.js';
+import { winMet, winShortfall, winTargets, winWords } from './missions.js';
 import { onBoard } from './units.js';
 
 /**
@@ -18,7 +19,7 @@ import { onBoard } from './units.js';
  *   dawn (the last turn has been played)            success, or failed
  *   nobody left on the board                        success, or withdrawn
  *   fewer than minimumOut alive or already out      withdrawn
- *   too few charges left to finish the primary      withdrawn
+ *   too few charges left to meet the win condition  withdrawn
  */
 export function missionCheck(state, rules, { dawn = false } = {}) {
   const alive = state.units.filter((u) => !u.dead);
@@ -35,27 +36,27 @@ export function missionCheck(state, rules, { dawn = false } = {}) {
   if (alive.length < minimum) {
     return { kind: 'withdrawn', reason: `fewer than ${minimum} men left to get out`, withdraw: true };
   }
-  if (primaryShortfall(state, rules) > 0) {
-    const primary = state.objectives.find((o) => o.primary);
-    return { kind: 'withdrawn', reason: `not enough charges left for the ${primary.label}`, withdraw: true };
+  if (winShortfall(state, rules) > 0) {
+    return { kind: 'withdrawn', reason: `not enough charges left for ${winWords(state, rules)}`, withdraw: true };
   }
   return null;
 }
 
 function succeeded(state, rules) {
-  const primary = state.objectives.find((o) => o.primary);
-  return primary.destroyed && state.units.filter((u) => u.out).length >= rules.mission.minimumOut;
+  return winMet(state, rules) && state.units.filter((u) => u.out).length >= rules.mission.minimumOut;
 }
 
 function failedAtDawn(state, rules) {
-  const primary = state.objectives.find((o) => o.primary);
-  if (!primary.destroyed) return `dawn, and the ${primary.label} still stands`;
+  if (!winMet(state, rules)) {
+    const words = winWords(state, rules);
+    return winTargets(state, rules).needed === 1 ? `dawn, and ${words} still stands` : `dawn, and fewer than ${words} destroyed`;
+  }
   return `dawn, and fewer than ${rules.mission.minimumOut} men got out`;
 }
 
 /**
  * The final outcome once any burning charges have gone off: success if the
- * primary is down and enough men are out, failed if every man is dead or it is
+ * win condition is met and enough men are out, failed if every man is dead or it is
  * dawn, withdrawn otherwise. `turn` is the turn it ended on, `dawn` whether
  * the last turn was played out.
  */

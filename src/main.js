@@ -17,8 +17,9 @@ import {
 } from './state.js';
 import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
-  objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
+  objectiveAt, objectiveForChargeHex, swimTargets,
 } from './sabotage.js';
+import { missionById, missionEnemyTypes, missionFromQuery, missionRules, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
@@ -66,8 +67,8 @@ const briefingCard = document.getElementById('briefing');
 
 // The game's title, set over the title card on the orders and the back page.
 const GAME_TITLE = 'BURN BY DAWN';
-// Its strapline, along the foot of the title card on the orders and the back page.
-const GAME_TAGLINE = 'SIX MEN · ONE BRIDGE · DAWN AT TWENTY';
+// The contents page's strapline (M27): the game's, not any one mission's.
+const CONTENTS_TAGLINE = 'PARACHUTE RAIDS BEHIND THE LINES';
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -83,6 +84,11 @@ let layers = null;
 let rawRules = null;
 let rawMap = null;
 let difficulty = null;
+// The mission being played (data/missions.json, M27): its map, roster and
+// patches are already in `rawMap`, `roster` and `rawRules`; this is its own
+// words, title card and sounds. `missions` is the whole contents page.
+let missions = null;
+let mission = null;
 // The build shown in the margin (data/version.json, M15).
 let version = null;
 let level = null;
@@ -346,7 +352,7 @@ function deriveView() {
   } else if (hex && isExfil(baseMap, hex)) {
     view.site = { title: 'Exfil', rows: [
       { label: 'HERE', text: 'a man who ends his move here is out' },
-      { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with the ${primaryLabel()} down, by dawn` },
+      { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with ${winWords(state, rules)} down, by dawn` },
       // Only for a man with a charge to leave, or nobody picked (M22: room).
       ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it where he stepped off, for another to pick up [P]' }]),
     ] };
@@ -563,10 +569,6 @@ function alertSources() {
   ];
 }
 
-function primaryLabel() {
-  return state.objectives.find((o) => o.primary).label;
-}
-
 /**
  * "USE ONE CHARGE", "USE TWO CHARGES": the marker-pen count on a target ring,
  * in words, since a lettered 1 is too easily read as I.
@@ -653,7 +655,7 @@ function payoffWords(kind) {
   const anyCalled = Object.values(rules.objectives).some((k) => k.reinforcements > 0);
   if (noReserve) words.push(`keeps the reserve squad${anyCalled ? ' and any reinforcements' : ''} from being called up`);
   if (withdrawPatrols > 0) words.push(`draws the nearest ${withdrawPatrols === 1 ? 'patrol' : `${withdrawPatrols} patrols`} off the board`);
-  if (kind.reinforcements > 0) words.push(`calls up ${kind.reinforcements === 1 ? 'a squad' : `${kind.reinforcements} squads`} of reinforcements to guard the way to the exfil, unless the telephones are already down`);
+  if (kind.reinforcements > 0) words.push(`calls up ${kind.reinforcements === 1 ? 'a squad' : `${kind.reinforcements} squads`} of reinforcements to guard the way to the exfil, unless ${mission.words.lineIsDown}`);
   return words.length ? words.join(' and ') : null;
 }
 
@@ -692,7 +694,7 @@ function describeMissionState() {
     }),
     out,
     minimumOut: rules.mission.minimumOut,
-    shortfall: primaryShortfall(state, rules),
+    shortfall: winShortfall(state, rules),
     diversion: diversionView(),
   };
 }
@@ -750,7 +752,7 @@ function actionsFor(unit) {
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
-    { id: 'swim', key: 'W', label: 'Swim', help: 'A full turn: across the canal to the far bank', ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
+    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
 }
 
@@ -815,7 +817,7 @@ function cutLineHelp() {
   const target = kind ? `the ${kind.label}` : 'the target';
   const payoff = kind ? payoffWords(kind) : null;
   return `Scouts only. Start his turn on one of ${target}'s charge points and spend the whole turn: it is destroyed at once, quietly. `
-    + `No noise, so nobody comes to look, though the garrison notices its telephones go dead (alert +${rules.alert.lineCut}); no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
+    + `No noise, so nobody comes to look, though the garrison notices ${mission.words.lineGoesDead} (alert +${rules.alert.lineCut}); no charge used, and the same bonus as blowing it${payoff ? `. It also ${payoff}` : ''}.`;
 }
 
 // Pass a charge to a man beside him (M11b): ok if there is anyone he could
@@ -836,8 +838,8 @@ function passChargeAction(unit) {
 function placeChargeAction(unit) {
   const check = checkPlaceCharge(state, unit, rules);
   let cost = `${check.cost} AP, fuse ${check.fuse}`;
-  if (check.ok && !check.objective.primary && primaryShortfall(placeCharge(state, unit.id, rules), rules) > 0) {
-    cost += ` — leaves too few for the ${primaryLabel()}: WITHDRAWS`;
+  if (check.ok && !winTargets(state, rules).targets.includes(check.objective) && winShortfall(placeCharge(state, unit.id, rules), rules) > 0) {
+    cost += ` — leaves too few for ${winWords(state, rules)}: WITHDRAWS`;
   }
   return {
     id: 'charge', key: 'C', label: 'Place charge', short: 'Charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
@@ -1008,7 +1010,7 @@ function render() {
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
-  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: GAME_TAGLINE }, restartMission);
+  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: mission.tagline }, restartMission, openContents);
   // Every man's name is set in bold on the card, as in the report.
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
   showCounterKey(briefing?.kind === 'orders');
@@ -1018,7 +1020,7 @@ function render() {
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
   if (shown && shown !== cardShown) playCue('card');
-  if (shown === 'results' && cardShown !== 'results') playCue(state.outcome.kind === 'success' ? 'victory' : 'defeat');
+  if (shown === 'results' && cardShown !== 'results') playCue(state.outcome.kind === 'success' ? mission.endSounds.success : mission.endSounds.otherwise);
   cardShown = shown;
 }
 
@@ -1490,7 +1492,7 @@ function handleRestartClick() {
 
 /** The orders again, with the counter key beside them, at any time (M16, the operator's). */
 function openHelp() {
-  if (state.outcome || briefing?.kind === 'orders') return;
+  if (state.outcome || briefing?.kind === 'orders' || briefing?.kind === 'contents') return;
   // M17, the operator's: the button did nothing while a turn card was up, as
   // it is most of the time a player reaches for it. Anything being shown is
   // cut short, as a key would, and the card it leads to waits under the
@@ -1504,8 +1506,37 @@ function openHelp() {
 }
 
 function closeBriefing() {
+  // The contents page is put away by opening a mission: the one loaded.
+  if (briefing?.kind === 'contents') return openMission(mission.id);
   briefing = briefing?.under ?? null;
   render();
+}
+
+/**
+ * The contents page (M27): every mission in data/missions.json, the coming
+ * ones stamped. It opens first unless `?mission=` named one, and the back
+ * page's CONTENTS brings it back, on a new game.
+ */
+function openContents() {
+  if (state.outcome) restartMission();
+  briefing = { kind: 'contents', opening: true };
+  render();
+}
+
+/**
+ * A mission picked on the contents page. The one loaded opens its orders; any
+ * other is its own files, so the page loads again with `?mission=` naming it.
+ */
+function openMission(id) {
+  if (id === mission.id) {
+    briefing = { kind: 'orders', opening: true };
+    render();
+    return;
+  }
+  const query = new URLSearchParams(window.location.search);
+  query.set('mission', id);
+  query.delete('seed');
+  window.location.search = query.toString();
 }
 
 // A turn card, or the diversion's, lets the board be seen and clicked round
@@ -1561,9 +1592,22 @@ function handleLevelClick() {
   render();
 }
 
-/** The card's words: the orders before the drop, or this turn's update. */
+/** The card's words: the contents page, the orders before the drop, or this turn's update. */
 function describeBriefing(which, view) {
-  const primary = state.objectives.find((o) => o.primary);
+  if (which.kind === 'contents') {
+    return {
+      banner: { title: GAME_TITLE, tagline: CONTENTS_TAGLINE },
+      title: 'CONTENTS',
+      kicker: 'IN THIS ANNUAL',
+      paragraphs: ['Pick a mission. Each one stands alone: one night behind the lines, and out by dawn.'],
+      contents: {
+        entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable' })),
+        onChoose: openMission,
+      },
+      sections: [],
+      go: `TURN TO PAGE ${mission.page} — any key, or click a mission`,
+    };
+  }
   if (which.kind === 'exfil') {
     const { kind, reason } = which.failure;
     const man = state.units.find((u) => u.id === which.unitId);
@@ -1599,15 +1643,15 @@ function describeBriefing(which, view) {
     const cuttable = state.objectives.find((o) => kindOf(o, rules).cutLine);
     const cutter = Object.values(rules.roles).find((role) => role.cutLine);
     return {
-      banner: { title: GAME_TITLE, tagline: GAME_TAGLINE },
+      banner: { title: GAME_TITLE, tagline: mission.tagline },
       title: 'ORDERS',
       kicker: before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`,
       paragraphs: [
         // The opening on a line of its own (M13), then the job.
         [
-          'Tonight six men are to drop behind enemy lines.',
+          mission.briefing,
           // Dawn on a line of its own (M22, the operator's).
-          `Blow the ${primary.label.toUpperCase()} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
+          `Blow ${winWords(state, rules, { upper: true })} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
         ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (+${rules.scoring.secondary}pts${bonus.length === 1 ? '' : ' ea'}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
@@ -1846,7 +1890,7 @@ function handleKey(event) {
     event.preventDefault();
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     // ? over a turn card swaps it for the orders (M17), as the button does.
-    if (isHelpKey(event) && briefing.kind !== 'orders' && briefing.kind !== 'exfil') return openHelp();
+    if (isHelpKey(event) && !['orders', 'exfil', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
     closeBriefing();
     // A man's number, or Tab, puts a turn card away and picks him (M23), as a click on him does.
@@ -2026,10 +2070,14 @@ try {
   const paperLoaded = loadSuppliedPaper();
   const fontsLoaded = loadSuppliedFonts().then(() => document.documentElement.classList.add('fonts-ready'));
   loadingProgress([paperLoaded, fontsLoaded]);
-  rawMap = await loadMap();
-  rawRules = await loadJson('data/rules.json');
+  // The mission (M27): `?mission=` picks one, as `?seed=` picks a seed; its
+  // files and patches are loaded here, before the level's go over them.
+  missions = validateMissions(await loadJson('data/missions.json'));
+  mission = missionById(missions, missionFromQuery(window.location.search, missions));
+  rawMap = await loadMap(mission.map, undefined, undefined, (types) => missionEnemyTypes(mission, types));
+  rawRules = missionRules(mission, await loadJson('data/rules.json'));
   traits = validateTraits(await loadJson('data/traits.json'));
-  roster = await loadJson('data/roster.json');
+  roster = await loadJson(mission.roster);
   difficulty = validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes });
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
@@ -2099,7 +2147,7 @@ try {
   const pictures = [
     paperLoaded,
     loadSuppliedPortraits(state.units.map((u) => u.id), () => render()),
-    loadSuppliedTitleCard(),
+    loadSuppliedTitleCard(mission.titleCard),
     loadSuppliedAircraft(),
     loadSuppliedBlast(),
     loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes)),
@@ -2110,9 +2158,10 @@ try {
   helpTab.addEventListener('click', () => openHelp());
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, () => describeDiversion(rules.diversion.uses));
-  // The orders open over the board before anything else (SPEC.md §11), with
-  // the title music over them.
-  briefing = { kind: 'orders', opening: true };
+  // The contents page opens over the board before anything else (M27), then
+  // the orders (SPEC.md §11), with the title music over both. A mission named
+  // in the address goes straight to its orders.
+  briefing = { kind: missionFromQuery(window.location.search, missions) ? 'orders' : 'contents', opening: true };
   briefingBackdrop.addEventListener('click', () => closeBriefing());
   briefingBackdrop.parentElement.addEventListener('click', clickThroughCard, true);
   loadingProgress(pictures);
