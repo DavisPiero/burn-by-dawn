@@ -8,6 +8,7 @@ import { alertIndex } from './enemy.js';
 import { checkPassCharge, checkStabilise, onBoard } from './units.js';
 import { checkCutLine, kindOf } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
+import { winMet, winTargets, winTargetsLeft, winWords } from './missions.js';
 
 const plural = (n, one, many) => (n === 1 ? one : many);
 const capitalFirst = (text) => `${text[0].toUpperCase()}${text.slice(1)}`;
@@ -43,16 +44,17 @@ export function callsLeft(state, rules) {
  * take one right now, and beside whom. "Right now" is the same check the
  * button makes, so a man who has already spent AP is not offered a full-turn
  * stabilise, and no prompt outlives its use. Passing is only worth prompting
- * while the primary still wants a charge (none set or gone off for it yet).
+ * while the win still wants a charge: a target it needs with a charge still
+ * to set (none set or gone off for it yet).
  * One prompt per man per kind.
  * @returns {{ kind: 'stabilise' | 'pass', unitId: string, otherId: string }[]}
  */
 export function aidPrompts(state, rules) {
   if (state.outcome) return [];
   const men = state.units.filter(onBoard);
-  const primary = state.objectives.find((o) => o.primary);
-  const set = primary ? state.charges.filter((c) => c.objectiveId === primary.id).length : 0;
-  const wanted = primary && !primary.destroyed && kindOf(primary, rules).chargesNeeded - primary.detonated - set > 0;
+  const wanted = winTargetsLeft(state, rules).some((o) => (
+    kindOf(o, rules).chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length > 0
+  ));
   const prompts = [];
   for (const man of men) {
     const patient = men.find((u) => checkStabilise(man, u).ok);
@@ -105,14 +107,16 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   const hints = [];
   const men = state.units.filter(onBoard);
   const out = state.units.filter((u) => u.out).length;
-  const primary = state.objectives.find((o) => o.primary);
+  const won = winMet(state, rules);
+  const single = rules.mission.win.condition === 'destroyPrimary';
   const turnsLeft = rules.turnLimit - state.turn;
   const leader = men.find((u) => u.leader);
 
   // The win is in reach: say how far off it is.
-  if (primary?.destroyed && out < rules.mission.minimumOut) {
+  if (won && out < rules.mission.minimumOut) {
     const need = rules.mission.minimumOut - out;
-    hints.push(`The ${primary.label} is down. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
+    const job = single ? `The ${winTargets(state, rules).targets[0].label} is down` : `${capitalFirst(winWords(state, rules))} are down`;
+    hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
   }
 
   // Charges burning: the soonest on each objective.
@@ -159,8 +163,11 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     hints.push(`${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded. ${help}; it takes his whole turn.`);
   }
 
-  if (primary && !primary.destroyed && turnsLeft <= 5) {
-    hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and the ${primary.label} still stands.`);
+  if (!won && turnsLeft <= 5) {
+    const { targets, needed } = winTargets(state, rules);
+    const toGo = needed - targets.filter((o) => o.destroyed).length;
+    const still = single ? `the ${targets[0].label} still stands` : `${toGo} more ${kindOf(targets[0], rules).label} still to go`;
+    hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and ${still}.`);
   }
 
   // A man behind an enemy (M12b): the knife is there to be used.

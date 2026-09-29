@@ -1,5 +1,5 @@
 {
-  "_comment": "The missions (SPEC.md §12 M27, ROADMAP.md Phase 2): the game is an engine plus a mission. Each entry is printed on the contents page, in this order. `status` is `playable` or `coming`; a coming mission is printed but stamped NEXT YEAR'S ANNUAL and cannot be chosen, so it needs only `id`, `title`, `place`, `page` and `blurb`. A playable one names its `map` and `roster` files, and a `rules` and `enemies` patch deep-merged over data/rules.json and data/enemies.json before the difficulty's (the same merge difficulty.json uses; a key must already exist, except a new objective kind under `objectives` or a new enemy type under `types`). `win` is one of the fixed win conditions in src/missions.js, never a code branch for one mission. `briefing` opens the orders; `tagline` runs along the foot of the title card; `words` are the mission's own phrases the rules' text needs; `titleCard` is its painted title card (ART-ASSETS.md §7); `endSounds` are the sound.js cues for the back page. `?mission=<id>` in the address picks one, and `default` is the one when none is asked for.",
+  "_comment": "The missions (SPEC.md §12 M27, ROADMAP.md Phase 2): the game is an engine plus a mission. Each entry is printed on the contents page, in this order. `status` is `playable`, `draft` or `coming`; a coming mission is printed but stamped NEXT YEAR'S ANNUAL and cannot be chosen, so it needs only `id`, `title`, `place`, `page` and `blurb`. A draft one (M28) is printed and stamped as a coming one, but `?mission=<id>` plays it, so it can be tried on the live site before it is announced; it needs everything a playable one does. A playable one names its `map` and `roster` files, and a `rules` and `enemies` patch deep-merged over data/rules.json and data/enemies.json before the difficulty's (the same merge difficulty.json uses; a key must already exist, except a new objective kind under `objectives` or a new enemy type under `types`). `win` is one of the fixed win conditions in src/missions.js, never a code branch for one mission. `briefing` opens the orders; `tagline` runs along the foot of the title card; `levels` (M28, optional) is the mission's own part of each difficulty level, keyed by the level's id in data/difficulty.json: a `rules` and `enemies` patch merged after the level's own, and a `summary` printed before the level's; what a level does to this mission's targets lives here, what it does in every mission lives in difficulty.json. `words` are the mission's own phrases the rules' text needs (the cut line's, the RAF diversion's card and log line); `dialogue` (M28) replaces any of the men's lines for this mission, keyed by his roster id, over the roster file's; `titleCard` is its painted title card (ART-ASSETS.md §7); `endSounds` are the sound.js cues for the back page. `?mission=<id>` in the address picks one, and `default` is the one when none is asked for.",
 
   "default": "france",
 
@@ -18,10 +18,23 @@
       "enemies": {},
       "win": { "condition": "destroyPrimary" },
       "briefing": "Tonight six men are to drop behind enemy lines.",
+      "levels": {
+        "easy": {
+          "summary": "The bridge takes one charge.",
+          "rules": { "objectives": { "bridge": { "chargesNeeded": 1 } } }
+        },
+        "hard": {
+          "summary": "Blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, none once the Telephone Exchange is down.",
+          "rules": { "objectives": { "bridge": { "reinforcements": 2 }, "fuelDump": { "reinforcements": 1 } } }
+        }
+      },
       "words": {
         "lineGoesDead": "its telephones go dead",
-        "lineIsDown": "the telephones are already down"
+        "lineIsDown": "the telephones are already down",
+        "diversionKicker": "BOMBERS OVER THE TOWN",
+        "diversionLog": "bombers over the town"
       },
+      "dialogue": {},
       "titleCard": "assets/title/title-card.jpg",
       "endSounds": { "success": "victory", "otherwise": "defeat" }
     },

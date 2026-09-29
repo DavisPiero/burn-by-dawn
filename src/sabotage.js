@@ -24,7 +24,7 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
   const kinds = rules.objectives;
   if (!kinds || typeof kinds !== 'object') throw new Error(`${rulesUrl}: expected an "objectives" object of kinds`);
   for (const [id, kind] of Object.entries(kinds)) {
-    for (const field of ['chargesNeeded', 'blastRadius', 'killRadius', 'alert']) {
+    for (const field of ['chargesNeeded', 'blastRadius', 'killRadius', 'alert', 'score']) {
       if (!Number.isInteger(kind[field]) || kind[field] < 0) {
         throw new Error(`${rulesUrl}: objectives.${id}.${field} must be a non-negative integer`);
       }
@@ -63,7 +63,7 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
     ids.add(o.id);
     if (typeof o.label !== 'string' || o.label === '') throw new Error(`${where} needs a "label"`);
     if (!kinds[o.kind]) throw new Error(`${where} has kind "${o.kind}", which ${rulesUrl} objectives does not define`);
-    if (typeof o.primary !== 'boolean') throw new Error(`${where} needs "primary": true or false`);
+    if (o.primary !== undefined && typeof o.primary !== 'boolean') throw new Error(`${where} "primary" must be true or false`);
     hexList(o.hexes, `${where} hexes`, false);
     hexList(o.chargeHexes, `${where} chargeHexes`, true);
     if (o.chargeHexes.length < kinds[o.kind].chargesNeeded) {
@@ -74,7 +74,18 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
       chargeHexes.add(hexKey(q, r));
     }
   });
-  if (map.objectives.filter((o) => o.primary).length !== 1) throw new Error(`${mapUrl}: exactly one objective must be "primary"`);
+  // The map's targets must suit the mission's win condition (M28, missions.js):
+  // destroyPrimary wants exactly one primary; destroyCount wants none, and at
+  // least as many of its kind as it counts.
+  const win = rules.mission?.win;
+  const primaries = map.objectives.filter((o) => o.primary).length;
+  if (win?.condition === 'destroyCount') {
+    if (primaries !== 0) throw new Error(`${mapUrl}: a destroyCount mission has no "primary" objective`);
+    const of = map.objectives.filter((o) => o.kind === win.kind).length;
+    if (of < win.count) throw new Error(`${mapUrl}: the win wants ${win.count} "${win.kind}" objectives, and the map has ${of}`);
+  } else if (primaries !== 1) {
+    throw new Error(`${mapUrl}: exactly one objective must be "primary"`);
+  }
   hexList(map.exfil, `${mapUrl}: exfil`, true);
 
   for (const [id, kind] of Object.entries(kinds)) {
@@ -106,7 +117,7 @@ export function createObjectives(map) {
     id: o.id,
     label: o.label,
     kind: o.kind,
-    primary: o.primary,
+    primary: o.primary ?? false,
     hexes: o.hexes.map(([q, r]) => ({ q, r })),
     chargeHexes: o.chargeHexes.map(([q, r]) => ({ q, r })),
     detonated: 0, // charges that have gone off on it

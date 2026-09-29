@@ -46,13 +46,16 @@ export function levelById(json, id) {
 
 /**
  * `rules` and the map's `enemyTypes` with the level's patches merged over
- * them. The inputs are left as they were, so switching level before the drop
- * starts again from the files as loaded.
+ * them, then the mission's own part of the level (`level.mission`, from
+ * missions.js missionLevels, M28). The inputs are left as they were, so
+ * switching level before the drop starts again from the files as loaded.
  */
 export function applyDifficulty(level, rules, map) {
+  const own = level.mission ?? {};
+  const types = deepMerge(deepMerge({ types: map.enemyTypes }, level.enemies ?? {}), own.enemies ?? {}).types;
   return {
-    rules: deepMerge(rules, level.rules ?? {}),
-    map: { ...map, enemyTypes: deepMerge({ types: map.enemyTypes }, level.enemies ?? {}).types },
+    rules: deepMerge(deepMerge(rules, level.rules ?? {}), own.rules ?? {}),
+    map: { ...map, enemyTypes: types },
   };
 }
 

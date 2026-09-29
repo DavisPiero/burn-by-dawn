@@ -517,7 +517,7 @@ export default [
     equal(settled.outcome.turn, 12, 'two turns of fuses');
     const lines = settled.outcome.score.lines.map((l) => l.label).join('; ');
     // Three out and never seen: each pays twice (M11b), and no turns-left points.
-    equal(settled.outcome.score.total, rules.scoring.primary + 3 * rules.scoring.perTrooperOut
+    equal(settled.outcome.score.total, rules.objectives.bridge.score + 3 * rules.scoring.perTrooperOut
       + 3 * rules.scoring.perTrooperUnseen + rules.scoring.clean, `score (${lines})`);
     const seen = settleMission({ ...s, units: s.units.map((u) => (u.out ? { ...u, everSpotted: true } : u)) }, rules, map);
     equal(seen.outcome.score.total, settled.outcome.score.total - 3 * rules.scoring.perTrooperUnseen, 'seen men pay once');

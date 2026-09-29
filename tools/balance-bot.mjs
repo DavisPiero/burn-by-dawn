@@ -22,7 +22,9 @@
 //
 // MISSION=<id> plays a playable mission from data/missions.json (M27), as
 // ?mission= does in the game; the default one otherwise. Its patches go over
-// the files first, then the level's. The bot's plan aims at the map's primary.
+// the files first, then the level's, then the mission's own part of the level.
+// The bot's plan aims at the win condition's targets (M28): France's primary,
+// or the nearest of many where any few will do.
 //
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
@@ -36,7 +38,7 @@
 // spot range, suppresses, and kills. It is the `careful` mover with the knife
 // on. By default only the men with no charge to place hunt ("free"); HUNTERS=all
 // has every man hunt, sappers too, and the charges wait. They hunt until the
-// primary is down or turn HUNT_TURNS (default 12) has passed, then play the
+// job is done or turn HUNT_TURNS (default 12) has passed, then play the
 // mission as `careful` does. Compare its win %, score and kills with `careful`
 // and `fight`.
 //
@@ -79,11 +81,11 @@ if (process.env.MISSION && MI.missionFromQuery(`?mission=${process.env.MISSION}`
 const mission = MI.missionById(missions, process.env.MISSION ?? null);
 const loadedMap = await M.loadMap(mission.map, undefined, undefined, (types) => MI.missionEnemyTypes(mission, types));
 const loadedRules = MI.missionRules(mission, await M.loadJson('data/rules.json'));
-const difficulty = D.validateDifficulty(await M.loadJson('data/difficulty.json'), loadedRules, { types: loadedMap.enemyTypes });
+const difficulty = MI.missionLevels(mission, D.validateDifficulty(await M.loadJson('data/difficulty.json'), loadedRules, { types: loadedMap.enemyTypes }), loadedRules, loadedMap.enemyTypes);
 if (process.env.DIFFICULTY && !difficulty.levels.some((l) => l.id === process.env.DIFFICULTY)) throw new Error(`unknown difficulty "${process.env.DIFFICULTY}"`);
 const { rules, map: map0 } = D.applyDifficulty(D.levelById(difficulty, process.env.DIFFICULTY ?? null), loadedRules, loadedMap);
 const traits = T.validateTraits(await M.loadJson('data/traits.json'));
-const roster = await M.loadJson(mission.roster);
+const roster = MI.missionRoster(mission, await M.loadJson(mission.roster));
 
 const args = process.argv.slice(2).filter((a) => a !== '--json');
 const AS_JSON = process.argv.includes('--json');
@@ -150,12 +152,26 @@ function huntGoals(state, unit, map) {
   return behind.length ? behind : [{ q: prey.q, r: prey.r }];
 }
 
-// Is this man hunting now? Until the primary is down or HUNT_TURNS is up; the
+// The targets the job still wants, and in what order to go for them: while the
+// win can take any `needed` of several (destroyCount), the ones already
+// started first, then the nearest to the stick, as many as are still to go.
+// For France it is the Rail Bridge alone, as it always was.
+function jobTargets(state) {
+  const left = MI.winTargetsLeft(state, rules);
+  const { targets, needed } = MI.winTargets(state, rules);
+  const toGo = needed - targets.filter((o) => o.destroyed).length;
+  if (left.length <= toGo) return left;
+  const men = state.units.filter(U.onBoard);
+  const near = (o) => Math.min(...o.chargeHexes.flatMap((h) => men.map((u) => H.hexDistance(u, h))));
+  const started = (o) => o.detonated + state.charges.filter((c) => c.objectiveId === o.id).length;
+  return [...left].sort((a, b) => started(b) - started(a) || near(a) - near(b)).slice(0, toGo);
+}
+
+// Is this man hunting now? Until the job is done or HUNT_TURNS is up; the
 // free men by default, everyone with HUNTERS=all.
 function isHunting(state, unit, assign) {
   if (!OPTS.hunt) return false;
-  const primary = state.objectives.find((o) => o.primary);
-  if (primary.destroyed || state.turn > HUNT_TURNS) return false;
+  if (MI.winMet(state, rules) || state.turn > HUNT_TURNS) return false;
   if (HUNTERS === 'free' && assign.has(unit.id)) return false;
   return state.enemies.some((e) => e.killable);
 }
@@ -163,12 +179,11 @@ function isHunting(state, unit, assign) {
 function goalFor(state, unit, map, assign) {
   if (isHunting(state, unit, assign)) return huntGoals(state, unit, map);
   if (assign.has(unit.id)) return [assign.get(unit.id)];
-  // A spare man who can still carry a charge stands by near the primary until
-  // its charges are all set, in case a carrier falls.
-  const primary = state.objectives.find((o) => o.primary);
-  const setOrGone = primary.detonated + state.charges.filter((c) => c.objectiveId === primary.id).length;
-  if (!primary.destroyed && setOrGone < rules.objectives[primary.kind].chargesNeeded && U.canCarryCharges(unit) && U.chargeCapacity(unit, rules) > 0) {
-    return primary.chargeHexes.map((h) => ({ ...h, standby: true }));
+  // A spare man who can still carry a charge stands by near the job until its
+  // charges are all set, in case a carrier falls.
+  const job = jobTargets(state).find((o) => o.detonated + state.charges.filter((c) => c.objectiveId === o.id).length < rules.objectives[o.kind].chargesNeeded);
+  if (job && U.canCarryCharges(unit) && U.chargeCapacity(unit, rules) > 0) {
+    return job.chargeHexes.map((h) => ({ ...h, standby: true }));
   }
   return map.exfil.map(([q, r]) => ({ q, r }));
 }
@@ -177,7 +192,8 @@ function assignCharges(state, map) {
   // Nearest carriers to the free charge hexes of objectives still to do.
   const assign = new Map();
   const wanted = [];
-  const objectives = state.objectives.filter((o) => !o.destroyed && (o.primary || OPTS.secondaries));
+  const job = jobTargets(state);
+  const objectives = state.objectives.filter((o) => !o.destroyed && (job.includes(o) || (OPTS.secondaries && !MI.isWinTarget(state, rules, o))));
   for (const o of objectives) {
     const need = rules.objectives[o.kind].chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length;
     const free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
@@ -193,8 +209,8 @@ function assignCharges(state, map) {
       if (fetchers[0]) assign.set(fetchers[0].id, { q: dc.q, r: dc.r, pickUp: true });
     }
   }
-  // primary first
-  wanted.sort((a, b) => (b.o.primary ? 1 : 0) - (a.o.primary ? 1 : 0));
+  // the job first
+  wanted.sort((a, b) => (job.includes(b.o) ? 1 : 0) - (job.includes(a.o) ? 1 : 0));
   for (const w of wanted) {
     let best = null;
     for (const c of carriers) {
@@ -276,7 +292,7 @@ function actFor(state, unit, map) {
       let score = d * 10;
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
       const left = rules.turnLimit - state.turn;
-      const done = state.objectives.find((o) => o.primary).destroyed || !assign.has(unit.id);
+      const done = MI.winMet(state, rules) || !assign.has(unit.id);
       const urgency = done ? Math.min(1, left / 6) : Math.min(1, Math.max(0.2, (left - 8) / 6));
       if (r.spotted && !unit.inContact) score += 45 * urgency;
       if (r.shot === 'hit') score += 400;
@@ -338,8 +354,8 @@ function play(seed, runId) {
       // Squads a bang called up coming on (M21b, Hard).
       if (e.kind === 'reinforcements') ev.reinforced++;
     }
-    const b = state.objectives.find((o) => o.primary);
-    if (b.destroyed && bridgeTurn === null) bridgeTurn = state.turn;
+    // When the job was done (the key keeps France's name for it).
+    if (MI.winMet(state, rules) && bridgeTurn === null) bridgeTurn = state.turn;
     if (state.turn > 25) break;
   }
   const o = state.outcome;
@@ -348,12 +364,14 @@ function play(seed, runId) {
     peak: state.alert.peak, dead: state.units.filter((u) => u.dead).length,
     out: state.units.filter((u) => u.out).length,
     kills: state.bodies.filter((b) => b.enemyId).length,
-    secondaries: state.objectives.filter((x) => !x.primary && x.destroyed).length,
-    destroyedIds: state.objectives.filter((x) => !x.primary && x.destroyed).map((x) => x.id),
+    secondaries: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).length,
+    destroyedIds: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).map((x) => x.id),
     ...ev,
   };
 }
 
+// The win's targets, so the bonus targets are the rest (M28).
+const WIN_IDS = new Set(MI.winTargets({ objectives: SB.createObjectives(map0) }, rules).targets.map((o) => o.id));
 const runs = map0.dropRuns.map((r) => r.id).filter((id) => !process.env.RUN || id === process.env.RUN);
 if (runs.length === 0) throw new Error(`unknown drop run "${process.env.RUN}"`);
 const summary = {};
@@ -371,7 +389,7 @@ for (const run of runs) {
     endTurn: avg((r) => r.turn ?? 0), spotted: avg((r) => r.spotted), pinned: avg((r) => r.pinned), wounded: avg((r) => r.wounded), killedMen: avg((r) => r.killed), found: avg((r) => r.found), chutes: avg((r) => r.chutes),
     landedWet: avg((r) => r.wet), landedBad: avg((r) => r.bad), reinforced: avg((r) => r.reinforced),
     // How often each bonus target went up, as a share of games.
-    bonusPct: Object.fromEntries(map0.objectives.filter((o) => !o.primary).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
+    bonusPct: Object.fromEntries(map0.objectives.filter((o) => !WIN_IDS.has(o.id)).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
     alarmedPct: `${((100 * res.filter((r) => (r.peak ?? 0) >= rules.alert.states.at(-1).from).length) / N).toFixed(0)}%`,
   };
 }

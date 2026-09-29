@@ -85,8 +85,10 @@ export default [
   }],
 
   ['destroyCount: any N of a kind, and the charges short counted on the cheapest left', async () => {
-    const { map, rules: france, traits, roster } = await loadFrance();
-    // France's two secondaries as stand-ins: destroy either of them.
+    const { map: withPrimary, rules: france, traits, roster } = await loadFrance();
+    // France's two secondaries as stand-ins: destroy either of them. A
+    // destroyCount mission has no primary (M28).
+    const map = { ...withPrimary, objectives: withPrimary.objectives.map((o) => ({ ...o, primary: false })) };
     const rules = { ...france, mission: { ...france.mission, win: { condition: 'destroyCount', kind: 'fuelDump', count: 1 } } };
     const state = landedState(roster, traits, rules, map);
     equal(winWords(state, rules), '1 of the 1 Fuel Dump', 'named in words');
