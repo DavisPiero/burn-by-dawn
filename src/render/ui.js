@@ -818,7 +818,7 @@ export function renderMission(element, mission) {
     ]);
     element.appendChild(item);
   }
-  const out = html('li', null, [html('span', null, 'Men out at the exfil'), html('span', null, `${mission.out}/${mission.minimumOut}`)]);
+  const out = html('li', null, [html('span', null, [html('b', null, 'Men out'), ' at the exfil']), html('span', null, `${mission.out}/${mission.minimumOut}`)]);
   attachPopup(out, [html('b', null, 'MEN OUT'), `\nAt least ${mission.minimumOut} must reach the exfil for the mission to count.`]);
   element.appendChild(out);
 }

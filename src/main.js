@@ -124,8 +124,9 @@ let garrisonShow = null;
 // once the stick is down, the men who can act are ringed as where to start.
 let menPicked = false;
 // The title music turned off from the orders (M21, the operator's): music
-// only, for the session; M still turns every sound off.
-let musicOff = false;
+// only, for the session; M still turns every sound off. Carried in the
+// address as `?music=off` when the contents page loads another mission (M29b).
+let musicOff = new URLSearchParams(window.location.search).get('music') === 'off';
 // The turns before this one, newest first, for the report's log (M21b): display only.
 let earlierReports = [];
 // Brings the report's ▲ ▼ up to date after a redraw (M22).
@@ -1584,6 +1585,8 @@ function openMission(id) {
   const query = new URLSearchParams(window.location.search);
   query.set('mission', id);
   query.delete('seed');
+  if (musicOff) query.set('music', 'off');
+  else query.delete('music');
   window.location.search = query.toString();
 }
 
@@ -1654,6 +1657,8 @@ function describeBriefing(which, view) {
       },
       sections: [],
       go: `TURN TO PAGE ${mission.page} — any key, or click a mission`,
+      // Bottom left, as on the orders (M29b, the operator's).
+      toggle: musicToggle(),
     };
   }
   if (which.kind === 'exfil') {
@@ -1733,14 +1738,7 @@ function describeBriefing(which, view) {
         onChoose: handleChooseLevel,
       },
       // Bottom left (M21, the operator's): the music plays only before the jump.
-      toggle: before ? {
-        on: musicOff,
-        label: ' Music off',
-        onChange: (on) => {
-          musicOff = on;
-          syncMusic();
-        },
-      } : null,
+      toggle: before ? musicToggle() : null,
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
@@ -1759,6 +1757,18 @@ function describeBriefing(which, view) {
       { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok }) },
     ],
     toggle: { on: briefingsOn },
+  };
+}
+
+/** Music off (M21, the operator's), bottom left of the orders and the contents page. */
+function musicToggle() {
+  return {
+    on: musicOff,
+    label: ' Music off',
+    onChange: (on) => {
+      musicOff = on;
+      syncMusic();
+    },
   };
 }
 
