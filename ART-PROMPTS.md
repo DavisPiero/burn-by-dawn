@@ -428,3 +428,12 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The parachutes: the canopy opening and drifting in the air and the spent one on the
   ground are the same green-and-cream cloth (M8e). Not worth a bitmap: they print at about
   20 px, where a painting would just be a blur, and the drawn ones now match each other.
+- The airfield (M29, SPEC.md §13), all of it in the palette's desert ochre: the sand,
+  scrub, dunes, the wadi, the strip, the pens' sandbag walls, the camp's bell tents and
+  the perimeter wire (a line with concertina coils and pickets, like a hedge); the eight
+  aircraft from above, four Ju 87 Stukas and four Ju 52s, intact and burnt out; the fuel
+  bowser alone on the apron; the signals tent with its wireless mast and field-telephone
+  wires, standing, cut and blown; the two trucks waiting at the rendezvous with the green
+  lamp; and the perimeter car's counter, a Kübelwagen with two helmets aboard. The
+  airfield's own title card (`titleCard` in data/missions.json) is France's until the
+  operator paints one; M31 lists it with the other paintings the airfield wants.

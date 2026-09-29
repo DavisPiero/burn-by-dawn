@@ -81,7 +81,8 @@ tests.html        every test suite, in the browser
     sound.js      cues, supplied recordings, made fallbacks, title music
 /data
   missions.json   the missions: files, patches, win condition, words, title card (§10)
-  map.json        terrain rows, drop runs, enemies, routes, objectives, exfil, names
+  map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
+  map-airfield.json  the airfield's (§13), in the same shape
   terrain.json    terrain types (§3)
   roster.json     the six, their traits and dialogue (§5)
   traits.json     trait definitions (hook + modifier)
@@ -787,7 +788,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M28", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M29", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -1044,7 +1045,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M29**, the airfield on the board (§13). M28, the engine work, is done. v1.0 is tagged.
+**M30**, the airfield's two new rules and its balance (§13). M28 and M29 are done: the
+airfield is on the board as a draft, `?mission=airfield`. v1.0 is tagged.
 The airfield's milestones, M28 to M31, are listed in §13.
 
 ### Done
@@ -1084,6 +1086,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M27 | Missions architecture: `data/missions.json`, win conditions as data, `?mission=`, the contents page; France's bot output byte-for-byte unchanged. Tagged v1.0 |
 | M27b | The drop's Dakota flies off the board on every run (the East run's stopped mid-map) |
 | M28 | Engine work for mission 2: a mission's own part of each level, score by kind, the win's targets instead of the primary flag, the RAF's words, a dialogue patch, `draft` missions; France's bot output byte-for-byte unchanged |
+| M29 | The airfield on the board as a draft: its map, the desert in ochre, the car, the aircraft, bowser and signals tent, the trucks; played under France's rules |
 
 ---
 
@@ -1144,14 +1147,16 @@ A mission with none of the swim's `across` terrain does not offer Swim at all.
 
 ### The map
 
-Placed in M29 with the bot; this is the outline.
+Placed in M29 (`data/map-airfield.json`); the bot tunes it in M30.
 
 - The **landing ground** fills the middle and east of the board inside a ring of **wire**,
   with the **perimeter track** just inside it. The **strip** runs east–west across the
   middle.
-- **North dispersal**: four pens along the strip's north side, two hexes apart.
-  **South dispersal**: four pens on the apron, two either side of the **bowser**, which
-  stands close enough for its blast to take in the two nearest aircraft.
+- **North dispersal**: four Ju 87 Stukas along the strip's north side. **South
+  dispersal**: four Ju 52s on the apron, the **bowser** between the middle two. Each
+  aircraft has one pen hex behind it, away from the strip, and that is its one charge
+  point. The bowser has one charge point too: the one hex beside it whose blast takes in
+  exactly the two Ju 52s either side of it (a test holds it to that).
 - **The camp** in the east: tents, the **signals tent** with its mast, the AA pits, and
   the gate where the road comes in from the east edge (Hard's reinforcements come this
   way).
@@ -1162,17 +1167,26 @@ Placed in M29 with the bot; this is the outline.
 - **The dunes** in the north-west, slow and blind, lead to the north dispersal.
   **Scrub** in the north and north-east is fast and light cover, open to the car.
 - **Exfil**: the rendezvous with the trucks, at the wadi's mouth in the south-west
-  corner, drawn as two desert trucks under netting.
-- **Three drop runs**, all landing outside the wire: over the dunes (quiet), over the
-  scrub (steady), and down the north-east nearest the aircraft (fast). Their tags are
+  corner, drawn as two desert trucks with a scrap of netting (the map's `exfilArt`).
+- **Three drop runs**: over the dunes (West, quiet), along the scrub above the north
+  wire (North, steady), and in from the north-east corner nearest the aircraft and the
+  camp (East, fast). A man can come down in the wire (a bad landing). Their tags are
   data, as in France.
+- **Art only**: an aircraft objective's `art` picks its picture (Stuka or Ju 52); the
+  wire is laid as a line like a hedge; the strip is a grey wash with its painted centre
+  line; the escarpment is France's ridge; the place names (Bir el Kasra, Erg Safra,
+  Djebel Rhar, Oued Melah) are placeholders.
 
 ### The garrison
 
 Eight enemies, as in France, plus the reserve:
-- **Sentries**: the two AA pits, and a guard at the signals tent.
-- **Patrols**: a guard walking each dispersal, one walking the strip, one in the camp.
-- **The perimeter car**, a new enemy type (data, `enemies.json`): speed 6, so it drives
+- **Sentries**: the two AA pits (one in the north dispersal, one at the south-east
+  corner), and a guard beside the signals tent.
+- **Patrols**: a guard walking each dispersal, the outer patrol walking the scrub above
+  the north wire, where the North and East runs land (so their chutes are found), and
+  one in the camp.
+- **The perimeter car**, a new enemy type, `vehicle` (the mission's enemies patch;
+  its counter is ART-ASSETS.md's `counter-enemy-vehicle`): speed 6, so it drives
   the whole perimeter in a few turns and reaches a noise first. Vision and arc as a
   patrol's. It **can be suppressed but not killed or knifed** (`killable: false`, like the
   reserve): the crew duck, the car stops for a turn. The verbs that answer it: a stone
