@@ -990,6 +990,17 @@ function renderBoard() {
 }
 
 /**
+ * The mouse has moved onto another hex: only the board and the readout under
+ * it change (M26d). The rest of the page is not rebuilt, which on Safari made
+ * every hover stutter.
+ */
+function renderHover() {
+  renderBoard();
+  renderReadout(readout, state, map, currentView);
+  dropStalePopup();
+}
+
+/**
  * Take a player action's result and see whether it ended the mission — the
  * last man stepping onto the exfil, say, or a charge set on a secondary that
  * leaves the primary short (SPEC.md §10). `cue` is the sound it makes
@@ -1207,12 +1218,12 @@ function handleAction(id) {
 
 function handleHexHover(q, r) {
   state = setHover(state, { q, r });
-  render();
+  renderHover();
 }
 
 function handleHexLeave() {
   state = setHover(state, null);
-  render();
+  renderHover();
 }
 
 function handleRosterClick(unitId) {

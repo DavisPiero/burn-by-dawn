@@ -1327,6 +1327,9 @@ function drawBlasts(layers, state, now) {
 
 // --- speech bubbles (SPEC.md §5 Dialogue, §11) ---------------------------------
 
+// Speech-bubble text widths, by the text measured (see drawSpeech).
+const SPEECH_WIDTHS = new Map();
+
 /**
  * The line of each man in `speakers` — the one selected and the one under the
  * mouse — in a bubble near his counter, the tail pointing at him. Lines wrap
@@ -1352,11 +1355,16 @@ function drawSpeech(layers, state, speakers) {
   const letter = (content, attrs = {}) => text(content, {
     'text-anchor': 'start', 'font-size': SPEECH.fontSize, 'font-family': SPEECH.font, 'font-weight': SPEECH.weight, class: 'ink', ...attrs,
   });
+  // Each measurement makes the browser lay the text out, which on every hover
+  // made Safari stutter (M26d): a width is kept once the fonts are in.
   const measure = (content) => {
+    const known = SPEECH_WIDTHS.get(content);
+    if (known !== undefined) return known;
     const probe = letter(content, { visibility: 'hidden' });
     layers.speech.appendChild(probe);
     const width = probe.getComputedTextLength();
     probe.remove();
+    if (document.fonts?.status === 'loaded') SPEECH_WIDTHS.set(content, width);
     return width;
   };
 
