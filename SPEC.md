@@ -253,7 +253,7 @@ to be casual while still being strategic.
 - **A prompt while Stabilise or Pass a charge is open.** Both are used only now and then
   and were hard to find, so while a man could take either right now (the same check the
   button makes: for Stabilise a wounded man beside him and his whole pool unspent; for
-  Pass a man beside him with room, while the primary still wants a charge) it is pointed
+  Pass a man beside him with room, while a target the win needs still wants a charge) it is pointed
   out four ways: the button is set in the End turn button's red dots; his roster portrait
   wears the action's key in red; the readout says what to press, in the orders' blue; and
   the wounded man's, or the taker's, hover names who can help. While aiming either, a blue
@@ -664,7 +664,9 @@ carrying a charge does not take it out: he leaves it on the hex he stepped off f
 **The results page** is the back page of the annual: all six by name and fate (out,
 killed, left behind), the level, and the score, whatever the outcome:
 
-- Objectives destroyed: the primary 10, each secondary 4.
+- Each objective destroyed, blown or cut: its kind's `score` (the Rail Bridge 10, each
+  secondary 4). Meeting the win condition pays `scoring.win` on top: 0 in France, whose
+  bridge carries its own 10; a mission with no primary pays it for the job done.
 - Each man out: 2 if never hit, 1 if wounded, dressed or not.
 - Each man out who was never spotted all mission: 1 more. His roster rollover says
   whether he is still unseen.
@@ -687,23 +689,38 @@ contents page prints them. A mission is data only, and no code asks which is on:
   mission's go first, then the level's. A patch key must already exist, except that a
   mission may add a new objective kind or enemy type. France's patches are empty: it is
   the files as they are, and the bot's numbers for it are unchanged by missions existing.
+- Its **own part of each level** (`levels.<id>` in `missions.json`: a `rules` and
+  `enemies` patch and a `summary`) goes over the level's own patch, and its summary is
+  printed before the level's. What a level does to one mission's targets lives there
+  (France: the bridge's one charge on Easy, the reinforcements on Hard); what it does in
+  every mission lives in `difficulty.json`.
 - Its **win condition** is one of a short fixed list in `missions.js`, in the spirit of the
   trait hooks: `destroyPrimary` (the objective `map.json` marks primary; France) or
   `destroyCount` (any `count` objectives of one `kind`). Success is the win condition met
   and `minimumOut` men out by dawn; withdrawal counts the charges short of it.
 - Its own words live with it: the orders' opening line, the tagline under the title card,
-  the phrases for its cut line, its title card and its back-page sounds.
+  the phrases for its cut line and the RAF diversion's card and log line, its title card
+  and its back-page sounds. A `dialogue` patch may replace any of the men's lines for it;
+  they are still the one roster.
+- The map's `primary` flag is asked for only by `destroyPrimary`, which wants exactly one;
+  a `destroyCount` map has none, and at least `count` of its kind. The target rings, the
+  ★, the mission panel, the hints, the Pass prompt and the bot all ask the win condition
+  which objectives it needs. Where any few of many will do, each is ringed once and the
+  first carries one note ("ANY FOUR AIRCRAFT!"), and the mission panel gives the kind one
+  line.
 - A **coming** mission is printed on the contents page but stamped NEXT YEAR'S ANNUAL,
-  and cannot be picked.
+  and cannot be picked. A **draft** one is printed and stamped the same, but can be
+  played by its address: how a mission is tried on the live site before it is announced.
 
-`?mission=<id>` in the address picks a playable mission and goes straight to its orders;
+`?mission=<id>` in the address picks a playable or draft mission and goes straight to its orders;
 `MISSION=<id>` does the same for the balance bot. Every mission keeps the 18×13 board.
 
 ### Difficulty
 
 Three levels, chosen on the orders before the drop and fixed once the stick jumps. The
 numbers in this spec are Normal's. A level is data only: a patch over `rules.json` and
-`enemies.json` in `data/difficulty.json`, and no code asks which level is on. It is shown
+`enemies.json` in `data/difficulty.json`, then the mission's own part of it (§10
+Missions), and no code asks which level is on. It is shown
 beside the seed and on the back page, and `?difficulty=easy|hard` picks it.
 
 | Level | Changes from Normal |
@@ -770,7 +787,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M27b", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M28", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -1027,7 +1044,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M28**, the engine work for mission 2, with no gameplay change (§13). v1.0 is tagged.
+**M29**, the airfield on the board (§13). M28, the engine work, is done. v1.0 is tagged.
 The airfield's milestones, M28 to M31, are listed in §13.
 
 ### Done
@@ -1066,6 +1083,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M26d | The operator's playtest notes: the fuel dump's points 1 AP, one shot per enemy a turn, the RAF urged in a pickle, pass rings, a smoother hover |
 | M27 | Missions architecture: `data/missions.json`, win conditions as data, `?mission=`, the contents page; France's bot output byte-for-byte unchanged. Tagged v1.0 |
 | M27b | The drop's Dakota flies off the board on every run (the East run's stopped mid-map) |
+| M28 | Engine work for mission 2: a mission's own part of each level, score by kind, the win's targets instead of the primary flag, the RAF's words, a dialogue patch, `draft` missions; France's bot output byte-for-byte unchanged |
 
 ---
 
@@ -1216,7 +1234,9 @@ caught objective whose own kind `setsOff` carries the chain on.
 - Why: one bomb for three aircraft at +4, not three bombs at +6. It is the biggest greed
   on the board, it stands in the open on the apron, and its blast is the widest.
 
-### What the engine needs first (M28, no gameplay change)
+### What the engine needs first (M28, no gameplay change) — done
+
+Built in M28 and written into §4 and §10; kept here as the list the airfield leans on.
 
 The three things M27 left as France's, and the rest of what the airfield leans on. The
 proof is the same as M27's: France's bot `--json` output is byte-for-byte unchanged.
