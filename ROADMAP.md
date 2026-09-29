@@ -17,10 +17,10 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
 - Tests: 130 headless, 132 in tests.html. Balance bot (naive, KNIFE=1, win %
   west/north/east): Easy 99/100/97, Normal 86/83/89, Hard 29/38/37, every run inside
   the SPEC §10 targets.
-- **Next: Phase 3, the airfield.** Write its full spec first (below). Start from the
-  three things M27 left as France's: the difficulty levels' patches and summaries, the
-  map's `primary` flag (the 10-point score and the PRIMARY TARGET ring), and the bot's
-  plan, which aims at the primary.
+- **Phase 3, the airfield, is specified** in SPEC.md §13 (29 Sep 2026): southern Tunisia,
+  1942; eight aircraft, any four to win; five bombs; the two new rules are time pencils
+  and a bowser that sets off its neighbours. **Next: M28**, the engine work with no
+  gameplay change, then M29–M31 as listed there.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 
@@ -120,7 +120,14 @@ Gunnerside, the SAS airfield raids, Chestnut, the Jedburghs, Nadzab).
 
 ## Phase 3 — Mission 2: the airfield (North Africa)
 
-Spec it once Phase 2 has landed. Build it after v1.0. The loose basis is the 1941–42
+**Specified** in SPEC.md §13, which supersedes this outline where they differ. The
+operator's calls (29 Sep 2026): southern Tunisia, 1942 (loosely 2 Para at Oudna, paras
+from Dakotas); the two new rules are **time pencils** (choose a charge's fuse) and a
+**fuel bowser that sets off the aircraft in its blast**; **sappers carry two bombs**
+(five in the stick). Built as M28 (engine, no gameplay change), M29 (the map, under
+today's rules), M30 (the two rules and balance), M31 (words, sound, art hand-off).
+
+The outline as first written: The loose basis is the 1941–42
 parachute raids on Axis airfields (Operation Squatter; 2 Para at Oudna, Tunisia).
 Why it goes second: it is the most *different* puzzle and the most "hunter" mission.
 - Many small targets. Aircraft parked in dispersal pens take one charge each. You win
