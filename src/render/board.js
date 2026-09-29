@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRES, counterFrameId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -111,6 +111,10 @@ export function createBoard(svg, map, handlers) {
     // it where the terrain has them, and the motif. Area terrain is printed
     // over all the hexes at once, below; the grid rule goes over everything.
     hex.appendChild(el('polygon', { points, fill: style.fill }));
+    // A hex's own wash goes under an area's shape too (M29: the desert's sand
+    // under its dunes and wadi, so their rounded corners meet sand). France's
+    // area terrain has none, so it prints as before.
+    if (style.tint && style.area) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
     if (!style.area) {
       if (style.tint) hex.appendChild(el('polygon', { points, fill: style.tintFill, 'fill-opacity': style.tint[1] }));
       if (style.tone) hex.appendChild(el('polygon', { points, class: toneClass(...style.tone) }));
@@ -156,6 +160,7 @@ export function createBoard(svg, map, handlers) {
   const lines = el('g', { 'pointer-events': 'none' });
   const railway = railwayHexes(map);
   drawHedges(lines, map);
+  drawFences(lines, map);
   drawRoads(lines, map, edge, railway);
   drawRailway(lines, map, edge);
   drawPlaces(lines, map);
@@ -391,8 +396,8 @@ function drawRoads(layer, map, edge, railway) {
  * not in a fork with a stub. In a fixed order, so the map always draws the
  * same. Keyed by hexKey, each a list of directions.
  */
-function hedgeTree(map) {
-  const isHedge = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r)).hedge);
+function hedgeTree(map, flag = 'hedge') {
+  const isHedge = (q, r) => Boolean(terrainArt(terrainIdAt(map, q, r))[flag]);
   const hexes = [];
   forEachCell(map, (q, r) => { if (isHedge(q, r)) hexes.push({ q, r }); });
   const degree = new Map(hexes.map((h) => [hexKey(h.q, h.r), NEIGHBOR_DIRS.filter((n) => isHedge(h.q + n.q, h.r + n.r)).length]));
@@ -460,10 +465,54 @@ function drawPlaces(layer, map) {
 /** The directions from a hedgerow hex to the hedgerow hexes its hedge joins. */
 // Worked out once per map: drawing memory, never written onto the map itself.
 const hedgeTrees = new WeakMap();
+const fenceTrees = new WeakMap();
 
 function hedgeLinks(map, q, r) {
   if (!hedgeTrees.has(map)) hedgeTrees.set(map, hedgeTree(map));
   return [...(hedgeTrees.get(map).get(hexKey(q, r)) ?? [])];
+}
+
+/**
+ * The perimeter wire (M29) as a line, joined hex to hex the way a hedge is
+ * (the same spanning tree, so a corner never draws as a little triangle): a
+ * strand of ink with a picket every few coils and the concertina's coils laid
+ * along it. Art only; the rule is the wire's terrain.
+ */
+function drawFences(layer, map) {
+  if (!fenceTrees.has(map)) fenceTrees.set(map, hedgeTree(map, 'fence'));
+  const tree = fenceTrees.get(map);
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  let d = '';
+  const spots = new Map();
+  const lay = (from, to) => {
+    const steps = Math.max(1, Math.round(Math.hypot(to.x - from.x, to.y - from.y) / WIRE.spacing));
+    for (let i = 0; i <= steps; i++) {
+      const p = { x: from.x + ((to.x - from.x) * i) / steps, y: from.y + ((to.y - from.y) * i) / steps };
+      const key = `${Math.round(p.x / 3)},${Math.round(p.y / 3)}`;
+      if (!spots.has(key)) spots.set(key, p);
+    }
+  };
+  forEachCell(map, (q, r) => {
+    if (!terrainArt(terrainIdAt(map, q, r)).fence) return;
+    const links = [...(tree.get(hexKey(q, r)) ?? [])];
+    if (links.length === 0) links.push(1);
+    if (links.length === 1) links.push((links[0] + 3) % 6);
+    const c = axialToPixel(q, r, map.hexSize);
+    for (const dir of links) {
+      const m = edgeMiddle(map, q, r, dir);
+      d += `M${f(m)} L${f(c)} `;
+      lay(m, c);
+    }
+  });
+  if (!d) return;
+  layer.appendChild(el('path', { d, fill: 'none', class: 'stroke-ink', 'stroke-width': WIRE.width, 'stroke-linecap': 'round' }));
+  const coils = el('g', { fill: 'none', class: 'stroke-ink', 'stroke-width': WIRE.coilWidth });
+  const posts = el('g', { class: 'stroke-ink', 'stroke-width': WIRE.postWidth, 'stroke-linecap': 'round' });
+  [...spots.values()].forEach((p, i) => {
+    coils.appendChild(el('ellipse', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), rx: WIRE.coil, ry: WIRE.coil * 0.8 }));
+    if (i % WIRE.postEvery === 0) posts.appendChild(el('path', { d: `M${f(p)} l0 ${-WIRE.postLength}` }));
+  });
+  layer.append(coils, posts);
 }
 
 /**
@@ -1442,7 +1491,7 @@ function drawArt(layers, state, view) {
   if (view.exfil.length > 0) {
     const middle = view.exfil[Math.floor(view.exfil.length / 2)];
     const p = axialToPixel(middle.q, middle.r, map.hexSize);
-    layers.art.appendChild(el('use', { href: `#${EXFIL.art}`, x: p.x - 40, y: p.y - 46, width: 80, height: 92 }));
+    layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: p.x - 40, y: p.y - 46, width: 80, height: 92 }));
   }
 }
 

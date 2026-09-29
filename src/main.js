@@ -756,6 +756,8 @@ function actionsFor(unit) {
     ...(role.kill ? [] : ['kill']),
     ...(role.cutLine ? [] : ['cut']),
     ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge', 'pass']),
+    // No water on the map to swim (M29, the airfield): no Swim button at all.
+    ...(Object.values(baseMap.legend).includes(rules.actions.swim.across) ? [] : ['swim']),
   ]);
   const patients = state.units.filter((u) => (
     onBoard(u) && u.id !== unit.id && hexDistance(u, unit) === 1 && u.hits > 0 && !u.stabilised

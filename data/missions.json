@@ -61,7 +61,7 @@
       "_enemies": "The perimeter car (SPEC.md §13): fast, so it reaches a noise first; it can be suppressed but never killed or knifed.",
       "enemies": {
         "types": {
-          "car": { "label": "Perimeter car", "counterLabel": "Car", "visionRadius": 3, "arcDegrees": 110, "detection": 3, "speed": 6, "killable": false }
+          "vehicle": { "label": "Perimeter car", "counterLabel": "Car", "visionRadius": 3, "arcDegrees": 110, "detection": 3, "speed": 6, "killable": false }
         }
       },
       "win": { "condition": "destroyCount", "kind": "aircraft", "count": 4 },
@@ -70,7 +70,7 @@
         "hard": {
           "summary": "Five aircraft are wanted, and the perimeter car sees further too.",
           "rules": { "mission": { "win": { "count": 5 } } },
-          "enemies": { "types": { "car": { "visionRadius": 4, "arcDegrees": 120 } } }
+          "enemies": { "types": { "vehicle": { "visionRadius": 4, "arcDegrees": 120 } } }
         }
       },
       "briefing": "Tonight six men are to drop on an enemy landing ground.",

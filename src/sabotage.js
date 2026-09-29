@@ -121,6 +121,7 @@ export function createObjectives(map) {
     label: o.label,
     kind: o.kind,
     primary: o.primary ?? false,
+    art: o.art ?? null, // which picture of its kind (art only, M29)
     hexes: o.hexes.map(([q, r]) => ({ q, r })),
     chargeHexes: o.chargeHexes.map(([q, r]) => ({ q, r })),
     detonated: 0, // charges that have gone off on it

@@ -22,7 +22,7 @@
       "jumpAt": 0,
       "spacing": 1,
       "wind": "SW",
-      "labelAlong": 0.3
+      "labelAlong": 0.6
     },
     {
       "id": "north",
@@ -40,7 +40,7 @@
       "jumpAt": 5,
       "spacing": 1,
       "wind": "E",
-      "labelAlong": 0.2
+      "labelAlong": 0.33
     },
     {
       "id": "east",
@@ -58,10 +58,10 @@
       "jumpAt": 0,
       "spacing": 1,
       "wind": "W",
-      "labelAlong": 0.55
+      "labelAlong": 0.12
     }
   ],
-  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north and east runs land), a patrol walks the camp, and the perimeter car drives the track round inside the wire. The car is its own type (data/missions.json enemies patch): fast, and it cannot be killed.",
+  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north and east runs land), a patrol walks the camp, and the perimeter car drives the track round inside the wire. The car is its own type, `vehicle` (the manifest's counter-enemy-vehicle) (data/missions.json enemies patch): fast, and it cannot be killed.",
   "enemies": [
     {
       "id": "post-aa-north",
@@ -96,7 +96,7 @@
     {
       "id": "car",
       "label": "Perimeter car",
-      "type": "car",
+      "type": "vehicle",
       "facing": "E",
       "loop": true,
       "route": [
@@ -257,7 +257,7 @@
       }
     ]
   },
-  "_objectives": "SPEC.md §7, §13. Eight aircraft, each in its pen: the pen hex behind it is its one charge point. The fuel bowser stands on the south apron between the middle two Ju 52s; its charge point is the one hex beside it whose blast takes in those two and no others (for M30's rule that it sets them off). The signals tent is the airfield's telephone exchange: blown, or its line cut by a scout. None is primary: the win is any N aircraft (data/missions.json).",
+  "_objectives": "SPEC.md §7, §13. Eight aircraft, each in its pen: the pen hex behind it is its one charge point. The fuel bowser stands on the south apron between the middle two Ju 52s; its charge point is the one hex beside it whose blast takes in those two and no others (for M30's rule that it sets them off). The signals tent is the airfield's telephone exchange: blown, or its line cut by a scout. None is primary: the win is any N aircraft (data/missions.json). `art` (optional, art only) picks which picture of its kind is drawn: the Stukas' or the Ju 52s'.",
   "objectives": [
     {
       "id": "stuka-1",
@@ -274,7 +274,8 @@
           4,
           4
         ]
-      ]
+      ],
+      "art": "stuka"
     },
     {
       "id": "stuka-2",
@@ -291,7 +292,8 @@
           6,
           4
         ]
-      ]
+      ],
+      "art": "stuka"
     },
     {
       "id": "stuka-3",
@@ -308,7 +310,8 @@
           9,
           4
         ]
-      ]
+      ],
+      "art": "stuka"
     },
     {
       "id": "stuka-4",
@@ -325,7 +328,8 @@
           11,
           4
         ]
-      ]
+      ],
+      "art": "stuka"
     },
     {
       "id": "ju52-1",
@@ -342,7 +346,8 @@
           2,
           8
         ]
-      ]
+      ],
+      "art": "ju52"
     },
     {
       "id": "ju52-2",
@@ -359,7 +364,8 @@
           4,
           8
         ]
-      ]
+      ],
+      "art": "ju52"
     },
     {
       "id": "ju52-3",
@@ -376,7 +382,8 @@
           7,
           8
         ]
-      ]
+      ],
+      "art": "ju52"
     },
     {
       "id": "ju52-4",
@@ -393,7 +400,8 @@
           9,
           8
         ]
-      ]
+      ],
+      "art": "ju52"
     },
     {
       "id": "bowser",
@@ -434,7 +442,7 @@
       ]
     }
   ],
-  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner.",
+  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn.",
   "exfil": [
     [
       -5,

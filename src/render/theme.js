@@ -28,6 +28,10 @@ export const PALETTE = {
   // The seventh, for fire only (M14, the operator's): a printed orange, kept
   // soft so it sits with the rest — flames, the blast's fireball.
   fire: '#C98249',
+  // The eighth, the desert's ground (SPEC.md §11, §13, M29): the second colour
+  // the airfield's story is printed in, used only by the desert's terrain.
+  // Yellower than fire orange, so a burning fuse still stands out on it.
+  ochre: '#D2A85C',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -294,6 +298,21 @@ const TERRAIN_ART = {
   // The bridge and the dump are drawn by their objective art, over the hexes.
   bridge: { base: 'paper', motif: null, road: true },
   depot: { base: 'paper', tint: ['ink', 0.07], motif: null },
+  // The desert (SPEC.md §13, M29), in desert ochre over the paper: sand a pale
+  // wash of it, dunes a stronger one in bands, the wadi the ochre darkened
+  // with ink. The strip and the camp stay bare paper, man-made against the
+  // sand. Area terrain here keeps the sand's wash under its shape (`tint`
+  // with `area`), so its rounded corners meet sand, not bare paper. The wire
+  // is a line, like a hedge (`fence`, drawn by board.js with WIRE).
+  sand: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-sand', variants: 3, sparse: 0.4 },
+  scrub: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-scrub', variants: 3 },
+  dunes: { base: 'paper', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.4], outline: 1, outlineOpacity: 0.35, dash: '6 4' }, motif: 'terrain-dunes', variants: 3 },
+  wadi: { base: 'paper', tint: ['ochre', 0.3], area: { fill: 'ochre', tone: ['ink', 35], outline: 1.6 }, motif: 'terrain-wadi', variants: 3 },
+  wire: { base: 'paper', tint: ['ochre', 0.3], motif: null, fence: true },
+  strip: { base: 'paper', tint: ['ink', 0.07], motif: 'terrain-strip' },
+  pen: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-pen' },
+  aircraft: { base: 'paper', tint: ['ochre', 0.3], motif: null },
+  camp: { base: 'paper', motif: 'terrain-camp', variants: 2, building: true },
 };
 
 // Area terrain's outline: it follows the hexes' edges, rounded off at every
@@ -782,6 +801,12 @@ export const WIRES = {
 // from the point given in the art's own units (M14: the exchange's roof standard,
 // on the crossarm).
 const OBJECTIVE_ART = {
+  // The desert's (M29). An aircraft's picture is picked by its `art` in the
+  // map (the Stukas' or the Ju 52s'); everything else by its kind.
+  stuka: { intact: 'objective-aircraft-stuka', destroyed: 'objective-aircraft-stuka-destroyed' },
+  ju52: { intact: 'objective-aircraft-ju52', destroyed: 'objective-aircraft-ju52-destroyed' },
+  bowser: { intact: 'objective-fuel-bowser', destroyed: 'objective-fuel-bowser-destroyed' },
+  signals: { intact: 'objective-signals-tent', destroyed: 'objective-signals-tent-destroyed', cut: 'objective-signals-tent-cut', wires: { x: 60, y: 12 } },
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
@@ -794,7 +819,7 @@ export function ordersMarkerId(bonus) {
 
 /** { id, width, height } for an objective as it stands, or null. */
 export function objectiveArt(objective) {
-  const art = OBJECTIVE_ART[objective.kind];
+  const art = OBJECTIVE_ART[objective.art ?? objective.kind];
   if (!art) return null;
   // Cut quietly, not blown (M16): its own picture where it has one.
   const id = objective.destroyed ? (objective.cut && art.cut ? art.cut : art.destroyed) : art.intact;
@@ -810,6 +835,14 @@ export const EXFIL = {
   label: PALETTE.green,
   art: 'objective-rally-point',
 };
+
+// The exfil's picture, by the map's `exfilArt` (M29): France's barn, or the
+// trucks waiting at the airfield's rendezvous.
+const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks' };
+
+export function exfilArtId(name) {
+  return EXFIL_ART[name] ?? EXFIL.art;
+}
 
 export const BLAST = {
   fill: PALETTE.red,
@@ -1215,6 +1248,10 @@ function apple(x, y) {
 
 // A hedge is a run of clumps along its line (board.js lays them), each a
 // small billow, with now and then a tree grown up out of it.
+// The perimeter wire (M29), laid along its line like a hedge: a strand of
+// ink, a picket every `postEvery`, and a coil of concertina every `spacing`.
+export const WIRE = { width: 1.6, spacing: 7, coil: 4.4, coilWidth: 1.1, postEvery: 3, postLength: 9, postWidth: 2 };
+
 export const HEDGE_CLUMP = { variants: 3, size: 24, spacing: 8.2, scale: [0.9, 1.15], jitter: 1.6, treeEvery: 9, treeScale: 1.5 };
 
 function hedgeClump(v) {
@@ -1668,6 +1705,246 @@ function starburst(cx, cy, points, outer, inner, cls, extra = {}) {
   return fill(`${d}Z`, cls, extra);
 }
 
+// --- the desert (SPEC.md §13, M29) --------------------------------------------
+// The airfield's ground and targets, drawn in the same hand as France's: bold
+// inked shapes, a hex about 30 px across at 1280x800, in desert ochre where
+// France has fields. Nothing here is used by France's map.
+
+// A camel-thorn bush: a low spray of green twigs over a dab of shadow.
+function thornBush(x, y, s = 1) {
+  const t = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  return [
+    svg('ellipse', { cx: x + 1.5 * s, cy: y + 0.8 * s, rx: 6 * s, ry: 1.8 * s, class: 'ink', opacity: 0.18 }),
+    line(`M${t(-5, 0)} L${t(-3, -5)} M${t(-2, 0)} L${t(-1, -7)} M${t(1, 0)} L${t(1.5, -8)} M${t(3, 0)} L${t(4, -6)} M${t(5, 0)} L${t(6.5, -3.5)}`, 1.5, 'stroke-green'),
+    line(`M${t(-6, 0.3)} H${t(7, 0.3).split(' ')[0]}`, 1, 'stroke-ink', { opacity: 0.45 }),
+  ];
+}
+
+// A dune crest: the ridge line, and the lee side hatched below it.
+function duneCrest(x, y, w, s = 1) {
+  const hatch = [];
+  for (let i = 1; i < 5; i++) {
+    const hx = x - w + (2 * w * i) / 5;
+    hatch.push(`M${hx.toFixed(1)} ${(y + 1.5).toFixed(1)} l${(-2 * s).toFixed(1)} ${(4 * s).toFixed(1)}`);
+  }
+  return [
+    line(`M${x - w} ${y + 3} Q${x} ${y - 7 * s} ${x + w} ${y + 3}`, 1.5, 'stroke-ink', { opacity: 0.5 }),
+    line(hatch.join(' '), 0.9, 'stroke-ink', { opacity: 0.3 }),
+  ];
+}
+
+// A stone in the wadi's bed: paper, inked, with its shadow.
+function wadiStone(x, y, rx, ry) {
+  return [
+    svg('ellipse', { cx: x + 1, cy: y + 1, rx, ry, class: 'ink', opacity: 0.3 }),
+    svg('ellipse', { cx: x, cy: y, rx, ry, class: 'paper' }),
+    svg('ellipse', { cx: x, cy: y, rx, ry, fill: 'none', class: 'stroke-ink', 'stroke-width': 1 }),
+  ];
+}
+
+// A bell tent, seen from the south-west, with its door and a guy line.
+function bellTent(x, y, s = 1) {
+  const t = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  const body = `M${t(-10, 0)} L${t(0, -14)} L${t(10, 0)} Z`;
+  return [
+    svg('ellipse', { cx: x + 3 * s, cy: y + 1, rx: 11 * s, ry: 2.5 * s, class: 'ink', opacity: 0.25 }),
+    ...inked(body, 'paper', 1.4),
+    fill(`M${t(0, -14)} L${t(10, 0)} L${t(3, 0)} Z`, 'ochre', { 'fill-opacity': 0.55 }),
+    fill(`M${t(-2.5, 0)} L${t(0, -6)} L${t(2.5, 0)} Z`, 'ink'),
+    line(`M${t(0, -14)} L${t(0, -17)} M${t(-10, 0)} L${t(-14, 2)} M${t(10, 0)} L${t(14, 2)}`, 0.9),
+  ];
+}
+
+// A ring of sandbags, filled with the sand they hold: a pen's blast walls.
+function sandbagRing(cx, cy, rx, ry, count, gapFrom = null, gapTo = null) {
+  const bags = [];
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2;
+    if (gapFrom !== null && a > gapFrom && a < gapTo) continue;
+    const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
+    bags.push(svg('g', { transform: `rotate(${(a * 180 / Math.PI + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})` }, [
+      svg('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: 6.5, ry: 4, class: 'ochre' }),
+      svg('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: 6.5, ry: 4, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.1 }),
+    ]));
+  }
+  return bags;
+}
+
+const DESERT_TERRAIN = {
+  // Sand: bare but for a stipple and now and then a ripple of wind.
+  'terrain-sand-01': () => [[24, 34], [30, 58], [50, 40], [56, 62], [38, 50]].map(([x, y]) => circle(x, y, 0.9, 'ink', { opacity: 0.45 })),
+  'terrain-sand-02': () => [line('M22 44 Q31 40 40 44 T58 44', 1.1, 'stroke-ink', { opacity: 0.28 }), line('M28 54 Q35 51 42 54', 1, 'stroke-ink', { opacity: 0.22 })],
+  'terrain-sand-03': () => [[28, 40], [46, 32], [52, 54], [34, 62]].map(([x, y]) => circle(x, y, 1.1, 'ink', { opacity: 0.4 })),
+  'terrain-scrub-01': () => [...thornBush(28, 42), ...thornBush(52, 56, 0.9), ...thornBush(40, 70, 0.75)],
+  'terrain-scrub-02': () => [...thornBush(46, 38, 0.9), ...thornBush(28, 60), ...thornBush(56, 66, 0.7)],
+  'terrain-scrub-03': () => [...thornBush(34, 48), ...thornBush(54, 40, 0.8), ...thornBush(44, 66, 0.85)],
+  'terrain-dunes-01': () => [...duneCrest(34, 36, 16), ...duneCrest(48, 60, 18)],
+  'terrain-dunes-02': () => [...duneCrest(44, 40, 20), ...duneCrest(30, 64, 13)],
+  'terrain-dunes-03': () => [...duneCrest(40, 50, 22)],
+  'terrain-wadi-01': () => [...wadiStone(30, 40, 4, 3), ...wadiStone(48, 56, 5, 3.4), ...wadiStone(38, 64, 2.6, 2)],
+  'terrain-wadi-02': () => [...wadiStone(46, 36, 3.6, 2.6), ...wadiStone(30, 54, 4.6, 3.2), ...wadiStone(52, 64, 2.8, 2)],
+  'terrain-wadi-03': () => [...wadiStone(40, 46, 5, 3.6), ...wadiStone(26, 62, 3, 2.2), ...wadiStone(54, 34, 2.6, 2)],
+  // The strip: rolled sand, a painted centre line along it.
+  'terrain-strip': () => [
+    line('M0 46 H80', 3, 'stroke-paper', { 'stroke-dasharray': '10 7' }),
+    line('M0 46 H80', 0.8, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '10 7' }),
+  ],
+  // A pen: blast walls of sandbags round a floor of sand, open to the strip.
+  'terrain-pen': () => [
+    svg('ellipse', { cx: 40, cy: 46, rx: 24, ry: 21, class: toneClass('ochre', 50) }),
+    ...sandbagRing(40, 46, 24, 21, 14),
+  ],
+  'terrain-camp-01': () => [...bellTent(28, 44), ...bellTent(52, 62, 0.9)],
+  'terrain-camp-02': () => [...bellTent(48, 40, 0.9), ...bellTent(30, 66)],
+};
+
+// A Balkenkreuz: the black cross, edged in paper, that says whose aircraft.
+function balkenkreuz(x, y, s = 1) {
+  const arm = (w, h) => `M${x - w} ${y - h} H${x + w} V${y + h} H${x - w} Z M${x - h} ${y - w} H${x + h} V${y + w} H${x - h} Z`;
+  return [fill(arm(5 * s, 2.2 * s), 'paper'), fill(arm(4 * s, 1.1 * s), 'ink')];
+}
+
+// A Ju 87 Stuka from above, nose north: gull wings, the fixed spats under
+// them, the long glasshouse canopy. Desert tan, mottled.
+function stuka(burnt) {
+  const body = 'M48 10 Q53 12 53 24 L51.5 70 Q49.5 80 48 82 Q46.5 80 44.5 70 L43 24 Q43 12 48 10 Z';
+  const wings = 'M44 30 L22 34 L6 40 Q4 44 8 45 L44 46 Z M52 30 L74 34 L90 40 Q92 44 88 45 L52 46 Z';
+  const tail = 'M45 70 L32 72 Q30 75 32 77 L46 77 Z M51 70 L64 72 Q66 75 64 77 L50 77 Z';
+  const shadow = svg('g', { transform: 'translate(3 3)' }, [fill(body, 'ink', { 'fill-opacity': 0.28 }), fill(wings, 'ink', { 'fill-opacity': 0.28 }), fill(tail, 'ink', { 'fill-opacity': 0.28 })]);
+  if (burnt) {
+    const broken = 'M44 30 L22 34 L14 38 L20 42 L44 46 Z M52 30 L70 35 L66 44 L52 46 Z';
+    return [
+      shadow,
+      ...inked(broken, 'ink', 1.4), ...inked(body, 'ink', 1.4), fill(tail, 'ink', { 'fill-opacity': 0.7 }),
+      fill('M10 42 L6 46 L14 48 Z', 'ink', { 'fill-opacity': 0.6 }),
+      ...flame(48, 48, 0.8), ...flame(30, 42, 0.5), ...smoke(56, 18, 1),
+    ];
+  }
+  return [
+    shadow,
+    ...inked(wings, 'ochre', 1.6), fill(wings, toneClass('green', 30)),
+    ...inked(tail, 'ochre', 1.4),
+    ...inked(body, 'ochre', 1.6),
+    svg('ellipse', { cx: 48, cy: 32, rx: 3, ry: 10, class: 'blue' }), svg('ellipse', { cx: 48, cy: 32, rx: 3, ry: 10, fill: 'none', class: 'stroke-ink', 'stroke-width': 1 }),
+    line('M38 10 H58', 2.4), circle(48, 10, 2.4, 'ink'),
+    ...inked('M20 44 h4 v6 h-4 Z M72 44 h4 v6 h-4 Z', 'ochre', 1),
+    ...balkenkreuz(20, 40, 0.9), ...balkenkreuz(76, 40, 0.9),
+  ];
+}
+
+// A Ju 52 from above, nose north: three engines, the long straight wing
+// with its corrugations, a fat fuselage. Darker than the Stukas.
+function ju52(burnt) {
+  const body = 'M48 12 Q54 14 54 28 L51 76 Q49.5 84 48 84 Q46.5 84 45 76 L42 28 Q42 14 48 12 Z';
+  const wings = 'M42 30 L4 36 Q2 42 6 44 L42 46 Z M54 30 L92 36 Q94 42 90 44 L54 46 Z';
+  const tail = 'M45 74 L30 76 Q28 80 31 82 L46 81 Z M51 74 L66 76 Q68 80 65 82 L50 81 Z';
+  const shadow = svg('g', { transform: 'translate(3 3)' }, [fill(body, 'ink', { 'fill-opacity': 0.28 }), fill(wings, 'ink', { 'fill-opacity': 0.28 })]);
+  const engines = 'M26 26 h8 v12 h-8 Z M62 26 h8 v12 h-8 Z';
+  if (burnt) {
+    return [
+      shadow,
+      ...inked('M42 30 L12 35 L18 44 L42 46 Z M54 30 L80 34 L76 45 L54 46 Z', 'ink', 1.4), ...inked(body, 'ink', 1.4),
+      fill(engines, 'ink'),
+      ...flame(48, 50, 0.9), ...flame(66, 42, 0.55), ...smoke(40, 20, 1.1),
+    ];
+  }
+  let ribs = '';
+  for (let x = 8; x < 42; x += 4) ribs += `M${x} ${37 - (x - 8) * 0.12} V${44 - (x - 8) * 0.05} `;
+  for (let x = 56; x < 90; x += 4) ribs += `M${x} ${33 + (x - 56) * 0.12} V${42 + (x - 56) * 0.05} `;
+  return [
+    shadow,
+    ...inked(wings, 'ochre', 1.6), fill(wings, toneClass('ink', 20)),
+    line(ribs, 0.7, 'stroke-ink', { opacity: 0.45 }),
+    ...inked(tail, 'ochre', 1.4), fill(tail, toneClass('ink', 20)),
+    ...inked(body, 'ochre', 1.6), fill(body, toneClass('ink', 20)),
+    ...inked(engines, 'ochre', 1.2), line('M24 26 H36 M60 26 H72 M40 12 H56', 2.2),
+    svg('ellipse', { cx: 48, cy: 22, rx: 3.4, ry: 4, class: 'blue' }),
+    ...balkenkreuz(16, 40, 0.9), ...balkenkreuz(80, 40, 0.9),
+  ];
+}
+
+// The signals tent: a marquee with its wireless mast; the field telephones'
+// wires run from the mast's crossarm (60, 12) to a pole on each charge point.
+function signalsTent(state) {
+  const tent = 'M12 70 L20 46 H52 L60 70 Z';
+  const roof = 'M20 46 L26 34 H46 L52 46 Z';
+  const parts = [
+    svg('ellipse', { cx: 40, cy: 72, rx: 30, ry: 5, class: 'ink', opacity: 0.25 }),
+  ];
+  if (state === 'destroyed') {
+    return [
+      ...parts,
+      ...inked('M10 72 L22 58 L40 64 L56 56 L64 72 Z', 'ink', 1.4),
+      line('M60 70 L78 40', 2.2), ...flame(34, 68, 0.8), ...smoke(46, 40, 1.1),
+    ];
+  }
+  return [
+    ...parts,
+    ...inked(tent, 'paper', 1.6), fill('M36 46 H52 L60 70 H40 Z', 'ochre', { 'fill-opacity': 0.5 }),
+    ...inked(roof, 'paper', 1.6), fill(roof, toneClass('ink', 20)),
+    fill('M30 70 V56 H38 V70 Z', state === 'cut' ? 'ink' : 'fire', { 'fill-opacity': state === 'cut' ? 1 : 0.8 }),
+    line('M30 70 V56 H38 V70', 1),
+    line('M60 70 V10', 2.2), line('M54 14 H66', 1.8),
+    line('M60 12 L74 70 M60 12 L46 34', 0.8, 'stroke-ink', { opacity: 0.6 }),
+  ];
+}
+
+// An LRDG truck from the south-west: the bonnet, the open back piled with kit.
+function desertTruck(x, y, s = 1) {
+  const t = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  const bed = `M${t(-14, 0)} V${t(0, -9).split(' ')[1]} H${t(4, 0).split(' ')[0]} V${t(0, 0).split(' ')[1]} Z`;
+  const cab = `M${t(4, 0)} V${t(0, -12).split(' ')[1]} H${t(10, 0).split(' ')[0]} L${t(15, -6)} V${t(0, 0).split(' ')[1]} Z`;
+  return [
+    svg('ellipse', { cx: x + 2 * s, cy: y + 2 * s, rx: 17 * s, ry: 3 * s, class: 'ink', opacity: 0.25 }),
+    ...inked(bed, 'ochre', 1.4), ...inked(cab, 'ochre', 1.4),
+    fill(`M${t(-12, -9)} Q${t(-6, -15)} ${t(2, -9)} Z`, toneClass('green', 50)),
+    ...[-9, 9].flatMap((dx) => [circle(x + dx * s, y + 0.5 * s, 3.6 * s, 'ink'), circle(x + dx * s, y + 0.5 * s, 1.3 * s, 'paper')]),
+  ];
+}
+
+const DESERT_OBJECTIVES = {
+  'objective-aircraft-stuka': { viewBox: '0 0 96 92', draw: () => stuka(false) },
+  'objective-aircraft-stuka-destroyed': { viewBox: '0 0 96 92', draw: () => stuka(true) },
+  'objective-aircraft-ju52': { viewBox: '0 0 96 92', draw: () => ju52(false) },
+  'objective-aircraft-ju52-destroyed': { viewBox: '0 0 96 92', draw: () => ju52(true) },
+  // The bowser, as in France's fuel dump, alone on the apron in a crop of that drawing.
+  'objective-fuel-bowser': {
+    viewBox: '78 106 84 48',
+    draw: () => [svg('ellipse', { cx: 122, cy: 146, rx: 36, ry: 4, class: 'ink', opacity: 0.25 }), ...bowser(false)],
+  },
+  'objective-fuel-bowser-destroyed': {
+    viewBox: '78 106 84 48',
+    draw: () => [fill('M82 146 Q100 128 124 130 Q152 132 158 146 Z', 'ink', { 'fill-opacity': 0.3 }), ...bowser(true), ...flame(112, 134, 0.7), ...flame(138, 132, 0.55)],
+  },
+  'objective-signals-tent': { viewBox: '0 0 80 92', draw: () => signalsTent('intact') },
+  'objective-signals-tent-cut': { viewBox: '0 0 80 92', draw: () => signalsTent('cut') },
+  'objective-signals-tent-destroyed': { viewBox: '0 0 80 92', draw: () => signalsTent('destroyed') },
+  // The rendezvous: two trucks under a scrap of netting, and the hooded green
+  // lamp, the one friendly light on the map (as France's barn has).
+  'objective-trucks': {
+    viewBox: '0 0 80 92',
+    draw: () => [
+      ...desertTruck(28, 50, 1), ...desertTruck(52, 70, 1),
+      circle(64, 44, 4.5, toneClass('green', 50)), circle(64, 44, 2, 'green'), ring(64, 44, 2, 0.8),
+    ],
+  },
+  // The perimeter car (the manifest's counter-enemy-vehicle): a Kübelwagen
+  // from the side, paper on the enemy counter's ink, two helmets aboard.
+  'counter-enemy-vehicle': {
+    viewBox: '0 0 56 56',
+    draw: () => {
+      const body = 'M6 32 L9 24 H20 L24 18 H34 L37 24 H48 L50 32 Z';
+      return [
+        ...helmet(18.5, 8.5, 0.55), ...helmet(29, 8.5, 0.55),
+        fill(body, 'paper'), fill(body, toneClass('ink', 20)),
+        line('M24 18 L22 24', 1.2), line('M8 28 H48', 0.8, 'stroke-ink', { opacity: 0.6 }),
+        circle(15, 33, 5, 'ink'), circle(15, 33, 5, 'none', { fill: 'none', class: 'stroke-paper', 'stroke-width': 1.4 }), circle(15, 33, 1.6, 'paper'),
+        circle(41, 33, 5, 'ink'), circle(41, 33, 5, 'none', { fill: 'none', class: 'stroke-paper', 'stroke-width': 1.4 }), circle(41, 33, 1.6, 'paper'),
+      ];
+    },
+  },
+};
+
 const SPRITES = {
   // --- counters and symbols (ART-ASSETS.md §3) ---
   'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('ink') },
@@ -1766,6 +2043,8 @@ const SPRITES = {
 
   // --- terrain (ART-ASSETS.md §4) ---
   ...Object.fromEntries(Object.entries(TERRAIN_SPRITES).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
+  ...Object.fromEntries(Object.entries(DESERT_TERRAIN).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
+  ...DESERT_OBJECTIVES,
   // A hedge's clumps (M17): board.js lays them along each hedge, every shadow first.
   ...Object.fromEntries(Array.from({ length: HEDGE_CLUMP.variants }, (_, i) => [
     [`hedge-clump-0${i + 1}`, { viewBox: `0 0 ${HEDGE_CLUMP.size} ${HEDGE_CLUMP.size}`, draw: () => hedgeClump(i) }],
