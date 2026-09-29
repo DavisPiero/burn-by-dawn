@@ -780,7 +780,9 @@ board must read at a glance.
   cold blue `#3D5A73`. Two reserved colours: **leader blue `#2F7BBF`**, used only for the
   ranking man (his name strip, rank flash, roster number) and his orders (radius, chevron,
   the AP dots they add); and **fire orange `#C98249`**, used only for flames, the blast's
-  fireball, a burning fuse's stopwatch and the dots for charges a man carries. Nothing else.
+  fireball, a burning fuse's stopwatch and the dots for charges a man carries. One ground
+  colour, **desert ochre `#D2A85C`**, used only by the desert's terrain (§13): it is the
+  second colour the airfield's story is printed in. Nothing else.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, objectives,
   the enemy's vision and in the chrome, printed faint, close to the colour beneath.
   Open ground is flat spot colour.
@@ -1094,8 +1096,16 @@ the alert, and the car answers a noise fastest of anything on the board.
 
 ### The ground
 
-New terrain, as data in `terrain.json` and drawn in `theme.js`. **No new colours**: the
-desert is the paper itself, with the ink, the army green and the tints §11 already uses.
+New terrain, as data in `terrain.json` and drawn in `theme.js`, in **one new colour,
+desert ochre** (§11): on France's palette alone the desert was bare paper, France's fields
+with the trees taken off. Sand is a pale wash of the ochre (about 30%), dunes a stronger
+one (about 55%) in bands, and the wadi the ochre darkened with ink, so the safe artery
+reads as a dark channel as the hedges do. The strip and the camp stay bare paper, man-made
+against the sand; scrub is army-green tufts on sand. Every colour that means something
+(green ours, red danger, the two blues, fire orange) is unchanged, so a counter, a threat
+or a burning fuse reads the same on both boards. Only the desert's terrain types use the
+ochre, and only the airfield's map has them, so no code asks which mission is on. M29
+checks fire orange on ochre on the real board and moves the ochre if flames get lost.
 
 | Terrain | Move cost | Cover | Blocks sight | Notes |
 |---|---|---|---|---|
