@@ -75,6 +75,11 @@ asked for, the game working in Chrome, Safari and Firefox, and the bot numbers n
 Then tag it `v1.0`.
 Prepared 2026-09-29 (build M26c): the playtest sheet is `docs/PLAYTEST.md`, and the
 proposed balance targets are in SPEC.md §10.
+**M26d** (2026-09-29) was built from the operator's own playtest notes, since a full round
+with new players is not likely soon: two rules changes (the fuel dump's charge points
+cost 1 AP; an enemy fires at one man a turn), a smoother hover for Safari, and five
+clarity fixes. Every bot run is now inside the proposed targets. Whether that is enough to
+tag v1.0 is the operator's call.
 
 ---
 

@@ -198,7 +198,9 @@ gives the full cost and, when it cannot be used, why not.
 - **Pick up a charge** — 1 AP, on a hex with a dropped charge, if he can carry one.
 - **Pass a charge** — 2 AP to the giver; the taker pays nothing. One charge to a man
   **beside him** who can carry it: not wounded, and with room (a scout carries none).
-  Aimed like stabilise: press it, then click the man.
+  If only one man beside him can take it, pressing it hands it straight over; otherwise
+  it is aimed like stabilise, with a blue ring round each man who could take it: press
+  it, then click the man.
 - **Place a charge** — 1 AP (the `onPlaceCharge` hook may change it), on a charge hex of an
   objective that still needs charges (§7). One charge per charge hex.
 - **Cut the line** (scout only) — a **full turn**: he must not have spent any AP yet.
@@ -227,7 +229,10 @@ gives the full cost and, when it cannot be used, why not.
   its search or held contact** and goes back to its route or post, and **every trooper is
   out of contact**. It does not undo wounds, deaths, bodies already found, or the
   explosion floor (§6). The leader carries the radio: this is a rule keyed to the
-  `leader` flag, not a trait. Calling it forfeits the clean-run score (§10).
+  `leader` flag, not a trait. Calling it forfeits the clean-run score (§10). **In a
+  pickle** (`diversion.prompt`: the garrison Alarmed, two men in contact at once, or a
+  wounded man in contact) the button turns red and says to call it now, and the turn
+  card says so second only to a charge about to blow.
 
 ### Desktop interaction
 
@@ -237,6 +242,8 @@ to be casual while still being strategic.
 - **Hover a hex** with a trooper selected: draw the path, its AP cost, and a detection
   risk readout for every hex on it. The player commits only on click.
 - **Hover an enemy**: its vision arc and patrol route, and what it will see next turn.
+  With a man selected, whether he can suppress, kill or knife it now, and if not, why not
+  (a kill wants it suppressed first; a knife wants it looking the other way).
 - **Hover an objective**: what it needs (charges, fuse, blast radius) and what it pays.
 - **Hover one of our men**: his particulars in the readout (§11).
 - **A prompt while Stabilise or Pass a charge is open.** Both are used only now and then
@@ -245,7 +252,8 @@ to be casual while still being strategic.
   Pass a man beside him with room, while the primary still wants a charge) it is pointed
   out four ways: the button is set in the End turn button's red dots; his roster portrait
   wears the action's key in red; the readout says what to press, in the orders' blue; and
-  the wounded man's, or the taker's, hover names who can help. The turn card's wounded
+  the wounded man's, or the taker's, hover names who can help. While aiming either, a blue
+  ring circles each man it could go to. The turn card's wounded
   hint names the helper. No prompt outlives its use.
 - **Right-click**: deselect / cancel.
 - **Undo**: the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last move
@@ -462,8 +470,15 @@ Being spotted is a warning, not a wound:
    Wounds). The alert does not rise again. A suppressed enemy does not fire. If nobody
    spots him, contact ends.
 
+**An enemy fires at one man a turn:** of the men already in contact it spots, the one it
+has in its sights (the one it turned to face), else the nearest, else the first in the
+roster. The others it sees stay in contact and are not shot by it that turn. So a man who
+holds an enemy's eye can draw its fire while another slips past: hunter and hunted. It
+turns to face whoever it fired at.
+
 The hover readout marks every path hex where a man in contact would be shot, and whether
-it would hit or pin him there, so being fired on is never a surprise.
+it would hit or pin him there, so being fired on is never a surprise. Where he is seen
+but every enemy seeing him is firing at another man, it says NOT SHOT and at whom.
 
 ### Exfil watched
 
@@ -514,7 +529,10 @@ Every objective lists its **charge hexes**: where a trooper stands to place a ch
 objective may list **more charge points than it needs charges** (the exchange has three
 and needs one): they are a choice of where to stand, not a count, and the orders, target
 rings and hovers must say so. Once an objective has every charge it needs, its empty
-charge points are no longer drawn.
+charge points are no longer drawn. A kind may set **`chargePointMoveCost`**: what a man
+pays to step onto any of its charge points, whatever the ground. The fuel dump's are on
+the ridge (2) and cost 1, so a man beside it is not stalled with nothing left to set the
+charge. It is for the men only: the garrison walks the ridge at its own cost.
 
 A charge sets a **3-turn fuse** by default. The fuse burns down in every fuse phase,
 including the one at the end of the turn it was placed, and the charge goes off at 0: a
@@ -675,8 +693,8 @@ missions through the rule functions. Its win rates show which way a change pushe
 the absolute answer; it never calls the diversion or stabilises, and only its `hunter`
 style goes looking for kills, and it packs no parachutes unless run with `PACK=1`, so a
 person does better. Current baselines, win % west / north / east: **Easy 99 / 100 / 97,
-Normal 80 / 82 / 88, Hard 24 / 36 / 36**; packing every chute on turn 1 (`PACK=1`):
-Easy 100 / 99 / 97, Normal 90 / 85 / 94, Hard 41 / 32 / 33. Easy and Normal are meant to
+Normal 86 / 83 / 89, Hard 29 / 38 / 37**; packing every chute on turn 1 (`PACK=1`):
+Easy 100 / 99 / 97, Normal 92 / 86 / 94, Hard 45 / 33 / 35. Easy and Normal are meant to
 be kind to casual players; Hard is the real test. Any rules, map or enemy change is re-run against these and
 the shift logged in DECISIONS.md.
 
@@ -685,7 +703,7 @@ nearest killable enemy to knife it, and closes a gunner to suppress and kill. By
 only the men with no charge to place hunt; `HUNTERS=all` sends everyone, until the bridge
 is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-everything
 must not be the best way to play, and with the whole-turn knife it is not (Normal
-72 / 77 / 73, Hard 23 / 18 / 22). Its numbers, against the baselines, are in DECISIONS.md.
+71 / 78 / 76, Hard 27 / 24 / 28, with `HUNTERS=all`). Its numbers, against the baselines, are in DECISIONS.md.
 
 **Targets** (proposed at the v1.0 gate; the playtest in `docs/PLAYTEST.md` confirms or
 moves them). What they are for is people, so the first three are measured on players new
@@ -697,8 +715,7 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Normal** | Most win within three tries | 75 to 90 | Below naive on the same run |
 | **Hard** | The real test: a win is earned | 25 to 45 | Below naive on the same run |
 
-Today every run is inside them except Hard West at 24, one point under; packing chutes
-lifts it to 41, and packing is what Dutch now tells the player to do.
+Today every run is inside them.
 
 ---
 
@@ -727,7 +744,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M26c", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M26d", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -778,7 +795,9 @@ board must read at a glance.
   The turn report uses them ("the field by Ferme Lebrun").
 - **Objectives say where to go.** Each is outlined firmly, its art inside, its name above.
   Each charge point is a red dashed hex with an empty satchel a third of the way toward
-  its target (`pointNudge`); hovering one says so. The exchange has a telegraph pole on
+  its target (`pointNudge`); hovering one says so. A charge set on it is drawn in the
+  same place as a solid green satchel, with its stopwatch beside it, and the dashed one
+  goes. The exchange has a telegraph pole on
   each charge point with a wire to its roof, hanging snapped once it is cut or blown.
 - An enemy's vision is a faint flat tint at rest (it is the risk map) and is filled
   strongly and outlined when that enemy is hovered. Next turn's facing is a hollow dashed
@@ -830,7 +849,8 @@ board must read at a glance.
   label, in one column with every row's words starting at the same place, most rows one
   line. For a hex: LANDING, MOVE, BLAST, RISK (how it goes and where), DOTS (the sum, "…
   = 2 of 3 dots", leaving out any term that is nought), HIDE, HERE, HEARD, GROUND, ORDERS.
-  For an enemy: DOING, ALARM, NEXT, SEES. A target, the exfil or a parachute is named in
+  For an enemy: DOING, ALARM, then with a man selected SUPPRESS, KILL and KNIFE (as his
+  role has them: he can, in blue, or why not), NEXT, SEES. A target, the exfil or a parachute is named in
   the headline with short rows (HERE, NEEDS, BANG, CUT, WORTH; only HERE and NEEDS while a
   man is selected); the ground is a small note at the headline's right. For one of our
   men: HAS, WHERE, TRAIT, SCORE, and CONTACT, CHUTE, ORDERS and RADIO where they apply;
@@ -878,7 +898,8 @@ board must read at a glance.
 ### Before the drop
 
 - **Targets are ringed** in red marker pen, the primary twice, each with a hand-lettered
-  note beside it (the exchange's says a scout can cut its lines), and the exfil in green.
+  note beside it (the primary's: PRIMARY TARGET! / BLOW IT WITH TWO CHARGES!, the count
+  from its kind; the exchange's says a scout can cut its lines), and the exfil in green.
   Each ring takes in the objective's name and is drawn under the names, charge points and
   counters, as a pen mark on a map would be. Picking a run clears them.
 - **Ghost Dakotas**: until a run is picked, a faint grey Dakota flies each drop line again
@@ -971,10 +992,18 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**The v1.0 gate**, on branch `v1-playtest-prep`: no rules change. Dutch's landing line
-cues packing the parachutes; the action buttons' names stand clear of their key box; a
-playtest sheet for the operator (`docs/PLAYTEST.md`); the balance targets proposed (§10).
-Then the operator's playtest, and the tag `v1.0`.
+**M26d, the operator's playtest notes**, on branch `m26d-playtest`:
+
+1. **Smoother on Safari**: a hover redraws only the board and the readout, not the whole
+   page, and speech bubbles keep their measured widths.
+2. **Why a man can or cannot kill**: an enemy's hover says, for the selected man.
+3. **The fuel dump's charge points cost 1 AP** to step onto (§7), for the men only.
+4. **Pass charge** rings the men it could go to, and hands it straight over when only one
+   man beside him can take it.
+5. **The RAF diversion is urged in a pickle** (§4): the button red, the turn card first.
+6. **An enemy fires at one man a turn** (§6), so a man can draw its fire.
+7. **A set charge is a solid green satchel** where its point's empty one was (§11).
+8. **The bridge's ring reads PRIMARY TARGET! / BLOW IT WITH TWO CHARGES!**
 
 ### Done
 
@@ -1008,3 +1037,4 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M25 | Housekeeping: this spec cut to current rules; a lighter title card; the drawn faces and unused sprites out; the map named |
 | M26 | Active play: prompts for Stabilise and Pass a charge, lines for a kill, a sighting and hiding, the bot's hunter style |
 | M26b | Review of M26: the knife a whole turn, the Wood patrol, Pick up charge and Pass charge in full, the search ring |
+| M26c | The v1.0 gate prepared: Dutch's chute line, the playtest sheet, the balance targets proposed |

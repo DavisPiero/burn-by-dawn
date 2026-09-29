@@ -1,6 +1,6 @@
 // M7b: the briefing card's hints (SPEC.md §11), a pure function of the state.
 
-import { aidPrompts, aidWords, hintsFor } from '../src/hints.js';
+import { aidPrompts, aidWords, diversionPrompt, hintsFor } from '../src/hints.js';
 import { orderReport } from '../src/render/ui.js';
 import { loadJson, loadMap } from '../src/map.js';
 import { validateTraits } from '../src/traits.js';
@@ -104,6 +104,20 @@ export default [
     const bridge = state.objectives.find((o) => o.primary);
     const full = Array.from({ length: rules.objectives[bridge.kind].chargesNeeded }, (_, i) => ({ objectiveId: bridge.id, q: 9, r: 5 + i, fuse: 3 }));
     assert(pass({ ...state, units, charges: full }).length === 0, 'not once it has every charge it wants');
+  }],
+  ['in a pickle the RAF diversion is urged first; out of one, or once called, it is not (M26d)', async () => {
+    const { rules, state } = await start();
+    const [a, b] = state.units.filter((u) => !u.leader);
+    const two = { ...state, units: state.units.map((u) => (u.id === a.id || u.id === b.id ? { ...u, inContact: true } : u)) };
+    assert(hintsFor(two, rules, { diversionOk: true })[0].startsWith('In a pickle'), 'two men in contact');
+    assert(diversionPrompt(two, rules, true), 'and the button is told');
+    assert(!diversionPrompt(two, rules, false), 'not once it cannot be called');
+    const wounded = { ...state, units: state.units.map((u) => (u.id === a.id ? { ...u, inContact: true, hits: 1 } : u)) };
+    assert(diversionPrompt(wounded, rules, true)?.includes('wounded'), 'one wounded man in contact');
+    const one = { ...state, units: state.units.map((u) => (u.id === a.id ? { ...u, inContact: true } : u)) };
+    assert(!diversionPrompt(one, rules, true), 'one man in contact is not a pickle');
+    const alarmed = rules.alert.states.find((st) => st.id === rules.diversion.prompt.alertState);
+    assert(diversionPrompt({ ...state, alert: { ...state.alert, points: alarmed.from ?? alarmed.min } }, rules, true), 'the garrison Alarmed');
   }],
   ['the turn report keeps each man together, worst news first, his death last (M13)', async () => {
     const events = [

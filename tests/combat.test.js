@@ -5,7 +5,7 @@
 // open field in memory, so they do not depend on where map.json puts anyone.
 
 import {
-  detectionAt, hearingRadius, listeners, runDetection, runEnemyPhase, walkRoute,
+  busyFor, detectionAt, fireRivals, hearingRadius, listeners, runDetection, runEnemyPhase, walkRoute,
 } from '../src/enemy.js';
 import { DIRECTION_NAMES, facingToward, hexDistance } from '../src/hex.js';
 import { isInPlay, loadJson, loadMap, terrainIdAt } from '../src/map.js';
@@ -172,6 +172,41 @@ export default [
     equal(wound.line, before.dialogue.onWoundedCarrying ?? before.dialogue.onWounded, 'carrying a charge: his carrying line if he has one');
     const refilled = fillActionPoints(result.state.units, rules);
     equal(unitIn({ units: refilled }, unitId).apMax, rules.combat.woundedActionPoints, 'wounded pool');
+  }],
+
+  ['an enemy fires at one man a turn: the one it has in its sights, else the nearest; the other is seen, not shot (M26d)', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const e = enemy(row.q, row.r, 'E');
+    const near = { q: row.q + 1, r: row.r }, far = { q: row.q + 3, r: row.r };
+    const [a, b] = state.units.filter((u) => u.role === 'sapper');
+    const place = (enemies, at) => ({
+      ...state, enemies,
+      units: state.units.map((u, i) => (at[u.id] ? { ...u, ...at[u.id], trail: [], inContact: true } : { ...u, q: 200 + i, r: 0 })),
+    });
+
+    // Nobody in its sights: the nearest is shot.
+    const plain = runDetection(place([e], { [a.id]: near, [b.id]: far }), map, rules);
+    equal(unitIn(plain.state, a.id).hits, 1, 'the nearer man is hit');
+    equal(unitIn(plain.state, b.id).hits, 0, 'the further man is not');
+    assert(unitIn(plain.state, b.id).inContact, 'but he is still seen');
+    equal(plain.state.enemies[0].holding.unitId, a.id, 'it holds the man it fired at');
+
+    // It has the further man in its sights: he draws its fire, the nearer man is spared.
+    const watched = runDetection(place([{ ...e, watching: { unitId: b.id, ...far } }], { [a.id]: near, [b.id]: far }), map, rules);
+    equal(unitIn(watched.state, b.id).hits, 1, 'the man in its sights is hit');
+    equal(unitIn(watched.state, a.id).hits, 0, 'the other is not');
+
+    // The readout agrees: for the spared man, the enemy is busy.
+    const s = place([{ ...e, watching: { unitId: b.id, ...far } }], { [a.id]: near, [b.id]: far });
+    const busy = busyFor(fireRivals(map, rules, s), s, unitIn(s, a.id));
+    const seen = detectionAt(map, rules, s.enemies, s.alert.points, unitIn(s, a.id), near, busy);
+    assert(seen.spotted && !seen.firing, 'spotted, and not fired on');
+
+    // Two enemies, one man each.
+    const e2 = enemy(row.q + 4, row.r, 'W');
+    const both = runDetection(place([e, e2], { [a.id]: near, [b.id]: far }), map, rules);
+    equal(unitIn(both.state, a.id).hits + unitIn(both.state, b.id).hits, 2, 'each enemy hits the man nearest it');
   }],
 
   ['two enemies firing still make one hit, and the second hit kills and leaves a body', async () => {

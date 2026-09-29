@@ -15,6 +15,19 @@ import { enterCost, findPath, forEachCell, hasLineOfSight, hexKey, isInPlay, ter
 import { applyHook } from './traits.js';
 import { onBoard, woundedLine } from './units.js';
 
+/**
+ * The map as the garrison walks it: the ground's own costs, without the
+ * cheaper charge points (sabotage.js effectiveMap, M26d), which are for the
+ * men placing charges. Without this the fuel dump's points sped up the patrols
+ * that cross them and moved their timing (Normal West 80% to 70% in the bot).
+ */
+const grounds = new WeakMap();
+function groundOf(map) {
+  if (!map.moveCosts) return map;
+  if (!grounds.has(map)) grounds.set(map, { ...map, moveCosts: null });
+  return grounds.get(map);
+}
+
 const DIRECTIONS = DIRECTION_NAMES.length;
 
 // --- setup -------------------------------------------------------------------
@@ -264,9 +277,10 @@ export function detectionScore(map, rules, enemy, alertPoints, unit, hex) {
  * others). Whether he is actually shot depends on his being in contact
  * already — see runDetection.
  */
-export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
+export function detectionAt(map, rules, enemies, alertPoints, unit, hex, busy = null) {
   let worst = null;
   const spotters = [];
+  const firers = [];
   let firing = false;
   // How close the nearest enemy is that would fire on him here (M13b: a
   // shot from far off pins rather than hits).
@@ -277,14 +291,68 @@ export function detectionAt(map, rules, enemies, alertPoints, unit, hex) {
     if (!result) continue;
     if (result.spotted) {
       spotters.push(enemy.id);
-      if (!result.suppressed) {
+      // An enemy fires at one man a turn (M26d): one busy with another
+      // spots him, and does not fire at him.
+      if (!result.suppressed && !busy?.(enemy, result.distance)) {
         firing = true;
+        firers.push(enemy.id);
         firingDistance = Math.min(firingDistance ?? Infinity, result.distance);
       }
     }
     if (!worst || result.score > worst.score) worst = result;
   }
-  return worst ? { ...worst, spotters, firing, firingDistance } : null;
+  return worst ? { ...worst, spotters, firers, firing, firingDistance } : null;
+}
+
+/**
+ * Whom an enemy fires at (SPEC.md §6, M26d, the operator's): one man a turn,
+ * of those already in contact it spots and is free to shoot. The man it
+ * already has in its sights first, then the nearest, then the first in the
+ * roster. So a man who holds its eye can draw its fire off another.
+ *
+ * `fireRivals` lists, for each enemy, every man in contact it would fire on as
+ * things stand, on the hexes he is tested on (testedHexes), each at his
+ * nearest. `busyFor` turns that into the `busy` test detectionAt takes for one
+ * man: is this enemy firing at someone ahead of him, were he this far off?
+ * Both the detection check and the hover readout use them, so the readout
+ * never says a man is safe who is then shot, or the other way round.
+ */
+export function fireRivals(map, rules, state) {
+  const rivals = new Map();
+  state.units.forEach((unit, order) => {
+    if (!onBoard(unit) || !unit.inContact) return;
+    for (const enemy of state.enemies) {
+      if (enemy.suppressed) continue;
+      let nearest = null;
+      for (const hex of testedHexes(unit)) {
+        const result = detectionScore(map, rules, enemy, state.alert.points, unit, hex);
+        if (result?.spotted && !result.suppressed) nearest = Math.min(nearest ?? Infinity, result.distance);
+      }
+      if (nearest === null) continue;
+      const list = rivals.get(enemy.id) ?? [];
+      list.push({ unitId: unit.id, distance: nearest, order });
+      rivals.set(enemy.id, list);
+    }
+  });
+  return rivals;
+}
+
+/** The man this enemy fires at of those in `rivals`, leaving `unitId` out, or null. */
+export function fireTargetOf(rivals, state, enemy, unitId) {
+  const others = (rivals.get(enemy.id) ?? []).filter((r) => r.unitId !== unitId);
+  const best = others.find((r) => !busyFor(rivals, state, state.units[r.order])(enemy, r.distance));
+  return best?.unitId ?? null;
+}
+
+export function busyFor(rivals, state, unit) {
+  const order = state.units.findIndex((u) => u.id === unit.id);
+  const eyeOn = (enemy) => (enemy.watching ?? enemy.holding)?.unitId ?? null;
+  const rank = (enemy, r) => [eyeOn(enemy) === r.unitId ? 0 : 1, r.distance, r.order];
+  const ahead = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+  return (enemy, distance) => {
+    const mine = rank(enemy, { unitId: unit.id, distance, order });
+    return (rivals.get(enemy.id) ?? []).some((r) => r.unitId !== unit.id && ahead(rank(enemy, r), mine) < 0);
+  };
 }
 
 /**
@@ -338,20 +406,28 @@ export function runDetection(state, map, rules) {
   let bodies = state.bodies;
   let droppedCharges = state.droppedCharges;
   let best = null;
+  // One man a turn for each enemy to fire at (M26d): see fireRivals.
+  const rivals = fireRivals(map, rules, state);
+  // Whom each enemy fires at, and where: it holds and faces him.
+  const firedAt = new Map();
 
   for (const unit of state.units) {
     if (!onBoard(unit)) continue;
     let seenAt = null;
     const shotResults = [];
     const firers = new Set();
+    const busy = unit.inContact ? busyFor(rivals, state, unit) : null;
     for (const hex of testedHexes(unit)) {
-      const result = detectionAt(map, rules, state.enemies, state.alert.points, unit, hex);
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, unit, hex, busy);
       if (!result || !result.spotted) continue;
       seenAt = { hex, result };
       if (result.firing) shotResults.push(shotResultOf(result, rules));
       for (const id of result.spotters) {
         enemies = enemies.map((e) => (e.id === id ? { ...e, holding: { unitId: unit.id, q: hex.q, r: hex.r } } : e));
-        if (!state.enemies.find((e) => e.id === id).suppressed) firers.add(id);
+      }
+      for (const id of result.firers) {
+        firers.add(id);
+        if (unit.inContact) firedAt.set(id, { unitId: unit.id, q: hex.q, r: hex.r });
       }
     }
 
@@ -401,6 +477,8 @@ export function runDetection(state, map, rules) {
     units = updateUnit(units, unit.id, shot);
   }
 
+  // An enemy that fired holds the man it fired at, whoever else it saw.
+  enemies = enemies.map((e) => (firedAt.has(e.id) ? { ...e, holding: firedAt.get(e.id) } : e));
   // A dead man holds nobody's attention.
   const living = new Set(units.filter(onBoard).map((u) => u.id));
   enemies = enemies.map((e) => (e.holding && !living.has(e.holding.unitId) ? { ...e, holding: null } : e));
@@ -758,7 +836,7 @@ export function walkToward(map, enemy, goal, blocked, budget, rules) {
   // walk up to; the walk below stops before any hex that is actually taken.
   const open = new Set(blocked);
   open.delete(goalKey);
-  const path = findPath(map, enemy, goal, open);
+  const path = findPath(groundOf(map), enemy, goal, open);
   if (!path) return { enemy, spent: 0, arrived: false, stuck: true, steps: [] };
 
   let current = enemy;
@@ -767,7 +845,7 @@ export function walkToward(map, enemy, goal, blocked, budget, rules) {
   for (let i = 1; i < path.length; i++) {
     const next = path[i];
     if (blocked.has(hexKey(next.q, next.r))) break;
-    const cost = enterCost(map, next.q, next.r, null);
+    const cost = enterCost(groundOf(map), next.q, next.r, null);
     const firstStep = spent === 0 && rules.minimumStep;
     if (spent + cost > budget && !firstStep) break;
     current = { ...current, q: next.q, r: next.r, facing: directionOf(current, next) };
@@ -830,7 +908,7 @@ export function routePath(map, enemy) {
   const stops = enemy.loop ? [...enemy.route, enemy.route[0]] : enemy.route;
   const hexes = [stops[0]];
   for (let i = 1; i < stops.length; i++) {
-    const leg = findPath(map, stops[i - 1], stops[i], null) ?? [stops[i - 1], stops[i]];
+    const leg = findPath(groundOf(map), stops[i - 1], stops[i], null) ?? [stops[i - 1], stops[i]];
     hexes.push(...leg.slice(1));
   }
   return { hexes, waypoints: enemy.route };

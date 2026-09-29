@@ -8,7 +8,7 @@
 
 import { alertIndex, runEnemyPhase } from '../src/enemy.js';
 import { hexDistance, NEIGHBOR_DIRS } from '../src/hex.js';
-import { findPath, forEachCell, hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
+import { enterCost, findPath, forEachCell, hexKey, isInPlay, isPassable, loadJson, loadMap, moveCostAt, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import {
   callDiversion, checkDiversion, createInitialState, cutLine, endTurn, exfilWouldFail, moveUnit, passCharge, placeCharge, settleMission,
   swimAcross,
@@ -72,6 +72,23 @@ export default [
     for (const h of primary.chargeHexes) equal(terrainIdAt(map, h.q, h.r), 'marsh', `(${h.q},${h.r}) terrain`);
     equal(state.charges.length, 0, 'nothing set');
     assert(map.exfil.length > 0, 'exfil hexes');
+  }],
+
+  ['a charge point with chargePointMoveCost costs that to enter, whatever its ground (M26d)', async () => {
+    const { map, rules, state } = await loadAll();
+    const live = effectiveMap(map, state.objectives, rules);
+    for (const o of state.objectives) {
+      const cost = rules.objectives[o.kind].chargePointMoveCost;
+      for (const h of o.chargeHexes) {
+        const ground = terrainAt(map, h.q, h.r).moveCost;
+        equal(enterCost(live, h.q, h.r, null), cost ?? ground, `${o.id} point (${h.q},${h.r})`);
+        equal(moveCostAt(live, h.q, h.r), cost ?? ground, `${o.id} point (${h.q},${h.r}) in the readout`);
+      }
+    }
+    const dump = state.objectives.find((o) => o.kind === 'fuelDump');
+    equal(rules.objectives.fuelDump.chargePointMoveCost, 1, 'the fuel dump\'s points cost 1');
+    assert(dump.chargeHexes.some((h) => terrainAt(map, h.q, h.r).moveCost > 1), 'at least one of them is on dearer ground');
+    equal(effectiveMap(map, state.objectives, rules), live, 'same objectives, same map');
   }],
 
   ['place a charge: on a charge hex, carrying one, the hook sets cost and fuse, one per hex', async () => {

@@ -3,7 +3,7 @@
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
 import {
-  alertIndex, decayTarget, detectionAt, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
+  alertIndex, busyFor, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
 } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
@@ -19,7 +19,7 @@ import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, primaryShortfall, swimTargets,
 } from './sabotage.js';
-import { aidPrompts, aidWords, hintsFor, ordersWords } from './hints.js';
+import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
@@ -290,6 +290,7 @@ function deriveView() {
     site: null,
     // The man under the mouse (M23): his id for the ring, his rows for the readout.
     hoverManId: null,
+    aidTargetIds: null,
     manReadout: null,
     blastLabel: null,
     noiseLabel: null,
@@ -397,6 +398,10 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = actionsFor(unit);
+  // Over an enemy, what the selected man can do to it, and why not (M26d: a
+  // playtester could not tell why Speers could kill one two hexes off and not
+  // the two beside him — those had not been suppressed, and could see him).
+  if (hoverEnemy && !state.targeting) view.enemyActs = enemyActsFor(unit, hoverEnemy);
   view.aidLabel = ['stabilise', 'pass'].map((kind) => aidFor(unit, kind)).filter(Boolean).join(' ');
   if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
@@ -411,14 +416,15 @@ function deriveView() {
     // if he stays put (enemy.js testedHexes), so that is what gets pips. A man
     // already in contact is shot on any of them where a free enemy would spot
     // him again (SPEC.md §6), and the pips say so.
+    const busy = busyNow(unit);
     view.risk = plan.path.map((step, i) => {
       if (i === 0 && plan.steps > 0) return null;
       // Moving brings him out of hiding, so only standing still keeps it.
       const mover = plan.steps > 0 ? { ...unit, hidden: false } : unit;
-      const result = detectionAt(map, rules, state.enemies, state.alert.points, mover, step);
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, mover, step, busy);
       if (!result) return null;
       const shot = unit.inContact && result.spotted && result.firing;
-      return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null };
+      return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null, drawnOff: shot ? null : drawnOff(unit, result) };
     });
     view.riskLabel = describeRisk(plan, view.risk, view.place);
     const end = plan.path[plan.path.length - 1];
@@ -435,6 +441,33 @@ function deriveView() {
     if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `[H] ${hideEffect(unit)}`;
   }
   return view;
+}
+
+/**
+ * Each enemy fires at one man a turn (SPEC.md §6, M26d). `busyNow` is the
+ * test for this man: is an enemy firing at another man ahead of him, as the
+ * others stand now? Kept for the state it was worked out on.
+ */
+let rivalsFor = { state: null, rivals: null };
+function busyNow(unit) {
+  if (!unit.inContact) return null;
+  if (rivalsFor.state !== state) rivalsFor = { state, rivals: fireRivals(map, rules, state) };
+  return busyFor(rivalsFor.rivals, state, unit);
+}
+
+/**
+ * A man in contact whom the enemies seeing him will not fire on, as each is
+ * firing at someone else: "the sentry is firing at BARROW". Null if not so.
+ */
+function drawnOff(unit, result) {
+  if (!unit.inContact || !result.spotted || result.firing || result.spotters.length === 0) return null;
+  if (rivalsFor.state !== state) rivalsFor = { state, rivals: fireRivals(map, rules, state) };
+  const words = result.spotters.map((id) => {
+    const enemy = state.enemies.find((e) => e.id === id);
+    const target = fireTargetOf(rivalsFor.rivals, state, enemy, unit.id);
+    return target && `the ${enemy.label.toLowerCase()} is firing at ${state.units.find((u) => u.id === target).shortName}`;
+  }).filter(Boolean);
+  return words.length ? words.join(', ') : null;
 }
 
 /** A move onto the exfil that would lose the mission (state.js exfilWouldFail), or null. */
@@ -482,7 +515,10 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         hexes: o.hexes, primary: o.primary, colour: 'red',
         // The charges it takes, so three dashed points never read as three charges.
-        note: [o.primary ? 'BLOW IT!' : `BONUS +${rules.scoring.secondary}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
+        // The primary's in two lines (M26d, the operator's): what it is, and how.
+        note: o.primary
+          ? ['PRIMARY TARGET!', `BLOW IT WITH ${chargeCount(kindOf(o, rules).chargesNeeded).replace(/^USE /, '')}!`]
+          : [`BONUS +${rules.scoring.secondary}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
       { hexes: view.exfil, primary: false, colour: 'green', beside: true, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
@@ -632,6 +668,13 @@ function payoffNote(kind) {
   return notes;
 }
 
+/** The RAF button: can it be called, how often more, and whether now is the time (M26d). */
+function diversionView() {
+  const check = checkDiversion(state, rules);
+  const leader = state.units.find((u) => u.leader && onBoard(u));
+  return { ...check, left: rules.diversion.uses - state.diversionsCalled, suggest: leader ? diversionPrompt(state, rules, check.ok) : null };
+}
+
 /** The mission at a glance for the panel: objectives, men out, the diversion. */
 function describeMissionState() {
   const out = state.units.filter((u) => u.out).length;
@@ -650,7 +693,7 @@ function describeMissionState() {
     out,
     minimumOut: rules.mission.minimumOut,
     shortfall: primaryShortfall(state, rules),
-    diversion: { ...checkDiversion(state, rules), left: rules.diversion.uses - state.diversionsCalled },
+    diversion: diversionView(),
   };
 }
 
@@ -754,8 +797,9 @@ function hideEffect(unit) {
   if (seenOnTheWay) {
     return `too late: the ${seenOnTheWay.d.enemyLabel.toLowerCase()} sees him on his way, in ${placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), seenOnTheWay.h)}${unit.inContact ? ', and will fire' : ''}`;
   }
-  const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
-  const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
+  const busy = busyNow(unit);
+  const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit, busy);
+  const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit, busy);
   if (!hidden) return 'no enemy can see this hex: hiding adds nothing';
   if (hidden.spotted) {
     return `still SPOTTED hidden, too close for this cover${unit.inContact && hidden.firing ? ', and fired on' : ''}: ${describeDetection(hidden)}`;
@@ -799,6 +843,27 @@ function placeChargeAction(unit) {
     id: 'charge', key: 'C', label: 'Place charge', short: 'Charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
     ok: check.ok, reason: check.reason, cost, apCost: check.cost,
   };
+}
+
+/**
+ * The selected man against the enemy under the mouse: one readout row for each
+ * of Suppress, Kill and Knife his role has, saying he can (with its key and
+ * cost) or why not.
+ */
+function enemyActsFor(unit, enemy) {
+  const role = rules.roles[unit.role];
+  const acts = [
+    role.suppress && { label: 'SUPPRESS', key: 'S', check: checkSuppress(map, unit, enemy, rules) },
+    role.kill && { label: 'KILL', key: 'K', check: checkKill(map, unit, enemy, rules) },
+    { label: 'KNIFE', key: 'N', check: checkKnife(unit, enemy, rules) },
+  ].filter(Boolean);
+  return acts.map(({ label, key, check }) => ({
+    label,
+    text: check.ok
+      ? `${unit.shortName} can, now [${key}]: ${label === 'KNIFE' && rules.actions.knife.fullTurn ? 'his whole turn' : `${check.cost} AP`}`
+      : `${unit.shortName} can't: ${check.reason}`,
+    tone: check.ok ? 'prompt' : null,
+  }));
 }
 
 function withCost(check, format) {
@@ -887,7 +952,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     // operator's): he comes out of the water unhidden and is tested there.
     if (check?.ok) {
       const plan = { steps: 1, path: [{ q: unit.q, r: unit.r }, { q: hex.q, r: hex.r }] };
-      const result = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, hex);
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, hex, busyNow(unit));
       const shot = Boolean(result && unit.inContact && result.spotted && result.firing);
       const risk = [null, result && { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null }];
       view.landing = { plan, risk };
@@ -902,6 +967,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     }
   } else if (kind === 'pass') {
     for (const u of state.units) if (checkPassCharge(unit, u, rules).ok) add(u);
+    view.aidTargetIds = new Set(state.units.filter((u) => u.id !== unit.id && checkPassCharge(unit, u, rules).ok).map((u) => u.id));
     const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
     const check = taker && taker.id !== unit.id ? checkPassCharge(unit, taker, rules) : null;
     view.targetLabel = check?.ok
@@ -909,6 +975,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       : check ? `Pass a charge: ${check.reason}.` : 'Pass a charge: click a man beside him who can carry one. Esc to cancel.';
   } else if (kind === 'stabilise') {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);
+    view.aidTargetIds = new Set(state.units.filter((u) => u.id !== unit.id && checkStabilise(unit, u).ok).map((u) => u.id));
     const patient = hex ? unitAt(state.units, hex.q, hex.r) : null;
     const check = patient ? checkStabilise(unit, patient) : null;
     // A red cross over the man under the mouse (M17), as the crosshair over an enemy.
@@ -987,6 +1054,17 @@ function renderBoard() {
   currentView = view;
   noteHeard();
   renderPieces(layers, state, view);
+}
+
+/**
+ * The mouse has moved onto another hex: only the board and the readout under
+ * it change (M26d). The rest of the page is not rebuilt, which on Safari made
+ * every hover stutter.
+ */
+function renderHover() {
+  renderBoard();
+  renderReadout(readout, state, map, currentView);
+  dropStalePopup();
 }
 
 /**
@@ -1186,12 +1264,21 @@ function handleAction(id) {
       if (cut) showStrike({ kind: 'cut', objectiveId: cut.id }, POWER_CUT.ms);
       break;
     }
+    case 'pass': {
+      // Only one man beside him can take it (M26d, the operator's): it is
+      // handed straight over, with no aiming. Undo takes it back.
+      const takers = state.units.filter((u) => u.id !== unit.id && checkPassCharge(unit, u, rules).ok);
+      if (state.targeting !== 'pass' && takers.length === 1) {
+        commit(passCharge(state, unit.id, takers[0].id, rules));
+        break;
+      }
+    }
+    // falls through: more than one could take it, so he aims it
     case 'suppress':
     case 'kill':
     case 'knife':
     case 'stone':
     case 'swim':
-    case 'pass':
     case 'stabilise': {
       // An action his role can never take is not in his list: its key does nothing.
       const action = actionsFor(unit).find((a) => a.id === id);
@@ -1207,12 +1294,12 @@ function handleAction(id) {
 
 function handleHexHover(q, r) {
   state = setHover(state, { q, r });
-  render();
+  renderHover();
 }
 
 function handleHexLeave() {
   state = setHover(state, null);
-  render();
+  renderHover();
 }
 
 function handleRosterClick(unitId) {
@@ -1614,7 +1701,8 @@ function describeMarker(id, unit) {
   if (id === 'marker-spotted') {
     return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
       + `If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover — `
-      + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away.\n`
+      + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away. `
+      + 'An enemy fires at one man a turn, the one it is watching first, so another man in its sights can draw its fire.\n'
       + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or have a gunner suppress it [S].'];
   }
   if (id === 'marker-wounded') {

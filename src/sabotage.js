@@ -32,6 +32,10 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
     if (kind.killRadius > kind.blastRadius) throw new Error(`${rulesUrl}: objectives.${id}.killRadius must be no more than its blastRadius`);
     if (kind.chargesNeeded < 1) throw new Error(`${rulesUrl}: objectives.${id}.chargesNeeded must be at least 1`);
     if (typeof kind.cutLine !== 'boolean') throw new Error(`${rulesUrl}: objectives.${id}.cutLine must be true or false`);
+    if (kind.chargePointMoveCost != null && !(Number.isInteger(kind.chargePointMoveCost) && kind.chargePointMoveCost >= 1)) {
+      // Pathing's heuristic needs every step to cost at least 1 (map.js enterCost).
+      throw new Error(`${rulesUrl}: objectives.${id}.chargePointMoveCost must be a whole number, at least 1`);
+    }
     if (kind.destroyedTerrain !== null && !legendCharFor(map, kind.destroyedTerrain)) {
       throw new Error(`${rulesUrl}: objectives.${id}.destroyedTerrain "${kind.destroyedTerrain}" has no character in ${mapUrl} legend`);
     }
@@ -137,10 +141,13 @@ const effectiveMaps = new WeakMap();
 
 /**
  * The map with every destroyed objective's hexes turned into its kind's
- * `destroyedTerrain` (a blown bridge becomes canal). Everything that paths or
- * looks — troopers, enemies, the readout — should be handed this, not the
- * loaded map. The same objectives list always gives back the same map object,
- * so callers can compare by identity.
+ * `destroyedTerrain` (a blown bridge becomes canal), and with `moveCosts`: the
+ * charge points of a kind with a `chargePointMoveCost` cost that to enter,
+ * whatever their ground (M26d: the fuel dump's are on the ridge, and a man
+ * beside it stalled). Everything that paths or looks — troopers, enemies, the
+ * readout — should be handed this, not the loaded map. The same objectives
+ * list always gives back the same map object, so callers can compare by
+ * identity.
  */
 export function effectiveMap(map, objectives, rules) {
   const cached = effectiveMaps.get(objectives);
@@ -158,7 +165,12 @@ export function effectiveMap(map, objectives, rules) {
       return chars.join('');
     });
   }
-  const damaged = rows === map.rows ? map : { ...map, rows };
+  const moveCosts = new Map();
+  for (const o of objectives) {
+    const cost = kindOf(o, rules).chargePointMoveCost;
+    if (cost != null) for (const h of o.chargeHexes) moveCosts.set(hexKey(h.q, h.r), cost);
+  }
+  const damaged = rows === map.rows && moveCosts.size === 0 ? map : { ...map, rows, moveCosts };
   effectiveMaps.set(objectives, { base: map, map: damaged });
   return damaged;
 }

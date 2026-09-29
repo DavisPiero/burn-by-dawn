@@ -10,6 +10,7 @@ import { checkCutLine, kindOf } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
 
 const plural = (n, one, many) => (n === 1 ? one : many);
+const capitalFirst = (text) => `${text[0].toUpperCase()}${text.slice(1)}`;
 
 /** "once", "twice", "3 times": how often something may be done. */
 export const timesWord = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
@@ -62,6 +63,29 @@ export function aidPrompts(state, rules) {
   return prompts;
 }
 
+/**
+ * The team is in a pickle and the RAF diversion is still there to call (M26d,
+ * the operator's): the garrison at rules.diversion.prompt.alertState or worse,
+ * or that many men in contact at once, or that many wounded men in contact.
+ * Says why in words, or null. `diversionOk` is the caller's checkDiversion.
+ */
+export function diversionPrompt(state, rules, diversionOk) {
+  const prompt = rules.diversion.prompt;
+  if (!prompt || !diversionOk || state.phase === 'drop' || state.outcome) return null;
+  const men = state.units.filter(onBoard);
+  const inContact = men.filter((u) => u.inContact);
+  const wounded = inContact.filter((u) => u.hits > 0);
+  const states = rules.alert.states;
+  const at = alertIndex(state.alert.points, rules);
+  const floor = states.findIndex((s) => s.id === prompt.alertState);
+  if (prompt.woundedInContact != null && wounded.length >= prompt.woundedInContact) {
+    return `${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded and in contact: one more hit kills`;
+  }
+  if (prompt.menInContact != null && inContact.length >= prompt.menInContact) return `${names(inContact)} are in contact`;
+  if (floor >= 0 && at >= floor) return `the garrison is ${states[at].label.toUpperCase()}`;
+  return null;
+}
+
 /** A prompt in words, from the helper's side: "Barrow is wounded beside him: dress it [A]…". */
 export function aidWords(prompt, units, rules) {
   const other = units.find((u) => u.id === prompt.otherId);
@@ -101,6 +125,12 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     const label = state.objectives.find((o) => o.id === objectiveId)?.label ?? 'objective';
     const when = fuse <= 1 ? 'goes off at the end of this turn' : `goes off in ${fuse} turns`;
     hints.push(`The charge on the ${label} ${when}. Get everyone clear of the blast: hover the ${label} to see how far it reaches.`);
+  }
+
+  // In a pickle (M26d): the diversion next, after any charge about to blow.
+  const pickle = leader ? diversionPrompt(state, rules, diversionOk) : null;
+  if (pickle) {
+    hints.push(`In a pickle: ${pickle}. Call the RAF diversion [D] now: the garrison drops a level and lets go of everyone it has in its sights. ${capitalFirst(callsLeft(state, rules))}.`);
   }
 
   // A scout starting his turn on a point he can cut (M20: a playtester could
@@ -144,7 +174,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   }
 
   const alert = alertIndex(state.alert.points, rules);
-  if (alert >= 2 && diversionOk && leader) {
+  if (alert >= 2 && diversionOk && leader && !pickle) {
     const label = rules.alert.states[alert].label;
     hints.push(`The garrison is ${label.toUpperCase()}. The RAF diversion [D] can reduce it by one level: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
   }
