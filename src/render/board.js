@@ -804,7 +804,9 @@ function drawTargetRings(layers, rings, now) {
     // be several lines; the last sits just above the ring.
     const east = ring.beside || c.x < midX;
     const x = ring.beside ? c.x + rx + 12 : east ? c.x + rx * 0.75 : c.x - rx * 0.75;
-    const lines = [].concat(ring.note);
+    // A ring with no note (M28: all but the first of many targets) is the pen mark alone.
+    const lines = [].concat(ring.note ?? []);
+    if (lines.length === 0) return;
     const note = text('', {
       'text-anchor': east ? 'start' : 'end', 'font-family': SPEECH.font, 'font-weight': 'bold',
       'font-size': RINGS.noteSize, fill: colour, stroke: RINGS.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
@@ -1473,9 +1475,11 @@ function drawSites(layers, state, view) {
     ]);
     layers.sites.appendChild(outline);
     const at = labelPoint(map, objective.hexes);
-    const name = objective.primary ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
+    // The star marks what the win needs (M28: the win's targets, from main.js).
+    const needed = view.winTargetIds.has(objective.id);
+    const name = needed ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
     // Names go on last, over the charge points around them.
-    labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, objective.primary ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
     // The exchange's telephone lines run out to a pole on each of its charge
     // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
     if (objectiveArt(objective)?.wires) drawWires(layers, objective);

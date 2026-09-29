@@ -19,7 +19,7 @@ import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, swimTargets,
 } from './sabotage.js';
-import { missionById, missionEnemyTypes, missionFromQuery, missionRules, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
+import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
@@ -36,7 +36,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled,
+  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -218,6 +218,8 @@ function deriveView() {
   const exfil = baseMap.exfil.map(([q, r]) => ({ q, r }));
   const view = {
     traitEffectsById,
+    // What the win needs, for the board's star (M28: no longer the map's primary flag).
+    winTargetIds: new Set(winTargets(state, rules).targets.map((o) => o.id)),
     // Hexes carry no printed coordinates (SPEC.md §11), so text names places.
     place: (h) => placeName(map, state.objectives, exfil, h),
     highlightHex,
@@ -517,14 +519,22 @@ function deriveDrop(view, hex) {
   // Before a run is picked, the targets and the exfil are ringed in marker pen
   // (SPEC.md §11), so the first thing the player sees is where to go.
   if (!selected) {
+    const { targets, needed } = winTargets(state, rules);
+    const single = rules.mission.win.condition === 'destroyPrimary';
     view.targetRings = [
       ...state.objectives.map((o) => ({
-        hexes: o.hexes, primary: o.primary, colour: 'red',
+        // The primary is ringed twice; where any few of many will do (M28),
+        // each is ringed once and the first carries the note for them all.
+        hexes: o.hexes, primary: single && targets.includes(o), colour: 'red',
         // The charges it takes, so three dashed points never read as three charges.
         // The primary's in two lines (M26d, the operator's): what it is, and how.
-        note: o.primary
-          ? ['PRIMARY TARGET!', `BLOW IT WITH ${chargeCount(kindOf(o, rules).chargesNeeded).replace(/^USE /, '')}!`]
-          : [`BONUS +${rules.scoring.secondary}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean),
+        note: !targets.includes(o)
+          ? [`BONUS +${kindOf(o, rules).score}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean)
+          : single
+            ? ['PRIMARY TARGET!', `BLOW IT WITH ${chargeCount(kindOf(o, rules).chargesNeeded).replace(/^USE /, '')}!`]
+            : o === targets[0]
+              ? [`ANY ${countWord(needed)} ${kindOf(o, rules).label.toUpperCase()}!`, `${chargeCount(kindOf(o, rules).chargesNeeded).replace(/^USE /, '')} EACH!`]
+              : null,
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
       { hexes: view.exfil, primary: false, colour: 'green', beside: true, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
@@ -559,6 +569,11 @@ function areaAround(blasts) {
   return area;
 }
 
+/** A count in the pen's capitals: FOUR, not 4, which a lettered 1 and I make hard to read. */
+function countWord(n) {
+  return ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'][n] ?? String(n);
+}
+
 /** What raises the alert, and by how much, in words, from rules.json (SPEC.md §6). */
 function alertSources() {
   const a = rules.alert;
@@ -574,8 +589,7 @@ function alertSources() {
  * in words, since a lettered 1 is too easily read as I.
  */
 function chargeCount(n) {
-  const words = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
-  return `USE ${words[n] ?? n} CHARGE${n === 1 ? '' : 'S'}`;
+  return `USE ${countWord(n)} CHARGE${n === 1 ? '' : 'S'}`;
 }
 
 /**
@@ -618,7 +632,11 @@ function chargesOnPoints(o) {
  */
 function describeObjective(o, onPoint, brief = false) {
   const kind = kindOf(o, rules);
-  const worth = o.primary ? 'PRIMARY: needed to win' : `bonus, +${rules.scoring.secondary} score`;
+  const worth = !isWinTarget(state, rules, o)
+    ? `bonus, +${kind.score} score`
+    : rules.mission.win.condition === 'destroyPrimary'
+      ? 'PRIMARY: needed to win'
+      : `counts toward the job, ${winWords(state, rules)}; +${kind.score} score`;
   const payoff = payoffWords(kind);
   if (o.destroyed) return [{ label: 'DONE', text: `DESTROYED${o.cut ? ', line cut' : ''}` }, { label: 'WORTH', text: worth }];
   const wanted = chargesWanted(o);
@@ -681,21 +699,49 @@ function diversionView() {
 function describeMissionState() {
   const out = state.units.filter((u) => u.out).length;
   return {
-    objectives: state.objectives.map((o) => {
-      const kind = kindOf(o, rules);
-      const set = state.charges.filter((c) => c.objectiveId === o.id).length;
-      return {
-        label: o.label, primary: o.primary, destroyed: o.destroyed, cut: o.cut,
-        points: o.primary ? rules.scoring.primary : rules.scoring.secondary,
-        detail: (o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`)
-          + (payoffWords(kind) ? `. Destroying it ${payoffWords(kind)}` : ''),
-        progress: o.destroyed ? (o.cut ? 'cut' : 'done') : `${o.detonated + set}/${kind.chargesNeeded}${set ? ' ●' : ''}`,
-      };
-    }),
+    objectives: missionPanelObjectives(),
     out,
     minimumOut: rules.mission.minimumOut,
     shortfall: winShortfall(state, rules),
     diversion: diversionView(),
+  };
+}
+
+/**
+ * The panel's lines: one per objective, except that where any few of a kind
+ * will do (M28, destroyCount) the kind is one line, so eight aircraft do not
+ * read as a checklist of eight.
+ */
+function missionPanelObjectives() {
+  const { targets, needed } = winTargets(state, rules);
+  const grouped = rules.mission.win.condition === 'destroyCount';
+  const lines = [];
+  if (grouped) {
+    const kind = kindOf(targets[0], rules);
+    const done = targets.filter((o) => o.destroyed).length;
+    const burning = state.charges.filter((c) => targets.some((o) => o.id === c.objectiveId)).length;
+    lines.push({
+      label: kind.label, win: true, destroyed: done >= needed, cut: false, points: kind.score,
+      detail: `${done} of ${needed} needed destroyed, of the ${targets.length} on the field${burning ? `; ${burning} ${burning === 1 ? 'charge' : 'charges'} burning` : ''}. Each takes ${chargeCount(kind.chargesNeeded).replace(/^USE /, '').toLowerCase()}`,
+      progress: `${done}/${needed}${burning ? ' ●' : ''}`,
+    });
+  }
+  for (const o of state.objectives) {
+    if (grouped && targets.includes(o)) continue;
+    lines.push(describePanelObjective(o, targets.includes(o)));
+  }
+  return lines;
+}
+
+function describePanelObjective(o, win) {
+  const kind = kindOf(o, rules);
+  const set = state.charges.filter((c) => c.objectiveId === o.id).length;
+  return {
+    label: o.label, win, destroyed: o.destroyed, cut: o.cut,
+    points: kind.score,
+    detail: (o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`)
+      + (payoffWords(kind) ? `. Destroying it ${payoffWords(kind)}` : ''),
+    progress: o.destroyed ? (o.cut ? 'cut' : 'done') : `${o.detonated + set}/${kind.chargesNeeded}${set ? ' ●' : ''}`,
   };
 }
 
@@ -1626,7 +1672,11 @@ function describeBriefing(which, view) {
     // the drop's own lines gone.
     const before = state.phase === 'drop';
     // Places in capitals, as the operator's orders name them (M12).
-    const bonus = state.objectives.filter((o) => !o.primary).map((o) => `the ${o.label.toUpperCase()}`);
+    const bonusTargets = state.objectives.filter((o) => !isWinTarget(state, rules, o));
+    const bonus = bonusTargets.map((o) => `the ${o.label.toUpperCase()}`);
+    // What each pays: one number if they all pay the same, as France's do.
+    const bonusScores = [...new Set(bonusTargets.map((o) => kindOf(o, rules).score))];
+    const bonusPts = bonusScores.length === 1 ? `+${bonusScores[0]}pts${bonus.length === 1 ? '' : ' ea'}` : bonusTargets.map((o) => `${o.label} +${kindOf(o, rules).score}`).join(', ');
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
@@ -1654,7 +1704,7 @@ function describeBriefing(which, view) {
           `Blow ${winWords(state, rules, { upper: true })} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (+${rules.scoring.secondary}pts${bonus.length === 1 ? '' : ' ea'}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
+        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (${bonusPts}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
@@ -1728,7 +1778,7 @@ function describeDiversionCard(before) {
   lines.push('The clean-run bonus is gone.');
   return {
     title: 'RAF DIVERSION',
-    kicker: 'BOMBERS OVER THE TOWN',
+    kicker: mission.words.diversionKicker,
     // Headed in the diversion's own blue, as its button is (M11).
     tone: 'raf',
     paragraphs: ['The radio worked. The garrison looks the other way.'],
@@ -2077,8 +2127,10 @@ try {
   rawMap = await loadMap(mission.map, undefined, undefined, (types) => missionEnemyTypes(mission, types));
   rawRules = missionRules(mission, await loadJson('data/rules.json'));
   traits = validateTraits(await loadJson('data/traits.json'));
-  roster = await loadJson(mission.roster);
-  difficulty = validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes });
+  roster = missionRoster(mission, await loadJson(mission.roster));
+  // The levels, with the mission's own part of each (M28) carried on them.
+  difficulty = missionLevels(mission, validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes }), rawRules, rawMap.enemyTypes);
+  useMissionWords(mission.words);
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
 

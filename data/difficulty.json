@@ -1,5 +1,5 @@
 {
-  "_comment": "Difficulty levels (SPEC.md §10, M9). Each level is a patch deep-merged over data/rules.json (`rules`) and data/enemies.json (`enemies`) when the mission starts: an object merges key by key, anything else replaces. Every key a patch names must already exist in that file, so a typo fails loudly rather than doing nothing. No code asks which level is on (CLAUDE.md rule 5): a level is only different numbers. Chosen on the orders before the drop, fixed once the stick jumps; `?difficulty=<id>` in the address picks one, as `?seed=` picks a seed. `default` is the level when none is asked for.",
+  "_comment": "Difficulty levels (SPEC.md §10, M9). Each level is a patch deep-merged over data/rules.json (`rules`) and data/enemies.json (`enemies`) when the mission starts: an object merges key by key, anything else replaces. Every key a patch names must already exist in that file, so a typo fails loudly rather than doing nothing. No code asks which level is on (CLAUDE.md rule 5): a level is only different numbers. These patches hold in every mission; what a level changes about one mission's own targets is that mission's `levels` in data/missions.json, merged after these (M28). Chosen on the orders before the drop, fixed once the stick jumps; `?difficulty=<id>` in the address picks one, as `?seed=` picks a seed. `default` is the level when none is asked for.",
 
   "_tuning": "Balance-bot win % (node tools/balance-bot.mjs 100 naive, DIFFICULTY=<id>), west / north / east run, at M9: see DECISIONS.md for the numbers. The bot never calls the diversion, so the second diversion on Easy helps a person more than the bot shows.",
 
@@ -9,9 +9,8 @@
     {
       "id": "easy",
       "label": "Easy",
-      "summary": "The bridge takes one charge, two men out will do, the RAF can be called twice, orders reach 3 hexes, hiding counts double, enemy shots hit only from 2 hexes off, and undo goes back as far as the start of the turn.",
+      "summary": "Two men out will do, the RAF can be called twice, orders reach 3 hexes, hiding counts double, enemy shots hit only from 2 hexes off, and undo goes back as far as the start of the turn.",
       "rules": {
-        "objectives": { "bridge": { "chargesNeeded": 1 } },
         "mission": { "minimumOut": 2 },
         "diversion": { "uses": 2 },
         "command": { "radius": 3 },
@@ -29,10 +28,9 @@
     {
       "id": "hard",
       "label": "Hard",
-      "summary": "Four men must get out, every sentry and patrol sees a hex further and wider, and blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, none once the Telephone Exchange is down.",
+      "summary": "Four men must get out, and every sentry and patrol sees a hex further and wider.",
       "rules": {
-        "mission": { "minimumOut": 4 },
-        "objectives": { "bridge": { "reinforcements": 2 }, "fuelDump": { "reinforcements": 1 } }
+        "mission": { "minimumOut": 4 }
       },
       "enemies": {
         "types": {

@@ -77,7 +77,6 @@ export default [
     const at = (id) => applyDifficulty(levelById(json, id), rules, map);
     const easy = at('easy');
     const hard = at('hard');
-    assert(easy.rules.objectives.bridge.chargesNeeded < rules.objectives.bridge.chargesNeeded, 'easy bridge takes fewer charges');
     assert(easy.rules.mission.minimumOut < rules.mission.minimumOut, 'easy needs fewer out');
     assert(easy.rules.diversion.uses > rules.diversion.uses, 'easy has more diversions');
     assert(easy.rules.command.radius > rules.command.radius, 'easy orders reach further');

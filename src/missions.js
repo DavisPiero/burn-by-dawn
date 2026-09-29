@@ -9,7 +9,15 @@ import { deepMerge } from './difficulty.js';
 import { kindOf } from './sabotage.js';
 import { chargeCapacity, onBoard } from './units.js';
 
-export const MISSION_STATUSES = ['playable', 'coming'];
+export const MISSION_STATUSES = ['playable', 'draft', 'coming'];
+
+// A mission that can be played: `playable`, or `draft` (M28), which the
+// contents page stamps as coming but `?mission=` still opens.
+const PLAYS = ['playable', 'draft'];
+export const canPlay = (m) => PLAYS.includes(m?.status);
+
+// The mission's own phrases, which the engine's text needs (SPEC.md §10).
+const WORDS = ['lineGoesDead', 'lineIsDown', 'diversionKicker', 'diversionLog'];
 
 /**
  * The win conditions, in the same spirit as the trait hooks: a short
@@ -57,15 +65,24 @@ export function validateMissions(json, url = 'data/missions.json') {
       if (typeof m[key] !== 'string' || !m[key]) throw new Error(`${where} needs a "${key}"`);
     }
     if (!Number.isInteger(m.page)) throw new Error(`${where} needs a "page" number for the contents page`);
-    if (m.status !== 'playable') continue;
+    if (!canPlay(m)) continue;
     for (const key of ['tagline', 'map', 'roster', 'briefing', 'titleCard']) {
-      if (typeof m[key] !== 'string' || !m[key]) throw new Error(`${where} is playable, so needs a "${key}"`);
+      if (typeof m[key] !== 'string' || !m[key]) throw new Error(`${where} can be played, so needs a "${key}"`);
     }
     for (const key of ['rules', 'enemies', 'words']) {
       if (typeof m[key] !== 'object' || m[key] === null || Array.isArray(m[key])) throw new Error(`${where} "${key}" must be an object`);
     }
-    for (const key of ['lineGoesDead', 'lineIsDown']) {
+    for (const key of WORDS) {
       if (typeof m.words[key] !== 'string') throw new Error(`${where} "words" needs "${key}"`);
+    }
+    for (const key of ['levels', 'dialogue']) {
+      if (m[key] !== undefined && (typeof m[key] !== 'object' || m[key] === null || Array.isArray(m[key]))) throw new Error(`${where} "${key}" must be an object`);
+    }
+    for (const [id, part] of Object.entries(m.levels ?? {})) {
+      if (part.summary !== undefined && (typeof part.summary !== 'string' || !part.summary)) throw new Error(`${where} levels.${id}.summary must be words`);
+      for (const key of ['rules', 'enemies']) {
+        if (part[key] !== undefined && (typeof part[key] !== 'object' || part[key] === null || Array.isArray(part[key]))) throw new Error(`${where} levels.${id}.${key} must be an object`);
+      }
     }
     if (typeof m.endSounds?.success !== 'string' || typeof m.endSounds?.otherwise !== 'string') {
       throw new Error(`${where} "endSounds" needs "success" and "otherwise" cues`);
@@ -73,19 +90,66 @@ export function validateMissions(json, url = 'data/missions.json') {
     validateWin(m.win, `${where}.win`);
   }
   const chosen = json.missions.find((m) => m.id === json.default);
-  if (chosen?.status !== 'playable') throw new Error(`${url}: "default" must be a playable mission's id, got ${JSON.stringify(json.default)}`);
+  if (!canPlay(chosen)) throw new Error(`${url}: "default" must be a playable mission's id, got ${JSON.stringify(json.default)}`);
   return json;
 }
 
-/** The playable mission asked for by `?mission=<id>`, or null if none or not one. */
+/** The mission asked for by `?mission=<id>`, if it can be played (a draft too), or null. */
 export function missionFromQuery(search, json) {
   const raw = new URLSearchParams(search).get('mission');
-  return json.missions.some((m) => m.id === raw && m.status === 'playable') ? raw : null;
+  return json.missions.some((m) => m.id === raw && canPlay(m)) ? raw : null;
 }
 
-/** The playable mission with this id, or the default one. */
+/** The mission with this id if it can be played, or the default one. */
 export function missionById(json, id) {
-  return json.missions.find((m) => m.id === id && m.status === 'playable') ?? json.missions.find((m) => m.id === json.default);
+  return json.missions.find((m) => m.id === id && canPlay(m)) ?? json.missions.find((m) => m.id === json.default);
+}
+
+/**
+ * data/difficulty.json with the mission's own part of each level (M28): its
+ * `rules` and `enemies` patches carried on the level as `mission`, which
+ * difficulty.js applyDifficulty merges after the level's own, and its summary
+ * printed before the level's. Every key must already exist in the files as
+ * the mission and the level have patched them, and a level the mission names
+ * must exist. The input is left as it was.
+ */
+export function missionLevels(mission, difficulty, rules, enemyTypes, url = 'data/missions.json') {
+  for (const id of Object.keys(mission.levels ?? {})) {
+    if (!difficulty.levels.some((l) => l.id === id)) throw new Error(`${url}: ${mission.id}.levels.${id} is not a level in data/difficulty.json`);
+  }
+  return {
+    ...difficulty,
+    levels: difficulty.levels.map((level) => {
+      const part = mission.levels?.[level.id];
+      if (!part) return level;
+      const levelRules = deepMerge(rules, level.rules ?? {});
+      const levelTypes = deepMerge({ types: enemyTypes }, level.enemies ?? {});
+      requireKnownKeys(part.rules ?? {}, levelRules, `${url}: ${mission.id}.levels.${level.id}.rules`, []);
+      requireKnownKeys(part.enemies ?? {}, levelTypes, `${url}: ${mission.id}.levels.${level.id}.enemies`, []);
+      return {
+        ...level,
+        summary: part.summary ? `${part.summary} ${level.summary}` : level.summary,
+        mission: { rules: part.rules ?? {}, enemies: part.enemies ?? {} },
+      };
+    }),
+  };
+}
+
+/**
+ * The roster with the mission's `dialogue` (M28) over each man's lines: the
+ * same six men, with lines that fit where they are. A man it names must be in
+ * the roster, and it may only replace lines, not his other particulars.
+ */
+export function missionRoster(mission, roster, url = 'data/missions.json') {
+  const dialogue = mission.dialogue ?? {};
+  for (const id of Object.keys(dialogue)) {
+    if (!roster.troopers?.some((t) => t.id === id)) throw new Error(`${url}: ${mission.id}.dialogue.${id} is not a man in ${mission.roster}`);
+  }
+  if (Object.keys(dialogue).length === 0) return roster;
+  return {
+    ...roster,
+    troopers: roster.troopers.map((t) => (dialogue[t.id] ? { ...t, dialogue: { ...t.dialogue, ...dialogue[t.id] } } : t)),
+  };
 }
 
 /**
@@ -130,6 +194,20 @@ export function winTargets(state, rules) {
   const win = winOf(rules);
   const condition = WIN_CONDITIONS[win.condition];
   return { targets: condition.targets(state, win), needed: condition.needed(win) };
+}
+
+/** Does this objective count toward the win? */
+export function isWinTarget(state, rules, objective) {
+  return winTargets(state, rules).targets.some((o) => o.id === objective.id);
+}
+
+/**
+ * The job's targets still to do: every one while the condition can pick any
+ * `needed` of them, none once it is met.
+ */
+export function winTargetsLeft(state, rules) {
+  if (winMet(state, rules)) return [];
+  return winTargets(state, rules).targets.filter((o) => !o.destroyed);
 }
 
 /** Is the win condition met: enough of its targets destroyed? */

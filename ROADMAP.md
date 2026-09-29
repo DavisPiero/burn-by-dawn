@@ -19,8 +19,9 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   the SPEC §10 targets.
 - **Phase 3, the airfield, is specified** in SPEC.md §13 (29 Sep 2026): southern Tunisia,
   1942; eight aircraft, any four to win; five bombs; the two new rules are time pencils
-  and a bowser that sets off its neighbours. **Next: M28**, the engine work with no
-  gameplay change, then M29–M31 as listed there.
+  and a bowser that sets off its neighbours. **M28 is built** (the engine work, France's
+  bot output byte-for-byte unchanged). **Next: M29**, the airfield on the board under
+  today's rules, then M30 and M31 as listed there.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 

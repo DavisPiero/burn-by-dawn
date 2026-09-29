@@ -550,6 +550,15 @@ function reportMark(kind) {
   return box;
 }
 
+// The mission's own phrases for the turn report (data/missions.json `words`,
+// M28), set once when the mission loads.
+let missionWords = { diversionLog: 'bombers over the target' };
+
+/** Use this mission's phrases in the turn report. */
+export function useMissionWords(words) {
+  missionWords = { ...missionWords, ...words };
+}
+
 export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
@@ -571,7 +580,7 @@ export function describeEvent(event, place) {
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label} — killed.`;
     case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label} — wounded.`;
     case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label} and dies.`;
-    case 'diversion': return 'RAF diversion called: bombers over the town. The garrison looks the other way.';
+    case 'diversion': return `RAF diversion called: ${missionWords.diversionLog}. The garrison looks the other way.`;
     case 'noReserve': return event.deployed
       ? `With the ${event.label} gone, the garrison can call up nobody more — but the reserve is already out.`
       : `With the ${event.label} gone, the garrison cannot call up its reserve squad.`;
@@ -799,13 +808,13 @@ export function renderMission(element, mission) {
   element.replaceChildren();
   for (const o of mission.objectives) {
     const item = html('li', o.destroyed ? 'done' : null);
-    // SPEC.md §10: only the primary is needed to win. The star says so, and
+    // SPEC.md §10: only the win's targets are needed. The star says so, and
     // the optional ones carry their score, or the three read as a checklist.
-    const name = html('span', null, [html('b', null, o.primary ? `★ ${o.label}` : o.label), html('i', null, o.primary ? ' needed' : ` +${o.points}`)]);
+    const name = html('span', null, [html('b', null, o.win ? `★ ${o.label}` : o.label), html('i', null, o.win ? ' needed' : ` +${o.points}`)]);
     item.append(name, html('span', null, o.progress));
     attachPopup(item, () => [
       html('b', null, o.label.toUpperCase()),
-      `\n${o.primary ? 'Primary: needed to win.' : `Optional: +${o.points} score.`}\n${o.detail}.`,
+      `\n${o.win ? 'Primary: needed to win.' : `Optional: +${o.points} score.`}\n${o.detail}.`,
     ]);
     element.appendChild(item);
   }

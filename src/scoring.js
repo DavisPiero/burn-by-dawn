@@ -6,6 +6,7 @@
 // when to ask.
 
 import { winMet, winShortfall, winTargets, winWords } from './missions.js';
+import { kindOf } from './sabotage.js';
 import { onBoard } from './units.js';
 
 /**
@@ -81,7 +82,9 @@ export function finalOutcome(state, rules, check, turn, dawn) {
 }
 
 /**
- * SPEC.md §10 (numbers as of M18): primary 10, each secondary 4, 2 per man out
+ * SPEC.md §10 (numbers as of M18): each objective destroyed pays its kind's
+ * `score` (M28: France's bridge 10, the others 4), and meeting the win
+ * condition pays `scoring.win` on top (France 0), then 2 per man out
  * unhurt and 1 per man out who was hit, 1 more for each of
  * them never spotted all mission, 1 per enemy knifed or shot and 1 back for
  * each of their bodies found (M16), and 3 for a clean run — never reached
@@ -92,8 +95,9 @@ export function scoreOf(state, rules) {
   const s = rules.scoring;
   const lines = [];
   for (const o of state.objectives) {
-    if (o.destroyed) lines.push({ label: `${o.label} destroyed${o.cut ? ' (line cut)' : ''}`, points: o.primary ? s.primary : s.secondary });
+    if (o.destroyed) lines.push({ label: `${o.label} destroyed${o.cut ? ' (line cut)' : ''}`, points: kindOf(o, rules).score });
   }
+  if (s.win > 0 && winMet(state, rules)) lines.push({ label: `The job done: ${winWords(state, rules)}`, points: s.win });
   const out = state.units.filter((u) => u.out);
   const men = (n) => `${n} m${n === 1 ? 'a' : 'e'}n`;
   // M18: a man who was hit, dressed or not, pays less than one who came through whole.
