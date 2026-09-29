@@ -5,8 +5,8 @@ branch history and some internal ids (`night-drop-ready`) keep that name.
 
 A turn-based, hex tactical game. Six named British paratroopers land behind enemy lines
 and sabotage German infrastructure before dawn. It is an engine plus missions (§12 M27):
-mission 1, the rail bridge in occupied France, is the one playable today, and is the
-mission this spec describes.
+mission 1, the rail bridge in occupied France, is the one playable today, and §1–§11
+describe it. Mission 2, the airfield, is specified in §13 where it differs.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -780,7 +780,9 @@ board must read at a glance.
   cold blue `#3D5A73`. Two reserved colours: **leader blue `#2F7BBF`**, used only for the
   ranking man (his name strip, rank flash, roster number) and his orders (radius, chevron,
   the AP dots they add); and **fire orange `#C98249`**, used only for flames, the blast's
-  fireball, a burning fuse's stopwatch and the dots for charges a man carries. Nothing else.
+  fireball, a burning fuse's stopwatch and the dots for charges a man carries. One ground
+  colour, **desert ochre `#D2A85C`**, used only by the desert's terrain (§13): it is the
+  second colour the airfield's story is printed in. Nothing else.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, objectives,
   the enemy's vision and in the chrome, printed faint, close to the colour beneath.
   Open ground is flat spot colour.
@@ -1025,8 +1027,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-None. v1.0 is tagged. The next milestone is Phase 3 in ROADMAP.md, the airfield: spec it
-here first.
+**M28**, the engine work for mission 2, with no gameplay change (§13). v1.0 is tagged.
+The airfield's milestones, M28 to M31, are listed in §13.
 
 ### Done
 
@@ -1064,3 +1066,192 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M26d | The operator's playtest notes: the fuel dump's points 1 AP, one shot per enemy a turn, the RAF urged in a pickle, pass rings, a smoother hover |
 | M27 | Missions architecture: `data/missions.json`, win conditions as data, `?mission=`, the contents page; France's bot output byte-for-byte unchanged. Tagged v1.0 |
 | M27b | The drop's Dakota flies off the board on every run (the East run's stopped mid-map) |
+
+---
+
+## 13. Mission 2 — the airfield
+
+§1–§11 describe mission 1. This section describes mission 2 only where it differs. Each
+engine change below (marked **engine**) is written into §4, §7 or §10 when it is built,
+and then kept here only as the mission's numbers. The words and names here are
+placeholder copy for the operator to reword.
+
+### The mission
+
+**The Airfield, southern Tunisia, winter 1942.** Loosely based on 2 Para's jump at Oudna:
+British paratroopers dropped by Dakota onto an Axis landing ground. The same six men,
+the same 18×13 board, the same 20-turn night.
+
+Eight **aircraft** stand in their dispersal pens, and one charge wrecks each. The job is
+**any four of the eight** (Normal), and every one past that is greed against dawn. The
+stick carries **five bombs**, so the most it can wreck with bombs alone is five: the
+**fuel bowser** on the apron is how to take more, since it sets off the aircraft beside
+it (below, rule 2). A signals tent, the airfield's telephone exchange, stops the reserve
+and the reinforcements, as in France.
+
+Its pillar check. What the player does: slip down the wadi, knife a pen guard between the
+blast walls, throw a stone to send the car away, set a long pencil and walk off, blow the
+bowser for three aircraft with one bomb. What it costs: every aircraft that goes up raises
+the alert, and the car answers a noise fastest of anything on the board.
+
+### The ground
+
+New terrain, as data in `terrain.json` and drawn in `theme.js`, in **one new colour,
+desert ochre** (§11): on France's palette alone the desert was bare paper, France's fields
+with the trees taken off. Sand is a pale wash of the ochre (about 30%), dunes a stronger
+one (about 55%) in bands, and the wadi the ochre darkened with ink, so the safe artery
+reads as a dark channel as the hedges do. The strip and the camp stay bare paper, man-made
+against the sand; scrub is army-green tufts on sand. Every colour that means something
+(green ours, red danger, the two blues, fire orange) is unchanged, so a counter, a threat
+or a burning fuse reads the same on both boards. Only the desert's terrain types use the
+ochre, and only the airfield's map has them, so no code asks which mission is on. M29
+checks fire orange on ochre on the real board and moves the ochre if flames get lost.
+
+| Terrain | Move cost | Cover | Blocks sight | Notes |
+|---|---|---|---|---|
+| Sand | 1 | none | no | the open desert, flat paper with a sparse stipple |
+| Scrub | 1 | light | no | camel-thorn in green tufts; light cover you can be seen in |
+| Dunes | 2 | light | yes | soft sand in tonal bands; a crest hides what lies beyond it |
+| Wadi | 2 | heavy | yes | a dry watercourse below the ground: the safe artery; bad landing (rocks) |
+| Wire | 3 | none | no | the perimeter wire; a full turn for a sapper to get through |
+| Strip | 1 | none | no | the landing strip, rolled sand, drawn as one broad band |
+| Pen | 1 | heavy | yes | the earth and sandbag walls round an aircraft; its charge points stand in it |
+| Aircraft | impassable | — | yes | a parked aircraft; the objective stands on it |
+| Camp | 1 | heavy | yes | tents and huts |
+
+Kept from France: **Track** (the perimeter track and the road in), **Ridge** (the
+escarpment), **Emplacement** (the AA pits), **Fuel dump** (under the bowser).
+
+A mission with none of the swim's `across` terrain does not offer Swim at all.
+
+### The map
+
+Placed in M29 with the bot; this is the outline.
+
+- The **landing ground** fills the middle and east of the board inside a ring of **wire**,
+  with the **perimeter track** just inside it. The **strip** runs east–west across the
+  middle.
+- **North dispersal**: four pens along the strip's north side, two hexes apart.
+  **South dispersal**: four pens on the apron, two either side of the **bowser**, which
+  stands close enough for its blast to take in the two nearest aircraft.
+- **The camp** in the east: tents, the **signals tent** with its mast, the AA pits, and
+  the gate where the road comes in from the east edge (Hard's reinforcements come this
+  way).
+- **The escarpment** runs north–south on the west, looking down over the wire: high
+  ground for a gunner.
+- **The wadi** winds in from the south-west corner under the escarpment, through a gap in
+  the wire, to the south dispersal: the quiet way in, like the towpath.
+- **The dunes** in the north-west, slow and blind, lead to the north dispersal.
+  **Scrub** in the north and north-east is fast and light cover, open to the car.
+- **Exfil**: the rendezvous with the trucks, at the wadi's mouth in the south-west
+  corner, drawn as two desert trucks under netting.
+- **Three drop runs**, all landing outside the wire: over the dunes (quiet), over the
+  scrub (steady), and down the north-east nearest the aircraft (fast). Their tags are
+  data, as in France.
+
+### The garrison
+
+Eight enemies, as in France, plus the reserve:
+- **Sentries**: the two AA pits, and a guard at the signals tent.
+- **Patrols**: a guard walking each dispersal, one walking the strip, one in the camp.
+- **The perimeter car**, a new enemy type (data, `enemies.json`): speed 6, so it drives
+  the whole perimeter in a few turns and reaches a noise first. Vision and arc as a
+  patrol's. It **can be suppressed but not killed or knifed** (`killable: false`, like the
+  reserve): the crew duck, the car stops for a turn. The verbs that answer it: a stone
+  sends it off to look, a gunner stops it for a turn, and the wadi and the dunes hide
+  from it. It keeps to the track while it patrols, but drives across open ground to a
+  noise, paying the same ground costs as anyone.
+- **The reserve** turns out from the camp at Alarmed and guards the way to the trucks.
+  None comes once the signals tent is down.
+
+### The objectives
+
+Numbers are Normal's, per kind in the mission's rules patch; the bot tunes them in M30.
+
+| Objective | Needs | Blast / kills within | Alert | Score | Pays |
+|---|---|---|---|---|---|
+| **Aircraft** ×8 | 1 charge | 1 / 1 | +2 | 2 each | toward the win |
+| **Fuel bowser** | 1 charge | 2 / 1 | +4 | 2 | sets off the aircraft in its blast |
+| **Signals tent** | 1 charge, or cut the line | 1 / 1 | +3 (cut +1) | 4 | no reserve, no reinforcements |
+
+**The win**: `destroyCount { kind: "aircraft", count: 4 }` (Easy 3, Hard 5), and at least
+the level's `minimumOut` men out by dawn. No objective is `primary`.
+
+**The bombs**: small Lewes bombs, so the mission's patch lets a **sapper carry 2**. Dutch
+2, Fitch 2, Nunn 1 (Ox): five in the stick. A man killed or wounded drops what he carried
+on his hex, and anyone with room picks it up (1 AP each), so losing a sapper is a fetch
+under fire, not a lost mission. It is withdrawn only when too few bombs are left anywhere
+to reach the count, as §10 already says.
+
+**The alert on this ground**: four aircraft at +2 is 8, so a win nearly always ends with
+the garrison Alarmed. The mission is not whether it goes up but where the stick is when
+it does. The clean-run bonus is kept: it is rare, and earned with patience.
+
+### The two new rules (the budget)
+
+**1. Time pencils** (engine, `charges.fuseChoice`; null in `rules.json`, so France is
+unchanged). When he sets a charge, the sapper picks its fuse from `min` to `max` turns
+(the airfield: 2 to 6). The default (`fuseTurns`, 3) is offered first, so a player who
+never chooses plays as in France. Steady Hands takes a turn off whichever he picks
+(Dutch: 1 to 5).
+- **C**, or the button, opens the pencils as buttons in the action strip, each with its
+  length and the turn it goes off ("4 turns · blows turn 11"). **C** again or **Enter**
+  takes the default, a number key takes that many turns, **Esc** backs out. A pencil that
+  would go off after dawn is shown struck out and cannot be picked.
+- The stopwatch's face is divided into the charge's own length. Its hover, and the
+  target's, say when it blows. Undo takes it back like any other action.
+- Why: the order and timing of the demolitions is the strategy (the spine). A long
+  pencil lets charges set over three turns go off together, while the stick is already
+  walking to the trucks, which is how the real raids were done.
+
+**2. A blast that sets off its neighbours** (engine, `setsOff` on an objective kind; false
+everywhere in France). When an objective of a kind with `setsOff` explodes, every intact
+objective with a hex inside its blast radius goes up with it: destroyed, counted toward
+the win, scored as its own, with its own blast felt around it, killing and wounding by
+its own radii. It is still **one explosion**: one alert rise and one noise, the setting-off
+objective's. A charge already set on a caught objective goes up with it and is spent. A
+caught objective whose own kind `setsOff` carries the chain on.
+- The bowser's ring and hover name the aircraft it will take. The path warnings include
+  every blast in the chain, so a man in the pen next door is never caught unwarned.
+- Why: one bomb for three aircraft at +4, not three bombs at +6. It is the biggest greed
+  on the board, it stands in the open on the apron, and its blast is the widest.
+
+### What the engine needs first (M28, no gameplay change)
+
+The three things M27 left as France's, and the rest of what the airfield leans on. The
+proof is the same as M27's: France's bot `--json` output is byte-for-byte unchanged.
+
+- **A mission's own level patches.** `missions.json` gains `levels.<id>` (`rules`,
+  `enemies`, `summary`), merged after the level's own patch. France's Easy "the bridge
+  takes one charge" and its Hard reinforcements move there; `difficulty.json` keeps only
+  what holds in every mission. The orders print the mission's summary line before the
+  level's.
+- **Score by kind.** Each objective kind gets a `score` (France: bridge 10, exchange 4,
+  fuel dump 4, so nothing changes), and `scoring.win` pays for meeting the win condition
+  (France 0; the airfield 10, set in M30 so that a success with three men out still beats
+  the best retreat, as France's bridge does). `scoring.primary` and `secondary` go.
+- **`primary` only where the win condition uses it.** `destroyPrimary` wants exactly one;
+  `destroyCount` wants none, and at least `count` objectives of its kind. The target
+  rings, the ★, the mission panel, the turn-card hints, the Pass-a-charge prompt and the
+  bot all ask `winTargets` instead of the flag. For `destroyCount` the orders ring each
+  target once, with one note ("ANY FOUR AIRCRAFT! / ONE CHARGE EACH!"), and the mission
+  panel shows the kind as one line ("★ Aircraft 1 of 4 · 8 on the field").
+- **France's last words out of code**: the RAF card's "bombers over the town" and its log
+  line become mission `words`.
+- **A dialogue patch**: a mission may replace any man's lines (`dialogue.<man id>`),
+  merged over the roster file. The six stay one roster; only the lines that name France
+  (Vance's church, Barrow's trees, the bridge) get desert versions.
+- **A `draft` status**: printed and stamped on the contents page like a coming mission,
+  but `?mission=<id>` opens it, so the operator can try it on the live site before it is
+  announced.
+
+### Milestones for the airfield
+
+| # | What it builds | Done when |
+|---|---|---|
+| **M28** | The engine work above | France's bot output byte-for-byte unchanged; a test mission with `destroyCount` plays through in the tests |
+| **M29** | The airfield on the board: its terrain and art, `data/map-airfield.json`, the car, the aircraft, bowser and signals tent (no chain yet), the trucks, the drop runs; `draft` in missions.json | `?mission=airfield` plays start to end under today's rules; the bot runs `MISSION=airfield` |
+| **M30** | The two new rules; the bot learns both (a pencil policy, and whether to go for the bowser); the three levels balanced | Every run inside the §10 targets; the hunter below naive; France unchanged |
+| **M31** | Its words and sounds: orders, tagline, turn-card hints, the six's desert lines, the RAF's; ART-ASSETS and ART-PROMPTS entries for the operator's paintings (title card, aircraft, car counter, trucks) | The operator's review, then `playable` |
+
+Balance targets are §10's, for the airfield as for France.
