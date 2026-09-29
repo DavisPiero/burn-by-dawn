@@ -770,7 +770,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M27", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M27b", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -945,7 +945,8 @@ board must read at a glance.
   Jumping needs **Space** or a second click on the same run. Once the stick is down, every
   man who can act wears a gently throbbing red pen ring, with CLICK A MAN TO START in the
   middle of the men, until the player first selects a man; never again that game.
-- **The drop is shown.** A Dakota flies the chosen line, and each man's canopy opens where
+- **The drop is shown.** A Dakota flies the chosen line, in from off the board and on
+  until it has left it, whatever the line's own ends, and each man's canopy opens where
   he jumps, drifts downwind to where the rules have already put him, lands and collapses
   into his parachute marker. Display only; a click or Space skips it.
 
@@ -1024,20 +1025,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M27, missions architecture** (ROADMAP Phase 2, no gameplay change), on branch
-`m27-missions`:
-
-1. **`data/missions.json`**: France is mission 1, its map, roster, patches, win
-   condition, words, title card and end sounds named there (§10 Missions).
-2. **Win conditions** as a fixed list: `destroyPrimary`, `destroyCount`.
-3. **France's words out of code**: the tagline, the cut line's telephones, the orders'
-   opening line; the swim's water is named from the terrain it crosses.
-4. **`?mission=`** in the address and **`MISSION=`** for the bot.
-5. **The contents page** (§11 Cards), with the airfield and the aqueduct stamped NEXT
-   YEAR'S ANNUAL.
-
-Proof nothing changed: the bot's output for France (naive at every level, hunter on
-Hard, 300 seeds) is byte-for-byte what it was before.
+None. v1.0 is tagged. The next milestone is Phase 3 in ROADMAP.md, the airfield: spec it
+here first.
 
 ### Done
 
@@ -1073,3 +1062,5 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M26b | Review of M26: the knife a whole turn, the Wood patrol, Pick up charge and Pass charge in full, the search ring |
 | M26c | The v1.0 gate prepared: Dutch's chute line, the playtest sheet, the balance targets proposed |
 | M26d | The operator's playtest notes: the fuel dump's points 1 AP, one shot per enemy a turn, the RAF urged in a pickle, pass rings, a smoother hover |
+| M27 | Missions architecture: `data/missions.json`, win conditions as data, `?mission=`, the contents page; France's bot output byte-for-byte unchanged. Tagged v1.0 |
+| M27b | The drop's Dakota flies off the board on every run (the East run's stopped mid-map) |

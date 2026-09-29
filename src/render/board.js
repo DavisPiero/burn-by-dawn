@@ -913,10 +913,20 @@ export function dropTimeline(map, show) {
   const a = px(show.from), b = px(show.to);
   const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
   const ux = (b.x - a.x) / len, uy = (b.y - a.y) / len;
+  // It flies on until it is off the board, clear of its own wings (M27b: the
+  // East run's line ends mid-map, and the aircraft stopped there and vanished).
   const runIn = DROP_SHOW.runIn * map.hexSize * Math.sqrt(3);
-  const start = { x: a.x - ux * runIn, y: a.y - uy * runIn };
-  const end = { x: b.x + ux * runIn, y: b.y + uy * runIn };
-  const total = len + runIn * 2;
+  const bounds = boardPixelBounds(map);
+  const clear = DROP_SHOW.aircraftSize / 2;
+  const offBoard = (p, dx, dy) => Math.max(runIn, Math.min(
+    dx > 0 ? (bounds.maxX + clear - p.x) / dx : dx < 0 ? (bounds.minX - clear - p.x) / dx : Infinity,
+    dy > 0 ? (bounds.maxY + clear - p.y) / dy : dy < 0 ? (bounds.minY - clear - p.y) / dy : Infinity,
+  ));
+  const runBefore = offBoard(a, -ux, -uy);
+  const runAfter = offBoard(b, ux, uy);
+  const start = { x: a.x - ux * runBefore, y: a.y - uy * runBefore };
+  const end = { x: b.x + ux * runAfter, y: b.y + uy * runAfter };
+  const total = len + runBefore + runAfter;
   const byUnit = new Map();
   let last = DROP_SHOW.flightMs;
   for (const j of show.jumps) {
