@@ -12,7 +12,7 @@
       "id": "holloway", "name": "Sgt. Alec \"Dutch\" Holloway", "shortName": "DUTCH", "role": "sapper", "leader": true,
       "traits": ["steady-hands"],
       "dialogue": {
-        "onLand": "Right. Nobody wanders off till I've found the rest of you.",
+        "onLand": "Pack the chutes boys!",
         "onPlaceCharge": "Set. Walk away from it — then run.",
         "onWounded": "Only a scratch. Keep the lads moving.",
         "onWoundedCarrying": "Charge is by my boots. Somebody fetch it — I'll catch you up.",
