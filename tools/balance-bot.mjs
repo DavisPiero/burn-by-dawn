@@ -220,9 +220,9 @@ function assignCharges(state, map) {
     }
     if (best) assign.set(best.c.id, { q: w.q, r: w.r });
   }
-  // Scouts cut the exchange if we go for secondaries.
+  // Scouts cut a line (France's exchange, the airfield's signals tent) if we go for secondaries.
   if (OPTS.secondaries) {
-    const ex = state.objectives.find((o) => o.kind === 'exchange' && !o.destroyed);
+    const ex = state.objectives.find((o) => rules.objectives[o.kind].cutLine && !o.destroyed);
     const scout = state.units.find((u) => U.onBoard(u) && rules.roles[u.role].cutLine && !assign.has(u.id));
     if (ex && scout) assign.set(scout.id, { ...ex.chargeHexes[0], cut: true });
   }

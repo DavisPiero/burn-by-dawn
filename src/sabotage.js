@@ -36,7 +36,10 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
       // Pathing's heuristic needs every step to cost at least 1 (map.js enterCost).
       throw new Error(`${rulesUrl}: objectives.${id}.chargePointMoveCost must be a whole number, at least 1`);
     }
-    if (kind.destroyedTerrain !== null && !legendCharFor(map, kind.destroyedTerrain)) {
+    // Only a kind this map places needs its ruins in the legend (M29: the
+    // airfield has no canal for France's bridge to become).
+    const placed = map.objectives?.some((o) => o.kind === id);
+    if (placed && kind.destroyedTerrain !== null && !legendCharFor(map, kind.destroyedTerrain)) {
       throw new Error(`${rulesUrl}: objectives.${id}.destroyedTerrain "${kind.destroyedTerrain}" has no character in ${mapUrl} legend`);
     }
   }

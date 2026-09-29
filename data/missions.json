@@ -40,11 +40,49 @@
     },
     {
       "id": "airfield",
-      "status": "coming",
+      "status": "draft",
       "title": "The Airfield",
       "place": "Southern Tunisia",
       "page": 18,
-      "blurb": "Aircraft in their pens on an Axis landing ground, one charge each. Every one more is greed against the dawn."
+      "blurb": "Aircraft in their pens on an Axis landing ground, one charge each. Every one more is greed against the dawn.",
+      "tagline": "SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY",
+      "map": "data/map-airfield.json",
+      "roster": "data/roster.json",
+      "_rules": "SPEC.md §13. Lewes bombs are small, so a sapper carries two. The win pays 10 on top of each aircraft's own 2, since no target here is worth the bridge's 10 on its own. Three new objective kinds; their numbers are Normal's, first guesses for M30's balance.",
+      "rules": {
+        "roles": { "sapper": { "charges": 2 } },
+        "scoring": { "win": 10 },
+        "objectives": {
+          "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2 },
+          "bowser": { "label": "Fuel Bowser", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2 },
+          "signals": { "label": "Signals Tent", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4 }
+        }
+      },
+      "_enemies": "The perimeter car (SPEC.md §13): fast, so it reaches a noise first; it can be suppressed but never killed or knifed.",
+      "enemies": {
+        "types": {
+          "car": { "label": "Perimeter car", "counterLabel": "Car", "visionRadius": 3, "arcDegrees": 110, "detection": 3, "speed": 6, "killable": false }
+        }
+      },
+      "win": { "condition": "destroyCount", "kind": "aircraft", "count": 4 },
+      "levels": {
+        "easy": { "summary": "Three aircraft will do.", "rules": { "mission": { "win": { "count": 3 } } } },
+        "hard": {
+          "summary": "Five aircraft are wanted, and the perimeter car sees further too.",
+          "rules": { "mission": { "win": { "count": 5 } } },
+          "enemies": { "types": { "car": { "visionRadius": 4, "arcDegrees": 120 } } }
+        }
+      },
+      "briefing": "Tonight six men are to drop on an enemy landing ground.",
+      "words": {
+        "lineGoesDead": "its field telephones go dead",
+        "lineIsDown": "the field telephones are already down",
+        "diversionKicker": "BOMBERS OVER THE PORT",
+        "diversionLog": "bombers over the port"
+      },
+      "dialogue": {},
+      "titleCard": "assets/title/title-card.jpg",
+      "endSounds": { "success": "victory", "otherwise": "defeat" }
     },
     {
       "id": "aqueduct",

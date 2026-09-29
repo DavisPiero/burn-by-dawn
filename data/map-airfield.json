@@ -1,0 +1,523 @@
+{
+  "_comment": "The airfield (SPEC.md §13, M29): mission 2's map, in the same shape as data/map.json. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. Terrain ids must exist in data/terrain.json; the desert's are printed in the one ground colour, desert ochre (SPEC.md §11).",
+  "name": "The landing ground at Bir el Kasra",
+  "width": 18,
+  "height": 13,
+  "hexSize": 46,
+  "_dropRuns": "SPEC.md §9, §13. All three land outside the wire. West drops over the dunes, north along the scrub above the north wire, where the outer patrol walks, and east from the north-east corner, closest to the north dispersal and the camp. `tag`, `labelAlong`, `labelNudge`, `windAlong` as in data/map.json.",
+  "dropRuns": [
+    {
+      "id": "west",
+      "label": "West run",
+      "tag": "quiet",
+      "description": "The dunes: soft sand and blind hollows the whole way to the north dispersal, and the escarpment above the wire. The longest walk to the aircraft.",
+      "from": [
+        5,
+        0
+      ],
+      "to": [
+        -4,
+        9
+      ],
+      "jumpAt": 0,
+      "spacing": 1,
+      "wind": "SW",
+      "labelAlong": 0.3
+    },
+    {
+      "id": "north",
+      "label": "North run",
+      "tag": "steady",
+      "description": "The scrub along the north wire: firm landings and the gate close by. A patrol walks the wire: pack your chutes.",
+      "from": [
+        0,
+        1
+      ],
+      "to": [
+        17,
+        1
+      ],
+      "jumpAt": 5,
+      "spacing": 1,
+      "wind": "E",
+      "labelAlong": 0.2
+    },
+    {
+      "id": "east",
+      "label": "East run",
+      "tag": "fast",
+      "description": "The north-east corner: down nearest the aircraft and the signals tent, with the camp and the perimeter car close by. Tricky.",
+      "from": [
+        17,
+        0
+      ],
+      "to": [
+        6,
+        1
+      ],
+      "jumpAt": 0,
+      "spacing": 1,
+      "wind": "W",
+      "labelAlong": 0.55
+    }
+  ],
+  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north and east runs land), a patrol walks the camp, and the perimeter car drives the track round inside the wire. The car is its own type (data/missions.json enemies patch): fast, and it cannot be killed.",
+  "enemies": [
+    {
+      "id": "post-aa-north",
+      "label": "North AA pit",
+      "type": "sentry",
+      "at": [
+        8,
+        4
+      ],
+      "facing": "NE"
+    },
+    {
+      "id": "post-aa-south",
+      "label": "South AA pit",
+      "type": "sentry",
+      "at": [
+        10,
+        8
+      ],
+      "facing": "SW"
+    },
+    {
+      "id": "post-signals",
+      "label": "Signals guard",
+      "type": "sentry",
+      "at": [
+        14,
+        5
+      ],
+      "facing": "W"
+    },
+    {
+      "id": "car",
+      "label": "Perimeter car",
+      "type": "car",
+      "facing": "E",
+      "loop": true,
+      "route": [
+        [
+          3,
+          3
+        ],
+        [
+          14,
+          3
+        ],
+        [
+          11,
+          9
+        ],
+        [
+          0,
+          9
+        ]
+      ]
+    },
+    {
+      "id": "patrol-north",
+      "label": "North dispersal guard",
+      "type": "patrol",
+      "facing": "E",
+      "loop": false,
+      "route": [
+        [
+          5,
+          4
+        ],
+        [
+          10,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "patrol-south",
+      "label": "South dispersal guard",
+      "type": "patrol",
+      "facing": "W",
+      "loop": false,
+      "route": [
+        [
+          8,
+          8
+        ],
+        [
+          3,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "patrol-outer",
+      "label": "Outer patrol",
+      "type": "patrol",
+      "facing": "W",
+      "loop": false,
+      "route": [
+        [
+          14,
+          1
+        ],
+        [
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "patrol-camp",
+      "label": "Camp patrol",
+      "type": "patrol",
+      "facing": "SE",
+      "loop": false,
+      "route": [
+        [
+          15,
+          3
+        ],
+        [
+          12,
+          9
+        ]
+      ]
+    }
+  ],
+  "_reserve": "SPEC.md §6. The airfield's defence company turns out from the camp at Alarmed and marches round to guard the last stretch before the trucks.",
+  "reserve": {
+    "id": "reserve",
+    "label": "Reserve squad",
+    "type": "reserve",
+    "facing": "SW",
+    "entryHexes": [
+      [
+        14,
+        6
+      ],
+      [
+        13,
+        6
+      ],
+      [
+        12,
+        8
+      ]
+    ],
+    "guardHex": [
+      -3,
+      10
+    ],
+    "guardFacing": "SW"
+  },
+  "_reinforcements": "SPEC.md §6. By lorry down the road from the east edge, to posts on the ways into the rendezvous. None are called on Normal (rules.json objectives.<kind>.reinforcements).",
+  "reinforcements": {
+    "id": "reinforcements",
+    "label": "Reinforcements",
+    "type": "patrol",
+    "facing": "SW",
+    "entryHexes": [
+      [
+        14,
+        6
+      ],
+      [
+        13,
+        6
+      ],
+      [
+        12,
+        8
+      ]
+    ],
+    "posts": [
+      {
+        "guardHex": [
+          -1,
+          11
+        ],
+        "guardFacing": "SW"
+      },
+      {
+        "guardHex": [
+          -4,
+          10
+        ],
+        "guardFacing": "SW"
+      },
+      {
+        "guardHex": [
+          -1,
+          12
+        ],
+        "guardFacing": "W"
+      }
+    ]
+  },
+  "_objectives": "SPEC.md §7, §13. Eight aircraft, each in its pen: the pen hex behind it is its one charge point. The fuel bowser stands on the south apron between the middle two Ju 52s; its charge point is the one hex beside it whose blast takes in those two and no others (for M30's rule that it sets them off). The signals tent is the airfield's telephone exchange: blown, or its line cut by a scout. None is primary: the win is any N aircraft (data/missions.json).",
+  "objectives": [
+    {
+      "id": "stuka-1",
+      "label": "Stuka",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          4,
+          5
+        ]
+      ],
+      "chargeHexes": [
+        [
+          4,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "stuka-2",
+      "label": "Stuka",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          6,
+          5
+        ]
+      ],
+      "chargeHexes": [
+        [
+          6,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "stuka-3",
+      "label": "Stuka",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          9,
+          5
+        ]
+      ],
+      "chargeHexes": [
+        [
+          9,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "stuka-4",
+      "label": "Stuka",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          11,
+          5
+        ]
+      ],
+      "chargeHexes": [
+        [
+          11,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "ju52-1",
+      "label": "Ju 52",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          3,
+          7
+        ]
+      ],
+      "chargeHexes": [
+        [
+          2,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "ju52-2",
+      "label": "Ju 52",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          5,
+          7
+        ]
+      ],
+      "chargeHexes": [
+        [
+          4,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "ju52-3",
+      "label": "Ju 52",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          8,
+          7
+        ]
+      ],
+      "chargeHexes": [
+        [
+          7,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "ju52-4",
+      "label": "Ju 52",
+      "kind": "aircraft",
+      "hexes": [
+        [
+          10,
+          7
+        ]
+      ],
+      "chargeHexes": [
+        [
+          9,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "bowser",
+      "label": "Fuel Bowser",
+      "kind": "bowser",
+      "hexes": [
+        [
+          7,
+          7
+        ]
+      ],
+      "chargeHexes": [
+        [
+          6,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "signals",
+      "label": "Signals Tent",
+      "kind": "signals",
+      "hexes": [
+        [
+          14,
+          4
+        ]
+      ],
+      "chargeHexes": [
+        [
+          15,
+          3
+        ],
+        [
+          15,
+          4
+        ]
+      ]
+    }
+  ],
+  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner.",
+  "exfil": [
+    [
+      -5,
+      12
+    ],
+    [
+      -4,
+      12
+    ],
+    [
+      -4,
+      11
+    ]
+  ],
+  "exfilArt": "trucks",
+  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
+  "places": [
+    {
+      "name": "Bir el Kasra",
+      "kind": "village",
+      "at": [
+        5,
+        11
+      ],
+      "dy": 0.1
+    },
+    {
+      "name": "Erg Safra",
+      "kind": "wood",
+      "at": [
+        2,
+        1
+      ],
+      "dy": -0.6
+    },
+    {
+      "name": "Djebel Rhar",
+      "kind": "high",
+      "at": [
+        -3,
+        7
+      ],
+      "dy": 0.2
+    },
+    {
+      "name": "Oued Melah",
+      "kind": "water",
+      "at": [
+        -2,
+        11
+      ],
+      "angle": -55,
+      "dx": 0.1
+    }
+  ],
+  "legend": {
+    "S": "sand",
+    "C": "scrub",
+    "U": "dunes",
+    "W": "wadi",
+    "X": "wire",
+    "L": "strip",
+    "P": "pen",
+    "A": "aircraft",
+    "K": "camp",
+    "T": "track",
+    "R": "ridge",
+    "E": "emplacement",
+    "D": "depot"
+  },
+  "rows": [
+    "UUUUUSCCSSTSCCSSCS",
+    "UUUUUSSCCSTSCSSCCS",
+    "UUSXXXXXXXTXXXXXSS",
+    "UUUXTTTTTTTTTTTTKK",
+    "URSXTSPSPSEPSPSTKK",
+    "RRSXTSASASSASASTKK",
+    "RRSXTLLLLLLLLLLTTT",
+    "RRSXTSASASDASASTKK",
+    "RRSXTWPSPSSPSPETKK",
+    "RRSXWWTTTTTTTTTTKK",
+    "SSSWWXXXXXXXXXXXSS",
+    "SSSWSSSCCSSSCCSSCS",
+    "SSSWWSCSCCSSSCSSCS"
+  ]
+}

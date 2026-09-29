@@ -107,6 +107,15 @@
       "blocksLOS": true,
       "spotBonus": 0,
       "notes": "drums, tanks and tarpaulins; the fuel dump objective stands on it (SPEC.md §7). Not in the §3 table: added at M5b"
-    }
+    },
+    "sand": { "label": "Sand", "moveCost": 1, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "the open desert (SPEC.md §13, M29)" },
+    "scrub": { "label": "Scrub", "moveCost": 1, "cover": "light", "blocksLOS": false, "spotBonus": 0, "notes": "camel-thorn: light cover you can be seen in" },
+    "dunes": { "label": "Dunes", "moveCost": 2, "cover": "light", "blocksLOS": true, "spotBonus": 0, "notes": "soft sand; a crest hides what lies beyond it" },
+    "wadi": { "label": "Wadi", "moveCost": 2, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "landing": "bad", "notes": "a dry watercourse below the ground: the safe artery; rocks make a bad landing" },
+    "wire": { "label": "Wire", "moveCost": 3, "cover": "none", "blocksLOS": false, "spotBonus": 0, "landing": "bad", "notes": "the perimeter wire: a full turn for a sapper to get through" },
+    "strip": { "label": "Landing strip", "moveCost": 1, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "rolled sand" },
+    "pen": { "label": "Pen", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "earth and sandbag walls round an aircraft; its charge point stands in it" },
+    "aircraft": { "label": "Aircraft", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "a parked aircraft; the objective stands on it" },
+    "camp": { "label": "Camp", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "tents and huts" }
   }
 }
