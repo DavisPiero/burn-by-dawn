@@ -19,7 +19,8 @@ Read these before drawing anything. They are what make the swap painless.
 - Export with a `viewBox`, and **strip `width`/`height` attributes**. The game scales them.
 - **No hardcoded colours.** Use CSS classes only: `.ink`, `.paper`, `.green`, `.red`,
   `.blue`, `.leader` for the ranking man's marks only (see the leader counter below), and
-  `.fire` (a soft printed orange, M14) for flames and the blast's fireball only.
+  `.fire` (a soft printed orange, M14) for flames and the blast's fireball only, and
+  `.ochre` (desert ochre, M29) for the airfield's desert ground and what stands on it only.
   The palette lives in `theme.js` and must stay tunable.
 - **Do not bake in the halftone.** Fills get the halftone `<pattern>` applied in code so
   density can be tuned per element.
@@ -91,7 +92,7 @@ also had a drawn face of his own in code; the painted ones replaced them, so the
 | `symbol-gunner.svg` | 24 x 24 | Bren, a solid side silhouette: curved magazine up, stock, bipod (redrawn bolder M13) |
 | `counter-enemy-sentry.svg` | 56 x 56 | static post: one man, helmet over greatcoat shoulders with a slung rifle slanting behind (M14; the upright rifle read as a T). **Or a painted chip** for each enemy type, `/assets/enemies/counter-enemy-<type>.png`, 128 x 128 on transparency, which replaces the drawn helmets inside the frame on load (ART-PROMPTS.md priority 7) |
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
-| `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle |
+| `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle. M29: the airfield's perimeter car (enemy type `vehicle`), a Kübelwagen from the side with two helmets aboard. *Drawn by code.* Or a painted chip, `counter-enemy-vehicle.png` |
 | `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |
 
 Counters are drawn in a 56px viewBox and printed at 64px inside an 80px hex (M7b, so the
@@ -118,6 +119,21 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-ridge.svg` | 80 x 92 | 1 — not used since M7b: the ridge is drawn as tonal bands |
 | `terrain-farmhouse.svg` | 80 x 92 | 1: Ferme Lebrun, the one farmhouse hex not under an objective — a farm round its yard after `assets/reference/Farmhouse_Reference_01.jpeg` (M14): half-timbered house under red tiles, stone barn under slate with an arched door, haystack, yard wall with a gate gap. *Drawn by code.* |
 | `terrain-emplacement.svg` | 80 x 92 | 1 |
+
+**The desert (M29, the airfield, SPEC.md §13)**, in desert ochre over the paper. *All drawn by code.*
+
+| Asset | viewBox | Variants |
+|---|---|---|
+| `terrain-sand-01..03.svg` | 80 x 92 | 3: a stipple, a wind ripple; on about two hexes in five |
+| `terrain-scrub-01..03.svg` | 80 x 92 | 3: camel-thorn, low green sprays |
+| `terrain-dunes-01..03.svg` | 80 x 92 | 3: crests with the lee side hatched, over the dunes' area |
+| `terrain-wadi-01..03.svg` | 80 x 92 | 3: stones in the bed, over the wadi's area (ochre darkened with ink) |
+| `terrain-strip.svg` | 80 x 92 | 1: the painted centre line, the strip's rolled sand a grey wash |
+| `terrain-pen.svg` | 80 x 92 | 1: a ring of sandbags round a floor of sand |
+| `terrain-camp-01..02.svg` | 80 x 92 | 2: bell tents |
+
+The perimeter wire is a line, not a motif: board.js lays it like a hedge (`WIRE` in
+theme.js), a strand of ink with concertina coils and a picket every third coil.
 
 `hedge-clump-01..03` (24 x 24, M17), each with a `-shadow`: one bush of a hedge, laid by board.js every few units along each hedge's line over an ink bottom, now and then half as big again as a tree, after `Hedgerows_Reference_01.jpeg`. *Drawn by code.*
 
@@ -154,6 +170,11 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-fuel-dump.svg` | 240 x 184 | drums, tank laager, tarpaulins |
 | `objective-fuel-destroyed.svg` | 240 x 184 | |
 | `objective-rally-point.svg` | 80 x 92 | the exfil barn, from the south-west like the exchange, with the pick-up party's hooded green lamp. *Drawn by code (M8e).* |
+| `objective-aircraft-stuka.svg`, `-destroyed` | 96 x 92 | M29, the airfield: a Ju 87 from above, nose north, desert tan mottled green, crosses on the wings; burnt out, a black hulk alight. An aircraft objective's `art` in its map picks Stuka or Ju 52. *Drawn by code.* |
+| `objective-aircraft-ju52.svg`, `-destroyed` | 96 x 92 | a Ju 52 from above: three engines, a long corrugated wing, darker than the Stukas. *Drawn by code.* |
+| `objective-fuel-bowser.svg`, `-destroyed` | 84 x 48 | the fuel dump's bowser alone on the apron, a crop of the fuel dump's drawing. *Drawn by code.* |
+| `objective-signals-tent.svg`, `-cut`, `-destroyed` | 80 x 92 | a marquee with its wireless mast, the field telephones' wires ending at the mast's crossarm (60, 12); cut, its lit door dark; blown, collapsed and burning. *Drawn by code.* |
+| `objective-trucks.svg` | 80 x 92 | the airfield's exfil (the map's `exfilArt: "trucks"`): two desert trucks, a scrap of netting and the pick-up party's green lamp. *Drawn by code.* |
 | `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art draws the church inside itself, beside the building (`church()` in theme.js; M25 took out the stand-alone `landmark-church` sprite nothing used); the church stands whether or not the exchange does. |
 
 ---

@@ -1,6 +1,7 @@
 // A tiny in-browser test runner. Each test file exports an array of
 // [name, fn] pairs; fn may be async and throws to fail.
 
+import airfieldTests from './airfield.test.js';
 import combatTests from './combat.test.js';
 import difficultyTests from './difficulty.test.js';
 import dropTests from './drop.test.js';
@@ -12,7 +13,7 @@ import soundTests from './sound.test.js';
 import speechTests from './speech.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests], ['difficulty', difficultyTests], ['missions', missionTests], ['sound', soundTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests], ['difficulty', difficultyTests], ['missions', missionTests], ['airfield', airfieldTests], ['sound', soundTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');
