@@ -85,6 +85,13 @@ tag v1.0 is the operator's call.
 
 ## Phase 2 — Missions architecture (M27, no gameplay change)
 
+**M27** ✅ built 2026-09-29 on `m27-missions`. Everything below is in; France's bot output
+is byte-for-byte unchanged. Left for Phase 3: the difficulty levels' patches and
+summaries are still France's (Easy's "the bridge takes one charge"), so a mission will
+want its own level patches; and the map's `primary` flag still sets the 10-point score
+and the PRIMARY TARGET ring, which the airfield's `destroyCount` will need to say
+something about.
+
 Turn "the game" into "an engine plus a mission". France becomes mission 1, and the bot's
 numbers for it must come out **identical**, which proves nothing changed.
 - `data/missions.json` lists each mission: id, title, status (`playable` / `coming`),

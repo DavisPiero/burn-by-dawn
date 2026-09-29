@@ -1,0 +1,45 @@
+{
+  "_comment": "The missions (SPEC.md §12 M27, ROADMAP.md Phase 2): the game is an engine plus a mission. Each entry is printed on the contents page, in this order. `status` is `playable` or `coming`; a coming mission is printed but stamped NEXT YEAR'S ANNUAL and cannot be chosen, so it needs only `id`, `title`, `place`, `page` and `blurb`. A playable one names its `map` and `roster` files, and a `rules` and `enemies` patch deep-merged over data/rules.json and data/enemies.json before the difficulty's (the same merge difficulty.json uses; a key must already exist, except a new objective kind under `objectives` or a new enemy type under `types`). `win` is one of the fixed win conditions in src/missions.js, never a code branch for one mission. `briefing` opens the orders; `tagline` runs along the foot of the title card; `words` are the mission's own phrases the rules' text needs; `titleCard` is its painted title card (ART-ASSETS.md §7); `endSounds` are the sound.js cues for the back page. `?mission=<id>` in the address picks one, and `default` is the one when none is asked for.",
+
+  "default": "france",
+
+  "missions": [
+    {
+      "id": "france",
+      "status": "playable",
+      "title": "The Rail Bridge",
+      "place": "Canal St-Rémy, France",
+      "page": 4,
+      "blurb": "Six men drop by night to blow the bridge that carries the line to the coast, and must be out before dawn.",
+      "tagline": "SIX MEN · ONE BRIDGE · DAWN AT TWENTY",
+      "map": "data/map.json",
+      "roster": "data/roster.json",
+      "rules": {},
+      "enemies": {},
+      "win": { "condition": "destroyPrimary" },
+      "briefing": "Tonight six men are to drop behind enemy lines.",
+      "words": {
+        "lineGoesDead": "its telephones go dead",
+        "lineIsDown": "the telephones are already down"
+      },
+      "titleCard": "assets/title/title-card.jpg",
+      "endSounds": { "success": "victory", "otherwise": "defeat" }
+    },
+    {
+      "id": "airfield",
+      "status": "coming",
+      "title": "The Airfield",
+      "place": "The Western Desert",
+      "page": 18,
+      "blurb": "Aircraft in their pens on an Axis landing ground, one charge each. Every one more is greed against the dawn."
+    },
+    {
+      "id": "aqueduct",
+      "status": "coming",
+      "title": "The Aqueduct",
+      "place": "Southern Italy",
+      "page": 32,
+      "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait."
+    }
+  ]
+}

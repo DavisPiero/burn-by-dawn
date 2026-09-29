@@ -145,6 +145,7 @@ export function applyDocumentTheme(root = document.documentElement) {
   for (const [name, value] of Object.entries(PALETTE)) root.style.setProperty(`--${name}`, value);
   root.style.setProperty('--typewriter', TYPE.typewriter);
   root.style.setProperty('--slab', TYPE.slab);
+  root.style.setProperty('--lettering', TYPE.lettering);
   root.style.setProperty('--paper-fibre', paperTile());
   root.style.setProperty('--dots-ink', halftoneCss('ink', 10));
   root.style.setProperty('--dots-blue', halftoneCss('blue', 20));
@@ -241,20 +242,21 @@ export function loadSuppliedEnemyChips(types) {
 }
 
 // A supplied title card (ART-ASSETS.md §7, ART-PROMPTS.md): a painted JPEG at
-// TITLE_CARD.url replaces the drawn `title-card` sprite once it loads, cropped
-// to the sprite's 4:1 from the middle. A missing file is fine: the drawn one stays.
+// the mission's `titleCard` (data/missions.json, M27; TITLE_CARD.url if none)
+// replaces the drawn `title-card` sprite once it loads, cropped to the
+// sprite's 4:1 from the middle. A missing file is fine: the drawn one stays.
 // `lettered` says the picture has the title painted in, so the typed title is
 // hidden over it; set it false for a picture without (title-card_original.jpg).
 export const TITLE_CARD = { url: 'assets/title/title-card.jpg', width: 600, height: 150, lettered: true };
 
-export function loadSuppliedTitleCard() {
-  return picture(TITLE_CARD.url).then((ok) => {
+export function loadSuppliedTitleCard(url = TITLE_CARD.url) {
+  return picture(url).then((ok) => {
     if (!ok) return;
     const symbol = document.getElementById('title-card');
     if (!symbol) return;
     symbol.setAttribute('overflow', 'hidden');
     symbol.replaceChildren(svg('image', {
-      href: TITLE_CARD.url, x: 0, y: 0, width: TITLE_CARD.width, height: TITLE_CARD.height, preserveAspectRatio: 'xMidYMid slice',
+      href: url, x: 0, y: 0, width: TITLE_CARD.width, height: TITLE_CARD.height, preserveAspectRatio: 'xMidYMid slice',
     }));
     document.documentElement.classList.toggle('title-card-lettered', TITLE_CARD.lettered);
   });

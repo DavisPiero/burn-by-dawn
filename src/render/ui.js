@@ -334,7 +334,8 @@ function titleBanner({ title, tagline }) {
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
- *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) } }
+ *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
+ *   contents?: { entries: [{ id, page, title, place, blurb, playable }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
@@ -356,6 +357,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
     card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
   }
+  if (briefing.contents) card.appendChild(contentsList(briefing.contents));
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
@@ -391,6 +393,39 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
   card.appendChild(foot);
+}
+
+/**
+ * The contents page (M27): each mission as a line of the annual's contents,
+ * its title run to its page number with a dotted leader, where it is set and
+ * a line about it under. A playable one is a button; a coming one is printed
+ * all the same but stamped NEXT YEAR'S ANNUAL, and a click on it does nothing.
+ */
+function contentsList({ entries, onChoose }) {
+  const list = html('ol', 'contents');
+  for (const entry of entries) {
+    const line = html('span', 'contents-line', [
+      html('span', 'contents-title', entry.title),
+      html('span', 'contents-leader'),
+      html('span', 'contents-page', String(entry.page)),
+    ]);
+    const words = [line, html('span', 'contents-place', entry.place), html('span', 'contents-blurb', entry.blurb)];
+    const item = html('li', entry.playable ? 'contents-entry' : 'contents-entry coming');
+    if (entry.playable) {
+      const button = html('button', 'contents-pick', words);
+      button.type = 'button';
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        onChoose(entry.id);
+      });
+      item.appendChild(button);
+    } else {
+      item.append(html('div', 'contents-pick', words), html('span', 'contents-stamp', 'NEXT YEAR’S ANNUAL'));
+      item.addEventListener('click', (event) => event.stopPropagation());
+    }
+    list.appendChild(item);
+  }
+  return list;
 }
 
 /**
@@ -803,7 +838,7 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * The results (SPEC.md §10), printed as the back page of the annual over the
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
-export function renderResults(element, outcome, levelLabel, banner, onAgain) {
+export function renderResults(element, outcome, levelLabel, banner, onAgain, onContents) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
@@ -834,6 +869,10 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
   const again = html('button', 'btn', 'PLAY AGAIN');
   again.type = 'button';
   again.addEventListener('click', () => onAgain());
+  // Back to the contents page (M27), to pick another mission.
+  const contents = html('button', 'btn', 'CONTENTS');
+  contents.type = 'button';
+  contents.addEventListener('click', () => onContents());
 
   element.append(
     titleBanner(banner),
@@ -843,7 +882,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain) {
     html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),
     fates,
     score,
-    html('div', 'again', [again]),
+    html('div', 'again', [again, contents]),
   );
 }
 

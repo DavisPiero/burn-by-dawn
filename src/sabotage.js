@@ -296,26 +296,6 @@ export function checkSwim(map, state, unit, target, rules) {
   return result(cost, null);
 }
 
-// --- the charges that are enough to finish the primary ------------------------
-
-/**
- * Charges that could still end up on the primary: carried by men in the field,
- * lying dropped, or already set on it and burning. With the ones that have
- * gone off, if that is short of what it needs the mission cannot succeed.
- */
-export function primaryShortfall(state, rules) {
-  const primary = state.objectives.find((o) => o.primary);
-  if (primary.destroyed) return 0;
-  const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
-  const set = state.charges.filter((c) => c.objectiveId === primary.id).length;
-  // A charge on the ground counts only while a man still in the field could
-  // carry it (M13): with both sappers and Ox dead, a scout or gunner can never
-  // pick one up, and the mission must end rather than drag on.
-  const carrier = state.units.some((u) => onBoard(u) && chargeCapacity(u, rules) > 0);
-  const have = primary.detonated + set + carried + (carrier ? state.droppedCharges.length : 0);
-  return Math.max(0, kindOf(primary, rules).chargesNeeded - have);
-}
-
 // --- fuse phase ----------------------------------------------------------------
 
 /**

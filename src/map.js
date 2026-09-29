@@ -10,12 +10,15 @@ import { DIRECTION_NAMES, hexDistance, hexLine, neighbors, rowQStart } from './h
  * tables. Enemy types ride along with the map for the same reason terrain
  * does: the map's placements name them, and they are checked together.
  * Throws with a human-readable message if the data is unusable — a
- * data-driven map is only useful if a typo says so out loud.
+ * data-driven map is only useful if a typo says so out loud. `patchEnemyTypes`
+ * is the mission's patch over the enemy types (missions.js, M27), applied
+ * before the placements are checked against them.
  */
 export async function loadMap(
-  mapUrl = 'data/map.json', terrainUrl = 'data/terrain.json', enemiesUrl = 'data/enemies.json',
+  mapUrl = 'data/map.json', terrainUrl = 'data/terrain.json', enemiesUrl = 'data/enemies.json', patchEnemyTypes = (types) => types,
 ) {
-  const [map, terrain, enemies] = await Promise.all([loadJson(mapUrl), loadJson(terrainUrl), loadJson(enemiesUrl)]);
+  const [map, terrain, loadedEnemies] = await Promise.all([loadJson(mapUrl), loadJson(terrainUrl), loadJson(enemiesUrl)]);
+  const enemies = { ...loadedEnemies, types: patchEnemyTypes(loadedEnemies.types) };
   validate(map, terrain, mapUrl, terrainUrl);
   const loaded = { ...map, terrain: terrain.types };
   validateEnemyTypes(enemies, enemiesUrl);

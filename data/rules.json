@@ -47,8 +47,8 @@
     "perKillFound": -1
   },
 
-  "_mission": "SPEC.md §10. Success needs the primary destroyed and at least `minimumOut` troopers out by the end of the last turn.",
-  "mission": { "minimumOut": 3 },
+  "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27).",
+  "mission": { "minimumOut": 3, "win": { "condition": "destroyPrimary" } },
 
   "_undo": "SPEC.md §4 Undo. How many moves or actions of this player phase can be taken back, most recent first; null is every one of them. Never further than the start of the turn, and never across the jump, so nothing the garrison has done is undone. Normal and Hard keep one step, a mis-click net; Easy lets a new player walk the whole turn back (M11b, data/difficulty.json).",
   "undo": {
