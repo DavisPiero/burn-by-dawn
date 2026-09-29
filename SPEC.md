@@ -687,6 +687,19 @@ is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-ev
 must not be the best way to play, and with the whole-turn knife it is not (Normal
 72 / 77 / 73, Hard 23 / 18 / 22). Its numbers, against the baselines, are in DECISIONS.md.
 
+**Targets** (proposed at the v1.0 gate; the playtest in `docs/PLAYTEST.md` confirms or
+moves them). What they are for is people, so the first three are measured on players new
+to the game, and the bot's ranges are the guard rails a change must stay inside:
+
+| Level | Players | Naive bot, every run | Hunter bot |
+|---|---|---|---|
+| **Easy** | A first try usually wins | 95 or more | — |
+| **Normal** | Most win within three tries | 75 to 90 | Below naive on the same run |
+| **Hard** | The real test: a win is earned | 25 to 45 | Below naive on the same run |
+
+Today every run is inside them except Hard West at 24, one point under; packing chutes
+lifts it to 41, and packing is what Dutch now tells the player to do.
+
 ---
 
 ## 11. Art direction
@@ -714,7 +727,7 @@ board must read at a glance.
   the cards keep their full-strength paper.
 - The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M26b", from `data/version.json`), the level and seed, the sound on/off word,
+  build ("build M26c", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
   the same level, without a reload).
 
@@ -958,15 +971,10 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M26b, the operator's review of M26**, on branch `m26b-review`:
-
-1. **Killing costs a turn**: the knife is a full turn (§4), the operator's answer to the
-   M26 finding that clearing the garrison first was the best way to play.
-2. **The Wood patrol** (§8) walks the landing grounds, so packing a parachute matters.
-3. **Pick up charge** and **Pass charge** named in full on their buttons.
-4. The "?" search ring only where someone is going (§11), with a hover.
-
-Left for the operator's next playtest: re-setting the balance targets.
+**The v1.0 gate**, on branch `v1-playtest-prep`: no rules change. Dutch's landing line
+cues packing the parachutes; the action buttons' names stand clear of their key box; a
+playtest sheet for the operator (`docs/PLAYTEST.md`); the balance targets proposed (§10).
+Then the operator's playtest, and the tag `v1.0`.
 
 ### Done
 
@@ -999,3 +1007,4 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M24 | Playtest review; the run tabs re-placed; the drop's lettering reworded and still; a move made silent |
 | M25 | Housekeeping: this spec cut to current rules; a lighter title card; the drawn faces and unused sprites out; the map named |
 | M26 | Active play: prompts for Stabilise and Pass a charge, lines for a kill, a sighting and hiding, the bot's hunter style |
+| M26b | Review of M26: the knife a whole turn, the Wood patrol, Pick up charge and Pass charge in full, the search ring |
