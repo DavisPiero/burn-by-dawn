@@ -8,16 +8,19 @@ Update it when a phase finishes or the plan changes.
 
 ## Where we are
 
-- One mission (the canal bridge, France), three difficulty levels, three drop runs,
-  six named men, 13 actions. It is fully playable, published on GitHub Pages, with
-  painted art, recorded sound and title music.
-- 24 milestones in two weeks. M8–M21 shaped the rules. M22–M24 were playtest reviews
-  with **no rules changes**, only polish. That is the sign the core is settling.
-- Tests: 115 pass. Balance bot (naive, win % west/north/east): Easy 100/100/97,
-  Normal 93/83/88, Hard 47/33/38.
-- Code: about 13,000 lines of plain JS with no dependencies. The rules are
-  data-driven: objective kinds, terrain, enemies, difficulty and traits all live in JSON.
-  That makes more missions realistic.
+Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
+- Mission 1 (the rail bridge, France) with three difficulty levels, three drop runs,
+  six named men and 13 actions, published on GitHub Pages with painted art, recorded
+  sound and title music. Phases 1 and 2 are done: the game is an engine plus missions
+  (`data/missions.json`), opened from a contents page with the airfield and the aqueduct
+  stamped NEXT YEAR'S ANNUAL.
+- Tests: 130 headless, 132 in tests.html. Balance bot (naive, KNIFE=1, win %
+  west/north/east): Easy 99/100/97, Normal 86/83/89, Hard 29/38/37, every run inside
+  the SPEC §10 targets.
+- **Next: Phase 3, the airfield.** Write its full spec first (below). Start from the
+  three things M27 left as France's: the difficulty levels' patches and summaries, the
+  map's `primary` flag (the 10-point score and the PRIMARY TARGET ring), and the bot's
+  plan, which aims at the primary.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 

@@ -15,6 +15,8 @@ import {
 import { validateTraits } from '../src/traits.js';
 import { checkPackParachute, commandBonus, isWounded, planMove, unitById } from '../src/units.js';
 import { landedState } from './fixtures.js';
+import { boardPixelBounds, dropTimeline } from '../src/render/board.js';
+import { DROP_SHOW } from '../src/render/theme.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -342,5 +344,17 @@ export default [
     const heard = runEnemyPhase(walked.state, map, rules);
     equal(`${heard.state.contact.q},${heard.state.contact.r}`, `${chute.q},${chute.r}`, 'it becomes the last known contact');
     equal(heard.events.filter((e) => e.kind === 'parachuteFound').length, 0, 'found once');
+  }],
+
+  ['the drop aircraft flies in from off the board and out past its far edge on every run (M27b: the East run stopped mid-map)', async () => {
+    const map = await loadMap();
+    const b = boardPixelBounds(map);
+    const clear = DROP_SHOW.aircraftSize / 2;
+    const off = (p) => p.x <= b.minX - clear + 0.5 || p.x >= b.maxX + clear - 0.5 || p.y <= b.minY - clear + 0.5 || p.y >= b.maxY + clear - 0.5;
+    for (const run of map.dropRuns) {
+      const t = dropTimeline(map, { from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] }, jumps: [] });
+      assert(off(t.start), `${run.id} starts off the board`);
+      assert(off(t.end), `${run.id} ends off the board`);
+    }
   }],
 ];
