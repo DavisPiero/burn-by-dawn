@@ -56,7 +56,7 @@
   },
   "_diversion": "SPEC.md §4 RAF diversion: once per mission, no AP, while the trooper flagged leader is alive. The alert drops `statesDown` states (never below the explosion floor), every search and held contact is dropped, every trooper is out of contact. `prompt` (M26d): when the team is in a pickle the RAF button turns red and the turn card says so first: the garrison at `alertState` or worse, or `menInContact` men in contact at once, or `woundedInContact` wounded men in contact (one more hit kills them).",
   "diversion": { "uses": 1, "statesDown": 1,
-    "prompt": { "alertState": "Alarmed", "menInContact": 2, "woundedInContact": 1 }
+    "prompt": { "alertState": "alarmed", "menInContact": 2, "woundedInContact": 1 }
   },
 
   "_detection": "SPEC.md §6: detection = base(enemy) - cover(terrain) - concealment(trooper) + proximity, then the onDetectionCheck trait hook; spotted when it reaches `threshold`. No dice: the hover readout shows exactly this sum. `cover` is keyed by the cover word in data/terrain.json. `proximity[d]` is the bonus at d hexes, past the end of the list it is 0. A trooper is tested on every hex he entered this turn, or on the hex he stands on if he never moved. Starting numbers, for the M8 balance pass: open ground in an arc is spotted, heavy cover is safe unless an enemy is adjacent, and a scout in heavy cover is safe even then.",

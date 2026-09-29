@@ -77,7 +77,7 @@ export function diversionPrompt(state, rules, diversionOk) {
   const wounded = inContact.filter((u) => u.hits > 0);
   const states = rules.alert.states;
   const at = alertIndex(state.alert.points, rules);
-  const floor = states.findIndex((s) => s.label === prompt.alertState);
+  const floor = states.findIndex((s) => s.id === prompt.alertState);
   if (prompt.woundedInContact != null && wounded.length >= prompt.woundedInContact) {
     return `${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded and in contact: one more hit kills`;
   }
@@ -109,12 +109,6 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   const turnsLeft = rules.turnLimit - state.turn;
   const leader = men.find((u) => u.leader);
 
-  // In a pickle (M26d): the diversion first, ahead of everything else.
-  const pickle = leader ? diversionPrompt(state, rules, diversionOk) : null;
-  if (pickle) {
-    hints.push(`In a pickle: ${pickle}. Call the RAF diversion [D] now: the garrison drops a level and lets go of everyone it has in its sights. ${capitalFirst(callsLeft(state, rules))}.`);
-  }
-
   // The win is in reach: say how far off it is.
   if (primary?.destroyed && out < rules.mission.minimumOut) {
     const need = rules.mission.minimumOut - out;
@@ -131,6 +125,12 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
     const label = state.objectives.find((o) => o.id === objectiveId)?.label ?? 'objective';
     const when = fuse <= 1 ? 'goes off at the end of this turn' : `goes off in ${fuse} turns`;
     hints.push(`The charge on the ${label} ${when}. Get everyone clear of the blast: hover the ${label} to see how far it reaches.`);
+  }
+
+  // In a pickle (M26d): the diversion next, after any charge about to blow.
+  const pickle = leader ? diversionPrompt(state, rules, diversionOk) : null;
+  if (pickle) {
+    hints.push(`In a pickle: ${pickle}. Call the RAF diversion [D] now: the garrison drops a level and lets go of everyone it has in its sights. ${capitalFirst(callsLeft(state, rules))}.`);
   }
 
   // A scout starting his turn on a point he can cut (M20: a playtester could

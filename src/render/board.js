@@ -1508,7 +1508,11 @@ function drawSites(layers, state, view) {
     const size = OBJECTIVE.pointIconSize;
     layers.tokens.appendChild(el('use', { href: '#marker-charge', x: at.x - size / 2, y: at.y - size / 2, width: size, height: size }));
     const watch = MARKER.fuseSize;
-    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: at.x + size * 0.15, y: at.y - size * 0.2, width: watch, height: watch }));
+    // Up beside the satchel, toward the middle of the hex, so it sits on the
+    // man's counter and neither hides the satchel nor a target's name.
+    const side = at.x <= axialToPixel(charge.q, charge.r, map.hexSize).x ? 1 : -1;
+    const wx = side > 0 ? at.x + size * 0.3 : at.x - size * 0.3 - watch;
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: wx, y: at.y - watch * 0.95, width: watch, height: watch }));
   }
 }
 

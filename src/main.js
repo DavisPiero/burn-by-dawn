@@ -3,7 +3,7 @@
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
 import {
-  alertIndex, decayTarget, detectionAt, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
+  alertIndex, busyFor, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
 } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
@@ -416,14 +416,15 @@ function deriveView() {
     // if he stays put (enemy.js testedHexes), so that is what gets pips. A man
     // already in contact is shot on any of them where a free enemy would spot
     // him again (SPEC.md §6), and the pips say so.
+    const busy = busyNow(unit);
     view.risk = plan.path.map((step, i) => {
       if (i === 0 && plan.steps > 0) return null;
       // Moving brings him out of hiding, so only standing still keeps it.
       const mover = plan.steps > 0 ? { ...unit, hidden: false } : unit;
-      const result = detectionAt(map, rules, state.enemies, state.alert.points, mover, step);
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, mover, step, busy);
       if (!result) return null;
       const shot = unit.inContact && result.spotted && result.firing;
-      return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null };
+      return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null, drawnOff: shot ? null : drawnOff(unit, result) };
     });
     view.riskLabel = describeRisk(plan, view.risk, view.place);
     const end = plan.path[plan.path.length - 1];
@@ -440,6 +441,33 @@ function deriveView() {
     if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `[H] ${hideEffect(unit)}`;
   }
   return view;
+}
+
+/**
+ * Each enemy fires at one man a turn (SPEC.md §6, M26d). `busyNow` is the
+ * test for this man: is an enemy firing at another man ahead of him, as the
+ * others stand now? Kept for the state it was worked out on.
+ */
+let rivalsFor = { state: null, rivals: null };
+function busyNow(unit) {
+  if (!unit.inContact) return null;
+  if (rivalsFor.state !== state) rivalsFor = { state, rivals: fireRivals(map, rules, state) };
+  return busyFor(rivalsFor.rivals, state, unit);
+}
+
+/**
+ * A man in contact whom the enemies seeing him will not fire on, as each is
+ * firing at someone else: "the sentry is firing at BARROW". Null if not so.
+ */
+function drawnOff(unit, result) {
+  if (!unit.inContact || !result.spotted || result.firing || result.spotters.length === 0) return null;
+  if (rivalsFor.state !== state) rivalsFor = { state, rivals: fireRivals(map, rules, state) };
+  const words = result.spotters.map((id) => {
+    const enemy = state.enemies.find((e) => e.id === id);
+    const target = fireTargetOf(rivalsFor.rivals, state, enemy, unit.id);
+    return target && `the ${enemy.label.toLowerCase()} is firing at ${state.units.find((u) => u.id === target).shortName}`;
+  }).filter(Boolean);
+  return words.length ? words.join(', ') : null;
 }
 
 /** A move onto the exfil that would lose the mission (state.js exfilWouldFail), or null. */
@@ -769,8 +797,9 @@ function hideEffect(unit) {
   if (seenOnTheWay) {
     return `too late: the ${seenOnTheWay.d.enemyLabel.toLowerCase()} sees him on his way, in ${placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), seenOnTheWay.h)}${unit.inContact ? ', and will fire' : ''}`;
   }
-  const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit);
-  const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit);
+  const busy = busyNow(unit);
+  const open = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, unit, busy);
+  const hidden = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: true }, unit, busy);
   if (!hidden) return 'no enemy can see this hex: hiding adds nothing';
   if (hidden.spotted) {
     return `still SPOTTED hidden, too close for this cover${unit.inContact && hidden.firing ? ', and fired on' : ''}: ${describeDetection(hidden)}`;
@@ -832,7 +861,7 @@ function enemyActsFor(unit, enemy) {
     label,
     text: check.ok
       ? `${unit.shortName} can, now [${key}]: ${label === 'KNIFE' && rules.actions.knife.fullTurn ? 'his whole turn' : `${check.cost} AP`}`
-      : `not ${unit.shortName}: ${check.reason}`,
+      : `${unit.shortName} can't: ${check.reason}`,
     tone: check.ok ? 'prompt' : null,
   }));
 }
@@ -923,7 +952,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     // operator's): he comes out of the water unhidden and is tested there.
     if (check?.ok) {
       const plan = { steps: 1, path: [{ q: unit.q, r: unit.r }, { q: hex.q, r: hex.r }] };
-      const result = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, hex);
+      const result = detectionAt(map, rules, state.enemies, state.alert.points, { ...unit, hidden: false }, hex, busyNow(unit));
       const shot = Boolean(result && unit.inContact && result.spotted && result.firing);
       const risk = [null, result && { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null }];
       view.landing = { plan, risk };
@@ -1672,7 +1701,8 @@ function describeMarker(id, unit) {
   if (id === 'marker-spotted') {
     return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
       + `If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover — `
-      + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away.\n`
+      + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away. `
+      + 'An enemy fires at one man a turn, the one it is watching first, so another man in its sights can draw its fire.\n'
       + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or have a gunner suppress it [S].'];
   }
   if (id === 'marker-wounded') {

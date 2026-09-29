@@ -674,6 +674,10 @@ export function describeRisk(plan, risk, place) {
     return { text: `${outcome}: in contact, and seen again in ${place(plan.path[worst])}`, sum: describeDetection(risk[worst]) };
   }
   const where = place(plan.path[worstAt]);
+  // In contact and seen, but every enemy seeing him is firing at another man
+  // (M26d: one man a turn each), so he is not shot.
+  const drawn = spotted.map((i) => risk[i].drawnOff).find(Boolean);
+  if (drawn) return { text: `NOT SHOT: in contact and seen in ${place(plan.path[spotted[0]])}, but ${drawn}`, sum: describeDetection(risk[worstAt]) };
   const text = spotted.length > 0
     ? `spotted on ${spotted.length} of ${tested.length} hex${tested.length === 1 ? '' : 'es'}, worst in ${where}`
     : `seen, not spotted, worst in ${where}`;
