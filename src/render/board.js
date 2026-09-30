@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  HOSE, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  DRIVE_BY, DRIVE_BY_ART, HOSE, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -788,7 +788,7 @@ export function renderPieces(layers, state, view) {
     const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
     if (objective) drawPowerCut(layers, objective, now - view.strikeShow.since);
   }
-  if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
+  if (view.flyShow) drawDiversion(layers, view.flyShow, now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
@@ -1090,6 +1090,39 @@ function drawGhostPlanes(layers, runs, now) {
 // Display only, like the drop: when the diversion is called the Dakota crosses
 // the board over the garrison, on the straight line that best fits where the
 // enemies stand, from edge to edge. Then the diversion's card opens.
+
+/**
+ * The diversion shown (M31): the map's `diversionRun` driven on the ground if
+ * it has one (the airfield's jeep), or else the Dakota over the garrison.
+ * `fly` is main.js's flyShow. Exported so main.js knows when it is over.
+ */
+export function diversionTimeline(map, fly) {
+  if (!map.diversionRun) return flyoverTimeline(map, fly.points, fly.heading);
+  const [from, to] = [map.diversionRun.from, map.diversionRun.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  return {
+    start: from,
+    end: to,
+    angle: (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI,
+    length: DRIVE_BY.driveMs + DRIVE_BY.tailMs,
+  };
+}
+
+function drawDiversion(layers, fly, elapsed) {
+  const timeline = diversionTimeline(layers.map, fly);
+  const art = layers.map.diversionRun && DRIVE_BY_ART[layers.map.diversionRun.art];
+  if (!art) return drawAircraft(layers, timeline, elapsed);
+  if (elapsed >= DRIVE_BY.driveMs) return;
+  const { start, end, angle } = timeline;
+  const size = DRIVE_BY.size;
+  const at = (p) => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)`;
+  const car = el('g', {});
+  car.appendChild(el('use', { href: `#${art.body}`, x: -size / 2, y: -size / 2, width: size, height: size }));
+  const flash = el('use', { href: `#${art.flash}`, x: -size / 2, y: -size / 2, width: size, height: size });
+  car.appendChild(flash);
+  playFrom(car, [{ transform: at(start) }, { transform: at(end) }], { duration: DRIVE_BY.driveMs }, elapsed);
+  playFrom(flash, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: DRIVE_BY.flashMs, iterations: Infinity }, elapsed);
+  layers.effects.appendChild(car);
+}
 
 /**
  * The flyover's line and length. `points` are the enemies' hexes as they

@@ -9,7 +9,7 @@
     {
       "id": "easy",
       "label": "Easy",
-      "summary": "Two men out will do, the RAF can be called twice, orders reach 3 hexes, hiding counts double, enemy shots hit only from 2 hexes off, and undo goes back as far as the start of the turn.",
+      "summary": "Two men out will do, the diversion can be called twice, orders reach 3 hexes, hiding counts double, enemy shots hit only from 2 hexes off, and undo goes back as far as the start of the turn.",
       "rules": {
         "mission": { "minimumOut": 2 },
         "diversion": { "uses": 2 },

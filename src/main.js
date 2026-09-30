@@ -26,7 +26,7 @@ import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, drawCounterKey, dropTimeline, flyoverTimeline, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
@@ -294,6 +294,7 @@ function deriveView() {
     // The leader's orders, for his rollover in the roster (SPEC.md §5 Command).
     command: rules.command,
     diversionUses: rules.diversion.uses,
+    diversionName: mission.words.diversionName,
     // The stealth score (SPEC.md §10, M11b), for each man's roster rollover.
     unseenPoints: rules.scoring.perTrooperUnseen,
     // Stabilise and Pass a charge, wherever one could be taken now (M26): the
@@ -697,7 +698,7 @@ function describeObjective(o, onPoint, brief = false) {
     return rows;
   }
   const choice = rules.charges.fuseChoice;
-  rows.push({ label: 'BANG', text: `${choice ? `pencil ${choice.min}–${choice.max} turns` : `fuse ${rules.charges.fuseTurns} turns`} · ${blastWords(kind)} · alert +${kind.alert}` });
+  rows.push({ label: 'BANG', text: `${choice ? `timer ${choice.min}–${choice.max} turns` : `fuse ${rules.charges.fuseTurns} turns`} · ${blastWords(kind)} · alert +${kind.alert}` });
   const takes = setsOffWords(o);
   if (takes) rows.push({ label: 'TAKES', text: takes });
   if (kind.cutLine) rows.push({ label: 'CUT', text: `or a scout cuts the line [X]: a whole turn on a charge point, quiet, alert +${rules.alert.lineCut}` });
@@ -1414,7 +1415,7 @@ function handleAction(id) {
   if (id === 'diversion') {
     if (flyShow) return;
     const before = state;
-    commit(callDiversion(state, rules), 'diversion');
+    commit(callDiversion(state, rules), mission.diversionSound ?? 'diversion');
     // The Dakota flies over the garrison, then the call is said on a card, so
     // it can never pass unnoticed and be made twice.
     if (state !== before) {
@@ -1425,7 +1426,7 @@ function handleAction(id) {
       const lead = DROP_SHOW.flyoverSoundLeadMs;
       flyShow = { since: performance.now() + lead, before, heading, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
       clearTimeout(flyShowTimer);
-      flyShowTimer = setTimeout(endFlyShow, lead + flyoverTimeline(baseMap, flyShow.points, flyShow.heading).length);
+      flyShowTimer = setTimeout(endFlyShow, lead + diversionTimeline(baseMap, flyShow).length);
     }
     render();
     return;
@@ -1834,18 +1835,35 @@ function describeBriefing(which, view) {
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
-    const needs = state.objectives.map((o) => {
+    // Targets of one name and one need said once (M31: the airfield's eight
+    // aircraft were eight clauses): "Stukas 1 each, its point".
+    const needGroups = new Map();
+    for (const o of state.objectives) {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
       const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
-      return `${o.label} ${needed}, ${where}`;
-    }).join('; ');
+      const key = `${o.label}|${needed}|${where}`;
+      needGroups.set(key, { label: o.label, needed, where, n: (needGroups.get(key)?.n ?? 0) + 1 });
+    }
+    const needs = [...needGroups.values()].map(({ label, needed, where, n }) => (
+      n === 1 ? `${label} ${needed}, ${where}` : `${label}s ${needed} each, ${where}`
+    )).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
     const runList = runs.length > 1 ? `${runs.slice(0, -1).join(', ')} or ${runs.at(-1)}` : runs.join('');
     // The one target a scout can cut instead of blowing (M12: the orders did not say).
     const cuttable = state.objectives.find((o) => kindOf(o, rules).cutLine);
     const cutter = Object.values(rules.roles).find((role) => role.cutLine);
+    // The airfield's two rules (M31), said where a mission has them: the timer
+    // when charges take one, and whatever sets off its neighbours.
+    const choice = rules.charges.fuseChoice;
+    const timerLine = choice
+      ? `Every charge takes a timer: after C, press ${choice.min}–${choice.max} for that many turns, or Enter for ${rules.charges.fuseTurns}. A long timer lets charges set over several turns go off together, with the stick already on its way out.`
+      : null;
+    const setterLines = state.objectives.filter((o) => setsOffList(o).length).map((o) => {
+      const caught = setsOffList(o);
+      return `The ${o.label.toUpperCase()} sets off ${namesOf(caught)} beside it: ${caught.length + 1} targets for one charge, and one bang.`;
+    });
     return {
       banner: { title: GAME_TITLE, tagline: mission.tagline },
       title: 'ORDERS',
@@ -1872,6 +1890,8 @@ function describeBriefing(which, view) {
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
+          ...(timerLine ? [timerLine] : []),
+          ...setterLines,
           'Hover anything for detail; KEYBOARD lists every key, and ? brings this card back.',
         ],
       }],
@@ -1901,7 +1921,7 @@ function describeBriefing(which, view) {
         lines: lines.length ? lines.slice(0, shown) : ['A quiet night. Nothing seen.'],
         more: lines.length > shown ? `…and ${lines.length - shown} more in the report under the map.` : null,
       },
-      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok }) },
+      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName }) },
     ],
     toggle: { on: briefingsOn },
   };
@@ -1936,7 +1956,7 @@ function describeDiversionCard(before) {
   if (freed) lines.push(`${freed} ${freed === 1 ? 'man is' : 'men are'} out of contact.`);
   lines.push('The clean-run bonus is gone.');
   return {
-    title: 'RAF DIVERSION',
+    title: mission.words.diversionName.toUpperCase(),
     kicker: mission.words.diversionKicker,
     // Headed in the diversion's own blue, as its button is (M11).
     tone: 'raf',
@@ -2383,7 +2403,7 @@ try {
   const pictures = [
     paperLoaded,
     loadSuppliedPortraits(state.units.map((u) => u.id), () => render(), mission.portraits ?? null),
-    loadSuppliedTitleCard(mission.titleCard),
+    loadSuppliedTitleCard(mission.titleCard, mission.titleCardLettered ?? true),
     loadSuppliedAircraft(),
     loadSuppliedBlast(),
     loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes)),

@@ -17,7 +17,7 @@ const PLAYS = ['playable', 'draft'];
 export const canPlay = (m) => PLAYS.includes(m?.status);
 
 // The mission's own phrases, which the engine's text needs (SPEC.md §10).
-const WORDS = ['lineGoesDead', 'lineIsDown', 'diversionKicker', 'diversionLog'];
+const WORDS = ['lineGoesDead', 'lineIsDown', 'diversionName', 'diversionKicker', 'diversionLog'];
 
 /**
  * The win conditions, in the same spirit as the trait hooks: a short
@@ -84,6 +84,8 @@ export function validateMissions(json, url = 'data/missions.json') {
         if (part[key] !== undefined && (typeof part[key] !== 'object' || part[key] === null || Array.isArray(part[key]))) throw new Error(`${where} levels.${id}.${key} must be an object`);
       }
     }
+    if (m.diversionSound !== undefined && (typeof m.diversionSound !== 'string' || !m.diversionSound)) throw new Error(`${where} "diversionSound" must name a sound cue`);
+    if (m.titleCardLettered !== undefined && typeof m.titleCardLettered !== 'boolean') throw new Error(`${where} "titleCardLettered" must be true or false`);
     if (typeof m.endSounds?.success !== 'string' || typeof m.endSounds?.otherwise !== 'string') {
       throw new Error(`${where} "endSounds" needs "success" and "otherwise" cues`);
     }

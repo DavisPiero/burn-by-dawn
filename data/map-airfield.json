@@ -503,6 +503,8 @@
       11
     ]
   ],
+  "_diversionRun": "M31, art only: the jeep raid (the mission's diversion) drives this line along the second row (the top one clips it), outside the north wire, east to west, from off the board to off it, its guns toward the field.",
+  "diversionRun": { "from": [19, 1], "to": [-2, 1], "art": "jeep" },
   "exfilArt": "trucks",
   "dropCueAt": [7.2, 5.5],
   "exfilNoteNudge": [-4.25, 0],
