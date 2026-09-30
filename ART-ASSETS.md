@@ -73,6 +73,11 @@ code change, and uses its own drawn portrait for any file that is missing.
 Names: holloway, fitch, vance, barrow, speers, nunn — the trooper's `id` in
 `data/roster.json`, so a seventh man's portrait is named after his id.
 
+A mission may have the six in its own kit (M29b): `portraits` in `data/missions.json` names
+a folder with the same file names, tried before `/assets/portraits/` man by man. The
+airfield's is `/assets/portraits/desert/` (ART-PROMPTS.md Priority 12): the same sizes and
+rules, on a desert-ochre background.
+
 A trooper with no portrait of his own is drawn with `portrait-fallback-full` and
 `portrait-fallback-chip`, which live in code and are not to be supplied: they are what
 keeps a seventh man a JSON entry until someone draws him. (Until M25 each of the six
@@ -245,7 +250,14 @@ and the ground along the bottom fifth. Without the file, code draws its own nigh
 Since M27 each playable mission names its own title card in `data/missions.json`
 (`titleCard`); France's is `assets/title/title-card.jpg`. A new mission's is the same
 size and format, dropped beside it under its own name. The contents page opens under
-the game's card, France's.
+the game's card, France's. The airfield's will be `assets/title/title-card-airfield.jpg`
+(ART-PROMPTS.md Priority 13), wired in M31.
+
+**Contents page panels** (M29b, specified, not yet shown): `assets/title/contents-<mission
+id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:2,
+1200 x 800** (no smaller than 600 x 400), JPEG, sRGB, opaque, no text. A small painting
+beside each mission's line on the contents page, shown about 180 x 120 (ART-PROMPTS.md
+Priority 14).
 
 Since M25 the file the game loads is a **1600 x 400** copy at quality 90 (about 200 KB),
 made from the painted 2400 x 600, which is kept beside it as `title-card_full.jpg` and
