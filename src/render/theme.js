@@ -2715,14 +2715,16 @@ const PLACED = new Set();
  * into its <symbol>, so every <use> of it shows the file. `onLoaded` is called
  * after each swap, so the caller can redraw anything that picked a fallback.
  */
-export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
+export function loadSuppliedPortraits(unitIds, onLoaded = () => {}, missionDir = null) {
   const defs = document.getElementById('portrait-fallback-full')?.parentNode;
   if (!defs) return Promise.resolve();
   const loads = [];
   for (const unitId of unitIds) {
     for (const [size, box] of Object.entries(PORTRAIT_FILES.sizes)) {
       const id = `portrait-${unitId}-${size}`;
-      const url = `${PORTRAIT_FILES.dir}/${id}.${box.ext}`;
+      // A mission's own (M29b: the desert's, `portraits` in data/missions.json)
+      // first, then the stick's usual one, so they can come in one at a time.
+      const urls = [missionDir, PORTRAIT_FILES.dir].filter(Boolean).map((dir) => `${dir}/${id}.${box.ext}`);
       let symbol = document.getElementById(id);
       if (!symbol) {
         const { width, height } = spriteSize(`portrait-fallback-${size}`);
@@ -2731,8 +2733,8 @@ export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
         defs.appendChild(symbol);
         PLACED.add(id);
       }
-      loads.push(picture(url).then((ok) => {
-        if (!ok) return;
+      loads.push(firstPicture(urls).then((url) => {
+        if (!url) return;
         symbol.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
         symbol.replaceChildren(svg('image', {
           href: url, x: 0, y: 0, width: box.width, height: box.height, preserveAspectRatio: 'xMidYMid slice',
@@ -2742,6 +2744,12 @@ export function loadSuppliedPortraits(unitIds, onLoaded = () => {}) {
     }
   }
   return Promise.all(loads);
+}
+
+/** The first of these pictures that loads, or null. */
+async function firstPicture(urls) {
+  for (const url of urls) if (await picture(url)) return url;
+  return null;
 }
 
 /** Sprite id for a fuse token: turns left, 1 to 5; longer fuses show 5. */

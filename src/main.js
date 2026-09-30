@@ -2222,7 +2222,7 @@ try {
   // whole rather than filling in bit by bit.
   const pictures = [
     paperLoaded,
-    loadSuppliedPortraits(state.units.map((u) => u.id), () => render()),
+    loadSuppliedPortraits(state.units.map((u) => u.id), () => render(), mission.portraits ?? null),
     loadSuppliedTitleCard(mission.titleCard),
     loadSuppliedAircraft(),
     loadSuppliedBlast(),
