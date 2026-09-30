@@ -30,7 +30,7 @@ import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropT
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -2405,6 +2405,7 @@ try {
     loadSuppliedPortraits(state.units.map((u) => u.id), () => render(), mission.portraits ?? null),
     loadSuppliedTitleCard(mission.titleCard, mission.titleCardLettered ?? true),
     loadSuppliedAircraft(),
+    loadSuppliedVehicle(baseMap.diversionRun?.art),
     loadSuppliedBlast(),
     loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes)),
   ];

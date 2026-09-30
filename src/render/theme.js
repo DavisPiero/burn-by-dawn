@@ -972,6 +972,22 @@ export const DRIVE_BY = {
 };
 export const DRIVE_BY_ART = { jeep: { body: 'vehicle-jeep', flash: 'vehicle-jeep-flash' } };
 
+// A painted vehicle (M31, ART-PROMPTS.md Priority 15): assets/vehicles/<body
+// id>.png, from above, nose to the east, on transparency, replaces the drawn
+// one once it loads; the drawn muzzle flashes stay where the drawn guns end.
+// Only a map with a diversionRun asks for one. A missing file is fine.
+export const VEHICLE_FILES = { dir: 'assets/vehicles', size: 60 };
+
+export function loadSuppliedVehicle(art) {
+  const body = DRIVE_BY_ART[art]?.body;
+  if (!body) return Promise.resolve();
+  const url = `${VEHICLE_FILES.dir}/${body}.png`;
+  return picture(url).then((ok) => {
+    if (!ok) return;
+    document.getElementById(body)?.replaceChildren(svg('image', { href: url, x: 0, y: 0, width: VEHICLE_FILES.size, height: VEHICLE_FILES.size }));
+  });
+}
+
 // Before a run is picked (M16, the operator's): a faint grey Dakota flies each
 // drop line over and over, staggered, so the lines read as flight paths.
 // Display only and silent.

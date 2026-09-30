@@ -237,7 +237,9 @@ gives the full cost and, when it cannot be used, why not.
   `leader` flag, not a trait. Calling it forfeits the clean-run score (§10). **In a
   pickle** (`diversion.prompt`: the garrison Alarmed, two men in contact at once, or a
   wounded man in contact) the button turns red and says to call it now, and the turn
-  card says so second only to a charge about to blow.
+  card says so second only to a charge about to blow. Its name is the mission's
+  (`words.diversionName`): the airfield's is a **jeep raid** on the north wire, the same
+  rule.
 
 ### Desktop interaction
 
@@ -734,8 +736,9 @@ contents page prints them. A mission is data only, and no code asks which is on:
   `destroyCount` (any `count` objectives of one `kind`). Success is the win condition met
   and `minimumOut` men out by dawn; withdrawal counts the charges short of it.
 - Its own words live with it: the orders' opening line, the tagline under the title card,
-  the phrases for its cut line and the RAF diversion's card and log line, its title card
-  and its back-page sounds. A `dialogue` patch may replace any of the men's lines for it;
+  the phrases for its cut line and the diversion's name, card and log line, its title card
+  (the game's, France's, until its own is painted; `titleCardLettered` false if the title
+  is not painted in), the diversion's sound and its back-page sounds. A `dialogue` patch may replace any of the men's lines for it;
   they are still the one roster.
 - The map's `primary` flag is asked for only by `destroyPrimary`, which wants exactly one;
   a `destroyCount` map has none, and at least `count` of its kind. The target rings, the
@@ -980,7 +983,9 @@ board must read at a glance.
   men puts it away and selects him, any other click only puts it away. A box on the card
   turns the turn cards off for the session; the orders still open on a new game.
 - **The RAF diversion** flies the Dakota across the board over the garrison (display only,
-  skipped by any key or click), its engines heard half a second first, then a card headed
+  skipped by any key or click), its engines heard half a second first; where the map gives
+  a `diversionRun` (the airfield), the vehicle its `art` names (a jeep, guns flashing)
+  drives that line on the ground instead; then a card headed
   in the diversion's blue says what it did and what calls are left.
 - **The back page** (§10) is headed by the title card, smaller. Play again starts a new
   mission without a reload, and the orders open again.
@@ -1066,7 +1071,10 @@ and a muffled cough for a silenced shot. The Dakota drones over the drop and the
 flyover, cut short if the drop is skipped. The one exception to the table: a turn with a
 bang plays a real explosion, close, loud, low and slow. The back page rings the village
 church's bells, upward to the top bell, for a mission accomplished, and tolls a single
-bell with a siren far off for one withdrawn or failed.
+bell with a siren far off for one withdrawn or failed. A mission names its own back-page
+and diversion sounds: the airfield's jeep raid is an engine going by and bursts of fire,
+its success the trucks pulling away with crumps behind them, the rest its own air-raid
+siren close by (made in code until recordings are supplied).
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
 choice, fading at the jump and never between turns. A new game brings it back from the
@@ -1090,9 +1098,10 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M31**, the airfield's words, sounds and art hand-off (§13). M28 to M30b are done: the
-airfield is on the board as a draft, `?mission=airfield`, with its two new rules and its
-balance. v1.0 is tagged. The airfield's milestones, M28 to M31, are listed in §13.
+**M31**, the airfield's words, sounds and art hand-off (§13): built, waiting on the
+operator's review; then the airfield's status becomes `playable`. M28 to M30b are done:
+the airfield is on the board as a draft, `?mission=airfield`, with its two new rules and
+its balance. v1.0 is tagged. The airfield's milestones, M28 to M31, are listed in §13.
 
 ### Done
 
@@ -1347,6 +1356,30 @@ proof is the same as M27's: France's bot `--json` output is byte-for-byte unchan
 - **A `draft` status**: printed and stamped on the contents page like a coming mission,
   but `?mission=<id>` opens it, so the operator can try it on the live site before it is
   announced.
+
+### Its words, sounds and pictures (M31)
+
+Placeholder copy for the operator to reword; all of it data in `missions.json` and the map.
+
+- **The orders** say the two rules where a mission has them: every charge takes a timer
+  (the keys, the default, why a long one), and what a target that sets off its
+  neighbours takes ("the BOWSER sets off the 2 Ju 52s beside it: 3 targets for one
+  charge, and one bang"). Targets of one name are said once in the charges line
+  ("Stukas 1 each, its point"). The **turn card** adds "then pick a timer" to the first
+  turns' charge hint, and names what the bowser sets off while it stands.
+- **The diversion** is a **jeep raid**: "JEEP RAID" on the button and card, "JEEPS ON THE
+  NORTH WIRE", "jeeps shoot up the north wire" in the log. A jeep drives the scrub
+  outside the north wire, east to west, guns flashing at the field (the map's
+  `diversionRun`, art only), to an engine and four bursts of fire (`jeepRaid`).
+- **The six's lines**: only those naming France or its ground change (Fitch's cabbages
+  and dirt, Vance's church, Barrow's trees, bridge and mud).
+- **The back page**: the trucks pulling away with crumps behind them for success
+  (`desertVictory`), the landing ground's siren for the rest (`desertDefeat`).
+- **Its title card** is `assets/title/title-card-airfield.jpg` (ART-PROMPTS Priority 13);
+  France's shows until it is there. The tagline stays SIX MEN · EIGHT AIRCRAFT · DAWN AT
+  TWENTY.
+- The paintings and recordings it wants are in ART-PROMPTS.md (Priorities 13, 15, 16);
+  every one has a drawn or made stand-in, so none holds up `playable`.
 
 ### Milestones for the airfield
 

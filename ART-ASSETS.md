@@ -215,6 +215,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |
 | `aircraft-dakota.svg` | 120 x 120 (a C-47 from above, **nose to the east**, invasion stripes; flown across the board at the drop, SPEC.md §11). **Or a painted PNG**, `/assets/aircraft/aircraft-dakota.png`, 512 x 512, transparent, the same view — it replaces the drawn one on load, and its shadow is made from it (see ART-PROMPTS.md) |
 | `aircraft-dakota-shadow.svg` | 120 x 120 (the same silhouette, one flat fill; printed faint on the ground below it) |
+| `vehicle-jeep.svg`, `vehicle-jeep-flash.svg` | 60 x 60 (M31: the airfield's diversion, a jeep raid driven along the north scrub, SPEC.md §13. From above, **nose to the east**, sand-painted, two men aboard, jerrycans and spare wheel behind, twin guns over its **left** side; the flash is two fire-orange bursts at the muzzles, blinked by code. *Drawn by code.* **Or a painted PNG**, `/assets/vehicles/vehicle-jeep.png`, 512 x 512, transparent, the same view: it replaces the drawn jeep on load, and the drawn flashes stay where the drawn guns end, about (325, 110) and (155, 160) of the 512, so paint the guns there) |
 | `parachute-canopy.svg` | 40 x 40 (an open canopy from above, in the air — distinct from `marker-parachute`, which is spent on the ground) |
 | `parachute-canopy-shadow.svg` | 40 x 40 (its silhouette, one flat fill) |
 
@@ -251,7 +252,9 @@ Since M27 each playable mission names its own title card in `data/missions.json`
 (`titleCard`); France's is `assets/title/title-card.jpg`. A new mission's is the same
 size and format, dropped beside it under its own name. The contents page opens under
 the game's card, France's. The airfield's will be `assets/title/title-card-airfield.jpg`
-(ART-PROMPTS.md Priority 13), wired in M31.
+(ART-PROMPTS.md Priority 13), wired in M31: until the file is there the airfield shows
+France's. If it is painted without the title, set `titleCardLettered: false` on the
+airfield in `data/missions.json` and code sets BURN BY DAWN over it.
 
 **Contents page panels** (M29b, specified, not yet shown): `assets/title/contents-<mission
 id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:2,
@@ -326,6 +329,9 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12), rising to the top bell (M15) | ~4–7 s |
 | `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
+| `jeep.mp3` | the airfield's jeep raid (M31): a jeep going by fast, engine revving, wheels on stones; the cue lays four bursts of `gunfire` over it | ~3 s |
+| `truck.mp3` | the airfield's back page, mission accomplished (M31): a lorry, or two, starting up and pulling away, fading into the distance; the cue adds two far crumps behind | ~4–5 s |
+| `siren.mp3` | the airfield's back page, withdrawn or failed (M31): an air-raid siren close by, winding up, wailing and winding down | ~5–6 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.

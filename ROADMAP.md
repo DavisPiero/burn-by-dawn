@@ -26,8 +26,10 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   the two rules, the bot playing both, and the balance: a West patrol, five aircraft on
   Normal, six on Hard, every run inside the §10 targets; M30b, the operator's desert notes
   (the timer made plain, blasts to come shown, a default timer of 4, a Sand patrol, the
-  desert chips). **Next: M31**, its words,
-  sounds and art hand-off, then `playable`.
+  desert chips); M31 (30 Sep 2026), its words, sounds and art hand-off: the orders explain
+  the timer and the bowser, the diversion is a jeep raid, desert lines and back-page sounds,
+  and the paintings and recordings listed in ART-PROMPTS (13, 15, 16). **Next: the
+  operator's review of M31, then the airfield `playable`.**
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 
