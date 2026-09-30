@@ -5,9 +5,9 @@
 // hard rule 7) — clicks are handed straight back to the caller.
 
 import { timesWord } from '../hints.js';
-import { hexDistance } from '../hex.js';
+import { axialToPixel, hexDistance } from '../hex.js';
 import { columnOf, moveCostAt, terrainAt } from '../map.js';
-import { ALERT_STATE, DAWN, DIAL, portraitId } from './theme.js';
+import { ALERT_STATE, DAWN, DIAL, portraitId, timePencilId } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -586,7 +586,10 @@ export function useMissionWords(words) {
 export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
-    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
+    case 'spotted': return event.bumped
+      // Walked into (M31d): found whatever his cover, and nothing to do with dots.
+      ? `The ${event.enemyLabel.toLowerCase()} runs right into ${event.unitName} in ${at()}: spotted.`
+      : `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
@@ -1059,6 +1062,79 @@ export function renderActions(element, actions, onAction) {
   }
 }
 
+/**
+ * The tin of time pencils (M31d, the operator's): laid on the map in the
+ * corner away from the man setting the charge, so his blast stays in view. A
+ * pencil clicked is lifted out; SET takes the one lifted. `tin` is from
+ * main.js timerTin, or null to put it away. `on` is { pick(fuse), set(), back() }.
+ */
+export function renderTimerTin(element, tin, board, map, on) {
+  element.hidden = !tin;
+  if (!tin) return;
+  // The opposite quarter of the map to the man (board units, so no measuring).
+  const box = board.viewBox.baseVal;
+  const at = axialToPixel(tin.anchor.q, tin.anchor.r, map.hexSize);
+  const east = (at.x - box.x) / box.width > 0.5;
+  const south = (at.y - box.y) / box.height > 0.5;
+  element.classList.toggle('west', east);
+  element.classList.toggle('north', south);
+
+  const stop = (event) => event.stopPropagation();
+  const rows = tin.pencils.map((p) => {
+    const art = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    art.setAttribute('viewBox', '0 0 200 26');
+    art.setAttribute('class', 'tin-pencil-art');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', `#${timePencilId(p.fuse)}`);
+    use.setAttribute('width', '200');
+    use.setAttribute('height', '26');
+    art.appendChild(use);
+    const row = html('button', 'tin-pencil', [
+      art,
+      html('span', 'tin-words', [html('b', null, `${p.fuse} TURN${p.fuse === 1 ? '' : 'S'}`), html('span', null, p.words)]),
+      html('span', 'tin-key', String(p.fuse)),
+    ]);
+    row.type = 'button';
+    row.classList.toggle('lifted', p.lifted);
+    row.classList.toggle('danger', p.danger);
+    row.classList.toggle('struck', !p.ok);
+    row.disabled = !p.ok;
+    row.addEventListener('click', (event) => {
+      stop(event);
+      on.pick(p.fuse);
+    });
+    return row;
+  });
+  const lifted = tin.pencils.find((p) => p.lifted);
+  const set = html('button', 'tin-set', [html('span', null, 'SET'), html('small', null, 'Enter')]);
+  set.type = 'button';
+  set.disabled = !lifted;
+  set.addEventListener('click', (event) => {
+    stop(event);
+    on.set();
+  });
+  const back = html('button', 'tin-back', 'Back · Esc');
+  back.type = 'button';
+  back.addEventListener('click', (event) => {
+    stop(event);
+    on.back();
+  });
+  element.replaceChildren(
+    html('div', 'tin-lid', [html('span', 'tin-make', 'SWITCH, DELAY, No. 10'), html('span', 'tin-name', 'TIME PENCILS')]),
+    html('div', 'tin-card', [
+      html('div', 'tin-head', [html('b', null, 'SET THE TIMER'), html('span', null, tin.title)]),
+      html('div', 'tin-rows', rows),
+      html('div', 'tin-foot', [
+        html('span', 'tin-say', lifted ? `Goes off at the end of turn ${lifted.blows}.` : 'Pick a pencil.'),
+        back,
+        set,
+      ]),
+    ]),
+  );
+  element.onclick = stop;
+  element.onmousedown = stop;
+}
+
 // --- traits in words (used by roster.js) ----------------------------------------
 
 // How a hook stat reads to a player. A stat missing here still renders, by
@@ -1168,8 +1244,10 @@ export function renderReadout(element, state, map, view) {
     const own = view.plan?.steps === 0;
     const verdict = own ? riskVerdict(view.plan, view.risk) : null;
     const blast = own ? view.blastLabel : null;
-    renderRows(element, m.head.toUpperCase(), m.stamp ?? verdict, m.note, [
+    const into = own ? view.walkIntoLabel : null;
+    renderRows(element, m.head.toUpperCase(), m.stamp ?? (into ? WALKED_INTO_STAMP : verdict), m.note, [
       blast && { label: 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
+      into && { label: 'FOUND', text: into, tone: 'danger' },
       ...(own ? riskRows(view.riskLabel, verdict) : []),
       own && { label: 'HIDE', text: view.hideLabel },
       ...m.rows,
@@ -1212,10 +1290,14 @@ export function renderReadout(element, state, map, view) {
   // The ground's name goes beside it when the headline names what stands on it.
   if (view?.site?.title) parts.unshift(terrain.label.toLowerCase());
   // The ground in the headline's spare room, not a row of its own (M22: room).
-  renderRows(element, head.toUpperCase(), blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : verdict, parts.join(' · '), [
+  const into = view?.walkIntoLabel;
+  const stamp = blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : into && verdict?.tone !== 'danger' ? WALKED_INTO_STAMP : verdict;
+  renderRows(element, head.toUpperCase(), stamp, parts.join(' · '), [
     { label: 'LANDING', text: view?.dropLabel },
     { label: 'MOVE', text: view?.moveLabel },
     blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
+    // A patrol walks into him here (M31d): after the dots, so said on its own.
+    into && { label: 'FOUND', text: into, tone: 'danger' },
     ...riskRows(view?.riskLabel, verdict),
     // Stabilise or Pass is open to him (M26); only while he is not off on a move.
     { label: 'AID', text: !view?.plan || view.plan.steps === 0 ? view?.aidLabel : null, tone: 'prompt' },
@@ -1252,6 +1334,9 @@ function renderRows(element, head, stamp, note, rows) {
     if (element.scrollHeight <= element.clientHeight) break;
   }
 }
+
+/** The stamp for a move that ends where a patrol will walk into him (M31d). */
+const WALKED_INTO_STAMP = { word: 'SPOTTED', tone: 'danger' };
 
 /** A move's risk as two rows: how it goes, then the sum beside the dots. */
 function riskRows(risk, verdict) {

@@ -89,9 +89,12 @@
 
   "_patrols": "How the alert states move patrols (SPEC.md §6). Suspicious: a patrol stops to sweep on every `suspiciousPauseEvery`-th turn and walks on the others — read literally, 'pause and sweep' would freeze patrols for the rest of the mission once an explosion pins the alert at Suspicious. A sweep turns the patrol `sweepRotation` hex directions (3 is an about-face). Who reacts to a noise is decided by `noise` below, not by the state. Alarmed: every moving enemy hunts the last known contact; whoever reaches it sweeps, the contact counts as searched, and everyone goes back to their route. M13b: `sweepRotation` 1 (60°, was 3, an about-face): playtesters found enemies swinging round to watch whole new stretches of the map between turns.",
 
+  "_walkIntoMen": "M31d, the operator's: a moving enemy plans its walk as if our men were not there, and one whose next step is onto a man stops beside him, turns to face him and has found him: he is spotted (in contact, +alert.spotted if he was not already), whatever his cover or hiding. It was: enemies walked round a man in their way, as round a rock. False puts that back.",
+
   "patrols": {
     "suspiciousPauseEvery": 2,
-    "sweepRotation": 1
+    "sweepRotation": 1,
+    "walkIntoMen": true
   },
 
   "_noise": "SPEC.md §6 'the dial is global, the reaction is local'. Every noise happens at a hex and is heard within this many hexes (plus the alert state's hearingBonus), by distance alone: walls do not stop sound. Patrols in earshot walk to it, sweep and go back to their route; sentries cannot leave their post, so they turn to face it for one turn. `found` is a body or a parachute an enemy came onto or beside, on its way or where it ended its go. A sighting is not a noise: the spotters hold their man, and nobody else comes. An explosion is heard from its objective in the enemy phase after it goes off. M13b: a thrown stone turns the sentries in earshot at once, in the player phase, and they hold that facing through the detection check and back to their post in the enemy phase; patrols still walk over in the enemy phase.",

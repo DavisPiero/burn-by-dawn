@@ -161,6 +161,17 @@ function risk(map, state, unit, path, endHidden) {
   return { spotted, shot };
 }
 
+// Would a patrol walk into him if he ended his move on `hex` (M31d,
+// patrols.walkIntoMen)? The readout's FOUND row, worked out the same way: the
+// detection check and enemy phase the turn would do. The bot heeds it as it
+// heeds the dots. Nothing to heed with the rule off.
+function walkedInto(map, state, unit, hex) {
+  if (!rules.patrols.walkIntoMen) return false;
+  const trial = { ...state, units: state.units.map((u) => (u.id === unit.id ? { ...u, q: hex.q, r: hex.r } : u)) };
+  const after = E.runEnemyPhase(E.runDetection(trial, map, rules).state, map, rules);
+  return after.events.some((e) => e.kind === 'spotted' && e.bumped && e.unitId === unit.id);
+}
+
 // The hunter's target and where to stand to take it (M26): the nearest killable
 // enemy; for a gunner, the enemy's own hex (the distance field leads him to it
 // and he fires as soon as he is in range); for anyone else, the hexes beside it
@@ -329,6 +340,7 @@ function actFor(state, unit, map) {
       path = [...unit.trail, ...plan.path.slice(1)];
     }
     const apLeft = unit.ap - (plan ? plan.total : 0);
+    const into = !SB.isExfil(map, c) && walkedInto(map, state, unit, c);
     for (const hide of [false, true]) {
       if (hide && (apLeft < hideCost || unit.hidden)) continue;
       const r = risk(map, state, unit, path, hide || (c === here && unit.hidden));
@@ -340,7 +352,8 @@ function actFor(state, unit, map) {
       const left = rules.turnLimit - state.turn;
       const done = MI.winMet(state, rules) || !assign.has(unit.id);
       const urgency = done ? Math.min(1, left / 6) : Math.min(1, Math.max(0.2, (left - 8) / 6));
-      if (r.spotted && !unit.inContact) score += 45 * urgency;
+      if ((r.spotted || into) && !unit.inContact) score += 45 * urgency;
+      if (into && unit.inContact) score += 5;
       if (r.shot === 'hit') score += 400;
       if (r.shot === 'pinned') score += 60 * urgency;
       if (r.spotted && unit.inContact && !r.shot) score += 5;

@@ -694,6 +694,9 @@ export const HIGHLIGHT = {
 // The lengths a fuse token's face can be divided into (M30: the airfield's
 // time pencils run to 6 turns; France's fuse is 3, Dutch's 2).
 export const FUSE_LENGTHS = [1, 2, 3, 4, 5, 6];
+// The time pencils' safety strips, shortest to longest (M31d): the No. 10's
+// black, red, white, green, yellow and blue, in the palette's own colours.
+const TIME_PENCIL_COLOURS = ['ink', 'red', 'paper', 'green', 'ochre', 'blue'];
 
 export const MARKER = {
   size: 22,
@@ -2686,6 +2689,31 @@ const SPRITES = {
       ];
     },
   }]))),
+  // Time pencils (M31d, the operator's: the timer as a period object). The
+  // No. 10 delay switch as it was issued in its tin: a crimped copper tube
+  // over the acid ampoule, the safety strip in the length's colour, then the
+  // brass striker body with its inspection hole. Coloured by length as the
+  // real ones were, shortest to longest: black, red, white, green, yellow,
+  // blue (the yellow in desert ochre: only the airfield has pencils).
+  ...Object.fromEntries(TIME_PENCIL_COLOURS.map((colour, i) => [`time-pencil-${i + 1}`, {
+    viewBox: '0 0 200 26',
+    draw: () => [
+      // Its shadow on the tin's card, down and to the right as the counters'.
+      svg('rect', { x: 8, y: 11, width: 188, height: 11, rx: 4, class: 'ink', 'fill-opacity': 0.18 }),
+      // The copper tube, crimped at its end over the ampoule.
+      ...inked('M6 13 Q6 8 11 8 H112 V18 H11 Q6 18 6 13 Z', 'paper', 1.4),
+      fill('M6 13 Q6 8 11 8 H112 V18 H11 Q6 18 6 13 Z', toneClass('fire', 35)),
+      line('M15 8.5 V17.5 M18.5 8.5 V17.5 M22 8.5 V17.5', 1.1),
+      // The safety strip, in the colour that says how long it runs.
+      ...inked('M112 7 H130 V19 H112 Z', colour, 1.4),
+      ...inked('M117 19 H125 V24.5 H117 Z', colour, 1.2),
+      // The brass striker body and its inspection hole, then the end fitting.
+      ...inked('M130 9 H184 V17 H130 Z', 'paper', 1.4),
+      fill('M130 9 H184 V17 H130 Z', toneClass('ink', 20)),
+      circle(152, 13, 2.1, 'ink'),
+      ...inked('M184 10 H194 Q196 10 196 12 V14 Q196 16 194 16 H184 Z', 'ink', 1.2),
+    ],
+  }])),
   // A comic starburst, one frame; board.js does the stepped reveal.
   // Blood, as the annual would print it (M16): a spot-red splat, halftoned,
   // inked round, with droplets thrown off it. The knife's burst, and drawn
@@ -2932,6 +2960,11 @@ export function loadSuppliedPortraits(unitIds, onLoaded = () => {}, missionDir =
 async function firstPicture(urls) {
   for (const url of urls) if (await picture(url)) return url;
   return null;
+}
+
+/** Sprite id for the time pencil of this many turns (M31d): 1 to 6 by colour. */
+export function timePencilId(fuse) {
+  return `time-pencil-${Math.min(TIME_PENCIL_COLOURS.length, Math.max(1, fuse))}`;
 }
 
 /**

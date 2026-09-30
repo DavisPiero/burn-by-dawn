@@ -36,7 +36,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderContentsBack, renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  renderContentsBack, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -58,6 +58,7 @@ const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
 const restartButton = document.getElementById('restart');
 const contentsBackButton = document.getElementById('contents-back');
+const timerTinBox = document.getElementById('timer-tin');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
@@ -154,6 +155,9 @@ let undoStack = [];
 // charge, while he picks its length; null otherwise. Where it is shown, not
 // what happens, so it lives here and not in the game state.
 let pencilsFor = null;
+// The pencil lifted out of the tin (M31d): picked by a click or its number,
+// set by SET, Enter or C. The one offered first when the tin opens.
+let pencilLifted = null;
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
@@ -311,6 +315,7 @@ function deriveView() {
     aidTargetIds: null,
     manReadout: null,
     blastLabel: null,
+    walkIntoLabel: null, // M31d: the enemy that would walk into him where the move ends
     noiseLabel: null,
     searchLabel: null,
     mission: describeMissionState(),
@@ -323,6 +328,7 @@ function deriveView() {
     strikeShow,
     targetRings: null,
     timerCue: null,
+    timerTin: null, // M31d: the tin of time pencils, while its timers are open
     dropCue: null,
     selectCue: false,
   };
@@ -428,8 +434,9 @@ function deriveView() {
     // And in the pen lettering beside him on the map (M31, the operator's).
     const open = pencils(state, unit, rules).filter((p) => !p.afterDawn).map((p) => p.fuse);
     view.timerCue = { q: unit.q, r: unit.r, target: objective.hexes, range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}` };
-    view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: how many turns until it goes off? Press a number, or click a timer below; Enter or C takes the one marked. `
+    view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: pick a time pencil from the tin, how many turns until it goes off, then SET. A number picks one, Enter or C sets it. `
       + 'The red ground is its blast: every man must be off it by then. Esc: don\'t set it.';
+    view.timerTin = timerTin(unit, objective);
     return view;
   }
   // Over an enemy, what the selected man can do to it, and why not (M26d: a
@@ -472,6 +479,9 @@ function deriveView() {
       const later = laterBlasts(state, rules).filter((b) => blastEffect([b], end)).sort((a, b) => a.blows - b.blows)[0];
       if (later) view.blastLabel = `BLAST — to come: the ${later.label} goes up at the end of turn ${later.blows} with this ground in its blast; get him clear by then`;
     }
+    // Walked into where he stops (M31d): worked out as the turn would do it.
+    const into = isExfil(baseMap, end) ? null : walkedIntoAt(unit, end, plan.steps > 0);
+    if (into) view.walkIntoLabel = `the ${into.toLowerCase()} runs right into him here in its move: SPOTTED, whatever his cover`;
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
     // Not where nobody can see him: hiding would add nothing (M22: room).
@@ -479,6 +489,25 @@ function deriveView() {
     if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `[H] ${hideEffect(unit)}`;
   }
   return view;
+}
+
+/**
+ * Which enemy would walk into this man (M31d, patrols.walkIntoMen) if he
+ * ended his move on `end` and the turn ended now, or null: the detection
+ * check and enemy phase the turn will do, so the readout warns before it
+ * happens. Kept for the state and hex it was worked out on.
+ */
+let walkedIntoCache = { state: null, key: null, label: null };
+function walkedIntoAt(unit, end, moved) {
+  if (!rules.patrols.walkIntoMen) return null;
+  const key = `${unit.id}|${end.q},${end.r}|${moved}`;
+  if (walkedIntoCache.state === state && walkedIntoCache.key === key) return walkedIntoCache.label;
+  const there = { ...unit, q: end.q, r: end.r, hidden: moved ? false : unit.hidden };
+  const trial = { ...state, units: state.units.map((u) => (u.id === unit.id ? there : u)) };
+  const after = runEnemyPhase(runDetection(trial, map, rules).state, map, rules);
+  const label = after.events.find((e) => e.kind === 'spotted' && e.bumped && e.unitId === unit.id)?.enemyLabel ?? null;
+  walkedIntoCache = { state, key, label };
+  return label;
 }
 
 /**
@@ -994,37 +1023,59 @@ function pencilsOpen(unit) {
 }
 
 /**
- * The time pencils as the action strip (SPEC.md §7, M30), called timers on
- * screen (M30b, the operator's word): a heading saying what to do, then one
- * button a length, its key the number, "4 turns" over "on turn 19"; the one
- * offered first marked, and taken by C or Enter; one that would catch a man
- * who cannot get clear of the blast in time marked TOO SHORT and naming him;
- * one that would go off after dawn struck out. Esc, or Back, puts them away.
+ * The tin of time pencils (SPEC.md §7; M31d, the operator's: the timer as a
+ * period object, pick one then SET): one pencil a length, coloured as the
+ * No. 10's were, with the turn it goes off; the one lifted is the one SET
+ * takes, the one offered first when it opens; one that would catch a man who
+ * cannot get clear of the blast in time says TOO SHORT and names him; one
+ * that would go off after dawn is struck out and cannot be picked.
  */
-function pencilActions(unit) {
-  const offered = offeredPencil(state, map, unit, rules);
-  const objective = objectiveForChargeHex(state.objectives, unit);
+function timerTin(unit, objective) {
   const choices = pencils(state, unit, rules);
   const open = choices.filter((p) => !p.afterDawn).map((p) => p.fuse);
-  const buttons = choices.map((p) => {
-    const caught = p.afterDawn ? [] : caughtBy(state, map, unit, objective, p.fuse, rules);
-    const warning = caught.length ? ` TOO SHORT: ${listNames(caught)} could not get clear of the red ground in time.` : ' Every man can get clear of the red ground in time.';
-    return {
-      id: `pencil-${p.fuse}`, key: String(p.fuse), label: `${p.fuse}-turn timer`, short: `${p.fuse} turn${p.fuse === 1 ? '' : 's'}`,
-      // "blows turn 17" overflowed a button three across at 1280.
-      apLabel: p.afterDawn ? 'after dawn' : caught.length ? 'too short!' : `on turn ${p.blows}`,
-      ok: !p.afterDawn, struck: p.afterDawn, danger: caught.length > 0, active: p.fuse === offered?.fuse,
-      reason: 'it would go off after dawn, with the stick still waiting for it',
-      cost: `${checkPlaceCharge(state, unit, rules, p.fuse).cost} AP; it goes off at the end of turn ${p.blows}`,
-      help: `Set the charge to go off in ${p.fuse} turn${p.fuse === 1 ? '' : 's'}, this one included: at the end of turn ${p.blows}.${p.afterDawn ? '' : warning}${p.fuse === offered?.fuse ? ' C or Enter takes this one.' : ''}`,
-    };
-  });
-  const range = open.length > 1 ? `${open[0]}–${open[open.length - 1]}` : `${open[0] ?? ''}`;
+  const lifted = open.includes(pencilLifted) ? pencilLifted : offeredPencil(state, map, unit, rules)?.fuse ?? null;
+  return {
+    anchor: { q: unit.q, r: unit.r },
+    title: `CHARGE ON THE ${objective.label.toUpperCase()}`,
+    range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}`,
+    pencils: choices.map((p) => {
+      const caught = p.afterDawn ? [] : caughtBy(state, map, unit, objective, p.fuse, rules);
+      return {
+        fuse: p.fuse,
+        blows: p.blows,
+        words: p.afterDawn ? 'after dawn' : caught.length ? `too short: ${listNames(caught)}` : `on turn ${p.blows}`,
+        ok: !p.afterDawn,
+        danger: caught.length > 0,
+        lifted: p.fuse === lifted,
+      };
+    }),
+    lifted,
+  };
+}
+
+/**
+ * The action strip while the tin is open (M31d): what to do, SET for the
+ * pencil lifted, and Back. The pencils themselves are in the tin on the map.
+ */
+function pencilActions(unit) {
+  const tin = timerTin(unit, objectiveForChargeHex(state.objectives, unit));
+  const lifted = tin.pencils.find((p) => p.lifted);
   return [
-    { heading: `SET THE TIMER: PRESS ${range}` },
-    ...buttons,
-    { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the timers away without setting the charge' },
+    { heading: `SET THE TIMER: PICK A PENCIL (${tin.range}), THEN SET` },
+    {
+      id: 'pencil-set', key: 'Enter', label: 'Set the charge', short: 'SET', apLabel: lifted ? `${lifted.fuse} turns` : 'no pencil',
+      ok: Boolean(lifted), active: Boolean(lifted), danger: Boolean(lifted?.danger),
+      reason: 'pick a pencil first', cost: lifted ? `${checkPlaceCharge(state, unit, rules, lifted.fuse).cost} AP; it goes off at the end of turn ${lifted.blows}` : 'nothing',
+      help: lifted ? `Set the charge with the ${lifted.fuse}-turn pencil: it goes off at the end of turn ${lifted.blows}.` : 'Pick a pencil in the tin first',
+    },
+    { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the tin away without setting the charge' },
   ];
+}
+
+/** Lift a pencil out of the tin (M31d): the one SET will take. */
+function liftPencil(unit, fuse) {
+  const pencil = pencils(state, unit, rules).find((p) => p.fuse === fuse);
+  if (pencil && !pencil.afterDawn) pencilLifted = fuse;
 }
 
 function listNames(names) {
@@ -1034,6 +1085,7 @@ function listNames(names) {
 /** Set the charge with this pencil, or the one offered first. */
 function setCharge(unit, fuse) {
   pencilsFor = null;
+  pencilLifted = null;
   commit(placeCharge(state, unit.id, rules, fuse ?? offeredPencil(state, map, unit, rules)?.fuse));
 }
 
@@ -1197,6 +1249,11 @@ function render() {
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
+  renderTimerTin(timerTinBox, view.timerTin, svg, map, {
+    pick: (fuse) => handleAction(`pencil-${fuse}`),
+    set: () => handleAction('pencil-set'),
+    back: () => handleAction('pencil-back'),
+  });
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
@@ -1454,13 +1511,20 @@ function handleAction(id) {
     case 'charge':
       // Time pencils (M30): C opens them, and C again takes the default.
       if (rules.charges.fuseChoice && !pencilsOpen(unit)) {
-        if (checkPlaceCharge(state, unit, rules).ok) pencilsFor = unit.id;
+        if (checkPlaceCharge(state, unit, rules).ok) {
+          pencilsFor = unit.id;
+          pencilLifted = offeredPencil(state, map, unit, rules)?.fuse ?? null;
+        }
       } else {
-        setCharge(unit);
+        setCharge(unit, pencilLifted ?? undefined);
       }
+      break;
+    case 'pencil-set':
+      if (pencilsOpen(unit) && pencilLifted != null) setCharge(unit, pencilLifted);
       break;
     case 'pencil-back':
       pencilsFor = null;
+      pencilLifted = null;
       break;
     case 'cut': {
       const before = state;
@@ -1492,8 +1556,9 @@ function handleAction(id) {
       break;
     }
     default:
+      // A pencil clicked in the tin is lifted, not set (M31d): SET sets it.
       if (!id.startsWith('pencil-') || !pencilsOpen(unit)) return;
-      setCharge(unit, Number(id.slice('pencil-'.length)));
+      liftPencil(unit, Number(id.slice('pencil-'.length)));
   }
   render();
 }
@@ -1595,7 +1660,7 @@ function alarmReasons() {
   const place = (h) => placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), h);
   const add = (id, words) => reasons.set(id, [...(reasons.get(id) ?? []), words]);
   for (const e of state.report) {
-    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `spotted ${e.unitName} in ${place(e)}` });
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `${e.bumped ? 'ran right into' : 'spotted'} ${e.unitName} in ${place(e)}` });
     if (e.kind === 'bodyFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s body in ${place(e)}` });
     if (e.kind === 'parachuteFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s parachute in ${place(e)}` });
   }
@@ -1626,7 +1691,10 @@ function describeGarrisonShow(after) {
   const msPerHex = GARRISON_SHOW.msPerHex[rules.alert.states[alertIndex(after.alert.points, rules)].id];
   const alarmed = new Map();
   for (const e of after.report) {
-    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
+    // One that walked into a man (M31d) finds him at the end of its walk.
+    if (e.kind === 'spotted' && e.bumped) {
+      for (const id of e.enemyIds ?? []) alarmed.set(id, (after.enemies.find((x) => x.id === id)?.walked?.length ?? 0) * msPerHex);
+    } else if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
     if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
       const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
       alarmed.set(e.enemyId, walked * msPerHex);
@@ -1888,7 +1956,7 @@ function describeBriefing(which, view) {
     // when charges take one, and whatever sets off its neighbours.
     const choice = rules.charges.fuseChoice;
     const timerLine = choice
-      ? `Every charge takes a timer: after C, press ${choice.min}–${choice.max} for that many turns, or Enter for ${rules.charges.fuseTurns}. A long timer lets charges set over several turns go off together, with the stick already on its way out.`
+      ? `Every charge takes a timer: after C, pick a time pencil from the tin (${choice.min}–${choice.max} turns; ${rules.charges.fuseTurns} is offered first), then SET. A long timer lets charges set over several turns go off together, with the stick already on its way out.`
       : null;
     const setterLines = state.objectives.filter((o) => setsOffList(o).length).map((o) => {
       const caught = setsOffList(o);
@@ -2198,19 +2266,20 @@ function handleKey(event) {
   // the default, Esc backs out; any other key puts them away and does its own.
   const setter = selectedUnit(state);
   if (pencilsOpen(setter)) {
+    // A number lifts that pencil out of the tin; Enter or C sets the one lifted (M31d).
     if (/^[0-9]$/.test(key)) {
-      const pencil = pencils(state, setter, rules).find((p) => p.fuse === Number(key));
-      if (pencil && !pencil.afterDawn) setCharge(setter, pencil.fuse);
+      liftPencil(setter, Number(key));
       render();
       return;
     }
     if (key === 'Enter' || key === 'c' || key === 'C') {
       event.preventDefault();
-      setCharge(setter);
+      setCharge(setter, pencilLifted ?? undefined);
       render();
       return;
     }
     pencilsFor = null;
+    pencilLifted = null;
     if (key === 'Escape') {
       render();
       return;
