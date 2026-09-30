@@ -1073,7 +1073,7 @@ bang plays a real explosion, close, loud, low and slow. The back page rings the 
 church's bells, upward to the top bell, for a mission accomplished, and tolls a single
 bell with a siren far off for one withdrawn or failed. A mission names its own back-page
 and diversion sounds: the airfield's jeep raid is an engine going by and bursts of fire,
-its success the trucks pulling away with crumps behind them, the rest its own air-raid
+its success a bugle call, the rest its own air-raid
 siren close by (made in code until recordings are supplied).
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
@@ -1098,10 +1098,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M31**, the airfield's words, sounds and art hand-off (§13): built, waiting on the
-operator's review; then the airfield's status becomes `playable`. M28 to M30b are done:
-the airfield is on the board as a draft, `?mission=airfield`, with its two new rules and
-its balance. v1.0 is tagged. The airfield's milestones, M28 to M31, are listed in §13.
+None chosen. Phase 3 is done: the airfield is `playable`, picked from the contents page
+(M31b). What comes next, the aqueduct (Phase 4), is in ROADMAP.md, to be specified here
+before it is built, as §13 was. v1.0 is tagged.
 
 ### Done
 
@@ -1145,6 +1144,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M29c | The operator's second notes: the desert portraits in; the West run straight down outside the wire; the airfield's notes placed again (the signals note over its patrol, the bowser's named, the exfil's inside its ring) |
 | M30 | The airfield's two new rules, time pencils and the bowser that sets off its neighbours; the bot learns both; the airfield balanced (a West patrol, five aircraft on Normal, six on Hard); France's bot output unchanged |
 | M30b | The operator's desert notes: the timer made two plain steps with its blast shown and too-short timers named, a default of 4, blasts to come drawn; the bowser's hose and the Ju 52's point moved off it; the desert chips; the South tab moved; a Sand patrol; the hunter measured against careful |
+| M31–M31b | The airfield's words and sounds (the orders and turn cards explain the timer and the bowser, the jeep raid, desert lines, a bugle and a siren for the back page) and the art hand-off; the operator's notes: `playable`, the jeep's line clear of counters, the strip's edges, SET THE TIMER in the pen on the map |
 
 ---
 
@@ -1368,13 +1368,22 @@ Placeholder copy for the operator to reword; all of it data in `missions.json` a
   ("Stukas 1 each, its point"). The **turn card** adds "then pick a timer" to the first
   turns' charge hint, and names what the bowser sets off while it stands.
 - **The diversion** is a **jeep raid**: "JEEP RAID" on the button and card, "JEEPS ON THE
-  NORTH WIRE", "jeeps shoot up the north wire" in the log. A jeep drives the scrub
-  outside the north wire, east to west, guns flashing at the field (the map's
-  `diversionRun`, art only), to an engine and four bursts of fire (`jeepRaid`).
+  NORTH WIRE", "jeeps shoot up the north wire" in the log. A jeep drives past outside
+  the wire, guns flashing at the field, to an engine and four bursts of fire (`jeepRaid`).
+  The map's `diversionRun` (art only) offers three lines, the north scrub, the south sand
+  and the west edge, each from off the board to off it; when it is called the jeep takes
+  the one with the fewest counters within 1.2 hex radii, the north on a tie (M31b, the
+  operator's: it drove through chips).
 - **The six's lines**: only those naming France or its ground change (Fitch's cabbages
   and dirt, Vance's church, Barrow's trees, bridge and mud).
-- **The back page**: the trucks pulling away with crumps behind them for success
-  (`desertVictory`), the landing ground's siren for the rest (`desertDefeat`).
+- **The back page**: a bugle call, rising to its top note, for success (`desertVictory`;
+  M31b, the operator's: M31's trucks and crumps sounded like a failure), the landing
+  ground's siren for the rest (`desertDefeat`).
+- **The timers open**: SET THE TIMER / PRESS 2–6 is also lettered in the pen on the map
+  beside the man, on his side away from his target, over any speech (M31b, the
+  operator's).
+- **The strip** has its two edges drawn as thick ink lines the length of it, with the
+  painted centre line between, so it reads as a runway (M31b, the operator's).
 - **Its title card** is `assets/title/title-card-airfield.jpg` (ART-PROMPTS Priority 13);
   France's shows until it is there. The tagline stays SIX MEN · EIGHT AIRCRAFT · DAWN AT
   TWENTY.

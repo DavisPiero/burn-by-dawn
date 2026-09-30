@@ -26,7 +26,7 @@ import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   onBoard, planMove, reachableFor, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
@@ -321,6 +321,7 @@ function deriveView() {
     shotShow,
     strikeShow,
     targetRings: null,
+    timerCue: null,
     dropCue: null,
     selectCue: false,
   };
@@ -423,6 +424,9 @@ function deriveView() {
     // Drawn as a blast is, not a hover's faint preview: this is the ground to get off.
     view.blastArea = new Map([...view.blastArea, ...areaAround(blasts)]);
     view.blastKillArea = new Map([...view.blastKillArea, ...areaAround(blasts.map((b) => ({ ...b, radius: b.killRadius })))]);
+    // And in the pen lettering beside him on the map (M31, the operator's).
+    const open = pencils(state, unit, rules).filter((p) => !p.afterDawn).map((p) => p.fuse);
+    view.timerCue = { q: unit.q, r: unit.r, target: objective.hexes, range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}` };
     view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: how many turns until it goes off? Press a number, or click a timer below; Enter or C takes the one marked. `
       + 'The red ground is its blast: every man must be off it by then. Esc: don\'t set it.';
     return view;
@@ -1425,6 +1429,9 @@ function handleAction(id) {
       // Its engines are heard before it comes into sight (M17): the cue plays now.
       const lead = DROP_SHOW.flyoverSoundLeadMs;
       flyShow = { since: performance.now() + lead, before, heading, points: before.enemies.map((e) => ({ q: e.q, r: e.r })) };
+      // A vehicle on the ground (M31) takes the line clear of the counters.
+      const chips = [...before.enemies, ...before.units.filter((u) => u.landed && !u.out && !u.dead)];
+      if (baseMap.diversionRun) flyShow.line = pickDiversionLine(baseMap, chips.map((c) => ({ q: c.q, r: c.r })));
       clearTimeout(flyShowTimer);
       flyShowTimer = setTimeout(endFlyShow, lead + diversionTimeline(baseMap, flyShow).length);
     }

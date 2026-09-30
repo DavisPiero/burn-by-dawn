@@ -13,7 +13,7 @@ import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '.
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
 import { hintsFor } from '../src/hints.js';
-import { boardPixelBounds, diversionTimeline, dropTimeline } from '../src/render/board.js';
+import { boardPixelBounds, diversionTimeline, dropTimeline, pickDiversionLine } from '../src/render/board.js';
 import { DRIVE_BY, DRIVE_BY_ART, DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
@@ -53,10 +53,10 @@ const objectiveIn = (state, id) => state.objectives.find((o) => o.id === id);
 const SEEDS = Array.from({ length: 30 }, (_, i) => i * 7919 + 3);
 
 export default [
-  ['the airfield is a draft: stamped NEXT YEAR\'S ANNUAL on the contents page, but ?mission=airfield plays it', async () => {
+  ['the airfield is playable (M31b, the operator\'s): picked on the contents page, or by ?mission=airfield', async () => {
     const { json, mission } = await loadAirfield();
     equal(mission.id, 'airfield', 'picked by id');
-    equal(mission.status, 'draft', 'a draft, not yet announced');
+    equal(mission.status, 'playable', 'announced');
     equal(missionFromQuery('?mission=airfield', json), 'airfield', 'the address opens it');
     equal(json.default, 'france', 'France still opens by default');
   }],
@@ -326,16 +326,22 @@ export default [
     for (const word of ['church', 'France', 'bridge', 'cabbages', 'mud']) assert(!said.includes(word), `nobody says "${word}" in the desert`);
   }],
 
-  ['the jeep drives the north scrub from off the board to off it, east to west, outside the wire (M31)', async () => {
+  ['the jeep drives from off the board to off it, outside the wire, on the line clearest of counters (M31b)', async () => {
     const { map } = await loadAirfield();
     const run = map.diversionRun;
     assert(DRIVE_BY_ART[run.art], `${run.art} has a picture`);
-    equal(run.from[1], run.to[1], 'one row');
-    assert(run.from[1] < 2, 'north of the wire (row 2)');
-    const t = diversionTimeline(map, { points: [], heading: null });
+    equal(run.lines.map((l) => l.id).join(), 'north,south,west', 'top, bottom and side');
     const edge = boardPixelBounds(map);
-    assert(t.start.x > edge.maxX && t.end.x < edge.minX, 'in from past the east edge, out past the west');
-    equal(t.length, DRIVE_BY.driveMs + DRIVE_BY.tailMs, 'its length');
+    for (const line of run.lines) {
+      const t = diversionTimeline(map, { line });
+      const off = (p) => p.x < edge.minX || p.x > edge.maxX || p.y < edge.minY || p.y > edge.maxY;
+      assert(off(t.start) && off(t.end), `${line.id}: in from off the board and out past it`);
+      equal(t.length, DRIVE_BY.driveMs + DRIVE_BY.tailMs, 'its length');
+    }
+    equal(pickDiversionLine(map, []).id, 'north', 'the north on a clear board');
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }]).id, 'south', 'a counter on the north scrub sends it south');
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }]).id, 'west', 'and one on the south sand, west');
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }, { q: -2, r: 4 }, { q: -3, r: 6 }]).id, 'north', 'fewest wins');
   }],
 
   ['the turn card says to pick a timer, and what the bowser sets off (M31)', async () => {

@@ -330,7 +330,7 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
 | `jeep.mp3` | the airfield's jeep raid (M31): a jeep going by fast, engine revving, wheels on stones; the cue lays four bursts of `gunfire` over it | ~3 s |
-| `truck.mp3` | the airfield's back page, mission accomplished (M31): a lorry, or two, starting up and pulling away, fading into the distance; the cue adds two far crumps behind | ~4–5 s |
+| `bugle.mp3` | the airfield's back page, mission accomplished (M31b): a British Army bugle call, bright and rising, ending on a held top note — triumphant, not a Last Post | ~2–3 s |
 | `siren.mp3` | the airfield's back page, withdrawn or failed (M31): an air-raid siren close by, winding up, wailing and winding down | ~5–6 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 

@@ -969,6 +969,7 @@ export const DRIVE_BY = {
   driveMs: 3400,
   tailMs: 350,
   flashMs: 180, // one blink of the muzzle flash, on and off
+  clearance: 1.2, // hex radii from its line: a counter nearer is in its way (M31)
 };
 export const DRIVE_BY_ART = { jeep: { body: 'vehicle-jeep', flash: 'vehicle-jeep-flash' } };
 
@@ -1838,8 +1839,13 @@ const DESERT_TERRAIN = {
   'terrain-wadi-01': () => [...wadiStone(30, 40, 4, 3), ...wadiStone(48, 56, 5, 3.4), ...wadiStone(38, 64, 2.6, 2)],
   'terrain-wadi-02': () => [...wadiStone(46, 36, 3.6, 2.6), ...wadiStone(30, 54, 4.6, 3.2), ...wadiStone(52, 64, 2.8, 2)],
   'terrain-wadi-03': () => [...wadiStone(40, 46, 5, 3.6), ...wadiStone(26, 62, 3, 2.2), ...wadiStone(54, 34, 2.6, 2)],
-  // The strip: rolled sand, a painted centre line along it.
+  // The strip: rolled sand, a painted centre line along it, and (M31, the
+  // operator's: it did not read as an airstrip) its two edges as thick ink
+  // lines the length of it, flush with the hexes' upright sides so they run on
+  // unbroken from hex to hex.
   'terrain-strip': () => [
+    line('M0 25 H80', 6, 'stroke-ink', { 'stroke-linecap': 'butt', opacity: 0.8 }),
+    line('M0 67 H80', 6, 'stroke-ink', { 'stroke-linecap': 'butt', opacity: 0.8 }),
     line('M0 46 H80', 3, 'stroke-paper', { 'stroke-dasharray': '10 7' }),
     line('M0 46 H80', 0.8, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '10 7' }),
   ],

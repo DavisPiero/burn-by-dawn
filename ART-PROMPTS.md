@@ -514,7 +514,7 @@ Claude can find, cut and level them as it did in M21c, if asked.
 | File | What | Length |
 |---|---|---|
 | `jeep.m4a` / `.mp3` | a jeep or light car going past fast, engine revving, gravel | ~3 s |
-| `truck.m4a` / `.mp3` | a lorry starting and pulling away into the distance | ~4–5 s |
+| `bugle.m4a` / `.mp3` | a bugle call, bright and rising, a held top note to finish: a win, not a Last Post | ~2–3 s |
 | `siren.m4a` / `.mp3` | an air-raid siren close by, up, wailing, down | ~5–6 s |
 
 ---
@@ -597,7 +597,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   lamp; and the perimeter car's counter, a Kübelwagen with two helmets aboard. The
   airfield's own title card (`titleCard` in data/missions.json) is France's until the
   operator paints one (Priority 13).
+- The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.
 - The airfield's jeep raid (M31): a sand jeep from above with twin guns, their muzzle
   flashes blinking (Priority 15 replaces the jeep; the flashes stay drawn). Its three new
-  sounds, the jeep, the trucks pulling away and the siren, are made in code until
+  sounds, the jeep, the bugle and the siren, are made in code until
   Priority 16's recordings arrive.
