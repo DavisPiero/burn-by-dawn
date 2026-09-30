@@ -12,8 +12,9 @@ import { blastEffect, blastHexesThisTurn, blastsOfCharge, caughtBy, checkPlaceCh
 import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '../src/state.js';
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
-import { boardPixelBounds, dropTimeline } from '../src/render/board.js';
-import { DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
+import { hintsFor } from '../src/hints.js';
+import { boardPixelBounds, diversionTimeline, dropTimeline } from '../src/render/board.js';
+import { DRIVE_BY, DRIVE_BY_ART, DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -314,5 +315,33 @@ export default [
     assert(later.every((b) => b.blows === 7), 'goes off at the end of turn 7');
     assert(later.some((b) => b.label === 'Ju 52'), 'the Ju 52s it sets off are in it');
     equal(laterBlasts({ ...set, charges: [{ ...set.charges[0], fuse: 1 }] }, rules).length, 0, 'not once it is this turn\'s');
+  }],
+
+  ['its words (M31): the jeep raid is its diversion, with its own sound, back-page sounds and title card; lines that named France replaced', async () => {
+    const { mission, roster } = await loadAirfield();
+    equal(mission.words.diversionName, 'jeep raid', 'the diversion\'s name');
+    equal(mission.diversionSound, 'jeepRaid', 'its sound');
+    equal(mission.titleCard, 'assets/title/title-card-airfield.jpg', 'its own title card (France\'s until painted)');
+    const said = roster.troopers.flatMap((t) => Object.values(t.dialogue)).join(' ');
+    for (const word of ['church', 'France', 'bridge', 'cabbages', 'mud']) assert(!said.includes(word), `nobody says "${word}" in the desert`);
+  }],
+
+  ['the jeep drives the north scrub from off the board to off it, east to west, outside the wire (M31)', async () => {
+    const { map } = await loadAirfield();
+    const run = map.diversionRun;
+    assert(DRIVE_BY_ART[run.art], `${run.art} has a picture`);
+    equal(run.from[1], run.to[1], 'one row');
+    assert(run.from[1] < 2, 'north of the wire (row 2)');
+    const t = diversionTimeline(map, { points: [], heading: null });
+    const edge = boardPixelBounds(map);
+    assert(t.start.x > edge.maxX && t.end.x < edge.minX, 'in from past the east edge, out past the west');
+    equal(t.length, DRIVE_BY.driveMs + DRIVE_BY.tailMs, 'its length');
+  }],
+
+  ['the turn card says to pick a timer, and what the bowser sets off (M31)', async () => {
+    const { state, rules } = await onAirfield({ holloway: [5, 12] });
+    const hints = hintsFor({ ...state, turn: 2, parachutes: [] }, rules, {}, 10);
+    assert(hints.some((h) => h.includes('then pick a timer')), `the timer: ${hints.join(' | ')}`);
+    assert(hints.some((h) => h.includes('The Bowser sets off the 2 Ju 52s beside it: 3 for one charge')), `the bowser: ${hints.join(' | ')}`);
   }],
 ];
