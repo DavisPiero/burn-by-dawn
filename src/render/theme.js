@@ -253,16 +253,18 @@ export function loadSuppliedEnemyChips(types) {
 // hidden over it; set it false for a picture without (title-card_original.jpg).
 export const TITLE_CARD = { url: 'assets/title/title-card.jpg', width: 600, height: 150, lettered: true };
 
-export function loadSuppliedTitleCard(url = TITLE_CARD.url) {
+export function loadSuppliedTitleCard(url = TITLE_CARD.url, lettered = TITLE_CARD.lettered) {
   return picture(url).then((ok) => {
-    if (!ok) return;
+    // A mission whose own card is not painted yet (M31: the airfield's) has
+    // the game's card, France's, until it is.
+    if (!ok) return url === TITLE_CARD.url ? undefined : loadSuppliedTitleCard(TITLE_CARD.url);
     const symbol = document.getElementById('title-card');
     if (!symbol) return;
     symbol.setAttribute('overflow', 'hidden');
     symbol.replaceChildren(svg('image', {
       href: url, x: 0, y: 0, width: TITLE_CARD.width, height: TITLE_CARD.height, preserveAspectRatio: 'xMidYMid slice',
     }));
-    document.documentElement.classList.toggle('title-card-lettered', TITLE_CARD.lettered);
+    document.documentElement.classList.toggle('title-card-lettered', lettered);
   });
 }
 
@@ -958,6 +960,34 @@ export const DROP_SHOW = {
   appearMs: 120,
   tailMs: 350,
 };
+
+// The airfield's diversion (M31): where a map gives a `diversionRun`, a
+// vehicle drives it on the ground instead of the Dakota flying over, its guns
+// flashing. `art` in the run picks it by name. Display only. Times in ms.
+export const DRIVE_BY = {
+  size: 110,
+  driveMs: 3400,
+  tailMs: 350,
+  flashMs: 180, // one blink of the muzzle flash, on and off
+  clearance: 1.2, // hex radii from its line: a counter nearer is in its way (M31)
+};
+export const DRIVE_BY_ART = { jeep: { body: 'vehicle-jeep', flash: 'vehicle-jeep-flash' } };
+
+// A painted vehicle (M31, ART-PROMPTS.md Priority 15): assets/vehicles/<body
+// id>.png, from above, nose to the east, on transparency, replaces the drawn
+// one once it loads; the drawn muzzle flashes stay where the drawn guns end.
+// Only a map with a diversionRun asks for one. A missing file is fine.
+export const VEHICLE_FILES = { dir: 'assets/vehicles', size: 60 };
+
+export function loadSuppliedVehicle(art) {
+  const body = DRIVE_BY_ART[art]?.body;
+  if (!body) return Promise.resolve();
+  const url = `${VEHICLE_FILES.dir}/${body}.png`;
+  return picture(url).then((ok) => {
+    if (!ok) return;
+    document.getElementById(body)?.replaceChildren(svg('image', { href: url, x: 0, y: 0, width: VEHICLE_FILES.size, height: VEHICLE_FILES.size }));
+  });
+}
 
 // Before a run is picked (M16, the operator's): a faint grey Dakota flies each
 // drop line over and over, staggered, so the lines read as flight paths.
@@ -1809,8 +1839,13 @@ const DESERT_TERRAIN = {
   'terrain-wadi-01': () => [...wadiStone(30, 40, 4, 3), ...wadiStone(48, 56, 5, 3.4), ...wadiStone(38, 64, 2.6, 2)],
   'terrain-wadi-02': () => [...wadiStone(46, 36, 3.6, 2.6), ...wadiStone(30, 54, 4.6, 3.2), ...wadiStone(52, 64, 2.8, 2)],
   'terrain-wadi-03': () => [...wadiStone(40, 46, 5, 3.6), ...wadiStone(26, 62, 3, 2.2), ...wadiStone(54, 34, 2.6, 2)],
-  // The strip: rolled sand, a painted centre line along it.
+  // The strip: rolled sand, a painted centre line along it, and (M31, the
+  // operator's: it did not read as an airstrip) its two edges as thick ink
+  // lines the length of it, flush with the hexes' upright sides so they run on
+  // unbroken from hex to hex.
   'terrain-strip': () => [
+    line('M0 25 H80', 6, 'stroke-ink', { 'stroke-linecap': 'butt', opacity: 0.8 }),
+    line('M0 67 H80', 6, 'stroke-ink', { 'stroke-linecap': 'butt', opacity: 0.8 }),
     line('M0 46 H80', 3, 'stroke-paper', { 'stroke-dasharray': '10 7' }),
     line('M0 46 H80', 0.8, 'stroke-ink', { opacity: 0.35, 'stroke-dasharray': '10 7' }),
   ],
@@ -1926,6 +1961,11 @@ function signalsTent(state) {
 }
 
 // An LRDG truck from the south-west: the bonnet, the open back piled with kit.
+/** A man's helmet from straight above (M31, the jeep's crew). */
+function helmetTop(x, y) {
+  return [circle(x, y, 3.6, 'green'), ring(x, y, 3.6, 1), circle(x - 1, y - 1, 0.9, 'paper')];
+}
+
 function desertTruck(x, y, s = 1) {
   const t = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
   const bed = `M${t(-14, 0)} V${t(0, -9).split(' ')[1]} H${t(4, 0).split(' ')[0]} V${t(0, 0).split(' ')[1]} Z`;
@@ -2269,6 +2309,38 @@ const SPRITES = {
   'aircraft-dakota-shadow': {
     viewBox: '0 0 120 120',
     draw: () => [fill('M50 60 L56 6 Q60 2 64 6 L70 58 L70 62 L64 114 Q60 118 56 114 L50 62 Z M14 56 Q12 60 14 64 L96 64 Q112 62 114 60 Q112 58 96 56 Z M18 60 L10 42 Q13 38 17 42 L26 58 L26 62 L17 78 Q13 82 10 78 Z', 'ink')],
+  },
+  // The airfield's diversion (M31, the operator's): a jeep driving by outside
+  // the wire, from above, nose to the east as the Dakota's is, sand-painted,
+  // two men aboard, jerrycans behind and twin guns on the left side, which
+  // board.js turns toward the field. Its muzzle flash is a sprite of its own,
+  // blinked by board.js.
+  'vehicle-jeep': {
+    viewBox: '0 0 60 60',
+    draw: () => {
+      const body = 'M12 20 H44 Q50 20 51 24 V36 Q50 40 44 40 H12 Q10 40 10 38 V22 Q10 20 12 20 Z';
+      const wheels = [[18, 18], [18, 42], [42, 18], [42, 42]];
+      return [
+        svg('ellipse', { cx: 32, cy: 33, rx: 23, ry: 12, class: 'ink', opacity: 0.2 }),
+        ...wheels.map(([x, y]) => svg('rect', { x: x - 5, y: y - 2.5, width: 10, height: 5, rx: 1.5, class: 'ink' })),
+        ...inked(body, 'ochre', 1.6),
+        // Bonnet and folded windscreen, the grille at the nose.
+        line('M36 21 V39', 1.2), line('M51 25 V35', 1.6),
+        // Jerrycans and the spare wheel on the back.
+        ...inked('M12.5 23 H18 V29 H12.5 Z', 'green', 1), ...inked('M12.5 31 H18 V37 H12.5 Z', 'green', 1),
+        circle(8.5, 30, 4, 'ink'), circle(8.5, 30, 1.5, 'paper'),
+        // Two men aboard, and the twin guns over the left side.
+        ...helmetTop(30, 25), ...helmetTop(22, 33),
+        line('M32 22 L37 13 M34 22 L39 13', 1.2), line('M22 29 L17 19 M24 29 L19 19', 1.2),
+      ];
+    },
+  },
+  'vehicle-jeep-flash': {
+    viewBox: '0 0 60 60',
+    draw: () => [
+      fill('M38 13 L34.5 7.5 L38.5 9.5 L40.5 5 L40.5 9.5 L44.5 8 L39.5 13.5 Z', 'fire'),
+      fill('M18 19 L13.5 14.5 L17.5 15.5 L18 11 L19.5 15 L23 13 L19.5 19.5 Z', 'fire'),
+    ],
   },
   'parachute-canopy-shadow': { viewBox: '0 0 40 40', draw: () => [circle(20, 20, 18, 'ink')] },
   // An open canopy seen from above: eight gores, alternate ones printed in

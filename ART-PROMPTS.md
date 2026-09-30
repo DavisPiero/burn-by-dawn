@@ -410,7 +410,8 @@ he gets a new one.
 ## Priority 13 — the airfield's title card · ready to make now
 
 Its own painting in place of France's, across the top of its orders and its back page.
-Wired in M31, when the airfield becomes playable.
+Wired in M31: drop the file in and reload; until then the airfield shows France's card.
+Say whether BURN BY DAWN is painted in: if not, Claude sets `titleCardLettered: false`.
 
 | | |
 |---|---|
@@ -463,6 +464,58 @@ without one shows its line as now.
 > engines lit orange, sandbagged pen walls, black smoke against a starry sky. Warm
 > ochre sand, deep night blue, fire orange. Strong simple shapes that read at thumbnail
 > size.
+
+---
+
+## Priority 15 — the airfield's other paintings (M31) · any time, none holds anything up
+
+Each has a drawn stand-in that works now. In the order they buy the most.
+
+**The jeep** (the airfield's diversion, a jeep raid on the north wire). Wired: drop it in
+and reload.
+
+| | |
+|---|---|
+| File | `assets/vehicles/vehicle-jeep.png` |
+| Size, format | **1:1, 512 × 512 px**, PNG, **transparent background** |
+| View | **Straight down from above, nose pointing right (east)**, about 80% of the width long. Twin Vickers K guns on a pintle over its **left** side (the top of the picture), muzzles at about (325, 110) and (155, 160): the drawn muzzle flashes blink there |
+| Shown at | About 40 px on screen, driving across the top of the board for 3½ seconds |
+
+> Top-down view from directly above of a WW2 British SAS jeep, painted pale desert sand,
+> nose pointing to the right, two soldiers in sand-coloured helmets seated, jerrycans and a
+> spare wheel strapped on the back, twin Vickers machine guns on a pintle mount pointing
+> out over the left side, isolated on a plain transparent background, no shadow, no
+> ground.
+
+**The perimeter car's counter.** Wired since M29: `assets/enemies/counter-enemy-vehicle.png`,
+exactly as Priority 7 (1:1, 128 × 128, transparent, shown about 20 px). A Kübelwagen from
+the side, two coal-scuttle helmets aboard, same painter and light as the three you made.
+
+> Counter icon for a board game, a WW2 German Kübelwagen field car seen from the side, two
+> soldiers in Stahlhelm helmets aboard, sand-coloured, simple bold shapes that read at
+> thumbnail size, isolated on a plain transparent background, no text, no insignia.
+
+**Reference art for the aircraft and the trucks (for Claude to redraw, not dropped in).**
+As Priority 5: the board's pictures stay SVG, since they are recoloured, burnt out and
+drawn at 30–90 px, so a painting would be a blur. One picture each of a **Ju 87 Stuka
+from directly above**, a **Ju 52 from directly above** (three engines, corrugated wing),
+and **two Bedford-style desert lorries with camouflage netting**, into `assets/reference/`
+as `Stuka_Reference_01.jpeg`, `Ju52_Reference_01.jpeg`, `Trucks_Reference_01.jpeg`. Claude
+redraws the board's pictures from them, as it did the bridge and the exchange.
+
+---
+
+## Priority 16 — the airfield's sounds (find, don't generate) (M31)
+
+Made in code now, and they sound like it. As Priority 11: freesound.org (CC0) or
+Pixabay, into `assets/audio/` by these names; each replaces its made sound on reload.
+Claude can find, cut and level them as it did in M21c, if asked.
+
+| File | What | Length |
+|---|---|---|
+| `jeep.m4a` / `.mp3` | a jeep or light car going past fast, engine revving, gravel | ~3 s |
+| `bugle.m4a` / `.mp3` | a bugle call, bright and rising, a held top note to finish: a win, not a Last Post | ~2–3 s |
+| `siren.m4a` / `.mp3` | an air-raid siren close by, up, wailing, down | ~5–6 s |
 
 ---
 
@@ -543,4 +596,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   wires, standing, cut and blown; the two trucks waiting at the rendezvous with the green
   lamp; and the perimeter car's counter, a Kübelwagen with two helmets aboard. The
   airfield's own title card (`titleCard` in data/missions.json) is France's until the
-  operator paints one; M31 lists it with the other paintings the airfield wants.
+  operator paints one (Priority 13).
+- The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.
+- The airfield's jeep raid (M31): a sand jeep from above with twin guns, their muzzle
+  flashes blinking (Priority 15 replaces the jeep; the flashes stay drawn). Its three new
+  sounds, the jeep, the bugle and the siren, are made in code until
+  Priority 16's recordings arrive.

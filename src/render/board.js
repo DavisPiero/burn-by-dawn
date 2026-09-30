@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  HOSE, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  DRIVE_BY, DRIVE_BY_ART, HOSE, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -788,10 +788,12 @@ export function renderPieces(layers, state, view) {
     const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
     if (objective) drawPowerCut(layers, objective, now - view.strikeShow.since);
   }
-  if (view.flyShow) drawAircraft(layers, flyoverTimeline(map, view.flyShow.points, view.flyShow.heading), now - view.flyShow.since);
+  if (view.flyShow) drawDiversion(layers, view.flyShow, now - view.flyShow.since);
   if (show) drawDropShow(layers, view.dropShow, show, elapsed);
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
+  // Over the speech, so a man's line never hides what to press (M31b).
+  if (view.timerCue) drawTimerCue(layers, view.timerCue);
 }
 
 // --- target rings (SPEC.md §11) --------------------------------------------------
@@ -953,6 +955,27 @@ function drawSelectCue(layers, state, now) {
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
 }
 
+/**
+ * The timers open (M31, the operator's): SET THE TIMER / PRESS 2–6 in the pen
+ * lettering beside the man setting the charge, on his side away from its
+ * target (a pen's point is behind its aircraft), kept on the board.
+ */
+function drawTimerCue(layers, cue) {
+  const { map } = layers;
+  const p = axialToPixel(cue.q, cue.r, map.hexSize);
+  const edge = boardEdges(map);
+  const sizes = [CUE.noteSize * 1.3, CUE.noteSize];
+  const target = cue.target.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+  const ty = target.reduce((sum, t) => sum + t.y, 0) / target.length;
+  const above = p.y - map.hexSize * 2.1;
+  const below = p.y + map.hexSize * 1.6;
+  const wantAbove = ty > p.y;
+  const y = wantAbove ? (above - sizes[0] > edge.top ? above : below) : (below + sizes[1] < edge.bottom ? below : above);
+  const width = 'SET THE TIMER'.length * sizes[0] * 0.5;
+  const x = Math.min(Math.max(p.x, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
+  layers.speech.appendChild(penLetters(['SET THE TIMER', `PRESS ${cue.range}`], x, y, sizes));
+}
+
 // --- the drop shown (SPEC.md §11) ----------------------------------------------
 // Display only: the rules have already put every man down, and this plays the
 // aircraft's pass and the canopies coming down to where they are. Like a
@@ -1090,6 +1113,65 @@ function drawGhostPlanes(layers, runs, now) {
 // Display only, like the drop: when the diversion is called the Dakota crosses
 // the board over the garrison, on the straight line that best fits where the
 // enemies stand, from edge to edge. Then the diversion's card opens.
+
+/**
+ * The diversion shown (M31): the map's `diversionRun` driven on the ground if
+ * it has one (the airfield's jeep), or else the Dakota over the garrison.
+ * `fly` is main.js's flyShow. Exported so main.js knows when it is over.
+ */
+export function diversionTimeline(map, fly) {
+  if (!map.diversionRun) return flyoverTimeline(map, fly.points, fly.heading);
+  const line = fly.line ?? map.diversionRun.lines[0];
+  const [from, to] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  return {
+    start: from,
+    end: to,
+    angle: (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI,
+    length: DRIVE_BY.driveMs + DRIVE_BY.tailMs,
+  };
+}
+
+/**
+ * Which of the map's drive-by lines the vehicle takes (M31, the operator's: it
+ * drove through counters): the one with the fewest counters (`points`, hexes)
+ * within DRIVE_BY.clearance of it, the first on a tie. Display only.
+ */
+export function pickDiversionLine(map, points) {
+  const lines = map.diversionRun?.lines ?? [];
+  const near = (line) => {
+    const [a, b] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy || 1;
+    return points.filter((h) => {
+      const p = axialToPixel(h.q, h.r, map.hexSize);
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+      return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)) < DRIVE_BY.clearance * map.hexSize;
+    }).length;
+  };
+  let best = null;
+  for (const line of lines) {
+    const n = near(line);
+    if (!best || n < best.n) best = { line, n };
+  }
+  return best?.line ?? null;
+}
+
+function drawDiversion(layers, fly, elapsed) {
+  const timeline = diversionTimeline(layers.map, fly);
+  const art = layers.map.diversionRun && DRIVE_BY_ART[layers.map.diversionRun.art];
+  if (!art) return drawAircraft(layers, timeline, elapsed);
+  if (elapsed >= DRIVE_BY.driveMs) return;
+  const { start, end, angle } = timeline;
+  const size = DRIVE_BY.size;
+  const at = (p) => `translate(${p.x}px, ${p.y}px) rotate(${angle}deg)`;
+  const car = el('g', {});
+  car.appendChild(el('use', { href: `#${art.body}`, x: -size / 2, y: -size / 2, width: size, height: size }));
+  const flash = el('use', { href: `#${art.flash}`, x: -size / 2, y: -size / 2, width: size, height: size });
+  car.appendChild(flash);
+  playFrom(car, [{ transform: at(start) }, { transform: at(end) }], { duration: DRIVE_BY.driveMs }, elapsed);
+  playFrom(flash, [{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: DRIVE_BY.flashMs, iterations: Infinity }, elapsed);
+  layers.effects.appendChild(car);
+}
 
 /**
  * The flyover's line and length. `points` are the enemies' hexes as they

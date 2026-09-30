@@ -84,6 +84,20 @@ export function validateDrop(map, rules, count, mapUrl = 'data/map.json', rulesU
       if (!isInPlay(map, p.q, p.r)) throw new Error(`${where} "${run.id}": man ${n + 1} would jump over (${p.q}, ${p.r}), which is out of play`);
     });
   });
+  // The diversion's drive-by (M31, art only): the vehicle's picture by name,
+  // and the lines it may drive, each [q, r] ends that may lie off the board.
+  const drive = map.diversionRun;
+  if (drive !== undefined) {
+    if (typeof drive.art !== 'string' || !drive.art) throw new Error(`${mapUrl}: "diversionRun" needs the "art" it drives`);
+    if (!Array.isArray(drive.lines) || drive.lines.length === 0) throw new Error(`${mapUrl}: "diversionRun" needs a list of "lines"`);
+    drive.lines.forEach((l, i) => {
+      for (const key of ['from', 'to']) {
+        if (!Array.isArray(l[key]) || l[key].length !== 2 || !l[key].every(Number.isInteger)) {
+          throw new Error(`${mapUrl}: "diversionRun.lines[${i}].${key}" must be a [q, r], got ${JSON.stringify(l[key])}`);
+        }
+      }
+    });
+  }
 }
 
 export function runById(map, id) {

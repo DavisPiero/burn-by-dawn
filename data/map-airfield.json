@@ -503,6 +503,15 @@
       11
     ]
   ],
+  "_diversionRun": "M31, art only: the jeep raid (the mission's diversion) drives one of these lines, from off the board to off it, outside the wire, its guns (on its left) toward the field: along the north scrub east to west, along the south sand west to east, or down the west edge. When it is called it takes the line with the fewest counters near it (M31, the operator's: it drove through chips), first in this order on a tie.",
+  "diversionRun": {
+    "art": "jeep",
+    "lines": [
+      { "id": "north", "from": [19, 1], "to": [-2, 1] },
+      { "id": "south", "from": [-8, 11], "to": [15, 11] },
+      { "id": "west", "from": [1, -2], "to": [-7, 14] }
+    ]
+  },
   "exfilArt": "trucks",
   "dropCueAt": [7.2, 5.5],
   "exfilNoteNudge": [-4.25, 0],

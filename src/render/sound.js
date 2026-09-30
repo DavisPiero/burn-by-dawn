@@ -294,6 +294,95 @@ const SYNTHS = {
     noiseThrough(ctx, out, at, length, [filter(ctx, 'bandpass', 380, 0.9), envelope(ctx, at, 0.25, length - 0.1, 1)], v * 0.11);
   },
 
+  // The airfield's diversion (M31): a jeep going by outside the wire, a
+  // four-cylinder engine revving hard, its note falling as it passes, and
+  // the rattle of its wheels on the stones.
+  jeep: (ctx, destination, at, v) => {
+    const length = 3.2;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, at);
+    out.gain.exponentialRampToValueAtTime(0.45, at + 1.2);
+    out.gain.setValueAtTime(0.45, at + 1.6);
+    out.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    const air = filter(ctx, 'lowpass', 900, 0.9);
+    air.connect(out).connect(destination);
+    for (const [base, type, level] of [[62, 'sawtooth', 0.5], [124, 'square', 0.12], [186, 'sawtooth', 0.1]]) {
+      const engine = ctx.createOscillator();
+      engine.type = type;
+      engine.frequency.setValueAtTime(base * 0.95, at);
+      engine.frequency.linearRampToValueAtTime(base * 1.12, at + 1.3);
+      engine.frequency.linearRampToValueAtTime(base * 0.88, at + 1.9);
+      const gain = ctx.createGain();
+      gain.gain.value = level;
+      engine.connect(gain).connect(air);
+      engine.start(at);
+      engine.stop(at + length + 0.05);
+    }
+    noiseThrough(ctx, out, at, length, [filter(ctx, 'bandpass', 1400, 0.7), envelope(ctx, at, 0.2, length - 0.1, 1)], v * 0.13 + 0.5);
+  },
+
+  // The airfield's back page, mission accomplished (M31b, the operator's: the
+  // trucks and crumps sounded sinister, like a failure): a bugle call, bright
+  // and rising, on the bugle's own notes, G C E G, a fall to E and the top G
+  // held with a little vibrato.
+  bugle: (ctx, destination, at) => {
+    const out = ctx.createGain();
+    out.gain.value = 0.8;
+    out.connect(destination);
+    const calls = [[392, 0, 0.16], [523.25, 0.18, 0.16], [659.25, 0.36, 0.16], [783.99, 0.54, 0.3], [659.25, 0.9, 0.18], [783.99, 1.12, 1.3]];
+    for (const [f, start, length] of calls) {
+      const t = at + start;
+      const brass = filter(ctx, 'lowpass', 900, 1.2);
+      brass.frequency.setValueAtTime(700, t);
+      brass.frequency.exponentialRampToValueAtTime(3200, t + 0.05);
+      brass.frequency.exponentialRampToValueAtTime(1800, t + length);
+      const level = ctx.createGain();
+      level.gain.setValueAtTime(0.0001, t);
+      level.gain.exponentialRampToValueAtTime(0.12, t + 0.03);
+      level.gain.setValueAtTime(0.1, t + length - 0.05);
+      level.gain.exponentialRampToValueAtTime(0.0001, t + length + 0.12);
+      brass.connect(level).connect(out);
+      const vibrato = ctx.createOscillator();
+      vibrato.frequency.value = 5.5;
+      const wobble = ctx.createGain();
+      wobble.gain.setValueAtTime(0, t);
+      wobble.gain.linearRampToValueAtTime(length > 1 ? f * 0.006 : 0, t + length);
+      vibrato.connect(wobble);
+      for (const detune of [-5, 5]) {
+        const tone = ctx.createOscillator();
+        tone.type = 'sawtooth';
+        tone.frequency.value = f;
+        tone.detune.value = detune;
+        wobble.connect(tone.frequency);
+        tone.connect(brass);
+        tone.start(t);
+        tone.stop(t + length + 0.15);
+      }
+      vibrato.start(t);
+      vibrato.stop(t + length + 0.15);
+    }
+  },
+
+  // The airfield's back page, withdrawn or failed (M31): the landing ground's
+  // air-raid siren, close, winding up and down as dawn comes.
+  siren: (ctx, destination, at) => {
+    const siren = ctx.createOscillator();
+    siren.type = 'triangle';
+    siren.frequency.setValueAtTime(180, at);
+    siren.frequency.linearRampToValueAtTime(420, at + 1.6);
+    siren.frequency.linearRampToValueAtTime(360, at + 2.6);
+    siren.frequency.linearRampToValueAtTime(420, at + 3.6);
+    siren.frequency.linearRampToValueAtTime(160, at + 6);
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0.0001, at);
+    level.gain.exponentialRampToValueAtTime(0.22, at + 1.2);
+    level.gain.setValueAtTime(0.22, at + 3.8);
+    level.gain.exponentialRampToValueAtTime(0.0001, at + 6);
+    siren.connect(filter(ctx, 'lowpass', 1400)).connect(level).connect(destination);
+    siren.start(at);
+    siren.stop(at + 6.1);
+  },
+
   // The mission failed (M12): one low bell tolling, slowly, and an air-raid
   // siren winding up and down a long way off under it.
   'bell-toll': (ctx, destination, at) => {
@@ -452,6 +541,13 @@ const CUES = {
   kill: [['silenced-shot', 0.5, 0]],
   victory: [['church-bells', 0.9, 0.35]],
   defeat: [['bell-toll', 0.55, 0.35]],
+  // The airfield's (M31; data/missions.json names a mission's cues): its
+  // diversion, jeeps going by outside the wire with their guns going; and its
+  // back page, a bugle call (M31b; the trucks pulling away were sinister), or
+  // the landing ground's siren.
+  jeepRaid: [['jeep', 0.6, 0], ['gunfire', 0.3, 0.8], ['gunfire', 0.34, 1.35], ['gunfire', 0.28, 2.0], ['gunfire', 0.2, 2.6]],
+  desertVictory: [['bugle', 0.8, 0.35]],
+  desertDefeat: [['siren', 0.7, 0.35]],
   // The opening screens' music (M17): one pass of it; startMusic loops it.
   titleMusic: [['music-title', 0.5, 0]],
 };

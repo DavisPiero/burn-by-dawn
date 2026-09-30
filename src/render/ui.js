@@ -97,7 +97,7 @@ const KEYS = [
   ['1–6', 'select a man'],
   ['A', 'stabilise a wounded man (aid)'],
   ['C', 'place a charge'],
-  ['D', 'RAF diversion'],
+  ['D', 'the diversion (the leader\'s radio)'],
   ['E', 'pass a charge'],
   ['Esc', 'deselect, or back out of aiming (or right-click)'],
   ['H', 'hide'],
@@ -552,7 +552,7 @@ function reportMark(kind) {
 
 // The mission's own phrases for the turn report (data/missions.json `words`,
 // M28), set once when the mission loads.
-let missionWords = { diversionLog: 'bombers over the target' };
+let missionWords = { diversionName: 'RAF diversion', diversionLog: 'bombers over the target' };
 
 /** Use this mission's phrases in the turn report. */
 export function useMissionWords(words) {
@@ -581,7 +581,7 @@ export function describeEvent(event, place) {
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label} — killed.`;
     case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label} — wounded.`;
     case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label} and dies.`;
-    case 'diversion': return `RAF diversion called: ${missionWords.diversionLog}. The garrison looks the other way.`;
+    case 'diversion': return `${capitalise(missionWords.diversionName)} called: ${missionWords.diversionLog}. The garrison looks the other way.`;
     case 'noReserve': return event.deployed
       ? `With the ${event.label} gone, the garrison can call up nobody more — but the reserve is already out.`
       : `With the ${event.label} gone, the garrison cannot call up its reserve squad.`;
@@ -830,7 +830,7 @@ export function renderDiversion(button, check) {
   // In a pickle (M26d): red, and saying so.
   button.classList.toggle('suggest', Boolean(check.ok && check.suggest));
   const small = !check.ok ? capitalise(check.reason) : check.suggest ? '[D] Call it now!' : `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP`;
-  button.replaceChildren('RAF DIVERSION', html('small', null, boldKeys(small)));
+  button.replaceChildren(missionWords.diversionName.toUpperCase(), html('small', null, boldKeys(small)));
 }
 
 /** The diversion's rollover; `uses` is how many calls the mission allows. */

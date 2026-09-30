@@ -6,7 +6,7 @@
 
 import { alertIndex } from './enemy.js';
 import { checkPassCharge, checkStabilise, onBoard } from './units.js';
-import { checkCutLine, kindOf } from './sabotage.js';
+import { chainFrom, checkCutLine, kindOf } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
 import { winMet, winTargets, winTargetsLeft, winWords } from './missions.js';
 
@@ -100,10 +100,11 @@ export function aidWords(prompt, units, rules) {
 /**
  * @param {object} state
  * @param {object} rules data/rules.json
- * @param {{ diversionOk?: boolean }} [extra] what the caller has already worked out
+ * @param {{ diversionOk?: boolean, diversionName?: string }} [extra] what the caller has already
+ *   worked out, and the mission's name for its diversion (words.diversionName, M31)
  * @returns {string[]} most pressing first, at most `max`
  */
-export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
+export function hintsFor(state, rules, { diversionOk = false, diversionName = 'RAF diversion' } = {}, max = 3) {
   const hints = [];
   const men = state.units.filter(onBoard);
   const out = state.units.filter((u) => u.out).length;
@@ -134,7 +135,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   // In a pickle (M26d): the diversion next, after any charge about to blow.
   const pickle = leader ? diversionPrompt(state, rules, diversionOk) : null;
   if (pickle) {
-    hints.push(`In a pickle: ${pickle}. Call the RAF diversion [D] now: the garrison drops a level and lets go of everyone it has in its sights. ${capitalFirst(callsLeft(state, rules))}.`);
+    hints.push(`In a pickle: ${pickle}. Call the ${diversionName} [D] now: the garrison drops a level and lets go of everyone it has in its sights. ${capitalFirst(callsLeft(state, rules))}.`);
   }
 
   // A scout starting his turn on a point he can cut (M20: a playtester could
@@ -183,7 +184,7 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   const alert = alertIndex(state.alert.points, rules);
   if (alert >= 2 && diversionOk && leader && !pickle) {
     const label = rules.alert.states[alert].label;
-    hints.push(`The garrison is ${label.toUpperCase()}. The RAF diversion [D] can reduce it by one level: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
+    hints.push(`The garrison is ${label.toUpperCase()}. The ${diversionName} [D] can reduce it by one level: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
   }
 
   const chutes = state.parachutes.length;
@@ -200,7 +201,19 @@ export function hintsFor(state, rules, { diversionOk = false } = {}, max = 3) {
   if (state.turn <= 2) {
     const carriers = men.filter((u) => u.charges > 0);
     if (carriers.length) {
-      hints.push(`${names(carriers)} ${plural(carriers.length, 'carries', 'carry')} the charges. Stand one on a red dashed charge point and press [C].`);
+      // Where charges take a timer (M31), the second step is said too.
+      const timer = rules.charges.fuseChoice ? ', then pick a timer' : '';
+      hints.push(`${names(carriers)} ${plural(carriers.length, 'carries', 'carry')} the charges. Stand one on a red dashed charge point and press [C]${timer}.`);
+    }
+    // Whatever sets off its neighbours (M31, the airfield's bowser), while it
+    // still stands and would take something with it.
+    for (const setter of state.objectives) {
+      if (setter.destroyed || !kindOf(setter, rules).setsOff) continue;
+      const caught = chainFrom(state.objectives, setter, setter.chargeHexes, rules);
+      if (caught.length === 0) continue;
+      const labels = [...new Set(caught.map((c) => c.objective.label))];
+      const what = labels.length === 1 && caught.length > 1 ? `${caught.length} ${labels[0]}s` : caught.length === 1 ? labels[0] : `${caught.length} targets`;
+      hints.push(`The ${setter.label} sets off the ${what} beside it: ${caught.length + 1} for one charge. Hover it to see which.`);
     }
   }
 

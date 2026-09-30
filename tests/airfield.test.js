@@ -12,8 +12,9 @@ import { blastEffect, blastHexesThisTurn, blastsOfCharge, caughtBy, checkPlaceCh
 import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '../src/state.js';
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
-import { boardPixelBounds, dropTimeline } from '../src/render/board.js';
-import { DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
+import { hintsFor } from '../src/hints.js';
+import { boardPixelBounds, diversionTimeline, dropTimeline, pickDiversionLine } from '../src/render/board.js';
+import { DRIVE_BY, DRIVE_BY_ART, DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -52,10 +53,10 @@ const objectiveIn = (state, id) => state.objectives.find((o) => o.id === id);
 const SEEDS = Array.from({ length: 30 }, (_, i) => i * 7919 + 3);
 
 export default [
-  ['the airfield is a draft: stamped NEXT YEAR\'S ANNUAL on the contents page, but ?mission=airfield plays it', async () => {
+  ['the airfield is playable (M31b, the operator\'s): picked on the contents page, or by ?mission=airfield', async () => {
     const { json, mission } = await loadAirfield();
     equal(mission.id, 'airfield', 'picked by id');
-    equal(mission.status, 'draft', 'a draft, not yet announced');
+    equal(mission.status, 'playable', 'announced');
     equal(missionFromQuery('?mission=airfield', json), 'airfield', 'the address opens it');
     equal(json.default, 'france', 'France still opens by default');
   }],
@@ -314,5 +315,39 @@ export default [
     assert(later.every((b) => b.blows === 7), 'goes off at the end of turn 7');
     assert(later.some((b) => b.label === 'Ju 52'), 'the Ju 52s it sets off are in it');
     equal(laterBlasts({ ...set, charges: [{ ...set.charges[0], fuse: 1 }] }, rules).length, 0, 'not once it is this turn\'s');
+  }],
+
+  ['its words (M31): the jeep raid is its diversion, with its own sound, back-page sounds and title card; lines that named France replaced', async () => {
+    const { mission, roster } = await loadAirfield();
+    equal(mission.words.diversionName, 'jeep raid', 'the diversion\'s name');
+    equal(mission.diversionSound, 'jeepRaid', 'its sound');
+    equal(mission.titleCard, 'assets/title/title-card-airfield.jpg', 'its own title card (France\'s until painted)');
+    const said = roster.troopers.flatMap((t) => Object.values(t.dialogue)).join(' ');
+    for (const word of ['church', 'France', 'bridge', 'cabbages', 'mud']) assert(!said.includes(word), `nobody says "${word}" in the desert`);
+  }],
+
+  ['the jeep drives from off the board to off it, outside the wire, on the line clearest of counters (M31b)', async () => {
+    const { map } = await loadAirfield();
+    const run = map.diversionRun;
+    assert(DRIVE_BY_ART[run.art], `${run.art} has a picture`);
+    equal(run.lines.map((l) => l.id).join(), 'north,south,west', 'top, bottom and side');
+    const edge = boardPixelBounds(map);
+    for (const line of run.lines) {
+      const t = diversionTimeline(map, { line });
+      const off = (p) => p.x < edge.minX || p.x > edge.maxX || p.y < edge.minY || p.y > edge.maxY;
+      assert(off(t.start) && off(t.end), `${line.id}: in from off the board and out past it`);
+      equal(t.length, DRIVE_BY.driveMs + DRIVE_BY.tailMs, 'its length');
+    }
+    equal(pickDiversionLine(map, []).id, 'north', 'the north on a clear board');
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }]).id, 'south', 'a counter on the north scrub sends it south');
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }]).id, 'west', 'and one on the south sand, west');
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }, { q: -2, r: 4 }, { q: -3, r: 6 }]).id, 'north', 'fewest wins');
+  }],
+
+  ['the turn card says to pick a timer, and what the bowser sets off (M31)', async () => {
+    const { state, rules } = await onAirfield({ holloway: [5, 12] });
+    const hints = hintsFor({ ...state, turn: 2, parachutes: [] }, rules, {}, 10);
+    assert(hints.some((h) => h.includes('then pick a timer')), `the timer: ${hints.join(' | ')}`);
+    assert(hints.some((h) => h.includes('The Bowser sets off the 2 Ju 52s beside it: 3 for one charge')), `the bowser: ${hints.join(' | ')}`);
   }],
 ];
