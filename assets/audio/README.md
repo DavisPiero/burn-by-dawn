@@ -4,7 +4,7 @@ The game's sounds (ART-ASSETS.md §9). Each file replaces the sound made in code
 (`src/render/sound.js`) of the same name; delete one and the made sound comes back.
 `.m4a` (AAC) is tried first, then `.mp3`.
 
-Supplied in M21c, chosen by Claude from free libraries and approved by the operator. Each
+Supplied in M21c (the airfield's three in M31c), chosen by Claude from free libraries and approved by the operator. Each
 was cut to the moment the game wants, faded, levelled to the made sound it replaces
 (the loudest 0.4 s at the same RMS, so the loudness set per cue in sound.js still holds),
 and encoded as AAC with macOS `afconvert`. None needs a credit line.
@@ -22,6 +22,9 @@ and encoded as AAC with macOS `afconvert`. None needs a credit line.
 | `church-bells.m4a` | "church bells", jasonlee3071, [Pixabay](https://pixabay.com/sound-effects/city-church-bells-194653/) | Pixabay Content License | 8.9 s from 0.7 s |
 | `bell-toll.m4a` | "Church Bell Toll", Universfield, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-church-bell-toll-156464/) | Pixabay Content License | whole, 5.25 s |
 | `aircraft.m4a` | "Low Airplane Fly By", freesound_community, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-low-airplane-fly-by-90354/) | Pixabay Content License | 5 s from 5.0 s, the pass |
+| `jeep.m4a` | "Jeep-CJ5-1965-final", freesound_community, [Pixabay](https://pixabay.com/sound-effects/city-jeep-cj5-1965-final-19997/) | Pixabay Content License | 3.5 s from 16.5 s, the pass nearest; faded 0.35 s in, 0.7 s out (M31c, the airfield's jeep raid) |
+| `bugle.m4a` | "Tada Military 3", floraphonic, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-tada-military-3-183975/) | Pixabay Content License | whole, 4.3 s, a drum roll and trumpet fanfare, faded out over its last 0.5 s (M31c, the airfield's win; named for the made bugle it replaces) |
+| `siren.m4a` | "Sound Effect - WW2 UK Air Raid Siren", ScottishPerson, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-sound-effect-ww2-uk-air-raid-siren-164346/) | Pixabay Content License | 6 s from 23.5 s, faded 0.8 s in, 1.6 s out (M31c, the airfield's withdrawn or failed) |
 | `music-title.m4a` | "War Epic", PaulYudin, [Pixabay music](https://pixabay.com/music/main-title-war-epic-182501/) | Pixabay Content License | whole, 1:33, faded out over its last 2 s |
 
 **Licences.** CC0 is public domain. The Pixabay Content License allows use in a game with

@@ -335,7 +335,7 @@ function titleBanner({ title, tagline }) {
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
- *   contents?: { entries: [{ id, page, title, place, blurb, playable }], onChoose(id) } }
+ *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel? }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
@@ -409,7 +409,16 @@ function contentsList({ entries, onChoose }) {
       html('span', 'contents-leader'),
       html('span', 'contents-page', String(entry.page)),
     ]);
-    const words = [line, html('span', 'contents-place', entry.place), html('span', 'contents-blurb', entry.blurb)];
+    const text = [line, html('span', 'contents-place', entry.place), html('span', 'contents-blurb', entry.blurb)];
+    // Its panel beside it, if it has one (M31c, ART-ASSETS.md §7): a small
+    // painting, as an annual's contents page has a picture for each story.
+    const words = [html('span', 'contents-words', text)];
+    if (entry.panel) {
+      const panel = html('img', 'contents-panel');
+      panel.src = entry.panel;
+      panel.alt = '';
+      words.unshift(panel);
+    }
     const item = html('li', entry.playable ? 'contents-entry' : 'contents-entry coming');
     if (entry.playable) {
       const button = html('button', 'contents-pick', words);

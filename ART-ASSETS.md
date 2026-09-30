@@ -256,7 +256,7 @@ the game's card, France's. The airfield's will be `assets/title/title-card-airfi
 France's. If it is painted without the title, set `titleCardLettered: false` on the
 airfield in `data/missions.json` and code sets BURN BY DAWN over it.
 
-**Contents page panels** (M29b, specified, not yet shown): `assets/title/contents-<mission
+**Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 150 x 100; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
 id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:2,
 1200 x 800** (no smaller than 600 x 400), JPEG, sRGB, opaque, no text. A small painting
 beside each mission's line on the contents page, shown about 180 x 120 (ART-PROMPTS.md
@@ -312,7 +312,7 @@ placeholder on the next reload, with no code change. A missing file is fine.
 **M4A (AAC) or MP3**, mono, 44.1 kHz, under 200 KB each, trimmed tight (no silence before
 the sound — it is played the moment its event happens). `.m4a` is tried first, then `.mp3`
 (M21c: the supplied set is AAC, which macOS's `afconvert` can write and MP3 it cannot).
-**Since M21c every sound below is supplied**, cut and levelled from free libraries; where
+**Since M21c every sound below is supplied** (the airfield's jeep, bugle and siren since M31c), cut and levelled from free libraries; where
 each came from, its licence and how it was cut are in `assets/audio/README.md`. The table's
 names say `.mp3`; the same name in `.m4a` does as well.
 
@@ -330,7 +330,7 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
 | `jeep.mp3` | the airfield's jeep raid (M31): a jeep going by fast, engine revving, wheels on stones; the cue lays four bursts of `gunfire` over it | ~3 s |
-| `bugle.mp3` | the airfield's back page, mission accomplished (M31b): a British Army bugle call, bright and rising, ending on a held top note — triumphant, not a Last Post | ~2–3 s |
+| `bugle.mp3` | the airfield's back page, mission accomplished (M31b): bright and triumphant, not a Last Post; supplied (M31c) as a drum roll and trumpet fanfare | ~2–4 s |
 | `siren.mp3` | the airfield's back page, withdrawn or failed (M31): an air-raid siren close by, winding up, wailing and winding down | ~5–6 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 

@@ -1807,7 +1807,7 @@ function describeBriefing(which, view) {
       kicker: 'IN THIS ANNUAL',
       paragraphs: ['Pick a mission. Each one stands alone: one night behind the lines, and out by dawn.'],
       contents: {
-        entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable' })),
+        entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null })),
         onChoose: openMission,
       },
       sections: [],

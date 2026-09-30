@@ -407,7 +407,9 @@ he gets a new one.
 
 ---
 
-## Priority 13 — the airfield's title card · ready to make now
+## Priority 13 — the airfield's title card ✅ done (2026-09-30)
+
+Supplied without the title painted in, so code sets BURN BY DAWN over it (`titleCardLettered: false`).
 
 Its own painting in place of France's, across the top of its orders and its back page.
 Wired in M31: drop the file in and reload; until then the airfield shows France's card.
@@ -432,7 +434,10 @@ Say whether BURN BY DAWN is painted in: if not, Claude sets `titleCardLettered: 
 
 ---
 
-## Priority 14 — the contents page panels · specs only, not wired yet
+## Priority 14 — the contents page panels ✅ done (2026-09-30)
+
+Wired in M31c at 150 × 100 beside each entry; the game loads 480 × 320 copies, and your
+1200 × 800 originals are kept beside them as `contents-<id>_full.jpg`.
 
 One small painting per mission, beside its line on the contents page, so the page
 reads as an annual's contents with a picture for each story. Make these whenever you
@@ -467,7 +472,11 @@ without one shows its line as now.
 
 ---
 
-## Priority 15 — the airfield's other paintings (M31) · any time, none holds anything up
+## Priority 15 — the airfield's other paintings ✅ done (2026-09-30)
+
+The jeep (its twin guns fire astern, so the flashes moved to its muzzles), the car's
+counter (a 128 × 128 copy of your 512, kept as `counter-enemy-vehicle_full.png`), and
+the Stuka, Ju 52 and trucks redrawn from your references in M31c.
 
 Each has a drawn stand-in that works now. In the order they buy the most.
 
@@ -505,7 +514,11 @@ redraws the board's pictures from them, as it did the bridge and the exchange.
 
 ---
 
-## Priority 16 — the airfield's sounds (find, don't generate) (M31)
+## Priority 16 — the airfield's sounds ✅ done (2026-09-30)
+
+Found, cut and levelled by Claude in M31c (`assets/audio/README.md`): a 1965 Jeep CJ-5
+going by, a drum-roll-and-trumpet fanfare for the win (not a lone bugle), and a WW2 air-raid
+siren. Swap any of them by dropping in a file of the same name.
 
 Made in code now, and they sound like it. As Priority 11: freesound.org (CC0) or
 Pixabay, into `assets/audio/` by these names; each replaces its made sound on reload.
@@ -591,14 +604,14 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The airfield (M29, SPEC.md §13), all of it in the palette's desert ochre: the sand,
   scrub, dunes, the wadi, the strip, the pens' sandbag walls, the camp's bell tents and
   the perimeter wire (a line with concertina coils and pickets, like a hedge); the eight
-  aircraft from above, four Ju 87 Stukas and four Ju 52s, intact and burnt out; the fuel
+  aircraft from above, four Ju 87 Stukas and four Ju 52s, intact and burnt out (redrawn
+  M31c after `Stuka_` and `Ju52_Reference_01`); the fuel
   bowser alone on the apron; the signals tent with its wireless mast and field-telephone
   wires, standing, cut and blown; the two trucks waiting at the rendezvous with the green
-  lamp; and the perimeter car's counter, a Kübelwagen with two helmets aboard. The
+  lamp (netted lorries since M31c, after `Trucks_Reference_01` and `_02`); and the
+  perimeter car's counter until its painting (M31c). The
   airfield's own title card (`titleCard` in data/missions.json) is France's until the
   operator paints one (Priority 13).
 - The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.
-- The airfield's jeep raid (M31): a sand jeep from above with twin guns, their muzzle
-  flashes blinking (Priority 15 replaces the jeep; the flashes stay drawn). Its three new
-  sounds, the jeep, the bugle and the siren, are made in code until
-  Priority 16's recordings arrive.
+- The airfield's jeep raid's muzzle flashes (M31), blinking at the painted jeep's guns. Its three sounds
+  are made in code as the fallback; recordings supplied since M31c.
