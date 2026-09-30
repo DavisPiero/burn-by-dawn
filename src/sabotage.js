@@ -8,7 +8,7 @@
 // bridge is special only because its kind says its hexes become canal.
 
 import { hexDistance, NEIGHBOR_DIRS } from './hex.js';
-import { columnOf, hexKey, isInPlay, isPassable, terrainAt, terrainIdAt } from './map.js';
+import { columnOf, hexKey, isInPlay, isPassable, reachableWithin, terrainAt, terrainIdAt } from './map.js';
 import { applyHit, makeNoise } from './enemy.js';
 import { applyHook } from './traits.js';
 import { canAct, chargeCapacity, isWounded, occupiedHexes, onBoard, result, woundedLine } from './units.js';
@@ -232,6 +232,85 @@ export function pencils(state, unit, rules) {
     const blows = state.turn + fuse - 1;
     return { fuse, blows, afterDawn: Boolean(choice) && blows > rules.turnLimit, isDefault: turns === rules.charges.fuseTurns };
   });
+}
+
+/**
+ * The blasts a charge set on `objective` at `from` would make when it goes off
+ * (M30b): its own, and if it would finish the objective (with the charges
+ * already on it), every objective that sets off — each round its own hexes,
+ * by its own radii. Each is { q, r, radius, killRadius, label }.
+ */
+export function blastsOfCharge(state, objective, from, rules) {
+  const kind = kindOf(objective, rules);
+  const on = state.charges.filter((c) => c.objectiveId === objective.id);
+  const at = [{ q: from.q, r: from.r }, ...on.map((c) => ({ q: c.q, r: c.r }))];
+  const blasts = at.map((h) => ({ q: h.q, r: h.r, radius: kind.blastRadius, killRadius: kind.killRadius, label: objective.label }));
+  if (objective.detonated + on.length + 1 < kind.chargesNeeded) return blasts;
+  for (const link of chainFrom(state.objectives, objective, at, rules)) {
+    const k = kindOf(link.objective, rules);
+    for (const h of link.at) blasts.push({ q: h.q, r: h.r, radius: k.blastRadius, killRadius: k.killRadius, label: link.objective.label });
+  }
+  return blasts;
+}
+
+/**
+ * Who a charge set now with this fuse would catch (M30b, the operator's: "very
+ * easy to have the team too close to the blasts"): every man on the board
+ * inside its blasts who could not walk out of them before it goes off — this
+ * turn's AP left (the setter's after placing it) and a full pool for each turn
+ * after, over the ground's move costs. Returns the men's short names.
+ */
+export function caughtBy(state, map, setter, objective, fuse, rules) {
+  const blasts = blastsOfCharge(state, objective, setter, rules);
+  const placeCost = chargeNumbers(setter, rules).apCost;
+  const caught = [];
+  for (const man of state.units) {
+    if (!onBoard(man) || !blastEffect(blasts, man)) continue;
+    const now = man.id === setter.id ? Math.max(0, man.ap - placeCost) : man.ap;
+    const budget = now + (fuse - 1) * man.apMax;
+    const reach = reachableWithin(map, man, budget, null);
+    const clear = [...reach.values()].some((h) => !blastEffect(blasts, h));
+    if (!clear) caught.push(man.shortName);
+  }
+  return caught;
+}
+
+/**
+ * The pencil the game offers first, the one C or Enter takes (M30b): the
+ * default, or if that would catch one of the stick, the shortest longer one
+ * that lets them all get clear. With no choice (France), the one fuse.
+ */
+export function offeredPencil(state, map, unit, rules) {
+  const plain = defaultPencil(state, unit, rules);
+  const objective = objectiveForChargeHex(state.objectives, unit);
+  if (!rules.charges.fuseChoice || !plain || !objective) return plain;
+  const longer = pencils(state, unit, rules).filter((p) => !p.afterDawn && p.fuse >= plain.fuse);
+  return longer.find((p) => caughtBy(state, map, unit, objective, p.fuse, rules).length === 0) ?? plain;
+}
+
+/**
+ * The blasts still to come from charges set and burning past this turn
+ * (M30b): each charge's, and a chain's once its objective would be finished,
+ * with `blows`, the turn it goes off at the end of, and `label`.
+ */
+export function laterBlasts(state, rules) {
+  const blasts = [];
+  for (const o of state.objectives) {
+    const on = state.charges.filter((c) => c.objectiveId === o.id);
+    if (on.length === 0 || o.destroyed) continue;
+    const kind = kindOf(o, rules);
+    for (const c of on) {
+      if (c.fuse <= 1) continue;
+      blasts.push({ q: c.q, r: c.r, radius: kind.blastRadius, killRadius: kind.killRadius, label: o.label, blows: state.turn + c.fuse - 1 });
+    }
+    const last = Math.max(...on.map((c) => c.fuse));
+    if (last <= 1 || o.detonated + on.length < kind.chargesNeeded) continue;
+    for (const link of chainFrom(state.objectives, o, on, rules)) {
+      const k = kindOf(link.objective, rules);
+      for (const h of link.at) blasts.push({ q: h.q, r: h.r, radius: k.blastRadius, killRadius: k.killRadius, label: link.objective.label, blows: state.turn + last - 1 });
+    }
+  }
+  return blasts;
 }
 
 /**

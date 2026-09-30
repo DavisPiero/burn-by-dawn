@@ -8,7 +8,7 @@ import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terra
 import {
   missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets, winWords,
 } from '../src/missions.js';
-import { blastEffect, blastHexesThisTurn, checkPlaceCharge, defaultPencil, isExfil, pencils, runFusePhase } from '../src/sabotage.js';
+import { blastEffect, blastHexesThisTurn, blastsOfCharge, caughtBy, checkPlaceCharge, defaultPencil, isExfil, laterBlasts, offeredPencil, pencils, runFusePhase } from '../src/sabotage.js';
 import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '../src/state.js';
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
@@ -41,7 +41,9 @@ async function onAirfield(placements, level = 'normal') {
   const start = { ...createInitialState(roster, traits, rules, map, 1), phase: 'play', turn: 1 };
   const units = start.units.map((u, i) => {
     const at = placements[u.id];
-    return at ? { ...u, q: at[0], r: at[1], trail: [], landed: true, ap: u.apMax } : { ...u, q: 200 + i, r: 0, trail: [], landed: true };
+    // Pools are filled at landing, which this skips: a full one each.
+    const pool = rules.roles[u.role].actionPoints;
+    return at ? { ...u, q: at[0], r: at[1], trail: [], landed: true, ap: pool, apMax: pool } : { ...u, q: 200 + i, r: 0, trail: [], landed: true };
   });
   return { map, rules, state: { ...start, units, enemies: [] } };
 }
@@ -164,14 +166,14 @@ export default [
     }
   }],
 
-  ['time pencils (M30): 2 to 6 turns, the default 3 first; Steady Hands a turn off each; after dawn struck out', async () => {
+  ['time pencils (M30): 2 to 6 turns, the default 4 first (M30b); Steady Hands a turn off each; after dawn struck out', async () => {
     const { rules, state } = await onAirfield({});
     const sapper = state.units.find((u) => u.role === 'sapper' && !u.traits.some((t) => t.id === 'steady-hands'));
     const dutch = state.units.find((u) => u.traits.some((t) => t.id === 'steady-hands'));
     equal(pencils(state, sapper, rules).map((p) => p.fuse).join(), '2,3,4,5,6', 'a sapper\'s pencils');
     equal(pencils(state, dutch, rules).map((p) => p.fuse).join(), '1,2,3,4,5', 'Dutch\'s, a turn shorter');
-    equal(defaultPencil(state, sapper, rules).fuse, 3, 'the default is fuseTurns');
-    equal(defaultPencil(state, dutch, rules).fuse, 2, 'his default, hooked');
+    equal(defaultPencil(state, sapper, rules).fuse, 4, 'the default is the airfield\'s fuseTurns');
+    equal(defaultPencil(state, dutch, rules).fuse, 3, 'his default, hooked');
     const late = { ...state, turn: 17 };
     equal(pencils(late, sapper, rules).map((p) => `${p.fuse}${p.afterDawn ? 'x' : ''}`).join(), '2,3,4,5x,6x', 'turn 17: 5 would blow on turn 21');
     equal(pencils(late, sapper, rules)[1].blows, 19, 'a 3-turn pencil set on 17 blows at the end of 19');
@@ -188,7 +190,7 @@ export default [
     const set = placeCharge(state, sapper.id, rules, 5);
     equal(set.charges.length, 1, 'set');
     equal(set.charges[0].fuse, 5, 'with the 5-turn pencil');
-    equal(placeCharge(state, sapper.id, rules).charges[0].fuse, 3, 'none picked: the default');
+    equal(placeCharge(state, sapper.id, rules).charges[0].fuse, 4, 'none picked: the default');
     equal(placeCharge(state, sapper.id, rules, 7), state, 'no 7-turn pencil');
     const late = { ...state, turn: 18 };
     equal(checkPlaceCharge(late, late.units.find((u) => u.id === sapper.id), rules, 4).reason, 'a 4-turn pencil would go off after dawn', 'after dawn');
@@ -278,5 +280,39 @@ export default [
     equal(winShortfall({ ...hard, objectives: hard.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) }, hardRules), 1, 'Hard without the bowser: one short');
     const gone = { ...fewer, objectives: fewer.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) };
     equal(winShortfall(gone, rules), 1, 'without it, one short');
+  }],
+
+  ['a timer too short for a man to get clear is named; the one offered is the shortest safe one from the default (M30b)', async () => {
+    const { map: m } = await loadAirfield();
+    const bowser = m.objectives.find((o) => o.kind === 'bowser');
+    const [bq, br] = bowser.chargeHexes[0];
+    const { state: bare } = await onAirfield({});
+    const setter = bare.units.find((u) => u.role === 'sapper' && !u.traits.some((t) => t.id === 'steady-hands'));
+    const other = bare.units.find((u) => u.role === 'gunner' && u.charges > 0);
+    // Beside the bowser's point, with no AP now and one a turn: slow to get clear.
+    const { map, rules, state } = await onAirfield({ [setter.id]: [bq, br], [other.id]: [bq - 1, br] });
+    const slow = { ...state, units: state.units.map((u) => (u.id === other.id ? { ...u, ap: 0, apMax: 1 } : u)) };
+    const target = slow.objectives.find((o) => o.id === bowser.id);
+    const me = slow.units.find((u) => u.id === setter.id);
+    const blasts = blastsOfCharge(slow, target, me, rules);
+    assert(slow.objectives.filter((o) => o.kind === 'aircraft').every((o) => o.hexes.some((h) => blasts.some((b) => b.q === h.q && b.r === h.r)) === ['ju52-2', 'ju52-3'].includes(o.id)), 'the preview includes the two Ju 52s\' own blasts');
+    assert(caughtBy(slow, map, me, target, 2, rules).includes(other.shortName), 'two turns: he is caught');
+    equal(caughtBy(slow, map, me, target, 6, rules).join(), '', 'six turns: everyone gets clear');
+    const offered = offeredPencil(slow, map, me, rules);
+    assert(offered.fuse >= rules.charges.fuseTurns, 'never shorter than the default');
+    equal(caughtBy(slow, map, me, target, offered.fuse, rules).length, 0, 'the one offered lets them all get clear');
+    equal(offeredPencil(state, map, me, rules).fuse, rules.charges.fuseTurns, 'with nobody slow, the default');
+  }],
+
+  ['a charge burning past this turn shows its blast to come, the chain\'s too, with the turn it goes off (M30b)', async () => {
+    const { map: m } = await loadAirfield();
+    const bowser = m.objectives.find((o) => o.kind === 'bowser');
+    const [bq, br] = bowser.chargeHexes[0];
+    const { rules, state } = await onAirfield({});
+    const set = { ...state, turn: 5, charges: [{ objectiveId: bowser.id, q: bq, r: br, fuse: 3, length: 4, unitId: 'x' }] };
+    const later = laterBlasts(set, rules);
+    assert(later.every((b) => b.blows === 7), 'goes off at the end of turn 7');
+    assert(later.some((b) => b.label === 'Ju 52'), 'the Ju 52s it sets off are in it');
+    equal(laterBlasts({ ...set, charges: [{ ...set.charges[0], fuse: 1 }] }, rules).length, 0, 'not once it is this turn\'s');
   }],
 ];

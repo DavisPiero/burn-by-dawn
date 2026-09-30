@@ -17,7 +17,7 @@ import {
 } from './state.js';
 import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
-  objectiveAt, objectiveForChargeHex, swimTargets, chainFrom, defaultPencil, pencils,
+  objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencils,
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
@@ -285,6 +285,9 @@ function deriveView() {
     blastArea: areaAround(blastHexesThisTurn(state, rules)),
     // Where it kills a man, not only wounds him (M20: the fuel dump's outer ring wounds).
     blastKillArea: areaAround(blastHexesThisTurn(state, rules).map((b) => ({ ...b, radius: b.killRadius }))),
+    // Where a charge burning past this turn will go off (M30b, the operator's:
+    // men were caught too close), drawn faintly until its turn comes.
+    laterBlastArea: areaAround(laterBlasts(state, rules)),
     // An objective with every charge it needs set takes no more, so its empty
     // charge points are no longer drawn: "put one here" would be a lie.
     chargedObjectiveIds: new Set(state.objectives.filter((o) => !o.destroyed && chargesWanted(o) === 0).map((o) => o.id)),
@@ -411,6 +414,18 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = pencilsOpen(unit) ? pencilActions(unit) : actionsFor(unit);
+  // The timers open (M30b): the charge's blast, chain and all, on the board,
+  // and what to do in the readout.
+  if (pencilsOpen(unit)) {
+    const objective = objectiveForChargeHex(state.objectives, unit);
+    const blasts = blastsOfCharge(state, objective, unit, rules);
+    // Drawn as a blast is, not a hover's faint preview: this is the ground to get off.
+    view.blastArea = new Map([...view.blastArea, ...areaAround(blasts)]);
+    view.blastKillArea = new Map([...view.blastKillArea, ...areaAround(blasts.map((b) => ({ ...b, radius: b.killRadius })))]);
+    view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: how many turns until it goes off? Press a number, or click a timer below; Enter or C takes the one marked. `
+      + 'The red ground is its blast: every man must be off it by then. Esc: don\'t set it.';
+    return view;
+  }
   // Over an enemy, what the selected man can do to it, and why not (M26d: a
   // playtester could not tell why Speers could kill one two hexes off and not
   // the two beside him — those had not been suppressed, and could see him).
@@ -446,6 +461,10 @@ function deriveView() {
       view.blastLabel = `BLAST — a charge goes off this turn with him in it: KILLED${blast === 'wounded' ? ' (at its edge, but already wounded)' : ''}`;
     } else if (blast === 'wounded') {
       view.blastLabel = 'BLAST — a charge goes off this turn with him at its edge: WOUNDED';
+    } else if (!isExfil(baseMap, end)) {
+      // Inside a blast to come (M30b): say when, so he is off it by then.
+      const later = laterBlasts(state, rules).filter((b) => blastEffect([b], end)).sort((a, b) => a.blows - b.blows)[0];
+      if (later) view.blastLabel = `BLAST — to come: the ${later.label} goes up at the end of turn ${later.blows} with this ground in its blast; get him clear by then`;
     }
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
@@ -948,14 +967,16 @@ function placeChargeAction(unit) {
   const check = checkPlaceCharge(state, unit, rules);
   const choice = rules.charges.fuseChoice;
   const lengths = pencils(state, unit, rules).map((p) => p.fuse);
-  let cost = choice ? `${check.cost} AP, a pencil of ${lengths[0]} to ${lengths[lengths.length - 1]} turns` : `${check.cost} AP, fuse ${check.fuse}`;
+  let cost = choice ? `${check.cost} AP, then set its timer: ${lengths[0]} to ${lengths[lengths.length - 1]} turns` : `${check.cost} AP, fuse ${check.fuse}`;
   if (check.ok && !winTargets(state, rules).targets.includes(check.objective) && winShortfall(placeCharge(state, unit.id, rules), rules) > 0) {
     cost += ` — leaves too few for ${winWords(state, rules)}: WITHDRAWS`;
   }
   return {
     id: 'charge', key: 'C', label: 'Place charge', short: 'Charge',
+    // Two steps where there is a timer to set (M30b, the operator's: it was not clear a second was needed).
+    ...(choice ? { lines: ['Charge', '+ timer'] } : {}),
     help: choice
-      ? `Set a charge here with a time pencil: pick how many turns it burns, ${lengths[0]} to ${lengths[lengths.length - 1]}, this turn's included. Press C, then a number, or C again for ${check.fuse}`
+      ? `Two steps: press C, then set its timer — how many turns until it goes off, ${lengths[0]} to ${lengths[lengths.length - 1]}, this turn's included. Give every man time to get clear of its blast.`
       : `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
     ok: check.ok, reason: check.reason, cost, apCost: check.cost,
   };
@@ -967,29 +988,47 @@ function pencilsOpen(unit) {
 }
 
 /**
- * The time pencils as the action strip (SPEC.md §7, M30): one button a
- * length, its key the number, "4 turns" over "blows turn 11"; the default
- * marked as the one C or Enter takes; one that would go off after dawn struck
- * out. Esc, or the last button, backs out.
+ * The time pencils as the action strip (SPEC.md §7, M30), called timers on
+ * screen (M30b, the operator's word): a heading saying what to do, then one
+ * button a length, its key the number, "4 turns" over "on turn 19"; the one
+ * offered first marked, and taken by C or Enter; one that would catch a man
+ * who cannot get clear of the blast in time marked TOO SHORT and naming him;
+ * one that would go off after dawn struck out. Esc, or Back, puts them away.
  */
 function pencilActions(unit) {
-  const choice = defaultPencil(state, unit, rules);
-  const buttons = pencils(state, unit, rules).map((p) => ({
-    id: `pencil-${p.fuse}`, key: String(p.fuse), label: `${p.fuse}-turn pencil`, short: `${p.fuse} turn${p.fuse === 1 ? '' : 's'}`,
-    // "blows turn 17" overflowed a button three across at 1280.
-    apLabel: p.afterDawn ? 'after dawn' : `on turn ${p.blows}`,
-    ok: !p.afterDawn, struck: p.afterDawn, active: p.fuse === choice?.fuse,
-    reason: 'it would go off after dawn, with the stick still waiting for it',
-    cost: `${checkPlaceCharge(state, unit, rules, p.fuse).cost} AP; it goes off at the end of turn ${p.blows}`,
-    help: `Set the charge with a ${p.fuse}-turn pencil: ${p.fuse} fuse phase${p.fuse === 1 ? '' : 's'}, this turn's included${p.fuse === choice?.fuse ? '. C or Enter takes this one' : ''}`,
-  }));
-  return [...buttons, { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the pencils away without setting the charge' }];
+  const offered = offeredPencil(state, map, unit, rules);
+  const objective = objectiveForChargeHex(state.objectives, unit);
+  const choices = pencils(state, unit, rules);
+  const open = choices.filter((p) => !p.afterDawn).map((p) => p.fuse);
+  const buttons = choices.map((p) => {
+    const caught = p.afterDawn ? [] : caughtBy(state, map, unit, objective, p.fuse, rules);
+    const warning = caught.length ? ` TOO SHORT: ${listNames(caught)} could not get clear of the red ground in time.` : ' Every man can get clear of the red ground in time.';
+    return {
+      id: `pencil-${p.fuse}`, key: String(p.fuse), label: `${p.fuse}-turn timer`, short: `${p.fuse} turn${p.fuse === 1 ? '' : 's'}`,
+      // "blows turn 17" overflowed a button three across at 1280.
+      apLabel: p.afterDawn ? 'after dawn' : caught.length ? 'too short!' : `on turn ${p.blows}`,
+      ok: !p.afterDawn, struck: p.afterDawn, danger: caught.length > 0, active: p.fuse === offered?.fuse,
+      reason: 'it would go off after dawn, with the stick still waiting for it',
+      cost: `${checkPlaceCharge(state, unit, rules, p.fuse).cost} AP; it goes off at the end of turn ${p.blows}`,
+      help: `Set the charge to go off in ${p.fuse} turn${p.fuse === 1 ? '' : 's'}, this one included: at the end of turn ${p.blows}.${p.afterDawn ? '' : warning}${p.fuse === offered?.fuse ? ' C or Enter takes this one.' : ''}`,
+    };
+  });
+  const range = open.length > 1 ? `${open[0]}–${open[open.length - 1]}` : `${open[0] ?? ''}`;
+  return [
+    { heading: `SET THE TIMER: PRESS ${range}` },
+    ...buttons,
+    { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the timers away without setting the charge' },
+  ];
 }
 
-/** Set the charge with this pencil, or the default one. */
+function listNames(names) {
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+}
+
+/** Set the charge with this pencil, or the one offered first. */
 function setCharge(unit, fuse) {
   pencilsFor = null;
-  commit(placeCharge(state, unit.id, rules, fuse ?? defaultPencil(state, unit, rules)?.fuse));
+  commit(placeCharge(state, unit.id, rules, fuse ?? offeredPencil(state, map, unit, rules)?.fuse));
 }
 
 /**
