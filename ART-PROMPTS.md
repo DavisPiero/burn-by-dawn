@@ -558,6 +558,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   ground; a painted set would replace them.
 - The fuse stopwatches on a burning charge (M15), since M30 with the face divided into
   the charge's own length (the airfield's time pencils run 1 to 6 turns).
+- The tin of time pencils (M31d): the six No. 10 delay switches, colour-banded by length,
+  and the olive tin they lie in (the tin is page styling, the pencils `time-pencil-N`).
+- The airfield's burnt-orange counters (M31d): the same frame, printed in another colour.
 - Continuous roads, hedges and the railway line; since M17 the hedges are laid as bushy
   clumps along their line, with now and then a tree, after `Hedgerows_Reference_01.jpeg`.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs. Since M17

@@ -30,7 +30,11 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   the timer and the bowser, the diversion is a jeep raid, desert lines and back-page sounds,
   and the paintings and recordings listed in ART-PROMPTS (13, 15, 16). M31b, the
   operator's notes on it: the airfield **playable** from the contents page (30 Sep 2026).
-  **Phase 3 is done. Next: Phase 4, the aqueduct — spec it first.**
+  **Phase 3 is done. Next: Phase 4, the aqueduct — spec it first.** M31d (1 Oct 2026),
+  the operator's notes before Phase 4: the timer as a tin of time pencils, orange counters
+  on the airfield, a way back to the contents, and a rule, patrols walk into our men and
+  find them, which pushes Normal's North runs and every Hard run under the targets
+  (DECISIONS.md): the operator's call whether to re-balance or turn it off, before Phase 4.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 
