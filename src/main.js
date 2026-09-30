@@ -1843,17 +1843,17 @@ function describeBriefing(which, view) {
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
     // Targets of one name and one need said once (M31: the airfield's eight
-    // aircraft were eight clauses): "Stukas 1 each, its point".
+    // aircraft were eight clauses): "Stukas- 1ea at its charge target" (M31d).
     const needGroups = new Map();
     for (const o of state.objectives) {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
-      const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
+      const where = needed === points ? (needed === 1 ? 'at its charge target' : ', one per charge target') : `at any ${needed === 1 ? '' : `${needed} `}charge target${needed === 1 ? '' : 's'}`;
       const key = `${o.label}|${needed}|${where}`;
       needGroups.set(key, { label: o.label, needed, where, n: (needGroups.get(key)?.n ?? 0) + 1 });
     }
     const needs = [...needGroups.values()].map(({ label, needed, where, n }) => (
-      n === 1 ? `${label} ${needed}, ${where}` : `${label}s ${needed} each, ${where}`
+      `${n === 1 ? `${label}- ${needed}` : `${label}s- ${needed}ea`}${where.startsWith(',') ? '' : ' '}${where}`
     )).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
@@ -1873,17 +1873,28 @@ function describeBriefing(which, view) {
     });
     return {
       banner: { title: GAME_TITLE, tagline: mission.tagline },
-      title: 'ORDERS',
-      kicker: before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`,
+      // The mission's title heads its orders (M31d, the operator's), and
+      // ORDERS goes to the kicker, so the card is no taller.
+      title: mission.title.toUpperCase(),
+      kicker: `ORDERS · ${before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`}`,
       paragraphs: [
         // The opening on a line of its own (M13), then the job.
         [
           mission.briefing,
           // Dawn on a line of its own (M22, the operator's).
-          `Blow ${winWords(state, rules, { upper: true })} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
+          // Split at the comma (M31d, the operator's): EXFIL sat alone on a line.
+          `Blow ${winWords(state, rules, { upper: true })} before dawn,`,
+          `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (${bonusPts}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
+        // The timer named where charges take one, and the last sentence on a
+        // line of its own (M31d, the operator's).
+        ...(bonus.length ? [[
+          `${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (${bonusPts}). ${rules.charges.fuseChoice
+            ? 'Every bang alerts the garrison, so carefully plan the order and timer duration of the charges you set.'
+            : 'Every bang alerts the garrison, so plan the order you set charges carefully.'}`,
+          'It’s good to be slow and stealthy, but be sure to finish before dawn!',
+        ]] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
@@ -1895,7 +1906,8 @@ function describeBriefing(which, view) {
           // The operator's words (M13): "vulnerable points" here only; the
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
-          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
+          // The operator's words (M31d): "charge target", and "Stukas- 1ea".
+          `You don’t fill every charge target. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
           ...(timerLine ? [timerLine] : []),
           ...setterLines,

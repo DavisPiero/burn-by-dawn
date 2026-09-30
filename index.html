@@ -1027,6 +1027,15 @@
     #briefing-backdrop.orders #briefing p + h3 { margin-top: 16px; }
     #briefing-backdrop.orders #briefing li { margin-bottom: 5px; }
     #briefing-backdrop.orders #briefing .brief-foot { margin-top: 12px; }
+    /* Set tighter a step at a time when it would not fit the window (M31d,
+       ui.js fitBriefing): the air first, then the type, never below 13. */
+    #briefing[data-fit] { line-height: 1.36; }
+    #briefing-backdrop.orders #briefing[data-fit] p { margin-bottom: 5px; }
+    #briefing-backdrop.orders #briefing[data-fit] p + h3 { margin-top: 9px; }
+    #briefing-backdrop.orders #briefing[data-fit] li { margin-bottom: 2px; }
+    #briefing-backdrop.orders #briefing[data-fit] .brief-foot { margin-top: 6px; }
+    #briefing[data-fit="2"] { font-size: 14px; }
+    #briefing[data-fit="3"] { font-size: 13px; }
     /* Wider, so the picture is cropped lower rather than grown taller. */
     #briefing-backdrop.orders #briefing .title-banner { aspect-ratio: 5.8 / 1; }
     /* The level, first thing under the head: what it sets is in the text below. */

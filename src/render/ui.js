@@ -393,6 +393,21 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
   card.appendChild(foot);
+  fitBriefing(card);
+}
+
+/**
+ * A card taller than the window is set tighter, a step at a time, before
+ * anything is cut (M31d: the airfield's orders ran off the foot at 1280x800):
+ * first the air between its parts, then the type to 14 px, then 13 (index.html
+ * `data-fit`). Never below 13, the right page's least (SPEC.md §11).
+ */
+const BRIEFING_FIT_STEPS = 3;
+function fitBriefing(card) {
+  delete card.dataset.fit;
+  for (let step = 1; step <= BRIEFING_FIT_STEPS && card.scrollHeight > card.clientHeight + 1; step++) {
+    card.dataset.fit = String(step);
+  }
 }
 
 /**
