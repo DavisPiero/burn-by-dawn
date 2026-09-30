@@ -492,11 +492,12 @@ export function passCharge(state, giverId, receiverId, rules) {
 
 /**
  * Set a charge on the objective this man is standing beside (SPEC.md §7). The
- * onPlaceCharge hook sets what it costs him and how long its fuse burns.
+ * onPlaceCharge hook sets what it costs him and how long its fuse burns;
+ * `fuse` is the time pencil he picked (M30), the default one if left out.
  */
-export function placeCharge(state, unitId, rules) {
+export function placeCharge(state, unitId, rules, fuse = undefined) {
   const unit = unitById(state.units, unitId);
-  const check = checkPlaceCharge(state, unit, rules);
+  const check = checkPlaceCharge(state, unit, rules, fuse);
   if (!check.ok) return state;
   const spent = spend(state, unitId, check.cost, { charges: unit.charges - 1 });
   return {
