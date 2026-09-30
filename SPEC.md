@@ -557,16 +557,24 @@ fuse phase are one explosion — the alert rises once and the noise is heard onc
 the bridge's two fuses together is therefore worth a whole alert step.
 
 **Time pencils** (`charges.fuseChoice`; null in France, so a charge there is set with the
-one fuse as above). Where a mission gives a `{ min, max }`, the man setting a charge
-picks its fuse from that many turns, and his `onPlaceCharge` fuse hook applies to
-whichever he picks (Steady Hands: a turn off each). **C**, or the button, opens the
-pencils as buttons in the action strip, one a length, each with the turn it goes off
-("3 turns / on turn 18"); the default (`fuseTurns`) is marked and offered first, so a
-player who never chooses plays as in France. **C** again or **Enter** takes it, a number
-key takes that many turns, **Esc** or Back puts them away. A pencil that would go off
-after dawn is struck out and cannot be picked; if the default is, C takes the longest
-still in time. A burning charge's stopwatch is divided into its own length, and its
-hover and its target's say the turn it blows. Undo takes it back like any other action.
+one fuse as above), called **timers** on screen. Where a mission gives a `{ min, max }`,
+the man setting a charge picks its fuse from that many turns, and his `onPlaceCharge`
+fuse hook applies to whichever he picks (Steady Hands: a turn off each). It is two plain
+steps (M30b, the operator's: the second was missed): the button reads **Charge + timer**,
+and **C** opens the timers in the action strip under a heading, SET THE TIMER: PRESS 2–6,
+one button a length with the turn it goes off ("4 turns / on turn 19"), while the board
+shows the charge's blast in red, the chain's included, and the readout says every man
+must be off that ground by then. A number key takes that many turns, **C** again or
+**Enter** takes the marked one, **Esc** or Back puts them away. **Getting clear** (M30b):
+a timer that would catch a man who could not walk off the red ground before it goes off
+(his AP left this turn and a full pool each turn after, over the ground's costs) reads
+**too short!** in red and names him; the one marked and offered first is the default
+(`fuseTurns`), or if that is too short, the shortest longer one that lets everyone clear.
+A timer that would go off after dawn is struck out and cannot be picked; if the default
+is, C takes the longest still in time. A burning charge's stopwatch is divided into its
+own length, and its hover and its target's say the turn it blows. Once set, the blast to
+come stays on the board, faint with a dashed edge, until its turn, and a move that ends
+on it says when it goes off. Undo takes it back like any other action.
 
 **A blast that sets off its neighbours** (`setsOff` on an objective kind; false in France).
 When an objective of such a kind is destroyed, every intact objective with a hex inside
@@ -575,7 +583,9 @@ counted toward the win, scored as its own, its payoff paid, and its own blast fe
 its own hexes, killing and wounding by its own radii. It is still **one explosion**: one
 alert rise and one noise, the setting-off objective's. A charge already set on a caught
 objective is spent. A caught objective whose kind sets off carries the chain on. Its
-target ring and hover name what it takes ("SETS OFF 2 JU 52S"); the path warnings
+target ring and hover name what it takes ("SETS OFF 2 JU 52S"), and on the airfield a
+fuel hose runs from the bowser to its own charge point (M30b, art only: `hose` in its
+objective art); the path warnings
 include every blast in the chain; and a setter still standing counts toward what the
 stick can still do, so losing a bomb is not a withdrawal while the bowser could make it
 up.
@@ -770,8 +780,12 @@ The `hunter` style (`node tools/balance-bot.mjs 300 hunter`) walks each man behi
 nearest killable enemy to knife it, and closes a gunner to suppress and kill. By default
 only the men with no charge to place hunt; `HUNTERS=all` sends everyone, until the bridge
 is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-everything
-must not be the best way to play, and with the whole-turn knife it is not (Normal
-71 / 78 / 76, Hard 27 / 24 / 28, with `HUNTERS=all`). Its numbers, against the baselines, are in DECISIONS.md.
+must not be the best way to play. It moves as the `careful` style does, so it is measured
+against `careful` on the same run (M30b, the operator's: against naive, it measured how
+much careful movement is worth, 10 to 40 points on the airfield). France, 200 seeds, W/N/E:
+Normal careful 86 / 80 / 74, hunter 80 / 83 / 76, `HUNTERS=all` 76 / 79 / 78; Hard careful
+38 / 51 / 43, hunter 29 / 33 / 27, all 27 / 24 / 28: level on Normal, within the bot's noise,
+and well below on Hard. Its numbers, against the baselines, are in DECISIONS.md.
 
 **Targets** (proposed at the v1.0 gate; the playtest in `docs/PLAYTEST.md` confirms or
 moves them). What they are for is people, so the first three are measured on players new
@@ -780,8 +794,8 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | Level | Players | Naive bot, every run | Hunter bot |
 |---|---|---|---|
 | **Easy** | A first try usually wins | 95 or more | — |
-| **Normal** | Most win within three tries | 75 to 90 | Below naive on the same run |
-| **Hard** | The real test: a win is earned | 25 to 45 | Below naive on the same run |
+| **Normal** | Most win within three tries | 75 to 90 | Below careful on the same run (a few points over is the bot's noise) |
+| **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
 Today every run is inside them.
 
@@ -1076,7 +1090,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M31**, the airfield's words, sounds and art hand-off (§13). M28 to M30 are done: the
+**M31**, the airfield's words, sounds and art hand-off (§13). M28 to M30b are done: the
 airfield is on the board as a draft, `?mission=airfield`, with its two new rules and its
 balance. v1.0 is tagged. The airfield's milestones, M28 to M31, are listed in §13.
 
@@ -1121,6 +1135,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M29b | The operator's notes: the airfield's opening board cleared (tight rings, fewer words, notes and the drop cue in clear ground), a South run for the East, a camp guard, a bomb a scout and one a sapper, a lighter wadi, softer aircraft shadows, a mission's own portraits; Music off on the contents page; Men out in bold; France's two hidden charge points moved. France's bot output unchanged |
 | M29c | The operator's second notes: the desert portraits in; the West run straight down outside the wire; the airfield's notes placed again (the signals note over its patrol, the bowser's named, the exfil's inside its ring) |
 | M30 | The airfield's two new rules, time pencils and the bowser that sets off its neighbours; the bot learns both; the airfield balanced (a West patrol, five aircraft on Normal, six on Hard); France's bot output unchanged |
+| M30b | The operator's desert notes: the timer made two plain steps with its blast shown and too-short timers named, a default of 4, blasts to come drawn; the bowser's hose and the Ju 52's point moved off it; the desert chips; the South tab moved; a Sand patrol; the hunter measured against careful |
 
 ---
 
@@ -1191,7 +1206,11 @@ Placed in M29 (`data/map-airfield.json`); tuned by the bot in M30 (the West patr
   dispersal**: four Ju 52s on the apron, the **bowser** between the middle two. Each
   aircraft has one pen hex behind it, away from the strip, and that is its one charge
   point. The bowser has one charge point too: the one hex beside it whose blast takes in
-  exactly the two Ju 52s either side of it (a test holds it to that).
+  exactly the two Ju 52s either side of it (a test holds it to that), with a fuel hose
+  drawn to it. M30b, the operator's: the Ju 52 east of the bowser had its pen and point
+  just beside the bowser's, where the two read as a pair, so its pen moved one hex east
+  to (8,8). The hex west of the bowser, the other place offered for its point, would put
+  a Stuka across the strip inside its blast as well.
 - **The camp** in the east: tents, the **signals tent** with its mast, the AA pits, and
   the gate where the road comes in from the east edge (Hard's reinforcements come this
   way).
@@ -1217,7 +1236,7 @@ Placed in M29 (`data/map-airfield.json`); tuned by the bot in M30 (the West patr
 
 ### The garrison
 
-Ten enemies, two more than France, plus the reserve:
+Eleven enemies, three more than France, plus the reserve:
 - **Sentries**: the two AA pits (one in the north dispersal, one at the south-east
   corner), a guard beside the signals tent, and a guard among the south-east tents
   (M29b, the operator's: the camp's corner stood empty).
@@ -1225,7 +1244,9 @@ Ten enemies, two more than France, plus the reserve:
   the north wire, where the North run lands (so its chutes are found), one in the
   camp, and (M30, the bot's) a West patrol on the sand under the escarpment outside the
   west wire, between (-1,7) and (0,4), where the West run lands: before it nobody found
-  a West chute, and the West won nineteen games in twenty on Normal.
+  a West chute, and the West won nineteen games in twenty on Normal; and (M30b, the
+  bot's) a Sand patrol below the south wire, from (4,11) east to (12,10), where the South
+  run lands: with the default timer at 4 the South won 91% on Normal and 53% on Hard.
 - **The perimeter car**, a new enemy type, `vehicle` (the mission's enemies patch;
   its counter is ART-ASSETS.md's `counter-enemy-vehicle`): speed 6, so it drives
   the whole perimeter in a few turns and reaches a noise first. Vision and arc as a
@@ -1270,7 +1291,8 @@ Both are built (M30) and written into §7; kept here as the mission's numbers.
 
 **1. Time pencils** (engine, `charges.fuseChoice`; null in `rules.json`, so France is
 unchanged). When he sets a charge, the sapper picks its fuse from `min` to `max` turns
-(the airfield: 2 to 6). The default (`fuseTurns`, 3) is offered first, so a player who
+(the airfield: 2 to 6). The default (`fuseTurns`, 4 on the airfield since M30b, the operator's: men were
+caught too close with 3) is offered first, so a player who
 never chooses plays as in France. Steady Hands takes a turn off whichever he picks
 (Dutch: 1 to 5).
 - **C**, or the button, opens the pencils as buttons in the action strip, each with its
@@ -1332,22 +1354,13 @@ proof is the same as M27's: France's bot `--json` output is byte-for-byte unchan
 |---|---|---|
 | **M28** | The engine work above | France's bot output byte-for-byte unchanged; a test mission with `destroyCount` plays through in the tests |
 | **M29** | The airfield on the board: its terrain and art, `data/map-airfield.json`, the car, the aircraft, bowser and signals tent (no chain yet), the trucks, the drop runs; `draft` in missions.json | `?mission=airfield` plays start to end under today's rules; the bot runs `MISSION=airfield` |
-| **M30** | The two new rules; the bot learns both (a pencil policy, and whether to go for the bowser); the three levels balanced | Every run inside the §10 targets; the hunter below naive; France unchanged |
+| **M30** | The two new rules; the bot learns both (a pencil policy, and whether to go for the bowser); the three levels balanced | Every run inside the §10 targets; the hunter below careful (M30b; it said naive); France unchanged |
 | **M31** | Its words and sounds: orders, tagline, turn-card hints, the six's desert lines, the RAF's; ART-ASSETS and ART-PROMPTS entries for the operator's paintings (title card, aircraft, car counter, trucks) | The operator's review, then `playable` |
 
 Balance targets are §10's, for the airfield as for France.
 
-**The airfield's baselines (M30)**, 300 seeds, win % west / north / south, with `KNIFE=1
+**The airfield's baselines (M30b)**, 300 seeds, win % west / north / south, with `KNIFE=1
 BOWSER=1`: the naive bot going for the bowser, as its ring tells a first-timer to, and
-taking the default pencil, as one who never chooses would. **Easy 97 / 97 / 99, Normal
-88 / 79 / 86, Hard 39 / 31 / 45**, every run inside the targets. What the two rules are
-worth to the same bot: without the bowser Easy 65 / 82 / 88, Normal 51 / 57 / 63, Hard 0
-(six wants it); with long pencils too (`PENCIL=long`) Easy 98 / 97 / 100, Normal 94 / 82
-/ 95, Hard 64 / 36 / 59. Setting charges to go off together (`PENCIL=sync`) is worse
-than the default: each aircraft is its own explosion, so bunching them only brings the
-garrison sooner. The hunter is below the `careful` bot it moves like (Normal careful
-98 / 98 / 98, hunter 99 / 98 / 96, `HUNTERS=all` 80 / 88 / 95; Hard careful 88 / 74 /
-81, hunter 77 / 55 / 64, all 12 / 15 / 36), so killing everything is not the best way
-to play; but careful movement alone is worth 10 to 40 points here, so on Normal the
-hunter is not below *naive* as §10's check is worded. The full table is in
-DECISIONS.md.
+taking the timer offered first, as one who never chooses would. **Easy 97 / 98 / 99, Normal
+89 / 80 / 86, Hard 41 / 29 / 37**, every run inside the targets. The hunter against `careful`, and what
+each rule is worth to the bot, are in DECISIONS.md.

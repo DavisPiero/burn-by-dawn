@@ -486,6 +486,10 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The soft drop shadow under counters.
 - The counter markers (spotted, wounded, hidden, and since M11 the leader-blue orders
   chevron on a man who has the leader's +AP this turn).
+- The bowser's fuel hose to its charge point (M30b), and the faint dashed ground of a
+  blast still to come.
+- The desert chips (M30b), cut from the operator's desert portraits onto a dark red-brown
+  ground; a painted set would replace them.
 - The fuse stopwatches on a burning charge (M15), since M30 with the face divided into
   the charge's own length (the airfield's time pencils run 1 to 6 turns).
 - Continuous roads, hedges and the railway line; since M17 the hedges are laid as bushy

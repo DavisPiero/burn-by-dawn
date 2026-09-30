@@ -46,8 +46,9 @@
 // and `fight`.
 //
 // PENCIL=<policy> (M30) picks the time pencil where the mission offers a
-// choice (charges.fuseChoice): `default` (the default, as a player who never
-// chooses), `long` (the longest that goes off before dawn, to be walking to
+// choice (charges.fuseChoice): `default` (the one the game offers first, as a
+// player who never chooses takes: the default, or since M30b the shortest
+// longer one that lets every man get clear of the blast), `long` (the longest that goes off before dawn, to be walking to
 // the trucks when it blows), or `sync` (the same turn as a charge already
 // burning, if a pencil reaches it, so the bangs come together; else the
 // default). Where there is no choice (France) every policy is the one fuse.
@@ -201,9 +202,9 @@ function jobTargets(state) {
 }
 
 // The pencil this man sets his charge with, by PENCIL (M30).
-function pencilFor(state, unit) {
+function pencilFor(state, unit, map) {
   const open = SB.pencils(state, unit, rules).filter((p) => !p.afterDawn);
-  const fallback = SB.defaultPencil(state, unit, rules)?.fuse;
+  const fallback = SB.offeredPencil(state, map, unit, rules)?.fuse;
   if (PENCIL === 'long') return open[open.length - 1]?.fuse ?? fallback;
   if (PENCIL === 'sync') {
     const latest = Math.max(0, ...state.charges.map((c) => state.turn + c.fuse - 1));
@@ -284,8 +285,8 @@ function actFor(state, unit, map) {
       if (U.checkPickUpCharge(state.droppedCharges, unit, rules).ok) return S.pickUpCharge(state, unit.id, rules);
     } else if (goal.cut) {
       if (SB.checkCutLine(state, unit, rules).ok) return S.cutLine(state, unit.id, rules);
-    } else if (SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit)).ok) {
-      return S.placeCharge(state, unit.id, rules, pencilFor(state, unit));
+    } else if (SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit, map)).ok) {
+      return S.placeCharge(state, unit.id, rules, pencilFor(state, unit, map));
     }
   }
   if (OPTS.fight && rules.roles[unit.role].kill) {

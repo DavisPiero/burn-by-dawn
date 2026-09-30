@@ -24,7 +24,9 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   airfield on the board as a draft (`?mission=airfield`), the operator's notes on it (a
   South run for the East, a camp guard, a bomb for each scout), and (M30, 30 Sep 2026)
   the two rules, the bot playing both, and the balance: a West patrol, five aircraft on
-  Normal, six on Hard, every run inside the §10 targets. **Next: M31**, its words,
+  Normal, six on Hard, every run inside the §10 targets; M30b, the operator's desert notes
+  (the timer made plain, blasts to come shown, a default timer of 4, a Sand patrol, the
+  desert chips). **Next: M31**, its words,
   sounds and art hand-off, then `playable`.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)

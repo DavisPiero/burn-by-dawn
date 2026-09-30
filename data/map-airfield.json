@@ -61,7 +61,7 @@
       "labelAlong": 0.27
     }
   ],
-  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north run lands), a patrol walks the sand under the escarpment outside the west wire (M30: where the west run lands, whose chutes nobody found, and which won nineteen games in twenty), a patrol walks the camp, a guard stands among the south-east tents (M29b, the operator's), and the perimeter car drives the track round inside the wire. The car is its own type, `vehicle` (the manifest's counter-enemy-vehicle) (data/missions.json enemies patch): fast, and it cannot be killed.",
+  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north run lands), a patrol walks the sand below the south wire (M30b: where the south run lands; with the default timer at 4 turns the South won 91% on Normal, 53% on Hard), a patrol walks the sand under the escarpment outside the west wire (M30: where the west run lands, whose chutes nobody found, and which won nineteen games in twenty), a patrol walks the camp, a guard stands among the south-east tents (M29b, the operator's), and the perimeter car drives the track round inside the wire. The car is its own type, `vehicle` (the manifest's counter-enemy-vehicle) (data/missions.json enemies patch): fast, and it cannot be killed.",
   "enemies": [
     {
       "id": "post-aa-north",
@@ -176,6 +176,23 @@
         [
           0,
           4
+        ]
+      ]
+    },
+    {
+      "id": "patrol-sand",
+      "label": "Sand patrol",
+      "type": "patrol",
+      "facing": "E",
+      "loop": false,
+      "route": [
+        [
+          4,
+          11
+        ],
+        [
+          12,
+          10
         ]
       ]
     },
