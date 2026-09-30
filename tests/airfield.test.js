@@ -58,8 +58,8 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['any N of the eight aircraft is the job: 3 on Easy, 4 on Normal, 5 on Hard; five bombs in the stick', async () => {
-    for (const [level, count] of [['easy', 3], ['normal', 4], ['hard', 5]]) {
+  ['any N of the eight aircraft is the job: 3 on Easy, 5 on Normal, 6 on Hard (M30); five bombs in the stick', async () => {
+    for (const [level, count] of [['easy', 3], ['normal', 5], ['hard', 6]]) {
       const { map, rules, traits, roster } = await loadAirfield(level);
       const state = createInitialState(roster, traits, rules, map, 1);
       const { targets, needed } = winTargets(state, rules);
@@ -73,7 +73,7 @@ export default [
       equal(byRole('scout').join(), '1,1', `${level}: a scout carries one`);
     }
     const { map, rules, traits, roster } = await loadAirfield();
-    equal(winWords(createInitialState(roster, traits, rules, map, 1), rules), '4 of the 8 Aircraft', 'said in words');
+    equal(winWords(createInitialState(roster, traits, rules, map, 1), rules), '5 of the 8 Aircraft', 'said in words');
   }],
 
   ['each aircraft stands on its own hex with one charge point in its pen beside it', async () => {
@@ -136,8 +136,9 @@ export default [
     equal(car.speed, 6, 'speed');
     equal(car.killable, false, 'not killable');
     for (const [q, r] of map.enemies.find((e) => e.id === car.id).route) equal(terrainIdAt(map, q, r) === 'track' || terrainIdAt(map, q, r) === 'wadi', true, `waypoint (${q}, ${r}) on the track`);
+    // M30: Hard's car sees no further than Normal's (the North run, which it drives past, fell to 19%).
     const hard = await loadAirfield('hard');
-    equal(hard.map.enemyTypes.vehicle.visionRadius, 4, 'Hard: the car sees further too');
+    equal(hard.map.enemyTypes.vehicle.visionRadius, car.visionRadius, 'Hard: the car sees as far as on Normal');
   }],
 
   ['the desert has art for every terrain, target and the trucks, and no water for a swim', async () => {
@@ -264,14 +265,17 @@ export default [
   }],
 
   ['a bowser still standing counts toward what the stick can still do: one bomb for three', async () => {
-    const { rules, state } = await onAirfield({}, 'hard');
+    const { rules, state } = await onAirfield({}, 'normal');
     const { winShortfall } = await import('../src/missions.js');
-    // Hard wants five; four bombs left in the stick is enough with the bowser.
+    // Normal wants five; four bombs left in the stick is enough with the bowser.
     let left = 4;
     const units = state.units.map((u) => { const c = Math.min(u.charges, left); left -= c; return { ...u, charges: c }; });
     const fewer = { ...state, units };
     equal(units.reduce((n, u) => n + u.charges, 0), 4, 'four bombs');
     equal(winShortfall(fewer, rules), 0, 'three aircraft by bomb, two with the bowser');
+    const { state: hard, rules: hardRules } = await onAirfield({}, 'hard');
+    equal(winShortfall(hard, hardRules), 0, 'Hard wants six of five bombs: the bowser and four more');
+    equal(winShortfall({ ...hard, objectives: hard.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) }, hardRules), 1, 'Hard without the bowser: one short');
     const gone = { ...fewer, objectives: fewer.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) };
     equal(winShortfall(gone, rules), 1, 'without it, one short');
   }],

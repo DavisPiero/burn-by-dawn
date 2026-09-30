@@ -486,6 +486,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The soft drop shadow under counters.
 - The counter markers (spotted, wounded, hidden, and since M11 the leader-blue orders
   chevron on a man who has the leader's +AP this turn).
+- The fuse stopwatches on a burning charge (M15), since M30 with the face divided into
+  the charge's own length (the airfield's time pencils run 1 to 6 turns).
 - Continuous roads, hedges and the railway line; since M17 the hedges are laid as bushy
   clumps along their line, with now and then a tree, after `Hedgerows_Reference_01.jpeg`.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs. Since M17

@@ -65,13 +65,12 @@
           "vehicle": { "label": "Perimeter car", "counterLabel": "Car", "visionRadius": 3, "arcDegrees": 110, "detection": 3, "speed": 6, "killable": false }
         }
       },
-      "win": { "condition": "destroyCount", "kind": "aircraft", "count": 4 },
+      "win": { "condition": "destroyCount", "kind": "aircraft", "count": 5 },
       "levels": {
         "easy": { "summary": "Three aircraft will do.", "rules": { "mission": { "win": { "count": 3 } } } },
         "hard": {
-          "summary": "Five aircraft are wanted, and the perimeter car sees further too.",
-          "rules": { "mission": { "win": { "count": 5 } } },
-          "enemies": { "types": { "vehicle": { "visionRadius": 4, "arcDegrees": 120 } } }
+          "summary": "Six aircraft are wanted: with five bombs, the bowser has to go.",
+          "rules": { "mission": { "win": { "count": 6 } } }
         }
       },
       "briefing": "Tonight six men are to drop on an enemy landing ground.",

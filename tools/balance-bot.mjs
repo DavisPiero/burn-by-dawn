@@ -15,6 +15,9 @@
 // MAP_PATCH take JSON deep-merged over that file (arrays are replaced whole),
 // e.g. RULES_PATCH='{"turnLimit":16}' node tools/balance-bot.mjs 200 naive
 //
+// MISSION_PATCH does the same for the mission's entry in missions.json (M30),
+// e.g. MISSION_PATCH='{"levels":{"hard":{"rules":{"objectives":{"bowser":{"reinforcements":2}}}}}}'
+//
 // RUN=<id> plays only that drop run, for trying a change to one run quickly.
 //
 // DIFFICULTY=<id> plays at a level from data/difficulty.json, as the game
@@ -42,6 +45,17 @@
 // mission as `careful` does. Compare its win %, score and kills with `careful`
 // and `fight`.
 //
+// PENCIL=<policy> (M30) picks the time pencil where the mission offers a
+// choice (charges.fuseChoice): `default` (the default, as a player who never
+// chooses), `long` (the longest that goes off before dawn, to be walking to
+// the trucks when it blows), or `sync` (the same turn as a charge already
+// burning, if a pencil reaches it, so the bangs come together; else the
+// default). Where there is no choice (France) every policy is the one fuse.
+//
+// BOWSER=1 (M30) has the bot go for a target that sets off its neighbours
+// (the airfield's bowser) when that takes more of the job for its charges
+// than the targets themselves: one bomb for the aircraft either side of it.
+//
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -54,8 +68,13 @@ const DATA_OVERRIDE = process.env.RULES_PATCH ? JSON.parse(process.env.RULES_PAT
 globalThis.fetch = async (url) => {
   let json = JSON.parse(readFileSync(join(REPO, String(url)), 'utf8'));
   if (DATA_OVERRIDE && String(url).endsWith('rules.json')) json = deepMerge(json, DATA_OVERRIDE);
-  if (process.env.MAP_PATCH && String(url).endsWith('map.json')) json = deepMerge(json, JSON.parse(process.env.MAP_PATCH));
+  if (process.env.MAP_PATCH && /(^|\/)map[^/]*\.json$/.test(String(url))) json = deepMerge(json, JSON.parse(process.env.MAP_PATCH));
   if (process.env.ENEMIES_PATCH && String(url).endsWith('enemies.json')) json = deepMerge(json, JSON.parse(process.env.ENEMIES_PATCH));
+  // MISSION_PATCH (M30): merged over the mission MISSION names in missions.json,
+  // for its own rules, enemies and levels, which RULES_PATCH cannot reach.
+  if (process.env.MISSION_PATCH && String(url).endsWith('missions.json')) {
+    json = { ...json, missions: json.missions.map((m) => (m.id === process.env.MISSION ? deepMerge(m, JSON.parse(process.env.MISSION_PATCH)) : m)) };
+  }
   return { ok: true, json: async () => json };
 };
 function deepMerge(a, b) {
@@ -104,6 +123,9 @@ const OPTS = {
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
 const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
 const PACK = process.env.PACK === '1';
+const PENCIL = process.env.PENCIL ?? 'default';
+if (!['default', 'long', 'sync'].includes(PENCIL)) throw new Error(`PENCIL must be default, long or sync, not "${PENCIL}"`);
+const BOWSER = process.env.BOWSER === '1';
 const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
 const HUNTERS = process.env.HUNTERS ?? 'free';
 if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
@@ -160,11 +182,34 @@ function jobTargets(state) {
   const left = MI.winTargetsLeft(state, rules);
   const { targets, needed } = MI.winTargets(state, rules);
   const toGo = needed - targets.filter((o) => o.destroyed).length;
-  if (left.length <= toGo) return left;
   const men = state.units.filter(U.onBoard);
   const near = (o) => Math.min(...o.chargeHexes.flatMap((h) => men.map((u) => H.hexDistance(u, h))));
   const started = (o) => o.detonated + state.charges.filter((c) => c.objectiveId === o.id).length;
-  return [...left].sort((a, b) => started(b) - started(a) || near(a) - near(b)).slice(0, toGo);
+  const pick = (list, n) => [...list].sort((a, b) => started(b) - started(a) || near(a) - near(b)).slice(0, n);
+  // BOWSER=1 (M30): a setter that takes two or more of the job's targets with
+  // it goes on the list first, and the targets it takes come off it.
+  if (BOWSER && toGo > 0) {
+    for (const setter of state.objectives.filter((o) => !o.destroyed && rules.objectives[o.kind].setsOff)) {
+      const taken = SB.chainFrom(state.objectives, setter, setter.chargeHexes, rules).map((l) => l.objective).filter((o) => left.includes(o));
+      if (taken.length < 2) continue;
+      const rest = left.filter((o) => !taken.includes(o));
+      return [setter, ...pick(rest, Math.max(0, toGo - taken.length))];
+    }
+  }
+  if (left.length <= toGo) return left;
+  return pick(left, toGo);
+}
+
+// The pencil this man sets his charge with, by PENCIL (M30).
+function pencilFor(state, unit) {
+  const open = SB.pencils(state, unit, rules).filter((p) => !p.afterDawn);
+  const fallback = SB.defaultPencil(state, unit, rules)?.fuse;
+  if (PENCIL === 'long') return open[open.length - 1]?.fuse ?? fallback;
+  if (PENCIL === 'sync') {
+    const latest = Math.max(0, ...state.charges.map((c) => state.turn + c.fuse - 1));
+    return open.find((p) => p.blows === latest)?.fuse ?? fallback;
+  }
+  return fallback;
 }
 
 // Is this man hunting now? Until the job is done or HUNT_TURNS is up; the
@@ -239,8 +284,8 @@ function actFor(state, unit, map) {
       if (U.checkPickUpCharge(state.droppedCharges, unit, rules).ok) return S.pickUpCharge(state, unit.id, rules);
     } else if (goal.cut) {
       if (SB.checkCutLine(state, unit, rules).ok) return S.cutLine(state, unit.id, rules);
-    } else if (SB.checkPlaceCharge(state, unit, rules).ok) {
-      return S.placeCharge(state, unit.id, rules);
+    } else if (SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit)).ok) {
+      return S.placeCharge(state, unit.id, rules, pencilFor(state, unit));
     }
   }
   if (OPTS.fight && rules.roles[unit.role].kill) {

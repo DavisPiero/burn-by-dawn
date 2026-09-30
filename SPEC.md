@@ -556,6 +556,30 @@ holding anyone in contact.
 fuse phase are one explosion — the alert rises once and the noise is heard once. Timing
 the bridge's two fuses together is therefore worth a whole alert step.
 
+**Time pencils** (`charges.fuseChoice`; null in France, so a charge there is set with the
+one fuse as above). Where a mission gives a `{ min, max }`, the man setting a charge
+picks its fuse from that many turns, and his `onPlaceCharge` fuse hook applies to
+whichever he picks (Steady Hands: a turn off each). **C**, or the button, opens the
+pencils as buttons in the action strip, one a length, each with the turn it goes off
+("3 turns / on turn 18"); the default (`fuseTurns`) is marked and offered first, so a
+player who never chooses plays as in France. **C** again or **Enter** takes it, a number
+key takes that many turns, **Esc** or Back puts them away. A pencil that would go off
+after dawn is struck out and cannot be picked; if the default is, C takes the longest
+still in time. A burning charge's stopwatch is divided into its own length, and its
+hover and its target's say the turn it blows. Undo takes it back like any other action.
+
+**A blast that sets off its neighbours** (`setsOff` on an objective kind; false in France).
+When an objective of such a kind is destroyed, every intact objective with a hex inside
+its blast radius (measured from the charges that went off) goes up with it: destroyed,
+counted toward the win, scored as its own, its payoff paid, and its own blast felt round
+its own hexes, killing and wounding by its own radii. It is still **one explosion**: one
+alert rise and one noise, the setting-off objective's. A charge already set on a caught
+objective is spent. A caught objective whose kind sets off carries the chain on. Its
+target ring and hover name what it takes ("SETS OFF 2 JU 52S"); the path warnings
+include every blast in the chain; and a setter still standing counts toward what the
+stick can still do, so losing a bomb is not a withdrawal while the bowser could make it
+up.
+
 The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
 Blow the bridge last and you may not have turns left to reach exfil.
 
@@ -1235,6 +1259,8 @@ the garrison Alarmed. The mission is not whether it goes up but where the stick 
 it does. The clean-run bonus is kept: it is rare, and earned with patience.
 
 ### The two new rules (the budget)
+
+Both are built (M30) and written into §7; kept here as the mission's numbers.
 
 **1. Time pencils** (engine, `charges.fuseChoice`; null in `rules.json`, so France is
 unchanged). When he sets a charge, the sapper picks its fuse from `min` to `max` turns
