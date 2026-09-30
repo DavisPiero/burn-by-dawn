@@ -1076,9 +1076,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M30**, the airfield's two new rules and its balance (§13). M28, M29, M29b and M29c are done:
-the airfield is on the board as a draft, `?mission=airfield`. v1.0 is tagged.
-The airfield's milestones, M28 to M31, are listed in §13.
+**M31**, the airfield's words, sounds and art hand-off (§13). M28 to M30 are done: the
+airfield is on the board as a draft, `?mission=airfield`, with its two new rules and its
+balance. v1.0 is tagged. The airfield's milestones, M28 to M31, are listed in §13.
 
 ### Done
 
@@ -1120,6 +1120,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M29 | The airfield on the board as a draft: its map, the desert in ochre, the car, the aircraft, bowser and signals tent, the trucks; played under France's rules |
 | M29b | The operator's notes: the airfield's opening board cleared (tight rings, fewer words, notes and the drop cue in clear ground), a South run for the East, a camp guard, a bomb a scout and one a sapper, a lighter wadi, softer aircraft shadows, a mission's own portraits; Music off on the contents page; Men out in bold; France's two hidden charge points moved. France's bot output unchanged |
 | M29c | The operator's second notes: the desert portraits in; the West run straight down outside the wire; the airfield's notes placed again (the signals note over its patrol, the bowser's named, the exfil's inside its ring) |
+| M30 | The airfield's two new rules, time pencils and the bowser that sets off its neighbours; the bot learns both; the airfield balanced (a West patrol, five aircraft on Normal, six on Hard); France's bot output unchanged |
 
 ---
 
@@ -1137,10 +1138,11 @@ British paratroopers dropped by Dakota onto an Axis landing ground. The same six
 the same 18×13 board, the same 20-turn night.
 
 Eight **aircraft** stand in their dispersal pens, and one charge wrecks each. The job is
-**any four of the eight** (Normal), and every one past that is greed against dawn. The
+**any five of the eight** (Normal; M30, the bot's: four was won nineteen times in
+twenty once the bowser was in play), and every one past that is greed against dawn. The
 stick carries **five bombs**, so the most it can wreck with bombs alone is five: the
 **fuel bowser** on the apron is how to take more, since it sets off the aircraft beside
-it (below, rule 2). A signals tent, the airfield's telephone exchange, stops the reserve
+it (below, rule 2). On Hard the job is six, so the bowser has to go. A signals tent, the airfield's telephone exchange, stops the reserve
 and the reinforcements, as in France.
 
 Its pillar check. What the player does: slip down the wadi, knife a pen guard between the
@@ -1180,7 +1182,7 @@ A mission with none of the swim's `across` terrain does not offer Swim at all.
 
 ### The map
 
-Placed in M29 (`data/map-airfield.json`); the bot tunes it in M30.
+Placed in M29 (`data/map-airfield.json`); tuned by the bot in M30 (the West patrol).
 
 - The **landing ground** fills the middle and east of the board inside a ring of **wire**,
   with the **perimeter track** just inside it. The **strip** runs east–west across the
@@ -1215,17 +1217,20 @@ Placed in M29 (`data/map-airfield.json`); the bot tunes it in M30.
 
 ### The garrison
 
-Nine enemies, one more than France, plus the reserve:
+Ten enemies, two more than France, plus the reserve:
 - **Sentries**: the two AA pits (one in the north dispersal, one at the south-east
   corner), a guard beside the signals tent, and a guard among the south-east tents
   (M29b, the operator's: the camp's corner stood empty).
 - **Patrols**: a guard walking each dispersal, the outer patrol walking the scrub above
-  the north wire, where the North run lands (so its chutes are found), and one in the
-  camp.
+  the north wire, where the North run lands (so its chutes are found), one in the
+  camp, and (M30, the bot's) a West patrol on the sand under the escarpment outside the
+  west wire, between (-1,7) and (0,4), where the West run lands: before it nobody found
+  a West chute, and the West won nineteen games in twenty on Normal.
 - **The perimeter car**, a new enemy type, `vehicle` (the mission's enemies patch;
   its counter is ART-ASSETS.md's `counter-enemy-vehicle`): speed 6, so it drives
   the whole perimeter in a few turns and reaches a noise first. Vision and arc as a
-  patrol's. It **can be suppressed but not killed or knifed** (`killable: false`, like the
+  patrol's, on every level (M30: Hard's 4 hexes and 120° for it took the North run,
+  which it drives past, to 19%). It **can be suppressed but not killed or knifed** (`killable: false`, like the
   reserve): the crew duck, the car stops for a turn. The verbs that answer it: a stone
   sends it off to look, a gunner stops it for a turn, and the wadi and the dunes hide
   from it. It keeps to the track while it patrols, but drives across open ground to a
@@ -1235,7 +1240,8 @@ Nine enemies, one more than France, plus the reserve:
 
 ### The objectives
 
-Numbers are Normal's, per kind in the mission's rules patch; the bot tunes them in M30.
+Numbers are Normal's, per kind in the mission's rules patch; M30's bot left them as they
+were: the garrison is Alarmed in nearly every game here, so an alert number moves nothing.
 
 | Objective | Needs | Blast / kills within | Alert | Score | Pays |
 |---|---|---|---|---|---|
@@ -1243,7 +1249,7 @@ Numbers are Normal's, per kind in the mission's rules patch; the bot tunes them 
 | **Fuel bowser** | 1 charge | 2 / 1 | +4 | 2 | sets off the aircraft in its blast |
 | **Signals tent** | 1 charge, or cut the line | 1 / 1 | +3 (cut +1) | 4 | no reserve, no reinforcements |
 
-**The win**: `destroyCount { kind: "aircraft", count: 4 }` (Easy 3, Hard 5), and at least
+**The win**: `destroyCount { kind: "aircraft", count: 5 }` (Easy 3, Hard 6), and at least
 the level's `minimumOut` men out by dawn. No objective is `primary`.
 
 **The bombs**: small Lewes bombs, so the mission's patch lets a **scout carry 1** as well
@@ -1254,7 +1260,7 @@ on his hex, and anyone with room picks it up (1 AP each), so losing a sapper is 
 under fire, not a lost mission. It is withdrawn only when too few bombs are left anywhere
 to reach the count, as §10 already says.
 
-**The alert on this ground**: four aircraft at +2 is 8, so a win nearly always ends with
+**The alert on this ground**: five aircraft at +2 is 10, so a win nearly always ends with
 the garrison Alarmed. The mission is not whether it goes up but where the stick is when
 it does. The clean-run bonus is kept: it is rare, and earned with patience.
 
@@ -1330,3 +1336,18 @@ proof is the same as M27's: France's bot `--json` output is byte-for-byte unchan
 | **M31** | Its words and sounds: orders, tagline, turn-card hints, the six's desert lines, the RAF's; ART-ASSETS and ART-PROMPTS entries for the operator's paintings (title card, aircraft, car counter, trucks) | The operator's review, then `playable` |
 
 Balance targets are §10's, for the airfield as for France.
+
+**The airfield's baselines (M30)**, 300 seeds, win % west / north / south, with `KNIFE=1
+BOWSER=1`: the naive bot going for the bowser, as its ring tells a first-timer to, and
+taking the default pencil, as one who never chooses would. **Easy 97 / 97 / 99, Normal
+88 / 79 / 86, Hard 39 / 31 / 45**, every run inside the targets. What the two rules are
+worth to the same bot: without the bowser Easy 65 / 82 / 88, Normal 51 / 57 / 63, Hard 0
+(six wants it); with long pencils too (`PENCIL=long`) Easy 98 / 97 / 100, Normal 94 / 82
+/ 95, Hard 64 / 36 / 59. Setting charges to go off together (`PENCIL=sync`) is worse
+than the default: each aircraft is its own explosion, so bunching them only brings the
+garrison sooner. The hunter is below the `careful` bot it moves like (Normal careful
+98 / 98 / 98, hunter 99 / 98 / 96, `HUNTERS=all` 80 / 88 / 95; Hard careful 88 / 74 /
+81, hunter 77 / 55 / 64, all 12 / 15 / 36), so killing everything is not the best way
+to play; but careful movement alone is worth 10 to 40 points here, so on Normal the
+hunter is not below *naive* as §10's check is worded. The full table is in
+DECISIONS.md.
