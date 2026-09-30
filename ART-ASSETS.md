@@ -192,7 +192,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 |---|---|
 | `marker-charge.svg` | 28 x 28 |
 | `marker-parachute.svg` | 28 x 28 (an abandoned canopy, §9 — must read as spent kit on the ground, not as a chute in the air) |
-| `marker-fuse-1..5.svg` | 28 x 28 (a stopwatch per turns left, M15: the burning `.fire` wedge a quarter of the face per turn, from twelve to the hand; the last turn's wedge red with a burst behind the watch. Drawn at 34 on the board) |
+| `marker-fuse-L-N.svg` | 28 x 28 (a stopwatch for a charge set with an L-turn fuse and N turns left, L 1 to 6, N 1 to L; M30: the face is divided into the charge's own length, a tick a turn, and the burning `.fire` wedge is N of the L parts, from twelve to the hand, full when set; the last turn's wedge red with a burst behind the watch. Drawn at 34 on the board. M15 had `marker-fuse-1..5`, a quarter of the face a turn) |
 | `marker-wounded.svg` | 28 x 28 |
 | `marker-suppressed.svg` | 28 x 28 |
 | `marker-open-kill.svg` | 28 x 28 (M15: a red crosshair in a paper disc — the turn after suppression, when a gunner can still kill it) |

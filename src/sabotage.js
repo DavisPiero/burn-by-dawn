@@ -32,6 +32,7 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
     if (kind.killRadius > kind.blastRadius) throw new Error(`${rulesUrl}: objectives.${id}.killRadius must be no more than its blastRadius`);
     if (kind.chargesNeeded < 1) throw new Error(`${rulesUrl}: objectives.${id}.chargesNeeded must be at least 1`);
     if (typeof kind.cutLine !== 'boolean') throw new Error(`${rulesUrl}: objectives.${id}.cutLine must be true or false`);
+    if (typeof kind.setsOff !== 'boolean') throw new Error(`${rulesUrl}: objectives.${id}.setsOff must be true or false`);
     if (kind.chargePointMoveCost != null && !(Number.isInteger(kind.chargePointMoveCost) && kind.chargePointMoveCost >= 1)) {
       // Pathing's heuristic needs every step to cost at least 1 (map.js enterCost).
       throw new Error(`${rulesUrl}: objectives.${id}.chargePointMoveCost must be a whole number, at least 1`);
@@ -98,6 +99,15 @@ export function validateSabotage(map, rules, mapUrl = 'data/map.json', rulesUrl 
     }
     if (!Number.isInteger(kind.reinforcements) || kind.reinforcements < 0) {
       throw new Error(`${rulesUrl}: objectives.${id} needs "reinforcements" (a whole number, 0 for none)`);
+    }
+  }
+
+  // Time pencils (M30): null, or a range of whole turns that takes in the default fuse.
+  const choice = rules.charges.fuseChoice;
+  if (choice !== null && choice !== undefined) {
+    const { min, max } = choice;
+    if (!Number.isInteger(min) || !Number.isInteger(max) || min < 1 || min > rules.charges.fuseTurns || max < rules.charges.fuseTurns) {
+      throw new Error(`${rulesUrl}: charges.fuseChoice must be null or { min, max }, whole turns from 1, with fuseTurns (${rules.charges.fuseTurns}) between them`);
     }
   }
 
@@ -196,18 +206,54 @@ export function effectiveMap(map, objectives, rules) {
 export function chargeNumbers(unit, rules) {
   return {
     apCost: applyHook(unit, 'onPlaceCharge', 'apCost', rules.charges.placeApCost).value,
-    fuse: applyHook(unit, 'onPlaceCharge', 'fuse', rules.charges.fuseTurns).value,
+    fuse: pencilFuse(unit, rules.charges.fuseTurns),
   };
+}
+
+// A fuse of `turns` as this man sets it: his onPlaceCharge hook on it (Steady
+// Hands takes a turn off), never below one fuse phase.
+function pencilFuse(unit, turns) {
+  return Math.max(1, applyHook(unit, 'onPlaceCharge', 'fuse', turns).value);
+}
+
+/**
+ * The time pencils this man could set a charge with now (SPEC.md §7, M30):
+ * one for each length in `charges.fuseChoice`, his hook applied to each, the
+ * default (`fuseTurns`) marked. `blows` is the turn it goes off at the end
+ * of; a pencil that would go off after dawn is `afterDawn` and cannot be
+ * picked. With no choice (France) there is one pencil, the default, and dawn
+ * does not strike it out: as it always was.
+ */
+export function pencils(state, unit, rules) {
+  const choice = rules.charges.fuseChoice;
+  const lengths = choice ? Array.from({ length: choice.max - choice.min + 1 }, (_, i) => choice.min + i) : [rules.charges.fuseTurns];
+  return lengths.map((turns) => {
+    const fuse = pencilFuse(unit, turns);
+    const blows = state.turn + fuse - 1;
+    return { fuse, blows, afterDawn: Boolean(choice) && blows > rules.turnLimit, isDefault: turns === rules.charges.fuseTurns };
+  });
+}
+
+/**
+ * The pencil C or Enter takes: the default, or if dawn strikes that out, the
+ * longest still in time. Null when every pencil is struck out.
+ */
+export function defaultPencil(state, unit, rules) {
+  const open = pencils(state, unit, rules).filter((p) => !p.afterDawn);
+  return open.find((p) => p.isDefault) ?? open[open.length - 1] ?? null;
 }
 
 /**
  * Place a charge (SPEC.md §4, §7): carrying one, on a charge hex of an
  * objective that still needs charges, with no charge already on that hex.
- * Adds `objective` and `fuse` to the usual { ok, cost, reason }.
+ * `fuse` is the pencil picked (M30); left out, the default one. Adds
+ * `objective` and `fuse` to the usual { ok, cost, reason }.
  */
-export function checkPlaceCharge(state, unit, rules) {
-  const { apCost, fuse } = chargeNumbers(unit, rules);
-  const out = (reason, objective = null) => ({ ...result(apCost, reason), fuse, objective });
+export function checkPlaceCharge(state, unit, rules, fuse = undefined) {
+  const { apCost } = chargeNumbers(unit, rules);
+  const choices = unit ? pencils(state, unit, rules) : [];
+  const picked = fuse === undefined ? (unit ? defaultPencil(state, unit, rules) : null) : choices.find((p) => p.fuse === fuse) ?? null;
+  const out = (reason, objective = null) => ({ ...result(apCost, reason), fuse: picked?.fuse ?? fuse ?? rules.charges.fuseTurns, objective });
   const busy = canAct(unit, apCost);
   if (busy) return out(busy);
   if (unit.charges <= 0) return out('carrying no charge');
@@ -217,6 +263,8 @@ export function checkPlaceCharge(state, unit, rules) {
   if (state.charges.some(onHex(unit))) return out('a charge is already set here', objective);
   const set = state.charges.filter((c) => c.objectiveId === objective.id).length;
   if (objective.detonated + set >= kindOf(objective, rules).chargesNeeded) return out(`${objective.label} has all the charges it needs`, objective);
+  if (!picked) return out(fuse === undefined ? 'every pencil would go off after dawn' : `no ${fuse}-turn pencil`, objective);
+  if (picked.afterDawn) return out(`a ${picked.fuse}-turn pencil would go off after dawn`, objective);
   return out(null, objective);
 }
 
@@ -323,6 +371,13 @@ export function checkSwim(map, state, unit, target, rules) {
  * radius takes a hit (M20). An enemy of a killable type anywhere in the blast
  * dies, with no body, since the explosion itself is what the garrison hears.
  * An enemy that cannot be killed (the reserve, enemies.json) is not harmed.
+ *
+ * A kind that `setsOff` (M30, the airfield's bowser): when one is destroyed,
+ * every intact objective with a hex inside its blast goes up with it —
+ * destroyed, its own blast felt round its own hexes, its payoff paid — but it
+ * is still the one explosion, so no alert or noise of its own. A charge set on
+ * a caught objective is spent with it. A caught objective whose kind sets off
+ * carries the chain on.
  */
 export function runFusePhase(state, rules) {
   const events = [];
@@ -334,6 +389,8 @@ export function runFusePhase(state, rules) {
   for (const objective of state.objectives) {
     const charges = going.filter((c) => c.objectiveId === objective.id);
     if (charges.length === 0) continue;
+    // Gone up already this phase, set off by a neighbour: its charges went with it.
+    if (next.objectives.find((o) => o.id === objective.id).destroyed) continue;
     const kind = kindOf(objective, rules);
     const detonated = objective.detonated + charges.length;
     const destroyed = detonated >= kind.chargesNeeded;
@@ -344,43 +401,101 @@ export function runFusePhase(state, rules) {
     };
     // Every charge that went off, and its blast radius, so the board can
     // show each bang where it happened, as big as it was (M11).
-    events.push({
-      kind: 'explosion', label: objective.label, destroyed, q: charges[0].q, r: charges[0].r,
-      at: charges.map((c) => ({ q: c.q, r: c.r })), blastRadius: kind.blastRadius,
-    });
+    const at = charges.map((c) => ({ q: c.q, r: c.r }));
+    events.push({ kind: 'explosion', label: objective.label, destroyed, q: at[0].q, r: at[0].r, at, blastRadius: kind.blastRadius });
 
     const centre = objective.hexes[Math.floor(objective.hexes.length / 2)];
     const noise = makeNoise(next, 'explosion', centre, kind.alert, rules);
     next = noise.state;
     events.push(...noise.events);
 
-    for (const unit of next.units) {
-      if (!onBoard(unit)) continue;
-      const effect = blastEffect(charges.map((c) => ({ q: c.q, r: c.r, radius: kind.blastRadius, killRadius: kind.killRadius })), unit);
-      if (!effect) continue;
-      const hit = effect === 'wounded' ? applyHit(unit, rules) : null;
-      if (hit && !hit.dead) {
-        // The edge of the blast (M20): a hit, as from a shot, but nobody has
-        // him in their sights for it. His charges drop on his hex.
-        next = woundInBlast(next, unit, { ...hit, inContact: unit.inContact });
-        events.push({ kind: 'blastWounded', unitId: unit.id, unitName: unit.shortName, label: objective.label, line: woundedLine(unit) });
-        continue;
-      }
-      next = killInBlast(next, unit);
-      events.push({ kind: 'blastKilled', unitId: unit.id, unitName: unit.shortName, label: objective.label });
-    }
-    const caught = next.enemies.filter((e) => e.killable && charges.some((c) => hexDistance(c, e) <= kind.blastRadius));
-    if (caught.length > 0) {
-      next = { ...next, enemies: next.enemies.filter((e) => !caught.includes(e)) };
-      for (const e of caught) events.push({ kind: 'enemyBlastKilled', enemyId: e.id, enemyLabel: e.label, label: objective.label, q: e.q, r: e.r });
-    }
-    if (destroyed) {
-      const paid = applyPayoff(next, objective, rules);
-      next = paid.state;
-      events.push(...paid.events);
+    const felt = feelBlast(next, at, kind, objective.label, rules);
+    next = felt.state;
+    events.push(...felt.events);
+    if (!destroyed) continue;
+    const paid = applyPayoff(next, objective, rules);
+    next = paid.state;
+    events.push(...paid.events);
+
+    for (const link of chainFrom(next.objectives, objective, at, rules)) {
+      const caught = link.objective;
+      const caughtKind = kindOf(caught, rules);
+      next = {
+        ...next,
+        objectives: next.objectives.map((o) => (o.id === caught.id ? { ...o, detonated: caughtKind.chargesNeeded, destroyed: true } : o)),
+        charges: next.charges.filter((c) => c.objectiveId !== caught.id),
+      };
+      events.push({
+        kind: 'explosion', label: caught.label, destroyed: true, setOffBy: link.by.label, q: link.at[0].q, r: link.at[0].r, at: link.at, blastRadius: caughtKind.blastRadius,
+      });
+      const caughtFelt = feelBlast(next, link.at, caughtKind, caught.label, rules);
+      next = caughtFelt.state;
+      events.push(...caughtFelt.events);
+      const caughtPaid = applyPayoff(next, caught, rules);
+      next = caughtPaid.state;
+      events.push(...caughtPaid.events);
     }
   }
   return { state: next, events };
+}
+
+/**
+ * What one blast does round these hexes (its charges, or a set-off
+ * objective's own hexes): the men inside it killed or hit by the kind's
+ * radii, the killable enemies inside it dead.
+ */
+function feelBlast(state, at, kind, label, rules) {
+  const events = [];
+  let next = state;
+  const blasts = at.map((h) => ({ q: h.q, r: h.r, radius: kind.blastRadius, killRadius: kind.killRadius }));
+  for (const unit of next.units) {
+    if (!onBoard(unit)) continue;
+    const effect = blastEffect(blasts, unit);
+    if (!effect) continue;
+    const hit = effect === 'wounded' ? applyHit(unit, rules) : null;
+    if (hit && !hit.dead) {
+      // The edge of the blast (M20): a hit, as from a shot, but nobody has
+      // him in their sights for it. His charges drop on his hex.
+      next = woundInBlast(next, unit, { ...hit, inContact: unit.inContact });
+      events.push({ kind: 'blastWounded', unitId: unit.id, unitName: unit.shortName, label, line: woundedLine(unit) });
+      continue;
+    }
+    next = killInBlast(next, unit);
+    events.push({ kind: 'blastKilled', unitId: unit.id, unitName: unit.shortName, label });
+  }
+  const caught = next.enemies.filter((e) => e.killable && inBlast(blasts, e));
+  if (caught.length > 0) {
+    next = { ...next, enemies: next.enemies.filter((e) => !caught.includes(e)) };
+    for (const e of caught) events.push({ kind: 'enemyBlastKilled', enemyId: e.id, enemyLabel: e.label, label, q: e.q, r: e.r });
+  }
+  return { state: next, events };
+}
+
+/**
+ * The objectives a destroyed objective sets off (M30), in the order they go:
+ * if its kind `setsOff`, every intact objective with a hex inside its blast
+ * from `at` (the hexes it blew from), then the ones any of those set off in
+ * turn, round their own hexes. Each is { objective, at, by }. Empty for a
+ * kind that does not set off.
+ */
+export function chainFrom(objectives, setter, at, rules) {
+  const links = [];
+  const gone = new Set([setter.id]);
+  const queue = [{ objective: setter, at }];
+  while (queue.length) {
+    const { objective, at: from } = queue.shift();
+    const kind = kindOf(objective, rules);
+    if (!kind.setsOff) continue;
+    for (const o of objectives) {
+      if (o.destroyed || gone.has(o.id)) continue;
+      if (!o.hexes.some((h) => from.some((f) => hexDistance(f, h) <= kind.blastRadius))) continue;
+      gone.add(o.id);
+      const link = { objective: o, at: o.hexes.map((h) => ({ q: h.q, r: h.r })), by: objective };
+      links.push(link);
+      queue.push(link);
+    }
+  }
+  return links;
 }
 
 /**
@@ -438,13 +553,26 @@ function woundInBlast(state, unit, hit) {
   };
 }
 
-/** The charges going off in the coming fuse phase, each with how far it blasts and how far it kills a man. */
+/**
+ * The blasts of the coming fuse phase, each with how far it blasts and how far
+ * it kills a man: every charge going off, and every objective a destroyed one
+ * would set off (M30), round its own hexes, so a man in the next pen is never
+ * caught unwarned.
+ */
 export function blastHexesThisTurn(state, rules) {
   const hexes = [];
-  for (const c of state.charges) {
-    if (c.fuse > 1) continue;
-    const kind = kindOf(state.objectives.find((o) => o.id === c.objectiveId), rules);
-    hexes.push({ q: c.q, r: c.r, radius: kind.blastRadius, killRadius: kind.killRadius });
+  const reach = (h, kind) => ({ q: h.q, r: h.r, radius: kind.blastRadius, killRadius: kind.killRadius });
+  const going = state.charges.filter((c) => c.fuse <= 1);
+  for (const c of going) hexes.push(reach(c, kindOf(state.objectives.find((o) => o.id === c.objectiveId), rules)));
+  const caught = new Set();
+  for (const o of state.objectives) {
+    const on = going.filter((c) => c.objectiveId === o.id);
+    if (on.length === 0 || o.destroyed || caught.has(o.id) || o.detonated + on.length < kindOf(o, rules).chargesNeeded) continue;
+    for (const link of chainFrom(state.objectives, o, on, rules)) {
+      if (caught.has(link.objective.id)) continue;
+      caught.add(link.objective.id);
+      for (const h of link.at) hexes.push(reach(h, kindOf(link.objective, rules)));
+    }
   }
   return hexes;
 }

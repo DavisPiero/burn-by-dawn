@@ -18,12 +18,14 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   west/north/east): Easy 99/100/97, Normal 86/83/89, Hard 29/38/37, every run inside
   the SPEC §10 targets.
 - **Phase 3, the airfield, is specified** in SPEC.md §13 (29 Sep 2026): southern Tunisia,
-  1942; eight aircraft, any four to win; five bombs; the two new rules are time pencils
-  and a bowser that sets off its neighbours. **M28, M29, M29b and M29c are built**: the engine
-  work (France's bot output byte-for-byte unchanged), the airfield on the board as a
-  draft (`?mission=airfield`), under today's rules, and the operator's notes on it (a
-  South run for the East, a camp guard, a bomb for each scout). **Next: M30**, its two new rules and
-  its balance, then M31, as listed there.
+  1942; eight aircraft, any five to win on Normal (M30; four at first); five bombs; the
+  two new rules are time pencils and a bowser that sets off its neighbours. **M28 to M30
+  are built**: the engine work (France's bot output byte-for-byte unchanged), the
+  airfield on the board as a draft (`?mission=airfield`), the operator's notes on it (a
+  South run for the East, a camp guard, a bomb for each scout), and (M30, 30 Sep 2026)
+  the two rules, the bot playing both, and the balance: a West patrol, five aircraft on
+  Normal, six on Hard, every run inside the §10 targets. **Next: M31**, its words,
+  sounds and art hand-off, then `playable`.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 

@@ -679,6 +679,10 @@ export const HIGHLIGHT = {
   radius: 36,
 };
 
+// The lengths a fuse token's face can be divided into (M30: the airfield's
+// time pencils run to 6 turns; France's fuse is 3, Dutch's 2).
+export const FUSE_LENGTHS = [1, 2, 3, 4, 5, 6];
+
 export const MARKER = {
   size: 22,
   hiddenOpacity: 0.6,
@@ -2488,14 +2492,15 @@ const SPRITES = {
   },
   // Fuse tokens: a stopwatch counting down the turns left before the charge
   // goes off (M15: a number in a disc read as how many charges were laid).
-  // The burning wedge is a quarter of the face per turn left, swept from
-  // twelve o'clock to the hand; on its last turn it is red, with a burst
-  // behind the watch: it goes off at the end of this turn.
-  ...Object.fromEntries([1, 2, 3, 4, 5].map((n) => [`marker-fuse-${n}`, {
+  // The face is divided into the charge's own length (M30, time pencils), a
+  // tick a turn, and the burning wedge is the turns left of it, swept from
+  // twelve o'clock to the hand: full when it is set. On its last turn it is
+  // red, with a burst behind the watch: it goes off at the end of this turn.
+  ...Object.fromEntries(FUSE_LENGTHS.flatMap((length) => Array.from({ length }, (_, i) => i + 1).map((n) => [`marker-fuse-${length}-${n}`, {
     viewBox: '0 0 28 28',
     draw: () => {
       const cx = 14, cy = 15.5, r = 9.5;
-      const sweep = Math.min(n, 4) * 90;
+      const sweep = (n / length) * 360;
       const at = (deg, rad = r) => ({ x: cx + rad * Math.sin((deg * Math.PI) / 180), y: cy - rad * Math.cos((deg * Math.PI) / 180) });
       const end = at(sweep);
       const wedge = sweep >= 360
@@ -2508,13 +2513,13 @@ const SPRITES = {
         svg('rect', { x: 13.2, y: 3.6, width: 1.6, height: 2.6, class: 'ink' }),
         circle(cx, cy, r + 1, 'paper'),
         wedge,
-        line([0, 90, 180, 270].map((d) => { const a = at(d, r), b = at(d, r - 2.4); return `M${a.x.toFixed(2)} ${a.y.toFixed(2)} L${b.x.toFixed(2)} ${b.y.toFixed(2)}`; }).join(' '), 1.2),
+        line(Array.from({ length: Math.max(length, 2) }, (_, i) => (i * 360) / Math.max(length, 2)).map((d) => { const a = at(d, r), b = at(d, r - 2.4); return `M${a.x.toFixed(2)} ${a.y.toFixed(2)} L${b.x.toFixed(2)} ${b.y.toFixed(2)}`; }).join(' '), 1.2),
         line(`M${cx} ${cy} L${hand.x.toFixed(2)} ${hand.y.toFixed(2)}`, 1.8),
         circle(cx, cy, 1.6, 'ink'),
         ring(cx, cy, r + 1, 2),
       ];
     },
-  }])),
+  }]))),
   // A comic starburst, one frame; board.js does the stepped reveal.
   // Blood, as the annual would print it (M16): a spot-red splat, halftoned,
   // inked round, with droplets thrown off it. The knife's burst, and drawn
@@ -2752,9 +2757,13 @@ async function firstPicture(urls) {
   return null;
 }
 
-/** Sprite id for a fuse token: turns left, 1 to 5; longer fuses show 5. */
-export function fuseMarkerId(fuse) {
-  return `marker-fuse-${Math.min(5, Math.max(1, fuse))}`;
+/**
+ * Sprite id for a fuse token: turns left of the charge's own length (M30),
+ * 1 to 6; a longer one is drawn as if it were 6 long.
+ */
+export function fuseMarkerId(fuse, length = fuse) {
+  const whole = Math.min(FUSE_LENGTHS.length, Math.max(1, length));
+  return `marker-fuse-${whole}-${Math.min(whole, Math.max(1, Math.ceil((fuse * whole) / Math.max(length, 1))))}`;
 }
 
 export function hasSprite(id) {

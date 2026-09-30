@@ -6,7 +6,7 @@
 // Pure functions. Nothing here touches the DOM.
 
 import { deepMerge } from './difficulty.js';
-import { kindOf } from './sabotage.js';
+import { chainFrom, kindOf } from './sabotage.js';
 import { chargeCapacity, onBoard } from './units.js';
 
 export const MISSION_STATUSES = ['playable', 'draft', 'coming'];
@@ -179,6 +179,8 @@ function requireKnownKeys(patch, base, where, open, path = '') {
     const here = path ? `${path}.${key}` : key;
     if (open.includes(path)) continue;
     if (!base || typeof base !== 'object' || !(key in base)) throw new Error(`${where}.${here} is not in the file it patches`);
+    // A null in the file is "none here", which a patch may fill in whole (M30: charges.fuseChoice).
+    if (base[key] === null) continue;
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) requireKnownKeys(value, base[key], where, open, here);
   }
 }
@@ -223,18 +225,29 @@ export function winMet(state, rules) {
  * ground counts only while a man still in the field could carry it (M13): with
  * both sappers and Ox dead, a scout or gunner can never pick one up, and the
  * mission must end rather than drag on. The cheapest targets left are the
- * ones counted.
+ * ones counted. An intact objective that sets its neighbours off (M30, the
+ * bowser) is one more way: its charges for every target it would take.
  */
 export function winShortfall(state, rules) {
   const { targets, needed } = winTargets(state, rules);
   const toGo = needed - targets.filter((o) => o.destroyed).length;
   if (toGo <= 0) return 0;
-  const wants = targets
-    .filter((o) => !o.destroyed)
-    .map((o) => Math.max(0, kindOf(o, rules).chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length))
-    .sort((a, b) => a - b);
-  if (wants.length < toGo) return Infinity;
-  const want = wants.slice(0, toGo).reduce((n, w) => n + w, 0);
+  const still = (o) => Math.max(0, kindOf(o, rules).chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length);
+  const cheapest = (left, count) => {
+    const wants = left.map(still).sort((a, b) => a - b);
+    return wants.length < count ? Infinity : wants.slice(0, count).reduce((n, w) => n + w, 0);
+  };
+  const intact = targets.filter((o) => !o.destroyed);
+  let want = cheapest(intact, toGo);
+  // Blowing a setter from any of its charge points: what it would take for its charges.
+  for (const setter of state.objectives.filter((o) => !o.destroyed && kindOf(o, rules).setsOff)) {
+    for (const from of setter.chargeHexes) {
+      const taken = new Set(chainFrom(state.objectives, setter, [from], rules).map((l) => l.objective.id));
+      if (targets.includes(setter)) taken.add(setter.id);
+      const rest = intact.filter((o) => !taken.has(o.id));
+      want = Math.min(want, still(setter) + cheapest(rest, Math.max(0, toGo - (intact.length - rest.length))));
+    }
+  }
   const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
   const carrier = state.units.some((u) => onBoard(u) && chargeCapacity(u, rules) > 0);
   return Math.max(0, want - carried - (carrier ? state.droppedCharges.length : 0));

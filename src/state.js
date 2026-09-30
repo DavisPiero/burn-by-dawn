@@ -65,7 +65,7 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     reinforcementsDue: 0,
     reinforcementsSent: 0,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
-    // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
+    // { objectiveId, q, r, fuse, length, unitId } (`length`, M30: the fuse it was set with). `explosions` counts bangs, for the
     // explosion floor (§6).
     objectives: createObjectives(map),
     charges: [],
@@ -492,17 +492,18 @@ export function passCharge(state, giverId, receiverId, rules) {
 
 /**
  * Set a charge on the objective this man is standing beside (SPEC.md §7). The
- * onPlaceCharge hook sets what it costs him and how long its fuse burns.
+ * onPlaceCharge hook sets what it costs him and how long its fuse burns;
+ * `fuse` is the time pencil he picked (M30), the default one if left out.
  */
-export function placeCharge(state, unitId, rules) {
+export function placeCharge(state, unitId, rules, fuse = undefined) {
   const unit = unitById(state.units, unitId);
-  const check = checkPlaceCharge(state, unit, rules);
+  const check = checkPlaceCharge(state, unit, rules, fuse);
   if (!check.ok) return state;
   const spent = spend(state, unitId, check.cost, { charges: unit.charges - 1 });
   return {
     ...spent,
     speech: say(spent.speech, unitId, unit.dialogue?.onPlaceCharge ?? null),
-    charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, unitId }],
+    charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, length: check.fuse, unitId }],
   };
 }
 

@@ -51,11 +51,12 @@
       "_rules": "SPEC.md §13. Lewes bombs are small, so the scouts carry one each as well as the sappers (M29b, the operator's: with none, and two a sapper, the scouts had nothing to do here); still five in the stick with Nunn's. The win pays 10 on top of each aircraft's own 2, since no target here is worth the bridge's 10 on its own. Three new objective kinds; their numbers are Normal's, first guesses for M30's balance.",
       "rules": {
         "roles": { "scout": { "charges": 1 } },
+        "charges": { "fuseChoice": { "min": 2, "max": 6 } },
         "scoring": { "win": 10 },
         "objectives": {
-          "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2 },
-          "bowser": { "label": "Fuel Bowser", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2 },
-          "signals": { "label": "Signals Tent", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4 }
+          "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": false },
+          "bowser": { "label": "Fuel Bowser", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": true },
+          "signals": { "label": "Signals Tent", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4, "setsOff": false }
         }
       },
       "_enemies": "The perimeter car (SPEC.md §13): fast, so it reaches a noise first; it can be suppressed but never killed or knifed.",
@@ -64,13 +65,12 @@
           "vehicle": { "label": "Perimeter car", "counterLabel": "Car", "visionRadius": 3, "arcDegrees": 110, "detection": 3, "speed": 6, "killable": false }
         }
       },
-      "win": { "condition": "destroyCount", "kind": "aircraft", "count": 4 },
+      "win": { "condition": "destroyCount", "kind": "aircraft", "count": 5 },
       "levels": {
         "easy": { "summary": "Three aircraft will do.", "rules": { "mission": { "win": { "count": 3 } } } },
         "hard": {
-          "summary": "Five aircraft are wanted, and the perimeter car sees further too.",
-          "rules": { "mission": { "win": { "count": 5 } } },
-          "enemies": { "types": { "vehicle": { "visionRadius": 4, "arcDegrees": 120 } } }
+          "summary": "Six aircraft are wanted: with five bombs, the bowser has to go.",
+          "rules": { "mission": { "win": { "count": 6 } } }
         }
       },
       "briefing": "Tonight six men are to drop on an enemy landing ground.",
