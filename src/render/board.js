@@ -1580,7 +1580,7 @@ function drawSites(layers, state, view) {
     // man's counter and neither hides the satchel nor a target's name.
     const side = at.x <= axialToPixel(charge.q, charge.r, map.hexSize).x ? 1 : -1;
     const wx = side > 0 ? at.x + size * 0.3 : at.x - size * 0.3 - watch;
-    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse)}`, x: wx, y: at.y - watch * 0.95, width: watch, height: watch }));
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse, charge.length ?? charge.fuse)}`, x: wx, y: at.y - watch * 0.95, width: watch, height: watch }));
   }
 }
 

@@ -17,7 +17,7 @@ import {
 } from './state.js';
 import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
-  objectiveAt, objectiveForChargeHex, swimTargets,
+  objectiveAt, objectiveForChargeHex, swimTargets, chainFrom, defaultPencil, pencils,
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
@@ -149,6 +149,10 @@ let briefingsOn = true;
 // never take back what the garrison has seen — and the player phase rolls no
 // dice, so taking a move back can never re-roll anything.
 let undoStack = [];
+// The time pencils open in the action strip (M30): the id of the man setting a
+// charge, while he picks its length; null otherwise. Where it is shown, not
+// what happens, so it lives here and not in the game state.
+let pencilsFor = null;
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
@@ -406,7 +410,7 @@ function deriveView() {
   }
   if (!unit) return view;
 
-  view.actions = actionsFor(unit);
+  view.actions = pencilsOpen(unit) ? pencilActions(unit) : actionsFor(unit);
   // Over an enemy, what the selected man can do to it, and why not (M26d: a
   // playtester could not tell why Speers could kill one two hexes off and not
   // the two beside him — those had not been suppressed, and could see him).
@@ -536,7 +540,7 @@ function deriveDrop(view, hex) {
         // Where there are many targets (M29c, the operator's: a note moved
         // into clear ground lost its target), a bonus says whose it is.
         note: !targets.includes(o)
-          ? [`${single ? '' : `${o.label.toUpperCase()}: `}BONUS +${kindOf(o, rules).score}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean)
+          ? [`${single ? '' : `${o.label.toUpperCase()}: `}BONUS +${kindOf(o, rules).score}`, ...payoffNote(kindOf(o, rules)), ...setsOffNote(o), ...chargeNote(kindOf(o, rules))].filter(Boolean)
           : single
             ? ['PRIMARY TARGET!', `BLOW IT WITH ${chargeCount(kindOf(o, rules).chargesNeeded).replace(/^USE /, '')}!`]
             : o === targets[0]
@@ -657,7 +661,9 @@ function describeObjective(o, onPoint, brief = false) {
   if (o.destroyed) return [{ label: 'DONE', text: `DESTROYED${o.cut ? ', line cut' : ''}` }, { label: 'WORTH', text: worth }];
   const wanted = chargesWanted(o);
   const set = state.charges.filter((c) => c.objectiveId === o.id);
-  const burning = set.length ? `; ${set.length} set, fuse ${set.map((c) => c.fuse).join(', ')}` : '';
+  // When each blows (M30): the end of this turn, or of turn N.
+  const blows = (c) => (c.fuse <= 1 ? 'blows this turn' : `blows turn ${state.turn + c.fuse - 1}`);
+  const burning = set.length ? `; ${set.length} set, ${set.map(blows).join(', ')}` : '';
   const rows = [];
   if (onPoint) {
     // The cut, when the rows below leave it out (M22: said twice otherwise).
@@ -666,12 +672,44 @@ function describeObjective(o, onPoint, brief = false) {
     rows.push({ label: 'HERE', text: wanted > 0 ? `charge point: place a charge [C]${cut}` : 'charge point: it has all the charges it needs' });
   }
   rows.push({ label: 'NEEDS', text: `${o.detonated || set.length ? `${wanted} more: ` : ''}${chargesOnPoints(o)}${o.detonated ? `; ${o.detonated} gone off` : ''}${burning}` });
-  if (brief) return rows;
-  rows.push({ label: 'BANG', text: `fuse ${rules.charges.fuseTurns} turns · ${blastWords(kind)} · alert +${kind.alert}` });
+  if (brief) {
+    const takes = setsOffWords(o);
+    if (takes) rows.push({ label: 'TAKES', text: takes });
+    return rows;
+  }
+  const choice = rules.charges.fuseChoice;
+  rows.push({ label: 'BANG', text: `${choice ? `pencil ${choice.min}–${choice.max} turns` : `fuse ${rules.charges.fuseTurns} turns`} · ${blastWords(kind)} · alert +${kind.alert}` });
+  const takes = setsOffWords(o);
+  if (takes) rows.push({ label: 'TAKES', text: takes });
   if (kind.cutLine) rows.push({ label: 'CUT', text: `or a scout cuts the line [X]: a whole turn on a charge point, quiet, alert +${rules.alert.lineCut}` });
   rows.push({ label: 'WORTH', text: worth });
   if (payoff) rows.push({ label: 'DOWN', text: `it ${payoff}` });
   return rows;
+}
+
+/**
+ * What an objective that sets off its neighbours (M30, the bowser) would take
+ * with it, blown from its charge point: "sets off the 2 Ju 52s beside it,
+ * which count toward the job: one explosion, alert +4", or null.
+ */
+function setsOffList(o) {
+  if (o.destroyed || !kindOf(o, rules).setsOff) return [];
+  return chainFrom(state.objectives, o, o.chargeHexes, rules).map((l) => l.objective);
+}
+
+function namesOf(objectives) {
+  const counts = new Map();
+  for (const o of objectives) counts.set(o.label, (counts.get(o.label) ?? 0) + 1);
+  const names = [...counts].map(([label, n]) => (n === 1 ? `the ${label}` : `the ${n} ${label}s`));
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+}
+
+function setsOffWords(o) {
+  const caught = setsOffList(o);
+  if (caught.length === 0) return null;
+  const counted = caught.filter((c) => isWinTarget(state, rules, c)).length;
+  const toward = counted === 0 ? '' : counted === caught.length ? `, which count toward the job` : `, ${counted} of them toward the job`;
+  return `sets off ${namesOf(caught)} beside it${toward}: one explosion, alert +${kindOf(o, rules).alert}`;
 }
 
 /** How far a kind's blast reaches and what it does (SPEC.md §7; M20, a ring that only wounds our men). */
@@ -702,6 +740,12 @@ function payoffNote(kind) {
   // Hard (M21b): what it calls up, on the ring before the drop.
   if (kind.reinforcements > 0) notes.push(`CALLS UP ${kind.reinforcements === 1 ? 'A SQUAD' : `${kind.reinforcements} SQUADS`}`);
   return notes;
+}
+
+/** What it sets off, on its ring before the drop (M30): "SETS OFF 2 JU 52S". */
+function setsOffNote(o) {
+  const caught = setsOffList(o);
+  return caught.length ? [`SETS OFF ${namesOf(caught).replace(/^the /, '').toUpperCase()}`] : [];
 }
 
 /** The RAF button: can it be called, how often more, and whether now is the time (M26d). */
@@ -756,7 +800,8 @@ function describePanelObjective(o, win) {
     label: o.label, win, destroyed: o.destroyed, cut: o.cut,
     points: kind.score,
     detail: (o.destroyed ? (o.cut ? 'Line cut' : 'Destroyed') : `${o.detonated + set} of ${kind.chargesNeeded} charges set${set ? `, ${set} burning` : ''}`)
-      + (payoffWords(kind) ? `. Destroying it ${payoffWords(kind)}` : ''),
+      + (payoffWords(kind) ? `. Destroying it ${payoffWords(kind)}` : '')
+      + (setsOffWords(o) ? `. It ${setsOffWords(o)}` : ''),
     progress: o.destroyed ? (o.cut ? 'cut' : 'done') : `${o.detonated + set}/${kind.chargesNeeded}${set ? ' ●' : ''}`,
   };
 }
@@ -901,14 +946,50 @@ function passChargeAction(unit) {
 // would leave too few for the primary, which ends the mission (SPEC.md §10).
 function placeChargeAction(unit) {
   const check = checkPlaceCharge(state, unit, rules);
-  let cost = `${check.cost} AP, fuse ${check.fuse}`;
+  const choice = rules.charges.fuseChoice;
+  const lengths = pencils(state, unit, rules).map((p) => p.fuse);
+  let cost = choice ? `${check.cost} AP, a pencil of ${lengths[0]} to ${lengths[lengths.length - 1]} turns` : `${check.cost} AP, fuse ${check.fuse}`;
   if (check.ok && !winTargets(state, rules).targets.includes(check.objective) && winShortfall(placeCharge(state, unit.id, rules), rules) > 0) {
     cost += ` — leaves too few for ${winWords(state, rules)}: WITHDRAWS`;
   }
   return {
-    id: 'charge', key: 'C', label: 'Place charge', short: 'Charge', help: `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
+    id: 'charge', key: 'C', label: 'Place charge', short: 'Charge',
+    help: choice
+      ? `Set a charge here with a time pencil: pick how many turns it burns, ${lengths[0]} to ${lengths[lengths.length - 1]}, this turn's included. Press C, then a number, or C again for ${check.fuse}`
+      : `Set a charge here: it goes off in ${check.fuse} fuse phase${check.fuse === 1 ? '' : 's'}, this turn's included`,
     ok: check.ok, reason: check.reason, cost, apCost: check.cost,
   };
+}
+
+/** Are the time pencils open for this man, and can he still set a charge? */
+function pencilsOpen(unit) {
+  return Boolean(unit && pencilsFor === unit.id && rules.charges.fuseChoice && checkPlaceCharge(state, unit, rules).ok);
+}
+
+/**
+ * The time pencils as the action strip (SPEC.md §7, M30): one button a
+ * length, its key the number, "4 turns" over "blows turn 11"; the default
+ * marked as the one C or Enter takes; one that would go off after dawn struck
+ * out. Esc, or the last button, backs out.
+ */
+function pencilActions(unit) {
+  const choice = defaultPencil(state, unit, rules);
+  const buttons = pencils(state, unit, rules).map((p) => ({
+    id: `pencil-${p.fuse}`, key: String(p.fuse), label: `${p.fuse}-turn pencil`, short: `${p.fuse} turn${p.fuse === 1 ? '' : 's'}`,
+    // "blows turn 17" overflowed a button three across at 1280.
+    apLabel: p.afterDawn ? 'after dawn' : `on turn ${p.blows}`,
+    ok: !p.afterDawn, struck: p.afterDawn, active: p.fuse === choice?.fuse,
+    reason: 'it would go off after dawn, with the stick still waiting for it',
+    cost: `${checkPlaceCharge(state, unit, rules, p.fuse).cost} AP; it goes off at the end of turn ${p.blows}`,
+    help: `Set the charge with a ${p.fuse}-turn pencil: ${p.fuse} fuse phase${p.fuse === 1 ? '' : 's'}, this turn's included${p.fuse === choice?.fuse ? '. C or Enter takes this one' : ''}`,
+  }));
+  return [...buttons, { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the pencils away without setting the charge' }];
+}
+
+/** Set the charge with this pencil, or the default one. */
+function setCharge(unit, fuse) {
+  pencilsFor = null;
+  commit(placeCharge(state, unit.id, rules, fuse ?? defaultPencil(state, unit, rules)?.fuse));
 }
 
 /**
@@ -1200,6 +1281,7 @@ function showStrike(show, ms) {
 function undoLast() {
   if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
   const previous = undoStack.pop();
+  pencilsFor = null;
   playCue('move');
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
   render();
@@ -1213,6 +1295,7 @@ function handleHexClick(q, r) {
   if (bangTimer) return endBangHold();
   if (state.outcome || state.phase === 'drop') return;
   highlightHex = null;
+  pencilsFor = null;
   if (state.targeting) {
     handleTargetClick(q, r);
     render();
@@ -1321,7 +1404,15 @@ function handleAction(id) {
       commit(packParachute(state, unit.id, rules));
       break;
     case 'charge':
-      commit(placeCharge(state, unit.id, rules));
+      // Time pencils (M30): C opens them, and C again takes the default.
+      if (rules.charges.fuseChoice && !pencilsOpen(unit)) {
+        if (checkPlaceCharge(state, unit, rules).ok) pencilsFor = unit.id;
+      } else {
+        setCharge(unit);
+      }
+      break;
+    case 'pencil-back':
+      pencilsFor = null;
       break;
     case 'cut': {
       const before = state;
@@ -1353,7 +1444,8 @@ function handleAction(id) {
       break;
     }
     default:
-      return;
+      if (!id.startsWith('pencil-') || !pencilsOpen(unit)) return;
+      setCharge(unit, Number(id.slice('pencil-'.length)));
   }
   render();
 }
@@ -1390,6 +1482,7 @@ function handleEndTurn() {
 
 function endTurnNow() {
   undoStack = [];
+  pencilsFor = null;
   const before = new Map(state.units.map((u) => [u.id, u.dead]));
   earlierReports = [{ turn: state.turn, events: state.report }, ...earlierReports].slice(0, 2);
   state = endTurn(state, rules, baseMap);
@@ -1999,6 +2092,31 @@ function handleKey(event) {
   }
   if (state.outcome && event.key !== 'r' && event.key !== 'R') return;
   const key = event.key;
+
+  // The time pencils open (M30): a number takes that many turns, C or Enter
+  // the default, Esc backs out; any other key puts them away and does its own.
+  const setter = selectedUnit(state);
+  if (pencilsOpen(setter)) {
+    if (/^[0-9]$/.test(key)) {
+      const pencil = pencils(state, setter, rules).find((p) => p.fuse === Number(key));
+      if (pencil && !pencil.afterDawn) setCharge(setter, pencil.fuse);
+      render();
+      return;
+    }
+    if (key === 'Enter' || key === 'c' || key === 'C') {
+      event.preventDefault();
+      setCharge(setter);
+      render();
+      return;
+    }
+    pencilsFor = null;
+    if (key === 'Escape') {
+      render();
+      return;
+    }
+  } else {
+    pencilsFor = null;
+  }
 
   if (key >= '1' && key <= '9') {
     const unit = state.units[Number(key) - 1];

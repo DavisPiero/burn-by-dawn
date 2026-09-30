@@ -65,7 +65,7 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     reinforcementsDue: 0,
     reinforcementsSent: 0,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
-    // { objectiveId, q, r, fuse, unitId }. `explosions` counts bangs, for the
+    // { objectiveId, q, r, fuse, length, unitId } (`length`, M30: the fuse it was set with). `explosions` counts bangs, for the
     // explosion floor (§6).
     objectives: createObjectives(map),
     charges: [],
@@ -503,7 +503,7 @@ export function placeCharge(state, unitId, rules, fuse = undefined) {
   return {
     ...spent,
     speech: say(spent.speech, unitId, unit.dialogue?.onPlaceCharge ?? null),
-    charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, unitId }],
+    charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, length: check.fuse, unitId }],
   };
 }
 

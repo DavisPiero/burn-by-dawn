@@ -576,7 +576,8 @@ export function describeEvent(event, place) {
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
     case 'landed': return describeLanding(event, at());
-    case 'explosion': return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;
+    case 'explosion': if (event.setOffBy) return `The ${event.label} beside it goes up with the ${event.setOffBy}. Destroyed.`;
+      return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label} — killed.`;
     case 'blastWounded': return `${event.unitName} is caught at the edge of the blast at the ${event.label} — wounded.`;
     case 'enemyBlastKilled': return `The ${event.enemyLabel.toLowerCase()} is caught in the blast at the ${event.label} and dies.`;
@@ -1004,6 +1005,8 @@ export function renderActions(element, actions, onAction) {
     const button = html('button', 'action', [html('span', 'action-key', action.key), html('span', 'action-words', words)]);
     button.type = 'button';
     if (action.active) button.classList.add('active');
+    // A time pencil that would go off after dawn (M30): struck out.
+    if (action.struck) button.classList.add('struck');
     // A use is open right now (M26): Stabilise or Pass, marked on the button.
     if (action.suggest && action.ok) button.classList.add('suggest');
     button.disabled = !action.ok && !action.active;
