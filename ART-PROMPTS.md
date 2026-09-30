@@ -365,7 +365,7 @@ Lengths and when each is heard are in ART-ASSETS.md §9. Loudness is balanced in
 
 ---
 
-## Priority 12 — the six in desert kit (the airfield) · ready to make now
+## Priority 12 — the six in desert kit (the airfield) ✅ full portraits done (2026-09-30); chips optional
 
 The same six men, dressed for the airfield (SPEC.md §13), on a desert-ochre background
 instead of slate blue. Each loads the moment it is in the folder, and any one missing

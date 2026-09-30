@@ -533,8 +533,10 @@ function deriveDrop(view, hex) {
         noteNudge: baseMap.objectives.find((m) => m.id === o.id)?.noteNudge ?? null,
         // The charges it takes, so three dashed points never read as three charges.
         // The primary's in two lines (M26d, the operator's): what it is, and how.
+        // Where there are many targets (M29c, the operator's: a note moved
+        // into clear ground lost its target), a bonus says whose it is.
         note: !targets.includes(o)
-          ? [`BONUS +${kindOf(o, rules).score}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean)
+          ? [`${single ? '' : `${o.label.toUpperCase()}: `}BONUS +${kindOf(o, rules).score}`, ...payoffNote(kindOf(o, rules)), ...chargeNote(kindOf(o, rules))].filter(Boolean)
           : single
             ? ['PRIMARY TARGET!', `BLOW IT WITH ${chargeCount(kindOf(o, rules).chargesNeeded).replace(/^USE /, '')}!`]
             : o === targets[0]
@@ -542,7 +544,8 @@ function deriveDrop(view, hex) {
               : null,
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
-      { hexes: view.exfil, primary: false, colour: 'green', beside: true, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
+      // `exfilNoteNudge` (M29c, art only) moves it, as an objective's `noteNudge` does.
+      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: baseMap.exfilNoteNudge ?? null, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
     ];
   }
   if (!hex) {

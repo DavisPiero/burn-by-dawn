@@ -4,25 +4,25 @@
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md §9, §13. All three land outside the wire. West drops over the dunes, north along the scrub above the north wire, where the outer patrol walks, and south along the sand below the south wire, closest to the Ju 52s and the bowser (M29b, the operator's: it replaced an East run from the north-east corner, too like the North, and uses the bottom rows). `tag`, `labelAlong`, `labelNudge`, `windAlong` as in data/map.json.",
+  "_dropRuns": "SPEC.md §9, §13. All three land outside the wire. West drops straight down outside the west wire, over the dunes and the escarpment (M29c, the operator's: M29's West ran diagonally across the wire, where a man could land on it and the car), north along the scrub above the north wire, where the outer patrol walks, and south along the sand below the south wire, closest to the Ju 52s and the bowser (M29b, the operator's: it replaced an East run from the north-east corner, too like the North, and uses the bottom rows). `tag`, `labelAlong`, `labelNudge`, `windAlong` as in data/map.json.",
   "dropRuns": [
     {
       "id": "west",
       "label": "West run",
       "tag": "quiet",
-      "description": "The dunes: soft sand and blind hollows the whole way to the north dispersal, and the escarpment above the wire. The longest walk to the aircraft.",
+      "description": "Straight down outside the west wire: soft dunes and the escarpment, nothing to land on but sand and rock, and the car kept out by the wire. The longest walk to the aircraft.",
       "from": [
-        5,
+        1,
         0
       ],
       "to": [
         -4,
-        9
+        10
       ],
       "jumpAt": 0,
       "spacing": 1,
       "wind": "SW",
-      "labelAlong": 0.6
+      "labelNudge": [1.7, 0]
     },
     {
       "id": "north",
@@ -451,10 +451,10 @@
           4
         ]
       ],
-      "noteNudge": [2.9, -2.4]
+      "noteNudge": [2.9, 0.3]
     }
   ],
-  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn.",
+  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilNoteNudge` (M29c, art only) moves the exfil ring's note by [x, y] hex radii: inside the ring here, the operator's. `dropCueAt` (M29b, art only) is the hex PICK A DROP DIRECTION centres on: the strip.",
   "exfil": [
     [
       -5,
@@ -471,6 +471,7 @@
   ],
   "exfilArt": "trucks",
   "dropCueAt": [7.2, 5.5],
+  "exfilNoteNudge": [-4.25, 0],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
   "places": [
     {

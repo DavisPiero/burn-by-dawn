@@ -956,8 +956,8 @@ board must read at a glance.
   counters, as a pen mark on a map would be. Picking a run clears them. Where the win is
   any few of many (the airfield), each target's ring is tight and takes in its charge
   points too, so target and point read as one; where every target takes one charge, only
-  the win's note says so. A map may move a note into clear ground (`noteNudge` on an
-  objective, art only).
+  the win's note says so, and a bonus target's note names it (BOWSER: BONUS +2). A map may move a note into clear ground (`noteNudge` on an
+  objective, `exfilNoteNudge` on the map for the exfil's; art only).
 - **Ghost Dakotas**: until a run is picked, a faint grey Dakota flies each drop line again
   and again, staggered, so the lines read as flight paths. Silent.
 - Each run's tab sits on its line (`labelAlong`, `labelNudge` in `map.json`) with its word,
@@ -1052,7 +1052,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M30**, the airfield's two new rules and its balance (§13). M28, M29 and M29b are done:
+**M30**, the airfield's two new rules and its balance (§13). M28, M29, M29b and M29c are done:
 the airfield is on the board as a draft, `?mission=airfield`. v1.0 is tagged.
 The airfield's milestones, M28 to M31, are listed in §13.
 
@@ -1095,6 +1095,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28 | Engine work for mission 2: a mission's own part of each level, score by kind, the win's targets instead of the primary flag, the RAF's words, a dialogue patch, `draft` missions; France's bot output byte-for-byte unchanged |
 | M29 | The airfield on the board as a draft: its map, the desert in ochre, the car, the aircraft, bowser and signals tent, the trucks; played under France's rules |
 | M29b | The operator's notes: the airfield's opening board cleared (tight rings, fewer words, notes and the drop cue in clear ground), a South run for the East, a camp guard, a bomb a scout and one a sapper, a lighter wadi, softer aircraft shadows, a mission's own portraits; Music off on the contents page; Men out in bold; France's two hidden charge points moved. France's bot output unchanged |
+| M29c | The operator's second notes: the desert portraits in; the West run straight down outside the wire; the airfield's notes placed again (the signals note over its patrol, the bowser's named, the exfil's inside its ring) |
 
 ---
 
@@ -1176,7 +1177,8 @@ Placed in M29 (`data/map-airfield.json`); the bot tunes it in M30.
   **Scrub** in the north and north-east is fast and light cover, open to the car.
 - **Exfil**: the rendezvous with the trucks, at the wadi's mouth in the south-west
   corner, drawn as two desert trucks with a scrap of netting (the map's `exfilArt`).
-- **Three drop runs**: over the dunes (West, quiet), along the scrub above the north
+- **Three drop runs**: straight down outside the west wire, over the dunes and the
+  escarpment (West, quiet; M29c, the operator's: it had run diagonally across the wire), along the scrub above the north
   wire (North, steady), and along the sand below the south wire, nearest the Ju 52s and
   the bowser (South, fast; M29b, the operator's: it replaced an East run from the
   north-east corner that was too like the North, and it uses the bottom rows). A man can
