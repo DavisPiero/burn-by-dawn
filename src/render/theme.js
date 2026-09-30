@@ -32,6 +32,12 @@ export const PALETTE = {
   // the airfield's story is printed in, used only by the desert's terrain.
   // Yellower than fire orange, so a burning fuse still stands out on it.
   ochre: '#D2A85C',
+  // The ninth (M31d, the operator's "try orange"): our men's counters on the
+  // desert, where army green on ochre sat too close to the garrison's dark
+  // chits. Burnt, darker and redder than fire orange, so the orange dots for
+  // the charges a man carries still stand off it in their paper rings. A
+  // mission names it as its `counterColour` (data/missions.json).
+  burnt: '#B4592A',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -1178,7 +1184,9 @@ const ALLIED_OUTLINE = 'M6 1 H48 A5 5 0 0 1 53 6 V48 A5 5 0 0 1 48 53 H6 A5 5 0 
 function alliedFrame(stripClass, extras = []) {
   return [
     ...cardEdge(ALLIED_OUTLINE),
-    fill(ALLIED_OUTLINE, 'green'),
+    // The body's colour is --counter-body, green unless a mission names its
+    // own (M31d, applyCounterColour).
+    fill(ALLIED_OUTLINE, 'counter-body'),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', stripClass),
     circle(9.5, 10, 7.5, 'paper'), ring(9.5, 10, 7.5, 1.2),
     ...extras,
@@ -2834,6 +2842,17 @@ export function enemySymbolId(type) {
  * entry, so this stays a data lookup rather than a branch on anybody's name
  * (CLAUDE.md rule 6).
  */
+/**
+ * Our men's counters in a mission's own colour (M31d): `counterColour` in
+ * data/missions.json names a PALETTE entry; green when it names none. Set on
+ * the page, so every counter drawn from the sprite takes it: the board's, the
+ * counter key's and the drop's.
+ */
+export function applyCounterColour(name) {
+  const colour = PALETTE[name] ?? PALETTE.green;
+  document.documentElement.style.setProperty('--counter-body', colour);
+}
+
 export function counterFrameId(unit) {
   return unit.leader ? 'counter-frame-allied-leader' : 'counter-frame-allied';
 }
@@ -2961,12 +2980,13 @@ function printCss() {
   }
   // Colour is printed off register from the ink; the ink plate is the key and
   // stays put.
-  const offRegister = [...Object.keys(PALETTE).filter((c) => c !== 'ink').map((c) => `.${c}`), '[class*="tone-"]'];
+  const offRegister = [...Object.keys(PALETTE).filter((c) => c !== 'ink').map((c) => `.${c}`), '.counter-body', '[class*="tone-"]'];
   const misregister = `${offRegister.join(',')}{transform:translate(${MISREGISTER.x}px,${MISREGISTER.y}px)}`;
   // Stepped, never eased: a blast is revealed in three frames and then gone.
   // A spent man's die-cut edge is set by board.js through --counter-edge.
   const motion = [
     `.counter-edge{stroke:var(--counter-edge,${COUNTER.edge})}`,
+    `.counter-body{fill:var(--counter-body,${PALETTE.green})}`,
     '@keyframes nd-blast{0%{transform:scale(0.35)}12%{transform:scale(0.75)}24%{transform:scale(1)}85%{opacity:1;transform:scale(1)}100%{opacity:0}}',
     `.nd-blast{animation:nd-blast ${MOTION.blastMs}ms step-end both;transform-box:fill-box;transform-origin:center}`,
     // The where-to-start cues throb gently, so the eye goes to them (M21).

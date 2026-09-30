@@ -30,7 +30,7 @@ import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropT
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -2354,6 +2354,8 @@ try {
   // The levels, with the mission's own part of each (M28) carried on them.
   difficulty = missionLevels(mission, validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes }), rawRules, rawMap.enemyTypes);
   useMissionWords(mission.words);
+  // Our men's counters in the mission's own colour, if it has one (M31d).
+  applyCounterColour(mission.counterColour ?? null);
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
 
