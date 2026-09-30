@@ -48,9 +48,9 @@
       "tagline": "SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY",
       "map": "data/map-airfield.json",
       "roster": "data/roster.json",
-      "_rules": "SPEC.md §13. Lewes bombs are small, so a sapper carries two. The win pays 10 on top of each aircraft's own 2, since no target here is worth the bridge's 10 on its own. Three new objective kinds; their numbers are Normal's, first guesses for M30's balance.",
+      "_rules": "SPEC.md §13. Lewes bombs are small, so the scouts carry one each as well as the sappers (M29b, the operator's: with none, and two a sapper, the scouts had nothing to do here); still five in the stick with Nunn's. The win pays 10 on top of each aircraft's own 2, since no target here is worth the bridge's 10 on its own. Three new objective kinds; their numbers are Normal's, first guesses for M30's balance.",
       "rules": {
-        "roles": { "sapper": { "charges": 2 } },
+        "roles": { "scout": { "charges": 1 } },
         "scoring": { "win": 10 },
         "objectives": {
           "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2 },

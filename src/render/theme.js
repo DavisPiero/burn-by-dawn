@@ -307,7 +307,9 @@ const TERRAIN_ART = {
   sand: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-sand', variants: 3, sparse: 0.4 },
   scrub: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-scrub', variants: 3 },
   dunes: { base: 'paper', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.4], outline: 1, outlineOpacity: 0.35, dash: '6 4' }, motif: 'terrain-dunes', variants: 3 },
-  wadi: { base: 'paper', tint: ['ochre', 0.3], area: { fill: 'ochre', tone: ['ink', 35], outline: 1.6 }, motif: 'terrain-wadi', variants: 3 },
+  // The wadi a touch lighter (M29b, the operator's: too strong): the ochre at
+  // 75% and a lighter ink tone, still the darkest ground on the board.
+  wadi: { base: 'paper', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.75], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-wadi', variants: 3 },
   wire: { base: 'paper', tint: ['ochre', 0.3], motif: null, fence: true },
   strip: { base: 'paper', tint: ['ink', 0.07], motif: 'terrain-strip' },
   pen: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-pen' },
@@ -970,6 +972,7 @@ export const RINGS = {
   green: PALETTE.green,
   width: 4.5,
   margin: 14, // beyond the footprint's hexes
+  tightMargin: 2, // where many targets are ringed with their charge points (M29b)
   overshoot: 0.14, // of a turn past the start
   opacity: 0.8, // a touch under full, so what it crosses still shows (M12)
   wobble: 0.05, // of the radius
@@ -1804,13 +1807,24 @@ function balkenkreuz(x, y, s = 1) {
   return [fill(arm(5 * s, 2.2 * s), 'paper'), fill(arm(4 * s, 1.1 * s), 'ink')];
 }
 
+// A parked aircraft's shadow (M29b, the operator's: bigger and softer): cast
+// further down-right, its edge feathered by the same shape stroked wider and
+// fainter in layers, not a blur filter (the board redraws on hover).
+function planeShadow(paths) {
+  const { x, y, core, feather } = PLANE_SHADOW;
+  const layers = feather.map(([width, opacity]) => svg('g', { opacity }, paths.map((d) => svg('path', { d, class: 'ink stroke-ink', 'stroke-width': width, 'stroke-linejoin': 'round' }))));
+  return svg('g', { transform: `translate(${x} ${y})` }, [...layers, svg('g', { opacity: core }, paths.map((d) => fill(d, 'ink')))]);
+}
+
+const PLANE_SHADOW = { x: 6, y: 7, core: 0.2, feather: [[9, 0.05], [6, 0.06], [3, 0.08]] };
+
 // A Ju 87 Stuka from above, nose north: gull wings, the fixed spats under
 // them, the long glasshouse canopy. Desert tan, mottled.
 function stuka(burnt) {
   const body = 'M48 10 Q53 12 53 24 L51.5 70 Q49.5 80 48 82 Q46.5 80 44.5 70 L43 24 Q43 12 48 10 Z';
   const wings = 'M44 30 L22 34 L6 40 Q4 44 8 45 L44 46 Z M52 30 L74 34 L90 40 Q92 44 88 45 L52 46 Z';
   const tail = 'M45 70 L32 72 Q30 75 32 77 L46 77 Z M51 70 L64 72 Q66 75 64 77 L50 77 Z';
-  const shadow = svg('g', { transform: 'translate(3 3)' }, [fill(body, 'ink', { 'fill-opacity': 0.28 }), fill(wings, 'ink', { 'fill-opacity': 0.28 }), fill(tail, 'ink', { 'fill-opacity': 0.28 })]);
+  const shadow = planeShadow([body, wings, tail]);
   if (burnt) {
     const broken = 'M44 30 L22 34 L14 38 L20 42 L44 46 Z M52 30 L70 35 L66 44 L52 46 Z';
     return [
@@ -1838,7 +1852,7 @@ function ju52(burnt) {
   const body = 'M48 12 Q54 14 54 28 L51 76 Q49.5 84 48 84 Q46.5 84 45 76 L42 28 Q42 14 48 12 Z';
   const wings = 'M42 30 L4 36 Q2 42 6 44 L42 46 Z M54 30 L92 36 Q94 42 90 44 L54 46 Z';
   const tail = 'M45 74 L30 76 Q28 80 31 82 L46 81 Z M51 74 L66 76 Q68 80 65 82 L50 81 Z';
-  const shadow = svg('g', { transform: 'translate(3 3)' }, [fill(body, 'ink', { 'fill-opacity': 0.28 }), fill(wings, 'ink', { 'fill-opacity': 0.28 })]);
+  const shadow = planeShadow([body, wings, tail]);
   const engines = 'M26 26 h8 v12 h-8 Z M62 26 h8 v12 h-8 Z';
   if (burnt) {
     return [

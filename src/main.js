@@ -526,7 +526,11 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         // The primary is ringed twice; where any few of many will do (M28),
         // each is ringed once and the first carries the note for them all.
-        hexes: o.hexes, primary: single && targets.includes(o), colour: 'red',
+        // Where there are many (M29b, the operator's), a tight ring takes in
+        // each target's charge points with it, so the two read as one thing.
+        hexes: single ? o.hexes : [...o.hexes, ...o.chargeHexes], tight: !single,
+        primary: single && targets.includes(o), colour: 'red',
+        noteNudge: baseMap.objectives.find((m) => m.id === o.id)?.noteNudge ?? null,
         // The charges it takes, so three dashed points never read as three charges.
         // The primary's in two lines (M26d, the operator's): what it is, and how.
         note: !targets.includes(o)
@@ -601,8 +605,16 @@ function chargeCount(n) {
 function chargeNote(kind) {
   const count = chargeCount(kind.chargesNeeded);
   const cutter = Object.values(rules.roles).find((role) => role.cutLine);
+  // Where every target takes one charge (M29b, the operator's: the airfield's
+  // board was all words), the win's note says so once, and the rest leave it out.
+  if (oneChargeEach()) return kind.cutLine && cutter ? [`A ${cutter.label.toUpperCase()} CAN CUT ITS LINES`] : [];
   if (!kind.cutLine || !cutter) return [count];
   return [`${count},`, `OR HAVE A ${cutter.label.toUpperCase()} CUT THE LINES`];
+}
+
+/** Whether every objective on the board takes exactly one charge. */
+function oneChargeEach() {
+  return state.objectives.every((o) => kindOf(o, rules).chargesNeeded === 1);
 }
 
 /** Charges an objective still wants: what it needs, less those gone off or burning. */
