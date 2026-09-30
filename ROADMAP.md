@@ -19,9 +19,10 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   the SPEC §10 targets.
 - **Phase 3, the airfield, is specified** in SPEC.md §13 (29 Sep 2026): southern Tunisia,
   1942; eight aircraft, any four to win; five bombs; the two new rules are time pencils
-  and a bowser that sets off its neighbours. **M28 and M29 are built**: the engine work
-  (France's bot output byte-for-byte unchanged), and the airfield on the board as a
-  draft (`?mission=airfield`), under today's rules. **Next: M30**, its two new rules and
+  and a bowser that sets off its neighbours. **M28, M29 and M29b are built**: the engine
+  work (France's bot output byte-for-byte unchanged), the airfield on the board as a
+  draft (`?mission=airfield`), under today's rules, and the operator's notes on it (a
+  South run for the East, a camp guard, a bomb for each scout). **Next: M30**, its two new rules and
   its balance, then M31, as listed there.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
@@ -126,8 +127,10 @@ Gunnerside, the SAS airfield raids, Chestnut, the Jedburghs, Nadzab).
 operator's calls (29 Sep 2026): southern Tunisia, 1942 (loosely 2 Para at Oudna, paras
 from Dakotas); the two new rules are **time pencils** (choose a charge's fuse) and a
 **fuel bowser that sets off the aircraft in its blast**; **sappers carry two bombs**
-(five in the stick). Built as M28 (engine, no gameplay change), M29 (the map, under
-today's rules), M30 (the two rules and balance), M31 (words, sound, art hand-off).
+(five in the stick; M29b spread them one a man, scouts included). Built as M28 (engine, no gameplay change), M29 (the map, under
+today's rules), M30 (the two rules and balance), M31 (words, sound, art hand-off; and from the operator's notes, the RAF diversion as a
+jeep's drive-by outside the wire, the same rule in new words, art and sound, and the
+desert portraits, which load from `assets/portraits/desert` as they arrive).
 
 The outline as first written: The loose basis is the 1941–42
 parachute raids on Axis airfields (Operation Squatter; 2 Para at Oudna, Tunisia).
@@ -170,6 +173,13 @@ choose.
   A possible smaller, shorter mission.
 
 ## Parked (good ideas, not now)
+
+- **Comic panels at story moments** (the operator's, 2026-09-30): painted panels in the
+  Commando-comic style that pop up at key moments: the drop, Dutch killed, the first
+  enemy seen, the last charge set, victory, failure. The operator paints them. Needs a
+  design pass first: which moments, how a panel shows and is dismissed without slowing
+  play, one set shared by all missions or some per mission, and the art spec. A phase of
+  its own after the airfield is playable.
 
 - **Different teams for different missions**, such as Australians at Nadzab, New Guinea
   (the operator's wish, not yet). For now every mission uses the same six men, and every

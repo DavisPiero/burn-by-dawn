@@ -365,6 +365,107 @@ Lengths and when each is heard are in ART-ASSETS.md §9. Loudness is balanced in
 
 ---
 
+## Priority 12 — the six in desert kit (the airfield) · ready to make now
+
+The same six men, dressed for the airfield (SPEC.md §13), on a desert-ochre background
+instead of slate blue. Each loads the moment it is in the folder, and any one missing
+falls back to his France portrait, so they can come in one at a time.
+
+| | |
+|---|---|
+| Files | `assets/portraits/desert/portrait-<id>-full.png` × 6, and `portrait-<id>-chip.png` × 6 if the chips change too |
+| ids | `holloway`, `fitch`, `vance`, `barrow`, `speers`, `nunn` |
+| Size, format, framing | **Exactly as Priority 1 and 2** (full 4:5, 960 × 1200, opaque PNG; chip 1:1, 128 × 128, transparent) |
+| Background | Flat **desert ochre**, the board's `#D2A85C` or a little paler, so the rail says "desert" at a glance |
+| Code does | The same as for France. Send the PNGs; Claude makes the 480 × 600 JPEGs the game loads |
+
+### Base prompt (all six)
+
+> Head-and-shoulders portrait of a British airborne paratrooper, North Africa, winter
+> 1942, at night. He wears the rimless steel paratrooper helmet with chin strap, painted
+> sand-coloured and bare of foliage, and a faded Denison smock over khaki drill. Face
+> lightly blackened with burnt cork, dust on the helmet rim. Three-quarter view, looking
+> slightly off-camera, determined. Lit from one side by moonlight, with deep shadow on the
+> other. Face centred, eyes about 40% down the frame, shoulders filling the bottom of the
+> frame. Flat plain desert-ochre background. [PER-MAN DETAILS] [STYLE BLOCK]
+
+### Per-man details
+
+Keep each man's feature, but take the foliage out. Barrow's twig has no place in the desert, so
+he gets a new one.
+
+| id | Per-man details (paste into the prompt) | The one feature that must read |
+|---|---|---|
+| `holloway` | *As in France: sergeant, weathered, late thirties, square jaw, a thick dark moustache, chevrons on the sleeve.* | the moustache |
+| `fitch` | *As in France: young, thin face, jug ears, freckles, lopsided grin, an unlit cigarette in the corner of his mouth.* | the cigarette |
+| `vance` | *As in France, but the helmet scrim is plain sand-coloured hessian netting, no leaves; binoculars round his neck.* | the helmet net |
+| `barrow` | *Young, lanky, big ears, open-mouthed half-laugh; a pair of dust goggles pushed up on the front of his helmet.* | the goggles (new) |
+| `speers` | *As in France: broad face, dark stubble, a thin scar, a slate-blue scarf knotted at the throat, Bren sling.* | the scarf |
+| `nunn` | *As in France: enormous build, thick neck, broken nose, placid and gentle expression.* | the sheer width |
+
+**Check before accepting:** shrink to 56 × 70 px beside his France portrait. Same man?
+
+---
+
+## Priority 13 — the airfield's title card · ready to make now
+
+Its own painting in place of France's, across the top of its orders and its back page.
+Wired in M31, when the airfield becomes playable.
+
+| | |
+|---|---|
+| File | `assets/title/title-card-airfield.jpg` (keep your full-size original beside it as `title-card-airfield_full.jpg`) |
+| Size, format | **Exactly as Priority 2b**: 4:1, 2400 × 600, JPEG quality about 85, sRGB, opaque |
+| Composition | As France's: the middle 60% open and dark for the title, the action toward the left and right edges, the ground along the bottom fifth. With or without BURN BY DAWN painted in, but say which, since France's has it painted in |
+
+### Prompt (add the style block)
+
+> Wide panoramic night scene, winter 1942, a desert landing ground in Tunisia: a stick of
+> British paratroopers coming down under round canopies over pale moonlit sand, a C-47
+> Dakota flying away low, and along the bottom edge the dark silhouettes of parked
+> German Ju 52 transports and Stuka dive-bombers in sandbagged pens, one already
+> burning with a tall orange fire and black smoke. A low escarpment on the horizon, a
+> sliver of moon. The centre of the picture is open dark night sky; the canopies and
+> the aircraft are grouped toward the left and right edges. Deep slate-blue and ink
+> night palette, with warm ochre sand and fire orange.
+
+---
+
+## Priority 14 — the contents page panels · specs only, not wired yet
+
+One small painting per mission, beside its line on the contents page, so the page
+reads as an annual's contents with a picture for each story. Make these whenever you
+like. When the first two are in, Claude adds them to the contents page. Any mission
+without one shows its line as now.
+
+| | |
+|---|---|
+| Files | `assets/title/contents-france.jpg`, `assets/title/contents-airfield.jpg` (later `contents-aqueduct.jpg`) |
+| Size | **3:2, 1200 × 800 px** (never below 600 × 400) |
+| Format | JPEG, quality about 85, sRGB, opaque |
+| Shown at | About 180 × 120 px beside the entry, so it must read small: one clear subject, strong light and dark, like a single comic panel |
+| Code does | The frame, the title, the page number and the NEXT YEAR'S ANNUAL stamp. No text in the picture |
+
+### Prompt — the rail bridge (add the style block)
+
+> A single comic-book panel, night, Normandy, June 1944: a steel girder railway bridge
+> over a canal, seen from low on the bank, the moment its demolition charges go off,
+> a huge orange blast in the middle span with girders twisting and flying, the
+> silhouettes of two British paratroopers crouched in the reeds in the foreground
+> looking back at it. Deep slate-blue night, fire orange. Strong simple shapes that
+> read at thumbnail size.
+
+### Prompt — the airfield (add the style block)
+
+> A single comic-book panel, night, a desert landing ground in Tunisia, 1942: a British
+> paratrooper in a sand-coloured helmet running low across the sand away from a parked
+> Ju 52 transport that is erupting in flame behind him, its corrugated wing and three
+> engines lit orange, sandbagged pen walls, black smoke against a starry sky. Warm
+> ochre sand, deep night blue, fire orange. Strong simple shapes that read at thumbnail
+> size.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.

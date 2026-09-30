@@ -124,8 +124,9 @@ let garrisonShow = null;
 // once the stick is down, the men who can act are ringed as where to start.
 let menPicked = false;
 // The title music turned off from the orders (M21, the operator's): music
-// only, for the session; M still turns every sound off.
-let musicOff = false;
+// only, for the session; M still turns every sound off. Carried in the
+// address as `?music=off` when the contents page loads another mission (M29b).
+let musicOff = new URLSearchParams(window.location.search).get('music') === 'off';
 // The turns before this one, newest first, for the report's log (M21b): display only.
 let earlierReports = [];
 // Brings the report's ▲ ▼ up to date after a redraw (M22).
@@ -525,7 +526,11 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         // The primary is ringed twice; where any few of many will do (M28),
         // each is ringed once and the first carries the note for them all.
-        hexes: o.hexes, primary: single && targets.includes(o), colour: 'red',
+        // Where there are many (M29b, the operator's), a tight ring takes in
+        // each target's charge points with it, so the two read as one thing.
+        hexes: single ? o.hexes : [...o.hexes, ...o.chargeHexes], tight: !single,
+        primary: single && targets.includes(o), colour: 'red',
+        noteNudge: baseMap.objectives.find((m) => m.id === o.id)?.noteNudge ?? null,
         // The charges it takes, so three dashed points never read as three charges.
         // The primary's in two lines (M26d, the operator's): what it is, and how.
         note: !targets.includes(o)
@@ -600,8 +605,16 @@ function chargeCount(n) {
 function chargeNote(kind) {
   const count = chargeCount(kind.chargesNeeded);
   const cutter = Object.values(rules.roles).find((role) => role.cutLine);
+  // Where every target takes one charge (M29b, the operator's: the airfield's
+  // board was all words), the win's note says so once, and the rest leave it out.
+  if (oneChargeEach()) return kind.cutLine && cutter ? [`A ${cutter.label.toUpperCase()} CAN CUT ITS LINES`] : [];
   if (!kind.cutLine || !cutter) return [count];
   return [`${count},`, `OR HAVE A ${cutter.label.toUpperCase()} CUT THE LINES`];
+}
+
+/** Whether every objective on the board takes exactly one charge. */
+function oneChargeEach() {
+  return state.objectives.every((o) => kindOf(o, rules).chargesNeeded === 1);
 }
 
 /** Charges an objective still wants: what it needs, less those gone off or burning. */
@@ -1584,6 +1597,8 @@ function openMission(id) {
   const query = new URLSearchParams(window.location.search);
   query.set('mission', id);
   query.delete('seed');
+  if (musicOff) query.set('music', 'off');
+  else query.delete('music');
   window.location.search = query.toString();
 }
 
@@ -1654,6 +1669,8 @@ function describeBriefing(which, view) {
       },
       sections: [],
       go: `TURN TO PAGE ${mission.page} — any key, or click a mission`,
+      // Bottom left, as on the orders (M29b, the operator's).
+      toggle: musicToggle(),
     };
   }
   if (which.kind === 'exfil') {
@@ -1733,14 +1750,7 @@ function describeBriefing(which, view) {
         onChoose: handleChooseLevel,
       },
       // Bottom left (M21, the operator's): the music plays only before the jump.
-      toggle: before ? {
-        on: musicOff,
-        label: ' Music off',
-        onChange: (on) => {
-          musicOff = on;
-          syncMusic();
-        },
-      } : null,
+      toggle: before ? musicToggle() : null,
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
@@ -1759,6 +1769,18 @@ function describeBriefing(which, view) {
       { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok }) },
     ],
     toggle: { on: briefingsOn },
+  };
+}
+
+/** Music off (M21, the operator's), bottom left of the orders and the contents page. */
+function musicToggle() {
+  return {
+    on: musicOff,
+    label: ' Music off',
+    onChange: (on) => {
+      musicOff = on;
+      syncMusic();
+    },
   };
 }
 
@@ -2200,7 +2222,7 @@ try {
   // whole rather than filling in bit by bit.
   const pictures = [
     paperLoaded,
-    loadSuppliedPortraits(state.units.map((u) => u.id), () => render()),
+    loadSuppliedPortraits(state.units.map((u) => u.id), () => render(), mission.portraits ?? null),
     loadSuppliedTitleCard(mission.titleCard),
     loadSuppliedAircraft(),
     loadSuppliedBlast(),

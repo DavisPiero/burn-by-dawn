@@ -4,7 +4,7 @@
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md §9, §13. All three land outside the wire. West drops over the dunes, north along the scrub above the north wire, where the outer patrol walks, and east from the north-east corner, closest to the north dispersal and the camp. `tag`, `labelAlong`, `labelNudge`, `windAlong` as in data/map.json.",
+  "_dropRuns": "SPEC.md §9, §13. All three land outside the wire. West drops over the dunes, north along the scrub above the north wire, where the outer patrol walks, and south along the sand below the south wire, closest to the Ju 52s and the bowser (M29b, the operator's: it replaced an East run from the north-east corner, too like the North, and uses the bottom rows). `tag`, `labelAlong`, `labelNudge`, `windAlong` as in data/map.json.",
   "dropRuns": [
     {
       "id": "west",
@@ -43,25 +43,25 @@
       "labelAlong": 0.33
     },
     {
-      "id": "east",
-      "label": "East run",
+      "id": "south",
+      "label": "South run",
       "tag": "fast",
-      "description": "The north-east corner: down nearest the aircraft and the signals tent, with the camp and the perimeter car close by. Tricky.",
+      "description": "The sand south of the wire: down closest to the Ju 52s and the bowser, under the south AA pit's eye, and in the open.",
       "from": [
-        17,
-        0
+        12,
+        11
       ],
       "to": [
-        6,
-        1
+        -1,
+        11
       ],
-      "jumpAt": 0,
+      "jumpAt": 4,
       "spacing": 1,
       "wind": "W",
-      "labelAlong": 0.12
+      "labelAlong": 0.15
     }
   ],
-  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north and east runs land), a patrol walks the camp, and the perimeter car drives the track round inside the wire. The car is its own type, `vehicle` (the manifest's counter-enemy-vehicle) (data/missions.json enemies patch): fast, and it cannot be killed.",
+  "_enemies": "SPEC.md §6, §13. The two AA pits and the signals tent's guard are posts; a guard walks each dispersal, the outer patrol walks the scrub above the north wire (where the north run lands), a patrol walks the camp, a guard stands among the south-east tents (M29b, the operator's), and the perimeter car drives the track round inside the wire. The car is its own type, `vehicle` (the manifest's counter-enemy-vehicle) (data/missions.json enemies patch): fast, and it cannot be killed.",
   "enemies": [
     {
       "id": "post-aa-north",
@@ -92,6 +92,16 @@
         5
       ],
       "facing": "W"
+    },
+    {
+      "id": "post-camp",
+      "label": "Camp guard",
+      "type": "sentry",
+      "at": [
+        13,
+        8
+      ],
+      "facing": "SW"
     },
     {
       "id": "car",
@@ -418,7 +428,8 @@
           6,
           8
         ]
-      ]
+      ],
+      "noteNudge": [0, 5]
     },
     {
       "id": "signals",
@@ -439,7 +450,8 @@
           15,
           4
         ]
-      ]
+      ],
+      "noteNudge": [2.9, -2.4]
     }
   ],
   "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn.",
@@ -458,6 +470,7 @@
     ]
   ],
   "exfilArt": "trucks",
+  "dropCueAt": [7.2, 5.5],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
   "places": [
     {
@@ -467,7 +480,7 @@
         5,
         11
       ],
-      "dy": 0.1
+      "dy": 0.75
     },
     {
       "name": "Erg Safra",
@@ -485,7 +498,8 @@
         -3,
         7
       ],
-      "dy": 0.2
+      "dy": -0.3,
+      "dx": 0.6
     },
     {
       "name": "Oued Melah",

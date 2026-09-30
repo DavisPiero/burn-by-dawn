@@ -43,12 +43,12 @@
       { "guardHex": [1, 10], "guardFacing": "SE" }
     ] },
 
-  "_objectives": "SPEC.md §7. `kind` picks the numbers in data/rules.json objectives (charges needed, blast radius, alert, whether a scout can cut it, what its hexes become when destroyed). `hexes` is the footprint the art covers; `chargeHexes` are where a trooper stands to place a charge. Exactly one objective is `primary`. `pointNudge` (M14, art only) moves a charge point's satchel, keyed \"q,r\", by [x, y] hex radii, clear of the objective's art: the bridge's south one, whose fuse crossed the pier; the exchange's east one, down off its power line, and its south one, left off its wire (M16). Charge hexes were chosen by simulating the patrols at Calm and Suspicious: the bridge's west-bank marsh is watched only when the bridge patrol passes, the exchange's north, east and south sides only when the village patrol comes round, and the dump's two ridge hexes differ (-1,6 is rarely seen, -1,7 often).",
+  "_objectives": "SPEC.md §7. `kind` picks the numbers in data/rules.json objectives (charges needed, blast radius, alert, whether a scout can cut it, what its hexes become when destroyed). `hexes` is the footprint the art covers; `chargeHexes` are where a trooper stands to place a charge. Exactly one objective is `primary`. `pointNudge` (M14, art only) moves a charge point's satchel, keyed \"q,r\", by [x, y] hex radii, clear of the objective's art: the bridge's south one, whose fuse crossed the pier; the exchange's east one, down off its power line, and its south one, left off its wire (M16); the bridge's north one up and right, and the exchange's north one down and left, out from under their names (M29b, the operator's). Charge hexes were chosen by simulating the patrols at Calm and Suspicious: the bridge's west-bank marsh is watched only when the bridge patrol passes, the exchange's north, east and south sides only when the village patrol comes round, and the dump's two ridge hexes differ (-1,6 is rarely seen, -1,7 often).",
   "objectives": [
     { "id": "bridge", "label": "Rail Bridge", "kind": "bridge", "primary": true,
-      "hexes": [[8, 6], [9, 6], [10, 6]], "chargeHexes": [[9, 5], [8, 7]], "pointNudge": { "8,7": [0.35, 0] } },
+      "hexes": [[8, 6], [9, 6], [10, 6]], "chargeHexes": [[9, 5], [8, 7]], "pointNudge": { "9,5": [0.3, -0.3], "8,7": [0.35, 0] } },
     { "id": "exchange", "label": "Telephone Exchange", "kind": "exchange", "primary": false,
-      "hexes": [[13, 2], [14, 2], [13, 3], [14, 3]], "chargeHexes": [[13, 1], [15, 2], [14, 4]], "pointNudge": { "15,2": [0, 0.34], "14,4": [-0.33, 0.08] } },
+      "hexes": [[13, 2], [14, 2], [13, 3], [14, 3]], "chargeHexes": [[13, 1], [15, 2], [14, 4]], "pointNudge": { "13,1": [-0.5, 0.2], "15,2": [0, 0.34], "14,4": [-0.33, 0.08] } },
     { "id": "fuel-dump", "label": "Fuel Dump", "kind": "fuelDump", "primary": false,
       "hexes": [[-3, 7], [-2, 7], [-3, 8]], "chargeHexes": [[-1, 6], [-1, 7]] }
   ],

@@ -52,7 +52,11 @@ export default [
       equal(targets.length, 8, `${level}: eight aircraft`);
       equal(needed, count, `${level}: how many`);
       assert(state.objectives.every((o) => !o.primary), `${level}: no primary`);
-      equal(state.units.reduce((n, u) => n + u.charges, 0), 5, `${level}: two bombs a sapper and Nunn's one`);
+      equal(state.units.reduce((n, u) => n + u.charges, 0), 5, `${level}: five bombs`);
+      // M29b, the operator's: spread one a man so the scouts have a job here.
+      const byRole = (role) => state.units.filter((u) => u.role === role).map((u) => u.charges);
+      equal(byRole('sapper').join(), '1,1', `${level}: a sapper carries one`);
+      equal(byRole('scout').join(), '1,1', `${level}: a scout carries one`);
     }
     const { map, rules, traits, roster } = await loadAirfield();
     equal(winWords(createInitialState(roster, traits, rules, map, 1), rules), '4 of the 8 Aircraft', 'said in words');

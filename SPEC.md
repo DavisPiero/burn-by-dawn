@@ -953,13 +953,18 @@ board must read at a glance.
   note beside it (the primary's: PRIMARY TARGET! / BLOW IT WITH TWO CHARGES!, the count
   from its kind; the exchange's says a scout can cut its lines), and the exfil in green.
   Each ring takes in the objective's name and is drawn under the names, charge points and
-  counters, as a pen mark on a map would be. Picking a run clears them.
+  counters, as a pen mark on a map would be. Picking a run clears them. Where the win is
+  any few of many (the airfield), each target's ring is tight and takes in its charge
+  points too, so target and point read as one; where every target takes one charge, only
+  the win's note says so. A map may move a note into clear ground (`noteNudge` on an
+  objective, art only).
 - **Ghost Dakotas**: until a run is picked, a faint grey Dakota flies each drop line again
   and again, staggered, so the lines read as flight paths. Silent.
 - Each run's tab sits on its line (`labelAlong`, `labelNudge` in `map.json`) with its word,
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
-  the player's red pen among the runs' tabs, still, on the map at 1280x800. Once one is
+  the player's red pen among the runs' tabs (or centred on the map's `dropCueAt` hex where
+  that is busy: the airfield's is on the strip), still, on the map at 1280x800. Once one is
   picked it reads **HIT SPACE TO JUMP**, "or click the run again", the JUMP! button turns
   danger red and throbs, and the run's rollover ends PRESS SPACE TO JUMP, OR CLICK AGAIN.
   Jumping needs **Space** or a second click on the same run. Once the stick is down, every
@@ -1032,7 +1037,9 @@ every level.
 
 Nothing sounds until the player first presses a key or clicks, as browsers require. `M`,
 or the word under the seed, turns all sound off for the session; **Music off** on the
-orders turns off only the music. `?sound=off` in the address starts muted. Nothing is
+orders and on the contents page turns off only the music, and is carried in the address
+(`?music=off`) when the contents page loads another mission. `?sound=off` in the address
+starts muted. Nothing is
 stored.
 
 ---
@@ -1045,8 +1052,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M30**, the airfield's two new rules and its balance (§13). M28 and M29 are done: the
-airfield is on the board as a draft, `?mission=airfield`. v1.0 is tagged.
+**M30**, the airfield's two new rules and its balance (§13). M28, M29 and M29b are done:
+the airfield is on the board as a draft, `?mission=airfield`. v1.0 is tagged.
 The airfield's milestones, M28 to M31, are listed in §13.
 
 ### Done
@@ -1087,6 +1094,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M27b | The drop's Dakota flies off the board on every run (the East run's stopped mid-map) |
 | M28 | Engine work for mission 2: a mission's own part of each level, score by kind, the win's targets instead of the primary flag, the RAF's words, a dialogue patch, `draft` missions; France's bot output byte-for-byte unchanged |
 | M29 | The airfield on the board as a draft: its map, the desert in ochre, the car, the aircraft, bowser and signals tent, the trucks; played under France's rules |
+| M29b | The operator's notes: the airfield's opening board cleared (tight rings, fewer words, notes and the drop cue in clear ground), a South run for the East, a camp guard, a bomb a scout and one a sapper, a lighter wadi, softer aircraft shadows, a mission's own portraits; Music off on the contents page; Men out in bold; France's two hidden charge points moved. France's bot output unchanged |
 
 ---
 
@@ -1169,8 +1177,10 @@ Placed in M29 (`data/map-airfield.json`); the bot tunes it in M30.
 - **Exfil**: the rendezvous with the trucks, at the wadi's mouth in the south-west
   corner, drawn as two desert trucks with a scrap of netting (the map's `exfilArt`).
 - **Three drop runs**: over the dunes (West, quiet), along the scrub above the north
-  wire (North, steady), and in from the north-east corner nearest the aircraft and the
-  camp (East, fast). A man can come down in the wire (a bad landing). Their tags are
+  wire (North, steady), and along the sand below the south wire, nearest the Ju 52s and
+  the bowser (South, fast; M29b, the operator's: it replaced an East run from the
+  north-east corner that was too like the North, and it uses the bottom rows). A man can
+  come down in the wire (a bad landing). Their tags are
   data, as in France.
 - **Art only**: an aircraft objective's `art` picks its picture (Stuka or Ju 52); the
   wire is laid as a line like a hedge; the strip is a grey wash with its painted centre
@@ -1179,12 +1189,13 @@ Placed in M29 (`data/map-airfield.json`); the bot tunes it in M30.
 
 ### The garrison
 
-Eight enemies, as in France, plus the reserve:
+Nine enemies, one more than France, plus the reserve:
 - **Sentries**: the two AA pits (one in the north dispersal, one at the south-east
-  corner), and a guard beside the signals tent.
+  corner), a guard beside the signals tent, and a guard among the south-east tents
+  (M29b, the operator's: the camp's corner stood empty).
 - **Patrols**: a guard walking each dispersal, the outer patrol walking the scrub above
-  the north wire, where the North and East runs land (so their chutes are found), and
-  one in the camp.
+  the north wire, where the North run lands (so its chutes are found), and one in the
+  camp.
 - **The perimeter car**, a new enemy type, `vehicle` (the mission's enemies patch;
   its counter is ART-ASSETS.md's `counter-enemy-vehicle`): speed 6, so it drives
   the whole perimeter in a few turns and reaches a noise first. Vision and arc as a
@@ -1209,8 +1220,10 @@ Numbers are Normal's, per kind in the mission's rules patch; the bot tunes them 
 **The win**: `destroyCount { kind: "aircraft", count: 4 }` (Easy 3, Hard 5), and at least
 the level's `minimumOut` men out by dawn. No objective is `primary`.
 
-**The bombs**: small Lewes bombs, so the mission's patch lets a **sapper carry 2**. Dutch
-2, Fitch 2, Nunn 1 (Ox): five in the stick. A man killed or wounded drops what he carried
+**The bombs**: small Lewes bombs, so the mission's patch lets a **scout carry 1** as well
+as each sapper: Dutch, Fitch, Vance, Barrow and Nunn (Ox) one each, five in the stick
+(M29b, the operator's: M29 gave the sappers two each, and the scouts, with none, had
+little to do here). Only Speers carries none: his job is the car. A man killed or wounded drops what he carried
 on his hex, and anyone with room picks it up (1 AP each), so losing a sapper is a fetch
 under fire, not a lost mission. It is withdrawn only when too few bombs are left anywhere
 to reach the count, as §10 already says.

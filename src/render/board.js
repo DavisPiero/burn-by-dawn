@@ -241,11 +241,10 @@ function drawAreas(layer, defs, map, corners) {
     }
     const d = areaOutline(segments);
     const area = style.area;
-    if (area.fill) {
-      layer.appendChild(el('path', { d, class: area.fill, 'fill-rule': 'evenodd' }));
-      if (area.tone) layer.appendChild(el('path', { d, class: toneClass(...area.tone), 'fill-rule': 'evenodd' }));
-    }
+    if (area.fill) layer.appendChild(el('path', { d, class: area.fill, 'fill-rule': 'evenodd' }));
     if (area.tint) layer.appendChild(el('path', { d, fill: area.tintFill, 'fill-opacity': area.tint[1], 'fill-rule': 'evenodd' }));
+    // Over a fill or a tint (M29b: the wadi's is a tint).
+    if (area.tone) layer.appendChild(el('path', { d, class: toneClass(...area.tone), 'fill-rule': 'evenodd' }));
     if (area.rim) {
       const clipId = `area-clip-${clips++}`;
       const clip = el('clipPath', { id: clipId });
@@ -822,7 +821,8 @@ function drawTargetRings(layers, rings, now) {
     const labelTop = Math.min(...points.map((p) => p.y)) - map.hexSize * OBJECTIVE.labelLift - OBJECTIVE.labelSize;
     const top = Math.min(Math.min(...points.map((p) => p.y)) - half.y, labelTop), bottom = Math.max(...points.map((p) => p.y)) + half.y;
     const c = { x: (left + right) / 2, y: (top + bottom) / 2 };
-    const rx = (right - left) / 2 + RINGS.margin, ry = (bottom - top) / 2 + RINGS.margin;
+    const margin = ring.tight ? RINGS.tightMargin : RINGS.margin;
+    const rx = (right - left) / 2 + margin, ry = (bottom - top) / 2 + margin;
     const colour = RINGS[ring.colour] ?? RINGS.red;
     const loops = ring.primary ? 2 : 1;
     for (let loop = 0; loop < loops; loop++) {
@@ -852,7 +852,9 @@ function drawTargetRings(layers, rings, now) {
     // The note, on the side of the ring toward the middle of the board. It may
     // be several lines; the last sits just above the ring.
     const east = ring.beside || c.x < midX;
-    const x = ring.beside ? c.x + rx + 12 : east ? c.x + rx * 0.75 : c.x - rx * 0.75;
+    // `noteNudge` (M29b, art only) moves the note by [x, y] hex radii into clear ground.
+    const [nx, ny] = (ring.noteNudge ?? [0, 0]).map((v) => v * map.hexSize);
+    const x = (ring.beside ? c.x + rx + 12 : east ? c.x + rx * 0.75 : c.x - rx * 0.75) + nx;
     // A ring with no note (M28: all but the first of many targets) is the pen mark alone.
     const lines = [].concat(ring.note ?? []);
     if (lines.length === 0) return;
@@ -866,8 +868,8 @@ function drawTargetRings(layers, rings, now) {
     const above = c.y - ry - 8 - (lines.length - 1) * lead - RINGS.noteSize / 2 >= edge.top;
     lines.forEach((words, k) => {
       // `beside`: level with the ring's middle, just off its right-hand side.
-      const y = ring.beside ? c.y - ((lines.length - 1) / 2 - k) * lead
-        : above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead;
+      const y = ny + (ring.beside ? c.y - ((lines.length - 1) / 2 - k) * lead
+        : above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead);
       const span = el('tspan', { x, y });
       span.textContent = words;
       note.appendChild(span);
@@ -911,8 +913,11 @@ function throbbing(layers, key, now) {
  * operator's): the throb is kept for the men's rings.
  */
 function drawDropCue(layers, cue, names) {
-  const x = names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
-  const y = names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
+  // A map may say where it starts (M29b, art only: `dropCueAt`, a hex), where
+  // the middle of its runs' names is busy, as the airfield's is.
+  const at = layers.map.dropCueAt && axialToPixel(layers.map.dropCueAt[0], layers.map.dropCueAt[1], layers.map.hexSize);
+  const x = at ? at.x : names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
+  const y = at ? at.y : names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
   const lines = cue === 'pick' ? ['PICK A DROP DIRECTION', 'click a run\'s name, or press 1-3'] : ['HIT SPACE TO JUMP', 'or click the run again'];
   const g = el('g', { 'pointer-events': 'none' });
   g.appendChild(penLetters(lines, x, y, [CUE.size, CUE.subSize]));
