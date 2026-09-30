@@ -455,7 +455,7 @@ function drawPlaces(layer, map) {
     };
     const name = style.capitals ? place.name.toUpperCase() : place.name;
     if (style.halo !== false) {
-      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': 0.85 }));
+      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: style.halo ?? PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': style.haloOpacity ?? 0.85 }));
     }
     layer.appendChild(text(name, { ...attrs, fill: style.fill, 'fill-opacity': style.opacity ?? 1 }));
   }
@@ -1578,7 +1578,10 @@ function drawArt(layers, state, view) {
   if (view.exfil.length > 0) {
     const middle = view.exfil[Math.floor(view.exfil.length / 2)];
     const p = axialToPixel(middle.q, middle.r, map.hexSize);
-    layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: p.x - 40, y: p.y - 46, width: 80, height: 92 }));
+    // Moved by the map's `exfilArtNudge`, in hex radii (M31d, art only).
+    const [nx, ny] = map.exfilArtNudge ?? [0, 0];
+    const x = p.x + nx * map.hexSize, y = p.y + ny * map.hexSize;
+    layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
   }
 }
 

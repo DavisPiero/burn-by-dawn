@@ -402,6 +402,10 @@ export const PLACE = {
   village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink, opacity: 0.5 },
   water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.6, halo: false },
   other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink, opacity: 0.5 },
+  // A dry watercourse (M31d, the operator's: the wadi's name was lost under its
+  // stones): water's paper italic, solid, on a soft ink halo so it prints over
+  // the stones rather than among them.
+  wadi: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.95, halo: PALETTE.ink, haloOpacity: 0.45 },
 };
 
 export const GRID = {

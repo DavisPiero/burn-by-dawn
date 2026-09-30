@@ -22,7 +22,7 @@
       "jumpAt": 0,
       "spacing": 1,
       "wind": "SW",
-      "labelNudge": [1.7, 0]
+      "labelNudge": [1.27, 0]
     },
     {
       "id": "north",
@@ -40,7 +40,8 @@
       "jumpAt": 5,
       "spacing": 1,
       "wind": "E",
-      "labelAlong": 0.33
+      "labelAlong": 0.33,
+      "labelNudge": [1.73, 0]
     },
     {
       "id": "south",
@@ -488,7 +489,7 @@
       "noteNudge": [2.9, 0.3]
     }
   ],
-  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilNoteNudge` (M29c, art only) moves the exfil ring's note by [x, y] hex radii: inside the ring here, the operator's. `dropCueAt` (M29b, art only) is the hex PICK A DROP DIRECTION centres on: the strip.",
+  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilNoteNudge` (M29c, art only) moves the exfil ring's note by [x, y] hex radii: inside the ring here, the operator's. `exfilArtNudge` (M31d, art only) moves the exfil's picture the same way: the trucks lifted, as the bottom one was cut off by the board's edge (the operator's). `dropCueAt` (M29b, art only) is the hex PICK A DROP DIRECTION centres on: the strip.",
   "exfil": [
     [
       -5,
@@ -515,7 +516,8 @@
   "exfilArt": "trucks",
   "dropCueAt": [7.2, 5.5],
   "exfilNoteNudge": [-4.25, 0],
-  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
+  "exfilArtNudge": [0, -0.45],
+  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword. Kind `wadi` (M31d) prints the name solid over the wadi's stones, one hex up the wadi from its mouth (the operator's).",
   "places": [
     {
       "name": "Bir el Kasra",
@@ -547,13 +549,14 @@
     },
     {
       "name": "Oued Melah",
-      "kind": "water",
+      "kind": "wadi",
       "at": [
         -2,
         11
       ],
       "angle": -55,
-      "dx": 0.1
+      "dx": 0.97,
+      "dy": -1.5
     }
   ],
   "legend": {
