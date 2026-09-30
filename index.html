@@ -1085,7 +1085,9 @@
     #briefing .contents-entry { position: relative; padding: 0; margin: 0 0 10px; }
     #briefing .contents-entry::before { content: none; }
     #briefing .contents-pick {
-      display: block;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
       box-sizing: border-box;
       width: 100%;
       padding: 7px 10px 8px;
@@ -1096,6 +1098,9 @@
       border: 2px solid transparent;
     }
     #briefing button.contents-pick { cursor: pointer; }
+    /* A mission's panel (M31c): a small painting beside its line. */
+    #briefing .contents-panel { flex: none; width: 150px; height: 100px; object-fit: cover; border: 2px solid var(--ink); box-sizing: border-box; }
+    #briefing .contents-words { flex: 1; min-width: 0; display: block; }
     #briefing button.contents-pick:hover,
     #briefing button.contents-pick:focus-visible { border-color: var(--ink); box-shadow: 3px 3px 0 var(--red); outline: none; }
     #briefing .contents-line { display: flex; align-items: baseline; gap: 8px; }

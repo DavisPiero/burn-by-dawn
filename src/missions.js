@@ -65,6 +65,7 @@ export function validateMissions(json, url = 'data/missions.json') {
       if (typeof m[key] !== 'string' || !m[key]) throw new Error(`${where} needs a "${key}"`);
     }
     if (!Number.isInteger(m.page)) throw new Error(`${where} needs a "page" number for the contents page`);
+    if (m.panel !== undefined && (typeof m.panel !== 'string' || !m.panel)) throw new Error(`${where} "panel" must name a picture`);
     if (!canPlay(m)) continue;
     for (const key of ['tagline', 'map', 'roster', 'briefing', 'titleCard']) {
       if (typeof m[key] !== 'string' || !m[key]) throw new Error(`${where} can be played, so needs a "${key}"`);

@@ -971,11 +971,24 @@ export const DRIVE_BY = {
   flashMs: 180, // one blink of the muzzle flash, on and off
   clearance: 1.2, // hex radii from its line: a counter nearer is in its way (M31)
 };
-export const DRIVE_BY_ART = { jeep: { body: 'vehicle-jeep', flash: 'vehicle-jeep-flash' } };
+// `painted` is where the painted picture's muzzles are, in the 60-unit box,
+// and which way they point (degrees, 0 east): the flash moves there when the
+// painting loads (M31c: the operator's jeep has its twin guns firing astern).
+export const DRIVE_BY_ART = {
+  jeep: { body: 'vehicle-jeep', flash: 'vehicle-jeep-flash', painted: { muzzles: [[5.6, 27.2], [5.6, 31.5]], angle: 180 } },
+};
+
+/** A muzzle flash: a small fire-orange burst at (x, y), pointing `angle` degrees. */
+function muzzleBurst(x, y, angle) {
+  return svg('g', { transform: `translate(${x} ${y}) rotate(${angle})` }, [
+    fill('M0 -1.2 L4 -3.2 L3.2 -0.8 L7.5 0 L3.2 0.8 L4 3.2 L0 1.2 Z', 'fire'),
+    fill('M0.5 -0.6 L3.5 0 L0.5 0.6 Z', 'paper'),
+  ]);
+}
 
 // A painted vehicle (M31, ART-PROMPTS.md Priority 15): assets/vehicles/<body
 // id>.png, from above, nose to the east, on transparency, replaces the drawn
-// one once it loads; the drawn muzzle flashes stay where the drawn guns end.
+// one once it loads, and its muzzle flashes move to the painting's muzzles.
 // Only a map with a diversionRun asks for one. A missing file is fine.
 export const VEHICLE_FILES = { dir: 'assets/vehicles', size: 60 };
 
@@ -986,6 +999,8 @@ export function loadSuppliedVehicle(art) {
   return picture(url).then((ok) => {
     if (!ok) return;
     document.getElementById(body)?.replaceChildren(svg('image', { href: url, x: 0, y: 0, width: VEHICLE_FILES.size, height: VEHICLE_FILES.size }));
+    const { muzzles, angle } = DRIVE_BY_ART[art].painted;
+    document.getElementById(DRIVE_BY_ART[art].flash)?.replaceChildren(...muzzles.map(([x, y]) => muzzleBurst(x, y, angle)));
   });
 }
 
@@ -1875,62 +1890,88 @@ function planeShadow(paths) {
 
 const PLANE_SHADOW = { x: 6, y: 7, core: 0.2, feather: [[9, 0.05], [6, 0.06], [3, 0.08]] };
 
-// A Ju 87 Stuka from above, nose north: gull wings, the fixed spats under
-// them, the long glasshouse canopy. Desert tan, mottled.
+// A Ju 87 Stuka from above, nose north (M31c, redrawn after the operator's
+// Stuka_Reference_01): a long thin fuselage, the wings tapering to rounded
+// tips with the crank in their trailing edge, the spats forward of them, the
+// long glasshouse canopy and a square tailplane. Desert tan, mottled.
+const STUKA = {
+  body: 'M48 9.5 Q52.4 10 52.6 15 L52.8 46 L50.4 74 L48.8 82 L47.2 82 L45.6 74 L43.2 46 L43.4 15 Q43.6 10 48 9.5 Z',
+  wings: 'M52 28 L65 29.3 L85.5 31.4 Q90 32.4 89.4 35.6 L87.6 38 L71.7 41.8 L52.4 45.2 Z M44 28 L31 29.3 L10.5 31.4 Q6 32.4 6.6 35.6 L8.4 38 L24.3 41.8 L43.6 45.2 Z',
+  tail: 'M34 71.6 H62 Q63.6 74.4 62 77.4 H34 Q32.4 74.4 34 71.6 Z',
+};
+
 function stuka(burnt) {
-  const body = 'M48 10 Q53 12 53 24 L51.5 70 Q49.5 80 48 82 Q46.5 80 44.5 70 L43 24 Q43 12 48 10 Z';
-  const wings = 'M44 30 L22 34 L6 40 Q4 44 8 45 L44 46 Z M52 30 L74 34 L90 40 Q92 44 88 45 L52 46 Z';
-  const tail = 'M45 70 L32 72 Q30 75 32 77 L46 77 Z M51 70 L64 72 Q66 75 64 77 L50 77 Z';
+  const { body, wings, tail } = STUKA;
   const shadow = planeShadow([body, wings, tail]);
   if (burnt) {
-    const broken = 'M44 30 L22 34 L14 38 L20 42 L44 46 Z M52 30 L70 35 L66 44 L52 46 Z';
+    const broken = 'M52 28 L65 29.3 L74 31 L70 37 L60 43 L52.4 45.2 Z M44 28 L31 29.3 L14 32 L18 38 L24.3 41.8 L43.6 45.2 Z';
     return [
       shadow,
       ...inked(broken, 'ink', 1.4), ...inked(body, 'ink', 1.4), fill(tail, 'ink', { 'fill-opacity': 0.7 }),
-      fill('M10 42 L6 46 L14 48 Z', 'ink', { 'fill-opacity': 0.6 }),
-      ...flame(48, 48, 0.8), ...flame(30, 42, 0.5), ...smoke(56, 18, 1),
+      fill('M84 33 L90 35 L86 38 Z M8 34 L5 36 L9 38 Z', 'ink', { 'fill-opacity': 0.6 }),
+      ...flame(48, 46, 0.8), ...flame(28, 38, 0.5), ...smoke(56, 18, 1),
     ];
   }
   return [
     shadow,
+    ...inked(tail, 'ochre', 1.3), fill(tail, toneClass('green', 30)),
     ...inked(wings, 'ochre', 1.6), fill(wings, toneClass('green', 30)),
-    ...inked(tail, 'ochre', 1.4),
+    // The trailing edges' flaps, and the spats forward of the wing.
+    line('M71.7 41.8 L86 38.4 M24.3 41.8 L10 38.4', 0.8, 'stroke-ink', { opacity: 0.5 }),
+    ...inked('M35 24.5 q1.8 0 1.8 3.6 v2.6 h-3.6 v-2.6 q0 -3.6 1.8 -3.6 Z M61 24.5 q1.8 0 1.8 3.6 v2.6 h-3.6 v-2.6 q0 -3.6 1.8 -3.6 Z', 'ochre', 1),
     ...inked(body, 'ochre', 1.6),
-    svg('ellipse', { cx: 48, cy: 32, rx: 3, ry: 10, class: 'blue' }), svg('ellipse', { cx: 48, cy: 32, rx: 3, ry: 10, fill: 'none', class: 'stroke-ink', 'stroke-width': 1 }),
-    line('M38 10 H58', 2.4), circle(48, 10, 2.4, 'ink'),
-    ...inked('M20 44 h4 v6 h-4 Z M72 44 h4 v6 h-4 Z', 'ochre', 1),
-    ...balkenkreuz(20, 40, 0.9), ...balkenkreuz(76, 40, 0.9),
+    // The fin down the tail, the cowling's ring, the glasshouse in its frames.
+    line('M48 70 V82', 1.6), line('M44 18 H52', 0.9, 'stroke-ink', { opacity: 0.6 }),
+    svg('ellipse', { cx: 48, cy: 36.5, rx: 2.8, ry: 8.5, class: 'blue' }),
+    svg('ellipse', { cx: 48, cy: 36.5, rx: 2.8, ry: 8.5, fill: 'none', class: 'stroke-ink', 'stroke-width': 1 }),
+    line('M45.4 32 H50.6 M45.2 36.5 H50.8 M45.4 41 H50.6', 0.6),
+    line('M39 9.5 H57', 2.4), circle(48, 9.5, 2.3, 'ink'),
+    ...balkenkreuz(24.3, 35.5, 0.85), ...balkenkreuz(71.7, 35.5, 0.85),
   ];
 }
 
-// A Ju 52 from above, nose north: three engines, the long straight wing
-// with its corrugations, a fat fuselage. Darker than the Stukas.
+// A Ju 52 from above, nose north (M31c, redrawn after the operator's
+// Ju52_Reference_01): the long straight tapered wing, corrugated fore and
+// aft, a broad slab-sided fuselage, the nose engine and one in a nacelle out
+// on each wing, a wide tailplane. Darker than the Stukas.
+const JU52 = {
+  body: 'M48 13.5 Q51.8 13.8 52.2 18 L52.6 30 L52 58 L50.2 76 L48.7 81 L47.3 81 L45.8 76 L44 58 L43.4 30 L43.8 18 Q44.2 13.8 48 13.5 Z',
+  wings: 'M52.4 28.8 L92.5 33.6 Q95.4 34.6 94.4 37.4 L93 38 L52.4 47.2 Z M43.6 28.8 L3.5 33.6 Q0.6 34.6 1.6 37.4 L3 38 L43.6 47.2 Z',
+  tail: 'M34 69 L46 68.2 H50 L62 69 Q63.8 72.6 62 76.6 L50 77.2 H46 L34 76.6 Q32.2 72.6 34 69 Z',
+  engines: 'M33.8 22 Q36.5 20.6 39.2 22 L38.8 35.6 L36.5 38 L34.2 35.6 Z M56.8 22 Q59.5 20.6 62.2 22 L61.8 35.6 L59.5 38 L57.2 35.6 Z',
+};
+
 function ju52(burnt) {
-  const body = 'M48 12 Q54 14 54 28 L51 76 Q49.5 84 48 84 Q46.5 84 45 76 L42 28 Q42 14 48 12 Z';
-  const wings = 'M42 30 L4 36 Q2 42 6 44 L42 46 Z M54 30 L92 36 Q94 42 90 44 L54 46 Z';
-  const tail = 'M45 74 L30 76 Q28 80 31 82 L46 81 Z M51 74 L66 76 Q68 80 65 82 L50 81 Z';
+  const { body, wings, tail, engines } = JU52;
   const shadow = planeShadow([body, wings, tail]);
-  const engines = 'M26 26 h8 v12 h-8 Z M62 26 h8 v12 h-8 Z';
   if (burnt) {
     return [
       shadow,
-      ...inked('M42 30 L12 35 L18 44 L42 46 Z M54 30 L80 34 L76 45 L54 46 Z', 'ink', 1.4), ...inked(body, 'ink', 1.4),
-      fill(engines, 'ink'),
-      ...flame(48, 50, 0.9), ...flame(66, 42, 0.55), ...smoke(40, 20, 1.1),
+      ...inked('M43.6 28.8 L12 32.6 L16 40 L43.6 47.2 Z M52.4 28.8 L80 32 L76 41 L52.4 47.2 Z', 'ink', 1.4), ...inked(body, 'ink', 1.4),
+      fill(engines, 'ink'), fill(tail, 'ink', { 'fill-opacity': 0.7 }),
+      ...flame(48, 48, 0.9), ...flame(66, 40, 0.55), ...smoke(40, 20, 1.1),
     ];
   }
+  // Corrugations run fore and aft across the wing and tailplane.
   let ribs = '';
-  for (let x = 8; x < 42; x += 4) ribs += `M${x} ${37 - (x - 8) * 0.12} V${44 - (x - 8) * 0.05} `;
-  for (let x = 56; x < 90; x += 4) ribs += `M${x} ${33 + (x - 56) * 0.12} V${42 + (x - 56) * 0.05} `;
+  for (let x = 6; x < 43; x += 3.2) {
+    const t = (43.6 - x) / 40.1;
+    ribs += `M${x.toFixed(1)} ${(28.8 + t * 4.8 + 0.8).toFixed(1)} V${(47.2 - t * 9.2 - 0.8).toFixed(1)} `;
+    ribs += `M${(96 - x).toFixed(1)} ${(28.8 + t * 4.8 + 0.8).toFixed(1)} V${(47.2 - t * 9.2 - 0.8).toFixed(1)} `;
+  }
   return [
     shadow,
+    ...inked(tail, 'ochre', 1.3), fill(tail, toneClass('ink', 20)),
+    line('M36 69.6 V76 M40 69 V76.8 M56 69 V76.8 M60 69.6 V76', 0.6, 'stroke-ink', { opacity: 0.4 }),
     ...inked(wings, 'ochre', 1.6), fill(wings, toneClass('ink', 20)),
-    line(ribs, 0.7, 'stroke-ink', { opacity: 0.45 }),
-    ...inked(tail, 'ochre', 1.4), fill(tail, toneClass('ink', 20)),
+    line(ribs, 0.6, 'stroke-ink', { opacity: 0.4 }),
     ...inked(body, 'ochre', 1.6), fill(body, toneClass('ink', 20)),
-    ...inked(engines, 'ochre', 1.2), line('M24 26 H36 M60 26 H72 M40 12 H56', 2.2),
-    svg('ellipse', { cx: 48, cy: 22, rx: 3.4, ry: 4, class: 'blue' }),
-    ...balkenkreuz(16, 40, 0.9), ...balkenkreuz(80, 40, 0.9),
+    ...inked(engines, 'ochre', 1.2),
+    // The three propellers, the cockpit glazing, the fin down the tail.
+    line('M31.5 21.4 H41.5 M54.5 21.4 H64.5 M43 13.5 H53', 2.1),
+    fill('M45.4 19 Q48 17.6 50.6 19 L50.4 22.4 H45.6 Z', 'blue'), line('M45.4 19 Q48 17.6 50.6 19 L50.4 22.4 H45.6 Z', 0.8),
+    line('M48 70 V81', 1.4),
+    ...balkenkreuz(21.9, 37.2, 0.85), ...balkenkreuz(74.1, 37.2, 0.85),
   ];
 }
 
@@ -1960,21 +2001,44 @@ function signalsTent(state) {
   ];
 }
 
-// An LRDG truck from the south-west: the bonnet, the open back piled with kit.
 /** A man's helmet from straight above (M31, the jeep's crew). */
 function helmetTop(x, y) {
   return [circle(x, y, 3.6, 'green'), ring(x, y, 3.6, 1), circle(x - 1, y - 1, 0.9, 'paper')];
 }
 
+// A desert lorry from the side, facing east (M31c, redrawn after the
+// operator's Trucks_Reference_01 and _02): the tilt over its back draped in
+// camouflage netting, a rounded cab and bonnet in mottled sand, big wheels
+// under round mudguards. (x, y) is the ground under its middle.
 function desertTruck(x, y, s = 1) {
-  const t = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
-  const bed = `M${t(-14, 0)} V${t(0, -9).split(' ')[1]} H${t(4, 0).split(' ')[0]} V${t(0, 0).split(' ')[1]} Z`;
-  const cab = `M${t(4, 0)} V${t(0, -12).split(' ')[1]} H${t(10, 0).split(' ')[0]} L${t(15, -6)} V${t(0, 0).split(' ')[1]} Z`;
+  const P = (dx, dy) => `${(x + dx * s).toFixed(2)} ${(y + dy * s).toFixed(2)}`;
+  const path = (d) => d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (_, dx, dy) => P(+dx, +dy));
+  const tilt = path('M-17,-4 L-17,-14 Q-17,-17 -14,-17 L0,-17 Q3,-17 3,-14 L3,-4 Z');
+  const bed = path('M-18,-1 L-18,-5 L4,-5 L4,-1 Z');
+  const cab = path('M3,-1 L3,-13 Q3,-14 4,-14 L9,-14 L11.5,-8 L11.5,-1 Z');
+  const bonnet = path('M11.5,-8 L15.5,-8 Q17.5,-8 17.5,-6 L17.5,-1 L11.5,-1 Z');
+  const guards = path('M7,-1 Q7,-6 12,-6 Q17,-6 17,-1 M-15,-1 Q-15,-6 -10,-6 Q-5,-6 -5,-1');
+  // The netting: a lattice of diagonals across the tilt, kept inside it.
+  let net = '';
+  for (let k = -17 - 13; k <= 3; k += 2.6) {
+    const a0 = Math.max(-17, k), a1 = Math.min(3, k + 13);
+    if (a1 > a0) {
+      net += `M${P(a0, -4 - (a0 - k))} L${P(a1, -4 - (a1 - k))} `;
+      net += `M${P(a0, -17 + (a0 - k))} L${P(a1, -17 + (a1 - k))} `;
+    }
+  }
+  const wheel = (dx) => [circle(x + dx * s, y - 0.5 * s, 3.9 * s, 'ink'), circle(x + dx * s, y - 0.5 * s, 1.6 * s, 'paper'), circle(x + dx * s, y - 0.5 * s, 0.6 * s, 'ink')];
   return [
-    svg('ellipse', { cx: x + 2 * s, cy: y + 2 * s, rx: 17 * s, ry: 3 * s, class: 'ink', opacity: 0.25 }),
-    ...inked(bed, 'ochre', 1.4), ...inked(cab, 'ochre', 1.4),
-    fill(`M${t(-12, -9)} Q${t(-6, -15)} ${t(2, -9)} Z`, toneClass('green', 50)),
-    ...[-9, 9].flatMap((dx) => [circle(x + dx * s, y + 0.5 * s, 3.6 * s, 'ink'), circle(x + dx * s, y + 0.5 * s, 1.3 * s, 'paper')]),
+    svg('ellipse', { cx: x, cy: y + 2 * s, rx: 20 * s, ry: 3 * s, class: 'ink', opacity: 0.25 }),
+    ...inked(bed, 'ochre', 1.2),
+    ...inked(tilt, 'ochre', 1.4), fill(tilt, toneClass('green', 50)),
+    line(net, 0.5 * s, 'stroke-ink', { opacity: 0.55 }),
+    ...inked(cab, 'ochre', 1.3), fill(path('M5,-12 L9,-12 L9,-7 L5,-7 Z'), 'blue'), line(path('M9,-14 L11.5,-8'), 0.9),
+    fill(path('M3.5,-6 Q6,-8 8,-5 Q6,-3 3.5,-4 Z'), toneClass('green', 50)),
+    ...inked(bonnet, 'ochre', 1.3), line(path('M15.5,-7 L15.5,-2 M16.5,-7 L16.5,-2'), 0.6),
+    circle(x + 17.6 * s, y - 6.4 * s, 1 * s, 'paper'),
+    line(guards, 1.2),
+    ...wheel(12), ...wheel(-10),
   ];
 }
 
@@ -2000,7 +2064,7 @@ const DESERT_OBJECTIVES = {
   'objective-trucks': {
     viewBox: '0 0 80 92',
     draw: () => [
-      ...desertTruck(28, 50, 1), ...desertTruck(52, 70, 1),
+      ...desertTruck(26, 52, 0.95), ...desertTruck(50, 74, 0.95),
       circle(64, 44, 4.5, toneClass('green', 50)), circle(64, 44, 2, 'green'), ring(64, 44, 2, 0.8),
     ],
   },

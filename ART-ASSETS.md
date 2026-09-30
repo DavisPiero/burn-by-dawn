@@ -256,7 +256,7 @@ the game's card, France's. The airfield's will be `assets/title/title-card-airfi
 France's. If it is painted without the title, set `titleCardLettered: false` on the
 airfield in `data/missions.json` and code sets BURN BY DAWN over it.
 
-**Contents page panels** (M29b, specified, not yet shown): `assets/title/contents-<mission
+**Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 150 x 100; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
 id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:2,
 1200 x 800** (no smaller than 600 x 400), JPEG, sRGB, opaque, no text. A small painting
 beside each mission's line on the contents page, shown about 180 x 120 (ART-PROMPTS.md
