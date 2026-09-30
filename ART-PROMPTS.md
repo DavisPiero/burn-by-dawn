@@ -514,7 +514,11 @@ redraws the board's pictures from them, as it did the bridge and the exchange.
 
 ---
 
-## Priority 16 — the airfield's sounds (find, don't generate) (M31)
+## Priority 16 — the airfield's sounds ✅ done (2026-09-30)
+
+Found, cut and levelled by Claude in M31c (`assets/audio/README.md`): a 1965 Jeep CJ-5
+going by, a drum-roll-and-trumpet fanfare for the win (not a lone bugle), and a WW2 air-raid
+siren. Swap any of them by dropping in a file of the same name.
 
 Made in code now, and they sound like it. As Priority 11: freesound.org (CC0) or
 Pixabay, into `assets/audio/` by these names; each replaces its made sound on reload.
@@ -609,6 +613,5 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   airfield's own title card (`titleCard` in data/missions.json) is France's until the
   operator paints one (Priority 13).
 - The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.
-- The airfield's jeep raid's muzzle flashes (M31), blinking at the painted jeep's guns. Its three new
-  sounds, the jeep, the bugle and the siren, are made in code until
-  Priority 16's recordings arrive.
+- The airfield's jeep raid's muzzle flashes (M31), blinking at the painted jeep's guns. Its three sounds
+  are made in code as the fallback; recordings supplied since M31c.
