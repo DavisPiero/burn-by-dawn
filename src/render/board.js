@@ -18,7 +18,7 @@
 // and a blast play out once rather than again on every hover. That is drawing
 // memory, not game state.
 
-import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
+import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
@@ -439,6 +439,20 @@ function hedgeTree(map, flag = 'hedge') {
     open = open.filter((e) => e !== best);
   }
   return links;
+}
+
+/**
+ * Where an objective's DESTROYED stamp goes: its middle, moved by its
+ * `stampNudge` in map.json (M31d, art only) while an objective beside it is
+ * destroyed too, so two stamps side by side do not print over each other.
+ */
+function stampPoint(map, state, objective) {
+  const at = labelPoint(map, objective.hexes);
+  const nudge = map.objectives?.find((o) => o.id === objective.id)?.stampNudge;
+  const crowded = state.objectives.some((o) => o.id !== objective.id && o.destroyed
+    && o.hexes.some((h) => objective.hexes.some((mine) => hexDistance(h, mine) === 1)));
+  if (!nudge || !crowded) return at;
+  return { ...at, x: at.x + nudge[0] * map.hexSize, y: at.y + nudge[1] * map.hexSize };
 }
 
 /** Place names, printed on the map under everything that moves. */
@@ -1629,6 +1643,7 @@ function drawSites(layers, state, view) {
     if (objectiveArt(objective)?.wires) drawWires(layers, objective);
     if (objectiveArt(objective)?.hose && !objective.destroyed) drawHose(layers, objective);
     if (objective.destroyed) {
+      const at = stampPoint(map, state, objective);
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
         x: at.x - OBJECTIVE.stampWidth / 2, y: at.y - OBJECTIVE.stampHeight / 2,
