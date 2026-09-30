@@ -534,6 +534,11 @@
     }
     .action.active .action-tag { color: var(--paper); }
     .action.struck .action-words { text-decoration: line-through; text-decoration-thickness: 2px; }
+    .action.danger:not(:disabled) .action-cost { color: var(--red); font-weight: bold; }
+    .actions-heading {
+      grid-column: 1 / -1; align-self: center; text-align: center;
+      font-weight: bold; letter-spacing: 0.04em; color: var(--red);
+    }
     .action-name {
       font-size: 13px;
       font-weight: bold;

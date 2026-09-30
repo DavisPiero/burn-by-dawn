@@ -989,9 +989,14 @@ export function renderActions(element, actions, onAction) {
   element.classList.remove('idle');
   // Three rows at most (index.html): a man with more than nine actions — a
   // gunner who also carries a charge — gets a fourth column instead.
-  const four = actions.length > 9;
+  const four = actions.filter((a) => !a.heading).length > 9;
   element.classList.toggle('four', four);
   for (const action of actions) {
+    // A line across the strip saying what to do (M30b: the timers).
+    if (action.heading) {
+      element.appendChild(html('div', 'actions-heading', action.heading));
+      continue;
+    }
     // Key, verb and its AP under it (M19, the operator's); the full cost,
     // and why not, are the rollover, which has the full name where the
     // button has a short one. Four across, one shorter still, as a name
@@ -1007,6 +1012,8 @@ export function renderActions(element, actions, onAction) {
     if (action.active) button.classList.add('active');
     // A time pencil that would go off after dawn (M30): struck out.
     if (action.struck) button.classList.add('struck');
+    // A timer too short for every man to get clear (M30b).
+    if (action.danger) button.classList.add('danger');
     // A use is open right now (M26): Stabilise or Pass, marked on the button.
     if (action.suggest && action.ok) button.classList.add('suggest');
     button.disabled = !action.ok && !action.active;

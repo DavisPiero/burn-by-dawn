@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } fro
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  HOSE, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -1511,6 +1511,11 @@ function drawSites(layers, state, view) {
   // Where a blast only wounds our men (M20) is printed lighter than where it kills.
   if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);
   if (view.previewBlastKillArea) fillArea(layers, view.previewBlastKillArea, BLAST.previewOpacity);
+  // Blasts still to come (M30b): faint, with a dashed edge, until their turn.
+  if (view.laterBlastArea?.size > 0) {
+    fillArea(layers, view.laterBlastArea, BLAST.laterOpacity);
+    drawAreaEdge(layers, layers.sites, view.laterBlastArea, [[BLAST.stroke, BLAST.laterEdgeWidth]], { 'stroke-dasharray': BLAST.laterEdgeDash });
+  }
   if (view.blastArea.size > 0) {
     fillArea(layers, view.blastArea, BLAST.woundOpacity);
     fillArea(layers, view.blastKillArea, BLAST.opacity - BLAST.woundOpacity);
@@ -1537,6 +1542,7 @@ function drawSites(layers, state, view) {
     // The exchange's telephone lines run out to a pole on each of its charge
     // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
     if (objectiveArt(objective)?.wires) drawWires(layers, objective);
+    if (objectiveArt(objective)?.hose && !objective.destroyed) drawHose(layers, objective);
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
@@ -1610,6 +1616,29 @@ function towardObjective(map, hex, objective) {
     if (!best || d < best.d - 1e-6) best = { d, x: o.x - p.x, y: o.y - p.y };
   }
   return best && best.d > 0 ? { x: best.x / best.d, y: best.y / best.d } : { x: 0, y: 0 };
+}
+
+/**
+ * The bowser's hose (M30b, the operator's: its charge point sat beside a Ju
+ * 52's and read as one of a pair): from the tank's tail to the satchel on its
+ * charge point, drooping, with a nozzle at the end. Gone once it goes up.
+ */
+function drawHose(layers, objective) {
+  const { map } = layers;
+  const art = objectiveArt(objective);
+  const centre = labelPoint(map, objective.hexes);
+  const from = { x: centre.x - art.width / 2 + art.hose.x, y: centre.y - art.height / 2 + art.hose.y };
+  const g = el('g', {});
+  for (const h of objective.chargeHexes) {
+    const to = pointIconAt(map, objective, h);
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    const mid = { x: (from.x + to.x) / 2, y: Math.max(from.y, to.y) + length * HOSE.sag };
+    const d = `M${from.x} ${from.y} Q${mid.x} ${mid.y} ${to.x} ${to.y}`;
+    g.appendChild(el('path', { d, fill: 'none', stroke: HOSE.casing, 'stroke-width': HOSE.casingWidth, 'stroke-linecap': 'round' }));
+    g.appendChild(el('path', { d, fill: 'none', stroke: HOSE.stroke, 'stroke-width': HOSE.width, 'stroke-linecap': 'round' }));
+    g.appendChild(el('circle', { cx: to.x, cy: to.y, r: HOSE.nozzleRadius, fill: HOSE.nozzle, stroke: HOSE.stroke, 'stroke-width': 1.5 }));
+  }
+  layers.sites.appendChild(g);
 }
 
 /**

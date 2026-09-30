@@ -164,14 +164,14 @@ export default [
     }
   }],
 
-  ['time pencils (M30): 2 to 6 turns, the default 3 first; Steady Hands a turn off each; after dawn struck out', async () => {
+  ['time pencils (M30): 2 to 6 turns, the default 4 first (M30b); Steady Hands a turn off each; after dawn struck out', async () => {
     const { rules, state } = await onAirfield({});
     const sapper = state.units.find((u) => u.role === 'sapper' && !u.traits.some((t) => t.id === 'steady-hands'));
     const dutch = state.units.find((u) => u.traits.some((t) => t.id === 'steady-hands'));
     equal(pencils(state, sapper, rules).map((p) => p.fuse).join(), '2,3,4,5,6', 'a sapper\'s pencils');
     equal(pencils(state, dutch, rules).map((p) => p.fuse).join(), '1,2,3,4,5', 'Dutch\'s, a turn shorter');
-    equal(defaultPencil(state, sapper, rules).fuse, 3, 'the default is fuseTurns');
-    equal(defaultPencil(state, dutch, rules).fuse, 2, 'his default, hooked');
+    equal(defaultPencil(state, sapper, rules).fuse, 4, 'the default is the airfield\'s fuseTurns');
+    equal(defaultPencil(state, dutch, rules).fuse, 3, 'his default, hooked');
     const late = { ...state, turn: 17 };
     equal(pencils(late, sapper, rules).map((p) => `${p.fuse}${p.afterDawn ? 'x' : ''}`).join(), '2,3,4,5x,6x', 'turn 17: 5 would blow on turn 21');
     equal(pencils(late, sapper, rules)[1].blows, 19, 'a 3-turn pencil set on 17 blows at the end of 19');
@@ -188,7 +188,7 @@ export default [
     const set = placeCharge(state, sapper.id, rules, 5);
     equal(set.charges.length, 1, 'set');
     equal(set.charges[0].fuse, 5, 'with the 5-turn pencil');
-    equal(placeCharge(state, sapper.id, rules).charges[0].fuse, 3, 'none picked: the default');
+    equal(placeCharge(state, sapper.id, rules).charges[0].fuse, 4, 'none picked: the default');
     equal(placeCharge(state, sapper.id, rules, 7), state, 'no 7-turn pencil');
     const late = { ...state, turn: 18 };
     equal(checkPlaceCharge(late, late.units.find((u) => u.id === sapper.id), rules, 4).reason, 'a 4-turn pencil would go off after dawn', 'after dawn');

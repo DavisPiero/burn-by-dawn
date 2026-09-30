@@ -790,6 +790,18 @@ export const KNIFE_SPLAT = {
   stainOffset: { x: -2, y: 0 }, // near the hex's middle, so it shows beside the body
 };
 
+// The bowser's fuel hose (M30b): a fat rubber line from the tank to its
+// charge point, sagging, with a brass nozzle at the satchel.
+export const HOSE = {
+  stroke: PALETTE.ink,
+  casing: PALETTE.paper,
+  width: 4.5,
+  casingWidth: 8.5,
+  sag: 0.35, // how far it droops, as a share of its length
+  nozzle: PALETTE.ochre,
+  nozzleRadius: 3.2,
+};
+
 export const WIRES = {
   stroke: PALETTE.ink,
   casing: PALETTE.paper,
@@ -811,7 +823,9 @@ const OBJECTIVE_ART = {
   // map (the Stukas' or the Ju 52s'); everything else by its kind.
   stuka: { intact: 'objective-aircraft-stuka', destroyed: 'objective-aircraft-stuka-destroyed' },
   ju52: { intact: 'objective-aircraft-ju52', destroyed: 'objective-aircraft-ju52-destroyed' },
-  bowser: { intact: 'objective-fuel-bowser', destroyed: 'objective-fuel-bowser-destroyed' },
+  // `hose` (M30b, the operator's): a fuel hose from the tank's tail, in the
+  // art's own units, out to its charge point, so the bowser's point reads as its own.
+  bowser: { intact: 'objective-fuel-bowser', destroyed: 'objective-fuel-bowser-destroyed', hose: { x: 7, y: 33 } },
   signals: { intact: 'objective-signals-tent', destroyed: 'objective-signals-tent-destroyed', cut: 'objective-signals-tent-cut', wires: { x: 60, y: 12 } },
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
@@ -830,7 +844,7 @@ export function objectiveArt(objective) {
   // Cut quietly, not blown (M16): its own picture where it has one.
   const id = objective.destroyed ? (objective.cut && art.cut ? art.cut : art.destroyed) : art.intact;
   const [, , width, height] = SPRITES[id].viewBox.split(' ').map(Number);
-  return { id, width, height, wires: art.wires ?? null };
+  return { id, width, height, wires: art.wires ?? null, hose: art.hose ?? null };
 }
 
 export const EXFIL = {
@@ -858,6 +872,10 @@ export const BLAST = {
   width: 3,
   casingWidth: 6,
   previewOpacity: 0.08,
+  // A charge burning past this turn (M30b): its blast to come.
+  laterOpacity: 0.08,
+  laterEdgeWidth: 2,
+  laterEdgeDash: '6 5',
   // The ring where a blast only wounds a man (M20), lighter than where it
   // kills, which is edged in a dashed line inside the solid one.
   woundOpacity: 0.08,
