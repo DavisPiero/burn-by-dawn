@@ -166,6 +166,32 @@
       text-decoration: underline;
       cursor: pointer;
     }
+    /* Back to the contents (M31d, the operator's): a small arrow at the top
+       of the margin, over the title, asked twice once the stick has jumped,
+       as RESTART is. */
+    #contents-back {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 0 4px;
+      font: inherit;
+      color: var(--ink);
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+    #contents-back .arrow { font-size: 19px; font-weight: bold; line-height: 1; }
+    #contents-back .label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      opacity: 0.6;
+    }
+    #contents-back:hover .label, #contents-back.armed .label { opacity: 1; }
+    #contents-back.armed { color: var(--red); }
     /* RESTART in the bottom corner, dark and bold (M15), so it can be found. */
     #restart { opacity: 1; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
     #restart.armed { color: var(--red); }
@@ -1247,6 +1273,7 @@
   <main id="spread">
     <section id="left-page" class="page">
       <div id="outer-gutter">
+        <button id="contents-back" type="button" title="Back to the contents, to pick another mission"></button>
         <div id="margin-title">BURN BY DAWN</div>
         <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
         <div id="version"></div>

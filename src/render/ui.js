@@ -960,6 +960,12 @@ export function renderRestart(button, armed) {
   button.classList.toggle('armed', armed);
 }
 
+/** The way back to the contents (M31d), top of the margin: an arrow and its word, asked twice in play. */
+export function renderContentsBack(button, armed) {
+  button.replaceChildren(html('span', 'arrow', '←'), html('span', 'label', armed ? 'CLICK AGAIN: CONTENTS' : 'CONTENTS'));
+  button.classList.toggle('armed', armed);
+}
+
 /** Sound on or off, in the margin under the seed. */
 export function renderSoundToggle(button, muted) {
   button.textContent = muted ? 'sound off' : 'sound on';

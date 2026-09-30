@@ -36,7 +36,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  renderContentsBack, renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -57,6 +57,7 @@ const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
 const restartButton = document.getElementById('restart');
+const contentsBackButton = document.getElementById('contents-back');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
@@ -1694,6 +1695,28 @@ function handleRestartClick() {
   renderRestart(restartButton, true);
 }
 
+// Back to the contents from inside a mission (M31d, the operator's). Before
+// the jump nothing is at stake and it goes at once; after it, it asks once as
+// RESTART does, and the game on the board is given up for a fresh one.
+let contentsBackArmed = null;
+function handleContentsBackClick() {
+  contentsBackButton.blur();
+  const atStake = state.phase !== 'drop' && !state.outcome;
+  if (atStake && !contentsBackArmed) {
+    contentsBackArmed = setTimeout(() => {
+      contentsBackArmed = null;
+      renderContentsBack(contentsBackButton, false);
+    }, 4000);
+    renderContentsBack(contentsBackButton, true);
+    return;
+  }
+  clearTimeout(contentsBackArmed);
+  contentsBackArmed = null;
+  renderContentsBack(contentsBackButton, false);
+  if (state.phase !== 'drop') restartMission();
+  openContents();
+}
+
 /** The orders again, with the counter key beside them, at any time (M16, the operator's). */
 function openHelp() {
   if (state.outcome || briefing?.kind === 'orders' || briefing?.kind === 'contents') return;
@@ -2413,6 +2436,8 @@ try {
   renderSoundToggle(soundToggle, isMuted());
   restartButton.addEventListener('click', handleRestartClick);
   renderRestart(restartButton, false);
+  contentsBackButton.addEventListener('click', handleContentsBackClick);
+  renderContentsBack(contentsBackButton, false);
   // Sound files dropped into assets/audio replace the placeholders (ART-ASSETS.md §9).
   loadSuppliedSounds();
 
