@@ -265,7 +265,9 @@ function goalFor(state, unit, map, assign) {
   // A spare man who can still carry a charge stands by near the job until its
   // charges are all set, in case a carrier falls.
   const job = jobTargets(state).find((o) => o.detonated + state.charges.filter((c) => c.objectiveId === o.id).length < rules.objectives[o.kind].chargesNeeded);
-  if (job && U.canCarryCharges(unit) && U.chargeRoom(unit, rules) > 0) {
+  // Only a man whose loadout is charges stands by (M37: any man has room for
+  // one now, and a stick that all waited at the job got nobody out).
+  if (job && U.canCarryCharges(unit) && U.chargeCapacity(unit, rules) > 0) {
     return job.chargeHexes.map((h) => ({ ...h, standby: true }));
   }
   return map.exfil.map(([q, r]) => ({ q, r }));
