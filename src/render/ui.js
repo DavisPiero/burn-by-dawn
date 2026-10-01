@@ -106,7 +106,7 @@ const KEYS = [
   ['N', 'knife'],
   ['P', 'pick up a charge'],
   ['R', 'patrol routes'],
-  ['S', 'suppress (gunners)'],
+  ['S', 'suppress (gunners); return fire (a man who has been seen)'],
   ['Space', 'jump, then end turn'],
   ['T', 'throw a stone'],
   ['Tab', 'next man'],
@@ -1277,6 +1277,8 @@ export function renderReadout(element, state, map, view) {
   if (view?.hoverEnemy) {
     const e = view.hoverEnemy;
     let doing = e.speed === 0 ? 'holds its post' : e.route ? `walks its route, speed ${e.speed}` : `speed ${e.speed}`;
+    // The garrison has not set out yet (M36, the airfield's first turn).
+    if (e.route && view.garrisonSetsOut) doing = `stands here this turn: the patrols set out at the end of turn ${view.garrisonSetsOut}, speed ${e.speed}`;
     if (e.investigating) doing = `going to look at ${view.place(e.investigating)}`;
     if (e.watching) doing = `has a man in its sights in ${view.place(e.watching)}`;
     if (e.suppressed) doing = `SUPPRESSED — head down: will not see, fire or move this turn${e.killable ? ', and a gunner can kill it until the end of next turn' : ''}`;

@@ -25,7 +25,7 @@ import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
-  onBoard, planMove, reachableFor, traitEffects, unitAt,
+  hasInSights, onBoard, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
@@ -305,6 +305,10 @@ function deriveView() {
     diversionName: mission.words.diversionName,
     // The stealth score (SPEC.md §10, M11b), for each man's roster rollover.
     unseenPoints: rules.scoring.perTrooperUnseen,
+    // A spotted man can fire back himself (M36), for the words about contact.
+    returnFire: Boolean(rules.actions.returnFire),
+    // The turn the patrols set out on, while they have not (M36): an enemy's hover says it stands until then.
+    garrisonSetsOut: state.phase !== 'drop' && state.turn < rules.patrols.setOutTurn ? rules.patrols.setOutTurn : null,
     // Stabilise and Pass a charge, wherever one could be taken now (M26): the
     // roster, the readout and the man's own rows all point at them.
     aid: aidPrompts(state, rules).map((p) => ({ ...p, words: aidWords(p, state.units, rules) })),
@@ -896,7 +900,8 @@ function describePanelObjective(o, win) {
 function actionsFor(unit) {
   const role = rules.roles[unit.role];
   const never = new Set([
-    ...(role.suppress ? [] : ['suppress']),
+    // A man who is no gunner has it too, to return fire (M36), where the rules allow.
+    ...(role.suppress || returnsFire(unit, rules) ? [] : ['suppress']),
     ...(role.kill ? [] : ['kill']),
     ...(role.cutLine ? [] : ['cut']),
     ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge', 'pass']),
@@ -909,8 +914,13 @@ function actionsFor(unit) {
   const stabilise = patients.length === 0
     ? { ok: false, cost: unit.apMax, reason: 'no wounded man beside him' }
     : patients.map((patient) => checkStabilise(unit, patient)).find((c) => c.ok) ?? checkStabilise(unit, patients[0]);
-  const canSuppress = state.enemies.map((e) => checkSuppress(map, unit, e, rules));
-  const suppress = canSuppress.find((c) => c.ok) ?? checkSuppress(map, unit, null, rules);
+  // Returning fire (M36), the enemies that count are those with him in their
+  // sights: if none can be fired on, the button says why of the first.
+  const back = returnsFire(unit, rules);
+  const fireAt = back ? state.enemies.filter((e) => hasInSights(e, unit)) : state.enemies;
+  const canSuppress = fireAt.map((e) => checkSuppress(map, unit, e, rules));
+  const suppress = canSuppress.find((c) => c.ok) ?? (back ? canSuppress[0] : undefined) ?? checkSuppress(map, unit, null, rules);
+  const fireAlert = applyHook(unit, 'onFire', 'alert', rules.alert.gunfire).value;
   const kill = state.enemies.map((e) => checkKill(map, unit, e, rules)).find((c) => c.ok)
     ?? checkKill(map, unit, null, rules);
   // The knife: ok if any enemy beside him could be knifed; otherwise the
@@ -927,7 +937,14 @@ function actionsFor(unit) {
       help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
-    { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
+    back
+      ? {
+        // One line, so its cost always shows: "Fire back", or "Fire" where the strip has four columns.
+        id: 'suppress', key: 'S', label: 'Return fire', short: 'Fire back', tight: 'Fire',
+        help: `Fire back at an enemy that has him in its sights: it keeps its head down — it will not see, fire or move until its next go — so he can get away, or a gunner can kill it. Only a gunner fires first. Loud: alert +${fireAlert}, and the patrols in earshot come.`,
+        ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'the enemy that saw him is gone' } : suppress, ap),
+      }
+      : { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
       id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, rules.actions.knife.fullTurn ? () => 'full turn' : ap),
       help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
@@ -1127,6 +1144,8 @@ function enemyActsFor(unit, enemy) {
   const role = rules.roles[unit.role];
   const acts = [
     role.suppress && { label: 'SUPPRESS', key: 'S', check: checkSuppress(map, unit, enemy, rules) },
+    // A man who is no gunner can fire back at an enemy that has seen him (M36).
+    returnsFire(unit, rules) && { label: 'FIRE', key: 'S', check: checkSuppress(map, unit, enemy, rules) },
     role.kill && { label: 'KILL', key: 'K', check: checkKill(map, unit, enemy, rules) },
     { label: 'KNIFE', key: 'N', check: checkKnife(unit, enemy, rules) },
   ].filter(Boolean);
@@ -1137,6 +1156,13 @@ function enemyActsFor(unit, enemy) {
       : `${unit.shortName} can't: ${check.reason}`,
     tone: check.ok ? 'prompt' : null,
   }));
+}
+
+/** What a spotted man can do with a gun (M36): fire back himself, where the rules allow; else a gunner's job. */
+function fireBackWords() {
+  return rules.actions.returnFire
+    ? `fire back at it [S]: loud, alert +${rules.alert.gunfire}, but it keeps its head down for a turn`
+    : 'have a gunner suppress it [S]';
 }
 
 function withCost(check, format) {
@@ -1168,9 +1194,12 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     if (hoverEnemy) {
       const check = checkSuppress(map, unit, hoverEnemy, rules);
       view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
+      const verb = returnsFire(unit, rules) ? 'Return fire at' : 'Suppress';
       view.targetLabel = check.ok
-        ? `Suppress ${hoverEnemy.label} — ${check.cost} AP, gunfire: alert rises and it is heard. Click to fire.`
-        : `Suppress ${hoverEnemy.label}: ${check.reason}.`;
+        ? `${verb} ${hoverEnemy.label} — ${check.cost} AP, gunfire: alert rises and it is heard. Click to fire.`
+        : `${verb} ${hoverEnemy.label}: ${check.reason}.`;
+    } else if (returnsFire(unit, rules)) {
+      view.targetLabel = `Return fire: click an enemy that has ${unit.shortName} in its sights, inside his spot radius with a clear line. Esc to cancel.`;
     } else {
       view.targetLabel = `Suppress: click an enemy inside ${unit.shortName}'s spot radius with a clear line. Esc to cancel.`;
     }
@@ -1712,7 +1741,7 @@ function describeAlarm(enemy) {
   const after = [];
   if (enemy.watching) {
     const man = state.units.find((u) => u.id === enemy.holding?.unitId || (u.q === enemy.watching.q && u.r === enemy.watching.r));
-    after.push(`It has ${man ? man.shortName : 'him'} in its sights (the dashed line): if it sees him again at the end of this turn it fires. Get him out of its view, hide him [H], or suppress it [S].`);
+    after.push(`It has ${man ? man.shortName : 'him'} in its sights (the dashed line): if it sees him again at the end of this turn it fires. Get him out of its view, hide him [H], or ${fireBackWords()}.`);
   }
   if (reasons.some((r) => r.kind === 'found')) after.push(`What it found put the alert up +${rules.alert.bodyFound}, and the patrols in earshot come to look.`);
   return titled('RAISED THE ALARM', `At the end of last turn the ${enemy.label.toLowerCase()} ${what}. ${after.join(' ')}`.trim());
@@ -2142,7 +2171,7 @@ function describeMarker(id, unit) {
       + `If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover — `
       + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away. `
       + 'An enemy fires at one man a turn, the one it is watching first, so another man in its sights can draw its fire.\n'
-      + 'Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or have a gunner suppress it [S].'];
+      + `Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or ${fireBackWords()}.`];
   }
   if (id === 'marker-wounded') {
     const left = rules.combat.hitsToKill - unit.hits;

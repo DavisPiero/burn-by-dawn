@@ -66,6 +66,7 @@
         "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
         "scoring": { "win": 10, "cleanNeverReached": "alert", "cleanUntil": "firstExplosion", "salvo": { "count": 4, "points": 3 } },
         "diversion": { "prompt": { "alertState": null } },
+        "patrols": { "setOutTurn": 2 },
         "objectives": {
           "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": false },
           "bowser": { "label": "Fuel Bowser", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": true },

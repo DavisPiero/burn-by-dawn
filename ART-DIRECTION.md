@@ -168,8 +168,8 @@ board must read at a glance.
   label, in one column with every row's words starting at the same place, most rows one
   line. For a hex: LANDING, MOVE, BLAST, RISK (how it goes and where), DOTS (the sum, "…
   = 2 of 3 dots", leaving out any term that is nought), HIDE, HERE, HEARD, GROUND, ORDERS.
-  For an enemy: DOING, ALARM, then with a man selected SUPPRESS, KILL and KNIFE (as his
-  role has them: he can, in blue, or why not), NEXT, SEES. A target, the exfil or a parachute is named in
+  For an enemy: DOING, ALARM, then with a man selected SUPPRESS and KILL (a gunner) or
+  FIRE (anyone else: return fire), and KNIFE (he can, in blue, or why not), NEXT, SEES. A target, the exfil or a parachute is named in
   the headline with short rows (HERE, NEEDS, BANG, CUT, WORTH; only HERE and NEEDS while a
   man is selected); the ground is a small note at the headline's right. For one of our
   men: HAS, WHERE, TRAIT, SCORE, and CONTACT, CHUTE, ORDERS and RADIO where they apply;

@@ -640,7 +640,7 @@ function sameHex(a, b) {
  *   investigating walks to the noise it heard, sweeps, and goes back to its
  *                route from the next phase.
  *   Suspicious   walks, but stops and sweeps every `suspiciousPauseEvery`-th turn.
- *   otherwise    walks its route.
+ *   otherwise    walks its route, from the enemy phase of turn `patrols.setOutTurn` on.
  *
  * Any enemy that comes onto or beside an unfound body or a parachute this phase
  * finds it (SPEC.md §5, §9): on or beside any hex it walks through, or the hex
@@ -753,6 +753,9 @@ export function runEnemyPhase(state, map, rules) {
       }
     } else if (pauses) {
       moved = sweep(enemy, rules);
+    } else if (enemy.route && state.turn < rules.patrols.setOutTurn) {
+      // The garrison has not set out yet (M36): it stands where the map put it.
+      moved = enemy;
     } else if (enemy.route) {
       ({ enemy: moved, steps: entered } = walkRouteSteps(map, enemy, blocked, rules));
     }

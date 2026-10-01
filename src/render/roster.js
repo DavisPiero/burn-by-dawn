@@ -129,7 +129,7 @@ export function describeUnit(unit, number, state, map, view) {
     if (status.length) lines.push(status.join(' · '));
     if (!unit.everSpotted) lines.push(`Never seen yet: +${view.unseenPoints} score if he gets out unseen.`);
     else lines.push('Seen by the garrison: no stealth bonus for him.');
-    if (unit.inContact) lines.push('In contact: if he is seen again at the end of this turn, he is fired on, unless the enemy is firing at another man (one a turn). Break contact: out of sight, hide, or suppress.');
+    if (unit.inContact) lines.push(`In contact: if he is seen again at the end of this turn, he is fired on, unless the enemy is firing at another man (one a turn). Break contact: out of sight, hide, or ${view.returnFire ? 'fire back' : 'suppress'}.`);
     lines.push(...aidLines(unit, state, view));
     const chute = state.parachutes.find((p) => p.q === unit.q && p.r === unit.r);
     if (chute) {
@@ -159,7 +159,7 @@ export function describeUnitReadout(unit, number, state, map, view) {
   const rows = [
     { label: 'HAS', text: `${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders)` : ''} · ${charges}` },
     status.length > 1 && { label: 'STATE', text: status.join(' · ').toLowerCase() },
-    unit.inContact && { label: 'CONTACT', text: 'seen again at the turn\'s end, he is fired on, unless it is firing at another man: get out of sight, hide [H] or suppress [S]', tone: 'danger' },
+    unit.inContact && { label: 'CONTACT', text: `seen again at the turn's end, he is fired on, unless it is firing at another man: get out of sight, hide [H] or ${view.returnFire ? 'fire back' : 'suppress'} [S]`, tone: 'danger' },
     { label: 'WHERE', text: `${view.place(unit)}${terrain ? ` · cover ${terrain.cover}` : ''}` },
     ...aidLines(unit, state, view).map((text) => ({ label: 'AID', text, tone: 'prompt' })),
     chute && { label: 'CHUTE', text: `on ${chute.unitId === unit.id ? 'his' : `${chute.name}'s`} parachute: [U] to pack it` },

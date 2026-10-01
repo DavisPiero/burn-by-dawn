@@ -114,6 +114,13 @@ Eleven enemies, three more than France, plus the reserve:
   noise, paying the same ground costs as anyone.
 - **The reserve** turns out from the camp at Alarmed and guards the way to the trucks.
   None comes once the signals tent is down.
+- **The patrols set out on turn 2** (`patrols.setOutTurn` 2, SPEC.md §6): the patrols and
+  the car stand where they are through turn 1, and walk from the end of turn 2. The board
+  is small, and on every run two to four of the garrison start at the three hexes the
+  landing rule allows, their beats lying across the landing grounds; so the stick has one
+  quiet turn to regroup, pack its parachutes and get under cover before they come round.
+  The posts watch from the first turn as ever. It is this mission's number: France's
+  patrols start well away from its landings and walk from the start.
 
 ### The objectives
 
@@ -152,8 +159,9 @@ goes up but where the stick is when it does. So two things are the mission's own
   `cleanUntil: "firstExplosion"`). The back page's line is "quiet to first bang, no
   diversion", and the orders say it up front: "Getting in with as little enemy attention
   as possible earns a special bonus!" (`words.cleanOrders`). It is what packing the parachutes and hiding the bodies are for here: the
-  bot earns it about one game in twenty on the North and South runs without packing, and
-  in most with every chute packed.
+  bot earns it about one game in twenty on the North run and one in three on the South
+  without packing, and in half of the North's and most of the South's with every chute
+  packed.
 - **The jeep raid is urged only for men in contact** (`diversion.prompt.alertState` null):
   an Alarmed garrison is the ordinary state of things here, not a pickle.
 
@@ -191,11 +199,15 @@ All of it data in `missions.json` and the map.
 Targets are §10's, for the airfield as for France. **Baselines**, 300 seeds, win % west /
 north / south, with `KNIFE=1 BOWSER=1`: the naive bot going for the bowser, as its ring
 tells a first-timer to (the bowser and the bomb store both, nearest first, while the job
-wants two or more), and taking the timer offered first. **Easy 97 / 99 / 99, Normal
-88 / 92 / 82, Hard 34 / 22 / 29**. Two runs sit just outside the targets, within the
-bot's noise at 300 seeds: Normal's North 2 over, Hard's North 3 under. The careful bot,
-which is nearer a person: Normal 100 / 100 / 97, Hard 80 / 63 / 65, as before the bomb
-store (100 / 98 / 96 and 85 / 69 / 67). The hunter against `careful`, and what each rule
+wants two or more), and taking the timer offered first. **Easy 98 / 99 / 99, Normal
+89 / 95 / 79, Hard 25 / 36 / 29**. Hard is inside the targets on every run; Normal's
+North is 5 over. The careful bot, which is nearer a person: Normal 100 / 100 / 98, Hard
+65 / 68 / 63. Before the patrols waited a turn (M36) the same runs gave Normal
+88 / 92 / 82, Hard 34 / 22 / 29, and the careful bot's Hard 80 / 63 / 65: the quiet
+turn evens the three runs on Hard, and on Normal it takes away the early wounds (men
+hit in the first three turns, North and South: 0.54 and 0.16 a game before, 0.01 each
+after) without moving the win rate. Returning fire only when cornered (`FIRE=cornered`)
+leaves every one of these where it is. The hunter against `careful`, and what each rule
 is worth to the bot, are in DECISIONS.md.
 
 **The rating's bands** (SPEC.md §10): 36, 43 and 50.
