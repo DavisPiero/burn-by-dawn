@@ -211,9 +211,13 @@ gives the full cost and, when it cannot be used, why not.
 - **Stabilise** — another trooper spends a full turn beside a wounded man (§5). The
   wounded man gets his **full AP pool back and can carry a charge again**, but he is still
   one hit from death: the wound is dressed, not healed.
-- **Pick up a charge** — 1 AP, on a hex with a dropped charge, if he can carry one.
+- **Pick up a charge** — 1 AP, on a hex with a dropped charge, if he has room for it.
+  **Any man has room for one** (`charges.carryAtLeast`), whatever he jumped with: a scout
+  or a gunner can pick up a charge left lying, carry it and set it. A man whose loadout is
+  none is shown Pick up only while a charge lies on his hex, and Charge and Pass only
+  while he carries one.
 - **Pass a charge** — 2 AP to the giver; the taker pays nothing. One charge to a man
-  **beside him** who can carry it: not wounded, and with room (a scout carries none).
+  **beside him** who can carry it: not wounded, and with room (any man has room for one).
   If only one man beside him can take it, pressing it hands it straight over; otherwise
   it is aimed like stabilise, with a blue ring round each man who could take it: press
   it, then click the man.
@@ -371,7 +375,8 @@ decided every turn. It also makes losing Holloway expensive.
 | Gunner | 3 | 2 | 0 | 0 | suppress, kill |
 
 Spot radius matters only to shooting: a gunner's suppress and kill, and anyone's return
-fire (§4), which every role has (a ridge adds 1).
+fire (§4), which every role has (a ridge adds 1). Charges is what the role jumps with;
+any man can carry one he picks up or is handed (§4), and whoever carries one can set it.
 
 ### Wounds
 
