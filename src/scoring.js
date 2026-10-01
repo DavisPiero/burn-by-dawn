@@ -107,15 +107,24 @@ export function cleanRun(state, rules) {
   const peak = untilBang && state.explosions > 0 ? state.alert.peakBeforeBang ?? 0 : state.alert.peak ?? 0;
   return {
     kept: peak < top.from && state.diversionsCalled === 0,
-    label: untilBang ? `not ${top.label} before the first bang, no diversion` : `never ${top.label}, no diversion`,
+    label: untilBang ? 'quiet to first bang, no diversion' : `never ${top.label}, no diversion`,
   };
 }
 
 export function scoreOf(state, rules) {
   const s = rules.scoring;
   const lines = [];
+  // Targets of one name are one line (M32: eight aircraft, a line each, ran
+  // the airfield's back page off its foot): "3 Stukas destroyed".
+  const downed = new Map();
   for (const o of state.objectives) {
-    if (o.destroyed) lines.push({ label: `${o.label} destroyed${o.cut ? ' (line cut)' : ''}`, points: kindOf(o, rules).score });
+    if (!o.destroyed) continue;
+    const key = `${o.label}${o.cut ? ' (line cut)' : ''}`;
+    const line = downed.get(key) ?? { label: o.label, cut: o.cut, count: 0, points: 0 };
+    downed.set(key, { ...line, count: line.count + 1, points: line.points + kindOf(o, rules).score });
+  }
+  for (const d of downed.values()) {
+    lines.push({ label: `${d.count > 1 ? `${d.count} ${d.label}s` : d.label} destroyed${d.cut ? ' (line cut)' : ''}`, points: d.points });
   }
   if (s.win > 0 && winMet(state, rules)) lines.push({ label: `The job done: ${winWords(state, rules)}`, points: s.win });
   const out = state.units.filter((u) => u.out);

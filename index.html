@@ -859,11 +859,12 @@
       text-align: center;
       border-top: 2px solid var(--ink);
       border-bottom: 2px solid var(--ink);
-      /* Air above the kicker and the result, so each reads on its own (M12). */
-      margin: 20px 0 8px;
+      /* Air above the kicker and the result, so each reads on its own (M12);
+         less of it since M32, for the rating under the score. */
+      margin: 14px 0 8px;
     }
     #results h2 {
-      margin: 22px 0 4px;
+      margin: 14px 0 4px;
       text-align: center;
       font-family: var(--slab);
       font-size: 24px;
@@ -874,7 +875,7 @@
     #results.failed h2 { color: var(--red); }
     #results p { margin: 0 0 8px; }
     /* A blank line between the six and the score. */
-    #results .fates { list-style: none; margin: 0 0 1.4em; padding: 0; }
+    #results .fates { list-style: none; margin: 0 0 1em; padding: 0; }
     #results .fates li { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
     #results .fates svg { width: 22px; height: 22px; flex: 0 0 22px; }
     #results .fate-lost svg { filter: grayscale(1); opacity: 0.5; }
@@ -893,10 +894,10 @@
     }
     /* The rating (M32): the band earned as a red rubber stamp's words, and
        the annual's score table under it, the earned row in bold. */
-    #results .rating { margin-top: 14px; }
+    #results .rating { margin-top: 12px; }
     #results .rating-earned { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
     #results .rating-earned small { font-family: var(--slab); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; }
-    #results .rating-earned b { font-family: var(--slab); font-size: 18px; letter-spacing: 1px; color: var(--red); }
+    #results .rating-earned b { font-family: var(--slab); font-size: 16px; letter-spacing: 0.5px; white-space: nowrap; color: var(--red); }
     #results .rating table { margin-bottom: 0; font-size: 12px; color: color-mix(in srgb, var(--ink) 62%, transparent); }
     #results .rating td:first-child { width: 7.5em; }
     #results .rating td:last-child { width: 1.5em; color: var(--red); }
@@ -904,15 +905,17 @@
     #results .rating tr.earned td { color: var(--ink); font-weight: bold; }
     #results .rating tr.earned td:last-child { color: var(--red); }
     #results .rating tr:nth-last-child(2) td { padding-bottom: 0; }
-    #results .again { margin-top: 34px; text-align: center; }
-    #results .again .btn + .btn { margin-left: 12px; }
+    /* The two buttons on one line (M32: stacked, with the rating above them,
+       they ran off the foot of a long score sheet). */
+    #results .again { margin-top: 16px; text-align: center; white-space: nowrap; }
+    #results .again .btn + .btn { margin-left: 10px; }
     /* Set as SCORE and the result are (M12). */
     #results button {
-      padding: 6px 24px;
+      padding: 6px 12px;
       font-family: var(--slab);
-      font-size: 22px;
+      font-size: 18px;
       font-weight: bold;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
     }
 
     /* The briefing card (SPEC.md §11): the orders before the drop and an update

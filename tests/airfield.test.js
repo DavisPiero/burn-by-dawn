@@ -243,7 +243,9 @@ export default [
     equal(events.filter((e) => e.kind === 'explosion' && e.setOffBy).length, 2, 'two set off, said so');
     equal(after.charges.length, 0, 'the charge on the caught aircraft is spent');
     const scored = scoreOf(after, rules).lines.filter((l) => l.label.endsWith('destroyed'));
-    equal(scored.length, 3, 'each scored as its own');
+    // M32: targets of one name share a line ("2 Ju 52s destroyed"), each still paid its own score.
+    equal(scored.length, 2, 'the bowser, and the two Ju 52s on one line');
+    assert(scored.some((l) => l.label === '2 Ju 52s destroyed' && l.points === 2 * rules.objectives.aircraft.score), `each scored as its own: ${scored.map((l) => l.label).join(' | ')}`);
   }],
 
   ['a man beside a set-off aircraft is killed by its blast, though out of the bowser\'s', async () => {
@@ -376,7 +378,7 @@ export default [
     equal(after.alert.peakBeforeBang, alertFrom - 1, 'the alert before the bang is kept');
     const alarmed = { ...after, alert: { ...after.alert, points: 7, peak: 7 } };
     assert(cleanRun(alarmed, rules).kept, 'Alarmed after the first bang does not spoil it');
-    assert(scoreOf(alarmed, rules).lines.some((l) => l.points === rules.scoring.clean && l.label.includes('before the first bang')), 'and the back page pays it');
+    assert(scoreOf(alarmed, rules).lines.some((l) => l.points === rules.scoring.clean && l.label.includes('first bang')), 'and the back page pays it');
     assert(!cleanRun({ ...alarmed, diversionsCalled: 1 }, rules).kept, 'the jeep raid still costs it');
     const loud = { ...state, alert: { ...state.alert, points: alertFrom, peak: alertFrom } };
     assert(!cleanRun(loud, rules).kept, 'Alert before any bang: gone');
