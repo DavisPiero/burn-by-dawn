@@ -118,10 +118,13 @@ board must read at a glance.
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
   chip, never a selected man's solid frame.
-- An objective's name is printed above it; a map may move one (`nameNudge`, art only):
-  the airfield's bomb store's is under it, clear of the Stukas' names either side. A
-  target whose charge point could be taken for a neighbour's has a lead drawn to it: the
-  bowser's fuel hose, the bomb store's trolley rails (`hose` in its art).
+- An objective's name is printed above it; a map may move one (`nameNudge`, art only:
+  the airfield's Stukas' are under them, clear of their pens' charge points) or print it
+  a word to a line (`nameWrap`: BOMB STORE). A target that is not stood on and whose
+  charge point sits among its neighbours' (the bowser, the bomb store) has a **lead**
+  drawn to that point from under its picture, a fuel hose or a bomb trolley's rails
+  (`hose` in its art), and the point itself is told apart: its hex dashed in **cold
+  blue**, heavier and longer than a pen's red, its satchel in a blue ring.
 - Two DESTROYED stamps side by side would print over each other: a map may give an
   objective a `stampNudge` (art only), used only while one beside it is destroyed too
   (the airfield's bowser's goes up, the Ju 52's beside it down).
@@ -231,7 +234,9 @@ board must read at a glance.
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
   the player's red pen among the runs' tabs (or centred on the map's `dropCueAt` hex where
-  that is busy: the airfield's is on the strip), still, on the map at 1280x800. Once one is
+  that is busy: the airfield's is on the strip), still, on the map at 1280x800. Every
+  pen note is kept whole on the map: CLICK A MAN TO START is moved in from an edge the
+  men landed beside. Once one is
   picked it reads **HIT SPACE TO JUMP**, "or click the run again", the JUMP! button turns
   danger red and throbs, and the run's rollover ends PRESS SPACE TO JUMP, OR CLICK AGAIN.
   Jumping needs **Space** or a second click on the same run. Once the stick is down, every
