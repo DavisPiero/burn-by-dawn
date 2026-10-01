@@ -114,6 +114,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   // them until M4–M6, which is exactly when a missing one would go unnoticed.
   requireCount(rules.charges?.placeApCost, '"charges.placeApCost"', rulesUrl);
   requireCount(rules.charges?.fuseTurns, '"charges.fuseTurns"', rulesUrl);
+  requireCount(rules.charges?.carryAtLeast, '"charges.carryAtLeast"', rulesUrl);
   requireCount(rules.alert?.gunfire, '"alert.gunfire"', rulesUrl);
   requireCount(rules.alert?.silenced, '"alert.silenced"', rulesUrl);
   requireCount(rules.landing?.badLandingTurnsLost, '"landing.badLandingTurnsLost"', rulesUrl);

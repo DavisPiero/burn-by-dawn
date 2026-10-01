@@ -138,8 +138,8 @@ the level's `minimumOut` men out by dawn. No objective is `primary`. Meeting it 
 `scoring.win` 10, so the job done with three men out beats the best retreat.
 
 **The bombs**: small Lewes bombs, so a **scout carries 1** as well as each sapper: Dutch,
-Fitch, Vance, Barrow and Nunn (Ox) one each, five in the stick. Only Speers carries none:
-his job is the car. A man killed or wounded drops what he carried on his hex, and anyone
+Fitch, Vance, Barrow and Nunn (Ox) one each, five in the stick. Only Speers jumps with none:
+his job is the car, though he can carry one he picks up (SPEC.md §4). A man killed or wounded drops what he carried on his hex, and anyone
 with room picks it up, so losing a sapper is a fetch under fire, not a lost mission.
 
 **Time pencils**: 2 to 6 turns, the default 4 (Dutch, Steady Hands: 1 to 5).

@@ -1084,6 +1084,9 @@ export const CUE = {
   ringWidth: 4.5,
   ringOpacity: 0.5, // M22, the operator's: the rings at full strength were loud
   noteSize: 22,
+  // CHARGE IS SET. GET CLEAR! over a target a charge was just set on (M37).
+  chargeNoteSize: 30,
+  chargeNoteTilt: -5,
   noteAdvance: 0.72, // a letter's width in the pen lettering, in note sizes, for keeping a note on the board
   noteEdgeGap: 14,
 };

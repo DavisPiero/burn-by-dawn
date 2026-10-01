@@ -202,6 +202,16 @@ export function chargeCapacity(unit, rules) {
 }
 
 /**
+ * How many charges he has room for: his loadout, and never fewer than
+ * `charges.carryAtLeast` (M37, the operator's: a gunner could not pick up a
+ * charge left lying at the exfil). The loadout is what he jumps with; any man
+ * can carry one he picks up or is handed.
+ */
+export function chargeRoom(unit, rules) {
+  return Math.max(chargeCapacity(unit, rules), rules.charges.carryAtLeast);
+}
+
+/**
  * The base value a hook stat starts from for this unit, or null where the
  * base depends on the situation rather than the man — the hex being entered,
  * the enemy looking, the scatter the RNG rolls.
@@ -530,7 +540,7 @@ export function checkPassCharge(giver, receiver, rules) {
   if (!onBoard(receiver)) return result(cost, `${receiver.shortName} is not on the board`);
   if (hexDistance(giver, receiver) !== 1) return result(cost, `${receiver.shortName} is not beside him`);
   if (!canCarryCharges(receiver)) return result(cost, `${receiver.shortName} is wounded — stabilise him first`);
-  const room = chargeCapacity(receiver, rules);
+  const room = chargeRoom(receiver, rules);
   if (room === 0) return result(cost, `${receiver.shortName} is a ${receiver.roleLabel.toLowerCase()}: he carries no charges`);
   if (receiver.charges >= room) return result(cost, `${receiver.shortName} cannot carry any more`);
   return result(cost, null);
@@ -542,6 +552,6 @@ export function checkPickUpCharge(droppedCharges, unit, rules) {
   if (busy) return result(cost, busy);
   if (!droppedCharges.some((c) => c.q === unit.q && c.r === unit.r)) return result(cost, 'no charge on this hex');
   if (!canCarryCharges(unit)) return result(cost, 'wounded — stabilise him first');
-  if (unit.charges >= chargeCapacity(unit, rules)) return result(cost, 'cannot carry any more');
+  if (unit.charges >= chargeRoom(unit, rules)) return result(cost, 'cannot carry any more');
   return result(cost, null);
 }

@@ -7,7 +7,7 @@
 
 import { deepMerge } from './difficulty.js';
 import { chainFrom, kindOf } from './sabotage.js';
-import { chargeCapacity, onBoard } from './units.js';
+import { chargeRoom, onBoard } from './units.js';
 
 export const MISSION_STATUSES = ['playable', 'draft', 'coming'];
 
@@ -291,7 +291,7 @@ export function winShortfall(state, rules) {
   };
   tryWays(0, new Set(), new Set(), 0);
   const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
-  const carrier = state.units.some((u) => onBoard(u) && chargeCapacity(u, rules) > 0);
+  const carrier = state.units.some((u) => onBoard(u) && chargeRoom(u, rules) > 0);
   return Math.max(0, want - carried - (carrier ? state.droppedCharges.length : 0));
 }
 

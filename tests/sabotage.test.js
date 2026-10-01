@@ -421,7 +421,10 @@ export default [
     let s = scenario(state, { [a.id]: { q: 3, r: 3 }, [b.id]: { q: 4, r: 3, changes: { charges: 0 } }, [scout.id]: { q: 3, r: 4 } });
     const giver = unitIn(s, a.id);
     assert(checkPassCharge(giver, unitIn(s, b.id), rules).ok, 'to a sapper beside him');
-    assert(!checkPassCharge(giver, unitIn(s, scout.id), rules).ok, 'a scout carries no charges');
+    // M37: any man has room for one, whatever his loadout; with `carryAtLeast` 0 a scout carries none, as before.
+    assert(checkPassCharge(giver, unitIn(s, scout.id), rules).ok, 'to a scout too: any man can carry one');
+    const none = { ...rules, charges: { ...rules.charges, carryAtLeast: 0 } };
+    assert(!checkPassCharge(giver, unitIn(s, scout.id), none).ok, 'carryAtLeast 0: a scout carries no charges');
     s = passCharge(s, a.id, b.id, rules);
     equal(unitIn(s, a.id).charges, giver.charges - 1, 'one fewer');
     equal(unitIn(s, b.id).charges, 1, 'one more');
@@ -492,10 +495,14 @@ export default [
       units: state.units.map((u) => (carriers(u) ? { ...u, dead: true, charges: 0 } : u)),
       droppedCharges: dropped,
     };
-    assert(winShortfall(stranded, rules) > 0, 'charges nobody can carry do not count');
-    equal(settleMission(stranded, rules, map).outcome.kind, 'withdrawn', 'withdrawn at once');
+    // M37: any man left can carry one, so they count; where roles can carry none (carryAtLeast 0) they do not.
+    equal(winShortfall(stranded, rules), 0, 'a charge on the ground counts while any man is left to carry it');
+    equal(settleMission(stranded, rules, map).outcome, null, 'so the mission goes on');
+    const none = { ...rules, charges: { ...rules.charges, carryAtLeast: 0 } };
+    assert(winShortfall(stranded, none) > 0, 'charges nobody can carry do not count');
+    equal(settleMission(stranded, none, map).outcome.kind, 'withdrawn', 'withdrawn at once');
     const oneLeft = { ...stranded, units: stranded.units.map((u) => (u.role === 'sapper' && u.leader ? { ...u, dead: false } : u)) };
-    equal(winShortfall(oneLeft, rules), 0, 'with a sapper alive they count again');
+    equal(winShortfall(oneLeft, none), 0, 'with a sapper alive they count again');
 
     let dawn = { ...state, turn: rules.turnLimit };
     dawn = endTurn(dawn, rules, map);

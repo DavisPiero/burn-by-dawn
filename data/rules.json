@@ -19,9 +19,10 @@
 
   "_bases": "The base values the trait hooks modify (SPEC.md §5, §7, §9). They landed at M3 so every trait can be shown firing against a real number; the systems that act on them — charges and fuses at M5, gunfire at M4/M5, the drop at M6, trooper vision at M4 — arrive later and must read them from here.",
 
-  "_charges": "`fuseTurns` is the fuse a charge is set with. `fuseChoice` (M30, SPEC.md §7): null, or { min, max } — the time pencils a sapper picks from when he sets it, `fuseTurns` offered first; the onPlaceCharge fuse hook applies to whichever he picks.",
+  "_charges": "`carryAtLeast` (M37, the operator's: a gunner standing on charges left at the exfil could not pick one up): the room every man has for a charge he picks up or is handed, whatever his role's loadout (roles[].charges, through onChargeCapacity) — the loadout is what he jumps with. 0 would bring back men who can carry none. `fuseTurns` is the fuse a charge is set with. `fuseChoice` (M30, SPEC.md §7): null, or { min, max } — the time pencils a sapper picks from when he sets it, `fuseTurns` offered first; the onPlaceCharge fuse hook applies to whichever he picks.",
   "charges": {
     "placeApCost": 1,
+    "carryAtLeast": 1,
     "fuseTurns": 3,
     "fuseChoice": null
   },

@@ -279,6 +279,11 @@ board must read at a glance.
   goes to it.
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
   its counter flashing. A kill is one dim shot.
+- **The charges are set**: when a target is given the last charge it needs, the player's
+  pen letters **CHARGES ARE SET. / GET CLEAR!** over it (CHARGE IS SET where it needs one),
+  red with a paper outline, a little askew, over the counters and any speech bubble, kept
+  whole on the board. The next click or key anywhere puts it away. A target that wants
+  more than one says nothing until the last is set.
 - **A bang lands**: the page flashes, the board jolts, a shock ring runs out to the edge of
   the blast under the starburst, smoke rolls up, and BOOM! in the pen lettering, with a
   paper outline and tipped up 16°, all before that turn's card is laid over it. It is the

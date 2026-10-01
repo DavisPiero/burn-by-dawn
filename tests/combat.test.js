@@ -16,7 +16,7 @@ import {
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
 import {
-  checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById, woundedLine,
+  chargeCapacity, chargeRoom, checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById, woundedLine,
 } from '../src/units.js';
 
 function assert(condition, message) {
@@ -467,6 +467,26 @@ export default [
     equal(unitIn(picked, sapper.id).ap, sapper.ap - rules.actions.pickUpCharge.apCost, 'AP spent');
     equal(pickUpCharge(place({ charges: sapper.charges }), sapper.id, rules).droppedCharges.length, 1, 'full: stays on the ground');
     equal(pickUpCharge(place({ charges: 0, hits: 1 }), sapper.id, rules).droppedCharges.length, 1, 'wounded: stays on the ground');
+  }],
+
+  ['any man can carry one charge he picks up, whatever his loadout (M37: a gunner at charges left by the exfil)', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 2);
+    const bare = state.units.filter((u) => chargeCapacity(u, rules) === 0);
+    assert(bare.length >= 3, 'France: the scouts and one gunner jump with none');
+    for (const man of bare) {
+      equal(man.charges, 0, `${man.shortName} jumps with none`);
+      equal(chargeRoom(man, rules), rules.charges.carryAtLeast, `${man.shortName} has room for one`);
+      const on = {
+        ...state, enemies: [], droppedCharges: [{ q: row.q, r: row.r }, { q: row.q, r: row.r }],
+        units: state.units.map((u, i) => (u.id === man.id ? { ...u, q: row.q, r: row.r } : { ...u, q: 200 + i, r: 0 })),
+      };
+      const picked = pickUpCharge(on, man.id, rules);
+      equal(unitIn(picked, man.id).charges, 1, `${man.shortName} picks one up`);
+      equal(pickUpCharge(picked, man.id, rules).droppedCharges.length, 1, 'and no more than one');
+      const none = { ...rules, charges: { ...rules.charges, carryAtLeast: 0 } };
+      equal(pickUpCharge(on, man.id, none).droppedCharges.length, 2, 'carryAtLeast 0: he carries none, as before');
+    }
   }],
 
   ['kill: only a gunner, only an enemy under suppression; two gunners can do it in one turn, and it leaves a body', async () => {
