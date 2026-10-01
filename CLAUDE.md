@@ -1,12 +1,20 @@
 # CLAUDE.md — working agreement
 
-Read `SPEC.md` before doing anything. It is the source of truth. If a request conflicts
-with SPEC.md, say so before writing code.
+Read `SPEC.md` before doing anything. It is the source of truth, with the two files that
+hold its §11 and §13 (below). If a request conflicts with any of them, say so before
+writing code.
 
 ## Files in this repo
 
 - `CLAUDE.md` — this file. Rules you must follow.
-- `SPEC.md` — the design and technical spec. Authoritative.
+- `SPEC.md` — the design and technical spec. Authoritative. Two of its sections are files
+  of their own, as authoritative as it is, so that it stays short enough to read whole:
+  - `ART-DIRECTION.md` — SPEC §11: how the game looks, reads, moves and sounds. **Read it
+    before touching anything the player sees or hears** (`src/render/`, `index.html`, the
+    words on screen).
+  - `MISSION-AIRFIELD.md` — SPEC §13: mission 2. **Read it before working on the
+    airfield**, and as the pattern when specifying a new mission. Each later mission gets
+    a `MISSION-<NAME>.md` like it, written before the mission is built.
 - `ART-ASSETS.md` — the art asset manifest. **Read it at milestone M7**, and whenever you
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
 - `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.
