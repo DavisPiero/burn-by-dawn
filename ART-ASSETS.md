@@ -178,7 +178,7 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-aircraft-stuka.svg`, `-destroyed` | 96 x 92 | M29, the airfield: a Ju 87 from above, nose north, desert tan mottled green, crosses on the wings; burnt out, a black hulk alight. An aircraft objective's `art` in its map picks Stuka or Ju 52. *Drawn by code.* |
 | `objective-aircraft-ju52.svg`, `-destroyed` | 96 x 92 | a Ju 52 from above: three engines, a long corrugated wing, darker than the Stukas. *Drawn by code.* |
 | `objective-fuel-bowser.svg`, `-destroyed` | 84 x 48 | the fuel dump's bowser alone on the apron, a crop of the fuel dump's drawing. *Drawn by code.* |
-| `train-engine.svg`, `train-wagon.svg` | 80 x 46 | M34, France's goods train from above, running east, a car to a hex: a tank engine in ink (boiler bands, chimney, dome, green cab, red buffer beam) and a covered wagon in army green (roof ribs, a paper label panel, couplings). Turned along the railway by code; wrecked, thrown off its angle. *Drawn by code; a reference would be redrawn from (ART-PROMPTS.md Priority 18).* |
+| `train-engine.svg`, `train-wagon.svg` | 80 x 46 | M34, France's goods train from above, running east, a car to a hex: a tank engine in ink (boiler bands, chimney, dome, red buffer beam) and a covered wagon in army green (roof ribs, a paper label panel, couplings), both with rounded corners and trimmed in cold blue and paper since M35 (a blue cab, blue wagon ends, a paper line down each side). Turned along the railway by code; wrecked, thrown off its angle. *Drawn by code; a reference would be redrawn from (ART-PROMPTS.md Priority 18).* |
 | `objective-bomb-store.svg`, `-destroyed` | 84 x 76 | M33, the airfield's bomb store from above: bombs laid in rows, noses east, fins and a red band each, inside a low ring of sandbags; blown, the ring broken open round a scorched pit, alight. A bomb trolley's rails run from (42, 14) to its charge point (`hose` with `style: 'rails'`). *Drawn by code; a reference painting would be redrawn from, as the aircraft were (ART-PROMPTS.md Priority 17).* |
 | `objective-signals-tent.svg`, `-cut`, `-destroyed` | 80 x 92 | a marquee with its wireless mast, the field telephones' wires ending at the mast's crossarm (60, 12); cut, its lit door dark; blown, collapsed and burning. *Drawn by code.* |
 | `objective-trucks.svg` | 80 x 92 | the airfield's exfil (the map's `exfilArt: "trucks"`): two desert trucks, a scrap of netting and the pick-up party's green lamp. *Drawn by code.* |
@@ -315,7 +315,7 @@ placeholder on the next reload, with no code change. A missing file is fine.
 **M4A (AAC) or MP3**, mono, 44.1 kHz, under 200 KB each, trimmed tight (no silence before
 the sound — it is played the moment its event happens). `.m4a` is tried first, then `.mp3`
 (M21c: the supplied set is AAC, which macOS's `afconvert` can write and MP3 it cannot).
-**Since M21c every sound below is supplied** (the airfield's jeep, bugle and siren since M31c), cut and levelled from free libraries; where
+**Since M21c every sound below is supplied but the train's** (the airfield's jeep, bugle and siren since M31c), cut and levelled from free libraries; where
 each came from, its licence and how it was cut are in `assets/audio/README.md`. The table's
 names say `.mp3`; the same name in `.m4a` does as well.
 
@@ -335,6 +335,7 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `jeep.mp3` | the airfield's jeep raid (M31): a jeep going by fast, engine revving, wheels on stones; the cue lays four bursts of `gunfire` over it | ~3 s |
 | `bugle.mp3` | the airfield's back page, mission accomplished (M31b): bright and triumphant, not a Last Post; supplied (M31c) as a drum roll and trumpet fanfare | ~2–4 s |
 | `siren.mp3` | the airfield's back page, withdrawn or failed (M31): an air-raid siren close by, winding up, wailing and winding down | ~5–6 s |
+| `train.mp3` | France's goods train coming onto the board (M35): a steam whistle far off, one long blast and a short one, then the engine chuffing away. **Not supplied: made in code** (ART-PROMPTS.md Priority 18) | ~3 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.

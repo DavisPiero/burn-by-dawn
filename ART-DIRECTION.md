@@ -88,11 +88,15 @@ board must read at a glance.
   where a road meets it: art only, no rule. So is the village **church** with its spire,
   drawn with the exchange: the landmark Vance's landing line refers to.
 - **The goods train** (§7) is drawn in the art, under every counter: a car to a hex along
-  the railway, turned along the line, the engine in ink with its boiler bands, chimney
-  and green cab, the wagons army green with their roof ribs. Wrecked, each car is thrown
-  off the line a different way, the engine burns, and a car over the fallen bridge is
-  printed fainter. It does not move between turns on screen: it is where the turn has
-  put it.
+  the railway, turned along the line, every car with rounded corners: the engine in ink
+  with its boiler bands and chimney, the wagons army green with their roof ribs, and both
+  trimmed in cold blue and paper (a blue cab, blue wagon ends, a paper line down each
+  side) so it shows against the green ground it comes in over. Wrecked, each car is
+  thrown off the line a different way, the engine burns, and a car over the fallen bridge
+  is printed fainter. **It runs between turns**: in the garrison's turn each car travels
+  the hexes it made, 300 ms a hex, coming on from off the board's edge and its tail
+  running off the far one, and a wrecked car keeps to the line until it gets there,
+  then is thrown off it.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
   water, the rest in italic, each nudged off its hex (`dx`, `dy`) to sit in what it names.
   The turn report uses them ("the field by Ferme Lebrun").
@@ -133,7 +137,9 @@ board must read at a glance.
   blue**, heavier and longer than a pen's red, its satchel in a blue ring.
 - Two DESTROYED stamps side by side would print over each other: a map may give an
   objective a `stampNudge` (art only), used only while one beside it is destroyed too
-  (the airfield's bowser's goes up, the Ju 52's beside it down).
+  (the airfield's bowser's goes up, the Ju 52's beside it down). A `stampShift` (art
+  only) moves a stamp always: the Rail Bridge's is three quarters of a hex lower, below
+  the bridge, clear of the wreck and the train.
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all
@@ -309,7 +315,9 @@ church's bells, upward to the top bell, for a mission accomplished, and tolls a 
 bell with a siren far off for one withdrawn or failed. A mission names its own back-page
 and diversion sounds: the airfield's jeep raid is an engine going by and bursts of fire,
 its success a bugle call, the rest its own air-raid
-siren close by (made in code until recordings are supplied).
+siren close by (made in code until recordings are supplied). France's goods train
+whistles as it comes onto the board, one long blast and a short one, far off, with its
+chuffing dying away after: made in code until a recording is supplied.
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
 choice, fading at the jump and never between turns. A new game brings it back from the
