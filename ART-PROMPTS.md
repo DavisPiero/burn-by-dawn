@@ -554,7 +554,7 @@ to redraw from, as `Stuka_` and `Ju52_Reference_01` were for the aircraft, into
 
 ## Priority 18 — the goods train (reference and a sound, optional)
 
-M34 runs a **goods train** over France's rail bridge on turn 14. Claude has drawn an
+M34 runs a **goods train** over France's rail bridge on turn 17. Claude has drawn an
 engine and a wagon in code, from above, each one hex long (80 x 46). To bring them nearer
 the painted look, a reference for Claude to redraw from, into `assets/reference/`:
 
@@ -562,13 +562,15 @@ the painted look, a reference for Claude to redraw from, into `assets/reference/
 |---|---|
 | `Train_Reference_01` | seen from straight above, running left to right: a French or German wartime goods locomotive (a tank engine or a small tender engine) and two or three covered wagons, any size |
 
-It has **no sound yet**. Two would suit, found as Priority 11's were (freesound.org CC0
-or Pixabay), into `assets/audio/`; Claude can find, cut and level them and wire them in
-if asked:
+Since M35 it **whistles as it comes onto the board**, a whistle made in code. A
+recording would replace it: `train.m4a` dropped into `assets/audio/` is played instead,
+with no code change. The wreck has no sound of its own yet. Both would be found as
+Priority 11's were (freesound.org CC0 or Pixabay); Claude can find, cut and level them
+and wire the wreck in if asked:
 
 | File | What | Length |
 |---|---|---|
-| `train.m4a` / `.mp3` | a steam goods train passing at a distance, a whistle first | ~4–5 s, for the turn it comes on and the turn it crosses |
+| `train.m4a` / `.mp3` | a steam goods train at a distance, a whistle first, then its chuffing | ~3–5 s, for the turn it comes on |
 | `train-wreck.m4a` / `.mp3` | wagons piling up, steam, over the bridge's own bang | ~3 s |
 
 ### Prompt (add the style block)
@@ -601,8 +603,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   chevron on a man who has the leader's +AP this turn).
 - The bowser's fuel hose to its charge point (M30b), and the faint dashed ground of a
   blast still to come.
-- The goods train (M34): its engine and wagons from above, running and wrecked
-  (Priority 18 if a reference is wanted).
+- The goods train (M34): its engine and wagons from above, running and wrecked, with
+  rounded corners and blue and paper trim since M35 (Priority 18 if a reference is
+  wanted). Its whistle is made in code too (M35).
 - The bomb store (M33) in its sandbag ring, standing and blown, and the trolley rails to
   its charge point (Priority 17 if a reference is wanted).
 - The desert chips (M30b), cut from the operator's desert portraits onto a dark red-brown

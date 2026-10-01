@@ -31,7 +31,7 @@ import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropT
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -867,20 +867,13 @@ function trainRows(train) {
   ];
 }
 
-/** trainAt for the board: each car with the railway's direction there, and whether it lies over water. */
+/** trainAt for the board: the line it runs, its pace and length, and whether each car lies over water. */
 function trainView() {
   if (!rules.train || state.phase === 'drop') return null;
   const train = trainAt(state, rules, baseMap);
   if (!train) return null;
-  const line = railwayLine(baseMap);
-  const size = baseMap.hexSize;
-  const cars = train.cars.map((car) => {
-    const a = line[Math.max(0, car.index - 1)], b = line[Math.min(line.length - 1, car.index + 1)];
-    const pa = axialToPixel(a.q, a.r, size), pb = axialToPixel(b.q, b.r, size);
-    const d = Math.hypot(pb.x - pa.x, pb.y - pa.y) || 1;
-    return { ...car, along: { x: (pb.x - pa.x) / d, y: (pb.y - pa.y) / d }, sunk: train.objective.destroyed && train.objective.hexes.some((h) => h.q === car.q && h.r === car.r) };
-  });
-  return { ...train, cars };
+  const fallen = (car) => train.objective.destroyed && train.objective.hexes.some((h) => h.q === car.q && h.r === car.r);
+  return { ...train, cars: train.cars.map((car) => ({ ...car, sunk: fallen(car) })), line: railwayLine(baseMap), speed: rules.train.speed, length: rules.train.length };
 }
 
 function describePanelObjective(o, win) {
@@ -1396,6 +1389,8 @@ function syncMusic() {
 function cueReport(report) {
   if (report.some((e) => e.kind === 'explosion')) playCue('explosion');
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
+  // The goods train's whistle as it comes onto the board (M35).
+  if (report.some((e) => e.kind === 'train' && e.what === 'comes')) playCue('train');
 }
 
 function showShot(kind, from, to) {
@@ -1635,7 +1630,12 @@ function endTurnNow() {
   pencilsFor = null;
   const before = new Map(state.units.map((u) => [u.id, u.dead]));
   earlierReports = [{ turn: state.turn, events: state.report }, ...earlierReports].slice(0, 2);
+  const trainWas = trainView();
   state = endTurn(state, rules, baseMap);
+  // The goods train runs to its new place (M35): how far its engine went, or
+  // its own pace where it has just come on or gone off.
+  const trainNow = trainView();
+  const trainSteps = !trainWas && !trainNow ? 0 : !trainWas || !trainNow ? rules.train.speed : trainNow.head - trainWas.head;
   cueReport(state.report);
   garrisonShow = describeGarrisonShow(state);
   // The card waits for the garrison's moves and any bang to be seen (M11, M15);
@@ -1643,6 +1643,7 @@ function endTurnNow() {
   const hold = Math.max(
     garrisonShow.length,
     state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0,
+    trainSteps > 0 ? trainSteps * TRAIN.msPerHex + TRAIN.wreckMs + GARRISON_SHOW.tailMs : 0,
     // A man killed floats away before the card (M21).
     state.units.some((u) => u.dead && !before.get(u.id)) ? DEATH.delayMs + DEATH.floatMs : 0,
   );

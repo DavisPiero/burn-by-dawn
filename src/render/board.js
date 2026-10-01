@@ -187,6 +187,7 @@ export function resetBoardMemory(layers) {
   layers.motion = new Map();
   layers.deaths = new Map();
   layers.blasts = { bangs: null, list: [] };
+  layers.train = undefined;
   layers.ringsSince = null;
   layers.cueSince = null;
 }
@@ -443,12 +444,18 @@ function hedgeTree(map, flag = 'hedge') {
 
 /**
  * Where an objective's DESTROYED stamp goes: its middle, moved by its
+ * `stampShift` in map.json (M35, art only), and by its
  * `stampNudge` in map.json (M31d, art only) while an objective beside it is
  * destroyed too, so two stamps side by side do not print over each other.
  */
 function stampPoint(map, state, objective) {
-  const at = labelPoint(map, objective.hexes);
-  const nudge = map.objectives?.find((o) => o.id === objective.id)?.stampNudge;
+  const mapObjective = map.objectives?.find((o) => o.id === objective.id);
+  // `stampShift` (M35, art only) moves it always: the Rail Bridge's is
+  // printed below the bridge, clear of the wreck and the train on it.
+  const [sx, sy] = mapObjective?.stampShift ?? [0, 0];
+  const middle = labelPoint(map, objective.hexes);
+  const at = { ...middle, x: middle.x + sx * map.hexSize, y: middle.y + sy * map.hexSize };
+  const nudge = mapObjective?.stampNudge;
   const crowded = state.objectives.some((o) => o.id !== objective.id && o.destroyed
     && o.hexes.some((h) => objective.hexes.some((mine) => hexDistance(h, mine) === 1)));
   if (!nudge || !crowded) return at;
@@ -1590,7 +1597,7 @@ function drawArt(layers, state, view) {
       href: `#${art.id}`, x: at.x - art.width / 2, y: at.y - art.height / 2, width: art.width, height: art.height,
     }));
   }
-  if (view.train) drawTrain(layers, view.train);
+  drawTrain(layers, view.train, performance.now());
   if (view.exfil.length > 0) {
     const middle = view.exfil[Math.floor(view.exfil.length / 2)];
     const p = axialToPixel(middle.q, middle.r, map.hexSize);
@@ -1602,28 +1609,113 @@ function drawArt(layers, state, view) {
 }
 
 /**
+ * Where place `j` along the railway is on the board, and which way the line
+ * runs there. A place past either end of the line is carried straight on off
+ * the board, a hex a step, and is not `on` it: where the train comes from
+ * and goes to.
+ */
+export function railPoint(map, line, j) {
+  const px = (h) => axialToPixel(h.q, h.r, map.hexSize);
+  const k = Math.max(0, Math.min(line.length - 1, j));
+  const a = px(line[Math.max(0, k - 1)]), b = px(line[Math.min(line.length - 1, k + 1)]);
+  const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const along = { x: (b.x - a.x) / d, y: (b.y - a.y) / d };
+  const at = px(line[k]);
+  const step = map.hexSize * Math.sqrt(3) * (j - k);
+  return { x: at.x + along.x * step, y: at.y + along.y * step, along, on: j === k };
+}
+
+/**
+ * The train's move between turns (M35, the operator's): every car's way from
+ * where it stood, with the engine at `fromHead`, to where it stands now, a
+ * hex a step along the line, and how long the whole train takes over it.
+ */
+export function trainJourney(map, train, fromHead) {
+  const moved = Math.max(0, train.head - fromHead);
+  const cars = [];
+  for (let k = 0; k < train.length; k++) {
+    const index = train.head - k;
+    const path = [];
+    for (let back = moved; back >= 0; back--) path.push(railPoint(map, train.line, index - back));
+    cars.push({ index, path });
+  }
+  return { ms: moved * TRAIN.msPerHex, cars };
+}
+
+/**
  * The goods train (M34, SPEC.md §7): a car on each hex it covers, turned
  * along the railway there. Scenery: it is in the art, under every counter.
- * `train` is train.js trainAt's, with `along` the unit vector of the line at
- * each car (main.js works it out from the map's railway).
+ * `train` is train.js trainAt's, with the railway's `line`, its `speed` and
+ * `length`, and whether each car lies over water (main.js).
+ *
+ * It runs to where the turn has put it (M35): drawing memory like a move, so
+ * a redraw part-way carries the journey on. It comes on from off the board,
+ * and its tail runs off the far edge after the engine; a wrecked car keeps
+ * to the line until it gets there, then is thrown off it.
  */
-function drawTrain(layers, train) {
+function drawTrain(layers, train, now) {
   const { map } = layers;
-  train.cars.forEach((car, k) => {
-    const p = axialToPixel(car.q, car.r, map.hexSize);
-    const wrecked = train.status === 'wrecked';
-    const lie = Math.atan2(car.along.y, car.along.x) * 180 / Math.PI + (wrecked ? TRAIN.wreckAngles[k % TRAIN.wreckAngles.length] : 0);
+  const memory = layers.train;
+  if (train) {
+    // Nothing drawn yet this game: it stands where it is. Else it has moved
+    // if its engine has, and a train not there last time has just come on.
+    if (memory === undefined) layers.train = { last: train, shown: train, since: -Infinity, from: train.head };
+    else if (memory.last?.head !== train.head) layers.train = { last: train, shown: train, since: now, from: memory.last ? memory.last.head : train.head - train.speed };
+    else layers.train = { ...memory, last: train, shown: train };
+  } else if (memory?.last?.status === 'running') {
+    // Gone since it was last drawn: its tail runs off the board's edge.
+    layers.train = { last: null, shown: { ...memory.last, head: memory.last.head + memory.last.speed, cars: [] }, since: now, from: memory.last.head };
+  } else if (!memory?.shown || memory.last) {
+    layers.train = { last: null, shown: null };
+  }
+  const { shown, since, from } = layers.train;
+  if (!shown) return;
+  const journey = trainJourney(map, shown, from);
+  const elapsed = now - since;
+  const moving = journey.ms > 0 && elapsed < journey.ms + TRAIN.wreckMs;
+  if (!moving && !train) {
+    layers.train = { last: null, shown: null };
+    return;
+  }
+  const wrecked = shown.status === 'wrecked';
+
+  journey.cars.forEach((car, k) => {
+    const end = car.path.at(-1);
+    if (!end.on && !(moving && car.path.some((p) => p.on))) return;
+    const sunk = shown.cars.find((c) => c.index === car.index)?.sunk;
+    const lie = Math.atan2(end.along.y, end.along.x) * 180 / Math.PI;
+    // Wrecked, each car is thrown off the line a different way.
+    const tip = wrecked ? TRAIN.wreckAngles[k % TRAIN.wreckAngles.length] : 0;
     const off = wrecked ? TRAIN.wreckShift * (k % 2 ? -1 : 1) : 0;
-    const x = p.x - car.along.y * off, y = p.y + car.along.x * off;
-    layers.art.appendChild(el('use', {
-      href: `#${car.index === train.head ? TRAIN.engine : TRAIN.wagon}`,
-      x: x - TRAIN.width / 2, y: y - TRAIN.height / 2, width: TRAIN.width, height: TRAIN.height,
-      transform: `rotate(${lie.toFixed(1)} ${x} ${y})`,
-      opacity: wrecked && car.sunk ? TRAIN.sunkOpacity : 1,
+    const shift = { x: -end.along.y * off, y: end.along.x * off };
+    const faint = wrecked && sunk ? TRAIN.sunkOpacity : 1;
+
+    const mover = el('g', { opacity: end.on ? 1 : 0 });
+    const thrown = el('g', { transform: `translate(${shift.x.toFixed(2)} ${shift.y.toFixed(2)}) rotate(${tip} ${end.x} ${end.y})`, opacity: faint });
+    thrown.appendChild(el('use', {
+      href: `#${car.index === shown.head ? TRAIN.engine : TRAIN.wagon}`,
+      x: end.x - TRAIN.width / 2, y: end.y - TRAIN.height / 2, width: TRAIN.width, height: TRAIN.height,
+      transform: `rotate(${lie.toFixed(1)} ${end.x} ${end.y})`,
     }));
-    if (wrecked && car.index === train.head) {
-      layers.art.appendChild(el('use', { href: `#${TRAIN.flame}`, x: x - TRAIN.flameSize / 2, y: y - TRAIN.flameSize * 0.8, width: TRAIN.flameSize, height: TRAIN.flameSize }));
-    }
+    mover.appendChild(thrown);
+    layers.art.appendChild(mover);
+    const flame = wrecked && car.index === shown.head
+      ? layers.art.appendChild(el('use', { href: `#${TRAIN.flame}`, x: end.x + shift.x - TRAIN.flameSize / 2, y: end.y + shift.y - TRAIN.flameSize * 0.8, width: TRAIN.flameSize, height: TRAIN.flameSize }))
+      : null;
+    if (!moving) return;
+
+    // A steady run, a hex a step, fading in over the step that brings it
+    // onto the board and out over the one that takes it off.
+    playFrom(mover, car.path.map((p) => ({
+      transform: `translate(${(p.x - end.x).toFixed(2)}px, ${(p.y - end.y).toFixed(2)}px)`, opacity: p.on ? 1 : 0,
+    })), { duration: journey.ms }, elapsed);
+    if (!wrecked) return;
+    thrown.style.transformOrigin = `${end.x}px ${end.y}px`;
+    playFrom(thrown, [
+      { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${shift.x.toFixed(2)}px, ${shift.y.toFixed(2)}px) rotate(${tip}deg)`, opacity: faint },
+    ], { delay: journey.ms, duration: TRAIN.wreckMs, easing: 'ease-out' }, elapsed);
+    if (flame) playFrom(flame, [{ opacity: 0 }, { opacity: 1 }], { delay: journey.ms, duration: TRAIN.wreckMs }, elapsed);
   });
 }
 

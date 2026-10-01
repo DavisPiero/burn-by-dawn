@@ -825,7 +825,9 @@ export const HOSE = {
   nozzleRadius: 3.2,
   // The bomb store's lead to its charge point (M33): a bomb trolley's two
   // rails, straight, with sleepers, instead of a rubber hose.
-  rails: { gauge: 5, width: 1.3, sleeperEvery: 6, sleeperWidth: 1.6, sleeperOver: 2 },
+  // M35 (the operator's): a pixel heavier, and the gauge a little wider to
+  // keep the two rails apart.
+  rails: { gauge: 6.5, width: 2.3, sleeperEvery: 6, sleeperWidth: 1.8, sleeperOver: 2.2 },
 };
 
 export const WIRES = {
@@ -853,8 +855,10 @@ const OBJECTIVE_ART = {
   // art's own units, out to its charge point, so the bowser's point reads as its own.
   bowser: { intact: 'objective-fuel-bowser', destroyed: 'objective-fuel-bowser-destroyed', hose: { x: 7, y: 33 } },
   // The bomb store (M33): `hose` again, to its own charge point between the
-  // two pens' points, but drawn as the store's trolley rails (`style`).
-  bombStore: { intact: 'objective-bomb-store', destroyed: 'objective-bomb-store-destroyed', hose: { x: 42, y: 14, style: 'rails' } },
+  // two pens' points, but drawn as the store's trolley rails (`style`). They
+  // leave its upper left (M35, the operator's: from the top they ran under the
+  // S of STORE).
+  bombStore: { intact: 'objective-bomb-store', destroyed: 'objective-bomb-store-destroyed', hose: { x: 21, y: 25, style: 'rails' } },
   signals: { intact: 'objective-signals-tent', destroyed: 'objective-signals-tent-destroyed', cut: 'objective-signals-tent-cut', wires: { x: 60, y: 12 } },
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
@@ -898,6 +902,11 @@ export const TRAIN = {
   sunkOpacity: 0.6,
   flame: 'marker-blast',
   flameSize: 44,
+  // It moves between turns (M35, the operator's): each car runs the hexes it
+  // made in the garrison's turn at this pace, quicker than anyone walks, and
+  // a wrecked one is thrown off the line once it has got there.
+  msPerHex: 300,
+  wreckMs: 320,
 };
 
 // The exfil's picture, by the map's `exfilArt` (M29): France's barn, or the
@@ -2121,30 +2130,40 @@ function bombStore(burnt) {
 
 // The goods train (M34), from above, running east: a tank engine in ink with
 // its boiler bands, chimney, dome and cab, and a covered wagon in army green
-// with its roof ribs and couplings. Each is one hex long.
+// with its roof ribs and couplings. Each is one hex long. M35 (the operator's:
+// green on the green ground it comes in over, it was hard to notice): every
+// car has rounded corners and is trimmed in cold blue and paper, a blue cab
+// and blue ends with a paper line down each side.
+const roundBox = (x0, y0, x1, y1, r) => `M${x0 + r} ${y0} H${x1 - r} Q${x1} ${y0} ${x1} ${y0 + r} V${y1 - r} Q${x1} ${y1} ${x1 - r} ${y1} H${x0 + r} Q${x0} ${y1} ${x0} ${y1 - r} V${y0 + r} Q${x0} ${y0} ${x0 + r} ${y0} Z`;
 function trainEngine() {
-  const frame = 'M6 12 H70 Q76 12 76 18 V28 Q76 34 70 34 H6 Z';
+  const frame = roundBox(6, 12, 76, 34, 5);
   const boiler = 'M26 14 H66 Q73 14 73 20 V26 Q73 32 66 32 H26 Z';
-  const cab = 'M6 10 H26 V36 H6 Z';
+  const cab = roundBox(6, 10, 26, 36, 4);
   return [
     line('M0 23 H6', 3),
     ...inked(frame, 'ink', 1.4),
+    line('M29 12.8 H70 M29 33.2 H70', 1.6, 'stroke-paper'),
     fill(boiler, 'ink'), line(boiler, 1.2, 'stroke-paper', { opacity: 0.55 }),
-    line('M36 14 V32 M46 14 V32 M56 14 V32', 1, 'stroke-paper', { opacity: 0.4 }),
+    line('M36 14 V32 M46 14 V32 M56 14 V32', 1.2, 'stroke-paper', { opacity: 0.75 }),
     circle(64, 23, 4.2, 'paper'), ring(64, 23, 4.2, 1.2), circle(64, 23, 2, 'ink'),
-    circle(50, 23, 3, 'ink'), ring(50, 23, 3, 1, 'stroke-paper'),
-    ...inked(cab, 'green', 1.4), line('M10 14 H22 M10 32 H22', 1, 'stroke-ink', { opacity: 0.6 }),
+    circle(50, 23, 3, 'blue'), ring(50, 23, 3, 1, 'stroke-paper'),
+    ...inked(cab, 'blue', 1.4), line('M10 14 H22 M10 32 H22', 1.6, 'stroke-paper'),
     fill('M74 20 H79 V26 H74 Z', 'red'),
   ];
 }
 function trainWagon() {
-  const body = 'M5 11 H75 V35 H5 Z';
+  const body = roundBox(5, 11, 75, 35, 5);
   return [
     line('M0 23 H5 M75 23 H80', 3),
-    ...inked(body, 'green', 1.4),
-    line('M17 11 V35 M29 11 V35 M40 11 V35 M51 11 V35 M63 11 V35', 0.9, 'stroke-ink', { opacity: 0.45 }),
-    line('M5 23 H75', 0.9, 'stroke-ink', { opacity: 0.3 }),
-    fill('M34 19 H46 V27 H34 Z', 'paper', { 'fill-opacity': 0.75 }),
+    fill(body, 'green'),
+    // Its ends in blue, inside the body's rounded corners.
+    fill('M10 11 H16 V35 H10 Q5 35 5 30 V16 Q5 11 10 11 Z', 'blue'),
+    fill('M70 11 H64 V35 H70 Q75 35 75 30 V16 Q75 11 70 11 Z', 'blue'),
+    line('M16 11 V35 M64 11 V35', 1.4, 'stroke-paper'),
+    line('M28 11 V35 M40 11 V35 M52 11 V35', 0.9, 'stroke-ink', { opacity: 0.45 }),
+    line('M19 14.4 H61 M19 31.6 H61', 1.6, 'stroke-paper'),
+    fill('M34 19 H46 V27 H34 Z', 'paper', { 'fill-opacity': 0.9 }),
+    line(body, 1.4),
   ];
 }
 

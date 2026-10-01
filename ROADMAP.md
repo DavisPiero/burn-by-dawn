@@ -228,6 +228,9 @@ won more often than men who set them on arriving (91 / 94 / 96 against 86 / 83 /
 19 / 39 / 46 against 29 / 38 / 37: a gamble on the West run, and the stick has two to
 four turns to reach the exfil before dawn.
 
+Since M35 (2 Oct 2026, the operator's notes) it runs between turns, is trimmed in blue
+and paper, and whistles as it comes on.
+
 ## More missions after that (candidates, from the historical notes)
 
 - **Bruneval** (France, 1942): drop onto the cliffs, take the radar parts, fight down to
