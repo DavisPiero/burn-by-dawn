@@ -652,4 +652,40 @@ export default [
     equal(once.selectedUnitId, state.units[0].id, 'still selected');
     equal(deselect(once).selectedUnitId, null, 'then deselected');
   }],
+  ['return fire (M36): a man who is no gunner may suppress the enemy that has him in its sights, and no other', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 5);
+    const otherRole = Object.keys(rules.roles).find((id) => !rules.roles[id].suppress);
+    const man = state.units.find((u) => u.role === otherRole);
+    const sights = { unitId: man.id, q: row.q, r: row.r };
+    const watcher = enemy(row.q + 2, row.r, 'W', { watching: sights });
+    const bystander = enemy(row.q + 1, row.r, 'E');
+    const farWatcher = enemy(row.q + 4, row.r, 'W', { watching: sights });
+
+    const { state: quiet, unitId } = scenario(state, otherRole, row, [watcher, bystander]);
+    assert(!checkSuppress(map, unitIn(quiet, unitId), watcher, rules).ok, 'not while nobody has seen him: only a gunner fires first');
+
+    const { state: s } = scenario(state, otherRole, row, [watcher, bystander, farWatcher], { inContact: true });
+    const seen = unitIn(s, unitId);
+    const check = checkSuppress(map, seen, watcher, rules);
+    assert(check.ok, `he can fire back at the enemy watching him: ${check.reason}`);
+    equal(check.cost, rules.actions.returnFire.apCost, 'at return fire\'s own cost');
+    assert(!checkSuppress(map, seen, bystander, rules).ok, 'not at an enemy that has not seen him');
+    assert(!checkSuppress(map, seen, farWatcher, rules).ok, 'not past his spot radius');
+
+    const fired = suppressEnemy(s, unitId, watcher.id, map, rules);
+    assert(fired.enemies.find((e) => e.id === watcher.id).suppressed, 'it keeps its head down');
+    equal(unitIn(fired, unitId).ap, seen.ap - rules.actions.returnFire.apCost, 'AP spent, the rest his to move with');
+    equal(fired.alert.points, gunfireOf(seen, rules), 'it is gunfire to the alert');
+    equal(fired.noises.at(-1).kind, 'gunfire', 'and is heard as gunfire');
+    equal(suppressEnemy(s, unitId, bystander.id, map, rules), s, 'an illegal shot changes nothing');
+
+    // Turned off in the data, only gunners fire, as before M36.
+    const off = { ...rules, actions: { ...rules.actions, returnFire: null } };
+    assert(!checkSuppress(map, seen, watcher, off).ok, 'returnFire: null turns it off');
+    // A gunner needs no contact: he fires first, at anything he can see.
+    const gunnerRole = Object.keys(rules.roles).find((id) => rules.roles[id].suppress);
+    const { state: g, unitId: gunnerId } = scenario(state, gunnerRole, row, [bystander]);
+    assert(checkSuppress(map, unitIn(g, gunnerId), bystander, rules).ok, 'a gunner still fires first');
+  }],
 ];

@@ -151,6 +151,9 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
     throw new Error(`${rulesUrl}: "patrols.suspiciousPauseEvery" must be a positive integer`);
   }
   requireCount(rules.patrols.sweepRotation, '"patrols.sweepRotation"', rulesUrl);
+  if (!Number.isInteger(rules.patrols.setOutTurn) || rules.patrols.setOutTurn < 1) {
+    throw new Error(`${rulesUrl}: "patrols.setOutTurn" must be a positive integer (1: the patrols walk from the start)`);
+  }
   states.forEach((s, i) => requireCount(s.hearingBonus, `"alert.states[${i}].hearingBonus"`, rulesUrl));
   requireCount(rules.alert.stone, '"alert.stone"', rulesUrl);
   requireCount(rules.alert.bodyFound, '"alert.bodyFound"', rulesUrl);
@@ -176,6 +179,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.actions?.hide?.apCost, '"actions.hide.apCost"', rulesUrl);
   requireCount(rules.actions.hide.concealment, '"actions.hide.concealment"', rulesUrl);
   requireCount(rules.actions?.suppress?.apCost, '"actions.suppress.apCost"', rulesUrl);
+  if (rules.actions.returnFire !== null) requireCount(rules.actions.returnFire?.apCost, '"actions.returnFire.apCost" (or "returnFire": null)', rulesUrl);
   requireCount(rules.actions?.kill?.apCost, '"actions.kill.apCost"', rulesUrl);
   requireCount(rules.actions?.throwStone?.apCost, '"actions.throwStone.apCost"', rulesUrl);
   requireCount(rules.actions.throwStone.range, '"actions.throwStone.range"', rulesUrl);

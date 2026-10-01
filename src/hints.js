@@ -150,7 +150,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
 
   const inContact = men.filter((u) => u.inContact);
   if (inContact.length) {
-    hints.push(`${names(inContact)} ${plural(inContact.length, 'is', 'are')} in contact: an enemy has ${plural(inContact.length, 'him', 'them')} in its sights and will fire. Get out of its view, hide in cover [H], or have a gunner suppress it [S].`);
+    hints.push(`${names(inContact)} ${plural(inContact.length, 'is', 'are')} in contact: an enemy has ${plural(inContact.length, 'him', 'them')} in its sights and will fire. Get out of its view, hide in cover [H], or ${rules.actions.returnFire ? `fire back at it [S]: loud, but it keeps its head down for a turn` : 'have a gunner suppress it [S]'}.`);
   }
 
   const wounded = men.filter((u) => u.hits > 0 && !u.stabilised);
@@ -190,7 +190,9 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   const chutes = state.parachutes.length;
   if (chutes > 0 && state.turn <= 4) {
     // How to pack one is said once, on the first turn; after that, just the count.
-    const how = state.turn === 1 ? ' Any man standing on one can pack it up [U] before a patrol finds it.' : '';
+    // Where the patrols have not set out yet (M36, the airfield), this is the turn to do it.
+    const wait = state.turn < rules.patrols.setOutTurn ? ` The patrols stand where they are this turn, and set out at the end of turn ${rules.patrols.setOutTurn}.` : '';
+    const how = state.turn === 1 ? ` Any man standing on one can pack it up [U] before a patrol finds it.${wait}` : '';
     hints.push(`${chutes} ${plural(chutes, 'parachute still lies', 'parachutes still lie')} where the men came down.${how}`);
   }
 

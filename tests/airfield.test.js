@@ -4,6 +4,7 @@
 import { applyDifficulty, levelById, validateDifficulty } from '../src/difficulty.js';
 import { jumpPoints } from '../src/drop.js';
 import { hexDistance } from '../src/hex.js';
+import { runEnemyPhase } from '../src/enemy.js';
 import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import {
   missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winTargets, winWords,
@@ -463,5 +464,32 @@ export default [
     assert(bad([{ from: 5, label: 'X' }]), 'must start from 0');
     assert(bad([{ from: 0, label: 'X' }, { from: 0, label: 'Y' }]), 'must rise');
     assert(bad([{ from: 0 }]), 'needs a label');
+  }],
+  ['the garrison sets out on turn 2 here (M36): no patrol walks its route in turn 1, but one still goes to a noise; France\'s walk from the start', async () => {
+    const { map, rules, traits, roster } = await loadAirfield();
+    equal(rules.patrols.setOutTurn, 2, 'the airfield\'s number');
+    const start = { ...createInitialState(roster, traits, rules, map, 1), phase: 'play', turn: 1 };
+    // The men parked off the board, so nobody is seen and nothing is found.
+    const state = { ...start, units: start.units.map((u, i) => ({ ...u, q: 200 + i, r: 0, landed: true })), parachutes: [] };
+    const walkers = state.enemies.filter((e) => e.route);
+    assert(walkers.length >= 6, 'the patrols and the car');
+    const first = runEnemyPhase(state, map, rules).state;
+    for (const e of walkers) {
+      const now = first.enemies.find((x) => x.id === e.id);
+      equal(`${now.q},${now.r}`, `${e.q},${e.r}`, `${e.id} stands in turn 1`);
+    }
+    const second = runEnemyPhase({ ...first, turn: 2 }, map, rules).state;
+    for (const e of walkers) {
+      const now = second.enemies.find((x) => x.id === e.id);
+      assert(now.q !== e.q || now.r !== e.r, `${e.id} sets out in turn 2`);
+    }
+    // Standing is not sleeping: a patrol that hears a noise in turn 1 goes to it.
+    const patrol = walkers.find((e) => e.speed === 3);
+    const noisy = runEnemyPhase({ ...state, noises: [{ kind: 'stone', q: patrol.q + 2, r: patrol.r }] }, map, rules).state;
+    const went = noisy.enemies.find((e) => e.id === patrol.id);
+    assert(went.q !== patrol.q || went.r !== patrol.r, 'a noise in earshot still brings it');
+
+    const france = missionRules(missionById(validateMissions(await loadJson('data/missions.json')), 'france'), await loadJson('data/rules.json'));
+    equal(france.patrols.setOutTurn, 1, 'France\'s patrols walk from the start');
   }],
 ];

@@ -425,13 +425,30 @@ export function checkKnife(unit, enemy, rules) {
   return result(cost, null);
 }
 
-/** Suppress (SPEC.md §4): gunners only, a visible enemy — in spot radius, clear line. */
+/** Does a suppress by this man count as returning fire: he is no gunner, and the rule is on (SPEC.md §4, M36)? */
+export function returnsFire(unit, rules) {
+  return Boolean(unit && !rules.roles[unit.role].suppress && rules.actions.returnFire);
+}
+
+/** Does this enemy have this man in its sights: the one it spotted and is watching? */
+export function hasInSights(enemy, unit) {
+  return (enemy.watching ?? enemy.holding)?.unitId === unit.id;
+}
+
+/**
+ * Suppress (SPEC.md §4): a visible enemy — in spot radius, clear line. A
+ * gunner fires at any such enemy. Anyone else can only return fire (M36):
+ * he must be in contact, and the enemy must be one that has him in its sights.
+ */
 export function checkSuppress(map, unit, enemy, rules) {
-  const cost = rules.actions.suppress.apCost;
-  if (!unit || !rules.roles[unit.role].suppress) return result(cost, `a ${unit ? unit.roleLabel.toLowerCase() : 'trooper'} cannot suppress`);
+  const back = returnsFire(unit, rules);
+  const cost = back ? rules.actions.returnFire.apCost : rules.actions.suppress.apCost;
+  if (!unit || (!rules.roles[unit.role].suppress && !back)) return result(cost, `a ${unit ? unit.roleLabel.toLowerCase() : 'trooper'} cannot suppress`);
+  if (back && onBoard(unit) && !unit.inContact) return result(cost, 'nobody has seen him — only a gunner fires first');
   const busy = canAct(unit, cost);
   if (busy) return result(cost, busy);
   if (!enemy) return result(cost, 'pick an enemy');
+  if (back && !hasInSights(enemy, unit)) return result(cost, `the ${enemy.label.toLowerCase()} has not seen him — only a gunner fires first`);
   if (enemy.suppressed) return result(cost, `${enemy.label} is already suppressed`);
   const radius = spotRadiusOf(map, unit, rules);
   if (hexDistance(unit, enemy) > radius) return result(cost, `out of range — he sees ${radius} hex${radius === 1 ? '' : 'es'}`);
