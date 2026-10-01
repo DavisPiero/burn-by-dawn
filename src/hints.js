@@ -5,7 +5,7 @@
 // code: the leader is whoever carries the flag (rule 6).
 
 import { alertIndex } from './enemy.js';
-import { checkPassCharge, checkStabilise, onBoard } from './units.js';
+import { chargeCapacity, checkPassCharge, checkStabilise, onBoard } from './units.js';
 import { chainFrom, checkCutLine, kindOf } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
 import { winMet, winTargets, winTargetsLeft, winWords } from './missions.js';
@@ -45,7 +45,8 @@ export function callsLeft(state, rules) {
  * button makes, so a man who has already spent AP is not offered a full-turn
  * stabilise, and no prompt outlives its use. Passing is only worth prompting
  * while the win still wants a charge: a target it needs with a charge still
- * to set (none set or gone off for it yet).
+ * to set (none set or gone off for it yet), and toward a man who carries
+ * charges by his loadout.
  * One prompt per man per kind.
  * @returns {{ kind: 'stabilise' | 'pass', unitId: string, otherId: string }[]}
  */
@@ -59,7 +60,9 @@ export function aidPrompts(state, rules) {
   for (const man of men) {
     const patient = men.find((u) => checkStabilise(man, u).ok);
     if (patient) prompts.push({ kind: 'stabilise', unitId: man.id, otherId: patient.id });
-    const taker = wanted && men.find((u) => checkPassCharge(man, u, rules).ok);
+    // Prompted only toward a man whose loadout is charges (M37): any man can
+    // take one now, and a prompt for every man beside a carrier would never stop.
+    const taker = wanted && men.find((u) => chargeCapacity(u, rules) > 0 && checkPassCharge(man, u, rules).ok);
     if (taker) prompts.push({ kind: 'pass', unitId: man.id, otherId: taker.id });
   }
   return prompts;

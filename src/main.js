@@ -24,7 +24,7 @@ import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
-  chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
+  chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
@@ -904,7 +904,11 @@ function actionsFor(unit) {
     ...(role.suppress || returnsFire(unit, rules) ? [] : ['suppress']),
     ...(role.kill ? [] : ['kill']),
     ...(role.cutLine ? [] : ['cut']),
-    ...(chargeCapacity(unit, rules) > 0 ? [] : ['pickUp', 'charge', 'pass']),
+    // A man whose loadout is no charges (M37) can still carry one he picks up
+    // or is handed: Pick up shows while one lies on his hex, Charge and Pass
+    // while he carries one, so his strip stays short the rest of the time.
+    ...(chargeCapacity(unit, rules) > 0 || unit.charges > 0 || (chargeRoom(unit, rules) > 0 && state.droppedCharges.some((c) => c.q === unit.q && c.r === unit.r)) ? [] : ['pickUp']),
+    ...(chargeCapacity(unit, rules) > 0 || unit.charges > 0 ? [] : ['charge', 'pass']),
     // No water on the map to swim (M29, the airfield): no Swim button at all.
     ...(Object.values(baseMap.legend).includes(rules.actions.swim.across) ? [] : ['swim']),
   ]);
