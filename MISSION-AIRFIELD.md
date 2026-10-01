@@ -136,7 +136,8 @@ goes up but where the stick is when it does. So two things are the mission's own
 - **The clean run** is the night before the first bang: the garrison **below Alert when
   the first bang goes** and no jeep raid called (`cleanNeverReached: "alert"`,
   `cleanUntil: "firstExplosion"`). The back page's line is "quiet to first bang, no
-  diversion". It is what packing the parachutes and hiding the bodies are for here: the
+  diversion", and the orders say it up front: "Getting in with as little enemy attention
+  as possible earns a special bonus!" (`words.cleanOrders`). It is what packing the parachutes and hiding the bodies are for here: the
   bot earns it about one game in twenty on the North and South runs without packing, and
   in most with every chute packed.
 - **The jeep raid is urged only for men in contact** (`diversion.prompt.alertState` null):

@@ -714,7 +714,9 @@ killed, left behind), the level, and the score, whatever the outcome:
 - **The clean run**: never reached Alarmed (`scoring.cleanNeverReached`) and never called
   the RAF diversion: 3. A mission may ask only about the night before the first bang
   (`scoring.cleanUntil: "firstExplosion"`) and name a lower state: the airfield's is
-  **below Alert when the first bang goes**, whatever comes after (§13).
+  **below Alert when the first bang goes**, whatever comes after (§13). The orders say it
+  is there, in the mission's words (`words.cleanOrders`; France's: "Getting in and out
+  with as little enemy attention as possible earns a special bonus!").
 
 The bridge is worth 10 so that the job done with three men out (22 on a clean run) edges
 out the best retreat (21); a full success tops out at 39 before kills. The score is the
@@ -856,7 +858,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
 | M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
-| M32–M32b | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own |
+| M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
 
 ---
 

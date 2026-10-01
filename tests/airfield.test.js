@@ -380,6 +380,9 @@ export default [
     assert(cleanRun(alarmed, rules).kept, 'Alarmed after the first bang does not spoil it');
     assert(scoreOf(alarmed, rules).lines.some((l) => l.points === rules.scoring.clean && l.label.includes('first bang')), 'and the back page pays it');
     assert(!cleanRun({ ...alarmed, diversionsCalled: 1 }, rules).kept, 'the jeep raid still costs it');
+    const { json: all } = await loadAirfield();
+    assert(all.missions.find((m) => m.id === 'airfield').words.cleanOrders.startsWith('Getting in with'), 'the orders say so, of getting in');
+    assert(all.missions.find((m) => m.id === 'france').words.cleanOrders.startsWith('Getting in and out'), 'France\'s of in and out');
     const loud = { ...state, alert: { ...state.alert, points: alertFrom, peak: alertFrom } };
     assert(!cleanRun(loud, rules).kept, 'Alert before any bang: gone');
     let late = placeCharge(loud, 'fitch', rules, 2);

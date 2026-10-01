@@ -1959,6 +1959,9 @@ function describeBriefing(which, view) {
             ? 'Every bang alerts the garrison, so carefully plan the order and timer duration of the charges you set.'
             : 'Every bang alerts the garrison, so plan the order you set charges carefully.'}`,
           'It’s good to be slow and stealthy, but be sure to finish before dawn!',
+          // The clean run said up front (M32c, the operator's): until now only
+          // the back page told of it. The mission's own words, as its condition is.
+          ...(mission.words.cleanOrders ? [mission.words.cleanOrders] : []),
         ]] : []),
       ],
       sections: [{
