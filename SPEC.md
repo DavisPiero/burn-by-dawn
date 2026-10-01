@@ -862,7 +862,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
 | M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
-| M33 | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
 | M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
 
 ---

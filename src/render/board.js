@@ -962,8 +962,10 @@ function drawSelectCue(layers, state, now) {
   // until then), kept on the board.
   const edge = boardEdges(map);
   const middle = { x: points.reduce((sum, p) => sum + p.x, 0) / points.length, y: points.reduce((sum, p) => sum + p.y, 0) / points.length };
-  const width = 'CLICK A MAN TO START'.length * CUE.noteSize * 0.5;
-  const x = Math.min(Math.max(middle.x, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
+  // The lettering is wider than half its size a letter (M33b, the operator's:
+  // men down by the west edge put the C of CLICK off the map).
+  const width = 'CLICK A MAN TO START'.length * CUE.noteSize * CUE.noteAdvance;
+  const x = Math.min(Math.max(middle.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
   const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
 }
@@ -1581,6 +1583,9 @@ function drawArt(layers, state, view) {
     const art = objectiveArt(objective);
     if (!art) continue;
     const at = labelPoint(map, objective.hexes);
+    // Its lead to its charge point first, so it runs out from under the
+    // picture (M33b, the operator's: the bowser's hose lay over the bowser).
+    if (art.hose && !objective.destroyed) drawHose(layers, objective);
     layers.art.appendChild(el('use', {
       href: `#${art.id}`, x: at.x - art.width / 2, y: at.y - art.height / 2, width: art.width, height: art.height,
     }));
@@ -1633,14 +1638,20 @@ function drawSites(layers, state, view) {
     const needed = view.winTargetIds.has(objective.id);
     const name = needed ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
     // Names go on last, over the charge points around them.
-    // `nameNudge` (M33, art only) moves the name by [x, y] hex radii: the bomb
-    // store's goes under it, as it stands between two Stukas' names.
-    const [nameX, nameY] = (map.objectives?.find((o) => o.id === objective.id)?.nameNudge ?? [0, 0]).map((v) => v * map.hexSize);
-    labels.push(casedText(name, at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    // `nameNudge` (M33, art only) moves the name by [x, y] hex radii, and
+    // `nameWrap` (M33b, art only) prints it a word to a line, the last line
+    // where one line would sit: the airfield's Stukas' names are under them,
+    // clear of their pens' charge points, and BOMB STORE is two lines.
+    const mapObjective = map.objectives?.find((o) => o.id === objective.id);
+    const [nameX, nameY] = (mapObjective?.nameNudge ?? [0, 0]).map((v) => v * map.hexSize);
+    const words = mapObjective?.nameWrap ? name.split(' ') : [name];
+    words.forEach((word, k) => {
+      const up = (words.length - 1 - k) * OBJECTIVE.labelSize * OBJECTIVE.labelLeading;
+      labels.push(casedText(word, at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY - up, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    });
     // The exchange's telephone lines run out to a pole on each of its charge
     // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
     if (objectiveArt(objective)?.wires) drawWires(layers, objective);
-    if (objectiveArt(objective)?.hose && !objective.destroyed) drawHose(layers, objective);
     if (objective.destroyed) {
       const at = stampPoint(map, state, objective);
       layers.highlight.appendChild(el('use', {
@@ -1658,14 +1669,24 @@ function drawSites(layers, state, view) {
       if (state.charges.some((c) => c.q === h.q && c.r === h.r)) continue;
       const p = axialToPixel(h.q, h.r, map.hexSize);
       const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
-      const point = el('g', { opacity: hovered ? OBJECTIVE.pointHoverOpacity : OBJECTIVE.pointOpacity });
-      point.appendChild(el('polygon', { points: inset, fill: 'none', stroke: OBJECTIVE.casing, 'stroke-width': OBJECTIVE.pointCasingWidth, 'stroke-linejoin': 'round' }));
+      // A target with a lead to its point (the bowser, the bomb store) is
+      // not stood on, and its point sits among its neighbours' (M33b, the
+      // operator's: men were sent at the bomb store itself): that point is
+      // dashed in its own colour, heavier, and its satchel ringed.
+      const lead = Boolean(objectiveArt(objective)?.hose);
+      const stroke = lead ? OBJECTIVE.leadPointStroke : OBJECTIVE.pointStroke;
+      const point = el('g', { opacity: hovered || lead ? OBJECTIVE.pointHoverOpacity : OBJECTIVE.pointOpacity });
+      point.appendChild(el('polygon', { points: inset, fill: 'none', stroke: OBJECTIVE.casing, 'stroke-width': OBJECTIVE.pointCasingWidth + (lead ? 1.5 : 0), 'stroke-linejoin': 'round' }));
       point.appendChild(el('polygon', {
-        points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth,
-        'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
+        points: inset, fill: 'none', stroke, 'stroke-width': lead ? OBJECTIVE.leadPointWidth : OBJECTIVE.pointWidth,
+        'stroke-dasharray': lead ? OBJECTIVE.leadPointDash : OBJECTIVE.pointDash, 'stroke-linejoin': 'round',
       }));
       const size = OBJECTIVE.pointIconSize;
       const { x, y } = pointIconAt(map, objective, h);
+      if (lead) {
+        point.appendChild(el('circle', { cx: x, cy: y, r: OBJECTIVE.leadRingRadius, fill: 'none', stroke: OBJECTIVE.casing, 'stroke-width': OBJECTIVE.leadRingWidth + 3 }));
+        point.appendChild(el('circle', { cx: x, cy: y, r: OBJECTIVE.leadRingRadius, fill: 'none', stroke, 'stroke-width': OBJECTIVE.leadRingWidth }));
+      }
       point.appendChild(el('use', { href: '#marker-charge-point', x: x - size / 2, y: y - size / 2, width: size, height: size }));
       layers.sites.appendChild(point);
     }
@@ -1757,7 +1778,7 @@ function drawHose(layers, objective) {
     g.appendChild(el('path', { d, fill: 'none', stroke: HOSE.stroke, 'stroke-width': HOSE.width, 'stroke-linecap': 'round' }));
     g.appendChild(el('circle', { cx: to.x, cy: to.y, r: HOSE.nozzleRadius, fill: HOSE.nozzle, stroke: HOSE.stroke, 'stroke-width': 1.5 }));
   }
-  layers.sites.appendChild(g);
+  layers.art.appendChild(g);
 }
 
 /**

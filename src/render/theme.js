@@ -770,6 +770,14 @@ export const OBJECTIVE = {
   pointHoverOpacity: 1,
   pointIconSize: 34,
   pointIconShift: 0.3, // hex radii toward the target it serves (M12)
+  // The charge point of a target with a lead to it (M33b): cold blue, a
+  // heavier and longer dash, and a ring round its satchel.
+  leadPointStroke: PALETTE.blue,
+  leadPointDash: '11 5',
+  leadPointWidth: 4,
+  leadRingRadius: 19,
+  leadRingWidth: 3,
+  labelLeading: 1.05, // a wrapped name's line height, in label sizes
   stampWidth: 138,
   stampHeight: 44,
   stampRotate: -12,
@@ -1052,6 +1060,8 @@ export const CUE = {
   ringWidth: 4.5,
   ringOpacity: 0.5, // M22, the operator's: the rings at full strength were loud
   noteSize: 22,
+  noteAdvance: 0.72, // a letter's width in the pen lettering, in note sizes, for keeping a note on the board
+  noteEdgeGap: 14,
 };
 
 export const RINGS = {
