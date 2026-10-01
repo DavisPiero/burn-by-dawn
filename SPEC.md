@@ -189,7 +189,7 @@ gives the full cost and, when it cannot be used, why not.
   it is open to a gunner's kill. He keeps the AP he has left to get away. Only a gunner
   fires first; a man nobody has seen has no shot. It is the verb for the man who has been
   seen: it pays now (he is not fired on by that enemy) and costs later (the dial, and
-  every patrol in earshot coming to look). The button reads Return fire, and its rollover
+  every patrol in earshot coming to look). The button reads Fire back, and its rollover
   and the enemy's hover (a FIRE row) say whether he can, and why not.
 - **Kill** (gunner only) — 2 AP. The target must be visible, as for suppress, and
   **under suppression**: suppressed this player phase or the one before, so one gunner

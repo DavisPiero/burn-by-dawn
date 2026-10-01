@@ -919,7 +919,7 @@ function actionsFor(unit) {
   const back = returnsFire(unit, rules);
   const fireAt = back ? state.enemies.filter((e) => hasInSights(e, unit)) : state.enemies;
   const canSuppress = fireAt.map((e) => checkSuppress(map, unit, e, rules));
-  const suppress = canSuppress.find((c) => c.ok) ?? (back && canSuppress[0]) ?? checkSuppress(map, unit, null, rules);
+  const suppress = canSuppress.find((c) => c.ok) ?? (back ? canSuppress[0] : undefined) ?? checkSuppress(map, unit, null, rules);
   const fireAlert = applyHook(unit, 'onFire', 'alert', rules.alert.gunfire).value;
   const kill = state.enemies.map((e) => checkKill(map, unit, e, rules)).find((c) => c.ok)
     ?? checkKill(map, unit, null, rules);
@@ -939,7 +939,8 @@ function actionsFor(unit) {
     },
     back
       ? {
-        id: 'suppress', key: 'S', label: 'Return fire', lines: ['Return', 'fire'], tight: 'Fire',
+        // One line, so its cost always shows: "Fire back", or "Fire" where the strip has four columns.
+        id: 'suppress', key: 'S', label: 'Return fire', short: 'Fire back', tight: 'Fire',
         help: `Fire back at an enemy that has him in its sights: it keeps its head down — it will not see, fire or move until its next go — so he can get away, or a gunner can kill it. Only a gunner fires first. Loud: alert +${fireAlert}, and the patrols in earshot come.`,
         ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'the enemy that saw him is gone' } : suppress, ap),
       }
