@@ -1,7 +1,8 @@
 # Burn by Dawn — Roadmap
 
 For the operator's reference. Written 28 Sep 2026 at build M24. SPEC.md stays the source
-of truth for how the game works; this file says what comes next and in what order.
+of truth for how the game works (with ART-DIRECTION.md, its §11, and MISSION-AIRFIELD.md,
+its §13); this file says what comes next and in what order.
 Update it when a phase finishes or the plan changes.
 
 ---
@@ -17,7 +18,7 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
 - Tests: 130 headless, 132 in tests.html. Balance bot (naive, KNIFE=1, win %
   west/north/east): Easy 99/100/97, Normal 86/83/89, Hard 29/38/37, every run inside
   the SPEC §10 targets.
-- **Phase 3, the airfield, is specified** in SPEC.md §13 (29 Sep 2026): southern Tunisia,
+- **Phase 3, the airfield, is specified** in SPEC.md §13, now MISSION-AIRFIELD.md (29 Sep 2026): southern Tunisia,
   1942; eight aircraft, any five to win on Normal (M30; four at first); five bombs; the
   two new rules are time pencils and a bowser that sets off its neighbours. **M28 to M30
   are built**: the engine work (France's bot output byte-for-byte unchanged), the
@@ -49,9 +50,8 @@ the mission's score bands; SPEC.md trimmed. Tests: 157 headless, 159 in tests.ht
   aqueduct: **decide in the spec which alert state a normal win should end in**, and
   count the bangs, bodies and parachutes against it before the map is drawn.
 - **The longest timer is always best, and timing bangs together pays nothing.**
-- **The bowser is the plan, not a greed**, so play gathers on the south apron. A second
-  target that sets off its neighbours among the Stukas (a bomb store) would reuse the
-  rule and give the North run a plan of its own.
+- **The bowser is the plan, not a greed**, so play gathers on the south apron. The bomb
+  store, below, is the answer the operator chose.
 - **The West run is the airfield's best by every measure**: it lands beside the wadi and
   the trucks, and its parachutes are almost never found.
 - **The Fuel Dump in France is rarely worth it** (the bot takes it in 11–40% of games,
@@ -155,7 +155,7 @@ Gunnerside, the SAS airfield raids, Chestnut, the Jedburghs, Nadzab).
 
 ## Phase 3 — Mission 2: the airfield (North Africa)
 
-**Specified** in SPEC.md §13, which supersedes this outline where they differ. The
+**Specified** in SPEC.md §13 (now MISSION-AIRFIELD.md), which supersedes this outline where they differ. The
 operator's calls (29 Sep 2026): southern Tunisia, 1942 (loosely 2 Para at Oudna, paras
 from Dakotas); the two new rules are **time pencils** (choose a charge's fuse) and a
 **fuel bowser that sets off the aircraft in its blast**; **sappers carry two bombs**
@@ -196,6 +196,44 @@ choose.
 - **Mechanics budget: at most two new rules.**
 
 ---
+
+## Planned for the airfield: the bomb store (the operator's call, 1 Oct 2026)
+
+A second target that sets off its neighbours, among the Stukas in the north dispersal: a
+**bomb store**. It reuses the bowser's rule (`setsOff`) as a new objective kind, so it is
+data, a place on the map and a painting, not a new rule. What it is for: today one bomb
+on the bowser takes three Ju 52s, so every plan starts on the south apron; with a store
+in the north there are two big prizes on opposite sides of the strip, the stick has to
+choose or split, and the North run gets a plan of its own.
+To settle in MISSION-AIRFIELD.md before it is built:
+- **Where it stands and what it takes.** Between two Stukas, as the bowser stands between
+  two Ju 52s, is the plain choice; a test should hold its blast to exactly those, as one
+  holds the bowser's. Taking three would make it the better prize and move the problem
+  north.
+- **What makes it a greed and not a second plan-for-free.** With both, two bombs take six
+  aircraft, which is Hard's whole job. Candidates, cheapest first: it stands in the
+  north AA pit's view, so it needs a stone, a suppression or a kill first; its blast is
+  wider (3), so the man who sets it needs a long timer and a long walk; it raises the
+  alert more than the bowser. The bot decides between them.
+- **The win counts.** Five on Normal and six on Hard were set with one bowser. Expect to
+  raise them (six and seven?) or to cut the stick's bombs from five to four; measured by
+  the bot against SPEC §10's targets.
+- **Art**: a bomb store to paint (stacked bombs under netting, or a sandbagged dump), in
+  ART-PROMPTS.md.
+
+## Proposed for the airfield: a bonus for bangs timed together (not yet agreed)
+
+The bot's best timer is always the longest, and bangs timed together pay nothing, so the
+tin of time pencils offers a choice with one right answer. The alert cannot be the
+reward: the garrison is Alarmed whatever is done. Proposed: **the salvo**, a score line
+on the back page. If `scoring.salvo.count` or more of the win's targets go up in one fuse
+phase (say four aircraft), the sheet pays `scoring.salvo.points` (say 3): "4 up in one
+bang". Aircraft a bowser or bomb store sets off count, so the chain is the easy half of
+it (two) and the timers the hard half: to add a fourth and fifth the stick has to set shorter and shorter
+pencils as it goes round, and the last man is setting a 2 while the first charge has two
+turns left. It is score only, so it changes no win rate; it is data in `rules.json`
+(null in France, which has one fuse); and it gives the top rating band a route that is
+about skill with the mission's own mechanic.
 
 ## A candidate for France: the goods train (the operator likes it; not yet specified)
 
