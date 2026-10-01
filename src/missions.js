@@ -76,6 +76,8 @@ export function validateMissions(json, url = 'data/missions.json') {
     for (const key of WORDS) {
       if (typeof m.words[key] !== 'string') throw new Error(`${where} "words" needs "${key}"`);
     }
+    // The orders' line about the clean run (M32c), optional.
+    if (m.words.cleanOrders !== undefined && (typeof m.words.cleanOrders !== 'string' || !m.words.cleanOrders)) throw new Error(`${where} "words.cleanOrders" must be words`);
     for (const key of ['levels', 'dialogue']) {
       if (m[key] !== undefined && (typeof m[key] !== 'object' || m[key] === null || Array.isArray(m[key]))) throw new Error(`${where} "${key}" must be an object`);
     }
