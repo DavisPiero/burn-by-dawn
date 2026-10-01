@@ -91,6 +91,26 @@ export function finalOutcome(state, rules, check, turn, dawn) {
  * Alarmed and never called the RAF diversion. Stealth is paid for, not speed
  * (M11b): a point per turn to spare paid players to rush.
  */
+/**
+ * The clean run (SPEC.md §10): the garrison never reached
+ * `scoring.cleanNeverReached` and the diversion was never called. Where a
+ * mission sets `scoring.cleanUntil` to "firstExplosion" (M32, the airfield,
+ * whose garrison is Alarmed by the end of every raid), only the night before
+ * the first bang is asked about: the stick got in and set its charges before
+ * the alarm went up. `kept` is whether it still stands, `label` the back
+ * page's line for it.
+ */
+export function cleanRun(state, rules) {
+  const s = rules.scoring;
+  const top = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
+  const untilBang = s.cleanUntil === 'firstExplosion';
+  const peak = untilBang && state.explosions > 0 ? state.alert.peakBeforeBang ?? 0 : state.alert.peak ?? 0;
+  return {
+    kept: peak < top.from && state.diversionsCalled === 0,
+    label: untilBang ? `not ${top.label} before the first bang, no diversion` : `never ${top.label}, no diversion`,
+  };
+}
+
 export function scoreOf(state, rules) {
   const s = rules.scoring;
   const lines = [];
@@ -112,9 +132,7 @@ export function scoreOf(state, rules) {
   if (kills.length > 0) lines.push({ label: `${kills.length} ${kills.length === 1 ? 'enemy' : 'enemies'} killed`, points: kills.length * s.perKill });
   const found = kills.filter((b) => b.found).length;
   if (found > 0) lines.push({ label: `${found} ${found === 1 ? 'body' : 'bodies'} found`, points: found * s.perKillFound });
-  const clean = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
-  if ((state.alert.peak ?? 0) < clean.from && state.diversionsCalled === 0) {
-    lines.push({ label: `never ${clean.label}, no diversion`, points: s.clean });
-  }
+  const clean = cleanRun(state, rules);
+  if (clean.kept) lines.push({ label: clean.label, points: s.clean });
   return { lines, total: lines.reduce((n, l) => n + l.points, 0) };
 }

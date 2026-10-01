@@ -57,6 +57,9 @@
 // (the airfield's bowser) when that takes more of the job for its charges
 // than the targets themselves: one bomb for the aircraft either side of it.
 //
+// SCORES=1 (M32) adds a line per run with the winning scores' spread: lowest,
+// quartiles, highest. The back page's ratings (missions.json) are set against it.
+//
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -407,7 +410,7 @@ function play(seed, runId) {
   const o = state.outcome;
   return {
     kind: o?.kind ?? 'stuck', reason: o?.reason, turn: o?.turn, score: o?.score.total ?? 0, bridgeTurn,
-    peak: state.alert.peak, dead: state.units.filter((u) => u.dead).length,
+    peak: state.alert.peak, clean: o ? o.score.lines.some((l) => l.points === rules.scoring.clean && / diversion$/.test(l.label)) : false, dead: state.units.filter((u) => u.dead).length,
     out: state.units.filter((u) => u.out).length,
     kills: state.bodies.filter((b) => b.enemyId).length,
     secondaries: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).length,
@@ -436,6 +439,9 @@ for (const run of runs) {
     landedWet: avg((r) => r.wet), landedBad: avg((r) => r.bad), reinforced: avg((r) => r.reinforced),
     // How often each bonus target went up, as a share of games.
     bonusPct: Object.fromEntries(map0.objectives.filter((o) => !WIN_IDS.has(o.id)).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
+    // The winning scores' spread (M32): lowest, quartiles, highest — what the back page's ratings are set against.
+    winScores: (() => { const w = res.filter((r) => r.kind === 'success').map((r) => r.score).sort((a, b) => a - b); return w.length ? [0, 0.25, 0.5, 0.75, 1].map((f) => w[Math.min(w.length - 1, Math.floor(f * w.length))]) : []; })(),
+    cleanPct: `${((100 * res.filter((r) => r.clean).length) / N).toFixed(0)}%`,
     alarmedPct: `${((100 * res.filter((r) => (r.peak ?? 0) >= rules.alert.states.at(-1).from).length) / N).toFixed(0)}%`,
   };
 }
@@ -445,7 +451,8 @@ if (AS_JSON) {
   console.log(`${STRATEGY}, ${N} seeds per drop run${DATA_OVERRIDE ? `, rules patch ${JSON.stringify(DATA_OVERRIDE)}` : ''}`);
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
-      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
+      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
+    if (process.env.SCORES) console.log(`      winning scores, lowest / quartiles / highest: ${v.winScores.join(' / ')}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
   }
 }

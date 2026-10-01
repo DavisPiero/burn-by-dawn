@@ -91,10 +91,33 @@ export function validateMissions(json, url = 'data/missions.json') {
       throw new Error(`${where} "endSounds" needs "success" and "otherwise" cues`);
     }
     validateWin(m.win, `${where}.win`);
+    if (m.ratings !== undefined) {
+      if (!Array.isArray(m.ratings) || m.ratings.length === 0) throw new Error(`${where} "ratings" must be a non-empty list`);
+      for (const [n, r] of m.ratings.entries()) {
+        if (!Number.isInteger(r?.from) || typeof r.label !== 'string' || !r.label) throw new Error(`${where} ratings[${n}] needs a whole "from" score and a "label"`);
+        if (n === 0 ? r.from !== 0 : r.from <= m.ratings[n - 1].from) throw new Error(`${where} "ratings" must start from 0 and rise`);
+      }
+    }
   }
   const chosen = json.missions.find((m) => m.id === json.default);
   if (!canPlay(chosen)) throw new Error(`${url}: "default" must be a playable mission's id, got ${JSON.stringify(json.default)}`);
   return json;
+}
+
+/**
+ * The back page's verdict on a mission accomplished (M32, SPEC.md §10): the
+ * mission's `ratings` are score bands, lowest first, each `{ from, label }`.
+ * Returns the whole ladder with each band's span and which one `total` earns,
+ * or null where the mission has none. Only a success is rated: the outcome's
+ * own word is the verdict on the rest.
+ */
+export function ratingOf(mission, total) {
+  const ratings = mission?.ratings;
+  if (!ratings) return null;
+  let earned = 0;
+  ratings.forEach((r, i) => { if (total >= r.from) earned = i; });
+  const ladder = ratings.map((r, i) => ({ label: r.label, from: r.from, to: i + 1 < ratings.length ? ratings[i + 1].from - 1 : null, earned: i === earned }));
+  return { label: ratings[earned].label, ladder };
 }
 
 /** The mission asked for by `?mission=<id>`, if it can be played (a draft too), or null. */

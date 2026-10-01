@@ -475,6 +475,10 @@ export function runFusePhase(state, rules) {
     const destroyed = detonated >= kind.chargesNeeded;
     next = {
       ...next,
+      // How high the alert had been when the first bang went (M32): the
+      // clean-run score of a mission whose `scoring.cleanUntil` is the first
+      // explosion asks only about the night before it (scoring.js).
+      alert: next.explosions === 0 ? { ...next.alert, peakBeforeBang: next.alert.peak ?? 0 } : next.alert,
       explosions: next.explosions + 1,
       objectives: next.objectives.map((o) => (o.id === objective.id ? { ...o, detonated, destroyed } : o)),
     };
