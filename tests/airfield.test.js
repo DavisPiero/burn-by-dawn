@@ -6,13 +6,13 @@ import { jumpPoints } from '../src/drop.js';
 import { hexDistance } from '../src/hex.js';
 import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import {
-  missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets, winWords,
+  missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winTargets, winWords,
 } from '../src/missions.js';
 import { blastEffect, blastHexesThisTurn, blastsOfCharge, caughtBy, checkPlaceCharge, defaultPencil, isExfil, laterBlasts, offeredPencil, pencils, runFusePhase } from '../src/sabotage.js';
 import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '../src/state.js';
-import { scoreOf } from '../src/scoring.js';
+import { cleanRun, scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
-import { hintsFor } from '../src/hints.js';
+import { diversionPrompt, hintsFor } from '../src/hints.js';
 import { boardEdges, boardPixelBounds, diversionTimeline, dropTimeline, pickDiversionLine } from '../src/render/board.js';
 import { DRIVE_BY, DRIVE_BY_ART, DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
@@ -243,7 +243,9 @@ export default [
     equal(events.filter((e) => e.kind === 'explosion' && e.setOffBy).length, 2, 'two set off, said so');
     equal(after.charges.length, 0, 'the charge on the caught aircraft is spent');
     const scored = scoreOf(after, rules).lines.filter((l) => l.label.endsWith('destroyed'));
-    equal(scored.length, 3, 'each scored as its own');
+    // M32: targets of one name share a line ("2 Ju 52s destroyed"), each still paid its own score.
+    equal(scored.length, 2, 'the bowser, and the two Ju 52s on one line');
+    assert(scored.some((l) => l.label === '2 Ju 52s destroyed' && l.points === 2 * rules.objectives.aircraft.score), `each scored as its own: ${scored.map((l) => l.label).join(' | ')}`);
   }],
 
   ['a man beside a set-off aircraft is killed by its blast, though out of the bowser\'s', async () => {
@@ -360,5 +362,64 @@ export default [
     const hints = hintsFor({ ...state, turn: 2, parachutes: [] }, rules, {}, 10);
     assert(hints.some((h) => h.includes('then pick a timer')), `the timer: ${hints.join(' | ')}`);
     assert(hints.some((h) => h.includes('The Bowser sets off the 2 Ju 52s beside it: 3 for one charge')), `the bowser: ${hints.join(' | ')}`);
+  }],
+
+  ['the clean run here (M32): below Alert when the first bang goes, whatever comes after; France asks about the whole night', async () => {
+    const { state, rules } = await onAirfield({ fitch: [4, 4] });
+    const alertFrom = rules.alert.states.find((st) => st.id === 'alert').from;
+    equal(rules.scoring.cleanUntil, 'firstExplosion', 'only the night before the first bang');
+    equal(rules.scoring.cleanNeverReached, 'alert', 'and it must be below Alert');
+    const quiet = { ...state, alert: { ...state.alert, points: alertFrom - 1, peak: alertFrom - 1 } };
+    assert(cleanRun(quiet, rules).kept, 'Suspicious and no bang yet: still clean');
+    const set = placeCharge(quiet, 'fitch', rules, 2);
+    let after = set;
+    for (let i = 0; i < 2; i++) after = runFusePhase(after, rules).state;
+    assert(objectiveIn(after, 'stuka-1').destroyed, 'the Stuka goes up');
+    equal(after.alert.peakBeforeBang, alertFrom - 1, 'the alert before the bang is kept');
+    const alarmed = { ...after, alert: { ...after.alert, points: 7, peak: 7 } };
+    assert(cleanRun(alarmed, rules).kept, 'Alarmed after the first bang does not spoil it');
+    assert(scoreOf(alarmed, rules).lines.some((l) => l.points === rules.scoring.clean && l.label.includes('first bang')), 'and the back page pays it');
+    assert(!cleanRun({ ...alarmed, diversionsCalled: 1 }, rules).kept, 'the jeep raid still costs it');
+    const loud = { ...state, alert: { ...state.alert, points: alertFrom, peak: alertFrom } };
+    assert(!cleanRun(loud, rules).kept, 'Alert before any bang: gone');
+    let late = placeCharge(loud, 'fitch', rules, 2);
+    for (let i = 0; i < 2; i++) late = runFusePhase(late, rules).state;
+    assert(!cleanRun(late, rules).kept, 'and it stays gone once the bang comes');
+
+    const france = await loadJson('data/rules.json');
+    equal(france.scoring.cleanUntil, null, 'France: the whole night');
+    equal(france.scoring.cleanNeverReached, 'alarmed', 'France: never Alarmed');
+    const fr = { explosions: 1, diversionsCalled: 0, alert: { peak: 7, peakBeforeBang: 0 } };
+    assert(!cleanRun(fr, france).kept, 'France: Alarmed after the bridge still spoils it');
+  }],
+
+  ['the jeep raid is urged for men in contact, never for the Alarmed garrison (M32: it is Alarmed in every raid)', async () => {
+    const { state, rules } = await onAirfield({ fitch: [4, 4], vance: [5, 3] });
+    equal(rules.diversion.prompt.alertState, null, 'no alert state prompts it');
+    const alarmed = { ...state, alert: { ...state.alert, points: 7, peak: 7 } };
+    equal(diversionPrompt(alarmed, rules, true), null, 'Alarmed alone: no prompt');
+    const two = { ...alarmed, units: alarmed.units.map((u) => (u.id === 'fitch' || u.id === 'vance' ? { ...u, inContact: true } : u)) };
+    assert(diversionPrompt(two, rules, true)?.includes('in contact'), 'two men in contact: urged');
+  }],
+
+  ['the back page rates a mission accomplished against the mission\'s score bands (M32)', async () => {
+    const { json, mission } = await loadAirfield();
+    for (const m of json.missions.filter((x) => x.status === 'playable')) {
+      assert(m.ratings?.length >= 2 && m.ratings[0].from === 0, `${m.id} has its bands, from 0`);
+    }
+    const bands = mission.ratings;
+    equal(ratingOf(mission, 0).label, bands[0].label, 'the lowest band from nought');
+    equal(ratingOf(mission, bands[1].from - 1).label, bands[0].label, 'one short of the next');
+    equal(ratingOf(mission, bands[1].from).label, bands[1].label, 'on the line is in');
+    equal(ratingOf(mission, 999).label, bands.at(-1).label, 'the top has no ceiling');
+    const ladder = ratingOf(mission, bands[1].from).ladder;
+    equal(ladder.filter((b) => b.earned).length, 1, 'one band earned');
+    equal(ladder[0].to, bands[1].from - 1, 'a band runs to one below the next');
+    equal(ladder.at(-1).to, null, 'the top runs on');
+    equal(ratingOf({ ...mission, ratings: undefined }, 30), null, 'a mission with none is not rated');
+    const bad = (ratings) => { try { validateMissions({ ...json, missions: json.missions.map((m) => (m.id === 'airfield' ? { ...m, ratings } : m)) }); return false; } catch { return true; } };
+    assert(bad([{ from: 5, label: 'X' }]), 'must start from 0');
+    assert(bad([{ from: 0, label: 'X' }, { from: 0, label: 'Y' }]), 'must rise');
+    assert(bad([{ from: 0 }]), 'needs a label');
   }],
 ];

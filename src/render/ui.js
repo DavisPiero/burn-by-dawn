@@ -877,7 +877,7 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * The results (SPEC.md §10), printed as the back page of the annual over the
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
-export function renderResults(element, outcome, levelLabel, banner, onAgain, onContents) {
+export function renderResults(element, outcome, levelLabel, banner, onAgain, onContents, rating = null) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
@@ -905,6 +905,23 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain, onC
   total.insertCell().textContent = 'SCORE';
   total.insertCell().textContent = String(outcome.score.total);
 
+  // The rating (M32): the annual's "how did you score?" table, a success's
+  // score against the mission's bands (missions.js ratingOf), best first, the
+  // one earned set in bold with the pen's arrow.
+  let ladder = null;
+  if (rating) {
+    ladder = html('div', 'rating', [html('div', 'rating-earned', [html('small', null, 'RATING'), html('b', null, rating.label)])]);
+    const bands = document.createElement('table');
+    for (const band of [...rating.ladder].reverse()) {
+      const row = bands.insertRow();
+      if (band.earned) row.className = 'earned';
+      row.insertCell().textContent = band.to === null ? `${band.from} or more` : band.from === 0 ? `Under ${band.to + 1}` : `${band.from} to ${band.to}`;
+      row.insertCell().textContent = band.label;
+      row.insertCell().textContent = band.earned ? '◄' : '';
+    }
+    ladder.appendChild(bands);
+  }
+
   const again = html('button', 'btn', 'PLAY AGAIN');
   again.type = 'button';
   again.addEventListener('click', () => onAgain());
@@ -921,6 +938,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain, onC
     html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),
     fates,
     score,
+    ...(ladder ? [ladder] : []),
     html('div', 'again', [again, contents]),
   );
 }

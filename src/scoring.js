@@ -91,11 +91,40 @@ export function finalOutcome(state, rules, check, turn, dawn) {
  * Alarmed and never called the RAF diversion. Stealth is paid for, not speed
  * (M11b): a point per turn to spare paid players to rush.
  */
+/**
+ * The clean run (SPEC.md §10): the garrison never reached
+ * `scoring.cleanNeverReached` and the diversion was never called. Where a
+ * mission sets `scoring.cleanUntil` to "firstExplosion" (M32, the airfield,
+ * whose garrison is Alarmed by the end of every raid), only the night before
+ * the first bang is asked about: the stick got in and set its charges before
+ * the alarm went up. `kept` is whether it still stands, `label` the back
+ * page's line for it.
+ */
+export function cleanRun(state, rules) {
+  const s = rules.scoring;
+  const top = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
+  const untilBang = s.cleanUntil === 'firstExplosion';
+  const peak = untilBang && state.explosions > 0 ? state.alert.peakBeforeBang ?? 0 : state.alert.peak ?? 0;
+  return {
+    kept: peak < top.from && state.diversionsCalled === 0,
+    label: untilBang ? 'quiet to first bang, no diversion' : `never ${top.label}, no diversion`,
+  };
+}
+
 export function scoreOf(state, rules) {
   const s = rules.scoring;
   const lines = [];
+  // Targets of one name are one line (M32: eight aircraft, a line each, ran
+  // the airfield's back page off its foot): "3 Stukas destroyed".
+  const downed = new Map();
   for (const o of state.objectives) {
-    if (o.destroyed) lines.push({ label: `${o.label} destroyed${o.cut ? ' (line cut)' : ''}`, points: kindOf(o, rules).score });
+    if (!o.destroyed) continue;
+    const key = `${o.label}${o.cut ? ' (line cut)' : ''}`;
+    const line = downed.get(key) ?? { label: o.label, cut: o.cut, count: 0, points: 0 };
+    downed.set(key, { ...line, count: line.count + 1, points: line.points + kindOf(o, rules).score });
+  }
+  for (const d of downed.values()) {
+    lines.push({ label: `${d.count > 1 ? `${d.count} ${d.label}s` : d.label} destroyed${d.cut ? ' (line cut)' : ''}`, points: d.points });
   }
   if (s.win > 0 && winMet(state, rules)) lines.push({ label: `The job done: ${winWords(state, rules)}`, points: s.win });
   const out = state.units.filter((u) => u.out);
@@ -112,9 +141,7 @@ export function scoreOf(state, rules) {
   if (kills.length > 0) lines.push({ label: `${kills.length} ${kills.length === 1 ? 'enemy' : 'enemies'} killed`, points: kills.length * s.perKill });
   const found = kills.filter((b) => b.found).length;
   if (found > 0) lines.push({ label: `${found} ${found === 1 ? 'body' : 'bodies'} found`, points: found * s.perKillFound });
-  const clean = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
-  if ((state.alert.peak ?? 0) < clean.from && state.diversionsCalled === 0) {
-    lines.push({ label: `never ${clean.label}, no diversion`, points: s.clean });
-  }
+  const clean = cleanRun(state, rules);
+  if (clean.kept) lines.push({ label: clean.label, points: s.clean });
   return { lines, total: lines.reduce((n, l) => n + l.points, 0) };
 }

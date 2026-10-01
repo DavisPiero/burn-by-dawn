@@ -35,6 +35,28 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   on the airfield, a way back to the contents. A rule tried with them (patrols walk into
   our men and find them) was taken out again: it made the game worse (DECISIONS.md).
 
+**M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
+(DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
+first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
+Alarmed by the end of every raid; a mission accomplished is rated on the back page against
+the mission's score bands; SPEC.md trimmed. Tests: 157 headless, 159 in tests.html.
+
+### What the review found, for Phase 4 and after
+
+- **France's dawn does not press.** The bridge is down by turn 9–10 and the game over by
+  11–12; a 14-turn night would not change the win rate. See the goods train, below.
+- **The airfield's alert dial is always at the top.** No number moves it. For the
+  aqueduct: **decide in the spec which alert state a normal win should end in**, and
+  count the bangs, bodies and parachutes against it before the map is drawn.
+- **The longest timer is always best, and timing bangs together pays nothing.**
+- **The bowser is the plan, not a greed**, so play gathers on the south apron. A second
+  target that sets off its neighbours among the Stukas (a bomb store) would reuse the
+  rule and give the North run a plan of its own.
+- **The West run is the airfield's best by every measure**: it lands beside the wadi and
+  the trucks, and its parachutes are almost never found.
+- **The Fuel Dump in France is rarely worth it** (the bot takes it in 11–40% of games,
+  the exchange in every one).
+
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 
 The game got fun once the player could **act** instead of only avoid: narrower enemy
@@ -167,10 +189,35 @@ choose.
   must be found before they can be used. This puts the spine back on the drop.
 - **Exfil by boat**: beach hexes that are only open for a window of turns.
 - Mountain terrain and ravines. Maybe civilians who raise the alarm if they see you,
-  but who can't be harmed.
+  but who can't be harmed. (M32's review advises against: they are a thing to avoid with
+  no verb that answers them, which fails the second pillar. Spend the two rules on the
+  canisters and the boat, and make the boat's window the clock, since a 20-turn night
+  alone did not press in France.)
 - **Mechanics budget: at most two new rules.**
 
 ---
+
+## A candidate for France: the goods train (the operator likes it; not yet specified)
+
+The rail bridge has a railway and nothing runs on it. A goods train crosses at a turn the
+orders give ("the 04.10 goods crosses on turn 14"); drop the bridge under it and the back
+page pays a bonus. It gives France's fuses something to be timed against (the spine: the
+order and timing of the demolitions) and makes the slack half of the night a decision:
+wait for the train with the charges set and the garrison stirring, or blow it now and go.
+To settle in a spec before anything is built:
+- **What counts**: the bridge destroyed in the fuse phase of the train's turn, or within
+  a turn of it? France has one fuse length (3, Dutch 2), so the charges must be set on
+  the right turn; no time pencils here unless the operator wants them.
+- **What it pays**: score only (5 or so), or play as well (the wreck blocks the line: no
+  reinforcements)? Score only is the smaller rule.
+- **What it costs to wait**: probably nothing new. The Wood and Road patrols and the
+  parachutes already punish standing about; the bot can measure whether that is enough.
+- **Whether the train is a thing on the board** (it can see the men, it is heard) or
+  only a timetable. A timetable and a painted train crossing in the garrison's turn is
+  one rule; a train that sees is two.
+- **Art**: a locomotive and wagons to paint, and a whistle to record (ART-PROMPTS.md).
+- It changes France's numbers, so France's bot output will no longer be byte-identical:
+  the first change to mission 1's rules since v1.0.
 
 ## More missions after that (candidates, from the historical notes)
 
