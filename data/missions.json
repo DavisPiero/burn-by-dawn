@@ -104,12 +104,12 @@
       },
       "portraits": "assets/portraits/desert",
       "counterColour": "burnt",
-      "_ratings": "M32, as France's: five aircraft with most men out lands in the middle two; the top wants more than five, the signals tent and a quiet way in.",
+      "_ratings": "M32, as France's: five aircraft with most men out lands in the middle two; the top wants more than five, the signals tent and a quiet way in. M33: each band two or three higher, for the bomb store and the salvo (naive wins 35–46 between the quartiles, a careful game going for everything 44–53).",
       "ratings": [
         { "from": 0, "label": "SCRAPED HOME" },
-        { "from": 34, "label": "A GOOD NIGHT'S WORK" },
-        { "from": 41, "label": "MENTIONED IN DESPATCHES" },
-        { "from": 47, "label": "ONE FOR THE ANNUAL" }
+        { "from": 36, "label": "A GOOD NIGHT'S WORK" },
+        { "from": 43, "label": "MENTIONED IN DESPATCHES" },
+        { "from": 50, "label": "ONE FOR THE ANNUAL" }
       ],
       "titleCard": "assets/title/title-card-airfield.jpg",
       "diversionSound": "jeepRaid",

@@ -521,7 +521,7 @@ Three objectives, each on a different approach. Their numbers are per kind in
 |---|---|---|---|---|
 | **Rail Bridge** (PRIMARY) | 2 charges | 1 / 1 | +3 | the win; becomes canal |
 | **Telephone Exchange** | 1 charge, or cut the line | 1 / 1 | +3 (cut +1) | no reserve, no reinforcements |
-| **Fuel Dump** | 1 charge | 2 / 1 | +4 | the nearest patrol leaves the board |
+| **Fuel Dump** | 1 charge | 2 / 1 | +4 | the two nearest patrols leave the board |
 
 1. **Rail Bridge** — the charges go on the **piers, placed from the west canal bank**
    beside the bridge, not on the deck. The deck is in the bridge post's view every turn;
@@ -599,8 +599,8 @@ Blow the bridge last and you may not have turns left to reach exfil.
 **Only the primary is needed to win (§10).** The secondaries are bonus targets, worth
 score and costing alert, and each **pays back in play** (a `payoff` per kind, never a code
 branch for one objective): the exchange stops the garrison calling up its reserve squad
-(if it is already out, it stays) and its reinforcements; the fuel dump sends the nearest
-patrol off the board to fight the fire, on top of any the blast kills. The target rings,
+(if it is already out, it stays) and its reinforcements; the fuel dump sends the two nearest
+patrols off the board to fight the fire, on top of any the blast kills. The target rings,
 the hovers and the mission panel say what each pays before the player commits, and the
 turn report says when it happens.
 
@@ -702,8 +702,8 @@ carrying a charge does not take it out: he leaves it on the hex he stepped off f
 **The results page** is the back page of the annual: all six by name and fate (out,
 killed, left behind), the level, and the score, whatever the outcome:
 
-- Each objective destroyed, blown or cut: its kind's `score` (the Rail Bridge 10, each
-  secondary 4). Meeting the win condition pays `scoring.win` on top: 0 in France, whose
+- Each objective destroyed, blown or cut: its kind's `score` (the Rail Bridge 10, the
+  Telephone Exchange 4, the Fuel Dump 5). Meeting the win condition pays `scoring.win` on top: 0 in France, whose
   bridge carries its own 10; a mission with no primary pays it for the job done.
 - Each man out: 2 if never hit, 1 if wounded, dressed or not.
 - Each man out who was never spotted all mission: 1 more. His roster rollover says
@@ -711,6 +711,10 @@ killed, left behind), the level, and the score, whatever the outcome:
 - Each enemy killed by a knife or a gunner's shot: 1, less 1 for each of their bodies
   the garrison finds (so a kill nobody finds is worth 1, one they find nothing). A blast's
   kills score nothing, or blowing a target up beside a patrol would pay.
+- **The salvo** (`scoring.salvo`; null in France, which has one fuse and one primary):
+  where a mission gives `{ count, points }`, that many or more of the win's targets going
+  up in one fuse phase, set off by a neighbour or by charges timed to the same turn, pays
+  `points` ("4 Aircraft up in one bang"). The airfield's is 4 for 3 (§13).
 - **The clean run**: never reached Alarmed (`scoring.cleanNeverReached`) and never called
   the RAF diversion: 3. A mission may ask only about the night before the first bang
   (`scoring.cleanUntil: "firstExplosion"`) and name a lower state: the airfield's is
@@ -719,7 +723,7 @@ killed, left behind), the level, and the score, whatever the outcome:
   with as little enemy attention as possible earns a special bonus!").
 
 The bridge is worth 10 so that the job done with three men out (22 on a clean run) edges
-out the best retreat (21); a full success tops out at 39 before kills. The score is the
+out the best retreat (21); a full success tops out at 40 before kills. The score is the
 same sum at every level. Targets of one name share a line ("3 Stukas destroyed").
 
 **The rating.** A mission accomplished is rated against the mission's score bands
@@ -729,7 +733,7 @@ in bold with its name in red above. A withdrawal or a failure is not rated: the 
 is the verdict. The bands are set against the bot's winning scores on Normal
 (`SCORES=1`): the job alone with most men out lands in the middle two, and the top wants
 the bonus targets or a spotless night. France: under 24 SCRAPED HOME, 24 A GOOD NIGHT'S
-WORK, 30 MENTIONED IN DESPATCHES, 36 ONE FOR THE ANNUAL; the airfield: 34, 41 and 47.
+WORK, 30 MENTIONED IN DESPATCHES, 36 ONE FOR THE ANNUAL; the airfield: 36, 43 and 50.
 Nothing is stored: it rates the game just played.
 
 ### Missions
@@ -858,6 +862,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
 | M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
+| M33 | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
 | M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
 
 ---

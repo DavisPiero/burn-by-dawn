@@ -118,6 +118,10 @@ board must read at a glance.
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
   chip, never a selected man's solid frame.
+- An objective's name is printed above it; a map may move one (`nameNudge`, art only):
+  the airfield's bomb store's is under it, clear of the Stukas' names either side. A
+  target whose charge point could be taken for a neighbour's has a lead drawn to it: the
+  bowser's fuel hose, the bomb store's trolley rails (`hose` in its art).
 - Two DESTROYED stamps side by side would print over each other: a map may give an
   objective a `stampNudge` (art only), used only while one beside it is destroyed too
   (the airfield's bowser's goes up, the Ju 52's beside it down).

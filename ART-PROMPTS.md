@@ -532,6 +532,26 @@ Claude can find, cut and level them as it did in M21c, if asked.
 
 ---
 
+## Priority 17 — the bomb store (reference, optional)
+
+M33 put a **bomb store** in the airfield's north dispersal, between the two eastern
+Stukas. Claude has drawn it in code (rows of bombs inside a sandbag ring, seen from
+above). If the operator wants it nearer the painted look, a reference picture for Claude
+to redraw from, as `Stuka_` and `Ju52_Reference_01` were for the aircraft, into
+`assets/reference/`:
+
+| File | Spec |
+|---|---|
+| `BombStore_Reference_01` | seen from straight above, about square, any size: a Luftwaffe bomb dump in the desert, SC 250 bombs stacked in rows on timber, a low sandbag or oil-drum blast wall round it, perhaps a net over half; the same desert tan and dark green as the aircraft |
+
+### Prompt (add the style block)
+
+> A Luftwaffe field bomb dump in the North African desert seen from directly overhead:
+> rows of dark green aerial bombs with tail fins laid on timber baulks inside a low
+> ring of sandbags, a camouflage net thrown over one end, bare sand around it.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
@@ -554,6 +574,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   chevron on a man who has the leader's +AP this turn).
 - The bowser's fuel hose to its charge point (M30b), and the faint dashed ground of a
   blast still to come.
+- The bomb store (M33) in its sandbag ring, standing and blown, and the trolley rails to
+  its charge point (Priority 17 if a reference is wanted).
 - The desert chips (M30b), cut from the operator's desert portraits onto a dark red-brown
   ground; a painted set would replace them.
 - The fuse stopwatches on a burning charge (M15), since M30 with the face divided into

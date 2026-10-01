@@ -36,11 +36,14 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   on the airfield, a way back to the contents. A rule tried with them (patrols walk into
   our men and find them) was taken out again: it made the game worse (DECISIONS.md).
 
+**The order from here** (the operator's, 1 Oct 2026): the bomb store and the salvo (done,
+M33), then the goods train for France, then Phase 4, the aqueduct.
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
 Alarmed by the end of every raid; a mission accomplished is rated on the back page against
-the mission's score bands; SPEC.md trimmed. Tests: 157 headless, 159 in tests.html.
+the mission's score bands; SPEC.md trimmed. Tests (at M33): 159 headless, 161 in tests.html.
 
 ### What the review found, for Phase 4 and after
 
@@ -49,13 +52,17 @@ the mission's score bands; SPEC.md trimmed. Tests: 157 headless, 159 in tests.ht
 - **The airfield's alert dial is always at the top.** No number moves it. For the
   aqueduct: **decide in the spec which alert state a normal win should end in**, and
   count the bangs, bodies and parachutes against it before the map is drawn.
-- **The longest timer is always best, and timing bangs together pays nothing.**
-- **The bowser is the plan, not a greed**, so play gathers on the south apron. The bomb
-  store, below, is the answer the operator chose.
+- **The longest timer is always best, and timing bangs together pays nothing.** Answered
+  in M33 by the salvo score.
+- **The bowser is the plan, not a greed**, so play gathers on the south apron. Answered
+  in M33 by the bomb store.
 - **The West run is the airfield's best by every measure**: it lands beside the wadi and
-  the trucks, and its parachutes are almost never found.
+  the trucks, and its parachutes are almost never found. Still so by score; the North
+  now wins as often.
 - **The Fuel Dump in France is rarely worth it** (the bot takes it in 11–40% of games,
-  the exchange in every one).
+  the exchange in every one). M33 made it two patrols and 5 points; the bot cannot say
+  whether that tempts a person, since it blows the dump last, when patrols leaving no
+  longer help it.
 
 ## What playtesting taught us (the second pillar, now in SPEC.md)
 
@@ -197,65 +204,54 @@ choose.
 
 ---
 
-## Planned for the airfield: the bomb store (the operator's call, 1 Oct 2026)
+## Done for the airfield: the bomb store and the salvo (M33, 1 Oct 2026)
 
-A second target that sets off its neighbours, among the Stukas in the north dispersal: a
-**bomb store**. It reuses the bowser's rule (`setsOff`) as a new objective kind, so it is
-data, a place on the map and a painting, not a new rule. What it is for: today one bomb
-on the bowser takes three Ju 52s, so every plan starts on the south apron; with a store
-in the north there are two big prizes on opposite sides of the strip, the stick has to
-choose or split, and the North run gets a plan of its own.
-To settle in MISSION-AIRFIELD.md before it is built:
-- **Where it stands and what it takes.** Between two Stukas, as the bowser stands between
-  two Ju 52s, is the plain choice; a test should hold its blast to exactly those, as one
-  holds the bowser's. Taking three would make it the better prize and move the problem
-  north.
-- **What makes it a greed and not a second plan-for-free.** With both, two bombs take six
-  aircraft, which is Hard's whole job. Candidates, cheapest first: it stands in the
-  north AA pit's view, so it needs a stone, a suppression or a kill first; its blast is
-  wider (3), so the man who sets it needs a long timer and a long walk; it raises the
-  alert more than the bowser. The bot decides between them.
-- **The win counts.** Five on Normal and six on Hard were set with one bowser. Expect to
-  raise them (six and seven?) or to cut the stick's bombs from five to four; measured by
-  the bot against SPEC §10's targets.
-- **Art**: a bomb store to paint (stacked bombs under netting, or a sandbagged dump), in
-  ART-PROMPTS.md.
+Built as planned (MISSION-AIRFIELD.md, DECISIONS.md): a **bomb store** between the two
+eastern Stukas, the bowser's twin, taking exactly those two; and **the salvo**, 3 points
+for four or more aircraft up in one bang. Normal still wants five aircraft, so neither
+big target is needed there and each is a greed; Hard wants seven, so both have to go.
+The North run, which had no plan of its own, now wins as often as the West. The same
+milestone made France's **Fuel Dump** send two patrols away and score 5 (the operator's).
 
-## Proposed for the airfield: a bonus for bangs timed together (not yet agreed)
-
-The bot's best timer is always the longest, and bangs timed together pay nothing, so the
-tin of time pencils offers a choice with one right answer. The alert cannot be the
-reward: the garrison is Alarmed whatever is done. Proposed: **the salvo**, a score line
-on the back page. If `scoring.salvo.count` or more of the win's targets go up in one fuse
-phase (say four aircraft), the sheet pays `scoring.salvo.points` (say 3): "4 up in one
-bang". Aircraft a bowser or bomb store sets off count, so the chain is the easy half of
-it (two) and the timers the hard half: to add a fourth and fifth the stick has to set shorter and shorter
-pencils as it goes round, and the last man is setting a 2 while the first charge has two
-turns left. It is score only, so it changes no win rate; it is data in `rules.json`
-(null in France, which has one fuse); and it gives the top rating band a route that is
-about skill with the mission's own mechanic.
-
-## A candidate for France: the goods train (the operator likes it; not yet specified)
+## Next: the goods train, for France (the operator's decisions, 1 Oct 2026)
 
 The rail bridge has a railway and nothing runs on it. A goods train crosses at a turn the
 orders give ("the 04.10 goods crosses on turn 14"); drop the bridge under it and the back
 page pays a bonus. It gives France's fuses something to be timed against (the spine: the
 order and timing of the demolitions) and makes the slack half of the night a decision:
 wait for the train with the charges set and the garrison stirring, or blow it now and go.
-To settle in a spec before anything is built:
-- **What counts**: the bridge destroyed in the fuse phase of the train's turn, or within
-  a turn of it? France has one fuse length (3, Dutch 2), so the charges must be set on
-  the right turn; no time pencils here unless the operator wants them.
-- **What it pays**: score only (5 or so), or play as well (the wreck blocks the line: no
-  reinforcements)? Score only is the smaller rule.
+
+**Decided by the operator:**
+- **What counts**: the bridge going down **within a turn of the train**: the turn before
+  it reaches the bridge (the engine runs into the gap), the turn it is on it, or the turn
+  after.
+- **What it pays**: **score only**.
+- **The train is seen on the board**, coming in from the **left (west) edge** along the
+  railway, so there is at least a game turn in which it can be watched approaching.
+
+**Claude's recommendation on the one question left** (whether the train "sees"): it
+should be **scenery with a timetable, not an enemy**. It moves along the railway in the
+garrison's turn, a fixed number of hexes, and is drawn where it is; its hover says which
+turn it reaches the bridge. It does not spot the men, raise the alert or block a hex.
+That keeps it to one rule. A train that could see the men on the embankment would be a
+second rule, and a thing to avoid rather than a thing to do.
+
+**Still to settle in the spec (SPEC.md §7 and §10) before it is built:**
+- **Its turn and its speed.** The bot's bridge goes down on turn 9–10, so a train at
+  about turn 13–14 asks for a wait of three or four turns with the charges ready. Coming
+  on at the west edge two turns before it crosses gives the turn of warning asked for.
+- **France has one fuse length** (3 turns, Dutch 2), so the charges must be set on the
+  right turn: with "within a turn" that is a window of three turns for the setting. No
+  time pencils in France unless the operator wants them.
+- **What it pays**: 5, as the Fuel Dump, or more? It should be worth a wait that risks
+  the whole job. The rating's top band (36) may want to move with it.
+- **What happens to a train that finds the bridge already gone** earlier than that: it
+  never comes (the line is reported cut), or it stops short. Either is display only.
 - **What it costs to wait**: probably nothing new. The Wood and Road patrols and the
   parachutes already punish standing about; the bot can measure whether that is enough.
-- **Whether the train is a thing on the board** (it can see the men, it is heard) or
-  only a timetable. A timetable and a painted train crossing in the garrison's turn is
-  one rule; a train that sees is two.
-- **Art**: a locomotive and wagons to paint, and a whistle to record (ART-PROMPTS.md).
-- It changes France's numbers, so France's bot output will no longer be byte-identical:
-  the first change to mission 1's rules since v1.0.
+- **Art**: a locomotive and wagons from above to paint or to give Claude a reference for,
+  and a whistle and a train passing to record (ART-PROMPTS.md).
+- It changes France's score, not its win rates; the bot needs a style that waits for it.
 
 ## More missions after that (candidates, from the historical notes)
 
