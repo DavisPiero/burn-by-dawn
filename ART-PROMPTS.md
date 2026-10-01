@@ -554,7 +554,7 @@ to redraw from, as `Stuka_` and `Ju52_Reference_01` were for the aircraft, into
 
 ## Priority 18 — the goods train (reference and a sound, optional)
 
-M34 runs a **goods train** over France's rail bridge on turn 17. Claude has drawn an
+M34 runs a **goods train** over France's rail bridge on turn 10 (M37). Claude has drawn an
 engine and a wagon in code, from above, each one hex long (80 x 46). To bring them nearer
 the painted look, a reference for Claude to redraw from, into `assets/reference/`:
 

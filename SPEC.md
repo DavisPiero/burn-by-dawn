@@ -620,27 +620,31 @@ still do, so losing a bomb is not a withdrawal while the setter could make it up
 
 **The goods train** (`train`; null unless a mission gives one: France's). **Scenery with
 a timetable.** A train runs the map's railway from its west end, four hexes a turn, five
-hexes long, and is **on the Rail Bridge in the garrison's turn 17**. It comes onto the
-board three turns before, so it is watched coming: on the west edge in turn 15, four
-hexes on in turn 16, three short of the bridge in turn 17, across it in turn 18. **The
-bridge down within a turn of it** (in the fuse phase of turn 16, 17 or 18) **wrecks it and
-pays 5** on the back page (§10): on 16 the engine runs into the gap, on 17 it goes down
-with the bridge, on 18 its tail does. With France's three-turn fuse that is a charge set
-on turn 14, 15 or 16 (Dutch's a turn later), which leaves the stick two to four turns to
-reach the exfil before dawn.
+hexes long, and is **on the Rail Bridge in the garrison's turn 10**. It comes onto the
+board three turns before, so it is watched coming: on the west edge in turn 8, four
+hexes on in turn 9, three short of the bridge in turn 10, across it in turn 11, and off
+the east edge by turn 14. **The bridge down within a turn of it** (in the fuse phase of
+turn 9, 10 or 11) **wrecks it and pays 5** on the back page (§10): on 9 the engine runs
+into the gap, on 10 it goes down with the bridge, on 11 its tail does. With France's
+three-turn fuse that is a charge set on turn 7, 8 or 9 (Dutch's a turn later): about
+when a stick that has come straight from the drop reaches the bridge, so it is a train
+to be in time for, not one to wait for, and the rest of the night is left for the bonus
+targets and the walk out.
 - It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
   the line as it passes. Its one rule is the score.
 - The bridge down earlier, with the train already on the board, stops it at the west
   bank; down before it set out, none comes; down after it has gone by, it runs on.
 - Where it is follows from the turn and the turn the bridge went down, so nothing about
   it is kept in state, and its hover, the bridge's (a TRAIN row), the orders, the mission
-  panel ("Goods train +5 · turn 17") and the turn card say when it is due. The turn card
+  panel ("Goods train +5 · turn 10") and the turn card say when it is due. The turn card
   says so first on the turns a charge set now would catch it. The turn report says when
   it comes on, crosses, stops or is wrecked.
-- What waiting costs, by the bot (`TRAIN=1`: charges held, hidden on the charge points,
-  until they would catch it): on Normal about nothing, 84 / 87 / 92 against 86 / 83 / 89
-  for setting them on arriving; on Hard it is a gamble by the run, 19 / 39 / 46 against
-  29 / 38 / 37.
+- By the bot (`TRAIN=1`: charges held, hidden on the charge points, until they would
+  catch it): on Normal a stick that tries for it catches it in 80 to 90 games in 100,
+  waiting under a turn at the bridge, and wins 91 / 93 / 97 against 86 / 83 / 89 for
+  setting the charges on arriving, which catches it by chance in 11 to 25. On Hard it is
+  a stretch: the stick is at the bridge two turns later, catches it in 14 to 24 games in
+  100, and wins 26 / 37 / 46 against 29 / 38 / 37.
 
 The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
 Blow the bridge last and you may not have turns left to reach exfil.
@@ -913,8 +917,9 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
 | M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
-| M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17, 5 points for the bridge down within a turn of it |
+| M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
 | M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
 | M35 | The operator's notes: the goods train runs between turns, trimmed in blue and paper, and whistles as it comes on; the Rail Bridge's DESTROYED printed below it; the bomb store's rails clear of its name |
 | M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |

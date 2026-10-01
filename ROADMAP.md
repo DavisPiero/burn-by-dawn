@@ -231,6 +231,19 @@ four turns to reach the exfil before dawn.
 Since M35 (2 Oct 2026, the operator's notes) it runs between turns, is trimmed in blue
 and paper, and whistles as it comes on.
 
+**Its turn is 10 since M37** (2 Oct 2026, the operator's: at 17 most games were spent
+waiting for it). The bot's stick sets its charges on turns 7 to 9 as it is, so at 10 the
+train is one to be in time for: a stick that tries catches it in 80 to 90 games in 100
+on Normal after under a turn at the bridge, where at 17 it sat there seven. What was
+given up, knowingly: holding the charges for it is again safer than setting them on
+arriving (91 / 93 / 97 against 86 / 83 / 89), as it was at 14, and on Hard the stick is
+too slow to catch it more than one game in five. Measured and not taken: 12 (a two to
+three turn wait, caught more often on Hard), 14 (a four to five turn wait), and dawn at
+15 with the train at 10, which the bot's win rates survive on every level (Normal
+84 / 85 / 94, Hard 30 / 38 / 41) but which takes about two and a half points of bonus
+targets off the greedy bot's night: one number, `turnLimit` in France's patch, if the
+night should be shorter.
+
 ## Done for both missions: return fire, and the airfield's quiet first turn (M36, 2 Oct 2026)
 
 From the operator's notes after M35: nothing offensive to do once spotted, and the
