@@ -352,9 +352,10 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   const top = Boolean(briefing.choice?.top);
   if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
   card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  // A paragraph may be several lines, each on its own line (M13).
+  // A paragraph may be several lines, each on its own line (M13); a line given
+  // as { bold } is set in bold whole (M31d: the job on the orders).
   for (const text of briefing.paragraphs ?? []) {
-    const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
+    const lines = [].concat(text).map((line) => (typeof line === 'string' ? boldNames(line, briefing.names) : [html('b', null, line.bold)]));
     card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
   }
   if (briefing.contents) card.appendChild(contentsList(briefing.contents));
@@ -403,7 +404,11 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
  * `data-fit`). Never below 13, the right page's least (SPEC.md §11).
  */
 const BRIEFING_FIT_STEPS = 3;
+// Fitted again when the window is resized, as the spread is (M31d).
+let fittedCard = null;
+if (typeof window !== 'undefined') window.addEventListener('resize', () => fittedCard && fitBriefing(fittedCard));
 function fitBriefing(card) {
+  fittedCard = card;
   delete card.dataset.fit;
   for (let step = 1; step <= BRIEFING_FIT_STEPS && card.scrollHeight > card.clientHeight + 1; step++) {
     card.dataset.fit = String(step);

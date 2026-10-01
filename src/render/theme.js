@@ -2567,7 +2567,8 @@ const SPRITES = {
       svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, class: 'paper' }),
       svg('rect', { x: 12.5, y: 5, width: 3, height: 19, class: 'ink' }),
       svg('rect', { x: 7, y: 10, width: 14, height: 3, class: 'ink' }),
-      fill('M6 24 Q14 14 22 24 Z', 'green'),
+      // The mound in our counters' colour (M31d, the operator's: orange on the airfield).
+      fill('M6 24 Q14 14 22 24 Z', 'counter-body'),
       svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
     ],
   },

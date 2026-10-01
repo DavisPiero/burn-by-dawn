@@ -976,7 +976,7 @@ board must read at a glance.
   orders. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
 - **The orders are the first thing seen** after it. The orders card opens under the title card (a
   painted picture of the drop with the title lettered in; drawn in code if the file is
-  missing), 800 wide, centred, standing off the page on a deep soft shadow while the
+  missing), 820 wide (M31d), centred, standing off the page on a deep soft shadow while the
   whole spread is put in shade under a coarse halftone. The difficulty is in the black bar
   at the top, because it changes the numbers written below; under it the mission's title
   (THE AIRFIELD) heads the card, with ORDERS · BEFORE THE DROP beside it (M31d, the

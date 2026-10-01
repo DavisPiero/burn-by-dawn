@@ -1946,8 +1946,9 @@ function describeBriefing(which, view) {
           mission.briefing,
           // Dawn on a line of its own (M22, the operator's).
           // Split at the comma (M31d, the operator's): EXFIL sat alone on a line.
-          `Blow ${winWords(state, rules, { upper: true })} before dawn,`,
-          `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
+          // In bold, the job standing out from the words round it (M31d, the operator's).
+          { bold: `Blow ${winWords(state, rules, { upper: true })} before dawn,` },
+          { bold: `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.` },
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
         // The timer named where charges take one, and the last sentence on a
