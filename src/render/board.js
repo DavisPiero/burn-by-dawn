@@ -807,7 +807,6 @@ export function renderPieces(layers, state, view) {
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
   // Over the speech, so a man's line never hides what to press (M31b).
-  if (view.timerCue) drawTimerCue(layers, view.timerCue);
 }
 
 // --- target rings (SPEC.md §11) --------------------------------------------------
@@ -967,27 +966,6 @@ function drawSelectCue(layers, state, now) {
   const x = Math.min(Math.max(middle.x, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
   const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
-}
-
-/**
- * The timers open (M31, the operator's): SET THE TIMER / PRESS 2–6 in the pen
- * lettering beside the man setting the charge, on his side away from its
- * target (a pen's point is behind its aircraft), kept on the board.
- */
-function drawTimerCue(layers, cue) {
-  const { map } = layers;
-  const p = axialToPixel(cue.q, cue.r, map.hexSize);
-  const edge = boardEdges(map);
-  const sizes = [CUE.noteSize * 1.3, CUE.noteSize];
-  const target = cue.target.map((h) => axialToPixel(h.q, h.r, map.hexSize));
-  const ty = target.reduce((sum, t) => sum + t.y, 0) / target.length;
-  const above = p.y - map.hexSize * 2.1;
-  const below = p.y + map.hexSize * 1.6;
-  const wantAbove = ty > p.y;
-  const y = wantAbove ? (above - sizes[0] > edge.top ? above : below) : (below + sizes[1] < edge.bottom ? below : above);
-  const width = 'SET THE TIMER'.length * sizes[0] * 0.5;
-  const x = Math.min(Math.max(p.x, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
-  layers.speech.appendChild(penLetters(['SET THE TIMER', 'PICK A PENCIL'], x, y, sizes));
 }
 
 // --- the drop shown (SPEC.md §11) ----------------------------------------------

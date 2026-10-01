@@ -645,11 +645,7 @@ function sameHex(a, b) {
  * Any enemy that comes onto or beside an unfound body or a parachute this phase
  * finds it (SPEC.md §5, §9): on or beside any hex it walks through, or the hex
  * it ends on, whether it moved or not. Alert up, a noise there, found once.
- * Enemies cannot pass through troopers or each other. With `patrols.walkIntoMen`
- * (M31d) a moving enemy plans its walk as if our men were not there, and one
- * whose next step is onto a man stops beside him, faces him and has found him:
- * he is spotted as at a detection check (in contact; the alert up only if he
- * was not already), whatever his cover. Suppression wears off at
+ * Enemies cannot pass through troopers or each other. Suppression wears off at
  * the end of the phase, leaving the enemy open to a kill through the player
  * phase that follows (SPEC.md §4 Kill).
  */
@@ -664,11 +660,6 @@ export function runEnemyPhase(state, map, rules) {
   const alertBefore = state.alert.points;
   const noises = [];
   const living = state.units.filter(onBoard);
-  let units = state.units;
-  // Our men, by hex, for an enemy to walk into (M31d); null keeps them obstacles.
-  const walkInto = rules.patrols.walkIntoMen;
-  const men = walkInto ? new Map(living.map((u) => [hexKey(u.q, u.r), u.id])) : null;
-  let bumpedContact = null;
 
   // Not once a bonus target has cut the garrison's call for it (SPEC.md §7 payoffs).
   if (stateId === 'alarmed' && !reserveDeployed && !state.reserveCancelled) {
@@ -704,10 +695,9 @@ export function runEnemyPhase(state, map, rules) {
 
   for (let i = 0; i < enemies.length; i++) {
     const enemy = enemies[i];
-    const blocked = blockedFor(walkInto ? [] : living, enemies, enemy.id);
+    const blocked = blockedFor(living, enemies, enemy.id);
     let moved = enemy;
     let entered = []; // every hex it walks onto this go
-    let bumped = null; // the man it walked into, if any (M31d)
 
     if (enemy.suppressed) {
       moved = { ...enemy, holding: null };
@@ -726,17 +716,15 @@ export function runEnemyPhase(state, map, rules) {
       if (sameHex(enemy, enemy.guard)) {
         moved = enemy;
       } else {
-        const result = walkToward(map, enemy, enemy.guard, blocked, enemy.speed, rules, men);
+        const result = walkToward(map, enemy, enemy.guard, blocked, enemy.speed, rules);
         moved = result.enemy;
         entered = result.steps;
-        bumped = result.bumped;
         if (sameHex(moved, enemy.guard)) moved = { ...moved, facing: moved.homeFacing };
       }
     } else if (hunting) {
-      const result = walkToward(map, enemy, contact, blocked, enemy.speed, rules, men);
+      const result = walkToward(map, enemy, contact, blocked, enemy.speed, rules);
       moved = result.enemy;
       entered = result.steps;
-      bumped = result.bumped;
       if (result.arrived || result.stuck) {
         moved = { ...sweep(moved, rules), investigating: null };
         if (!contact.searched) {
@@ -746,10 +734,9 @@ export function runEnemyPhase(state, map, rules) {
       }
     } else if (enemy.investigating) {
       const goal = enemy.investigating;
-      const result = walkToward(map, enemy, goal, blocked, enemy.speed, rules, men);
+      const result = walkToward(map, enemy, goal, blocked, enemy.speed, rules);
       moved = result.enemy;
       entered = result.steps;
-      bumped = result.bumped;
       if (result.arrived || result.stuck) {
         moved = { ...sweep(moved, rules), investigating: null };
         // The first to get there reports the search. Anyone else still on the
@@ -767,24 +754,7 @@ export function runEnemyPhase(state, map, rules) {
     } else if (pauses) {
       moved = sweep(enemy, rules);
     } else if (enemy.route) {
-      ({ enemy: moved, steps: entered, bumped } = walkRouteSteps(map, enemy, blocked, rules, men));
-    }
-    // Walked into one of our men (M31d): it stops beside him, faces him and
-    // has him, as a sighting does, whatever his cover or hiding.
-    if (bumped) {
-      const unit = units.find((u) => u.id === bumped);
-      const facing = facingToward(moved, unit);
-      moved = { ...moved, facing: facing < 0 ? moved.facing : facing, watching: { unitId: unit.id, q: unit.q, r: unit.r } };
-      events.push({
-        kind: 'spotted', unitId: unit.id, unitName: unit.shortName, enemyLabel: moved.label, enemyIds: [moved.id],
-        q: unit.q, r: unit.r, hid: null, first: !unit.inContact, bumped: true,
-      });
-      alert = { ...alert, raisedThisTurn: true };
-      if (!unit.inContact) {
-        alert = raiseAlert(alert, rules.alert.spotted, rules);
-        bumpedContact = { q: unit.q, r: unit.r };
-      }
-      units = units.map((u) => (u.id === unit.id ? { ...u, inContact: true, everSpotted: true } : u));
+      ({ enemy: moved, steps: entered } = walkRouteSteps(map, enemy, blocked, rules));
     }
     // `walked`: the hexes it walked onto this go, in order — display only, so
     // the board can show the garrison moving (M15), as a man's trail does.
@@ -811,14 +781,9 @@ export function runEnemyPhase(state, map, rules) {
   }
 
   enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false, openToKill: true } : e));
-  // A man walked into is a first sighting: the last known contact (SPEC.md §6),
-  // unless that hex is already the one being looked for.
-  if (bumpedContact && !(contact && !contact.searched && sameHex(contact, bumpedContact))) {
-    contact = { ...bumpedContact, searched: false };
-  }
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
-    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, alert, bodies, parachutes, noises, units },
+    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, alert, bodies, parachutes, noises },
     events,
   };
 }
@@ -857,38 +822,29 @@ function sweep(enemy, rules) {
  * occupied it walks up beside it. `minimumStep` applies as it does to
  * troopers: with nothing spent yet, one step is always allowed.
  *
- * `men` (M31d, patrols.walkIntoMen), our men by hex: not planned round, but
- * a step onto one stops the walk beside him, and `bumped` names him.
- *
- * Returns { enemy, spent, arrived, stuck, steps, bumped }: `arrived` is standing on the
+ * Returns { enemy, spent, arrived, stuck, steps }: `arrived` is standing on the
  * goal or beside an occupied one; `stuck` is no route at all; `steps` is every
- * hex it walked onto, in order; `bumped` the id of the man it walked into, or null.
+ * hex it walked onto, in order.
  */
-export function walkToward(map, enemy, goal, blocked, budget, rules, men = null) {
+export function walkToward(map, enemy, goal, blocked, budget, rules) {
   const goalKey = hexKey(goal.q, goal.r);
-  const occupiedGoal = blocked.has(goalKey) || Boolean(men?.has(goalKey));
+  const occupiedGoal = blocked.has(goalKey);
   const arrivedAt = (e) => (e.q === goal.q && e.r === goal.r) || (occupiedGoal && hexDistance(e, goal) === 1);
-  if (arrivedAt(enemy)) return { enemy, spent: 0, arrived: true, stuck: false, steps: [], bumped: null };
+  if (arrivedAt(enemy)) return { enemy, spent: 0, arrived: true, stuck: false, steps: [] };
 
   // Path as if the goal were free, so an occupied goal still gives a route to
   // walk up to; the walk below stops before any hex that is actually taken.
   const open = new Set(blocked);
   open.delete(goalKey);
   const path = findPath(groundOf(map), enemy, goal, open);
-  if (!path) return { enemy, spent: 0, arrived: false, stuck: true, steps: [], bumped: null };
+  if (!path) return { enemy, spent: 0, arrived: false, stuck: true, steps: [] };
 
   let current = enemy;
   let spent = 0;
-  let bumped = null;
   const steps = [];
   for (let i = 1; i < path.length; i++) {
     const next = path[i];
-    const key = hexKey(next.q, next.r);
-    if (men?.has(key)) {
-      bumped = men.get(key);
-      break;
-    }
-    if (blocked.has(key)) break;
+    if (blocked.has(hexKey(next.q, next.r))) break;
     const cost = enterCost(groundOf(map), next.q, next.r, null);
     const firstStep = spent === 0 && rules.minimumStep;
     if (spent + cost > budget && !firstStep) break;
@@ -897,7 +853,7 @@ export function walkToward(map, enemy, goal, blocked, budget, rules, men = null)
     spent += cost;
     if (spent >= budget) break;
   }
-  return { enemy: current, spent, arrived: arrivedAt(current), stuck: false, steps, bumped };
+  return { enemy: current, spent, arrived: arrivedAt(current), stuck: false, steps };
 }
 
 /** Walk the route, carrying on past each waypoint while movement is left. */
@@ -905,12 +861,11 @@ export function walkRoute(map, enemy, blocked, rules) {
   return walkRouteSteps(map, enemy, blocked, rules).enemy;
 }
 
-/** walkRoute, plus every hex it walked onto and the man it walked into (M31d): { enemy, steps, bumped }. */
-function walkRouteSteps(map, enemy, blocked, rules, men = null) {
+/** walkRoute, plus every hex it walked onto: { enemy, steps }. */
+function walkRouteSteps(map, enemy, blocked, rules) {
   let current = enemy;
   let budget = enemy.speed;
   const steps = [];
-  let bumped = null;
   // Each pass either reaches a waypoint or stops, so the route length bounds it.
   for (let guard = 0; guard <= current.route.length + 1; guard++) {
     const target = current.route[current.waypoint];
@@ -919,7 +874,7 @@ function walkRouteSteps(map, enemy, blocked, rules, men = null) {
       continue;
     }
     if (budget <= 0) break;
-    const result = walkToward(map, current, target, blocked, budget, rules, men);
+    const result = walkToward(map, current, target, blocked, budget, rules);
     // A waypoint it cannot reach at all — across a blown bridge, say — is
     // given up: it turns round, or goes on to the next one on a loop.
     if (result.stuck) {
@@ -929,13 +884,9 @@ function walkRouteSteps(map, enemy, blocked, rules, men = null) {
     current = result.enemy;
     steps.push(...result.steps);
     budget -= result.spent;
-    if (result.bumped) {
-      bumped = result.bumped;
-      break;
-    }
     if (current.q !== target.q || current.r !== target.r) break;
   }
-  return { enemy: current, steps, bumped };
+  return { enemy: current, steps };
 }
 
 function nextWaypoint(enemy) {

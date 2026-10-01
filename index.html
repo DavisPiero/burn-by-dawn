@@ -225,13 +225,11 @@
        if the map were printed on the same paper. Display only: no clicks. */
     #left-content { position: relative; }
     /* The tin of time pencils (M31d, the operator's): an olive tin with its
-       lid stencilled as issued, open on a paper card of pencils, laid in the
-       corner of the map away from the man setting the charge (ui.js). */
+       lid stencilled as issued, open on a paper card of pencils, laid on the
+       map beside the man setting the charge (ui.js placeTin). */
     #timer-tin {
       position: absolute;
       z-index: 6;
-      right: 14px;
-      bottom: calc(100% - var(--board-h) + 14px);
       width: 318px;
       padding: 6px 8px 8px;
       background: var(--green);
@@ -243,8 +241,6 @@
       cursor: default;
     }
     #timer-tin[hidden] { display: none; }
-    #timer-tin.west { right: auto; left: 14px; }
-    #timer-tin.north { bottom: auto; top: 14px; }
     #timer-tin .tin-lid {
       display: flex;
       justify-content: space-between;

@@ -315,7 +315,6 @@ function deriveView() {
     aidTargetIds: null,
     manReadout: null,
     blastLabel: null,
-    walkIntoLabel: null, // M31d: the enemy that would walk into him where the move ends
     noiseLabel: null,
     searchLabel: null,
     mission: describeMissionState(),
@@ -327,7 +326,6 @@ function deriveView() {
     shotShow,
     strikeShow,
     targetRings: null,
-    timerCue: null,
     timerTin: null, // M31d: the tin of time pencils, while its timers are open
     dropCue: null,
     selectCue: false,
@@ -431,12 +429,11 @@ function deriveView() {
     // Drawn as a blast is, not a hover's faint preview: this is the ground to get off.
     view.blastArea = new Map([...view.blastArea, ...areaAround(blasts)]);
     view.blastKillArea = new Map([...view.blastKillArea, ...areaAround(blasts.map((b) => ({ ...b, radius: b.killRadius })))]);
-    // And in the pen lettering beside him on the map (M31, the operator's).
-    const open = pencils(state, unit, rules).filter((p) => !p.afterDawn).map((p) => p.fuse);
-    view.timerCue = { q: unit.q, r: unit.r, target: objective.hexes, range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}` };
     view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: pick a time pencil from the tin, how many turns until it goes off, then SET. A number picks one, Enter or C sets it. `
       + 'The red ground is its blast: every man must be off it by then. Esc: don\'t set it.';
-    view.timerTin = timerTin(unit, objective);
+    // The tin beside him (M31d), clear of the red ground where it can be; it
+    // took the place of M31b's SET THE TIMER in the pen beside him.
+    view.timerTin = { ...timerTin(unit, objective), keepClear: [...view.blastArea.values()] };
     return view;
   }
   // Over an enemy, what the selected man can do to it, and why not (M26d: a
@@ -479,9 +476,6 @@ function deriveView() {
       const later = laterBlasts(state, rules).filter((b) => blastEffect([b], end)).sort((a, b) => a.blows - b.blows)[0];
       if (later) view.blastLabel = `BLAST — to come: the ${later.label} goes up at the end of turn ${later.blows} with this ground in its blast; get him clear by then`;
     }
-    // Walked into where he stops (M31d): worked out as the turn would do it.
-    const into = isExfil(baseMap, end) ? null : walkedIntoAt(unit, end, plan.steps > 0);
-    if (into) view.walkIntoLabel = `the ${into.toLowerCase()} runs right into him here in its move: SPOTTED, whatever his cover`;
     const failure = exfilFailure(unit, plan);
     if (failure) view.blastLabel = `MISSION NOT YET COMPLETE — out now, it ends ${failure.kind.toUpperCase()}: ${failure.reason}`;
     // Not where nobody can see him: hiding would add nothing (M22: room).
@@ -489,25 +483,6 @@ function deriveView() {
     if (seenHere && checkHide(unit, rules).ok) view.hideLabel = `[H] ${hideEffect(unit)}`;
   }
   return view;
-}
-
-/**
- * Which enemy would walk into this man (M31d, patrols.walkIntoMen) if he
- * ended his move on `end` and the turn ended now, or null: the detection
- * check and enemy phase the turn will do, so the readout warns before it
- * happens. Kept for the state and hex it was worked out on.
- */
-let walkedIntoCache = { state: null, key: null, label: null };
-function walkedIntoAt(unit, end, moved) {
-  if (!rules.patrols.walkIntoMen) return null;
-  const key = `${unit.id}|${end.q},${end.r}|${moved}`;
-  if (walkedIntoCache.state === state && walkedIntoCache.key === key) return walkedIntoCache.label;
-  const there = { ...unit, q: end.q, r: end.r, hidden: moved ? false : unit.hidden };
-  const trial = { ...state, units: state.units.map((u) => (u.id === unit.id ? there : u)) };
-  const after = runEnemyPhase(runDetection(trial, map, rules).state, map, rules);
-  const label = after.events.find((e) => e.kind === 'spotted' && e.bumped && e.unitId === unit.id)?.enemyLabel ?? null;
-  walkedIntoCache = { state, key, label };
-  return label;
 }
 
 /**
@@ -1660,7 +1635,7 @@ function alarmReasons() {
   const place = (h) => placeName(map, state.objectives, baseMap.exfil.map(([q, r]) => ({ q, r })), h);
   const add = (id, words) => reasons.set(id, [...(reasons.get(id) ?? []), words]);
   for (const e of state.report) {
-    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `${e.bumped ? 'ran right into' : 'spotted'} ${e.unitName} in ${place(e)}` });
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `spotted ${e.unitName} in ${place(e)}` });
     if (e.kind === 'bodyFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s body in ${place(e)}` });
     if (e.kind === 'parachuteFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s parachute in ${place(e)}` });
   }
@@ -1691,10 +1666,7 @@ function describeGarrisonShow(after) {
   const msPerHex = GARRISON_SHOW.msPerHex[rules.alert.states[alertIndex(after.alert.points, rules)].id];
   const alarmed = new Map();
   for (const e of after.report) {
-    // One that walked into a man (M31d) finds him at the end of its walk.
-    if (e.kind === 'spotted' && e.bumped) {
-      for (const id of e.enemyIds ?? []) alarmed.set(id, (after.enemies.find((x) => x.id === id)?.walked?.length ?? 0) * msPerHex);
-    } else if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
+    if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
     if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
       const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
       alarmed.set(e.enemyId, walked * msPerHex);

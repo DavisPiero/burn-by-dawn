@@ -487,19 +487,6 @@ The hover readout marks every path hex where a man in contact would be shot, and
 it would hit or pin him there, so being fired on is never a surprise. Where he is seen
 but every enemy seeing him is firing at another man, it says NOT SHOT and at whom.
 
-### Walked into
-
-**A patrol does not step round one of our men** (`patrols.walkIntoMen`; M31d, the
-operator's: it felt wrong that a patrol or the car went round a man standing in its way).
-A moving enemy plans its walk as if our men were not there. One whose next step is onto a
-man stops beside him, turns to face him, and has found him: he is **spotted**, whatever
-his cover and whether or not he is hiding, as at a detection check: in contact, the alert
-+1 if he was not already, his hex the last known contact, the enemy holding him in its
-sights. So at the next detection check it fires if it sees him again, as §6 Contact says.
-The hover readout warns first: a move that ends where an enemy will walk into him is
-stamped SPOTTED with a FOUND row naming it, worked out as the turn will do it, and the
-turn report says the enemy "runs right into" him.
-
 ### Exfil watched
 
 At Alarmed the reserve squad enters from the road edge (`reserve.entryHexes`), marches to
@@ -577,7 +564,8 @@ the man setting a charge picks its fuse from that many turns, and his `onPlaceCh
 fuse hook applies to whichever he picks (Steady Hands: a turn off each). It is two plain
 steps (M30b, the operator's: the second was missed): the button reads **Charge + timer**,
 and **C** opens **the tin of time pencils** (M31d, the operator's: the timer as a period
-object) on the map, in the corner away from the man: an olive tin stencilled SWITCH,
+object) on the map beside the man, in whichever of the eight places round him covers
+least of his blast and his counter, the nearest on a tie: an olive tin stencilled SWITCH,
 DELAY, No. 10 · TIME PENCILS, open on a card of pencils, one a length, each banded in its
 colour as the real ones were (black, red, white, green, yellow, blue, shortest to longest)
 with the turn it goes off ("4 TURNS on turn 19"). Click a pencil, or press its number, and
@@ -818,11 +806,7 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Normal** | Most win within three tries | 75 to 90 | Below careful on the same run (a few points over is the bot's noise) |
 | **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
-Every run was inside them until M31d. **With patrols walking into our men (M31d) they are
-not**, and the operator is to choose what gives (DECISIONS.md M31d): naive, 300 seeds,
-France Easy 99 / 99 / 98, Normal 75 / 63 / 77, Hard 16 / 13 / 23; the airfield (`BOWSER=1`)
-Easy 99 / 97 / 98, Normal 88 / 71 / 85, Hard 22 / 8 / 16. `RULES_PATCH='{"patrols":
-{"walkIntoMen":false}}'` gives back the baselines above exactly.
+Today every run is inside them.
 
 ---
 
@@ -1182,7 +1166,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M30 | The airfield's two new rules, time pencils and the bowser that sets off its neighbours; the bot learns both; the airfield balanced (a West patrol, five aircraft on Normal, six on Hard); France's bot output unchanged |
 | M30b | The operator's desert notes: the timer made two plain steps with its blast shown and too-short timers named, a default of 4, blasts to come drawn; the bowser's hose and the Ju 52's point moved off it; the desert chips; the South tab moved; a Sand patrol; the hunter measured against careful |
 | M31c | The operator's airfield art (title card, contents panels, car counter, jeep), the Stuka, Ju 52 and trucks redrawn, the airfield's recorded sounds |
-| M31d | The operator's desert notes: a patrol walks into a man in its way and finds him; the timer as a tin of time pencils; burnt-orange counters on the airfield; a way back to the contents; the orders' words and the mission's title on them; the run tabs, trucks, Oued Melah and the DESTROYED stamps moved |
+| M31d | The operator's desert notes: the timer as a tin of time pencils beside the man; burnt-orange counters on the airfield; a way back to the contents; the orders' words and the mission's title on them; the run tabs, trucks, Oued Melah and the DESTROYED stamps moved |
 | M31–M31b | The airfield's words and sounds (the orders and turn cards explain the timer and the bowser, the jeep raid, desert lines, a bugle and a siren for the back page) and the art hand-off; the operator's notes: `playable`, the jeep's line clear of counters, the strip's edges, SET THE TIMER in the pen on the map |
 
 ---
@@ -1418,9 +1402,9 @@ Placeholder copy for the operator to reword; all of it data in `missions.json` a
 - **The back page**: a bugle call, rising to its top note, for success (`desertVictory`;
   M31b, the operator's: M31's trucks and crumps sounded like a failure), the landing
   ground's siren for the rest (`desertDefeat`).
-- **The timers open**: SET THE TIMER / PICK A PENCIL is also lettered in the pen on the
-  map beside the man, on his side away from his target, over any speech (M31b, the
-  operator's), and the tin of time pencils lies in the far corner of the map (M31d).
+- **The timers open**: the tin of time pencils lies on the map beside the man (M31d). It
+  took the place of M31b's SET THE TIMER lettered in the pen beside him, which said the
+  same thing in the same spot.
 - **Our men's counters** are burnt orange here (M31d), and Oued Melah is printed solid
   over the wadi's stones, a hex up the wadi from its mouth; the trucks sit a little
   higher (`exfilArtNudge`), clear of the board's foot.

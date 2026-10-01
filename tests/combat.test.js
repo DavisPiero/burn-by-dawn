@@ -401,36 +401,6 @@ export default [
     equal(reports, 1, 'searched reported once');
   }],
 
-  ['a patrol walks into a man on its way (M31d): it stops beside him, faces him, and he is spotted whatever his cover', async () => {
-    const { map, rules, state } = await loadAll();
-    const row = openRow(map, 6);
-    const route = [{ q: row.q, r: row.r }, { q: row.q + 5, r: row.r }];
-    // Facing away along the row, so no detection dots could have seen him: only the walk finds him.
-    const patrol = enemy(row.q, row.r, 'W', { route, waypoint: 1 });
-    const man = { ...state.units[0], q: row.q + 2, r: row.r, hidden: true, inContact: false };
-    const units = state.units.map((u, i) => (i === 0 ? man : { ...u, q: 200 + i, r: 0 }));
-    const s = { ...state, units, enemies: [patrol], alert: { ...state.alert, points: 0 } };
-    const phase = runEnemyPhase(s, map, rules);
-    const moved = phase.state.enemies[0];
-    equal(`${moved.q},${moved.r}`, `${row.q + 1},${row.r}`, 'it stopped beside him, not round him');
-    equal(moved.facing, facingToward(moved, man), 'it faces him');
-    const him = phase.state.units[0];
-    assert(him.inContact && him.everSpotted, 'he is in contact and no longer unseen');
-    equal(phase.state.alert.points, rules.alert.spotted, 'alert +spotted');
-    const event = phase.events.find((e) => e.kind === 'spotted');
-    assert(event?.bumped && event.first && event.unitId === man.id, 'reported as walked into, his first sighting');
-    equal(`${phase.state.contact.q},${phase.state.contact.r}`, `${man.q},${man.r}`, 'his hex is the last known contact');
-
-    // Already in contact: found again, but the alert does not rise twice.
-    const again = runEnemyPhase({ ...s, units: units.map((u, i) => (i === 0 ? { ...man, inContact: true } : u)) }, map, rules);
-    equal(again.state.alert.points, 0, 'no second rise for a man already in contact');
-
-    // With the rule off, it walks round him, as before M31d.
-    const off = { ...rules, patrols: { ...rules.patrols, walkIntoMen: false } };
-    const round = runEnemyPhase(s, map, off);
-    assert(!round.state.units[0].inContact && !round.events.some((e) => e.kind === 'spotted'), 'rule off: not found');
-  }],
-
   ['a body is found by an enemy on or beside it, standing or walking past: alert up, a noise, and only once', async () => {
     const { map, rules, state } = await loadAll();
     const row = openRow(map, 6);

@@ -586,10 +586,7 @@ export function useMissionWords(words) {
 export function describeEvent(event, place) {
   const at = () => place({ q: event.q, r: event.r });
   switch (event.kind) {
-    case 'spotted': return event.bumped
-      // Walked into (M31d): found whatever his cover, and nothing to do with dots.
-      ? `The ${event.enemyLabel.toLowerCase()} runs right into ${event.unitName} in ${at()}: spotted.`
-      : `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
+    case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
@@ -1063,21 +1060,15 @@ export function renderActions(element, actions, onAction) {
 }
 
 /**
- * The tin of time pencils (M31d, the operator's): laid on the map in the
- * corner away from the man setting the charge, so his blast stays in view. A
+ * The tin of time pencils (M31d, the operator's): laid on the map beside the
+ * man setting the charge, on his side away from his target where it fits, so
+ * the eye stays where the charge goes and the blast stays in view. A
  * pencil clicked is lifted out; SET takes the one lifted. `tin` is from
  * main.js timerTin, or null to put it away. `on` is { pick(fuse), set(), back() }.
  */
 export function renderTimerTin(element, tin, board, map, on) {
   element.hidden = !tin;
   if (!tin) return;
-  // The opposite quarter of the map to the man (board units, so no measuring).
-  const box = board.viewBox.baseVal;
-  const at = axialToPixel(tin.anchor.q, tin.anchor.r, map.hexSize);
-  const east = (at.x - box.x) / box.width > 0.5;
-  const south = (at.y - box.y) / box.height > 0.5;
-  element.classList.toggle('west', east);
-  element.classList.toggle('north', south);
 
   const stop = (event) => event.stopPropagation();
   const rows = tin.pencils.map((p) => {
@@ -1133,6 +1124,46 @@ export function renderTimerTin(element, tin, board, map, on) {
   );
   element.onclick = stop;
   element.onmousedown = stop;
+  placeTin(element, tin, board, map);
+}
+
+/**
+ * Beside the man (M31d, the operator's: in a corner it was far from the
+ * charge). Eight places round him, each a hex clear of his counter and kept
+ * inside the map; the one taken covers the fewest hexes of his blast and his
+ * own, then is the nearest to him. Measured in the page's own pixels, under
+ * any zoom of the spread.
+ */
+function placeTin(element, tin, board, map) {
+  const host = element.offsetParent;
+  const ctm = board.getScreenCTM();
+  if (!host || !ctm) return;
+  const frame = host.getBoundingClientRect();
+  const scale = frame.width / host.offsetWidth || 1;
+  const toPage = (h) => {
+    const p = axialToPixel(h.q, h.r, map.hexSize);
+    return { x: (ctm.a * p.x + ctm.e - frame.left) / scale, y: (ctm.d * p.y + ctm.f - frame.top) / scale };
+  };
+  const man = toPage(tin.anchor);
+  const clear = [man, ...(tin.keepClear ?? []).map(toPage)];
+  const boardBox = board.getBoundingClientRect();
+  const bounds = { width: boardBox.width / scale, height: boardBox.height / scale };
+  const w = element.offsetWidth, h = element.offsetHeight;
+  const gap = (ctm.a * map.hexSize * 1.1) / scale; // a hex radius and a bit: clear of his counter
+  const xs = { left: man.x - gap - w, middle: man.x - w / 2, right: man.x + gap };
+  const ys = { up: man.y - gap - h, middle: man.y - h / 2, down: man.y + gap };
+  const spots = [['right', 'middle'], ['left', 'middle'], ['middle', 'up'], ['middle', 'down'], ['right', 'up'], ['right', 'down'], ['left', 'up'], ['left', 'down']]
+    .map(([sx, sy]) => {
+      const x = Math.min(Math.max(xs[sx], 8), bounds.width - w - 8);
+      const y = Math.min(Math.max(ys[sy], 8), bounds.height - h - 8);
+      const pad = gap * 0.6;
+      const covered = clear.filter((c) => c.x > x - pad && c.x < x + w + pad && c.y > y - pad && c.y < y + h + pad).length;
+      const far = Math.hypot(x + w / 2 - man.x, y + h / 2 - man.y);
+      return { x, y, covered, far };
+    })
+    .sort((a, b) => a.covered - b.covered || a.far - b.far);
+  element.style.left = `${Math.round(spots[0].x)}px`;
+  element.style.top = `${Math.round(spots[0].y)}px`;
 }
 
 // --- traits in words (used by roster.js) ----------------------------------------
@@ -1244,10 +1275,8 @@ export function renderReadout(element, state, map, view) {
     const own = view.plan?.steps === 0;
     const verdict = own ? riskVerdict(view.plan, view.risk) : null;
     const blast = own ? view.blastLabel : null;
-    const into = own ? view.walkIntoLabel : null;
-    renderRows(element, m.head.toUpperCase(), m.stamp ?? (into ? WALKED_INTO_STAMP : verdict), m.note, [
+    renderRows(element, m.head.toUpperCase(), m.stamp ?? verdict, m.note, [
       blast && { label: 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
-      into && { label: 'FOUND', text: into, tone: 'danger' },
       ...(own ? riskRows(view.riskLabel, verdict) : []),
       own && { label: 'HIDE', text: view.hideLabel },
       ...m.rows,
@@ -1290,14 +1319,10 @@ export function renderReadout(element, state, map, view) {
   // The ground's name goes beside it when the headline names what stands on it.
   if (view?.site?.title) parts.unshift(terrain.label.toLowerCase());
   // The ground in the headline's spare room, not a row of its own (M22: room).
-  const into = view?.walkIntoLabel;
-  const stamp = blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : into && verdict?.tone !== 'danger' ? WALKED_INTO_STAMP : verdict;
-  renderRows(element, head.toUpperCase(), stamp, parts.join(' · '), [
+  renderRows(element, head.toUpperCase(), blast?.includes('KILLED') ? { word: 'KILLED', tone: 'danger' } : verdict, parts.join(' · '), [
     { label: 'LANDING', text: view?.dropLabel },
     { label: 'MOVE', text: view?.moveLabel },
     blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
-    // A patrol walks into him here (M31d): after the dots, so said on its own.
-    into && { label: 'FOUND', text: into, tone: 'danger' },
     ...riskRows(view?.riskLabel, verdict),
     // Stabilise or Pass is open to him (M26); only while he is not off on a move.
     { label: 'AID', text: !view?.plan || view.plan.steps === 0 ? view?.aidLabel : null, tone: 'prompt' },
@@ -1334,9 +1359,6 @@ function renderRows(element, head, stamp, note, rows) {
     if (element.scrollHeight <= element.clientHeight) break;
   }
 }
-
-/** The stamp for a move that ends where a patrol will walk into him (M31d). */
-const WALKED_INTO_STAMP = { word: 'SPOTTED', tone: 'danger' };
 
 /** A move's risk as two rows: how it goes, then the sum beside the dots. */
 function riskRows(risk, verdict) {
