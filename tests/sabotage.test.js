@@ -301,7 +301,7 @@ export default [
     equal(unitIn(cut, scout.id).ap, 0, 'his whole turn');
   }],
 
-  ['bonus payoffs (M11b): the exchange, cut or blown, keeps the reserve away; the fuel dump draws the nearest patrol off', async () => {
+  ['bonus payoffs (M11b): the exchange, cut or blown, keeps the reserve away; the fuel dump draws the two nearest patrols off', async () => {
     const { map, rules, state } = await loadAll();
     const exchange = state.objectives.find((o) => rules.objectives[o.kind].payoff.noReserve);
     const scout = state.units.find((u) => rules.roles[u.role].cutLine);
@@ -321,12 +321,15 @@ export default [
       enemies: [
         { id: 'near', label: 'Near patrol', killable: true, speed: 3, q: hex.q + far, r: hex.r, facing: 0 },
         { id: 'further', label: 'Far patrol', killable: true, speed: 3, q: hex.q + far + 3, r: hex.r, facing: 0 },
+        { id: 'furthest', label: 'Furthest patrol', killable: true, speed: 3, q: hex.q + far + 6, r: hex.r, facing: 0 },
         { id: 'post', label: 'Sentry', killable: true, speed: 0, q: hex.q, r: hex.r + far, facing: 0 },
         { id: 'reserve', label: 'Reserve squad', killable: false, speed: 4, q: hex.q, r: hex.r - far, facing: 0 },
       ],
     };
     const blown = runFusePhase(s, rules);
-    equal(blown.state.enemies.map((e) => e.id).sort().join(), 'further,post,reserve', 'the nearest patrol leaves; sentries and the reserve stay');
+    // M33, the operator's: the two nearest patrols leave (one until then).
+    equal(rules.objectives[dump.kind].payoff.withdrawPatrols, 2, 'two patrols');
+    equal(blown.state.enemies.map((e) => e.id).sort().join(), 'furthest,post,reserve', 'the two nearest patrols leave; sentries, the reserve and the furthest patrol stay');
     equal(blown.events.filter((e) => e.kind === 'withdrawn').length, rules.objectives[dump.kind].payoff.withdrawPatrols, 'reported');
   }],
 

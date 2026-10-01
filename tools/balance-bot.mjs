@@ -56,6 +56,8 @@
 // BOWSER=1 (M30) has the bot go for a target that sets off its neighbours
 // (the airfield's bowser) when that takes more of the job for its charges
 // than the targets themselves: one bomb for the aircraft either side of it.
+// M33: every such target (the bomb store too); BOWSER=<kind> (bowser,
+// bombStore) goes only for that kind, to see what each is worth.
 //
 // SCORES=1 (M32) adds a line per run with the winning scores' spread: lowest,
 // quartiles, highest. The back page's ratings (missions.json) are set against it.
@@ -129,7 +131,7 @@ const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
 const PACK = process.env.PACK === '1';
 const PENCIL = process.env.PENCIL ?? 'default';
 if (!['default', 'long', 'sync'].includes(PENCIL)) throw new Error(`PENCIL must be default, long or sync, not "${PENCIL}"`);
-const BOWSER = process.env.BOWSER === '1';
+const BOWSER = process.env.BOWSER === '1' ? true : process.env.BOWSER || false;
 const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
 const HUNTERS = process.env.HUNTERS ?? 'free';
 if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
@@ -191,14 +193,24 @@ function jobTargets(state) {
   const started = (o) => o.detonated + state.charges.filter((c) => c.objectiveId === o.id).length;
   const pick = (list, n) => [...list].sort((a, b) => started(b) - started(a) || near(a) - near(b)).slice(0, n);
   // BOWSER=1 (M30): a setter that takes two or more of the job's targets with
-  // it goes on the list first, and the targets it takes come off it.
+  // it goes on the list first, and the targets it takes come off it. M33:
+  // every such setter while the job still wants targets (the airfield has
+  // two), nearest first; BOWSER=<kind> goes only for setters of that kind.
   if (BOWSER && toGo > 0) {
-    for (const setter of state.objectives.filter((o) => !o.destroyed && rules.objectives[o.kind].setsOff)) {
-      const taken = SB.chainFrom(state.objectives, setter, setter.chargeHexes, rules).map((l) => l.objective).filter((o) => left.includes(o));
+    const plan = [];
+    let rest = left;
+    let want = toGo;
+    const setters = state.objectives.filter((o) => !o.destroyed && rules.objectives[o.kind].setsOff && (BOWSER === true || o.kind === BOWSER));
+    for (const setter of pick(setters, setters.length)) {
+      // One target still wanted is an aircraft's own bomb, not a second setter's.
+      if (want < 2) break;
+      const taken = SB.chainFrom(state.objectives, setter, setter.chargeHexes, rules).map((l) => l.objective).filter((o) => rest.includes(o));
       if (taken.length < 2) continue;
-      const rest = left.filter((o) => !taken.includes(o));
-      return [setter, ...pick(rest, Math.max(0, toGo - taken.length))];
+      plan.push(setter);
+      rest = rest.filter((o) => !taken.includes(o));
+      want -= taken.length;
     }
+    if (plan.length) return [...plan, ...pick(rest, Math.max(0, want))];
   }
   if (left.length <= toGo) return left;
   return pick(left, toGo);
@@ -410,7 +422,7 @@ function play(seed, runId) {
   const o = state.outcome;
   return {
     kind: o?.kind ?? 'stuck', reason: o?.reason, turn: o?.turn, score: o?.score.total ?? 0, bridgeTurn,
-    peak: state.alert.peak, clean: o ? o.score.lines.some((l) => l.points === rules.scoring.clean && / diversion$/.test(l.label)) : false, dead: state.units.filter((u) => u.dead).length,
+    peak: state.alert.peak, clean: o ? o.score.lines.some((l) => l.points === rules.scoring.clean && / diversion$/.test(l.label)) : false, salvo: o ? o.score.lines.some((l) => / up in one bang$/.test(l.label)) : false, dead: state.units.filter((u) => u.dead).length,
     out: state.units.filter((u) => u.out).length,
     kills: state.bodies.filter((b) => b.enemyId).length,
     secondaries: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).length,
@@ -441,6 +453,7 @@ for (const run of runs) {
     bonusPct: Object.fromEntries(map0.objectives.filter((o) => !WIN_IDS.has(o.id)).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
     // The winning scores' spread (M32): lowest, quartiles, highest — what the back page's ratings are set against.
     winScores: (() => { const w = res.filter((r) => r.kind === 'success').map((r) => r.score).sort((a, b) => a - b); return w.length ? [0, 0.25, 0.5, 0.75, 1].map((f) => w[Math.min(w.length - 1, Math.floor(f * w.length))]) : []; })(),
+    salvoPct: `${((100 * res.filter((r) => r.salvo).length) / N).toFixed(0)}%`,
     cleanPct: `${((100 * res.filter((r) => r.clean).length) / N).toFixed(0)}%`,
     alarmedPct: `${((100 * res.filter((r) => (r.peak ?? 0) >= rules.alert.states.at(-1).from).length) / N).toFixed(0)}%`,
   };
@@ -451,7 +464,7 @@ if (AS_JSON) {
   console.log(`${STRATEGY}, ${N} seeds per drop run${DATA_OVERRIDE ? `, rules patch ${JSON.stringify(DATA_OVERRIDE)}` : ''}`);
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
-      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
+      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}${rules.scoring.salvo ? `  salvo ${v.salvoPct}` : ''}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
     if (process.env.SCORES) console.log(`      winning scores, lowest / quartiles / highest: ${v.winScores.join(' / ')}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
   }

@@ -839,7 +839,7 @@
       position: absolute;
       inset: 0;
       z-index: 5;
-      padding: 12px 14px 12px 22px;
+      padding: 12px 14px 4px 22px;
       overflow-y: auto;
       background-color: var(--paper);
       background-image: var(--paper-fibre);
@@ -860,11 +860,12 @@
       border-top: 2px solid var(--ink);
       border-bottom: 2px solid var(--ink);
       /* Air above the kicker and the result, so each reads on its own (M12);
-         less of it since M32, for the rating under the score. */
-      margin: 14px 0 8px;
+         less of it since M32, for the rating under the score, and M33,
+         for the airfield's thirteen-line sheet. */
+      margin: 10px 0 8px;
     }
     #results h2 {
-      margin: 14px 0 4px;
+      margin: 10px 0 4px;
       text-align: center;
       font-family: var(--slab);
       font-size: 24px;
@@ -875,8 +876,8 @@
     #results.failed h2 { color: var(--red); }
     #results p { margin: 0 0 8px; }
     /* A blank line between the six and the score. */
-    #results .fates { list-style: none; margin: 0 0 1em; padding: 0; }
-    #results .fates li { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    #results .fates { list-style: none; margin: 0 0 0.8em; padding: 0; }
+    #results .fates li { display: flex; align-items: center; gap: 6px; }
     #results .fates svg { width: 22px; height: 22px; flex: 0 0 22px; }
     #results .fate-lost svg { filter: grayscale(1); opacity: 0.5; }
     #results .fate-lost b { color: var(--red); }
@@ -894,7 +895,7 @@
     }
     /* The rating (M32): the band earned as a red rubber stamp's words, and
        the annual's score table under it, the earned row in bold. */
-    #results .rating { margin-top: 12px; }
+    #results .rating { margin-top: 8px; }
     #results .rating-earned { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
     #results .rating-earned small { font-family: var(--slab); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; }
     #results .rating-earned b { font-family: var(--slab); font-size: 16px; letter-spacing: 0.5px; white-space: nowrap; color: var(--red); }
@@ -907,11 +908,11 @@
     #results .rating tr:nth-last-child(2) td { padding-bottom: 0; }
     /* The two buttons on one line (M32: stacked, with the rating above them,
        they ran off the foot of a long score sheet). */
-    #results .again { margin-top: 16px; text-align: center; white-space: nowrap; }
+    #results .again { margin-top: 12px; text-align: center; white-space: nowrap; }
     #results .again .btn + .btn { margin-left: 10px; }
     /* Set as SCORE and the result are (M12). */
     #results button {
-      padding: 6px 12px;
+      padding: 4px 12px;
       font-family: var(--slab);
       font-size: 18px;
       font-weight: bold;

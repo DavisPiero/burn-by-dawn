@@ -63,11 +63,12 @@
       "rules": {
         "roles": { "scout": { "charges": 1 } },
         "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
-        "scoring": { "win": 10, "cleanNeverReached": "alert", "cleanUntil": "firstExplosion" },
+        "scoring": { "win": 10, "cleanNeverReached": "alert", "cleanUntil": "firstExplosion", "salvo": { "count": 4, "points": 3 } },
         "diversion": { "prompt": { "alertState": null } },
         "objectives": {
           "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": false },
           "bowser": { "label": "Fuel Bowser", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": true },
+          "bombStore": { "label": "Bomb Store", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": true },
           "signals": { "label": "Signals Tent", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4, "setsOff": false }
         }
       },
@@ -81,8 +82,8 @@
       "levels": {
         "easy": { "summary": "Three aircraft will do.", "rules": { "mission": { "win": { "count": 3 } } } },
         "hard": {
-          "summary": "Six aircraft are wanted: with five bombs, the bowser has to go.",
-          "rules": { "mission": { "win": { "count": 6 } } }
+          "summary": "Seven aircraft are wanted: with five bombs, the bowser and the bomb store both have to go.",
+          "rules": { "mission": { "win": { "count": 7 } } }
         }
       },
       "briefing": "Tonight six men are to drop on an enemy landing ground.",
@@ -103,12 +104,12 @@
       },
       "portraits": "assets/portraits/desert",
       "counterColour": "burnt",
-      "_ratings": "M32, as France's: five aircraft with most men out lands in the middle two; the top wants more than five, the signals tent and a quiet way in.",
+      "_ratings": "M32, as France's: five aircraft with most men out lands in the middle two; the top wants more than five, the signals tent and a quiet way in. M33: each band two or three higher, for the bomb store and the salvo (naive wins 35–46 between the quartiles, a careful game going for everything 44–53).",
       "ratings": [
         { "from": 0, "label": "SCRAPED HOME" },
-        { "from": 34, "label": "A GOOD NIGHT'S WORK" },
-        { "from": 41, "label": "MENTIONED IN DESPATCHES" },
-        { "from": 47, "label": "ONE FOR THE ANNUAL" }
+        { "from": 36, "label": "A GOOD NIGHT'S WORK" },
+        { "from": 43, "label": "MENTIONED IN DESPATCHES" },
+        { "from": 50, "label": "ONE FOR THE ANNUAL" }
       ],
       "titleCard": "assets/title/title-card-airfield.jpg",
       "diversionSound": "jeepRaid",

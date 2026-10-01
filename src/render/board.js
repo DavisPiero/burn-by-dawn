@@ -1633,7 +1633,10 @@ function drawSites(layers, state, view) {
     const needed = view.winTargetIds.has(objective.id);
     const name = needed ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
     // Names go on last, over the charge points around them.
-    labels.push(casedText(name, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+    // `nameNudge` (M33, art only) moves the name by [x, y] hex radii: the bomb
+    // store's goes under it, as it stands between two Stukas' names.
+    const [nameX, nameY] = (map.objectives?.find((o) => o.id === objective.id)?.nameNudge ?? [0, 0]).map((v) => v * map.hexSize);
+    labels.push(casedText(name, at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
     // The exchange's telephone lines run out to a pole on each of its charge
     // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
     if (objectiveArt(objective)?.wires) drawWires(layers, objective);
@@ -1728,6 +1731,26 @@ function drawHose(layers, objective) {
   for (const h of objective.chargeHexes) {
     const to = pointIconAt(map, objective, h);
     const length = Math.hypot(to.x - from.x, to.y - from.y);
+    // The bomb store's (M33): a trolley's rails and sleepers, dead straight.
+    if (art.hose.style === 'rails') {
+      const r = HOSE.rails;
+      const along = { x: (to.x - from.x) / length, y: (to.y - from.y) / length };
+      const across = { x: -along.y, y: along.x };
+      let d = '';
+      for (const side of [-1, 1]) {
+        const o = { x: across.x * side * r.gauge / 2, y: across.y * side * r.gauge / 2 };
+        d += `M${from.x + o.x} ${from.y + o.y} L${to.x + o.x} ${to.y + o.y} `;
+      }
+      let sleepers = '';
+      for (let t = r.sleeperEvery / 2; t < length; t += r.sleeperEvery) {
+        const c = { x: from.x + along.x * t, y: from.y + along.y * t };
+        const half = r.gauge / 2 + r.sleeperOver;
+        sleepers += `M${c.x - across.x * half} ${c.y - across.y * half} L${c.x + across.x * half} ${c.y + across.y * half} `;
+      }
+      g.appendChild(el('path', { d: sleepers, fill: 'none', stroke: HOSE.stroke, 'stroke-width': r.sleeperWidth, opacity: 0.55 }));
+      g.appendChild(el('path', { d, fill: 'none', stroke: HOSE.stroke, 'stroke-width': r.width }));
+      continue;
+    }
     const mid = { x: (from.x + to.x) / 2, y: Math.max(from.y, to.y) + length * HOSE.sag };
     const d = `M${from.x} ${from.y} Q${mid.x} ${mid.y} ${to.x} ${to.y}`;
     g.appendChild(el('path', { d, fill: 'none', stroke: HOSE.casing, 'stroke-width': HOSE.casingWidth, 'stroke-linecap': 'round' }));
