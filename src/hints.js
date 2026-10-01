@@ -217,6 +217,21 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     }
   }
 
+  // The goods train (M34): its turn, and when the charges must be set to
+  // catch it, while it can still be caught. Said first on the turns a charge
+  // set now would do it.
+  const crossed = rules.train ? state.objectives.find((o) => o.kind === rules.train.objective) : null;
+  if (crossed && !crossed.destroyed) {
+    const { turn, window, score, label } = rules.train;
+    const burn = rules.charges.fuseTurns - 1;
+    const from = turn - window - burn, to = turn + window - burn;
+    if (state.turn >= from && state.turn <= to) {
+      hints.unshift(`A charge set on the ${crossed.label} this turn goes off on turn ${state.turn + burn}: under the ${label.toLowerCase()}, +${score}.`);
+    } else if (state.turn < from) {
+      hints.push(`The ${label.toLowerCase()} crosses the ${crossed.label} on turn ${turn}. Charges set on turns ${from} to ${to} bring it down under the train: +${score}.`);
+    }
+  }
+
   hints.push('Hover an enemy to see what it can see and where it walks. On a move, the dots under a hex are how near he is to being seen there: fill them all, a red cross, and he is spotted.');
   return hints.slice(0, max);
 }

@@ -7,6 +7,7 @@
 
 import { winMet, winShortfall, winTargets, winWords } from './missions.js';
 import { kindOf } from './sabotage.js';
+import { trainCaught } from './train.js';
 import { onBoard } from './units.js';
 
 /**
@@ -142,6 +143,8 @@ export function scoreOf(state, rules) {
     lines.push({ label: `${d.count > 1 ? `${d.count} ${d.label}s` : d.label} destroyed${d.cut ? ' (line cut)' : ''}`, points: d.points });
   }
   if (s.win > 0 && winMet(state, rules)) lines.push({ label: `The job done: ${winWords(state, rules)}`, points: s.win });
+  // The goods train (M34): the bridge down within a turn of it.
+  if (rules.train && trainCaught(state, rules)) lines.push({ label: `${rules.train.label} wrecked with it`, points: rules.train.score });
   const salvo = bestSalvo(state, rules);
   if (s.salvo && salvo.count >= s.salvo.count) lines.push({ label: `${salvo.count} ${salvo.label} up in one bang`, points: s.salvo.points });
   const out = state.units.filter((u) => u.out);

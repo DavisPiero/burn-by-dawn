@@ -526,7 +526,8 @@ export function runFusePhase(state, rules) {
   next = {
     ...next,
     fusePhases: phase,
-    objectives: next.objectives.map((o) => (o.destroyed && stood.has(o.id) ? { ...o, wentUp: phase } : o)),
+    // And the turn (M34): the goods train asks whether the bridge went under it.
+    objectives: next.objectives.map((o) => (o.destroyed && stood.has(o.id) ? { ...o, wentUp: phase, downTurn: state.turn } : o)),
   };
   return { state: next, events };
 }

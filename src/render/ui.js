@@ -284,7 +284,7 @@ export function describeAlertStates(alert) {
 // How much a line of the turn report matters, lowest first: the card puts the
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
-  killed: 0, blastKilled: 0, wounded: 1, blastWounded: 1, explosion: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reinforcementsCalled: 1, reserve: 2, reinforcements: 2, spotted: 2, diversion: 2,
+  killed: 0, blastKilled: 0, wounded: 1, blastWounded: 1, explosion: 1, train: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reinforcementsCalled: 1, reserve: 2, reinforcements: 2, spotted: 2, diversion: 2,
   pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
@@ -593,6 +593,13 @@ export function describeEvent(event, place) {
   switch (event.kind) {
     case 'spotted': return `${event.unitName} spotted by ${event.enemyLabel} in ${at()}${HID_WORDS[event.hid] ?? ''}.`;
     case 'alertRise': return `Alert rises: ${event.from} → ${event.to}.`;
+    // The goods train (M34): scenery, said as it comes, crosses, stops or is wrecked.
+    case 'train': return {
+      comes: `The ${event.label.toLowerCase()} comes on from the west: on the ${event.target} in the garrison's turn ${event.crossesOn}.`,
+      crosses: `The ${event.label.toLowerCase()} is on the ${event.target}.`,
+      halts: `The ${event.label.toLowerCase()} stops short: the ${event.target} is gone.`,
+      wrecked: `The ${event.label.toLowerCase()} goes down with the ${event.target}!`,
+    }[event.what];
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
     case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for the way to the exfil.`;

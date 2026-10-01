@@ -7,7 +7,7 @@ import {
 } from './enemy.js';
 import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
-import { DIRECTION_NAMES, hexDistance } from './hex.js';
+import { DIRECTION_NAMES, axialToPixel, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
 import { createRng, freshSeed, seedFromQuery } from './rng.js';
 import {
@@ -21,6 +21,7 @@ import {
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
+import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
   chargeCapacity, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
@@ -36,7 +37,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderContentsBack, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -228,6 +229,8 @@ function deriveView() {
   const exfil = baseMap.exfil.map(([q, r]) => ({ q, r }));
   const view = {
     traitEffectsById,
+    // The goods train where it stands (M34), each car with the line's direction under it.
+    train: trainView(),
     // What the win needs, for the board's star (M28: no longer the map's primary flag).
     winTargetIds: new Set(winTargets(state, rules).targets.map((o) => o.id)),
     // Hexes carry no printed coordinates (SPEC.md §11), so text names places.
@@ -366,6 +369,8 @@ function deriveView() {
       { label: 'HERE', text: `found by an enemy on or next to it: alert +${rules.alert.parachuteFound}` },
       { label: 'PACK', text: `any man standing here can pack it: [U] ${rules.actions.packParachute.apCost} AP` },
     ] };
+  } else if (hex && view.train?.cars.some((c) => c.q === hex.q && c.r === hex.r)) {
+    view.site = { title: rules.train.label, rows: trainRows(view.train) };
   } else if (hex && isExfil(baseMap, hex)) {
     view.site = { title: 'Exfil', rows: [
       { label: 'HERE', text: 'a man who ends his move here is out' },
@@ -694,6 +699,8 @@ function describeObjective(o, onPoint, brief = false) {
   const blows = (c) => (c.fuse <= 1 ? 'blows this turn' : `blows turn ${state.turn + c.fuse - 1}`);
   const burning = set.length ? `; ${set.length} set, ${set.map(blows).join(', ')}` : '';
   const rows = [];
+  // The goods train's turn, on the target it crosses (M34), while it can still be caught.
+  if (trainObjective(state, rules) === o && state.turn <= rules.train.turn + rules.train.window) rows.push({ label: 'TRAIN', text: trainDue() });
   if (onPoint) {
     // The cut, when the rows below leave it out (M22: said twice otherwise).
     const scout = rules.roles[selectedUnit(state)?.role]?.cutLine;
@@ -819,7 +826,61 @@ function missionPanelObjectives() {
     if (grouped && targets.includes(o)) continue;
     lines.push(describePanelObjective(o, targets.includes(o)));
   }
+  // The goods train (M34): its turn, and whether it was caught.
+  const crossed = trainObjective(state, rules);
+  if (crossed) {
+    const caught = trainCaught(state, rules);
+    const missed = !caught && (crossed.destroyed || state.turn > rules.train.turn + rules.train.window + 1);
+    lines.push({
+      label: rules.train.label, win: false, destroyed: caught, cut: false, points: rules.train.score,
+      detail: caught ? `Wrecked with the ${crossed.label}` : missed ? `Not caught: the ${crossed.label} went ${crossed.destroyed ? 'at the wrong time' : 'on standing'}` : capitalise(trainDue()),
+      progress: caught ? 'done' : missed ? 'missed' : `turn ${rules.train.turn}`,
+    });
+  }
   return lines;
+}
+
+/** The turns a charge must be set on to bring the train's target down under it, by the usual fuse. */
+function trainSetTurns() {
+  const { turn, window } = rules.train;
+  const burn = rules.charges.fuseTurns - 1;
+  return { from: turn - window - burn, to: turn + window - burn, downFrom: turn - window, downTo: turn + window };
+}
+
+/** "crosses on turn 14: the Rail Bridge down on turns 13 to 15 wrecks it, +5 (charges set on turns 11 to 13)". */
+function trainDue() {
+  const t = trainSetTurns();
+  const crossed = trainObjective(state, rules);
+  return `crosses on turn ${rules.train.turn}: the ${crossed.label} down on turns ${t.downFrom} to ${t.downTo} wrecks it, +${rules.train.score} (charges set on turns ${t.from} to ${t.to})`;
+}
+
+/** The train's hover rows: what it is doing, and that it is only scenery. */
+function trainRows(train) {
+  const doing = {
+    running: train.head >= train.objective.hexes.length && state.turn > rules.train.turn ? 'crossing' : `on its way: ${trainDue()}`,
+    halted: `stopped: the ${train.objective.label} went before it got near`,
+    wrecked: `wrecked with the ${train.objective.label}: +${rules.train.score}`,
+  }[train.status];
+  return [
+    { label: 'DOING', text: doing },
+    { label: 'HERE', text: 'only scenery: it sees nobody, and a man may stand on the line' },
+  ];
+}
+
+/** trainAt for the board: each car with the railway's direction there, and whether it lies over water. */
+function trainView() {
+  if (!rules.train || state.phase === 'drop') return null;
+  const train = trainAt(state, rules, baseMap);
+  if (!train) return null;
+  const line = railwayLine(baseMap);
+  const size = baseMap.hexSize;
+  const cars = train.cars.map((car) => {
+    const a = line[Math.max(0, car.index - 1)], b = line[Math.min(line.length - 1, car.index + 1)];
+    const pa = axialToPixel(a.q, a.r, size), pb = axialToPixel(b.q, b.r, size);
+    const d = Math.hypot(pb.x - pa.x, pb.y - pa.y) || 1;
+    return { ...car, along: { x: (pb.x - pa.x) / d, y: (pb.y - pa.y) / d }, sunk: train.objective.destroyed && train.objective.hexes.some((h) => h.q === car.q && h.r === car.r) };
+  });
+  return { ...train, cars };
 }
 
 function describePanelObjective(o, win) {
@@ -1974,6 +2035,8 @@ function describeBriefing(which, view) {
             ? 'Every bang alerts the garrison, so carefully plan the order and timer duration of the charges you set.'
             : 'Every bang alerts the garrison, so plan the order you set charges carefully.'}`,
           'It’s good to be slow and stealthy, but be sure to finish before dawn!',
+          // The goods train (M34), where the mission has one.
+          ...(rules.train ? [`The ${rules.train.label.toUpperCase()} ${trainDue().replace(/ \(charges.*\)$/, '')}.`] : []),
           // The clean run said up front (M32c, the operator's): until now only
           // the back page told of it. The mission's own words, as its condition is.
           ...(mission.words.cleanOrders ? [mission.words.cleanOrders] : []),

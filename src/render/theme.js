@@ -885,6 +885,21 @@ export const EXFIL = {
   art: 'objective-rally-point',
 };
 
+// The goods train (M34): a car to a hex along the railway, engine first. A
+// wrecked car is thrown off the line's angle, each a different way, and the
+// engine burns; a car over water (the fallen bridge) is printed fainter.
+export const TRAIN = {
+  engine: 'train-engine',
+  wagon: 'train-wagon',
+  width: 80,
+  height: 46,
+  wreckAngles: [24, -17, 31, -26, 14],
+  wreckShift: 7,
+  sunkOpacity: 0.6,
+  flame: 'marker-blast',
+  flameSize: 44,
+};
+
 // The exfil's picture, by the map's `exfilArt` (M29): France's barn, or the
 // trucks waiting at the airfield's rendezvous.
 const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks' };
@@ -2104,6 +2119,35 @@ function bombStore(burnt) {
   ];
 }
 
+// The goods train (M34), from above, running east: a tank engine in ink with
+// its boiler bands, chimney, dome and cab, and a covered wagon in army green
+// with its roof ribs and couplings. Each is one hex long.
+function trainEngine() {
+  const frame = 'M6 12 H70 Q76 12 76 18 V28 Q76 34 70 34 H6 Z';
+  const boiler = 'M26 14 H66 Q73 14 73 20 V26 Q73 32 66 32 H26 Z';
+  const cab = 'M6 10 H26 V36 H6 Z';
+  return [
+    line('M0 23 H6', 3),
+    ...inked(frame, 'ink', 1.4),
+    fill(boiler, 'ink'), line(boiler, 1.2, 'stroke-paper', { opacity: 0.55 }),
+    line('M36 14 V32 M46 14 V32 M56 14 V32', 1, 'stroke-paper', { opacity: 0.4 }),
+    circle(64, 23, 4.2, 'paper'), ring(64, 23, 4.2, 1.2), circle(64, 23, 2, 'ink'),
+    circle(50, 23, 3, 'ink'), ring(50, 23, 3, 1, 'stroke-paper'),
+    ...inked(cab, 'green', 1.4), line('M10 14 H22 M10 32 H22', 1, 'stroke-ink', { opacity: 0.6 }),
+    fill('M74 20 H79 V26 H74 Z', 'red'),
+  ];
+}
+function trainWagon() {
+  const body = 'M5 11 H75 V35 H5 Z';
+  return [
+    line('M0 23 H5 M75 23 H80', 3),
+    ...inked(body, 'green', 1.4),
+    line('M17 11 V35 M29 11 V35 M40 11 V35 M51 11 V35 M63 11 V35', 0.9, 'stroke-ink', { opacity: 0.45 }),
+    line('M5 23 H75', 0.9, 'stroke-ink', { opacity: 0.3 }),
+    fill('M34 19 H46 V27 H34 Z', 'paper', { 'fill-opacity': 0.75 }),
+  ];
+}
+
 const DESERT_OBJECTIVES = {
   'objective-aircraft-stuka': { viewBox: '0 0 96 92', draw: () => stuka(false) },
   'objective-aircraft-stuka-destroyed': { viewBox: '0 0 96 92', draw: () => stuka(true) },
@@ -2249,6 +2293,8 @@ const SPRITES = {
   ...Object.fromEntries(Object.entries(TERRAIN_SPRITES).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
   ...Object.fromEntries(Object.entries(DESERT_TERRAIN).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
   ...DESERT_OBJECTIVES,
+  'train-engine': { viewBox: '0 0 80 46', draw: trainEngine },
+  'train-wagon': { viewBox: '0 0 80 46', draw: trainWagon },
   // A hedge's clumps (M17): board.js lays them along each hedge, every shadow first.
   ...Object.fromEntries(Array.from({ length: HEDGE_CLUMP.variants }, (_, i) => [
     [`hedge-clump-0${i + 1}`, { viewBox: `0 0 ${HEDGE_CLUMP.size} ${HEDGE_CLUMP.size}`, draw: () => hedgeClump(i) }],

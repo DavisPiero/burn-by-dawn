@@ -50,6 +50,9 @@
     "perKillFound": -1
   },
 
+  "_train": "SPEC.md §7, M34: the goods train, scenery with a timetable. null here; a mission gives { label, objective, turn, window, score, speed, length }: it runs the map's `railway` from its first end and is on the objective of kind `objective` in the enemy phase of turn `turn`, `speed` hexes a turn, `length` hexes long. That objective destroyed within `window` turns of `turn` pays `score` on the back page. It sees nobody, raises nothing and blocks no hex.",
+  "train": null,
+
   "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27).",
   "mission": { "minimumOut": 3, "win": { "condition": "destroyPrimary" } },
 
