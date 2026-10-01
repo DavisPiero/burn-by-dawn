@@ -10,7 +10,7 @@ import {
 } from '../src/missions.js';
 import { blastEffect, blastHexesThisTurn, blastsOfCharge, caughtBy, checkPlaceCharge, defaultPencil, isExfil, laterBlasts, offeredPencil, pencils, runFusePhase } from '../src/sabotage.js';
 import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '../src/state.js';
-import { cleanRun, scoreOf } from '../src/scoring.js';
+import { bestSalvo, cleanRun, scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
 import { diversionPrompt, hintsFor } from '../src/hints.js';
 import { boardEdges, boardPixelBounds, diversionTimeline, dropTimeline, pickDiversionLine } from '../src/render/board.js';
@@ -61,8 +61,8 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['any N of the eight aircraft is the job: 3 on Easy, 5 on Normal, 6 on Hard (M30); five bombs in the stick', async () => {
-    for (const [level, count] of [['easy', 3], ['normal', 5], ['hard', 6]]) {
+  ['any N of the eight aircraft is the job: 3 on Easy, 5 on Normal, 7 on Hard (M33); five bombs in the stick', async () => {
+    for (const [level, count] of [['easy', 3], ['normal', 5], ['hard', 7]]) {
       const { map, rules, traits, roster } = await loadAirfield(level);
       const state = createInitialState(roster, traits, rules, map, 1);
       const { targets, needed } = winTargets(state, rules);
@@ -279,10 +279,13 @@ export default [
     equal(units.reduce((n, u) => n + u.charges, 0), 4, 'four bombs');
     equal(winShortfall(fewer, rules), 0, 'three aircraft by bomb, two with the bowser');
     const { state: hard, rules: hardRules } = await onAirfield({}, 'hard');
-    equal(winShortfall(hard, hardRules), 0, 'Hard wants six of five bombs: the bowser and four more');
+    // M33: Hard wants seven of five bombs, which takes the bowser and the bomb store both.
+    equal(winShortfall(hard, hardRules), 0, 'Hard wants seven of five bombs: both setters and three more');
     equal(winShortfall({ ...hard, objectives: hard.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) }, hardRules), 1, 'Hard without the bowser: one short');
-    const gone = { ...fewer, objectives: fewer.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) };
-    equal(winShortfall(gone, rules), 1, 'without it, one short');
+    const noBowser = { ...fewer, objectives: fewer.objectives.map((o) => (o.kind === 'bowser' ? { ...o, destroyed: true } : o)) };
+    equal(winShortfall(noBowser, rules), 0, 'without the bowser the bomb store still makes five of four bombs');
+    const gone = { ...fewer, objectives: fewer.objectives.map((o) => (o.kind === 'bowser' || o.kind === 'bombStore' ? { ...o, destroyed: true } : o)) };
+    equal(winShortfall(gone, rules), 1, 'without either, one short');
   }],
 
   ['a timer too short for a man to get clear is named; the one offered is the shortest safe one from the default (M30b)', async () => {
@@ -362,6 +365,42 @@ export default [
     const hints = hintsFor({ ...state, turn: 2, parachutes: [] }, rules, {}, 10);
     assert(hints.some((h) => h.includes('then pick a timer')), `the timer: ${hints.join(' | ')}`);
     assert(hints.some((h) => h.includes('The Bowser sets off the 2 Ju 52s beside it: 3 for one charge')), `the bowser: ${hints.join(' | ')}`);
+  }],
+
+  ['the bomb store (M33) is the bowser\'s twin in the north: its blast takes exactly the two Stukas beside it, one explosion', async () => {
+    const { rules, state } = await onAirfield({ fitch: [10, 4] });
+    const store = objectiveIn(state, 'bomb-store');
+    equal(rules.objectives.bombStore.setsOff, true, 'it sets off its neighbours');
+    equal(store.chargeHexes.length, 1, 'one charge point');
+    const reach = (o) => o.hexes.some((h) => store.chargeHexes.some((c) => hexDistance(h, c) <= rules.objectives.bombStore.blastRadius));
+    const caught = state.objectives.filter((o) => o.id !== store.id && reach(o)).map((o) => o.id).sort();
+    equal(caught.join(','), 'stuka-3,stuka-4', 'exactly the two Stukas either side');
+    let after = placeCharge(state, 'fitch', rules, 3);
+    equal(after.charges[0]?.objectiveId, 'bomb-store', 'the charge is the store\'s');
+    const before = after.explosions;
+    for (let i = 0; i < 3; i++) after = runFusePhase(after, rules).state;
+    assert(['bomb-store', 'stuka-3', 'stuka-4'].every((id) => objectiveIn(after, id).destroyed), 'all three go up');
+    equal(after.objectives.filter((o) => o.destroyed).length, 3, 'and nothing else');
+    equal(after.explosions - before, 1, 'one explosion');
+    equal(new Set(['bomb-store', 'stuka-3', 'stuka-4'].map((id) => objectiveIn(after, id).wentUp)).size, 1, 'in the one fuse phase');
+  }],
+
+  ['the salvo (M33): four of the win\'s targets up in one fuse phase pays; a chain counts, bangs on different turns do not; France has none', async () => {
+    const { rules, state } = await onAirfield({});
+    equal(rules.scoring.salvo.count, 4, 'four aircraft');
+    const up = (ids, phase) => (o) => (ids.includes(o.id) ? { ...o, destroyed: true, wentUp: phase } : o);
+    const together = { ...state, objectives: state.objectives.map(up(['stuka-1', 'stuka-2', 'ju52-1', 'ju52-2'], 1)) };
+    equal(bestSalvo(together, rules).count, 4, 'four in one phase');
+    const line = scoreOf(together, rules).lines.find((l) => l.label.endsWith('up in one bang'));
+    equal(line?.points, rules.scoring.salvo.points, 'and paid');
+    equal(line?.label, '4 Aircraft up in one bang', 'said so');
+    const apart = { ...state, objectives: state.objectives.map(up(['stuka-1', 'stuka-2'], 1)).map(up(['ju52-1', 'ju52-2'], 2)) };
+    equal(bestSalvo(apart, rules).count, 2, 'two and two on different turns');
+    assert(!scoreOf(apart, rules).lines.some((l) => l.label.endsWith('up in one bang')), 'not paid');
+    // The bowser and the store's own hexes are not aircraft: only the win's targets count.
+    const setters = { ...state, objectives: state.objectives.map(up(['bowser', 'bomb-store', 'signals', 'stuka-1'], 1)) };
+    equal(bestSalvo(setters, rules).count, 1, 'bonus targets do not count');
+    equal((await loadJson('data/rules.json')).scoring.salvo, null, 'France: none');
   }],
 
   ['the clean run here (M32): below Alert when the first bang goes, whatever comes after; France asks about the whole night', async () => {

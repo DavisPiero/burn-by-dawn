@@ -63,11 +63,12 @@
       "rules": {
         "roles": { "scout": { "charges": 1 } },
         "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
-        "scoring": { "win": 10, "cleanNeverReached": "alert", "cleanUntil": "firstExplosion" },
+        "scoring": { "win": 10, "cleanNeverReached": "alert", "cleanUntil": "firstExplosion", "salvo": { "count": 4, "points": 3 } },
         "diversion": { "prompt": { "alertState": null } },
         "objectives": {
           "aircraft": { "label": "Aircraft", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 2, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": false },
           "bowser": { "label": "Fuel Bowser", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": true },
+          "bombStore": { "label": "Bomb Store", "chargesNeeded": 1, "blastRadius": 2, "killRadius": 1, "alert": 4, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 2, "setsOff": true },
           "signals": { "label": "Signals Tent", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": true, "destroyedTerrain": null, "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4, "setsOff": false }
         }
       },
@@ -81,8 +82,8 @@
       "levels": {
         "easy": { "summary": "Three aircraft will do.", "rules": { "mission": { "win": { "count": 3 } } } },
         "hard": {
-          "summary": "Six aircraft are wanted: with five bombs, the bowser has to go.",
-          "rules": { "mission": { "win": { "count": 6 } } }
+          "summary": "Seven aircraft are wanted: with five bombs, the bowser and the bomb store both have to go.",
+          "rules": { "mission": { "win": { "count": 7 } } }
         }
       },
       "briefing": "Tonight six men are to drop on an enemy landing ground.",

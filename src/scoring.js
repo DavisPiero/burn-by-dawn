@@ -92,6 +92,21 @@ export function finalOutcome(state, rules, check, turn, dawn) {
  * (M11b): a point per turn to spare paid players to rush.
  */
 /**
+ * The salvo (M33, SPEC.md §10): the most of the win's targets that went up in
+ * one fuse phase, set off by a neighbour or by their own charges timed to the
+ * same turn. A mission's `scoring.salvo` { count, points } pays for that many
+ * or more; null (France, with one fuse and one primary) pays nothing.
+ */
+export function bestSalvo(state, rules) {
+  const { targets } = winTargets(state, rules);
+  const byPhase = new Map();
+  for (const o of targets) {
+    if (o.destroyed && o.wentUp) byPhase.set(o.wentUp, (byPhase.get(o.wentUp) ?? 0) + 1);
+  }
+  return { count: Math.max(0, ...byPhase.values()), label: targets[0] ? kindOf(targets[0], rules).label : '' };
+}
+
+/**
  * The clean run (SPEC.md §10): the garrison never reached
  * `scoring.cleanNeverReached` and the diversion was never called. Where a
  * mission sets `scoring.cleanUntil` to "firstExplosion" (M32, the airfield,
@@ -127,6 +142,8 @@ export function scoreOf(state, rules) {
     lines.push({ label: `${d.count > 1 ? `${d.count} ${d.label}s` : d.label} destroyed${d.cut ? ' (line cut)' : ''}`, points: d.points });
   }
   if (s.win > 0 && winMet(state, rules)) lines.push({ label: `The job done: ${winWords(state, rules)}`, points: s.win });
+  const salvo = bestSalvo(state, rules);
+  if (s.salvo && salvo.count >= s.salvo.count) lines.push({ label: `${salvo.count} ${salvo.label} up in one bang`, points: s.salvo.points });
   const out = state.units.filter((u) => u.out);
   const men = (n) => `${n} m${n === 1 ? 'a' : 'e'}n`;
   // M18: a man who was hit, dressed or not, pays less than one who came through whole.

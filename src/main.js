@@ -1900,9 +1900,10 @@ function describeBriefing(which, view) {
     // Places in capitals, as the operator's orders name them (M12).
     const bonusTargets = state.objectives.filter((o) => !isWinTarget(state, rules, o));
     const bonus = bonusTargets.map((o) => `the ${o.label.toUpperCase()}`);
-    // What each pays: one number if they all pay the same, as France's do.
+    // What each pays: one number if they all pay the same, as France's do;
+    // else each in the order they are named (M33: names again ran a line over).
     const bonusScores = [...new Set(bonusTargets.map((o) => kindOf(o, rules).score))];
-    const bonusPts = bonusScores.length === 1 ? `+${bonusScores[0]}pts${bonus.length === 1 ? '' : ' ea'}` : bonusTargets.map((o) => `${o.label} +${kindOf(o, rules).score}`).join(', ');
+    const bonusPts = bonusScores.length === 1 ? `+${bonusScores[0]}pts${bonus.length === 1 ? '' : ' ea'}` : `${bonusTargets.map((o) => `+${kindOf(o, rules).score}`).join(', ')}pts`;
     const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
@@ -1916,8 +1917,16 @@ function describeBriefing(which, view) {
       const key = `${o.label}|${needed}|${where}`;
       needGroups.set(key, { label: o.label, needed, where, n: (needGroups.get(key)?.n ?? 0) + 1 });
     }
-    const needs = [...needGroups.values()].map(({ label, needed, where, n }) => (
-      `${n === 1 ? `${label}- ${needed}` : `${label}s- ${needed}ea`}${where.startsWith(',') ? '' : ' '}${where}`
+    // Names that need the same said together (M33: with the bomb store the
+    // airfield had four clauses alike): "Stukas, Ju 52s, Bowser, Bomb Store- 1ea…".
+    const sameNeed = new Map();
+    for (const { label, needed, where, n } of needGroups.values()) {
+      const key = `${needed}|${where}`;
+      const group = sameNeed.get(key) ?? { names: [], needed, where, n: 0 };
+      sameNeed.set(key, { ...group, names: [...group.names, n === 1 ? label : `${label}s`], n: group.n + n });
+    }
+    const needs = [...sameNeed.values()].map(({ names, needed, where, n }) => (
+      `${names.join(', ')}- ${needed}${n === 1 ? '' : 'ea'}${where.startsWith(',') ? '' : ' '}${where}`
     )).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
@@ -1927,14 +1936,20 @@ function describeBriefing(which, view) {
     const cutter = Object.values(rules.roles).find((role) => role.cutLine);
     // The airfield's two rules (M31), said where a mission has them: the timer
     // when charges take one, and whatever sets off its neighbours.
+    // The salvo (M33), with the timers that earn it.
+    const salvo = rules.scoring.salvo;
+    const salvoWords = salvo ? ` ${salvo.count} ${kindOf(winTargets(state, rules).targets[0], rules).label.toLowerCase()} up in one bang: bonus +${salvo.points}.` : '';
     const choice = rules.charges.fuseChoice;
     const timerLine = choice
-      ? `Every charge takes a timer: after C, pick a time pencil from the tin (${choice.min}–${choice.max} turns; ${rules.charges.fuseTurns} is offered first), then SET. A long timer lets charges set over several turns go off together, with the stick already on its way out.`
+      ? `Every charge takes a timer: after C, pick a time pencil from the tin (${choice.min}–${choice.max} turns; ${rules.charges.fuseTurns} is offered first), then SET. A long timer lets charges set over several turns go off together, with the stick already on its way out.${salvoWords}`
       : null;
-    const setterLines = state.objectives.filter((o) => setsOffList(o).length).map((o) => {
-      const caught = setsOffList(o);
-      return `The ${o.label.toUpperCase()} sets off ${namesOf(caught)} beside it: ${caught.length + 1} targets for one charge, and one bang.`;
-    });
+    // One line however many there are (M33: the bomb store made two, and the
+    // airfield's orders had no room for a line each).
+    const setters = state.objectives.filter((o) => setsOffList(o).length);
+    const takes = setters.map((o, i) => `${i === 0 ? 'The' : 'the'} ${o.label.toUpperCase()}${i === 0 ? ' sets off' : ''} ${namesOf(setsOffList(o))} beside it`);
+    const setterLines = setters.length === 0 ? [] : [
+      `${takes.length > 1 ? `${takes.slice(0, -1).join(', ')} and ${takes.at(-1)}` : takes[0]}: ${setsOffList(setters[0]).length + 1} targets for one charge${setters.length > 1 ? ' each time' : ''}, and one bang.`,
+    ];
     return {
       banner: { title: GAME_TITLE, tagline: mission.tagline },
       // The mission's title heads its orders (M31d, the operator's), and

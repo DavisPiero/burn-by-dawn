@@ -519,6 +519,15 @@ export function runFusePhase(state, rules) {
       events.push(...caughtPaid.events);
     }
   }
+  // Which fuse phase each objective went up in (M33): targets that go up in
+  // one phase are one salvo on the score sheet (scoring.js), a chain's too.
+  const phase = (state.fusePhases ?? 0) + 1;
+  const stood = new Set(state.objectives.filter((o) => !o.destroyed).map((o) => o.id));
+  next = {
+    ...next,
+    fusePhases: phase,
+    objectives: next.objectives.map((o) => (o.destroyed && stood.has(o.id) ? { ...o, wentUp: phase } : o)),
+  };
   return { state: next, events };
 }
 

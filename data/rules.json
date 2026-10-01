@@ -36,7 +36,7 @@
   "_explosionFloor": "SPEC.md §6: once anything has exploded, the alert never decays below this state. A cut line is not an explosion.",
   "explosionFloor": "suspicious",
 
-  "_scoring": "SPEC.md §10. M18, the operator's: the bridge is worth more than any retreat. M28: what an objective pays is its kind's `score` in `objectives` (the bridge 10, the others 4), and `win` is paid for meeting the mission's win condition: 0 here, as France's bridge carries its own 10; a mission with no primary (the airfield) pays it so that the job done beats the best retreat. A man out pays `perTrooperOut` if he was never hit, `perTrooperOutWounded` if he was (dressed or not). `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion. `cleanUntil` (M32): null asks about the whole mission; \"firstExplosion\" only about the night before the first bang, for a mission whose garrison is Alarmed by the end of every raid (the airfield). `perKill` for each enemy killed by a knife or a gunner's shot, and `perKillFound` (negative) when its body is found — a body is found once, so a kill nobody finds is worth 1 and one they find nothing (M16, the operator's). A blast's kills leave no body and score nothing: paying for them would pay players to blow targets up beside patrols.",
+  "_scoring": "SPEC.md §10. M18, the operator's: the bridge is worth more than any retreat. M28: what an objective pays is its kind's `score` in `objectives` (the bridge 10, the others 4), and `win` is paid for meeting the mission's win condition: 0 here, as France's bridge carries its own 10; a mission with no primary (the airfield) pays it so that the job done beats the best retreat. A man out pays `perTrooperOut` if he was never hit, `perTrooperOutWounded` if he was (dressed or not). `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion. `cleanUntil` (M32): null asks about the whole mission; \"firstExplosion\" only about the night before the first bang, for a mission whose garrison is Alarmed by the end of every raid (the airfield). `salvo` (M33): null, or { count, points }: `points` for `count` or more of the win's targets going up in one fuse phase, set off by a neighbour or timed together (the airfield); France has one fuse and one primary, so none. `perKill` for each enemy killed by a knife or a gunner's shot, and `perKillFound` (negative) when its body is found — a body is found once, so a kill nobody finds is worth 1 and one they find nothing (M16, the operator's). A blast's kills leave no body and score nothing: paying for them would pay players to blow targets up beside patrols.",
   "scoring": {
     "win": 0,
     "perTrooperOut": 2,
@@ -45,6 +45,7 @@
     "clean": 3,
     "cleanNeverReached": "alarmed",
     "cleanUntil": null,
+    "salvo": null,
     "perKill": 1,
     "perKillFound": -1
   },

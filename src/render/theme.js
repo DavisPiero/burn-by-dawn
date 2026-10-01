@@ -815,6 +815,9 @@ export const HOSE = {
   sag: 0.35, // how far it droops, as a share of its length
   nozzle: PALETTE.ochre,
   nozzleRadius: 3.2,
+  // The bomb store's lead to its charge point (M33): a bomb trolley's two
+  // rails, straight, with sleepers, instead of a rubber hose.
+  rails: { gauge: 5, width: 1.3, sleeperEvery: 6, sleeperWidth: 1.6, sleeperOver: 2 },
 };
 
 export const WIRES = {
@@ -841,6 +844,9 @@ const OBJECTIVE_ART = {
   // `hose` (M30b, the operator's): a fuel hose from the tank's tail, in the
   // art's own units, out to its charge point, so the bowser's point reads as its own.
   bowser: { intact: 'objective-fuel-bowser', destroyed: 'objective-fuel-bowser-destroyed', hose: { x: 7, y: 33 } },
+  // The bomb store (M33): `hose` again, to its own charge point between the
+  // two pens' points, but drawn as the store's trolley rails (`style`).
+  bombStore: { intact: 'objective-bomb-store', destroyed: 'objective-bomb-store-destroyed', hose: { x: 42, y: 14, style: 'rails' } },
   signals: { intact: 'objective-signals-tent', destroyed: 'objective-signals-tent-destroyed', cut: 'objective-signals-tent-cut', wires: { x: 60, y: 12 } },
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
@@ -2058,6 +2064,36 @@ function desertTruck(x, y, s = 1) {
   ];
 }
 
+// The bomb store (M33), from above: bombs laid in rows inside a low ring of
+// sandbags, noses east, each with its fins and a red band. Blown: the ring
+// broken open round a scorched pit, burning.
+function bombStore(burnt) {
+  const cx = 42, cy = 38;
+  if (burnt) {
+    return [
+      ...sandbagRing(cx, cy, 31, 25, 15, 0.5, 2.3),
+      fill(`M${cx - 22} ${cy + 4} Q${cx - 18} ${cy - 16} ${cx} ${cy - 15} Q${cx + 21} ${cy - 16} ${cx + 23} ${cy + 3} Q${cx + 16} ${cy + 17} ${cx - 2} ${cy + 16} Q${cx - 19} ${cy + 16} ${cx - 22} ${cy + 4} Z`, 'ink', { 'fill-opacity': 0.55 }),
+      line(`M${cx - 12} ${cy + 6} l7 -3 M${cx + 6} ${cy + 9} l8 2 M${cx + 2} ${cy - 8} l-6 -4`, 1.6),
+      ...flame(cx - 6, cy + 6, 0.6), ...flame(cx + 11, cy + 2, 0.45),
+    ];
+  }
+  const bomb = (x, y) => {
+    const body = `M${x - 7} ${y - 2.6} H${x + 4} Q${x + 9} ${y} ${x + 4} ${y + 2.6} H${x - 7} Z`;
+    return [
+      ...inked(body, 'green', 1.1),
+      fill(`M${x + 1} ${y - 2.6} H${x + 3.2} V${y + 2.6} H${x + 1} Z`, 'red'),
+      line(`M${x - 7} ${y - 4} V${y + 4} M${x - 9.5} ${y - 3.2} L${x - 7} ${y} L${x - 9.5} ${y + 3.2}`, 1.1),
+    ];
+  };
+  const rows = [-11, -3.5, 4, 11.5].flatMap((dy, i) => [-12, 5].map((dx) => [cx + dx + (i % 2 ? 3 : 0), cy + dy]));
+  return [
+    svg('ellipse', { cx, cy, rx: 27, ry: 21, class: 'paper' }),
+    svg('ellipse', { cx, cy, rx: 27, ry: 21, class: toneClass('ochre', 50) }),
+    ...rows.flatMap(([x, y]) => bomb(x, y)),
+    ...sandbagRing(cx, cy, 31, 25, 15),
+  ];
+}
+
 const DESERT_OBJECTIVES = {
   'objective-aircraft-stuka': { viewBox: '0 0 96 92', draw: () => stuka(false) },
   'objective-aircraft-stuka-destroyed': { viewBox: '0 0 96 92', draw: () => stuka(true) },
@@ -2072,6 +2108,8 @@ const DESERT_OBJECTIVES = {
     viewBox: '78 106 84 48',
     draw: () => [fill('M82 146 Q100 128 124 130 Q152 132 158 146 Z', 'ink', { 'fill-opacity': 0.3 }), ...bowser(true), ...flame(112, 134, 0.7), ...flame(138, 132, 0.55)],
   },
+  'objective-bomb-store': { viewBox: '0 0 84 76', draw: () => bombStore(false) },
+  'objective-bomb-store-destroyed': { viewBox: '0 0 84 76', draw: () => bombStore(true) },
   'objective-signals-tent': { viewBox: '0 0 80 92', draw: () => signalsTent('intact') },
   'objective-signals-tent-cut': { viewBox: '0 0 80 92', draw: () => signalsTent('cut') },
   'objective-signals-tent-destroyed': { viewBox: '0 0 80 92', draw: () => signalsTent('destroyed') },

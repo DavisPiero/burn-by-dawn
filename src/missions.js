@@ -254,7 +254,8 @@ export function winMet(state, rules) {
  * both sappers and Ox dead, a scout or gunner can never pick one up, and the
  * mission must end rather than drag on. The cheapest targets left are the
  * ones counted. An intact objective that sets its neighbours off (M30, the
- * bowser) is one more way: its charges for every target it would take.
+ * bowser) is one more way: its charges for every target it would take; and
+ * any set of them together (M33, the bomb store beside it).
  */
 export function winShortfall(state, rules) {
   const { targets, needed } = winTargets(state, rules);
@@ -267,15 +268,28 @@ export function winShortfall(state, rules) {
   };
   const intact = targets.filter((o) => !o.destroyed);
   let want = cheapest(intact, toGo);
-  // Blowing a setter from any of its charge points: what it would take for its charges.
-  for (const setter of state.objectives.filter((o) => !o.destroyed && kindOf(o, rules).setsOff)) {
-    for (const from of setter.chargeHexes) {
+  // Blowing setters from any of their charge points: what each set of them
+  // would take for its charges (M33: the airfield has two, and Hard's count
+  // wants both; one at a time said the job could not be done before it began).
+  const ways = state.objectives.filter((o) => !o.destroyed && kindOf(o, rules).setsOff)
+    .flatMap((setter) => setter.chargeHexes.map((from) => {
       const taken = new Set(chainFrom(state.objectives, setter, [from], rules).map((l) => l.objective.id));
       if (targets.includes(setter)) taken.add(setter.id);
+      return { setter, taken, cost: still(setter) };
+    }));
+  const tryWays = (index, used, taken, cost) => {
+    if (used.size > 0) {
       const rest = intact.filter((o) => !taken.has(o.id));
-      want = Math.min(want, still(setter) + cheapest(rest, Math.max(0, toGo - (intact.length - rest.length))));
+      want = Math.min(want, cost + cheapest(rest, Math.max(0, toGo - (intact.length - rest.length))));
     }
-  }
+    for (let i = index; i < ways.length; i++) {
+      const way = ways[i];
+      // One charge point a setter, and not a setter another's blast already takes.
+      if (used.has(way.setter.id) || taken.has(way.setter.id)) continue;
+      tryWays(i + 1, new Set([...used, way.setter.id]), new Set([...taken, ...way.taken]), cost + way.cost);
+    }
+  };
+  tryWays(0, new Set(), new Set(), 0);
   const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
   const carrier = state.units.some((u) => onBoard(u) && chargeCapacity(u, rules) > 0);
   return Math.max(0, want - carried - (carrier ? state.droppedCharges.length : 0));
