@@ -32,6 +32,12 @@ export const PALETTE = {
   // the airfield's story is printed in, used only by the desert's terrain.
   // Yellower than fire orange, so a burning fuse still stands out on it.
   ochre: '#D2A85C',
+  // The ninth (M31d, the operator's "try orange"): our men's counters on the
+  // desert, where army green on ochre sat too close to the garrison's dark
+  // chits. Burnt, darker and redder than fire orange, so the orange dots for
+  // the charges a man carries still stand off it in their paper rings. A
+  // mission names it as its `counterColour` (data/missions.json).
+  burnt: '#B4592A',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -402,6 +408,10 @@ export const PLACE = {
   village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink, opacity: 0.5 },
   water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.6, halo: false },
   other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink, opacity: 0.5 },
+  // A dry watercourse (M31d, the operator's: the wadi's name was lost under its
+  // stones): water's paper italic, solid, on a soft ink halo so it prints over
+  // the stones rather than among them.
+  wadi: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.95, halo: PALETTE.ink, haloOpacity: 0.45 },
 };
 
 export const GRID = {
@@ -684,6 +694,9 @@ export const HIGHLIGHT = {
 // The lengths a fuse token's face can be divided into (M30: the airfield's
 // time pencils run to 6 turns; France's fuse is 3, Dutch's 2).
 export const FUSE_LENGTHS = [1, 2, 3, 4, 5, 6];
+// The time pencils' safety strips, shortest to longest (M31d): the No. 10's
+// black, red, white, green, yellow and blue, in the palette's own colours.
+const TIME_PENCIL_COLOURS = ['ink', 'red', 'paper', 'green', 'ochre', 'blue'];
 
 export const MARKER = {
   size: 22,
@@ -970,6 +983,7 @@ export const DRIVE_BY = {
   tailMs: 350,
   flashMs: 180, // one blink of the muzzle flash, on and off
   clearance: 1.2, // hex radii from its line: a counter nearer is in its way (M31)
+  edgeGap: 4, // board units past half its size that it keeps inside the board's edge (M31d)
 };
 // `painted` is where the painted picture's muzzles are, in the 60-unit box,
 // and which way they point (degrees, 0 east): the flash moves there when the
@@ -1174,7 +1188,9 @@ const ALLIED_OUTLINE = 'M6 1 H48 A5 5 0 0 1 53 6 V48 A5 5 0 0 1 48 53 H6 A5 5 0 
 function alliedFrame(stripClass, extras = []) {
   return [
     ...cardEdge(ALLIED_OUTLINE),
-    fill(ALLIED_OUTLINE, 'green'),
+    // The body's colour is --counter-body, green unless a mission names its
+    // own (M31d, applyCounterColour).
+    fill(ALLIED_OUTLINE, 'counter-body'),
     fill('M1 38 H53 V48 A5 5 0 0 1 48 53 H6 A5 5 0 0 1 1 48 Z', stripClass),
     circle(9.5, 10, 7.5, 'paper'), ring(9.5, 10, 7.5, 1.2),
     ...extras,
@@ -2552,7 +2568,8 @@ const SPRITES = {
       svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, class: 'paper' }),
       svg('rect', { x: 12.5, y: 5, width: 3, height: 19, class: 'ink' }),
       svg('rect', { x: 7, y: 10, width: 14, height: 3, class: 'ink' }),
-      fill('M6 24 Q14 14 22 24 Z', 'green'),
+      // The mound in our counters' colour (M31d, the operator's: orange on the airfield).
+      fill('M6 24 Q14 14 22 24 Z', 'counter-body'),
       svg('rect', { x: 2, y: 2, width: 24, height: 24, rx: 3, fill: 'none', class: 'stroke-ink', 'stroke-width': 2 }),
     ],
   },
@@ -2674,6 +2691,31 @@ const SPRITES = {
       ];
     },
   }]))),
+  // Time pencils (M31d, the operator's: the timer as a period object). The
+  // No. 10 delay switch as it was issued in its tin: a crimped copper tube
+  // over the acid ampoule, the safety strip in the length's colour, then the
+  // brass striker body with its inspection hole. Coloured by length as the
+  // real ones were, shortest to longest: black, red, white, green, yellow,
+  // blue (the yellow in desert ochre: only the airfield has pencils).
+  ...Object.fromEntries(TIME_PENCIL_COLOURS.map((colour, i) => [`time-pencil-${i + 1}`, {
+    viewBox: '0 0 200 26',
+    draw: () => [
+      // Its shadow on the tin's card, down and to the right as the counters'.
+      svg('rect', { x: 8, y: 11, width: 188, height: 11, rx: 4, class: 'ink', 'fill-opacity': 0.18 }),
+      // The copper tube, crimped at its end over the ampoule.
+      ...inked('M6 13 Q6 8 11 8 H112 V18 H11 Q6 18 6 13 Z', 'paper', 1.4),
+      fill('M6 13 Q6 8 11 8 H112 V18 H11 Q6 18 6 13 Z', toneClass('fire', 35)),
+      line('M15 8.5 V17.5 M18.5 8.5 V17.5 M22 8.5 V17.5', 1.1),
+      // The safety strip, in the colour that says how long it runs.
+      ...inked('M112 7 H130 V19 H112 Z', colour, 1.4),
+      ...inked('M117 19 H125 V24.5 H117 Z', colour, 1.2),
+      // The brass striker body and its inspection hole, then the end fitting.
+      ...inked('M130 9 H184 V17 H130 Z', 'paper', 1.4),
+      fill('M130 9 H184 V17 H130 Z', toneClass('ink', 20)),
+      circle(152, 13, 2.1, 'ink'),
+      ...inked('M184 10 H194 Q196 10 196 12 V14 Q196 16 194 16 H184 Z', 'ink', 1.2),
+    ],
+  }])),
   // A comic starburst, one frame; board.js does the stepped reveal.
   // Blood, as the annual would print it (M16): a spot-red splat, halftoned,
   // inked round, with droplets thrown off it. The knife's burst, and drawn
@@ -2830,6 +2872,17 @@ export function enemySymbolId(type) {
  * entry, so this stays a data lookup rather than a branch on anybody's name
  * (CLAUDE.md rule 6).
  */
+/**
+ * Our men's counters in a mission's own colour (M31d): `counterColour` in
+ * data/missions.json names a PALETTE entry; green when it names none. Set on
+ * the page, so every counter drawn from the sprite takes it: the board's, the
+ * counter key's and the drop's.
+ */
+export function applyCounterColour(name) {
+  const colour = PALETTE[name] ?? PALETTE.green;
+  document.documentElement.style.setProperty('--counter-body', colour);
+}
+
 export function counterFrameId(unit) {
   return unit.leader ? 'counter-frame-allied-leader' : 'counter-frame-allied';
 }
@@ -2911,6 +2964,11 @@ async function firstPicture(urls) {
   return null;
 }
 
+/** Sprite id for the time pencil of this many turns (M31d): 1 to 6 by colour. */
+export function timePencilId(fuse) {
+  return `time-pencil-${Math.min(TIME_PENCIL_COLOURS.length, Math.max(1, fuse))}`;
+}
+
 /**
  * Sprite id for a fuse token: turns left of the charge's own length (M30),
  * 1 to 6; a longer one is drawn as if it were 6 long.
@@ -2957,12 +3015,13 @@ function printCss() {
   }
   // Colour is printed off register from the ink; the ink plate is the key and
   // stays put.
-  const offRegister = [...Object.keys(PALETTE).filter((c) => c !== 'ink').map((c) => `.${c}`), '[class*="tone-"]'];
+  const offRegister = [...Object.keys(PALETTE).filter((c) => c !== 'ink').map((c) => `.${c}`), '.counter-body', '[class*="tone-"]'];
   const misregister = `${offRegister.join(',')}{transform:translate(${MISREGISTER.x}px,${MISREGISTER.y}px)}`;
   // Stepped, never eased: a blast is revealed in three frames and then gone.
   // A spent man's die-cut edge is set by board.js through --counter-edge.
   const motion = [
     `.counter-edge{stroke:var(--counter-edge,${COUNTER.edge})}`,
+    `.counter-body{fill:var(--counter-body,${PALETTE.green})}`,
     '@keyframes nd-blast{0%{transform:scale(0.35)}12%{transform:scale(0.75)}24%{transform:scale(1)}85%{opacity:1;transform:scale(1)}100%{opacity:0}}',
     `.nd-blast{animation:nd-blast ${MOTION.blastMs}ms step-end both;transform-box:fill-box;transform-origin:center}`,
     // The where-to-start cues throb gently, so the eye goes to them (M21).

@@ -13,7 +13,7 @@ import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '.
 import { scoreOf } from '../src/scoring.js';
 import { validateTraits } from '../src/traits.js';
 import { hintsFor } from '../src/hints.js';
-import { boardPixelBounds, diversionTimeline, dropTimeline, pickDiversionLine } from '../src/render/board.js';
+import { boardEdges, boardPixelBounds, diversionTimeline, dropTimeline, pickDiversionLine } from '../src/render/board.js';
 import { DRIVE_BY, DRIVE_BY_ART, DROP_SHOW, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
@@ -341,7 +341,18 @@ export default [
     equal(pickDiversionLine(map, []).id, 'north', 'the north on a clear board');
     equal(pickDiversionLine(map, [{ q: 8, r: 1 }]).id, 'south', 'a counter on the north scrub sends it south');
     equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }]).id, 'west', 'and one on the south sand, west');
-    equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }, { q: -2, r: 4 }, { q: -3, r: 6 }]).id, 'north', 'fewest wins');
+    // The West line runs a jeep's half-width inside the board's left edge (M31d), so these stand on it.
+    equal(pickDiversionLine(map, [{ q: 8, r: 1 }, { q: 3, r: 11 }, { q: -1, r: 4 }, { q: -2, r: 6 }]).id, 'north', 'fewest wins');
+    // Across its way, the whole jeep stays on the board (M31d, the operator's: on the West line it was half off).
+    const inside = boardEdges(map);
+    for (const line of run.lines) {
+      const { start, end } = diversionTimeline(map, { line });
+      const upright = Math.abs(end.y - start.y) > Math.abs(end.x - start.x);
+      for (const p of [start, end]) {
+        const across = upright ? [p.x - DRIVE_BY.size / 2, p.x + DRIVE_BY.size / 2, inside.left, inside.right] : [p.y - DRIVE_BY.size / 2, p.y + DRIVE_BY.size / 2, inside.top, inside.bottom];
+        assert(across[0] >= across[2] && across[1] <= across[3], `${line.id}: the jeep within the board's edge across its way`);
+      }
+    }
   }],
 
   ['the turn card says to pick a timer, and what the bowser sets off (M31)', async () => {

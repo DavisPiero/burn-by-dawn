@@ -22,7 +22,7 @@
       "jumpAt": 0,
       "spacing": 1,
       "wind": "SW",
-      "labelNudge": [1.7, 0]
+      "labelNudge": [1.27, 0]
     },
     {
       "id": "north",
@@ -40,7 +40,8 @@
       "jumpAt": 5,
       "spacing": 1,
       "wind": "E",
-      "labelAlong": 0.33
+      "labelAlong": 0.33,
+      "labelNudge": [1.73, 0]
     },
     {
       "id": "south",
@@ -301,7 +302,7 @@
       }
     ]
   },
-  "_objectives": "SPEC.md §7, §13. Eight aircraft, each in its pen: the pen hex behind it is its one charge point. The fuel bowser stands on the south apron between the middle two Ju 52s; its charge point is the one hex beside it whose blast takes in those two and no others (for M30's rule that it sets them off). The signals tent is the airfield's telephone exchange: blown, or its line cut by a scout. None is primary: the win is any N aircraft (data/missions.json). `art` (optional, art only) picks which picture of its kind is drawn: the Stukas' or the Ju 52s'.",
+  "_objectives": "SPEC.md §7, §13. Eight aircraft, each in its pen: the pen hex behind it is its one charge point. The fuel bowser stands on the south apron between the middle two Ju 52s; its charge point is the one hex beside it whose blast takes in those two and no others (for M30's rule that it sets them off). The signals tent is the airfield's telephone exchange: blown, or its line cut by a scout. None is primary: the win is any N aircraft (data/missions.json). `art` (optional, art only) picks which picture of its kind is drawn: the Stukas' or the Ju 52s'. `stampNudge` (M31d, optional, art only) moves its DESTROYED stamp by [x, y] hex radii, only while an objective beside it is destroyed too: the bowser's goes up and the Ju 52's beside it down, so the two stamps do not print over each other (the operator's).",
   "objectives": [
     {
       "id": "stuka-1",
@@ -427,7 +428,8 @@
           8
         ]
       ],
-      "art": "ju52"
+      "art": "ju52",
+      "stampNudge": [0, 0.6]
     },
     {
       "id": "ju52-4",
@@ -463,7 +465,8 @@
           8
         ]
       ],
-      "noteNudge": [0, 5]
+      "noteNudge": [0, 5],
+      "stampNudge": [0, -0.45]
     },
     {
       "id": "signals",
@@ -488,7 +491,7 @@
       "noteNudge": [2.9, 0.3]
     }
   ],
-  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilNoteNudge` (M29c, art only) moves the exfil ring's note by [x, y] hex radii: inside the ring here, the operator's. `dropCueAt` (M29b, art only) is the hex PICK A DROP DIRECTION centres on: the strip.",
+  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilNoteNudge` (M29c, art only) moves the exfil ring's note by [x, y] hex radii: inside the ring here, the operator's. `exfilArtNudge` (M31d, art only) moves the exfil's picture the same way: the trucks lifted, as the bottom one was cut off by the board's edge (the operator's). `dropCueAt` (M29b, art only) is the hex PICK A DROP DIRECTION centres on: the strip.",
   "exfil": [
     [
       -5,
@@ -515,7 +518,8 @@
   "exfilArt": "trucks",
   "dropCueAt": [7.2, 5.5],
   "exfilNoteNudge": [-4.25, 0],
-  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
+  "exfilArtNudge": [0, -0.45],
+  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword. Kind `wadi` (M31d) prints the name solid over the wadi's stones, one hex up the wadi from its mouth (the operator's).",
   "places": [
     {
       "name": "Bir el Kasra",
@@ -547,13 +551,14 @@
     },
     {
       "name": "Oued Melah",
-      "kind": "water",
+      "kind": "wadi",
       "at": [
         -2,
         11
       ],
       "angle": -55,
-      "dx": 0.1
+      "dx": 0.97,
+      "dy": -1.5
     }
   ],
   "legend": {

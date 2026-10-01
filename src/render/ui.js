@@ -5,9 +5,9 @@
 // hard rule 7) — clicks are handed straight back to the caller.
 
 import { timesWord } from '../hints.js';
-import { hexDistance } from '../hex.js';
+import { axialToPixel, hexDistance } from '../hex.js';
 import { columnOf, moveCostAt, terrainAt } from '../map.js';
-import { ALERT_STATE, DAWN, DIAL, portraitId } from './theme.js';
+import { ALERT_STATE, DAWN, DIAL, portraitId, timePencilId } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -352,9 +352,10 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   const top = Boolean(briefing.choice?.top);
   if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
   card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
-  // A paragraph may be several lines, each on its own line (M13).
+  // A paragraph may be several lines, each on its own line (M13); a line given
+  // as { bold } is set in bold whole (M31d: the job on the orders).
   for (const text of briefing.paragraphs ?? []) {
-    const lines = [].concat(text).map((line) => boldNames(line, briefing.names));
+    const lines = [].concat(text).map((line) => (typeof line === 'string' ? boldNames(line, briefing.names) : [html('b', null, line.bold)]));
     card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
   }
   if (briefing.contents) card.appendChild(contentsList(briefing.contents));
@@ -393,6 +394,25 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
   card.appendChild(foot);
+  fitBriefing(card);
+}
+
+/**
+ * A card taller than the window is set tighter, a step at a time, before
+ * anything is cut (M31d: the airfield's orders ran off the foot at 1280x800):
+ * first the air between its parts, then the type to 14 px, then 13 (index.html
+ * `data-fit`). Never below 13, the right page's least (SPEC.md §11).
+ */
+const BRIEFING_FIT_STEPS = 3;
+// Fitted again when the window is resized, as the spread is (M31d).
+let fittedCard = null;
+if (typeof window !== 'undefined') window.addEventListener('resize', () => fittedCard && fitBriefing(fittedCard));
+function fitBriefing(card) {
+  fittedCard = card;
+  delete card.dataset.fit;
+  for (let step = 1; step <= BRIEFING_FIT_STEPS && card.scrollHeight > card.clientHeight + 1; step++) {
+    card.dataset.fit = String(step);
+  }
 }
 
 /**
@@ -945,6 +965,12 @@ export function renderRestart(button, armed) {
   button.classList.toggle('armed', armed);
 }
 
+/** The way back to the contents (M31d), top of the margin: an arrow and its word, asked twice in play. */
+export function renderContentsBack(button, armed) {
+  button.replaceChildren(html('span', 'arrow', '←'), html('span', 'label', armed ? 'CLICK AGAIN: CONTENTS' : 'CONTENTS'));
+  button.classList.toggle('armed', armed);
+}
+
 /** Sound on or off, in the margin under the seed. */
 export function renderSoundToggle(button, muted) {
   button.textContent = muted ? 'sound off' : 'sound on';
@@ -1036,6 +1062,113 @@ export function renderActions(element, actions, onAction) {
     ]);
     element.appendChild(wrap);
   }
+}
+
+/**
+ * The tin of time pencils (M31d, the operator's): laid on the map beside the
+ * man setting the charge, on his side away from his target where it fits, so
+ * the eye stays where the charge goes and the blast stays in view. A
+ * pencil clicked is lifted out; SET takes the one lifted. `tin` is from
+ * main.js timerTin, or null to put it away. `on` is { pick(fuse), set(), back() }.
+ */
+export function renderTimerTin(element, tin, board, map, on) {
+  element.hidden = !tin;
+  if (!tin) return;
+
+  const stop = (event) => event.stopPropagation();
+  const rows = tin.pencils.map((p) => {
+    const art = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    art.setAttribute('viewBox', '0 0 200 26');
+    art.setAttribute('class', 'tin-pencil-art');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', `#${timePencilId(p.fuse)}`);
+    use.setAttribute('width', '200');
+    use.setAttribute('height', '26');
+    art.appendChild(use);
+    const row = html('button', 'tin-pencil', [
+      art,
+      html('span', 'tin-words', [html('b', null, `${p.fuse} TURN${p.fuse === 1 ? '' : 'S'}`), html('span', null, p.words)]),
+      html('span', 'tin-key', String(p.fuse)),
+    ]);
+    row.type = 'button';
+    row.classList.toggle('lifted', p.lifted);
+    row.classList.toggle('danger', p.danger);
+    row.classList.toggle('struck', !p.ok);
+    row.disabled = !p.ok;
+    row.addEventListener('click', (event) => {
+      stop(event);
+      on.pick(p.fuse);
+    });
+    return row;
+  });
+  const lifted = tin.pencils.find((p) => p.lifted);
+  const set = html('button', 'tin-set', [html('span', null, 'SET'), html('small', null, 'Enter')]);
+  set.type = 'button';
+  set.disabled = !lifted;
+  set.addEventListener('click', (event) => {
+    stop(event);
+    on.set();
+  });
+  const back = html('button', 'tin-back', 'Back · Esc');
+  back.type = 'button';
+  back.addEventListener('click', (event) => {
+    stop(event);
+    on.back();
+  });
+  element.replaceChildren(
+    html('div', 'tin-lid', [html('span', 'tin-make', 'SWITCH, DELAY, No. 10'), html('span', 'tin-name', 'TIME PENCILS')]),
+    html('div', 'tin-card', [
+      html('div', 'tin-head', [html('b', null, 'SET THE TIMER'), html('span', null, tin.title)]),
+      html('div', 'tin-rows', rows),
+      html('div', 'tin-foot', [
+        html('span', 'tin-say', lifted ? `Goes off at the end of turn ${lifted.blows}.` : 'Pick a pencil.'),
+        back,
+        set,
+      ]),
+    ]),
+  );
+  element.onclick = stop;
+  element.onmousedown = stop;
+  placeTin(element, tin, board, map);
+}
+
+/**
+ * Beside the man (M31d, the operator's: in a corner it was far from the
+ * charge). Eight places round him, each a hex clear of his counter and kept
+ * inside the map; the one taken covers the fewest hexes of his blast and his
+ * own, then is the nearest to him. Measured in the page's own pixels, under
+ * any zoom of the spread.
+ */
+function placeTin(element, tin, board, map) {
+  const host = element.offsetParent;
+  const ctm = board.getScreenCTM();
+  if (!host || !ctm) return;
+  const frame = host.getBoundingClientRect();
+  const scale = frame.width / host.offsetWidth || 1;
+  const toPage = (h) => {
+    const p = axialToPixel(h.q, h.r, map.hexSize);
+    return { x: (ctm.a * p.x + ctm.e - frame.left) / scale, y: (ctm.d * p.y + ctm.f - frame.top) / scale };
+  };
+  const man = toPage(tin.anchor);
+  const clear = [man, ...(tin.keepClear ?? []).map(toPage)];
+  const boardBox = board.getBoundingClientRect();
+  const bounds = { width: boardBox.width / scale, height: boardBox.height / scale };
+  const w = element.offsetWidth, h = element.offsetHeight;
+  const gap = (ctm.a * map.hexSize * 1.1) / scale; // a hex radius and a bit: clear of his counter
+  const xs = { left: man.x - gap - w, middle: man.x - w / 2, right: man.x + gap };
+  const ys = { up: man.y - gap - h, middle: man.y - h / 2, down: man.y + gap };
+  const spots = [['right', 'middle'], ['left', 'middle'], ['middle', 'up'], ['middle', 'down'], ['right', 'up'], ['right', 'down'], ['left', 'up'], ['left', 'down']]
+    .map(([sx, sy]) => {
+      const x = Math.min(Math.max(xs[sx], 8), bounds.width - w - 8);
+      const y = Math.min(Math.max(ys[sy], 8), bounds.height - h - 8);
+      const pad = gap * 0.6;
+      const covered = clear.filter((c) => c.x > x - pad && c.x < x + w + pad && c.y > y - pad && c.y < y + h + pad).length;
+      const far = Math.hypot(x + w / 2 - man.x, y + h / 2 - man.y);
+      return { x, y, covered, far };
+    })
+    .sort((a, b) => a.covered - b.covered || a.far - b.far);
+  element.style.left = `${Math.round(spots[0].x)}px`;
+  element.style.top = `${Math.round(spots[0].y)}px`;
 }
 
 // --- traits in words (used by roster.js) ----------------------------------------

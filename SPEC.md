@@ -563,14 +563,20 @@ one fuse as above), called **timers** on screen. Where a mission gives a `{ min,
 the man setting a charge picks its fuse from that many turns, and his `onPlaceCharge`
 fuse hook applies to whichever he picks (Steady Hands: a turn off each). It is two plain
 steps (M30b, the operator's: the second was missed): the button reads **Charge + timer**,
-and **C** opens the timers in the action strip under a heading, SET THE TIMER: PRESS 2–6,
-one button a length with the turn it goes off ("4 turns / on turn 19"), while the board
-shows the charge's blast in red, the chain's included, and the readout says every man
-must be off that ground by then. A number key takes that many turns, **C** again or
-**Enter** takes the marked one, **Esc** or Back puts them away. **Getting clear** (M30b):
+and **C** opens **the tin of time pencils** (M31d, the operator's: the timer as a period
+object) on the map beside the man, in whichever of the eight places round him covers
+least of his blast and his counter, the nearest on a tie: an olive tin stencilled SWITCH,
+DELAY, No. 10 · TIME PENCILS, open on a card of pencils, one a length, each banded in its
+colour as the real ones were (black, red, white, green, yellow, blue, shortest to longest)
+with the turn it goes off ("4 TURNS on turn 19"). Click a pencil, or press its number, and
+it is lifted out; **SET** (or **Enter**, or **C** again) sets the charge with the one
+lifted, which is the one offered first when the tin opens; **Esc** or Back puts it away.
+The action strip says SET THE TIMER: PICK A PENCIL, THEN SET, with SET and Back, while
+the board shows the charge's blast in red, the chain's included, and the readout says
+every man must be off that ground by then. **Getting clear** (M30b):
 a timer that would catch a man who could not walk off the red ground before it goes off
 (his AP left this turn and a full pool each turn after, over the ground's costs) reads
-**too short!** in red and names him; the one marked and offered first is the default
+**too short** in red and names him; the one marked and offered first is the default
 (`fuseTurns`), or if that is too short, the shortest longer one that lets everyone clear.
 A timer that would go off after dawn is struck out and cannot be picked; if the default
 is, C takes the longest still in time. A burning charge's stopwatch is divided into its
@@ -827,7 +833,11 @@ board must read at a glance.
 - Paper cream ground with a supplied fibre texture, centre-fold crease and gutter shadow.
   The fibre is printed faintly on the right page's flat boxes, the captions and the map;
   the cards keep their full-strength paper.
-- The outer margin: BURN BY DAWN in the title stencil running up the page at the top;
+- The outer margin: at its top a small **← CONTENTS** (M31d, the operator's), back to the
+  contents page to pick another mission: at once before the jump; once the stick has
+  jumped a first click arms it (CLICK AGAIN: CONTENTS, in red, for a few seconds) and a
+  second gives up the game on the board for a fresh one; then BURN BY DAWN in the title
+  stencil running up the page;
   "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
   build ("build M29", from `data/version.json`), the level and seed, the sound on/off word,
   and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
@@ -841,7 +851,10 @@ board must read at a glance.
   the AP dots they add); and **fire orange `#C98249`**, used only for flames, the blast's
   fireball, a burning fuse's stopwatch and the dots for charges a man carries. One ground
   colour, **desert ochre `#D2A85C`**, used only by the desert's terrain (§13): it is the
-  second colour the airfield's story is printed in. Nothing else.
+  second colour the airfield's story is printed in (and the yellow time pencil's band). One
+  counter colour, **burnt orange `#B4592A`**, used only for our men's counters on the
+  airfield (a mission's `counterColour`; M31d, the operator's try: army green on the desert
+  sat too close to the garrison's dark chits). Nothing else.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, objectives,
   the enemy's vision and in the chrome, printed faint, close to the colour beneath.
   Open ground is flat spot colour.
@@ -908,6 +921,9 @@ board must read at a glance.
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
   chip, never a selected man's solid frame.
+- Two DESTROYED stamps side by side would print over each other: a map may give an
+  objective a `stampNudge` (art only), used only while one beside it is destroyed too
+  (the airfield's bowser's goes up, the Ju 52's beside it down; M31d).
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all
@@ -960,10 +976,15 @@ board must read at a glance.
   orders. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
 - **The orders are the first thing seen** after it. The orders card opens under the title card (a
   painted picture of the drop with the title lettered in; drawn in code if the file is
-  missing), 800 wide, centred, standing off the page on a deep soft shadow while the
+  missing), 820 wide (M31d), centred, standing off the page on a deep soft shadow while the
   whole spread is put in shade under a coarse halftone. The difficulty is in the black bar
-  at the top, because it changes the numbers written below; ORDERS / BEFORE THE DROP under
-  it. The job has its own line ending at the EXFIL; "Dawn comes…" has a line of its own.
+  at the top, because it changes the numbers written below; under it the mission's title
+  (THE AIRFIELD) heads the card, with ORDERS · BEFORE THE DROP beside it (M31d, the
+  operator's). The job is two lines, split at its comma so the EXFIL never stands alone
+  (M31d); "Dawn comes…" has a line of its own, and so does the bonus paragraph's last
+  sentence. Where charges take a timer, the bang sentence says to plan "the order and
+  timer duration of the charges you set". A card too tall for the window is set tighter a
+  step at a time (less air, then 14 px, then 13) before anything is cut.
   **Music off** is at its foot.
 - **The counter key** lies beside the orders over the crease, drawn with the board's own
   counters: one of our men with every mark labelled, the leader and the marks a man can
@@ -1144,6 +1165,8 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M29c | The operator's second notes: the desert portraits in; the West run straight down outside the wire; the airfield's notes placed again (the signals note over its patrol, the bowser's named, the exfil's inside its ring) |
 | M30 | The airfield's two new rules, time pencils and the bowser that sets off its neighbours; the bot learns both; the airfield balanced (a West patrol, five aircraft on Normal, six on Hard); France's bot output unchanged |
 | M30b | The operator's desert notes: the timer made two plain steps with its blast shown and too-short timers named, a default of 4, blasts to come drawn; the bowser's hose and the Ju 52's point moved off it; the desert chips; the South tab moved; a Sand patrol; the hunter measured against careful |
+| M31c | The operator's airfield art (title card, contents panels, car counter, jeep), the Stuka, Ju 52 and trucks redrawn, the airfield's recorded sounds |
+| M31d | The operator's desert notes: the timer as a tin of time pencils beside the man; burnt-orange counters on the airfield; a way back to the contents; the orders' words and the mission's title on them; the run tabs, trucks, Oued Melah and the DESTROYED stamps moved |
 | M31–M31b | The airfield's words and sounds (the orders and turn cards explain the timer and the bowser, the jeep raid, desert lines, a bugle and a siren for the back page) and the art hand-off; the operator's notes: `playable`, the jeep's line clear of counters, the strip's edges, SET THE TIMER in the pen on the map |
 
 ---
@@ -1373,19 +1396,22 @@ Placeholder copy for the operator to reword; all of it data in `missions.json` a
   The map's `diversionRun` (art only) offers three lines, the north scrub, the south sand
   and the west edge, each from off the board to off it; when it is called the jeep takes
   the one with the fewest counters within 1.2 hex radii, the north on a tie (M31b, the
-  operator's: it drove through chips).
+  operator's: it drove through chips). Across its way the whole jeep stays inside the board's edge: a line nearer the edge than half the jeep is moved in (M31d, the operator's: on the West line, down the edge column, it was half off the map).
 - **The six's lines**: only those naming France or its ground change (Fitch's cabbages
   and dirt, Vance's church, Barrow's trees, bridge and mud).
 - **The back page**: a bugle call, rising to its top note, for success (`desertVictory`;
   M31b, the operator's: M31's trucks and crumps sounded like a failure), the landing
   ground's siren for the rest (`desertDefeat`).
-- **The timers open**: SET THE TIMER / PRESS 2–6 is also lettered in the pen on the map
-  beside the man, on his side away from his target, over any speech (M31b, the
-  operator's).
+- **The timers open**: the tin of time pencils lies on the map beside the man (M31d). It
+  took the place of M31b's SET THE TIMER lettered in the pen beside him, which said the
+  same thing in the same spot.
+- **Our men's counters** are burnt orange here (M31d), and Oued Melah is printed solid
+  over the wadi's stones, a hex up the wadi from its mouth; the trucks sit a little
+  higher (`exfilArtNudge`), clear of the board's foot.
 - **The strip** has its two edges drawn as thick ink lines the length of it, with the
   painted centre line between, so it reads as a runway (M31b, the operator's).
-- **Its title card** is `assets/title/title-card-airfield.jpg` (ART-PROMPTS Priority 13);
-  France's shows until it is there. The tagline stays SIX MEN · EIGHT AIRCRAFT · DAWN AT
+- **Its title card** is `assets/title/title-card-airfield.jpg` (ART-PROMPTS Priority 13),
+  with BURN BY DAWN painted in since M31d. The tagline stays SIX MEN · EIGHT AIRCRAFT · DAWN AT
   TWENTY.
 - The paintings and recordings it wants are in ART-PROMPTS.md (Priorities 13, 15, 16);
   every one has a drawn or made stand-in, so none holds up `playable`.

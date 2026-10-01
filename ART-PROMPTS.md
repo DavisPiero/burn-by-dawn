@@ -409,7 +409,7 @@ he gets a new one.
 
 ## Priority 13 — the airfield's title card ✅ done (2026-09-30)
 
-Supplied without the title painted in, so code sets BURN BY DAWN over it (`titleCardLettered: false`).
+Supplied without the title painted in at first (`titleCardLettered: false`); since M31d (2026-10-01) the operator's revision has BURN BY DAWN painted in, so the code sets nothing over it.
 
 Its own painting in place of France's, across the top of its orders and its back page.
 Wired in M31: drop the file in and reload; until then the airfield shows France's card.
@@ -558,6 +558,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   ground; a painted set would replace them.
 - The fuse stopwatches on a burning charge (M15), since M30 with the face divided into
   the charge's own length (the airfield's time pencils run 1 to 6 turns).
+- The tin of time pencils (M31d): the six No. 10 delay switches, colour-banded by length,
+  and the olive tin they lie in (the tin is page styling, the pencils `time-pencil-N`).
+- The airfield's burnt-orange counters (M31d): the same frame, printed in another colour.
 - Continuous roads, hedges and the railway line; since M17 the hedges are laid as bushy
   clumps along their line, with now and then a tree, after `Hedgerows_Reference_01.jpeg`.
 - Woods, orchards, marsh and the ridge as shapes across hexes, and their motifs. Since M17

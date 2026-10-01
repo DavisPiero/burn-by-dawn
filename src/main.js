@@ -30,13 +30,13 @@ import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropT
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  renderRestart, renderResults, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  renderContentsBack, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -57,6 +57,8 @@ const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
 const restartButton = document.getElementById('restart');
+const contentsBackButton = document.getElementById('contents-back');
+const timerTinBox = document.getElementById('timer-tin');
 const dawnStrip = document.getElementById('dawn-strip');
 const gutterNote = document.getElementById('gutter-note');
 const keysTab = document.getElementById('keys-tab');
@@ -153,6 +155,9 @@ let undoStack = [];
 // charge, while he picks its length; null otherwise. Where it is shown, not
 // what happens, so it lives here and not in the game state.
 let pencilsFor = null;
+// The pencil lifted out of the tin (M31d): picked by a click or its number,
+// set by SET, Enter or C. The one offered first when the tin opens.
+let pencilLifted = null;
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
@@ -321,7 +326,7 @@ function deriveView() {
     shotShow,
     strikeShow,
     targetRings: null,
-    timerCue: null,
+    timerTin: null, // M31d: the tin of time pencils, while its timers are open
     dropCue: null,
     selectCue: false,
   };
@@ -424,11 +429,11 @@ function deriveView() {
     // Drawn as a blast is, not a hover's faint preview: this is the ground to get off.
     view.blastArea = new Map([...view.blastArea, ...areaAround(blasts)]);
     view.blastKillArea = new Map([...view.blastKillArea, ...areaAround(blasts.map((b) => ({ ...b, radius: b.killRadius })))]);
-    // And in the pen lettering beside him on the map (M31, the operator's).
-    const open = pencils(state, unit, rules).filter((p) => !p.afterDawn).map((p) => p.fuse);
-    view.timerCue = { q: unit.q, r: unit.r, target: objective.hexes, range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}` };
-    view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: how many turns until it goes off? Press a number, or click a timer below; Enter or C takes the one marked. `
+    view.targetLabel = `SET THE TIMER for the charge on the ${objective.label}: pick a time pencil from the tin, how many turns until it goes off, then SET. A number picks one, Enter or C sets it. `
       + 'The red ground is its blast: every man must be off it by then. Esc: don\'t set it.';
+    // The tin beside him (M31d), clear of the red ground where it can be; it
+    // took the place of M31b's SET THE TIMER in the pen beside him.
+    view.timerTin = { ...timerTin(unit, objective), keepClear: [...view.blastArea.values()] };
     return view;
   }
   // Over an enemy, what the selected man can do to it, and why not (M26d: a
@@ -993,37 +998,59 @@ function pencilsOpen(unit) {
 }
 
 /**
- * The time pencils as the action strip (SPEC.md §7, M30), called timers on
- * screen (M30b, the operator's word): a heading saying what to do, then one
- * button a length, its key the number, "4 turns" over "on turn 19"; the one
- * offered first marked, and taken by C or Enter; one that would catch a man
- * who cannot get clear of the blast in time marked TOO SHORT and naming him;
- * one that would go off after dawn struck out. Esc, or Back, puts them away.
+ * The tin of time pencils (SPEC.md §7; M31d, the operator's: the timer as a
+ * period object, pick one then SET): one pencil a length, coloured as the
+ * No. 10's were, with the turn it goes off; the one lifted is the one SET
+ * takes, the one offered first when it opens; one that would catch a man who
+ * cannot get clear of the blast in time says TOO SHORT and names him; one
+ * that would go off after dawn is struck out and cannot be picked.
  */
-function pencilActions(unit) {
-  const offered = offeredPencil(state, map, unit, rules);
-  const objective = objectiveForChargeHex(state.objectives, unit);
+function timerTin(unit, objective) {
   const choices = pencils(state, unit, rules);
   const open = choices.filter((p) => !p.afterDawn).map((p) => p.fuse);
-  const buttons = choices.map((p) => {
-    const caught = p.afterDawn ? [] : caughtBy(state, map, unit, objective, p.fuse, rules);
-    const warning = caught.length ? ` TOO SHORT: ${listNames(caught)} could not get clear of the red ground in time.` : ' Every man can get clear of the red ground in time.';
-    return {
-      id: `pencil-${p.fuse}`, key: String(p.fuse), label: `${p.fuse}-turn timer`, short: `${p.fuse} turn${p.fuse === 1 ? '' : 's'}`,
-      // "blows turn 17" overflowed a button three across at 1280.
-      apLabel: p.afterDawn ? 'after dawn' : caught.length ? 'too short!' : `on turn ${p.blows}`,
-      ok: !p.afterDawn, struck: p.afterDawn, danger: caught.length > 0, active: p.fuse === offered?.fuse,
-      reason: 'it would go off after dawn, with the stick still waiting for it',
-      cost: `${checkPlaceCharge(state, unit, rules, p.fuse).cost} AP; it goes off at the end of turn ${p.blows}`,
-      help: `Set the charge to go off in ${p.fuse} turn${p.fuse === 1 ? '' : 's'}, this one included: at the end of turn ${p.blows}.${p.afterDawn ? '' : warning}${p.fuse === offered?.fuse ? ' C or Enter takes this one.' : ''}`,
-    };
-  });
-  const range = open.length > 1 ? `${open[0]}–${open[open.length - 1]}` : `${open[0] ?? ''}`;
+  const lifted = open.includes(pencilLifted) ? pencilLifted : offeredPencil(state, map, unit, rules)?.fuse ?? null;
+  return {
+    anchor: { q: unit.q, r: unit.r },
+    title: `CHARGE ON THE ${objective.label.toUpperCase()}`,
+    range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}`,
+    pencils: choices.map((p) => {
+      const caught = p.afterDawn ? [] : caughtBy(state, map, unit, objective, p.fuse, rules);
+      return {
+        fuse: p.fuse,
+        blows: p.blows,
+        words: p.afterDawn ? 'after dawn' : caught.length ? `too short: ${listNames(caught)}` : `on turn ${p.blows}`,
+        ok: !p.afterDawn,
+        danger: caught.length > 0,
+        lifted: p.fuse === lifted,
+      };
+    }),
+    lifted,
+  };
+}
+
+/**
+ * The action strip while the tin is open (M31d): what to do, SET for the
+ * pencil lifted, and Back. The pencils themselves are in the tin on the map.
+ */
+function pencilActions(unit) {
+  const tin = timerTin(unit, objectiveForChargeHex(state.objectives, unit));
+  const lifted = tin.pencils.find((p) => p.lifted);
   return [
-    { heading: `SET THE TIMER: PRESS ${range}` },
-    ...buttons,
-    { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the timers away without setting the charge' },
+    { heading: `SET THE TIMER: PICK A PENCIL (${tin.range}), THEN SET` },
+    {
+      id: 'pencil-set', key: 'Enter', label: 'Set the charge', short: 'SET', apLabel: lifted ? `${lifted.fuse} turns` : 'no pencil',
+      ok: Boolean(lifted), active: Boolean(lifted), danger: Boolean(lifted?.danger),
+      reason: 'pick a pencil first', cost: lifted ? `${checkPlaceCharge(state, unit, rules, lifted.fuse).cost} AP; it goes off at the end of turn ${lifted.blows}` : 'nothing',
+      help: lifted ? `Set the charge with the ${lifted.fuse}-turn pencil: it goes off at the end of turn ${lifted.blows}.` : 'Pick a pencil in the tin first',
+    },
+    { id: 'pencil-back', key: 'Esc', label: 'Back', short: 'Back', apLabel: 'no charge', ok: true, cost: 'nothing', help: 'Put the tin away without setting the charge' },
   ];
+}
+
+/** Lift a pencil out of the tin (M31d): the one SET will take. */
+function liftPencil(unit, fuse) {
+  const pencil = pencils(state, unit, rules).find((p) => p.fuse === fuse);
+  if (pencil && !pencil.afterDawn) pencilLifted = fuse;
 }
 
 function listNames(names) {
@@ -1033,6 +1060,7 @@ function listNames(names) {
 /** Set the charge with this pencil, or the one offered first. */
 function setCharge(unit, fuse) {
   pencilsFor = null;
+  pencilLifted = null;
   commit(placeCharge(state, unit.id, rules, fuse ?? offeredPencil(state, map, unit, rules)?.fuse));
 }
 
@@ -1196,6 +1224,11 @@ function render() {
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
   else renderActions(actionBar, view.actions, handleAction);
+  renderTimerTin(timerTinBox, view.timerTin, svg, map, {
+    pick: (fuse) => handleAction(`pencil-${fuse}`),
+    set: () => handleAction('pencil-set'),
+    back: () => handleAction('pencil-back'),
+  });
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
   renderDiversion(diversionButton, view.mission.diversion);
@@ -1453,13 +1486,20 @@ function handleAction(id) {
     case 'charge':
       // Time pencils (M30): C opens them, and C again takes the default.
       if (rules.charges.fuseChoice && !pencilsOpen(unit)) {
-        if (checkPlaceCharge(state, unit, rules).ok) pencilsFor = unit.id;
+        if (checkPlaceCharge(state, unit, rules).ok) {
+          pencilsFor = unit.id;
+          pencilLifted = offeredPencil(state, map, unit, rules)?.fuse ?? null;
+        }
       } else {
-        setCharge(unit);
+        setCharge(unit, pencilLifted ?? undefined);
       }
+      break;
+    case 'pencil-set':
+      if (pencilsOpen(unit) && pencilLifted != null) setCharge(unit, pencilLifted);
       break;
     case 'pencil-back':
       pencilsFor = null;
+      pencilLifted = null;
       break;
     case 'cut': {
       const before = state;
@@ -1491,8 +1531,9 @@ function handleAction(id) {
       break;
     }
     default:
+      // A pencil clicked in the tin is lifted, not set (M31d): SET sets it.
       if (!id.startsWith('pencil-') || !pencilsOpen(unit)) return;
-      setCharge(unit, Number(id.slice('pencil-'.length)));
+      liftPencil(unit, Number(id.slice('pencil-'.length)));
   }
   render();
 }
@@ -1694,6 +1735,28 @@ function handleRestartClick() {
   renderRestart(restartButton, true);
 }
 
+// Back to the contents from inside a mission (M31d, the operator's). Before
+// the jump nothing is at stake and it goes at once; after it, it asks once as
+// RESTART does, and the game on the board is given up for a fresh one.
+let contentsBackArmed = null;
+function handleContentsBackClick() {
+  contentsBackButton.blur();
+  const atStake = state.phase !== 'drop' && !state.outcome;
+  if (atStake && !contentsBackArmed) {
+    contentsBackArmed = setTimeout(() => {
+      contentsBackArmed = null;
+      renderContentsBack(contentsBackButton, false);
+    }, 4000);
+    renderContentsBack(contentsBackButton, true);
+    return;
+  }
+  clearTimeout(contentsBackArmed);
+  contentsBackArmed = null;
+  renderContentsBack(contentsBackButton, false);
+  if (state.phase !== 'drop') restartMission();
+  openContents();
+}
+
 /** The orders again, with the counter key beside them, at any time (M16, the operator's). */
 function openHelp() {
   if (state.outcome || briefing?.kind === 'orders' || briefing?.kind === 'contents') return;
@@ -1843,17 +1906,17 @@ function describeBriefing(which, view) {
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
     // Targets of one name and one need said once (M31: the airfield's eight
-    // aircraft were eight clauses): "Stukas 1 each, its point".
+    // aircraft were eight clauses): "Stukas- 1ea at its charge target" (M31d).
     const needGroups = new Map();
     for (const o of state.objectives) {
       const needed = kindOf(o, rules).chargesNeeded;
       const points = o.chargeHexes.length;
-      const where = needed === points ? (needed === 1 ? 'its point' : 'one per point') : `any ${needed === 1 ? '' : `${needed} `}point${needed === 1 ? '' : 's'}`;
+      const where = needed === points ? (needed === 1 ? 'at its charge target' : ', one per charge target') : `at any ${needed === 1 ? '' : `${needed} `}charge target${needed === 1 ? '' : 's'}`;
       const key = `${o.label}|${needed}|${where}`;
       needGroups.set(key, { label: o.label, needed, where, n: (needGroups.get(key)?.n ?? 0) + 1 });
     }
     const needs = [...needGroups.values()].map(({ label, needed, where, n }) => (
-      n === 1 ? `${label} ${needed}, ${where}` : `${label}s ${needed} each, ${where}`
+      `${n === 1 ? `${label}- ${needed}` : `${label}s- ${needed}ea`}${where.startsWith(',') ? '' : ' '}${where}`
     )).join('; ');
     const carried = state.units.reduce((n, u) => n + u.charges, 0);
     const runs = baseMap.dropRuns.map((r) => r.label.split(' ')[0].toUpperCase());
@@ -1865,7 +1928,7 @@ function describeBriefing(which, view) {
     // when charges take one, and whatever sets off its neighbours.
     const choice = rules.charges.fuseChoice;
     const timerLine = choice
-      ? `Every charge takes a timer: after C, press ${choice.min}–${choice.max} for that many turns, or Enter for ${rules.charges.fuseTurns}. A long timer lets charges set over several turns go off together, with the stick already on its way out.`
+      ? `Every charge takes a timer: after C, pick a time pencil from the tin (${choice.min}–${choice.max} turns; ${rules.charges.fuseTurns} is offered first), then SET. A long timer lets charges set over several turns go off together, with the stick already on its way out.`
       : null;
     const setterLines = state.objectives.filter((o) => setsOffList(o).length).map((o) => {
       const caught = setsOffList(o);
@@ -1873,17 +1936,29 @@ function describeBriefing(which, view) {
     });
     return {
       banner: { title: GAME_TITLE, tagline: mission.tagline },
-      title: 'ORDERS',
-      kicker: before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`,
+      // The mission's title heads its orders (M31d, the operator's), and
+      // ORDERS goes to the kicker, so the card is no taller.
+      title: mission.title.toUpperCase(),
+      kicker: `ORDERS · ${before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`}`,
       paragraphs: [
         // The opening on a line of its own (M13), then the job.
         [
           mission.briefing,
           // Dawn on a line of its own (M22, the operator's).
-          `Blow ${winWords(state, rules, { upper: true })} before dawn, then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.`,
+          // Split at the comma (M31d, the operator's): EXFIL sat alone on a line.
+          // In bold, the job standing out from the words round it (M31d, the operator's).
+          { bold: `Blow ${winWords(state, rules, { upper: true })} before dawn,` },
+          { bold: `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.` },
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
         ],
-        ...(bonus.length ? [`${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (${bonusPts}). Every bang alerts the garrison, so plan the order you set charges carefully. It’s good to be slow and stealthy, but be sure to finish before dawn!`] : []),
+        // The timer named where charges take one, and the last sentence on a
+        // line of its own (M31d, the operator's).
+        ...(bonus.length ? [[
+          `${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (${bonusPts}). ${rules.charges.fuseChoice
+            ? 'Every bang alerts the garrison, so carefully plan the order and timer duration of the charges you set.'
+            : 'Every bang alerts the garrison, so plan the order you set charges carefully.'}`,
+          'It’s good to be slow and stealthy, but be sure to finish before dawn!',
+        ]] : []),
       ],
       sections: [{
         heading: 'HOW TO PLAY',
@@ -1895,7 +1970,8 @@ function describeBriefing(which, view) {
           // The operator's words (M13): "vulnerable points" here only; the
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
-          `You don’t fill every point. Charges needed: ${needs}. The squad carries ${carried}.`
+          // The operator's words (M31d): "charge target", and "Stukas- 1ea".
+          `You don’t fill every charge target. Charges needed: ${needs}. The squad carries ${carried}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
           ...(timerLine ? [timerLine] : []),
           ...setterLines,
@@ -2163,19 +2239,20 @@ function handleKey(event) {
   // the default, Esc backs out; any other key puts them away and does its own.
   const setter = selectedUnit(state);
   if (pencilsOpen(setter)) {
+    // A number lifts that pencil out of the tin; Enter or C sets the one lifted (M31d).
     if (/^[0-9]$/.test(key)) {
-      const pencil = pencils(state, setter, rules).find((p) => p.fuse === Number(key));
-      if (pencil && !pencil.afterDawn) setCharge(setter, pencil.fuse);
+      liftPencil(setter, Number(key));
       render();
       return;
     }
     if (key === 'Enter' || key === 'c' || key === 'C') {
       event.preventDefault();
-      setCharge(setter);
+      setCharge(setter, pencilLifted ?? undefined);
       render();
       return;
     }
     pencilsFor = null;
+    pencilLifted = null;
     if (key === 'Escape') {
       render();
       return;
@@ -2342,6 +2419,8 @@ try {
   // The levels, with the mission's own part of each (M28) carried on them.
   difficulty = missionLevels(mission, validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes }), rawRules, rawMap.enemyTypes);
   useMissionWords(mission.words);
+  // Our men's counters in the mission's own colour, if it has one (M31d).
+  applyCounterColour(mission.counterColour ?? null);
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
 
@@ -2399,6 +2478,8 @@ try {
   renderSoundToggle(soundToggle, isMuted());
   restartButton.addEventListener('click', handleRestartClick);
   renderRestart(restartButton, false);
+  contentsBackButton.addEventListener('click', handleContentsBackClick);
+  renderContentsBack(contentsBackButton, false);
   // Sound files dropped into assets/audio replace the placeholders (ART-ASSETS.md §9).
   loadSuppliedSounds();
 

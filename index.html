@@ -166,6 +166,32 @@
       text-decoration: underline;
       cursor: pointer;
     }
+    /* Back to the contents (M31d, the operator's): a small arrow at the top
+       of the margin, over the title, asked twice once the stick has jumped,
+       as RESTART is. */
+    #contents-back {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 0 4px;
+      font: inherit;
+      color: var(--ink);
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+    #contents-back .arrow { font-size: 19px; font-weight: bold; line-height: 1; }
+    #contents-back .label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      opacity: 0.6;
+    }
+    #contents-back:hover .label, #contents-back.armed .label { opacity: 1; }
+    #contents-back.armed { color: var(--red); }
     /* RESTART in the bottom corner, dark and bold (M15), so it can be found. */
     #restart { opacity: 1; font-weight: bold; text-decoration: none; letter-spacing: 1px; }
     #restart.armed { color: var(--red); }
@@ -198,6 +224,89 @@
     /* The fibre printed faintly over the map too (M16, the operator's), as
        if the map were printed on the same paper. Display only: no clicks. */
     #left-content { position: relative; }
+    /* The tin of time pencils (M31d, the operator's): an olive tin with its
+       lid stencilled as issued, open on a paper card of pencils, laid on the
+       map beside the man setting the charge (ui.js placeTin). */
+    #timer-tin {
+      position: absolute;
+      z-index: 6;
+      width: 388px;
+      padding: 7px 10px 10px;
+      background: var(--green);
+      background-image: radial-gradient(circle, rgba(26, 26, 24, 0.22) 0.8px, transparent 1.2px);
+      background-size: 4px 4px;
+      border: 3px solid var(--ink);
+      border-radius: 11px;
+      box-shadow: 6px 6px 0 var(--ink), 0 12px 36px rgba(0, 0, 0, 0.35);
+      cursor: default;
+    }
+    #timer-tin[hidden] { display: none; }
+    #timer-tin .tin-lid {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0 4px 6px;
+      color: var(--paper);
+      font-family: var(--slab);
+      letter-spacing: 2px;
+    }
+    #timer-tin .tin-make { font-size: 12px; letter-spacing: 1px; opacity: 0.85; white-space: nowrap; }
+    #timer-tin .tin-name { font-size: 20px; white-space: nowrap; }
+    #timer-tin .tin-card {
+      padding: 6px 9px 7px;
+      background-color: var(--paper);
+      background-image: var(--paper-fibre);
+      background-size: var(--paper-fibre-size);
+      border: 2px solid var(--ink);
+      border-radius: 3px;
+    }
+    #timer-tin .tin-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 16px; border-bottom: 2px solid var(--ink); padding-bottom: 5px; margin-bottom: 5px; }
+    #timer-tin .tin-head b { font-family: var(--slab); font-size: 20px; letter-spacing: 1px; color: var(--red); }
+    #timer-tin .tin-head span { font-size: 14px; text-align: right; }
+    #timer-tin .tin-rows { display: flex; flex-direction: column; }
+    #timer-tin .tin-pencil {
+      display: grid;
+      grid-template-columns: 142px 1fr 20px;
+      align-items: center;
+      gap: 9px;
+      padding: 2px 5px;
+      font: inherit;
+      font-size: 14px;
+      text-align: left;
+      color: var(--ink);
+      background: none;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: none;
+    }
+    #timer-tin .tin-pencil-art { width: 142px; height: 20px; display: block; }
+    #timer-tin .tin-words { display: flex; justify-content: space-between; gap: 6px; line-height: 1.25; }
+    #timer-tin .tin-words b { font-size: 15px; white-space: nowrap; }
+    #timer-tin .tin-words span { text-align: right; }
+    #timer-tin .tin-key { font-weight: bold; text-align: center; border: 1.5px solid var(--ink); border-radius: 3px; font-size: 13px; line-height: 19px; }
+    #timer-tin .tin-pencil:hover:not(:disabled) { border-color: rgba(26, 26, 24, 0.35); }
+    /* Lifted out of the tin: up and to the left, off the card, ringed in the pen. */
+    #timer-tin .tin-pencil.lifted { border-color: var(--red); background: rgba(193, 39, 45, 0.07); }
+    #timer-tin .tin-pencil.lifted .tin-pencil-art { transform: translate(-5px, -3px); filter: drop-shadow(3px 4px 0 rgba(26, 26, 24, 0.35)); }
+    #timer-tin .tin-pencil.danger .tin-words span { color: var(--red); font-weight: bold; }
+    #timer-tin .tin-pencil.struck { opacity: 0.4; cursor: not-allowed; }
+    #timer-tin .tin-pencil.struck .tin-words { text-decoration: line-through; }
+    #timer-tin .tin-foot { display: flex; align-items: center; gap: 10px; margin-top: 5px; padding-top: 6px; border-top: 1px dashed rgba(26, 26, 24, 0.5); }
+    #timer-tin .tin-say { flex: 1; font-size: 14px; }
+    #timer-tin .tin-back { font: inherit; font-size: 14px; color: var(--ink); background: none; border: 0; text-decoration: underline; cursor: pointer; opacity: 0.7; }
+    #timer-tin .tin-set {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 4px 17px 3px;
+      font-family: var(--slab); font-size: 24px; letter-spacing: 2px; line-height: 1;
+      color: var(--paper); background: var(--red);
+      border: 2px solid var(--ink); border-radius: 4px;
+      box-shadow: 3px 3px 0 var(--ink);
+      cursor: pointer;
+    }
+    #timer-tin .tin-set small { font-family: var(--typewriter, inherit); font-size: 12px; letter-spacing: 0; opacity: 0.85; }
+    #timer-tin .tin-set:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+    #timer-tin .tin-set:disabled { opacity: 0.4; cursor: not-allowed; }
     #board-paper {
       position: absolute;
       left: 0;
@@ -845,10 +954,10 @@
       background-size: 5px 5px;
     }
     /* The orders: wider than a turn card, with more air between its parts (M13).
-       800 since M22 (720 until then), the operator's: the job's line ends
+       820 since M31d (800 since M22, 720 before), the operator's: the job's line ends
        at the EXFIL and the bonus paragraph at "before dawn!" unbroken. */
     #briefing-backdrop.orders #briefing {
-      width: min(800px, 94%);
+      width: min(820px, 94%);
       position: relative;
       box-shadow: 6px 6px 0 var(--ink), 0 16px 70px 12px rgba(0, 0, 0, 0.6);
     }
@@ -947,9 +1056,11 @@
        them. --key-w, --orders-w and --orders-gap are the three sizes. */
     #briefing-backdrop.with-key {
       --key-w: 344px;
-      --orders-w: min(800px, 94%);
+      --orders-w: min(820px, 94%);
       --orders-gap: 16px;
-      --orders-left: max(12px, calc((100% - var(--key-w) / 2 - var(--orders-gap) - var(--orders-w)) / 2));
+      /* Two thirds of the spare room to its left, not half (M31d, the operator's:
+         a third less gap between the orders and the key). */
+      --orders-left: max(12px, calc((100% - var(--key-w) / 2 - var(--orders-gap) - var(--orders-w)) * 2 / 3 + 5px));
       justify-content: flex-start;
     }
     #briefing-backdrop.with-key #briefing { margin-left: var(--orders-left); }
@@ -1027,6 +1138,15 @@
     #briefing-backdrop.orders #briefing p + h3 { margin-top: 16px; }
     #briefing-backdrop.orders #briefing li { margin-bottom: 5px; }
     #briefing-backdrop.orders #briefing .brief-foot { margin-top: 12px; }
+    /* Set tighter a step at a time when it would not fit the window (M31d,
+       ui.js fitBriefing): the air first, then the type, never below 13. */
+    #briefing[data-fit] { line-height: 1.36; }
+    #briefing-backdrop.orders #briefing[data-fit] p { margin-bottom: 5px; }
+    #briefing-backdrop.orders #briefing[data-fit] p + h3 { margin-top: 9px; }
+    #briefing-backdrop.orders #briefing[data-fit] li { margin-bottom: 2px; }
+    #briefing-backdrop.orders #briefing[data-fit] .brief-foot { margin-top: 6px; }
+    #briefing[data-fit="2"] { font-size: 14px; }
+    #briefing[data-fit="3"] { font-size: 13px; }
     /* Wider, so the picture is cropped lower rather than grown taller. */
     #briefing-backdrop.orders #briefing .title-banner { aspect-ratio: 5.8 / 1; }
     /* The level, first thing under the head: what it sets is in the text below. */
@@ -1238,6 +1358,7 @@
   <main id="spread">
     <section id="left-page" class="page">
       <div id="outer-gutter">
+        <button id="contents-back" type="button" title="Back to the contents, to pick another mission"></button>
         <div id="margin-title">BURN BY DAWN</div>
         <svg id="gutter-note" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet"></svg>
         <div id="version"></div>
@@ -1249,6 +1370,7 @@
       <div id="left-content">
         <svg id="board"></svg>
         <div id="board-paper"></div>
+        <div id="timer-tin" hidden></div>
         <div id="captions">
           <div id="coord-readout" class="caption">Loading map…</div>
           <div id="report-box" class="caption">

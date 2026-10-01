@@ -89,7 +89,7 @@ also had a drawn face of his own in code; the painted ones replaced them, so the
 
 | Asset | viewBox | Notes |
 |---|---|---|
-| `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square printed solid `.green`, a dark name strip along the bottom, a paper roundel top left for the role symbol, AP dots top right are drawn by code (M13; a figure before), and a sliver of card edge down-right (M7b) |
+| `counter-frame-allied.svg` | 56 x 56 | die-cut rounded square printed solid `.green` (M31d: its body is `.counter-body`, green unless a mission names another palette colour, `counterColour`; the airfield's is burnt orange `#B4592A`), a dark name strip along the bottom, a paper roundel top left for the role symbol, AP dots top right are drawn by code (M13; a figure before), and a sliver of card edge down-right (M7b) |
 | `counter-frame-allied-leader.svg` | 56 x 56 | the ranking man. Same die-cut silhouette as above so the two read as one set — distinguish it by the name strip and a rank flash, not by a different shape. Strip and rank flash use `.leader` |
 | `counter-frame-enemy.svg` | 56 x 56 | visually distinct at a glance, not just recoloured |
 | `symbol-sapper.svg` | 24 x 24 | detonator plunger or satchel |
@@ -201,7 +201,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide; paper with an ink eye since M21, printed at full strength over the faint counter) |
 | `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
 | `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
-| `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective) |
+| `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective; M31d: the mound is `.counter-body`, our counters' colour, orange on the airfield) |
 | `marker-body-enemy.svg` | 28 x 28, drawn at 39 since M15 (a killed enemy left on the ground, SPEC.md §4 Kill — must never be mistaken for one of ours) |
 | `marker-no-kill.svg` | 28 x 28 (on the counter of an enemy that cannot be killed, the reserve squad, SPEC.md §4 Kill) |
 | `effect-blood-splat.svg` | 100 x 100 (M16: the knife's splat, spot red halftoned and inked, with droplets; drawn small and faint as the stain under a knifed enemy, and since M18 grown slowly from under the body when he is knifed. *Drawn by code.*) |
@@ -209,7 +209,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-stone-target.svg` | 100 x 100 (M18: where a thrown stone will land, a pebble in an ink target ring; no lob is drawn. *Drawn by code.*) |
 | `effect-spark.svg` | 100 x 100 (M16: a spark where a cut telephone wire parts, a small paper starburst. *Drawn by code.*) |
 | `marker-blast.svg` | 200 x 200 (comic starburst, one frame, code does the stepped reveal; red burst, a `.fire` fireball inside it and a paper core since M14). **Or a painted PNG**, `/assets/markers/marker-blast.png`, square on transparency, shown from a 400 x 400 copy (M17, the operator's; the full painting is `marker-blast_original.png`, not loaded). It replaces the drawn one on load, the muzzle flash too, and code sets BOOM! over its middle, in the comic lettering since M21 |
-| `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed) |
+| `stamp-destroyed.svg` | 250 x 80 (red rubber stamp, rotated in code; wider since M13 so the word is not squeezed; M31d: a map may move one aside, `stampNudge`, where two blown targets stand side by side) |
+| `time-pencil-N.svg` | 200 x 26 (M31d: a No. 10 delay switch lying on its side, N 1 to 6 the turns it runs: crimped copper tube, the safety strip in its length's colour, black, red, white, green, yellow, blue, shortest to longest, as the real ones were; the brass striker body with its inspection hole. Shown in the tin of time pencils when a charge's timer is set, 142 wide. *Drawn by code.*) |
 | `marker-charge-point.svg` | 28 x 28 (a charge point, SPEC.md §7, §11: where a man stands to place a charge — an empty satchel with a red plus; must read as "put one here", never as a target. Drawn a third of the way toward the target it serves, M12) |
 | `marker-telegraph-pole.svg` | 28 x 28 (a telegraph pole with its crossarm, ink only, on each of the telephone exchange's charge points; code runs one long sagging wire from its crossarm to the exchange's roof standard, M12; M14) |
 | `counter-shadow.svg` | 56 x 56 (the soft shadow under every counter, down-right; no filters, so build the softness from stacked faint shapes) |

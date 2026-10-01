@@ -18,7 +18,7 @@
 // and a blast play out once rather than again on every hover. That is drawing
 // memory, not game state.
 
-import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexLine } from '../hex.js';
+import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
@@ -441,6 +441,20 @@ function hedgeTree(map, flag = 'hedge') {
   return links;
 }
 
+/**
+ * Where an objective's DESTROYED stamp goes: its middle, moved by its
+ * `stampNudge` in map.json (M31d, art only) while an objective beside it is
+ * destroyed too, so two stamps side by side do not print over each other.
+ */
+function stampPoint(map, state, objective) {
+  const at = labelPoint(map, objective.hexes);
+  const nudge = map.objectives?.find((o) => o.id === objective.id)?.stampNudge;
+  const crowded = state.objectives.some((o) => o.id !== objective.id && o.destroyed
+    && o.hexes.some((h) => objective.hexes.some((mine) => hexDistance(h, mine) === 1)));
+  if (!nudge || !crowded) return at;
+  return { ...at, x: at.x + nudge[0] * map.hexSize, y: at.y + nudge[1] * map.hexSize };
+}
+
 /** Place names, printed on the map under everything that moves. */
 function drawPlaces(layer, map) {
   for (const place of map.places ?? []) {
@@ -455,7 +469,7 @@ function drawPlaces(layer, map) {
     };
     const name = style.capitals ? place.name.toUpperCase() : place.name;
     if (style.halo !== false) {
-      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': 0.85 }));
+      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: style.halo ?? PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': style.haloOpacity ?? 0.85 }));
     }
     layer.appendChild(text(name, { ...attrs, fill: style.fill, 'fill-opacity': style.opacity ?? 1 }));
   }
@@ -793,7 +807,6 @@ export function renderPieces(layers, state, view) {
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
   // Over the speech, so a man's line never hides what to press (M31b).
-  if (view.timerCue) drawTimerCue(layers, view.timerCue);
 }
 
 // --- target rings (SPEC.md §11) --------------------------------------------------
@@ -955,27 +968,6 @@ function drawSelectCue(layers, state, now) {
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
 }
 
-/**
- * The timers open (M31, the operator's): SET THE TIMER / PRESS 2–6 in the pen
- * lettering beside the man setting the charge, on his side away from its
- * target (a pen's point is behind its aircraft), kept on the board.
- */
-function drawTimerCue(layers, cue) {
-  const { map } = layers;
-  const p = axialToPixel(cue.q, cue.r, map.hexSize);
-  const edge = boardEdges(map);
-  const sizes = [CUE.noteSize * 1.3, CUE.noteSize];
-  const target = cue.target.map((h) => axialToPixel(h.q, h.r, map.hexSize));
-  const ty = target.reduce((sum, t) => sum + t.y, 0) / target.length;
-  const above = p.y - map.hexSize * 2.1;
-  const below = p.y + map.hexSize * 1.6;
-  const wantAbove = ty > p.y;
-  const y = wantAbove ? (above - sizes[0] > edge.top ? above : below) : (below + sizes[1] < edge.bottom ? below : above);
-  const width = 'SET THE TIMER'.length * sizes[0] * 0.5;
-  const x = Math.min(Math.max(p.x, edge.left + width / 2 + 8), edge.right - width / 2 - 8);
-  layers.speech.appendChild(penLetters(['SET THE TIMER', `PRESS ${cue.range}`], x, y, sizes));
-}
-
 // --- the drop shown (SPEC.md §11) ----------------------------------------------
 // Display only: the rules have already put every man down, and this plays the
 // aircraft's pass and the canopies coming down to where they are. Like a
@@ -1122,13 +1114,31 @@ function drawGhostPlanes(layers, runs, now) {
 export function diversionTimeline(map, fly) {
   if (!map.diversionRun) return flyoverTimeline(map, fly.points, fly.heading);
   const line = fly.line ?? map.diversionRun.lines[0];
-  const [from, to] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  const [from, to] = driveLine(map, line);
   return {
     start: from,
     end: to,
     angle: (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI,
     length: DRIVE_BY.driveMs + DRIVE_BY.tailMs,
   };
+}
+
+/**
+ * A drive-by line in board pixels, moved in from the board's edge so the
+ * whole vehicle stays on the board as it passes (M31d, the operator's: the
+ * jeep on the West line, down the edge column, was half off it): across its
+ * way it keeps at least half its size, and a little, inside the edge; along
+ * its way it still comes on from off the board and goes off it.
+ */
+function driveLine(map, line) {
+  const edge = boardEdges(map);
+  const margin = DRIVE_BY.size / 2 + DRIVE_BY.edgeGap;
+  const [a, b] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  const upright = Math.abs(b.y - a.y) > Math.abs(b.x - a.x);
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  return [a, b].map((p) => (upright
+    ? { x: clamp(p.x, edge.left + margin, edge.right - margin), y: p.y }
+    : { x: p.x, y: clamp(p.y, edge.top + margin, edge.bottom - margin) }));
 }
 
 /**
@@ -1139,7 +1149,7 @@ export function diversionTimeline(map, fly) {
 export function pickDiversionLine(map, points) {
   const lines = map.diversionRun?.lines ?? [];
   const near = (line) => {
-    const [a, b] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+    const [a, b] = driveLine(map, line);
     const dx = b.x - a.x, dy = b.y - a.y;
     const len2 = dx * dx + dy * dy || 1;
     return points.filter((h) => {
@@ -1578,7 +1588,10 @@ function drawArt(layers, state, view) {
   if (view.exfil.length > 0) {
     const middle = view.exfil[Math.floor(view.exfil.length / 2)];
     const p = axialToPixel(middle.q, middle.r, map.hexSize);
-    layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: p.x - 40, y: p.y - 46, width: 80, height: 92 }));
+    // Moved by the map's `exfilArtNudge`, in hex radii (M31d, art only).
+    const [nx, ny] = map.exfilArtNudge ?? [0, 0];
+    const x = p.x + nx * map.hexSize, y = p.y + ny * map.hexSize;
+    layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
   }
 }
 
@@ -1626,6 +1639,7 @@ function drawSites(layers, state, view) {
     if (objectiveArt(objective)?.wires) drawWires(layers, objective);
     if (objectiveArt(objective)?.hose && !objective.destroyed) drawHose(layers, objective);
     if (objective.destroyed) {
+      const at = stampPoint(map, state, objective);
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed',
         x: at.x - OBJECTIVE.stampWidth / 2, y: at.y - OBJECTIVE.stampHeight / 2,
