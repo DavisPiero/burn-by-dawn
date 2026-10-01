@@ -39,7 +39,7 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
 Alarmed by the end of every raid; a mission accomplished is rated on the back page against
-the mission's score bands; SPEC.md trimmed. Tests: 157 headless.
+the mission's score bands; SPEC.md trimmed. Tests: 157 headless, 159 in tests.html.
 
 ### What the review found, for Phase 4 and after
 
