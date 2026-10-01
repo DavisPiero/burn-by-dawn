@@ -516,6 +516,43 @@ const SYNTHS = {
       }
     }
   },
+
+  // The goods train coming on (M35), a long way off: a steam whistle, one long
+  // blast and a short one, two reedy notes a little out of tune that scoop up
+  // as the steam comes and sag as it goes, breath in it; then the engine's
+  // chuffing dying away. Made in code until a recording is supplied.
+  train: (ctx, out, at, v) => {
+    const far = filter(ctx, 'lowpass', 2600, 0.6);
+    far.connect(out);
+    for (const [start, length] of [[0, 0.95], [1.2, 0.34]]) {
+      const t = at + start;
+      const level = ctx.createGain();
+      level.gain.setValueAtTime(0.0001, t);
+      level.gain.exponentialRampToValueAtTime(0.3, t + 0.07);
+      level.gain.setValueAtTime(0.3, t + length - 0.1);
+      level.gain.exponentialRampToValueAtTime(0.0001, t + length + 0.12);
+      level.connect(far);
+      for (const [f, amp, type] of [[784, 0.5, 'triangle'], [1046, 0.42, 'triangle'], [1058, 0.2, 'sine'], [1568, 0.1, 'sine']]) {
+        const pipe = ctx.createOscillator();
+        pipe.type = type;
+        pipe.frequency.setValueAtTime(f * 0.93, t);
+        pipe.frequency.exponentialRampToValueAtTime(f, t + 0.12);
+        pipe.frequency.setValueAtTime(f, t + length - 0.08);
+        pipe.frequency.exponentialRampToValueAtTime(f * 0.96, t + length + 0.1);
+        const part = ctx.createGain();
+        part.gain.value = amp;
+        pipe.connect(part).connect(level);
+        pipe.start(t);
+        pipe.stop(t + length + 0.15);
+      }
+      noiseThrough(ctx, level, t, length + 0.1, [filter(ctx, 'bandpass', 2100, 1.2)], v * 0.17 + start);
+    }
+    for (let i = 0; i < 10; i++) {
+      const t = at + 1.75 + i * 0.17;
+      const loud = 0.95 * (1 - i / 11) * (i % 4 === 0 ? 1 : 0.7);
+      noiseThrough(ctx, out, t, 0.14, [filter(ctx, 'bandpass', 420, 0.9), envelope(ctx, t, loud, 0.13, 0.012)], v * 0.11 + i * 0.09);
+    }
+  },
 };
 
 export const SOUND_IDS = Object.keys(SYNTHS);
@@ -548,6 +585,8 @@ const CUES = {
   jeepRaid: [['jeep', 0.6, 0], ['gunfire', 0.3, 0.8], ['gunfire', 0.34, 1.35], ['gunfire', 0.28, 2.0], ['gunfire', 0.2, 2.6]],
   desertVictory: [['bugle', 0.8, 0.35]],
   desertDefeat: [['siren', 0.7, 0.35]],
+  // France's goods train coming onto the board (M35): its whistle.
+  train: [['train', 0.5, 0]],
   // The opening screens' music (M17): one pass of it; startMusic loops it.
   titleMusic: [['music-title', 0.5, 0]],
 };

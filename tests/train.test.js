@@ -7,6 +7,8 @@ import { scoreOf } from '../src/scoring.js';
 import { createInitialState } from '../src/state.js';
 import { railwayLine, trainAt, trainCaught, trainEvents, trainTimetable } from '../src/train.js';
 import { validateTraits } from '../src/traits.js';
+import { railPoint, trainJourney } from '../src/render/board.js';
+import { TRAIN } from '../src/render/theme.js';
 import { hintsFor } from '../src/hints.js';
 
 function assert(condition, message) {
@@ -94,5 +96,39 @@ export default [
     assert(due[0].includes('this turn goes off on turn 17'), `in the window it is said first: ${due[0]}`);
     const late = hintsFor({ ...at(state, 18), parachutes: [] }, rules, {}, 10);
     assert(!late.some((h) => h.toLowerCase().includes('goods train')), 'nothing once it cannot be caught');
+  }],
+  ['it runs to its new place between turns: on from off the board, a hex a step, and off the far edge (M35)', async () => {
+    const { rules, state, map } = await load('france');
+    const line = railwayLine(map);
+    const view = (turn) => ({ ...trainAt(at(state, turn), rules, map), line, speed: rules.train.speed, length: rules.train.length });
+    const step = map.hexSize * Math.sqrt(3);
+
+    // A place past the line's end is carried straight on, a hex a step, and is not on the board.
+    const first = railPoint(map, line, 0), before = railPoint(map, line, -2), past = railPoint(map, line, line.length + 1);
+    assert(first.on && !before.on && !past.on, 'only the line itself is on the board');
+    assert(Math.abs(first.x - before.x - 2 * step) < 1e-6 && Math.abs(first.y - before.y) < 1e-6, 'two hexes back along the line');
+    assert(Math.abs(past.x - railPoint(map, line, line.length - 1).x - 2 * step) < 1e-6, 'two hexes on past its end');
+
+    // Coming on: the engine alone reaches the board, from four hexes off it.
+    const coming = trainJourney(map, view(15), view(15).head - rules.train.speed);
+    equal(coming.ms, rules.train.speed * TRAIN.msPerHex, 'four hexes at its pace');
+    equal(coming.cars.length, rules.train.length, 'every car has a way');
+    equal(coming.cars[0].path.map((p) => (p.on ? 'x' : '.')).join(''), '....x', 'the engine comes on at the last step');
+    assert(coming.cars.slice(1).every((c) => c.path.every((p) => !p.on)), 'its wagons are still off the board');
+
+    // Running: every car a hex a step, ending where the turn has put it.
+    const running = trainJourney(map, view(17), view(16).head);
+    for (const car of running.cars) {
+      equal(car.path.length, rules.train.speed + 1, 'a step a hex');
+      const end = railPoint(map, line, car.index);
+      assert(Math.abs(car.path.at(-1).x - end.x) < 1e-6, 'ends on its hex');
+      assert(car.path.every((p, i) => i === 0 || Math.abs(p.x - car.path[i - 1].x - step) < 1e-6), 'evenly, eastward');
+    }
+
+    // Going: on turn 20 its last two wagons are still on the board, the rest gone off the edge.
+    const going = trainJourney(map, view(20), view(19).head);
+    equal(going.cars.map((c) => (c.path.at(-1).on ? 'x' : '.')).join(''), '...xx', 'the engine and two wagons have left');
+    // It has not moved: no journey.
+    equal(trainJourney(map, view(17), view(17).head).ms, 0, 'standing still takes no time');
   }],
 ];
