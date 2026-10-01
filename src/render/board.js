@@ -1114,13 +1114,31 @@ function drawGhostPlanes(layers, runs, now) {
 export function diversionTimeline(map, fly) {
   if (!map.diversionRun) return flyoverTimeline(map, fly.points, fly.heading);
   const line = fly.line ?? map.diversionRun.lines[0];
-  const [from, to] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  const [from, to] = driveLine(map, line);
   return {
     start: from,
     end: to,
     angle: (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI,
     length: DRIVE_BY.driveMs + DRIVE_BY.tailMs,
   };
+}
+
+/**
+ * A drive-by line in board pixels, moved in from the board's edge so the
+ * whole vehicle stays on the board as it passes (M31d, the operator's: the
+ * jeep on the West line, down the edge column, was half off it): across its
+ * way it keeps at least half its size, and a little, inside the edge; along
+ * its way it still comes on from off the board and goes off it.
+ */
+function driveLine(map, line) {
+  const edge = boardEdges(map);
+  const margin = DRIVE_BY.size / 2 + DRIVE_BY.edgeGap;
+  const [a, b] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  const upright = Math.abs(b.y - a.y) > Math.abs(b.x - a.x);
+  const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  return [a, b].map((p) => (upright
+    ? { x: clamp(p.x, edge.left + margin, edge.right - margin), y: p.y }
+    : { x: p.x, y: clamp(p.y, edge.top + margin, edge.bottom - margin) }));
 }
 
 /**
@@ -1131,7 +1149,7 @@ export function diversionTimeline(map, fly) {
 export function pickDiversionLine(map, points) {
   const lines = map.diversionRun?.lines ?? [];
   const near = (line) => {
-    const [a, b] = [line.from, line.to].map(([q, r]) => axialToPixel(q, r, map.hexSize));
+    const [a, b] = driveLine(map, line);
     const dx = b.x - a.x, dy = b.y - a.y;
     const len2 = dx * dx + dy * dy || 1;
     return points.filter((h) => {

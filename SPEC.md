@@ -1396,7 +1396,7 @@ Placeholder copy for the operator to reword; all of it data in `missions.json` a
   The map's `diversionRun` (art only) offers three lines, the north scrub, the south sand
   and the west edge, each from off the board to off it; when it is called the jeep takes
   the one with the fewest counters within 1.2 hex radii, the north on a tie (M31b, the
-  operator's: it drove through chips).
+  operator's: it drove through chips). Across its way the whole jeep stays inside the board's edge: a line nearer the edge than half the jeep is moved in (M31d, the operator's: on the West line, down the edge column, it was half off the map).
 - **The six's lines**: only those naming France or its ground change (Fitch's cabbages
   and dirt, Vance's church, Barrow's trees, bridge and mud).
 - **The back page**: a bugle call, rising to its top note, for success (`desertVictory`;

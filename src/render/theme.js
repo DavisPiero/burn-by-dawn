@@ -983,6 +983,7 @@ export const DRIVE_BY = {
   tailMs: 350,
   flashMs: 180, // one blink of the muzzle flash, on and off
   clearance: 1.2, // hex radii from its line: a counter nearer is in its way (M31)
+  edgeGap: 4, // board units past half its size that it keeps inside the board's edge (M31d)
 };
 // `painted` is where the painted picture's muzzles are, in the 60-unit box,
 // and which way they point (degrees, 0 east): the flash moves there when the
