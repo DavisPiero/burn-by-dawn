@@ -409,7 +409,7 @@ he gets a new one.
 
 ## Priority 13 — the airfield's title card ✅ done (2026-09-30)
 
-Supplied without the title painted in, so code sets BURN BY DAWN over it (`titleCardLettered: false`).
+Supplied without the title painted in at first (`titleCardLettered: false`); since M31d (2026-10-01) the operator's revision has BURN BY DAWN painted in, so the code sets nothing over it.
 
 Its own painting in place of France's, across the top of its orders and its back page.
 Wired in M31: drop the file in and reload; until then the airfield shows France's card.

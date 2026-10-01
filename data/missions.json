@@ -94,7 +94,6 @@
       "portraits": "assets/portraits/desert",
       "counterColour": "burnt",
       "titleCard": "assets/title/title-card-airfield.jpg",
-      "titleCardLettered": false,
       "diversionSound": "jeepRaid",
       "endSounds": { "success": "desertVictory", "otherwise": "desertDefeat" }
     },

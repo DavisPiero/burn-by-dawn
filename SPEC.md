@@ -1410,8 +1410,8 @@ Placeholder copy for the operator to reword; all of it data in `missions.json` a
   higher (`exfilArtNudge`), clear of the board's foot.
 - **The strip** has its two edges drawn as thick ink lines the length of it, with the
   painted centre line between, so it reads as a runway (M31b, the operator's).
-- **Its title card** is `assets/title/title-card-airfield.jpg` (ART-PROMPTS Priority 13);
-  France's shows until it is there. The tagline stays SIX MEN · EIGHT AIRCRAFT · DAWN AT
+- **Its title card** is `assets/title/title-card-airfield.jpg` (ART-PROMPTS Priority 13),
+  with BURN BY DAWN painted in since M31d. The tagline stays SIX MEN · EIGHT AIRCRAFT · DAWN AT
   TWENTY.
 - The paintings and recordings it wants are in ART-PROMPTS.md (Priorities 13, 15, 16);
   every one has a drawn or made stand-in, so none holds up `playable`.
