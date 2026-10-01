@@ -37,13 +37,14 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
   our men and find them) was taken out again: it made the game worse (DECISIONS.md).
 
 **The order from here** (the operator's, 1 Oct 2026): the bomb store and the salvo (done,
-M33), then the goods train for France, then Phase 4, the aqueduct.
+M33), then the goods train for France (done, M34), then **Phase 4, the aqueduct: next**,
+specified first in `MISSION-AQUEDUCT.md`.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
 Alarmed by the end of every raid; a mission accomplished is rated on the back page against
-the mission's score bands; SPEC.md trimmed. Tests (at M33): 159 headless, 161 in tests.html.
+the mission's score bands; SPEC.md trimmed. Tests (at M34): 163 headless, 165 in tests.html.
 
 ### What the review found, for Phase 4 and after
 
@@ -213,45 +214,21 @@ big target is needed there and each is a greed; Hard wants seven, so both have t
 The North run, which had no plan of its own, now wins as often as the West. The same
 milestone made France's **Fuel Dump** send two patrols away and score 5 (the operator's).
 
-## Next: the goods train, for France (the operator's decisions, 1 Oct 2026)
+## Done for France: the goods train (M34, 1 Oct 2026)
 
-The rail bridge has a railway and nothing runs on it. A goods train crosses at a turn the
-orders give ("the 04.10 goods crosses on turn 14"); drop the bridge under it and the back
-page pays a bonus. It gives France's fuses something to be timed against (the spine: the
-order and timing of the demolitions) and makes the slack half of the night a decision:
-wait for the train with the charges set and the garrison stirring, or blow it now and go.
+Built to the operator's decisions (SPEC.md §7): scenery, not an enemy; on the Rail Bridge
+in the garrison's turn 14, seen coming on from the west edge three turns before; the
+bridge down within a turn of it wrecks it and pays 5, score only. Drawn in code; a
+reference and its sounds are in ART-PROMPTS.md Priority 18.
 
-**Decided by the operator:**
-- **What counts**: the bridge going down **within a turn of the train**: the turn before
-  it reaches the bridge (the engine runs into the gap), the turn it is on it, or the turn
-  after.
-- **What it pays**: **score only**.
-- **The train is seen on the board**, coming in from the **left (west) edge** along the
-  railway, so there is at least a game turn in which it can be watched approaching.
-
-**Claude's recommendation on the one question left** (whether the train "sees"): it
-should be **scenery with a timetable, not an enemy**. It moves along the railway in the
-garrison's turn, a fixed number of hexes, and is drawn where it is; its hover says which
-turn it reaches the bridge. It does not spot the men, raise the alert or block a hex.
-That keeps it to one rule. A train that could see the men on the embankment would be a
-second rule, and a thing to avoid rather than a thing to do.
-
-**Still to settle in the spec (SPEC.md §7 and §10) before it is built:**
-- **Its turn and its speed.** The bot's bridge goes down on turn 9–10, so a train at
-  about turn 13–14 asks for a wait of three or four turns with the charges ready. Coming
-  on at the west edge two turns before it crosses gives the turn of warning asked for.
-- **France has one fuse length** (3 turns, Dutch 2), so the charges must be set on the
-  right turn: with "within a turn" that is a window of three turns for the setting. No
-  time pencils in France unless the operator wants them.
-- **What it pays**: 5, as the Fuel Dump, or more? It should be worth a wait that risks
-  the whole job. The rating's top band (36) may want to move with it.
-- **What happens to a train that finds the bridge already gone** earlier than that: it
-  never comes (the line is reported cut), or it stops short. Either is display only.
-- **What it costs to wait**: probably nothing new. The Wood and Road patrols and the
-  parachutes already punish standing about; the bot can measure whether that is enough.
-- **Art**: a locomotive and wagons from above to paint or to give Claude a reference for,
-  and a whistle and a train passing to record (ART-PROMPTS.md).
-- It changes France's score, not its win rates; the bot needs a style that waits for it.
+**What the bot found, for the operator to weigh:** waiting for the train costs nothing.
+Men who hold their charges, hidden on the charge points, until turn 12 win *more* often
+than men who set them on arriving (naive 91 / 94 / 96 against 86 / 83 / 89; on Hard 28 /
+45 / 55 against 29 / 38 / 37), and catch the train in nine games in ten. So at turn 14 the
+train is a reward for patience, not a gamble. If the wait should bite, the lever is one
+number, its turn: on turn 17 the waiting bot wins 84 / 87 / 92, on turn 18 81 / 87 / 91,
+about level with not waiting, and the men have two or three turns to reach the exfil
+before dawn.
 
 ## More missions after that (candidates, from the historical notes)
 

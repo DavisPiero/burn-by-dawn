@@ -87,6 +87,12 @@ board must read at a glance.
   railway runs east–west across the board and over the rail bridge, with a level crossing
   where a road meets it: art only, no rule. So is the village **church** with its spire,
   drawn with the exchange: the landmark Vance's landing line refers to.
+- **The goods train** (§7) is drawn in the art, under every counter: a car to a hex along
+  the railway, turned along the line, the engine in ink with its boiler bands, chimney
+  and green cab, the wagons army green with their roof ribs. Wrecked, each car is thrown
+  off the line a different way, the engine burns, and a car over the fallen bridge is
+  printed fainter. It does not move between turns on screen: it is where the turn has
+  put it.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
   water, the rest in italic, each nudged off its hex (`dx`, `dy`) to sit in what it names.
   The turn report uses them ("the field by Ferme Lebrun").

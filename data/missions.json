@@ -39,12 +39,12 @@
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},
-      "_ratings": "M32: the back page's verdict on a mission accomplished, as score bands, lowest first (the first from 0). Set against the bot's winning scores on Normal (tools/balance-bot.mjs with SCORES=1): the bridge alone with most men out lands in the middle two; the top wants the bonus targets or a spotless night. Placeholder copy for the operator to reword.",
+      "_ratings": "M32: the back page's verdict on a mission accomplished, as score bands, lowest first (the first from 0). Set against the bot's winning scores on Normal (tools/balance-bot.mjs with SCORES=1): the bridge alone with most men out lands in the middle two; the top wants the bonus targets or a spotless night. M34: 28/36/43 (were 24/30/36), for the goods train's 5 and the Fuel Dump's fifth point: the bridge alone wins 24–33, with the train 33–39, with the train and both bonus targets 42–45. Placeholder copy for the operator to reword.",
       "ratings": [
         { "from": 0, "label": "SCRAPED HOME" },
-        { "from": 24, "label": "A GOOD NIGHT'S WORK" },
-        { "from": 30, "label": "MENTIONED IN DESPATCHES" },
-        { "from": 36, "label": "ONE FOR THE ANNUAL" }
+        { "from": 28, "label": "A GOOD NIGHT'S WORK" },
+        { "from": 36, "label": "MENTIONED IN DESPATCHES" },
+        { "from": 43, "label": "ONE FOR THE ANNUAL" }
       ],
       "titleCard": "assets/title/title-card.jpg",
       "endSounds": { "success": "victory", "otherwise": "defeat" }
