@@ -214,21 +214,19 @@ big target is needed there and each is a greed; Hard wants seven, so both have t
 The North run, which had no plan of its own, now wins as often as the West. The same
 milestone made France's **Fuel Dump** send two patrols away and score 5 (the operator's).
 
-## Done for France: the goods train (M34, 1 Oct 2026)
+## Done for France: the goods train (M34, M34b, 1 Oct 2026)
 
-Built to the operator's decisions (SPEC.md §7): scenery, not an enemy; on the Rail Bridge
-in the garrison's turn 14, seen coming on from the west edge three turns before; the
-bridge down within a turn of it wrecks it and pays 5, score only. Drawn in code; a
-reference and its sounds are in ART-PROMPTS.md Priority 18.
+Built to the operator's decisions (SPEC.md §7): scenery, not an enemy; seen coming on
+from the west edge three turns before it crosses; the bridge down within a turn of it
+wrecks it and pays 5, score only. Drawn in code; a reference and its sounds are in
+ART-PROMPTS.md Priority 18.
 
-**What the bot found, for the operator to weigh:** waiting for the train costs nothing.
-Men who hold their charges, hidden on the charge points, until turn 12 win *more* often
-than men who set them on arriving (naive 91 / 94 / 96 against 86 / 83 / 89; on Hard 28 /
-45 / 55 against 29 / 38 / 37), and catch the train in nine games in ten. So at turn 14 the
-train is a reward for patience, not a gamble. If the wait should bite, the lever is one
-number, its turn: on turn 17 the waiting bot wins 84 / 87 / 92, on turn 18 81 / 87 / 91,
-about level with not waiting, and the men have two or three turns to reach the exfil
-before dawn.
+**Its turn is 17** (M34b, the operator's). It was 14 at first, and the bot found that
+waiting for it then cost nothing: men holding their charges, hidden on the charge points,
+won more often than men who set them on arriving (91 / 94 / 96 against 86 / 83 / 89). At
+17 the waiting bot wins 84 / 87 / 92 on Normal, about level with not waiting, and on Hard
+19 / 39 / 46 against 29 / 38 / 37: a gamble on the West run, and the stick has two to
+four turns to reach the exfil before dawn.
 
 ## More missions after that (candidates, from the historical notes)
 
