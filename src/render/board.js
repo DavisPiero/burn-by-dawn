@@ -814,6 +814,8 @@ export function renderPieces(layers, state, view) {
   // Nobody speaks until the stick is down.
   else drawSpeech(layers, state, view.speakers ?? new Set());
   // Over the speech, so a man's line never hides what to press (M31b).
+  // The charge note last of all (M37): the setter's own line would cover it.
+  if (view.chargeNote) drawChargeNote(layers, view.chargeNote);
 }
 
 // --- target rings (SPEC.md §11) --------------------------------------------------
@@ -975,6 +977,24 @@ function drawSelectCue(layers, state, now) {
   const x = Math.min(Math.max(middle.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
   const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
+}
+
+/**
+ * CHARGE IS SET. GET CLEAR! (M37, the operator's): the player's pen over the
+ * target a charge has just been set on, a little askew, kept whole on the
+ * board. It takes no clicks: the next one, anywhere, puts it away (main.js).
+ */
+function drawChargeNote(layers, note) {
+  const { map } = layers;
+  const at = labelPoint(map, note.hexes);
+  const edge = boardEdges(map);
+  const size = CUE.chargeNoteSize;
+  const width = Math.max(...note.lines.map((l) => l.length)) * size * CUE.noteAdvance;
+  const x = Math.min(Math.max(at.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
+  const y = Math.min(Math.max(at.y - size * 0.3, edge.top + size), edge.bottom - size * 1.5);
+  const g = el('g', { 'pointer-events': 'none', transform: `rotate(${CUE.chargeNoteTilt} ${x} ${y})` });
+  g.appendChild(penLetters(note.lines, x, y, [size]));
+  layers.speech.appendChild(g);
 }
 
 // --- the drop shown (SPEC.md §11) ----------------------------------------------

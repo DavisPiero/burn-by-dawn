@@ -141,6 +141,11 @@ let shotShowTimer = null;
 // A knife's splat or the line cut's power failing (M16), on the board for a moment.
 let strikeShow = null;
 let strikeShowTimer = null;
+// CHARGE IS SET. GET CLEAR! in the player's pen over a target that has just
+// been given the last charge it needs (M37, the operator's: on Easy a second
+// man on the bridge's other point could not tell why he had nothing to set),
+// until the next click or key. Display only.
+let chargeSetNote = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -332,6 +337,7 @@ function deriveView() {
     flyShow,
     shotShow,
     strikeShow,
+    chargeNote: chargeSetNote,
     targetRings: null,
     timerTin: null, // M31d: the tin of time pencils, while its timers are open
     dropCue: null,
@@ -1136,7 +1142,32 @@ function listNames(names) {
 function setCharge(unit, fuse) {
   pencilsFor = null;
   pencilLifted = null;
+  const before = state.charges;
   commit(placeCharge(state, unit.id, rules, fuse ?? offeredPencil(state, map, unit, rules)?.fuse));
+  const set = state.charges.find((c) => !before.includes(c));
+  if (set && !state.outcome) chargeSetNote = describeChargeNote(set);
+}
+
+/**
+ * The pen note over a target once it has every charge it needs (M37, the
+ * operator's): that they are set, and to get clear. A target that wants more
+ * than one (the Rail Bridge on Normal and Hard) says nothing until the last
+ * is set, and then says CHARGES.
+ */
+function describeChargeNote(charge) {
+  const objective = state.objectives.find((o) => o.id === charge.objectiveId);
+  if (!objective) return null;
+  const needed = kindOf(objective, rules).chargesNeeded;
+  const set = state.charges.filter((c) => c.objectiveId === objective.id).length;
+  if (objective.detonated + set < needed) return null;
+  return { hexes: objective.hexes, lines: [needed > 1 ? 'CHARGES ARE SET.' : 'CHARGE IS SET.', 'GET CLEAR!'] };
+}
+
+/** The player's next click or key puts the charge note away (M37). */
+function dropChargeNote() {
+  if (!chargeSetNote) return;
+  chargeSetNote = null;
+  renderBoard();
 }
 
 /**
@@ -1796,6 +1827,7 @@ function restartMission() {
   bangTimer = null;
   garrisonShow = null;
   strikeShow = null;
+  chargeSetNote = null;
   briefingAfterDrop = false;
   highlightHex = null;
   hoverUnitId = null;
@@ -2581,6 +2613,10 @@ try {
   undoButton.addEventListener('click', undoLast);
   attachPopup(undoButton, () => describeUndo(rules.undo.steps));
   diversionButton.addEventListener('click', () => handleAction('diversion'));
+  // Before anything else hears them, so the click or key that sets a charge
+  // puts the last note away and then lays its own.
+  window.addEventListener('pointerdown', dropChargeNote, true);
+  window.addEventListener('keydown', dropChargeNote, true);
   window.addEventListener('keydown', handleKey);
   // Browsers keep sound off until the page has been pressed or clicked.
   window.addEventListener('pointerdown', unlockSound);
