@@ -1144,7 +1144,7 @@ function enemyActsFor(unit, enemy) {
   const acts = [
     role.suppress && { label: 'SUPPRESS', key: 'S', check: checkSuppress(map, unit, enemy, rules) },
     // A man who is no gunner can fire back at an enemy that has seen him (M36).
-    returnsFire(unit, rules) && { label: 'FIRE BACK', key: 'S', check: checkSuppress(map, unit, enemy, rules) },
+    returnsFire(unit, rules) && { label: 'FIRE', key: 'S', check: checkSuppress(map, unit, enemy, rules) },
     role.kill && { label: 'KILL', key: 'K', check: checkKill(map, unit, enemy, rules) },
     { label: 'KNIFE', key: 'N', check: checkKnife(unit, enemy, rules) },
   ].filter(Boolean);

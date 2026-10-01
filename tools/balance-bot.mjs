@@ -67,6 +67,11 @@
 // SCORES=1 (M32) adds a line per run with the winning scores' spread: lowest,
 // quartiles, highest. The back page's ratings (missions.json) are set against it.
 //
+// FIRE=<policy> (M36) has a man who is no gunner return fire at an enemy
+// that has him in its sights: `cornered` (only when the best move he can
+// find would still get him shot, as a person would), or `always` (whenever
+// he can, first thing: a check that firing is not a free way out of being
+// seen). Without it the bot never returns fire.
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -139,6 +144,17 @@ const PENCIL = process.env.PENCIL ?? 'default';
 if (!['default', 'long', 'sync'].includes(PENCIL)) throw new Error(`PENCIL must be default, long or sync, not "${PENCIL}"`);
 const BOWSER = process.env.BOWSER === '1' ? true : process.env.BOWSER || false;
 const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
+const FIRE = process.env.FIRE ?? null;
+if (FIRE && !['cornered', 'always'].includes(FIRE)) throw new Error(`FIRE must be cornered or always, not "${FIRE}"`);
+
+// FIRE (M36): a suppress at the first enemy that has him in its sights, or null.
+function returnFire(state, unit, map) {
+  if (!FIRE || !U.returnsFire(unit, rules) || !unit.inContact) return null;
+  for (const e of state.enemies) {
+    if (U.checkSuppress(map, unit, e, rules).ok) return S.suppressEnemy(state, unit.id, e.id, map, rules);
+  }
+  return null;
+}
 const HUNTERS = process.env.HUNTERS ?? 'free';
 if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
 
@@ -317,6 +333,7 @@ function actFor(state, unit, map) {
       return null;
     }
   }
+  if (FIRE === 'always') { const fired = returnFire(state, unit, map); if (fired) return fired; }
   if (OPTS.fight && rules.roles[unit.role].kill) {
     for (const e of state.enemies) if (U.checkKill(map, unit, e, rules).ok) return S.killEnemy(state, unit.id, e.id, map, rules);
     // Suppress whoever has one of ours in its sights; a hunter, anything he could then kill.
@@ -374,10 +391,11 @@ function actFor(state, unit, map) {
       if (r.spotted && unit.inContact && !r.shot) score += 5;
       if (hide) score += 2;
       if (exfil) score -= 1000;
-      if (!best || score < best.score) best = { score, c, plan, hide };
+      if (!best || score < best.score) best = { score, c, plan, hide, shot: r.shot };
     }
   }
   if (!best) return U.onBoard(unit) ? S.holdUnit(state, unit.id) : null;
+  if (FIRE === 'cornered' && best.shot) { const fired = returnFire(state, unit, map); if (fired) return fired; }
   let next = state;
   if (best.plan) next = S.moveUnit(next, unit.id, best.plan, map0);
   const moved = U.unitById(next.units, unit.id);

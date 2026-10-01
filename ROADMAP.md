@@ -231,6 +231,23 @@ four turns to reach the exfil before dawn.
 Since M35 (2 Oct 2026, the operator's notes) it runs between turns, is trimmed in blue
 and paper, and whistles as it comes on.
 
+## Done for both missions: return fire, and the airfield's quiet first turn (M36, 2 Oct 2026)
+
+From the operator's notes after M35: nothing offensive to do once spotted, and the
+airfield punishing from the first turn. **Return fire** (SPEC.md §4): a man who is no
+gunner, once seen, can fire back at the enemy that has him, a gunner's suppress at a
+gunner's price in alert and noise. By the bot it does not make the game easier: fired
+only when cornered it leaves the win rates where they are, fired every time it loses
+games, and kill-everything stays below careful play. **The airfield's patrols set out
+on turn 2** (MISSION-AIRFIELD.md): the early wounds go, Normal's win rate stays, and
+Hard's three runs come inside the targets. Tried and dropped on the way: a cheaper
+knife, a surprise knife on turn 1, landing further from the garrison, and patrols
+started off their beats (DECISIONS.md, m35).
+
+Left as it is: Normal's North run on the airfield is 5 over the target (95), and on Hard
+the kill-everything bot is level with the careful one on the West and South runs
+(69 / 41 / 67 against 67 / 68 / 60), where it was below.
+
 ## More missions after that (candidates, from the historical notes)
 
 - **Bruneval** (France, 1942): drop onto the cliffs, take the radar parts, fight down to

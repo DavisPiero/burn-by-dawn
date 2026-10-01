@@ -181,6 +181,16 @@ gives the full cost and, when it cannot be used, why not.
   or fire at the next detection check and does not move in the next enemy phase**, and
   its view is not drawn. Firing is gunfire: +2 alert, heard 5 hexes (§6). A suppressed
   enemy is open to a **kill** until the end of the next player phase.
+- **Return fire** (anyone who is no gunner) — 2 AP (`actions.returnFire`; null turns it
+  off), on the same key and button as Suppress. He must be **in contact**, and the target
+  must be **an enemy that has him in its sights** (one that spotted him and is watching
+  him), within his spot radius with a clear line. It is a gunner's suppress in every other
+  way: the enemy's head is down for a turn, it is gunfire (+2 alert, heard 5 hexes), and
+  it is open to a gunner's kill. He keeps the AP he has left to get away. Only a gunner
+  fires first; a man nobody has seen has no shot. It is the verb for the man who has been
+  seen: it pays now (he is not fired on by that enemy) and costs later (the dial, and
+  every patrol in earshot coming to look). The button reads Return fire, and its rollover
+  and the enemy's hover (a FIRE row) say whether he can, and why not.
 - **Kill** (gunner only) — 2 AP. The target must be visible, as for suppress, and
   **under suppression**: suppressed this player phase or the one before, so one gunner
   needs two turns (suppress, then kill) and two gunners can do it in one. A kill is **one
@@ -274,7 +284,7 @@ to be casual while still being strategic.
   not a scouting tool.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
   `R` patrol-route overlay, `?` or `/` how to play (§11), `M` sound on or off. Actions:
-  `H` hide, `S` suppress, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid),
+  `H` hide, `S` suppress or return fire, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid),
   `P` pick up a charge, `E` pass a charge, `C` place a charge, `X` cut the line, `W` swim,
   `U` pack a parachute, `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
   for a click; `Esc` backs out of it.
@@ -360,7 +370,8 @@ decided every turn. It also makes losing Holloway expensive.
 | Scout | 4 | 3 | +1 | 0 | cut the line |
 | Gunner | 3 | 2 | 0 | 0 | suppress, kill |
 
-Spot radius matters only to a gunner's suppress and kill (a ridge adds 1).
+Spot radius matters only to shooting: a gunner's suppress and kill, and anyone's return
+fire (§4), which every role has (a ridge adds 1).
 
 ### Wounds
 
@@ -449,6 +460,14 @@ else comes unless something is heard. Hearing is distance only; walls do not sto
 Patrols that hear it leave their route, walk to that hex, sweep, and go back to their
 route. Enemies out of earshot feel only the dial.
 
+**The turn the patrols set out** (`patrols.setOutTurn`; 1 in France: they walk from the
+start). Where a mission sets it later, nothing walks its route until that turn's enemy
+phase: every patrol stands where the map put it. Standing is not sleeping: it sees,
+turns to a man it spots and holds him, and goes to a noise as ever. The airfield's is 2
+(§13), so the stick has one turn on the ground, and a second player phase, before the
+patrols come round. An enemy's hover says it stands this turn, the turn card says so on
+turn 1, and next turn's facing is shown as ever.
+
 **Sentries cannot leave their post.** A sentry that hears a noise turns to face it in the
 enemy phase and holds that facing through the next player phase and detection check,
 then turns back to its facing in `map.json`. A thrown stone turns sentries in earshot
@@ -475,7 +494,8 @@ Being spotted is a warning, not a wound:
    **in contact** and wears the spotted marker. In the enemy phase every enemy that
    spotted him **stays put and turns to face him**, so the player can see who has him.
 2. **Player phase, turn N+1** — he has one turn to break contact: get out of sight, hide,
-   get distance, or have a gunner suppress (or someone kill) whoever is watching.
+   get distance, return fire himself (§4), or have a gunner suppress (or someone kill)
+   whoever is watching.
 3. **Detection check, turn N+1** — if any enemy spots him again, **he is shot** (§5
    Wounds). The alert does not rise again. A suppressed enemy does not fire. If nobody
    spots him, contact ends.
@@ -817,7 +837,7 @@ beside the seed and on the back page, and `?difficulty=easy|hard` picks it.
 
 The balance bot (`node tools/balance-bot.mjs 300 naive`, with `KNIFE=1`) plays whole
 missions through the rule functions. Its win rates show which way a change pushes, not
-the absolute answer; it never calls the diversion or stabilises, and only its `hunter`
+the absolute answer; it never calls the diversion or stabilises, returns fire only when run with `FIRE=cornered` or `FIRE=always`, and only its `hunter`
 style goes looking for kills, and it packs no parachutes unless run with `PACK=1`, so a
 person does better. Current baselines, win % west / north / east: **Easy 99 / 100 / 97,
 Normal 86 / 83 / 89, Hard 29 / 38 / 37**; packing every chute on turn 1 (`PACK=1`):
@@ -890,6 +910,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17, 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
 | M35 | The operator's notes: the goods train runs between turns, trimmed in blue and paper, and whistles as it comes on; the Rail Bridge's DESTROYED printed below it; the bomb store's rails clear of its name |
 | M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
 
