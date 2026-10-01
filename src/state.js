@@ -23,6 +23,7 @@ import {
   applyPayoff, checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
+import { trainEvents } from './train.js';
 import { applyHook } from './traits.js';
 import {
   checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
@@ -189,6 +190,13 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   }
   if (!rules.alert.states.some((s) => s.id === rules.scoring.cleanNeverReached)) {
     throw new Error(`${rulesUrl}: "scoring.cleanNeverReached" must be an alert state id`);
+  }
+  // The goods train (M34): null, or its timetable and score.
+  if (rules.train !== null) {
+    for (const key of ['turn', 'window', 'score', 'speed', 'length']) requireCount(rules.train?.[key], `"train.${key}"`, rulesUrl);
+    if (typeof rules.train.label !== 'string' || !rules.objectives[rules.train.objective]) {
+      throw new Error(`${rulesUrl}: "train" needs a "label" and the objective kind it crosses`);
+    }
   }
   requireCount(rules.mission?.minimumOut, '"mission.minimumOut"', rulesUrl);
   requireCount(rules.diversion?.uses, '"diversion.uses"', rulesUrl);
@@ -599,7 +607,7 @@ function playOutTurn(state, rules, baseMap, dawn) {
   return {
     ...next,
     turn: dawn ? state.turn : state.turn + 1,
-    report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events],
+    report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events, ...trainEvents(state, next, rules, baseMap)],
     speech: speechFrom(detected.events, next.units),
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.

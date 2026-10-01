@@ -593,6 +593,30 @@ target ring and hover name what it takes ("SETS OFF 2 JU 52S"); the path warning
 every blast in the chain; and a setter still standing counts toward what the stick can
 still do, so losing a bomb is not a withdrawal while the setter could make it up.
 
+**The goods train** (`train`; null unless a mission gives one: France's). **Scenery with
+a timetable.** A train runs the map's railway from its west end, four hexes a turn, five
+hexes long, and is **on the Rail Bridge in the garrison's turn 14**. It comes onto the
+board three turns before, so it is watched coming: on the west edge in turn 12, four
+hexes on in turn 13, three short of the bridge in turn 14, across it in turn 15. **The
+bridge down within a turn of it** (in the fuse phase of turn 13, 14 or 15) **wrecks it and
+pays 5** on the back page (§10): on 13 the engine runs into the gap, on 14 it goes down
+with the bridge, on 15 its tail does. With France's three-turn fuse that is a charge set
+on turn 11, 12 or 13 (Dutch's a turn later).
+- It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
+  the line as it passes. Its one rule is the score.
+- The bridge down earlier, with the train already on the board, stops it at the west
+  bank; down before it set out, none comes; down after it has gone by, it runs on.
+- Where it is follows from the turn and the turn the bridge went down, so nothing about
+  it is kept in state, and its hover, the bridge's (a TRAIN row), the orders, the mission
+  panel ("Goods train +5 · turn 14") and the turn card say when it is due. The turn card
+  says so first on the turns a charge set now would catch it. The turn report says when
+  it comes on, crosses, stops or is wrecked.
+- What waiting costs: nothing, by the bot. Men who hold their charges hidden on the
+  charge points until turn 12 win more often than men who set them on arriving (naive
+  91 / 94 / 96 against 86 / 83 / 89), because they spend less of the night under a roused
+  garrison. A train on turn 17 or 18 would make the wait a gamble against dawn
+  (DECISIONS.md, M34).
+
 The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
 Blow the bridge last and you may not have turns left to reach exfil.
 
@@ -711,6 +735,8 @@ killed, left behind), the level, and the score, whatever the outcome:
 - Each enemy killed by a knife or a gunner's shot: 1, less 1 for each of their bodies
   the garrison finds (so a kill nobody finds is worth 1, one they find nothing). A blast's
   kills score nothing, or blowing a target up beside a patrol would pay.
+- **The goods train** (§7): where a mission has one, its target down within a turn of it:
+  5 ("Goods train wrecked with it").
 - **The salvo** (`scoring.salvo`; null in France, which has one fuse and one primary):
   where a mission gives `{ count, points }`, that many or more of the win's targets going
   up in one fuse phase, set off by a neighbour or by charges timed to the same turn, pays
@@ -723,7 +749,7 @@ killed, left behind), the level, and the score, whatever the outcome:
   with as little enemy attention as possible earns a special bonus!").
 
 The bridge is worth 10 so that the job done with three men out (22 on a clean run) edges
-out the best retreat (21); a full success tops out at 40 before kills. The score is the
+out the best retreat (21); a full success tops out at 45 before kills. The score is the
 same sum at every level. Targets of one name share a line ("3 Stukas destroyed").
 
 **The rating.** A mission accomplished is rated against the mission's score bands
@@ -732,8 +758,8 @@ under the score as the annual's "how did you score?" table, best first, the band
 in bold with its name in red above. A withdrawal or a failure is not rated: the outcome
 is the verdict. The bands are set against the bot's winning scores on Normal
 (`SCORES=1`): the job alone with most men out lands in the middle two, and the top wants
-the bonus targets or a spotless night. France: under 24 SCRAPED HOME, 24 A GOOD NIGHT'S
-WORK, 30 MENTIONED IN DESPATCHES, 36 ONE FOR THE ANNUAL; the airfield: 36, 43 and 50.
+the bonus targets or a spotless night. France: under 28 SCRAPED HOME, 28 A GOOD NIGHT'S
+WORK, 36 MENTIONED IN DESPATCHES, 43 ONE FOR THE ANNUAL; the airfield: 36, 43 and 50.
 Nothing is stored: it rates the game just played.
 
 ### Missions
@@ -744,8 +770,8 @@ contents page prints them. A mission is data only, and no code asks which is on:
 - A **playable** mission names its `map` and `roster` files, and a `rules` and `enemies`
   patch merged over `rules.json` and `enemies.json` the way a difficulty level's is; the
   mission's go first, then the level's. A patch key must already exist, except that a
-  mission may add a new objective kind or enemy type. France's patches are empty: it is
-  the files as they are, and the bot's numbers for it are unchanged by missions existing.
+  mission may add a new objective kind or enemy type. France's one patch is its goods train (§7): the rest
+  is the files as they are.
 - Its **own part of each level** (`levels.<id>` in `missions.json`: a `rules` and
   `enemies` patch and a `summary`) goes over the level's own patch, and its summary is
   printed before the level's. What a level does to one mission's targets lives there
@@ -862,6 +888,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
 | M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
+| M34 | France's goods train: scenery with a timetable, on the Rail Bridge in turn 14, 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
 | M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
 

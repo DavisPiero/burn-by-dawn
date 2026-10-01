@@ -552,6 +552,33 @@ to redraw from, as `Stuka_` and `Ju52_Reference_01` were for the aircraft, into
 
 ---
 
+## Priority 18 — the goods train (reference and a sound, optional)
+
+M34 runs a **goods train** over France's rail bridge on turn 14. Claude has drawn an
+engine and a wagon in code, from above, each one hex long (80 x 46). To bring them nearer
+the painted look, a reference for Claude to redraw from, into `assets/reference/`:
+
+| File | Spec |
+|---|---|
+| `Train_Reference_01` | seen from straight above, running left to right: a French or German wartime goods locomotive (a tank engine or a small tender engine) and two or three covered wagons, any size |
+
+It has **no sound yet**. Two would suit, found as Priority 11's were (freesound.org CC0
+or Pixabay), into `assets/audio/`; Claude can find, cut and level them and wire them in
+if asked:
+
+| File | What | Length |
+|---|---|---|
+| `train.m4a` / `.mp3` | a steam goods train passing at a distance, a whistle first | ~4–5 s, for the turn it comes on and the turn it crosses |
+| `train-wreck.m4a` / `.mp3` | wagons piling up, steam, over the bridge's own bang | ~3 s |
+
+### Prompt (add the style block)
+
+> A wartime steam goods train seen from directly overhead, running left to right on a
+> single track: a black tank locomotive and three dark green covered wagons, plain
+> ground either side.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
@@ -574,6 +601,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   chevron on a man who has the leader's +AP this turn).
 - The bowser's fuel hose to its charge point (M30b), and the faint dashed ground of a
   blast still to come.
+- The goods train (M34): its engine and wagons from above, running and wrecked
+  (Priority 18 if a reference is wanted).
 - The bomb store (M33) in its sandbag ring, standing and blown, and the trolley rails to
   its charge point (Priority 17 if a reference is wanted).
 - The desert chips (M30b), cut from the operator's desert portraits onto a dark red-brown

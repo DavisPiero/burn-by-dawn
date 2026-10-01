@@ -59,6 +59,11 @@
 // M33: every such target (the bomb store too); BOWSER=<kind> (bowser,
 // bombStore) goes only for that kind, to see what each is worth.
 //
+// TRAIN=1 (M34) has the men hold their charges on the goods train's target
+// (France's Rail Bridge) until they would go off within its window, hiding on
+// the charge point meanwhile: what waiting for the train costs. The printed
+// line gains `train N%`, the share of games it was wrecked in.
+//
 // SCORES=1 (M32) adds a line per run with the winning scores' spread: lowest,
 // quartiles, highest. The back page's ratings (missions.json) are set against it.
 //
@@ -129,6 +134,7 @@ const OPTS = {
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
 const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
 const PACK = process.env.PACK === '1';
+const TRAIN = process.env.TRAIN === '1';
 const PENCIL = process.env.PENCIL ?? 'default';
 if (!['default', 'long', 'sync'].includes(PENCIL)) throw new Error(`PENCIL must be default, long or sync, not "${PENCIL}"`);
 const BOWSER = process.env.BOWSER === '1' ? true : process.env.BOWSER || false;
@@ -301,7 +307,14 @@ function actFor(state, unit, map) {
     } else if (goal.cut) {
       if (SB.checkCutLine(state, unit, rules).ok) return S.cutLine(state, unit.id, rules);
     } else if (SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit, map)).ok) {
-      return S.placeCharge(state, unit.id, rules, pencilFor(state, unit, map));
+      // TRAIN=1 (M34): on the goods train's target he holds his charge until
+      // it would go off within the train's window, standing where he is.
+      const check = SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit, map));
+      const early = TRAIN && rules.train && check.objective.kind === rules.train.objective
+        && state.turn + check.fuse - 1 < rules.train.turn - rules.train.window;
+      if (!early) return S.placeCharge(state, unit.id, rules, pencilFor(state, unit, map));
+      if (U.checkHide?.(unit, rules)?.ok) return S.hideUnit(state, unit.id, rules);
+      return null;
     }
   }
   if (OPTS.fight && rules.roles[unit.role].kill) {
@@ -422,7 +435,7 @@ function play(seed, runId) {
   const o = state.outcome;
   return {
     kind: o?.kind ?? 'stuck', reason: o?.reason, turn: o?.turn, score: o?.score.total ?? 0, bridgeTurn,
-    peak: state.alert.peak, clean: o ? o.score.lines.some((l) => l.points === rules.scoring.clean && / diversion$/.test(l.label)) : false, salvo: o ? o.score.lines.some((l) => / up in one bang$/.test(l.label)) : false, dead: state.units.filter((u) => u.dead).length,
+    peak: state.alert.peak, clean: o ? o.score.lines.some((l) => l.points === rules.scoring.clean && / diversion$/.test(l.label)) : false, salvo: o ? o.score.lines.some((l) => / up in one bang$/.test(l.label)) : false, train: o ? o.score.lines.some((l) => / wrecked with it$/.test(l.label)) : false, dead: state.units.filter((u) => u.dead).length,
     out: state.units.filter((u) => u.out).length,
     kills: state.bodies.filter((b) => b.enemyId).length,
     secondaries: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).length,
@@ -453,6 +466,7 @@ for (const run of runs) {
     bonusPct: Object.fromEntries(map0.objectives.filter((o) => !WIN_IDS.has(o.id)).map((o) => [o.id, `${((100 * res.filter((r) => r.destroyedIds.includes(o.id)).length) / N).toFixed(0)}%`])),
     // The winning scores' spread (M32): lowest, quartiles, highest — what the back page's ratings are set against.
     winScores: (() => { const w = res.filter((r) => r.kind === 'success').map((r) => r.score).sort((a, b) => a - b); return w.length ? [0, 0.25, 0.5, 0.75, 1].map((f) => w[Math.min(w.length - 1, Math.floor(f * w.length))]) : []; })(),
+    trainPct: `${((100 * res.filter((r) => r.train).length) / N).toFixed(0)}%`,
     salvoPct: `${((100 * res.filter((r) => r.salvo).length) / N).toFixed(0)}%`,
     cleanPct: `${((100 * res.filter((r) => r.clean).length) / N).toFixed(0)}%`,
     alarmedPct: `${((100 * res.filter((r) => (r.peak ?? 0) >= rules.alert.states.at(-1).from).length) / N).toFixed(0)}%`,
@@ -464,7 +478,7 @@ if (AS_JSON) {
   console.log(`${STRATEGY}, ${N} seeds per drop run${DATA_OVERRIDE ? `, rules patch ${JSON.stringify(DATA_OVERRIDE)}` : ''}`);
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
-      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}${rules.scoring.salvo ? `  salvo ${v.salvoPct}` : ''}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
+      + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}${rules.scoring.salvo ? `  salvo ${v.salvoPct}` : ''}${rules.train ? `  train ${v.trainPct}` : ''}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
     if (process.env.SCORES) console.log(`      winning scores, lowest / quartiles / highest: ${v.winScores.join(' / ')}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
   }

@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, 
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
   BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
-  DRIVE_BY, DRIVE_BY_ART, HOSE, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
+  DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
@@ -1590,6 +1590,7 @@ function drawArt(layers, state, view) {
       href: `#${art.id}`, x: at.x - art.width / 2, y: at.y - art.height / 2, width: art.width, height: art.height,
     }));
   }
+  if (view.train) drawTrain(layers, view.train);
   if (view.exfil.length > 0) {
     const middle = view.exfil[Math.floor(view.exfil.length / 2)];
     const p = axialToPixel(middle.q, middle.r, map.hexSize);
@@ -1598,6 +1599,32 @@ function drawArt(layers, state, view) {
     const x = p.x + nx * map.hexSize, y = p.y + ny * map.hexSize;
     layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
   }
+}
+
+/**
+ * The goods train (M34, SPEC.md §7): a car on each hex it covers, turned
+ * along the railway there. Scenery: it is in the art, under every counter.
+ * `train` is train.js trainAt's, with `along` the unit vector of the line at
+ * each car (main.js works it out from the map's railway).
+ */
+function drawTrain(layers, train) {
+  const { map } = layers;
+  train.cars.forEach((car, k) => {
+    const p = axialToPixel(car.q, car.r, map.hexSize);
+    const wrecked = train.status === 'wrecked';
+    const lie = Math.atan2(car.along.y, car.along.x) * 180 / Math.PI + (wrecked ? TRAIN.wreckAngles[k % TRAIN.wreckAngles.length] : 0);
+    const off = wrecked ? TRAIN.wreckShift * (k % 2 ? -1 : 1) : 0;
+    const x = p.x - car.along.y * off, y = p.y + car.along.x * off;
+    layers.art.appendChild(el('use', {
+      href: `#${car.index === train.head ? TRAIN.engine : TRAIN.wagon}`,
+      x: x - TRAIN.width / 2, y: y - TRAIN.height / 2, width: TRAIN.width, height: TRAIN.height,
+      transform: `rotate(${lie.toFixed(1)} ${x} ${y})`,
+      opacity: wrecked && car.sunk ? TRAIN.sunkOpacity : 1,
+    }));
+    if (wrecked && car.index === train.head) {
+      layers.art.appendChild(el('use', { href: `#${TRAIN.flame}`, x: x - TRAIN.flameSize / 2, y: y - TRAIN.flameSize * 0.8, width: TRAIN.flameSize, height: TRAIN.flameSize }));
+    }
+  });
 }
 
 function drawSites(layers, state, view) {
