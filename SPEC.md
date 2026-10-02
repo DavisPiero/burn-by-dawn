@@ -149,7 +149,7 @@ an orchard's edge is seen as ever; the ground behind him is not.
 
 ## 4. Turn structure
 
-Dawn arrives at the end of **turn 20**. That is the clock and the whole pressure.
+Dawn arrives at the end of the mission's last turn (`turnLimit`): **turn 15** in France, turn 20 on the airfield (§13). That is the clock and the whole pressure.
 
 Each turn:
 1. **Player phase** — each trooper has an AP pool. Move (terrain cost) or act.
@@ -213,7 +213,13 @@ gives the full cost and, when it cannot be used, why not.
   one hit from death: the wound is dressed, not healed.
 - **Pick up a charge** — 1 AP, on a hex with a dropped charge, if he has room for it.
   **Any man has room for one** (`charges.carryAtLeast`), whatever he jumped with: a scout
-  or a gunner can pick up a charge left lying, carry it and set it. A man whose loadout is
+  or a gunner can pick up a charge left lying, carry it and set it. **Its weight slows
+  him**: a man carrying more than he jumped with has **1 AP less** while he carries it
+  (`charges.overloadApLoss`), taken at once as he takes it and from each turn's pool
+  after, never below 1, before the leader's orders are added. So a charge handed to a
+  scout is no faster than a sapper's, only harder to see: a trick worth learning, not
+  the best way to set every charge. His particulars and the Pass and Pick up rollovers
+  say so. A man whose loadout is
   none is shown Pick up only while a charge lies on his hex, and Charge and Pass only
   while he carries one.
 - **Pass a charge** — 2 AP to the giver; the taker pays nothing. One charge to a man
@@ -376,7 +382,8 @@ decided every turn. It also makes losing Holloway expensive.
 
 Spot radius matters only to shooting: a gunner's suppress and kill, and anyone's return
 fire (§4), which every role has (a ridge adds 1). Charges is what the role jumps with;
-any man can carry one he picks up or is handed (§4), and whoever carries one can set it.
+any man can carry one he picks up or is handed, 1 AP slower for its weight (§4), and
+whoever carries one can set it.
 
 ### Wounds
 
@@ -628,8 +635,8 @@ turn 9, 10 or 11) **wrecks it and pays 5** on the back page (§10): on 9 the eng
 into the gap, on 10 it goes down with the bridge, on 11 its tail does. With France's
 three-turn fuse that is a charge set on turn 7, 8 or 9 (Dutch's a turn later): about
 when a stick that has come straight from the drop reaches the bridge, so it is a train
-to be in time for, not one to wait for, and the rest of the night is left for the bonus
-targets and the walk out.
+to be in time for, not one to wait for, and the four or five turns left before dawn are
+for a bonus target and the walk out.
 - It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
   the line as it passes. Its one rule is the score.
 - The bridge down earlier, with the train already on the board, stops it at the west
@@ -728,8 +735,8 @@ Stealth costs action points, speed costs alert: the design spine on the drop.
 
 Every mission ends in one of three outcomes:
 
-- **Success:** the primary destroyed AND at least **3** troopers out by the exfil by the
-  end of turn 20.
+- **Success:** the primary destroyed AND at least **3** troopers out by the exfil by
+  dawn (§4).
 - **Withdrawn:** the mission can no longer succeed, but the stick is not wiped out —
   fewer men alive or already out than are needed, or not enough charges left anywhere
   (carried, dropped or set) to finish the primary (a dropped charge counts only while a
@@ -799,7 +806,7 @@ contents page prints them. A mission is data only, and no code asks which is on:
 - A **playable** mission names its `map` and `roster` files, and a `rules` and `enemies`
   patch merged over `rules.json` and `enemies.json` the way a difficulty level's is; the
   mission's go first, then the level's. A patch key must already exist, except that a
-  mission may add a new objective kind or enemy type. France's one patch is its goods train (§7): the rest
+  mission may add a new objective kind or enemy type. France's patches are its dawn (`turnLimit` 15) and its goods train (§7): the rest
   is the files as they are.
 - Its **own part of each level** (`levels.<id>` in `missions.json`: a `rules` and
   `enemies` patch and a `summary`) goes over the level's own patch, and its summary is
@@ -848,9 +855,9 @@ The balance bot (`node tools/balance-bot.mjs 300 naive`, with `KNIFE=1`) plays w
 missions through the rule functions. Its win rates show which way a change pushes, not
 the absolute answer; it never calls the diversion or stabilises, returns fire only when run with `FIRE=cornered` or `FIRE=always`, and only its `hunter`
 style goes looking for kills, and it packs no parachutes unless run with `PACK=1`, so a
-person does better. Current baselines, win % west / north / east: **Easy 99 / 100 / 97,
-Normal 86 / 83 / 89, Hard 29 / 38 / 37**; packing every chute on turn 1 (`PACK=1`):
-Easy 100 / 99 / 97, Normal 92 / 86 / 94, Hard 45 / 33 / 35. Easy and Normal are meant to
+person does better. Current baselines, win % west / north / east: **Easy 100 / 100 / 97,
+Normal 84 / 85 / 91, Hard 27 / 39 / 42**; packing every chute on turn 1 (`PACK=1`):
+Easy 100 / 99 / 97, Normal 90 / 91 / 92, Hard 40 / 43 / 40. Easy and Normal are meant to
 be kind to casual players; Hard is the real test. Any rules, map or enemy change is re-run against these and
 the shift logged in DECISIONS.md.
 
@@ -860,9 +867,9 @@ only the men with no charge to place hunt; `HUNTERS=all` sends everyone, until t
 is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-everything
 must not be the best way to play. It moves as the `careful` style does, so it is measured
 against `careful` on the same run. France, 200 seeds, W/N/E:
-Normal careful 86 / 80 / 74, hunter 80 / 83 / 76, `HUNTERS=all` 76 / 79 / 78; Hard careful
-38 / 51 / 43, hunter 29 / 33 / 27, all 27 / 24 / 28: level on Normal, within the bot's noise,
-and well below on Hard. Its numbers, against the baselines, are in DECISIONS.md.
+Normal careful 85 / 77 / 74, hunter 64 / 75 / 61, `HUNTERS=all` 36 / 40 / 36; Hard careful
+51 / 40 / 71, hunter 12 / 19 / 14, all 4 / 4 / 6: below on Normal and far below on Hard,
+since a 15-turn night has no turns to spend hunting until turn 12. Its numbers, against the baselines, are in DECISIONS.md.
 
 **Targets** (proposed at the v1.0 gate; the playtest in `docs/PLAYTEST.md` confirms or
 moves them). What they are for is people, so the first three are measured on players new
@@ -874,7 +881,7 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Normal** | Most win within three tries | 75 to 90 | Below careful on the same run (a few points over is the bot's noise) |
 | **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
-Today every run is inside them.
+Today France's runs are inside them but Normal's East, 1 over; the airfield's are in §13.
 
 ---
 
@@ -919,6 +926,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M38 | France's dawn at the end of turn 15; a charge a man did not jump with costs him 1 AP while he carries it |
 | M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
 | M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
 | M35 | The operator's notes: the goods train runs between turns, trimmed in blue and paper, and whistles as it comes on; the Rail Bridge's DESTROYED printed below it; the bomb store's rails clear of its name |
