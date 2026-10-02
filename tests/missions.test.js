@@ -39,12 +39,16 @@ async function loadFrance() {
 }
 
 export default [
-  ['France is the default mission, and its patch leaves the files as they are but for its goods train (M34)', async () => {
+  ['France is the default mission, and its patch leaves the files as they are but for its goods train (M34) and its dawn (M38)', async () => {
     const { json, mission, map, rules } = await loadFrance();
     equal(json.default, 'france', 'the default');
     equal(mission.status, 'playable', 'France can be played');
-    equal(Object.keys(mission.rules).join(), 'train', 'its one patch is the train');
-    equal(JSON.stringify({ ...rules, train: null }), JSON.stringify(await loadJson('data/rules.json')), 'the rest unchanged, win condition included');
+    // M38: its own dawn too, turn 15; the files' is 20, and the airfield keeps it.
+    equal(Object.keys(mission.rules).join(), 'turnLimit,train', 'its patch is its dawn and the train');
+    const files = await loadJson('data/rules.json');
+    equal(rules.turnLimit, 15, 'dawn at the end of turn 15');
+    equal(files.turnLimit, 20, 'the files\' dawn is 20');
+    equal(JSON.stringify({ ...rules, train: null, turnLimit: files.turnLimit }), JSON.stringify(files), 'the rest unchanged, win condition included');
     equal(JSON.stringify(map), JSON.stringify(await loadMap()), 'map and enemy types unchanged');
   }],
 
