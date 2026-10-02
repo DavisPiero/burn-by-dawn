@@ -253,6 +253,12 @@ band is seldom earned; and hunting, which a 15-turn night has no turns for. The 
 milestone made a charge a man did not jump with cost him 1 AP while he carries it, so a
 charge passed to a scout is a trick, not the rule.
 
+**Turn 16 since M38b**, the operator's, the same day, with the top rating down to 40
+(was 43). Easy 100 / 100 / 97, Normal 87 / 86 / 94, Hard 39 / 41 / 42: the extra turn is
+worth most on Hard's West run (27 to 39). Normal's East is 4 over the target. The Fuel
+Dump is still what there is rarely time for (17 to 55 games in 100 for the bot that
+goes for it), and at 40 the top rating is earned by that bot's best quarter of games.
+
 ## Done for both missions: return fire, and the airfield's quiet first turn (M36, 2 Oct 2026)
 
 From the operator's notes after M35: nothing offensive to do once spotted, and the
