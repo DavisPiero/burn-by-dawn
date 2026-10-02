@@ -27,7 +27,7 @@ import { trainEvents } from './train.js';
 import { applyHook } from './traits.js';
 import {
   checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
-  createUnits, fillActionPoints, onBoard, unitById,
+  createUnits, fillActionPoints, onBoard, overloadApLoss, unitById,
 } from './units.js';
 
 /**
@@ -115,6 +115,7 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.charges?.placeApCost, '"charges.placeApCost"', rulesUrl);
   requireCount(rules.charges?.fuseTurns, '"charges.fuseTurns"', rulesUrl);
   requireCount(rules.charges?.carryAtLeast, '"charges.carryAtLeast"', rulesUrl);
+  requireCount(rules.charges?.overloadApLoss, '"charges.overloadApLoss"', rulesUrl);
   requireCount(rules.alert?.gunfire, '"alert.gunfire"', rulesUrl);
   requireCount(rules.alert?.silenced, '"alert.silenced"', rulesUrl);
   requireCount(rules.landing?.badLandingTurnsLost, '"landing.badLandingTurnsLost"', rulesUrl);
@@ -487,10 +488,24 @@ export function pickUpCharge(state, unitId, rules) {
   const check = checkPickUpCharge(state.droppedCharges, unit, rules);
   if (!check.ok) return state;
   const index = state.droppedCharges.findIndex((c) => c.q === unit.q && c.r === unit.r);
+  const picked = spend(state, unitId, check.cost, { charges: unit.charges + 1 });
   return {
-    ...spend(state, unitId, check.cost, { charges: unit.charges + 1 }),
+    ...picked,
+    units: picked.units.map((u) => (u.id === unitId ? takeWeight(u, rules) : u)),
     droppedCharges: state.droppedCharges.filter((_, i) => i !== index),
   };
+}
+
+/**
+ * The weight of a charge just taken by a man who did not jump with one (M38):
+ * it comes off what he has left this turn and off this turn's pool at once,
+ * so a charge handed to a fast man does not get one fast turn for nothing.
+ * `unit` already carries the charge.
+ */
+function takeWeight(unit, rules) {
+  const loss = overloadApLoss(unit, rules);
+  if (loss === 0) return unit;
+  return { ...unit, ap: Math.max(0, unit.ap - loss), apMax: Math.max(1, unit.apMax - loss) };
 }
 
 /** Hand one charge to the man beside him (SPEC.md §4, M11b): the giver pays, the taker does not. */
@@ -500,7 +515,7 @@ export function passCharge(state, giverId, receiverId, rules) {
   const check = checkPassCharge(giver, receiver, rules);
   if (!check.ok) return state;
   const next = spend(state, giverId, check.cost, { charges: giver.charges - 1 });
-  return { ...next, units: next.units.map((u) => (u.id === receiverId ? { ...u, charges: u.charges + 1 } : u)) };
+  return { ...next, units: next.units.map((u) => (u.id === receiverId ? takeWeight({ ...u, charges: u.charges + 1 }, rules) : u)) };
 }
 
 /**

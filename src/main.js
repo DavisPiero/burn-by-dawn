@@ -25,7 +25,7 @@ import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
-  hasInSights, onBoard, planMove, reachableFor, returnsFire, traitEffects, unitAt,
+  hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
 import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
@@ -312,6 +312,8 @@ function deriveView() {
     unseenPoints: rules.scoring.perTrooperUnseen,
     // A spotted man can fire back himself (M36), for the words about contact.
     returnFire: Boolean(rules.actions.returnFire),
+    // The AP a charge's weight is costing each man who did not jump with one (M38), by id.
+    weightById: new Map(state.units.map((u) => [u.id, overloadApLoss(u, rules)]).filter(([, loss]) => loss > 0)),
     // The turn the patrols set out on, while they have not (M36): an enemy's hover says it stands until then.
     garrisonSetsOut: state.phase !== 'drop' && state.turn < rules.patrols.setOutTurn ? rules.patrols.setOutTurn : null,
     // Stabilise and Pass a charge, wherever one could be taken now (M26): the
@@ -967,7 +969,7 @@ function actionsFor(unit) {
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
-    { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: 'Take a dropped charge from this hex', ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
+    { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: `Take a dropped charge from this hex.${weightFor(unit)}`, ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
@@ -1048,7 +1050,7 @@ function passChargeAction(unit) {
   const reason = check.reason === 'pick a man beside him' ? 'nobody beside him' : check.reason;
   return {
     id: 'pass', key: 'E', label: 'Pass charge', lines: ['Pass', 'charge'], ok: check.ok, reason, cost: `${check.cost} AP`, apCost: check.cost, suggest: aidFor(unit, 'pass'),
-    help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing. Press E, then click the man.`,
+    help: `Hand one of his charges to a man beside him who can carry it. He pays ${check.cost} AP; the man taking it pays nothing${weightWords()}. Press E, then click the man.`,
   };
 }
 
@@ -1200,6 +1202,18 @@ function fireBackWords() {
     : 'have a gunner suppress it [S]';
 }
 
+/** The weight rule in a clause (M38), where it is on: ", but a man who did not jump with a charge is 1 AP slower while he carries one". */
+function weightWords() {
+  const loss = rules.charges.overloadApLoss;
+  return loss > 0 ? `, but a man who did not jump with a charge is ${loss} AP slower while he carries one` : '';
+}
+
+/** What taking one more charge would cost this man in AP (M38), as a sentence, or nothing. */
+function weightFor(unit) {
+  const loss = overloadApLoss({ ...unit, charges: unit.charges + 1 }, rules) - overloadApLoss(unit, rules);
+  return loss > 0 ? ` He did not jump with one: its weight costs him ${loss} AP a turn while he carries it.` : '';
+}
+
 function withCost(check, format) {
   return { ok: check.ok, reason: check.reason, cost: format(check.cost), apCost: check.cost };
 }
@@ -1308,7 +1322,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
     const taker = hex ? unitAt(state.units, hex.q, hex.r) : null;
     const check = taker && taker.id !== unit.id ? checkPassCharge(unit, taker, rules) : null;
     view.targetLabel = check?.ok
-      ? `Pass a charge to ${taker.shortName} — ${check.cost} AP of ${unit.shortName}'s. Click to hand it over.`
+      ? `Pass a charge to ${taker.shortName} — ${check.cost} AP of ${unit.shortName}'s.${weightFor(taker)} Click to hand it over.`
       : check ? `Pass a charge: ${check.reason}.` : 'Pass a charge: click a man beside him who can carry one. Esc to cancel.';
   } else if (kind === 'stabilise') {
     for (const u of state.units) if (checkStabilise(unit, u).ok) add(u);

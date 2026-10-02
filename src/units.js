@@ -147,7 +147,9 @@ export function fillActionPoints(units, rules) {
     }
     // Trait first, then orders: onActionPoints modifies the man's own pool,
     // and command is added on top of whatever that pool turned out to be.
-    const own = applyHook(unit, 'onActionPoints', 'actionPoints', unit.apBase).value;
+    // The weight of a charge he did not jump with (M38) comes off his own
+    // pool, never below 1, before the orders are added.
+    const own = Math.max(1, applyHook(unit, 'onActionPoints', 'actionPoints', unit.apBase).value - overloadApLoss(unit, rules));
     const bonus = commandBonus(unit, units, rules);
     const pool = pinnedPool(unit, own + bonus, rules);
     return { ...unit, commandBonus: bonus, apMax: pool, ap: pool };
@@ -209,6 +211,15 @@ export function chargeCapacity(unit, rules) {
  */
 export function chargeRoom(unit, rules) {
   return Math.max(chargeCapacity(unit, rules), rules.charges.carryAtLeast);
+}
+
+/**
+ * The AP the weight of his charges costs him (M38, the operator's): a man
+ * carrying more than his loadout, one he picked up or was handed, loses
+ * `charges.overloadApLoss` while he carries it. 0 for anyone within his loadout.
+ */
+export function overloadApLoss(unit, rules) {
+  return unit.charges > chargeCapacity(unit, rules) ? rules.charges.overloadApLoss : 0;
 }
 
 /**

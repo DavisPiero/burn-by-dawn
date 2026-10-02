@@ -124,7 +124,7 @@ export function describeUnit(unit, number, state, map, view) {
   else {
     const terrain = terrainAt(map, unit.q, unit.r);
     lines.push(`In ${view.place(unit)}${terrain ? ` (cover ${terrain.cover})` : ''}.`);
-    lines.push(`${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders from the leader)` : ''} · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
+    lines.push(`${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders from the leader)` : ''}${view.weightById?.has(unit.id) ? ` (−${view.weightById.get(unit.id)} for the weight of a charge he did not jump with)` : ''} · ${unit.charges} charge${unit.charges === 1 ? '' : 's'}`);
     const status = conditions(unit);
     if (status.length) lines.push(status.join(' · '));
     if (!unit.everSpotted) lines.push(`Never seen yet: +${view.unseenPoints} score if he gets out unseen.`);
@@ -157,7 +157,7 @@ export function describeUnitReadout(unit, number, state, map, view) {
   const charges = unit.charges === 0 ? 'no charges' : `${unit.charges} charge${unit.charges === 1 ? '' : 's'}`;
   const chute = state.parachutes.find((p) => p.q === unit.q && p.r === unit.r);
   const rows = [
-    { label: 'HAS', text: `${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders)` : ''} · ${charges}` },
+    { label: 'HAS', text: `${unit.ap} of ${unit.apMax} AP${unit.commandBonus > 0 ? ` (+${unit.commandBonus} orders)` : ''}${view.weightById?.has(unit.id) ? ` (−${view.weightById.get(unit.id)} the charge's weight)` : ''} · ${charges}` },
     status.length > 1 && { label: 'STATE', text: status.join(' · ').toLowerCase() },
     unit.inContact && { label: 'CONTACT', text: `seen again at the turn's end, he is fired on, unless it is firing at another man: get out of sight, hide [H] or ${view.returnFire ? 'fire back' : 'suppress'} [S]`, tone: 'danger' },
     { label: 'WHERE', text: `${view.place(unit)}${terrain ? ` · cover ${terrain.cover}` : ''}` },

@@ -10,13 +10,13 @@ import {
 import { DIRECTION_NAMES, facingToward, hexDistance } from '../src/hex.js';
 import { isInPlay, loadJson, loadMap, terrainIdAt } from '../src/map.js';
 import {
-  createInitialState, deselect, endTurn, hideUnit, moveUnit, pickUpCharge, setTargeting,
+  createInitialState, deselect, endTurn, hideUnit, moveUnit, passCharge, pickUpCharge, setTargeting,
   killEnemy, knifeEnemy, stabiliseUnit, suppressEnemy, throwStone,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { landedState } from './fixtures.js';
 import {
-  chargeCapacity, chargeRoom, checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById, woundedLine,
+  chargeCapacity, chargeRoom, overloadApLoss, checkKill, checkKnife, checkStabilise, checkSuppress, checkThrowStone, fillActionPoints, occupiedHexes, planMove, unitById, woundedLine,
 } from '../src/units.js';
 
 function assert(condition, message) {
@@ -487,6 +487,43 @@ export default [
       const none = { ...rules, charges: { ...rules.charges, carryAtLeast: 0 } };
       equal(pickUpCharge(on, man.id, none).droppedCharges.length, 2, 'carryAtLeast 0: he carries none, as before');
     }
+  }],
+
+  ['the weight of a charge he did not jump with costs a man AP while he carries it (M38)', async () => {
+    const { map, rules, state } = await loadAll();
+    const row = openRow(map, 2);
+    const loss = rules.charges.overloadApLoss;
+    assert(loss > 0, 'the rule is on');
+    const scout = state.units.find((u) => u.role === 'scout');
+    const sapper = state.units.find((u) => u.role === 'sapper');
+    const on = (man, changes = {}) => ({
+      ...state, enemies: [], droppedCharges: [{ q: row.q, r: row.r }],
+      units: state.units.map((u, i) => (u.id === man.id ? { ...u, q: row.q, r: row.r, ...changes } : { ...u, q: 200 + i, r: 0 })),
+    });
+    // A scout picks one up: the pick-up's AP, and the weight at once, off what he has and off his pool.
+    const picked = unitIn(pickUpCharge(on(scout), scout.id, rules), scout.id);
+    equal(overloadApLoss(picked, rules), loss, 'he is carrying more than he jumped with');
+    equal(picked.ap, scout.ap - rules.actions.pickUpCharge.apCost - loss, 'the weight comes off this turn');
+    equal(picked.apMax, scout.apMax - loss, 'and off this turn\'s pool');
+    // Next turn's pool is his role's less the weight, while he carries it; once it is set, his own again.
+    const alone = (u) => fillActionPoints([{ ...u, commandBonus: 0 }], rules)[0];
+    equal(alone(picked).apMax, rules.roles.scout.actionPoints - loss, 'a slower turn while he carries it');
+    equal(alone({ ...picked, charges: 0 }).apMax, rules.roles.scout.actionPoints, 'his own pool once it is gone');
+    // A sapper picking up within his loadout carries no extra weight.
+    const own = unitIn(pickUpCharge(on(sapper, { charges: 0 }), sapper.id, rules), sapper.id);
+    equal(overloadApLoss(own, rules), 0, 'a sapper\'s own charge weighs nothing extra');
+    equal(own.ap, sapper.ap - rules.actions.pickUpCharge.apCost, 'only the pick-up\'s AP');
+    // Handed one: the taker pays nothing for the pass, but the weight is his at once.
+    const pair = {
+      ...state, enemies: [],
+      units: state.units.map((u, i) => (u.id === sapper.id ? { ...u, q: row.q, r: row.r } : u.id === scout.id ? { ...u, q: row.q + 1, r: row.r } : { ...u, q: 200 + i, r: 0 })),
+    };
+    const handed = unitIn(passCharge(pair, sapper.id, scout.id, rules), scout.id);
+    equal(handed.charges, 1, 'the scout has it');
+    equal(handed.ap, scout.ap - loss, 'and its weight');
+    // 0 turns the rule off.
+    const off = { ...rules, charges: { ...rules.charges, overloadApLoss: 0 } };
+    equal(unitIn(pickUpCharge(on(scout), scout.id, off), scout.id).ap, scout.ap - rules.actions.pickUpCharge.apCost, 'overloadApLoss 0: no weight');
   }],
 
   ['kill: only a gunner, only an enemy under suppression; two gunners can do it in one turn, and it leaves a body', async () => {
