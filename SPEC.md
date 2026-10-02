@@ -149,7 +149,7 @@ an orchard's edge is seen as ever; the ground behind him is not.
 
 ## 4. Turn structure
 
-Dawn arrives at the end of the mission's last turn (`turnLimit`): **turn 15** in France, turn 20 on the airfield (§13). That is the clock and the whole pressure.
+Dawn arrives at the end of the mission's last turn (`turnLimit`): **turn 16** in France, turn 20 on the airfield (§13). That is the clock and the whole pressure.
 
 Each turn:
 1. **Player phase** — each trooper has an AP pool. Move (terrain cost) or act.
@@ -635,7 +635,7 @@ turn 9, 10 or 11) **wrecks it and pays 5** on the back page (§10): on 9 the eng
 into the gap, on 10 it goes down with the bridge, on 11 its tail does. With France's
 three-turn fuse that is a charge set on turn 7, 8 or 9 (Dutch's a turn later): about
 when a stick that has come straight from the drop reaches the bridge, so it is a train
-to be in time for, not one to wait for, and the four or five turns left before dawn are
+to be in time for, not one to wait for, and the five or six turns left before dawn are
 for a bonus target and the walk out.
 - It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
   the line as it passes. Its one rule is the score.
@@ -647,11 +647,11 @@ for a bonus target and the walk out.
   says so first on the turns a charge set now would catch it. The turn report says when
   it comes on, crosses, stops or is wrecked.
 - By the bot (`TRAIN=1`: charges held, hidden on the charge points, until they would
-  catch it): on Normal a stick that tries for it catches it in 80 to 90 games in 100,
-  waiting under a turn at the bridge, and wins 91 / 93 / 97 against 86 / 83 / 89 for
-  setting the charges on arriving, which catches it by chance in 11 to 25. On Hard it is
-  a stretch: the stick is at the bridge two turns later, catches it in 14 to 24 games in
-  100, and wins 26 / 37 / 46 against 29 / 38 / 37.
+  catch it): on Normal a stick that tries for it catches it in 91 to 95 games in 100,
+  waiting under a turn at the bridge, and wins 94 / 95 / 97 against 87 / 86 / 94 for
+  setting the charges on arriving, which catches it by chance in 15 to 29. On Hard it is
+  a stretch: the stick is at the bridge a turn later, catches it in 36 to 54 games in
+  100, and wins 37 / 39 / 53 against 39 / 41 / 42.
 
 The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
 Blow the bridge last and you may not have turns left to reach exfil.
@@ -795,7 +795,7 @@ in bold with its name in red above. A withdrawal or a failure is not rated: the 
 is the verdict. The bands are set against the bot's winning scores on Normal
 (`SCORES=1`): the job alone with most men out lands in the middle two, and the top wants
 the bonus targets or a spotless night. France: under 28 SCRAPED HOME, 28 A GOOD NIGHT'S
-WORK, 36 MENTIONED IN DESPATCHES, 43 ONE FOR THE ANNUAL; the airfield: 36, 43 and 50.
+WORK, 36 MENTIONED IN DESPATCHES, 40 ONE FOR THE ANNUAL; the airfield: 36, 43 and 50.
 Nothing is stored: it rates the game just played.
 
 ### Missions
@@ -806,7 +806,7 @@ contents page prints them. A mission is data only, and no code asks which is on:
 - A **playable** mission names its `map` and `roster` files, and a `rules` and `enemies`
   patch merged over `rules.json` and `enemies.json` the way a difficulty level's is; the
   mission's go first, then the level's. A patch key must already exist, except that a
-  mission may add a new objective kind or enemy type. France's patches are its dawn (`turnLimit` 15) and its goods train (§7): the rest
+  mission may add a new objective kind or enemy type. France's patches are its dawn (`turnLimit` 16) and its goods train (§7): the rest
   is the files as they are.
 - Its **own part of each level** (`levels.<id>` in `missions.json`: a `rules` and
   `enemies` patch and a `summary`) goes over the level's own patch, and its summary is
@@ -856,8 +856,8 @@ missions through the rule functions. Its win rates show which way a change pushe
 the absolute answer; it never calls the diversion or stabilises, returns fire only when run with `FIRE=cornered` or `FIRE=always`, and only its `hunter`
 style goes looking for kills, and it packs no parachutes unless run with `PACK=1`, so a
 person does better. Current baselines, win % west / north / east: **Easy 100 / 100 / 97,
-Normal 84 / 85 / 91, Hard 27 / 39 / 42**; packing every chute on turn 1 (`PACK=1`):
-Easy 100 / 99 / 97, Normal 90 / 91 / 92, Hard 40 / 43 / 40. Easy and Normal are meant to
+Normal 87 / 86 / 94, Hard 39 / 41 / 42**; packing every chute on turn 1 (`PACK=1`):
+Easy 100 / 99 / 97, Normal 92 / 91 / 95, Hard 53 / 43 / 42. Easy and Normal are meant to
 be kind to casual players; Hard is the real test. Any rules, map or enemy change is re-run against these and
 the shift logged in DECISIONS.md.
 
@@ -867,9 +867,9 @@ only the men with no charge to place hunt; `HUNTERS=all` sends everyone, until t
 is down or turn `HUNT_TURNS` (12). It is the check on the second pillar: kill-everything
 must not be the best way to play. It moves as the `careful` style does, so it is measured
 against `careful` on the same run. France, 200 seeds, W/N/E:
-Normal careful 85 / 77 / 74, hunter 64 / 75 / 61, `HUNTERS=all` 36 / 40 / 36; Hard careful
-51 / 40 / 71, hunter 12 / 19 / 14, all 4 / 4 / 6: below on Normal and far below on Hard,
-since a 15-turn night has no turns to spend hunting until turn 12. Its numbers, against the baselines, are in DECISIONS.md.
+Normal careful 90 / 79 / 72, hunter 72 / 77 / 71, `HUNTERS=all` 51 / 49 / 45; Hard careful
+63 / 50 / 57, hunter 16 / 25 / 15, all 12 / 12 / 13: below or level on Normal and far below on
+Hard, since a 16-turn night has few turns to spend hunting until turn 12. Its numbers, against the baselines, are in DECISIONS.md.
 
 **Targets** (proposed at the v1.0 gate; the playtest in `docs/PLAYTEST.md` confirms or
 moves them). What they are for is people, so the first three are measured on players new
@@ -881,7 +881,7 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Normal** | Most win within three tries | 75 to 90 | Below careful on the same run (a few points over is the bot's noise) |
 | **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
-Today France's runs are inside them but Normal's East, 1 over; the airfield's are in §13.
+Today France's runs are inside them but Normal's East, 4 over; the airfield's are in §13.
 
 ---
 
@@ -926,7 +926,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
-| M38 | France's dawn at the end of turn 15; a charge a man did not jump with costs him 1 AP while he carries it |
+| M38–M38b | France's dawn at the end of turn 16 (15 for a turn), its top rating from 40; a charge a man did not jump with costs him 1 AP while he carries it |
 | M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
 | M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
 | M35 | The operator's notes: the goods train runs between turns, trimmed in blue and paper, and whistles as it comes on; the Rail Bridge's DESTROYED printed below it; the bomb store's rails clear of its name |

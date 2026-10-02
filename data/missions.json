@@ -12,11 +12,11 @@
       "page": 4,
       "blurb": "Six men drop by night to blow the bridge that carries the line to the coast, and must be out before dawn.",
       "panel": "assets/title/contents-france.jpg",
-      "tagline": "SIX MEN · ONE BRIDGE · DAWN AT FIFTEEN",
+      "tagline": "SIX MEN · ONE BRIDGE · DAWN AT SIXTEEN",
       "map": "data/map.json",
       "roster": "data/roster.json",
-      "_rules": "M38: `turnLimit` 15 (the operator's: with the train at 10 the night had five turns of slack; the bot wins as often with dawn at 15, hurrying as it nears, and the Fuel Dump becomes the thing there is rarely time for). M34: France's other patch is its goods train (data/rules.json `train`): on the Rail Bridge in the enemy phase of turn 10 (M37, the operator's: waiting for it at 17 was dull; 14 at first, then 17 from M34b, when waiting for it cost nothing), seen coming on from the west edge three turns before; the bridge down on turn 16, 17 or 18 pays 5 (the operator's: within a turn of it, score only, scenery). Everything else is the files as they are.",
-      "rules": { "turnLimit": 15, "train": { "label": "Goods train", "objective": "bridge", "turn": 10, "window": 1, "score": 5, "speed": 4, "length": 5 } },
+      "_rules": "M38b: `turnLimit` 16 (the operator's, after a turn at 15; 20 until M38: with the train at 10 the night had five turns of slack; the bot wins as often with dawn at 15, hurrying as it nears, and the Fuel Dump becomes the thing there is rarely time for). M34: France's other patch is its goods train (data/rules.json `train`): on the Rail Bridge in the enemy phase of turn 10 (M37, the operator's: waiting for it at 17 was dull; 14 at first, then 17 from M34b, when waiting for it cost nothing), seen coming on from the west edge three turns before; the bridge down on turn 16, 17 or 18 pays 5 (the operator's: within a turn of it, score only, scenery). Everything else is the files as they are.",
+      "rules": { "turnLimit": 16, "train": { "label": "Goods train", "objective": "bridge", "turn": 10, "window": 1, "score": 5, "speed": 4, "length": 5 } },
       "enemies": {},
       "win": { "condition": "destroyPrimary" },
       "briefing": "Tonight six men are to drop behind enemy lines.",
@@ -39,12 +39,12 @@
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},
-      "_ratings": "M32: the back page's verdict on a mission accomplished, as score bands, lowest first (the first from 0). Set against the bot's winning scores on Normal (tools/balance-bot.mjs with SCORES=1): the bridge alone with most men out lands in the middle two; the top wants the bonus targets or a spotless night. M34: 28/36/43 (were 24/30/36), for the goods train's 5 and the Fuel Dump's fifth point: the bridge alone wins 24–33, with the train 33–39, with the train and both bonus targets 42–45. Placeholder copy for the operator to reword.",
+      "_ratings": "M32: the back page's verdict on a mission accomplished, as score bands, lowest first (the first from 0). Set against the bot's winning scores on Normal (tools/balance-bot.mjs with SCORES=1): the bridge alone with most men out lands in the middle two; the top wants the bonus targets or a spotless night. M38b: the top from 40 (was 43), the operator's: with dawn at 16 there is rarely time for the Fuel Dump, and the greedy bot's best quarter of wins score 39 to 42. M34: 28/36/43 (were 24/30/36), for the goods train's 5 and the Fuel Dump's fifth point: the bridge alone wins 24–33, with the train 33–39, with the train and both bonus targets 42–45. Placeholder copy for the operator to reword.",
       "ratings": [
         { "from": 0, "label": "SCRAPED HOME" },
         { "from": 28, "label": "A GOOD NIGHT'S WORK" },
         { "from": 36, "label": "MENTIONED IN DESPATCHES" },
-        { "from": 43, "label": "ONE FOR THE ANNUAL" }
+        { "from": 40, "label": "ONE FOR THE ANNUAL" }
       ],
       "titleCard": "assets/title/title-card.jpg",
       "endSounds": { "success": "victory", "otherwise": "defeat" }

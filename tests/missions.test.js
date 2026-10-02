@@ -43,10 +43,10 @@ export default [
     const { json, mission, map, rules } = await loadFrance();
     equal(json.default, 'france', 'the default');
     equal(mission.status, 'playable', 'France can be played');
-    // M38: its own dawn too, turn 15; the files' is 20, and the airfield keeps it.
+    // M38b: its own dawn too, turn 16 (15 in M38); the files' is 20, and the airfield keeps it.
     equal(Object.keys(mission.rules).join(), 'turnLimit,train', 'its patch is its dawn and the train');
     const files = await loadJson('data/rules.json');
-    equal(rules.turnLimit, 15, 'dawn at the end of turn 15');
+    equal(rules.turnLimit, 16, 'dawn at the end of turn 16');
     equal(files.turnLimit, 20, 'the files\' dawn is 20');
     equal(JSON.stringify({ ...rules, train: null, turnLimit: files.turnLimit }), JSON.stringify(files), 'the rest unchanged, win condition included');
     equal(JSON.stringify(map), JSON.stringify(await loadMap()), 'map and enemy types unchanged');
