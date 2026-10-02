@@ -18,7 +18,7 @@ placeholder copy for the operator to reword.
 
 **The Airfield, southern Tunisia, winter 1942.** Loosely based on 2 Para's jump at Oudna:
 British paratroopers dropped by Dakota onto an Axis landing ground. The same six men,
-the same 18×13 board, the same 20-turn night.
+the same 18×13 board, and a 20-turn night (France's is 15 since M38).
 
 Eight **aircraft** stand in their dispersal pens, and one charge wrecks each. The job is
 **any five of the eight** (Easy three, Hard seven), and every one past that is greed

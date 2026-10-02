@@ -15,7 +15,7 @@
       "tagline": "SIX MEN · ONE BRIDGE · DAWN AT FIFTEEN",
       "map": "data/map.json",
       "roster": "data/roster.json",
-      "_rules": "M34: France's one patch is its goods train (data/rules.json `train`): on the Rail Bridge in the enemy phase of turn 10 (M37, the operator's: waiting for it at 17 was dull; 14 at first, then 17 from M34b, when waiting for it cost nothing), seen coming on from the west edge three turns before; the bridge down on turn 16, 17 or 18 pays 5 (the operator's: within a turn of it, score only, scenery). Everything else is the files as they are.",
+      "_rules": "M38: `turnLimit` 15 (the operator's: with the train at 10 the night had five turns of slack; the bot wins as often with dawn at 15, hurrying as it nears, and the Fuel Dump becomes the thing there is rarely time for). M34: France's other patch is its goods train (data/rules.json `train`): on the Rail Bridge in the enemy phase of turn 10 (M37, the operator's: waiting for it at 17 was dull; 14 at first, then 17 from M34b, when waiting for it cost nothing), seen coming on from the west edge three turns before; the bridge down on turn 16, 17 or 18 pays 5 (the operator's: within a turn of it, score only, scenery). Everything else is the files as they are.",
       "rules": { "turnLimit": 15, "train": { "label": "Goods train", "objective": "bridge", "turn": 10, "window": 1, "score": 5, "speed": 4, "length": 5 } },
       "enemies": {},
       "win": { "condition": "destroyPrimary" },

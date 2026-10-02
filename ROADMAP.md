@@ -244,6 +244,15 @@ three turn wait, caught more often on Hard), 14 (a four to five turn wait), and 
 targets off the greedy bot's night: one number, `turnLimit` in France's patch, if the
 night should be shorter.
 
+**Dawn in France is turn 15 since M38** (2 Oct 2026, the operator's, to try): with the
+train at 10 it makes the night bridge, train, then four or five turns to get out or take
+one bonus target. The bot wins as often as at 20 (Easy 100 / 100 / 97, Normal
+84 / 85 / 91, Hard 27 / 39 / 42). What it costs is the Fuel Dump, which the greedy bot
+now reaches in 15 to 53 games in 100 (it took it in most at dawn 20), so the top rating
+band is seldom earned; and hunting, which a 15-turn night has no turns for. The same
+milestone made a charge a man did not jump with cost him 1 AP while he carries it, so a
+charge passed to a scout is a trick, not the rule.
+
 ## Done for both missions: return fire, and the airfield's quiet first turn (M36, 2 Oct 2026)
 
 From the operator's notes after M35: nothing offensive to do once spotted, and the
