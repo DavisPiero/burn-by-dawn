@@ -47,6 +47,9 @@ on a timetable like the goods train; a tidy Normal win ending at Alert, not Alar
 From play since M38b the operator finds return fire, the 16-turn night and the weight of
 a carried charge all good, and may yet adjust them. Built as M40 (the engine, no
 gameplay change), M41 (the map, a draft), M42 (balance), M43 (words, sounds, art).
+**M40 is built** (5 Oct 2026): canisters and the exfil's opening turn are in the engine
+as data, off in France and on the airfield, whose bot output is unchanged byte for byte.
+**Next: M41, the map.** Tests: 175 headless.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the

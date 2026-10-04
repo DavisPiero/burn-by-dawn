@@ -3,9 +3,9 @@
 This is §14 of the specification, kept in a file of its own, as MISSION-AIRFIELD.md is
 §13. It is as authoritative as SPEC.md. Section numbers in it (§6, §10) are SPEC.md's.
 
-**Specified 5 Oct 2026 (M39). Not yet built.** Its two rules are engine rules, to be
-written into SPEC.md (§9 Supply canisters, §10 The way out on a timetable) when the
-engine has them (M40); until then they are here, with its numbers. Every number is a first guess for the balance
+**Specified 5 Oct 2026 (M39). The engine has its two rules (M40); the mission itself is
+not yet built.** The rules are written in SPEC.md (§9 Supply canisters, §10 The way out
+on a timetable) and its numbers are here. Every number is a first guess for the balance
 milestone (M42) unless it says the operator chose it. The words and names are placeholder
 copy for the operator to reword. Once the mission is playable this file says how things
 are, and keeps no history (DECISIONS.md has it).
@@ -54,7 +54,7 @@ a patrol walks; and the aqueduct going up brings a squad down to the beach.
 Both are engine rules, off (null) in France and on the airfield.
 
 **Supply canisters** (SPEC.md §9, `canisters` in the rules patch): `{ count: 3,
-charges: 2 }`. The men jump with no charges; three canisters holding two each leave the
+charges: 2, scatterWeights: [0, 4, 4, 2, 1] }`. The men jump with no charges; three canisters holding two each leave the
 aircraft among them, after the second, the fourth and the sixth man, and scatter as the
 men do, a hex further at the most. A canister is a pile of charges with a container
 round it: a man standing on it takes one with the ordinary **Pick up** (1 AP). It is
