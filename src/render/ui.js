@@ -285,7 +285,7 @@ export function describeAlertStates(alert) {
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
   killed: 0, blastKilled: 0, wounded: 1, blastWounded: 1, explosion: 1, train: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reinforcementsCalled: 1, reserve: 2, reinforcements: 2, spotted: 2, diversion: 2,
-  pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, searched: 4, heard: 4, alertDecay: 5, landed: 5,
+  pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, canisterFound: 3, boat: 1, searched: 4, canisterLanded: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
 const DEATHS = new Set(['killed', 'blastKilled']);
@@ -555,6 +555,7 @@ const REPORT_MARKS = {
   spotted: 'marker-spotted', pinned: 'marker-spotted', wounded: 'marker-wounded', blastWounded: 'marker-wounded',
   killed: 'marker-body', blastKilled: 'marker-body', explosion: 'marker-blast', enemyBlastKilled: 'marker-blast',
   bodyFound: 'marker-body', parachuteFound: 'marker-parachute', landed: 'marker-parachute',
+  canisterLanded: 'marker-canister', canisterFound: 'marker-canister',
 };
 
 function reportMark(kind) {
@@ -612,6 +613,14 @@ export function describeEvent(event, place) {
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
     case 'landed': return describeLanding(event, at());
+    // Supply canisters (SPEC.md §9, M41).
+    case 'canisterLanded': return `A canister comes down in ${at()}: ${event.charges} ${event.charges === 1 ? 'charge' : 'charges'} in it.`;
+    case 'canisterFound': return `${event.label} finds a canister in ${at()}. Its charges are still in it.`;
+    // The boat (SPEC.md §10, M41): scenery, said as it is sighted and as it comes in.
+    case 'boat': return {
+      sighted: `The boat is sighted, coming in: on the beach on turn ${event.opens}.`,
+      in: `The boat is in. The way out is open until dawn, the end of turn ${event.leaves}.`,
+    }[event.what];
     case 'explosion': if (event.setOffBy) return `The ${event.label} beside it goes up with the ${event.setOffBy}. Destroyed.`;
       return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;
     case 'blastKilled': return `${event.unitName} is caught in the blast at the ${event.label} — killed.`;
@@ -847,11 +856,11 @@ export function renderMission(element, mission) {
     const item = html('li', o.destroyed ? 'done' : null);
     // SPEC.md §10: only the win's targets are needed. The star says so, and
     // the optional ones carry their score, or the three read as a checklist.
-    const name = html('span', null, [html('b', null, o.win ? `★ ${o.label}` : o.label), html('i', null, o.win ? ' needed' : ` +${o.points}`)]);
+    const name = html('span', null, [html('b', null, o.win ? `★ ${o.label}` : o.label), html('i', null, o.win ? ' needed' : o.points == null ? '' : ` +${o.points}`)]);
     item.append(name, html('span', null, o.progress));
     attachPopup(item, () => [
       html('b', null, o.label.toUpperCase()),
-      `\n${o.win ? 'Primary: needed to win.' : `Optional: +${o.points} score.`}\n${o.detail}.`,
+      `\n${o.win ? 'Primary: needed to win.' : o.points == null ? '' : `Optional: +${o.points} score.`}\n${o.detail}.`,
     ]);
     element.appendChild(item);
   }

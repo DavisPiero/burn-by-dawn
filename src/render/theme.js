@@ -323,6 +323,21 @@ const TERRAIN_ART = {
   pen: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-pen' },
   aircraft: { base: 'paper', tint: ['ochre', 0.3], motif: null },
   camp: { base: 'paper', motif: 'terrain-camp', variants: 2, building: true },
+  // The winter hills (SPEC.md §14, M41): a pale wash of the cold blue over the
+  // paper where the desert has its ochre, the ravine the blue darkened with
+  // ink as the wadi is, the crags in ink. The plough and the beach stay bare
+  // paper, and the sea is the canal's blue. No new colour.
+  hillside: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-hillside', variants: 3, sparse: 0.6 },
+  crag: { base: 'paper', tint: ['blue', 0.1], area: { tint: ['ink', 0.3], outline: 1.8 }, motif: 'terrain-crag', variants: 2 },
+  ravine: { base: 'paper', tint: ['blue', 0.1], area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
+  terrace: { base: 'paper', tint: ['green', 0.14], motif: 'terrain-terrace', variants: 2 },
+  olives: { base: 'paper', tint: ['blue', 0.1], area: { tint: ['green', 0.1], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-olives', variants: 3 },
+  plough: { base: 'paper', motif: 'terrain-plough', variants: 2 },
+  aqueduct: { base: 'paper', tint: ['blue', 0.1], motif: null },
+  arch: { base: 'paper', tint: ['ink', 0.1], motif: 'terrain-arch' },
+  shingle: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-shingle', variants: 2 },
+  rocks: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-rocks', variants: 2 },
+  sea: { base: 'blue', motif: 'terrain-sea', variants: 2, banks: ['sea'] },
 };
 
 // Area terrain's outline: it follows the hexes' edges, rounded off at every
@@ -706,6 +721,7 @@ export const MARKER = {
   // over the faint counter.
   hiddenAt: { x: 38, y: 33 },
   groundSize: 26,
+  canisterSize: 34, // a supply canister (M41), bigger than the charges in it
   fuseSize: 34, // the stopwatch on a burning charge (M15)
   ordersScale: 0.6, // the orders chevrons on a counter, against MARKER.size (M15)
   bodySize: 39, // half as big again as groundSize since M15, the operator's: bodies were easy to miss
@@ -863,6 +879,9 @@ const OBJECTIVE_ART = {
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
+  // The aqueduct's (M41).
+  aqueduct: { intact: 'objective-aqueduct', destroyed: 'objective-aqueduct-destroyed' },
+  roadBridge: { intact: 'objective-road-bridge', destroyed: 'objective-road-bridge-destroyed' },
 };
 
 /** The orders chevrons for a man's bonus from the leader: one, or two for more than one AP (M12). */
@@ -911,7 +930,11 @@ export const TRAIN = {
 
 // The exfil's picture, by the map's `exfilArt` (M29): France's barn, or the
 // trucks waiting at the airfield's rendezvous.
-const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks' };
+const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks', boat: 'objective-boat' };
+
+// The boat on its way in (M41): the exfil's own picture, printed out at sea
+// and a little fainter until it is on the beach.
+export const BOAT = { art: 'objective-boat', width: 80, height: 92, comingOpacity: 0.75 };
 
 export function exfilArtId(name) {
   return EXFIL_ART[name] ?? EXFIL.art;
@@ -2215,6 +2238,189 @@ const DESERT_OBJECTIVES = {
   },
 };
 
+// --- the winter hills (SPEC.md §14, M41) ---------------------------------------
+// The aqueduct's ground and targets, in the same hand as France's and the
+// desert's. Nothing here is used by either of those maps.
+
+// Slope hachures: short strokes falling down and to the right.
+function hachures(marks) {
+  return [line(marks.map(([x, y, l]) => `M${x} ${y} l${(l * 0.45).toFixed(1)} ${l}`).join(' '), 1.1, 'stroke-ink', { opacity: 0.3 })];
+}
+
+// A rock face: an angular block, toned, with its cracks.
+function rockFace(x, y, s = 1) {
+  const t = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  const d = `M${t(-13, 8)} L${t(-9, -8)} L${t(-1, -13)} L${t(9, -7)} L${t(13, 7)} L${t(3, 11)} Z`;
+  return [
+    fill(d, 'paper'), fill(d, toneClass('ink', 35)), line(d, 1.5),
+    line(`M${t(-1, -13)} L${t(1, 2)} L${t(-9, 8)} M${t(1, 2)} L${t(11, 5)}`, 1, 'stroke-ink', { opacity: 0.6 }),
+  ];
+}
+
+// A dry-stone terrace wall across the hex, bowed with the slope.
+function terraceWall(y, bow) {
+  const d = `M12 ${y} Q40 ${y + bow} 68 ${y}`;
+  return [line(d, 4.4), line(d, 2.4, 'stroke-paper', { 'stroke-dasharray': '6 2.5' })];
+}
+
+// An olive: a small grey-green crown over its shadow.
+function oliveTree(x, y, s = 1) {
+  return [
+    svg('ellipse', { cx: x + 3 * s, cy: y + 5 * s, rx: 7 * s, ry: 3 * s, class: 'ink', opacity: 0.25 }),
+    circle(x, y, 6.5 * s, 'paper'), circle(x, y, 6.5 * s, 'green', { 'fill-opacity': 0.6 }), ring(x, y, 6.5 * s, 1.3),
+    line(`M${x - 2.5 * s} ${y - 1 * s} q${2 * s} ${-2.5 * s} ${4.5 * s} ${-0.5 * s}`, 0.9, 'stroke-ink', { opacity: 0.55 }),
+  ];
+}
+
+// The torrent in its bed: a thread of water among the stones.
+function torrent(d) {
+  return [line(d, 3.2, 'stroke-blue'), line(d, 1, 'stroke-paper', { opacity: 0.7 })];
+}
+
+// A sea-worn boulder, bigger than the wadi's stones.
+function boulder(x, y, rx, ry) {
+  return [
+    svg('ellipse', { cx: x + 2, cy: y + 2.5, rx, ry, class: 'ink', opacity: 0.3 }),
+    svg('ellipse', { cx: x, cy: y, rx, ry, class: 'paper' }),
+    svg('ellipse', { cx: x, cy: y, rx, ry, class: toneClass('ink', 20) }),
+    svg('ellipse', { cx: x, cy: y, rx, ry, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.4 }),
+  ];
+}
+
+const ITALY_TERRAIN = {
+  'terrain-hillside-01': () => hachures([[26, 36, 7], [34, 40, 6], [50, 56, 7], [42, 60, 5]]),
+  'terrain-hillside-02': () => [...hachures([[44, 34, 7], [52, 38, 6], [28, 58, 6]]), ...wadiStone(36, 48, 2.6, 1.9)],
+  'terrain-hillside-03': () => [...hachures([[30, 44, 6], [38, 48, 7], [54, 62, 5]]), ...wadiStone(52, 40, 2.2, 1.6)],
+  'terrain-crag-01': () => [...rockFace(32, 42), ...rockFace(52, 60, 0.8)],
+  'terrain-crag-02': () => [...rockFace(48, 40, 0.9), ...rockFace(30, 60, 0.85)],
+  'terrain-ravine-01': () => [...torrent('M30 22 Q46 36 36 50 T48 74'), ...wadiStone(26, 44, 4, 3), ...wadiStone(52, 58, 4.4, 3.2)],
+  'terrain-ravine-02': () => [...torrent('M46 20 Q30 38 44 52 T34 76'), ...wadiStone(54, 38, 3.6, 2.6), ...wadiStone(28, 62, 4.2, 3)],
+  'terrain-ravine-03': () => [...torrent('M38 20 Q50 40 38 54 T46 76'), ...wadiStone(26, 34, 3.2, 2.4), ...wadiStone(54, 66, 3.6, 2.6)],
+  'terrain-terrace-01': () => [...terraceWall(34, 5), ...terraceWall(50, 6), ...terraceWall(66, 4)],
+  'terrain-terrace-02': () => [...terraceWall(30, -4), ...terraceWall(46, -5), ...terraceWall(62, -4)],
+  'terrain-olives-01': () => [...oliveTree(28, 38), ...oliveTree(50, 46, 0.9), ...oliveTree(36, 62, 0.95)],
+  'terrain-olives-02': () => [...oliveTree(46, 34, 0.95), ...oliveTree(28, 52), ...oliveTree(52, 62, 0.9)],
+  'terrain-olives-03': () => [...oliveTree(34, 36, 0.9), ...oliveTree(54, 48), ...oliveTree(30, 62, 0.95)],
+  'terrain-plough-01': () => [line('M20 34 L58 30 M18 44 L62 40 M18 54 L62 50 M22 64 L60 60', 1.1, 'stroke-ink', { opacity: 0.24 })],
+  'terrain-plough-02': () => [line('M22 30 L56 36 M18 40 L62 46 M18 50 L62 56 M24 60 L58 66', 1.1, 'stroke-ink', { opacity: 0.24 })],
+  // The foot of a pier: dressed stone laid in courses, seen from above.
+  'terrain-arch': () => [
+    ...inked('M22 30 H40 V40 H22 Z', 'paper', 1.2), ...inked('M42 30 H58 V40 H42 Z', 'paper', 1.2),
+    ...inked('M26 54 H44 V64 H26 Z', 'paper', 1.2), ...inked('M46 54 H60 V64 H46 Z', 'paper', 1.2),
+  ].map((n) => { n.setAttribute('opacity', '0.55'); return n; }),
+  'terrain-shingle-01': () => [[26, 36, 2.4, 1.6], [44, 30, 1.8, 1.2], [54, 46, 2.6, 1.8], [32, 56, 2, 1.4], [48, 64, 2.4, 1.6], [38, 44, 1.4, 1]]
+    .map(([x, y, rx, ry]) => svg('ellipse', { cx: x, cy: y, rx, ry, class: 'ink', opacity: 0.35 })),
+  'terrain-shingle-02': () => [[30, 32, 2, 1.4], [50, 36, 2.6, 1.8], [26, 50, 2.4, 1.6], [42, 56, 1.6, 1.1], [56, 60, 2, 1.4], [36, 68, 2.4, 1.6]]
+    .map(([x, y, rx, ry]) => svg('ellipse', { cx: x, cy: y, rx, ry, class: 'ink', opacity: 0.35 })),
+  'terrain-rocks-01': () => [...boulder(30, 40, 9, 6.5), ...boulder(50, 56, 11, 7.5), ...boulder(34, 64, 6, 4.5)],
+  'terrain-rocks-02': () => [...boulder(48, 36, 10, 7), ...boulder(28, 54, 8, 6), ...boulder(52, 64, 7, 5)],
+  'terrain-sea-01': () => [line('M22 38 Q28 34 34 38 Q40 42 46 38 M36 58 Q42 54 48 58 Q54 62 60 58', 1.4, 'stroke-paper', { opacity: 0.5 })],
+  'terrain-sea-02': () => [line('M30 32 Q36 28 42 32 Q48 36 54 32 M20 54 Q26 50 32 54 Q38 58 44 54', 1.4, 'stroke-paper', { opacity: 0.5 })],
+};
+
+// The aqueduct, seen from the south and a little above, as the rail bridge is:
+// the channel on top with its water, the masonry face below it with an arch
+// between every pair of piers, and the tall arch the torrent runs under. Six
+// hexes long, a hex to 80; the torrent's arch is the fourth.
+function aqueduct(blown) {
+  const parts = [];
+  // Whole, it is one run; blown, the span over the third hex is gone.
+  const runs = blown ? [[4, 176], [262, 476]] : [[4, 476]];
+  parts.push(fill('M4 72 H476 V80 H4 Z', 'ink', { 'fill-opacity': 0.22 }));
+  for (const [x0, x1] of runs) {
+    const face = `M${x0} 46 H${x1} V72 H${x0} Z`;
+    parts.push(...inked(face, 'paper', 2), fill(face, toneClass('ink', 20)));
+    // An arch a hex, between the piers; the torrent's is taller and wider.
+    for (let k = 0; k < 6; k++) {
+      const cx = 40 + 80 * k, big = k === 3, r = big ? 24 : 15;
+      if (cx - r < x0 + 4 || cx + r > x1 - 4) continue;
+      const arch = `M${cx - r} 72 V${big ? 62 : 66} A${r} ${big ? 15 : 10} 0 0 1 ${cx + r} ${big ? 62 : 66} V72 Z`;
+      parts.push(fill(arch, big ? 'blue' : 'ink', big ? {} : { 'fill-opacity': 0.75 }), line(arch, 1.4));
+    }
+    // The channel on top: stone kerbs, the water between them.
+    const top = `M${x0} 28 H${x1} V46 H${x0} Z`;
+    parts.push(...inked(top, 'paper', 2), fill(`M${x0 + 2} 33 H${x1 - 2} V41 H${x0 + 2} Z`, 'blue'));
+    let joints = '';
+    for (let x = x0 + 20; x < x1 - 6; x += 20) joints += `M${x} 28 V33 M${x} 41 V46 `;
+    parts.push(line(joints, 0.9, 'stroke-ink', { opacity: 0.5 }), line(`M${x0 + 2} 37 H${x1 - 2}`, 1, 'stroke-paper', { opacity: 0.6, 'stroke-dasharray': '9 7' }));
+  }
+  if (blown) {
+    // The broken ends, the water pouring out of them, and the fallen pier.
+    parts.push(
+      ...inked('M176 28 L186 34 L178 44 L188 58 L176 72 Z', toneClass('ink', 20), 1.8),
+      ...inked('M262 28 L252 36 L260 46 L250 60 L262 72 Z', toneClass('ink', 20), 1.8),
+      fill('M178 34 Q196 44 190 78 L204 80 Q208 44 184 30 Z', 'blue', { 'fill-opacity': 0.85 }),
+      fill('M260 34 Q244 46 248 78 L236 80 Q232 46 256 30 Z', 'blue', { 'fill-opacity': 0.85 }),
+      line('M184 40 Q196 52 194 76 M256 40 Q246 52 244 76', 1.1, 'stroke-paper', { opacity: 0.8 }),
+      ...[[204, 70, 12, 8, -14], [222, 76, 14, 7, 10], [232, 64, 9, 7, 28], [212, 60, 8, 6, -30]].flatMap(([x, y, w, h, a]) => [
+        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
+        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.3, transform: `rotate(${a} ${x} ${y})` }),
+      ]),
+      ...smoke(218, 30, 1.3),
+    );
+  }
+  return parts;
+}
+
+// The road bridge: one stone arch carrying the road over the torrent, the
+// road running from the hex's upper right to its lower left, as the map's does.
+function roadBridge(blown) {
+  const bed = 'M6 30 L74 62';
+  const parts = [
+    line(bed, 30, 'stroke-ink', { opacity: 0.32, 'stroke-linecap': 'butt' }),
+    line('M10 34 Q40 40 70 58', 3, 'stroke-blue'),
+  ];
+  const deck = (d) => [line(d, 19, 'stroke-ink', { 'stroke-linecap': 'butt' }), line(d, 14, 'stroke-paper', { 'stroke-linecap': 'butt' })];
+  if (!blown) {
+    parts.push(...deck('M64 4 L16 88'), line('M58 4 L10 88 M70 4 L22 88', 1, 'stroke-ink', { opacity: 0.45, 'stroke-dasharray': '4 4' }));
+  } else {
+    parts.push(
+      ...deck('M64 4 L48 32'), ...deck('M32 60 L16 88'),
+      line('M42 28 L52 30 L48 36 L56 36 M26 58 L34 56 L30 62 L38 64', 1.6),
+      ...[[40, 44, 9, 6, 20], [46, 52, 7, 5, -25], [34, 50, 6, 5, 50]].flatMap(([x, y, w, h, a]) => [
+        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
+        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2, transform: `rotate(${a} ${x} ${y})` }),
+      ]),
+      ...smoke(44, 30, 0.9),
+    );
+  }
+  return parts;
+}
+
+// The boat from the submarine, drawn up at the water's edge: a clinker dinghy
+// seen from above, its thwarts and oars, and the hooded green lamp, the one
+// friendly light on the map (as France's barn has).
+function shipsBoat() {
+  const hull = 'M40 22 C56 30 58 58 50 74 H30 C22 58 24 30 40 22 Z';
+  return [
+    svg('ellipse', { cx: 44, cy: 52, rx: 17, ry: 28, class: 'ink', opacity: 0.25 }),
+    ...inked(hull, 'paper', 2), fill(hull, toneClass('green', 50)),
+    line('M40 26 V72 M29 46 H51 M28 58 H52', 1.4),
+    line('M30 52 L10 60 M50 52 L70 60', 2.4), line('M10 60 l-5 4 M70 60 l5 4', 4),
+    circle(40, 34, 4.5, toneClass('green', 50)), circle(40, 34, 2.2, 'green'), ring(40, 34, 2.2, 0.9),
+  ];
+}
+
+const ITALY_OBJECTIVES = {
+  'objective-aqueduct': { viewBox: '0 0 480 92', draw: () => aqueduct(false) },
+  'objective-aqueduct-destroyed': { viewBox: '0 0 480 92', draw: () => aqueduct(true) },
+  'objective-road-bridge': { viewBox: '0 0 80 92', draw: () => roadBridge(false) },
+  'objective-road-bridge-destroyed': { viewBox: '0 0 80 92', draw: () => roadBridge(true) },
+  'objective-boat': { viewBox: '0 0 80 92', draw: shipsBoat },
+  // A supply canister on the ground (SPEC.md §9): a steel drum in army green,
+  // banded, with the lines of its own small parachute trailing off it.
+  'marker-canister': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      line('M5 9 Q2 5 6 3 M5 9 Q8 4 11 5', 1),
+      svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, class: 'green', transform: 'rotate(18 14 14)' }),
+      svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.8, transform: 'rotate(18 14 14)' }),
+      line('M9 9 V20 M14 9 V20 M19 9 V20', 1.3, 'stroke-ink', { transform: 'rotate(18 14 14)' }),
+      line('M4.5 12 H23.5', 1, 'stroke-paper', { opacity: 0.6, transform: 'rotate(18 14 14)' }),
+    ],
+  },
+};
+
 const SPRITES = {
   // --- counters and symbols (ART-ASSETS.md §3) ---
   'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('ink') },
@@ -2315,6 +2521,8 @@ const SPRITES = {
   ...Object.fromEntries(Object.entries(TERRAIN_SPRITES).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
   ...Object.fromEntries(Object.entries(DESERT_TERRAIN).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
   ...DESERT_OBJECTIVES,
+  ...Object.fromEntries(Object.entries(ITALY_TERRAIN).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
+  ...ITALY_OBJECTIVES,
   'train-engine': { viewBox: '0 0 80 46', draw: trainEngine },
   'train-wagon': { viewBox: '0 0 80 46', draw: trainWagon },
   // A hedge's clumps (M17): board.js lays them along each hedge, every shadow first.

@@ -23,6 +23,7 @@ import {
   applyPayoff, checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
+import { boatEvents } from './boat.js';
 import { trainEvents } from './train.js';
 import { applyHook } from './traits.js';
 import {
@@ -655,7 +656,7 @@ function playOutTurn(state, rules, baseMap, dawn) {
   return {
     ...next,
     turn: dawn ? state.turn : state.turn + 1,
-    report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events, ...trainEvents(state, next, rules, baseMap)],
+    report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events, ...trainEvents(state, next, rules, baseMap), ...boatEvents(state, { ...next, turn: dawn ? state.turn : state.turn + 1 }, rules, baseMap)],
     speech: speechFrom(detected.events, next.units),
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.

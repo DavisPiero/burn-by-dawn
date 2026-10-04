@@ -119,11 +119,46 @@
     },
     {
       "id": "aqueduct",
-      "status": "coming",
+      "status": "draft",
       "title": "The Aqueduct",
       "place": "Southern Italy",
       "page": 32,
-      "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait."
+      "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait.",
+      "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT LEAVES AT DAWN",
+      "map": "data/map-aqueduct.json",
+      "roster": "data/roster.json",
+      "_rules": "MISSION-AQUEDUCT.md (SPEC.md §14), M41: a draft, every number a first guess for M42. Its two rules: `canisters` (the men jump with none; three canisters of two) and `exfil.opensTurn` (the boat is in on 15, gone at dawn, 18). A sapper has room for two charges, so the sappers and Nunn carry five at full pace. Time pencils as on the airfield. The patrols set out on turn 2. The aqueduct calls one squad down the road when it goes; the road bridge down stops the reserve and the squads (the exchange's payoff in France).",
+      "rules": {
+        "turnLimit": 18,
+        "roles": { "sapper": { "charges": 2 } },
+        "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
+        "canisters": { "count": 3, "charges": 2, "scatterWeights": [0, 4, 4, 2, 1] },
+        "exfil": { "opensTurn": 15 },
+        "patrols": { "setOutTurn": 2 },
+        "objectives": {
+          "aqueduct": { "label": "Aqueduct", "chargesNeeded": 4, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 1, "score": 10, "setsOff": false },
+          "roadBridge": { "label": "Road Bridge", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "ravine", "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4, "setsOff": false }
+        }
+      },
+      "enemies": {},
+      "win": { "condition": "destroyPrimary" },
+      "levels": {
+        "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it goes.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
+        "hard": { "summary": "The aqueduct takes five charges of your six, and two squads come down the road when it goes: none once the Road Bridge is down.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 5, "reinforcements": 2 } } } }
+      },
+      "briefing": "Tonight six men are to drop into the mountains of southern Italy.",
+      "_words": "M41. Placeholder copy for the operator to reword. The line words are asked for by every mission: nothing here has a line to cut, and `lineIsDown` is what stops the squads coming, the road bridge. The diversion is the RAF again, as in 1941: bombers over Foggia.",
+      "words": {
+        "lineGoesDead": "the road is cut",
+        "lineIsDown": "the Road Bridge is already down",
+        "diversionName": "RAF diversion",
+        "diversionKicker": "BOMBERS OVER FOGGIA",
+        "diversionLog": "bombers over Foggia",
+        "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
+      },
+      "dialogue": {},
+      "titleCard": "assets/title/title-card.jpg",
+      "endSounds": { "success": "victory", "otherwise": "defeat" }
     }
   ]
 }
