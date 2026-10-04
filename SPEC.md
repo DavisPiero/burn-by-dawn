@@ -7,7 +7,8 @@ A turn-based, hex tactical game. Six named British paratroopers land behind enem
 and sabotage German infrastructure before dawn. It is an engine plus missions: §1–§11
 describe the engine through mission 1, the rail bridge in occupied France. How it looks
 and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), is in
-`MISSION-AIRFIELD.md`, where it differs. Both missions are playable.
+`MISSION-AIRFIELD.md`, where it differs. Both missions are playable. Mission 3, the
+aqueduct (§14), is specified in `MISSION-AQUEDUCT.md` and not yet built.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -907,9 +908,13 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-None chosen. Phase 3 is done: the airfield is `playable`, picked from the contents page.
-What comes next, the aqueduct (Phase 4), is in ROADMAP.md, to be specified in a file of
-its own (`MISSION-AQUEDUCT.md`) before it is built, as the airfield was. v1.0 is tagged.
+**M40, the aqueduct's engine work** (Phase 4; §14, `MISSION-AQUEDUCT.md`): its two rules
+as data, off in both playable missions, whose bot output must come out unchanged, byte
+for byte. **Supply canisters** (`canisters`): the men jump with no charges, and the
+charges come down in containers that scatter with them, each a pile to pick up from and
+evidence until it is empty. **The way out on a timetable** (`exfil.opensTurn`): the
+exfil cannot be entered before that turn. Then M41, the map as a draft; M42, balance;
+M43, words, sounds and the art hand-off. v1.0 is tagged.
 
 ### Done
 
@@ -926,6 +931,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M39 | Mission 3, the aqueduct, specified (§14): southern Italy 1941, every charge in a canister, a boat on a timetable, a tidy win ending at Alert. The airfield's line on the contents page reworded |
 | M38–M38b | France's dawn at the end of turn 16 (15 for a turn), its top rating from 40; a charge a man did not jump with costs him 1 AP while he carries it |
 | M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
 | M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
@@ -943,3 +949,12 @@ sounds and pictures, and its balance baselines.
 
 Each mission after the first has a file like it (`MISSION-<NAME>.md`), written before the
 mission is built, and this spec gains only the engine rules the mission needs.
+
+---
+
+## 14. Mission 3 — the aqueduct
+
+**In `MISSION-AQUEDUCT.md`**, specified and not yet built: southern Italy, February 1941.
+One big target that takes four charges, every charge down in a supply canister, and a
+boat that is in to the beach from turn 15 and gone at dawn. Its two rules, supply
+canisters and the way out on a timetable, join this file as the engine gains them.
