@@ -164,7 +164,7 @@
         [1, 4],
         [4, 4]
       ],
-      "noteNudge": [-4.6, 2.4]
+      "noteNudge": [-8.5, 5.2]
     },
     {
       "id": "road-bridge",
@@ -178,7 +178,7 @@
         [4, 8],
         [5, 9]
       ],
-      "noteNudge": [3.2, 0.2]
+      "noteNudge": [-0.7, 1.5]
     }
   ],
   "_exfil": "SPEC.md §10, §14. The beach: three hexes at the water's edge, shut until the boat is in (data/missions.json rules exfil.opensTurn). `exfilArt` picks its picture, the boat. `boatRun` (M41, art only) is the line the boat comes in along, from out at sea to the beach: it is seen on it for the two turns before the beach opens.",
@@ -192,7 +192,7 @@
     "from": [12, 11],
     "to": [3, 12]
   },
-  "exfilNoteNudge": [-4.4, -0.2],
+  "exfilNoteNudge": [0.2, -0.4],
   "dropCueAt": [10.5, 5],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
   "places": [

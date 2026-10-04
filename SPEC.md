@@ -8,7 +8,8 @@ and sabotage German infrastructure before dawn. It is an engine plus missions: �
 describe the engine through mission 1, the rail bridge in occupied France. How it looks
 and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Both missions are playable. Mission 3, the
-aqueduct (§14), is specified in `MISSION-AQUEDUCT.md` and not yet built.
+aqueduct (§14, `MISSION-AQUEDUCT.md`), is a draft: played by its address, not yet
+balanced or announced.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -74,6 +75,8 @@ tests.html        every test suite, in the browser
   hints.js        the turn card's hints (§11)
   difficulty.js   the difficulty patches (§10)
   missions.js     the missions and their win conditions (§10)
+  train.js        the goods train's timetable (§7)
+  boat.js         the boat's (§10, §14)
   rng.js
   render/
     board.js      the map, counters, markers, overlays, motion
@@ -85,6 +88,7 @@ tests.html        every test suite, in the browser
   missions.json   the missions: files, patches, win condition, words, title card (§10)
   map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
   map-airfield.json  the airfield's (§13), in the same shape
+  map-aqueduct.json  the aqueduct's (§14)
   terrain.json    terrain types (§3)
   roster.json     the six, their traits and dialogue (§5)
   traits.json     trait definitions (hook + modifier)
@@ -938,14 +942,13 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M41, the aqueduct's map as a draft** (Phase 4; §14, `MISSION-AQUEDUCT.md`): played by
-its address, `?mission=aqueduct`, still stamped NEXT YEAR'S ANNUAL on the contents page.
-`data/map-aqueduct.json` and its terrain, drawn in code; the garrison, the two
-objectives and the three drop runs; the canister and the closed exfil on the board, in
-the hovers, the orders and the turn report (M40 gave them rules and no pictures or
-words); the boat as scenery; and the balance bot taught to fetch from the canisters and
-to wait for the boat. Read `ART-DIRECTION.md` first. Then M42, balance; M43, words,
-sounds and the art hand-off. v1.0 is tagged.
+**M42, the aqueduct's balance** (Phase 4; §14, `MISSION-AQUEDUCT.md`, whose Balance
+section says where the draft stands). By the bot, before any art is asked for: the
+**alert budget** met by redrawing the map and the patrols' beats, not the alert's
+numbers (a careful Normal win below Alarmed in six games in ten); the **boat's turn and
+dawn** set to when a stick straight from the job reaches the shore; the three runs and
+the three levels inside the §10 targets; the rating's bands. Then the operator's own
+play of the draft, and M43: words, sounds and the art hand-off. v1.0 is tagged.
 
 ### Done
 
@@ -962,6 +965,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M41 | The aqueduct as a draft (`?mission=aqueduct`): its map and eleven kinds of ground, the aqueduct and the road bridge, the canister, the closed beach and the boat drawn and worded, the bot taught to fetch and to wait |
 | M40 | The aqueduct's engine work, off in both missions: supply canisters (§9) and the way out on a timetable (§10) |
 | M39 | Mission 3, the aqueduct, specified (§14): southern Italy 1941, every charge in a canister, a boat on a timetable, a tidy win ending at Alert. The airfield's line on the contents page reworded |
 | M38–M38b | France's dawn at the end of turn 16 (15 for a turn), its top rating from 40; a charge a man did not jump with costs him 1 AP while he carries it |
@@ -986,7 +990,8 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 ## 14. Mission 3 — the aqueduct
 
-**In `MISSION-AQUEDUCT.md`**, specified and not yet built: southern Italy, February 1941.
+**In `MISSION-AQUEDUCT.md`**, a draft played by `?mission=aqueduct` and not yet balanced:
+southern Italy, February 1941.
 One big target that takes four charges, every charge down in a supply canister, and a
 boat that is in to the beach from turn 15 and gone at dawn. Its two rules are engine
 rules, written above: supply canisters (§9) and the way out on a timetable (§10).

@@ -2413,10 +2413,12 @@ const ITALY_OBJECTIVES = {
     viewBox: '0 0 28 28',
     draw: () => [
       line('M5 9 Q2 5 6 3 M5 9 Q8 4 11 5', 1),
-      svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, class: 'green', transform: 'rotate(18 14 14)' }),
-      svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.8, transform: 'rotate(18 14 14)' }),
-      line('M9 9 V20 M14 9 V20 M19 9 V20', 1.3, 'stroke-ink', { transform: 'rotate(18 14 14)' }),
-      line('M4.5 12 H23.5', 1, 'stroke-paper', { opacity: 0.6, transform: 'rotate(18 14 14)' }),
+      svg('g', { transform: 'rotate(18 14 14)' }, [
+        svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, class: 'green' }),
+        line('M4.5 12 H23.5', 1, 'stroke-paper', { opacity: 0.6 }),
+        line('M9 9 V20 M14 9 V20 M19 9 V20', 1.3),
+        svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.8 }),
+      ]),
     ],
   },
 };
