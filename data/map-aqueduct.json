@@ -1,0 +1,261 @@
+{
+  "_comment": "The aqueduct (SPEC.md §14, MISSION-AQUEDUCT.md, M41): mission 3's map, in the same shape as data/map.json. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. Terrain ids must exist in data/terrain.json; the winter hills are printed under a pale wash of the cold blue (SPEC.md §11). A first drawing, for M42's balance to move.",
+  "name": "The aqueduct on the Tragino",
+  "width": 18,
+  "height": 13,
+  "hexSize": 46,
+  "_dropRuns": "SPEC.md §9, §14. All three land north and west of the road bridge, so nobody starts below the job. West comes down the hillside south of the aqueduct, in the olives and terraces and beside the torrent's bed; north over the plough beside the farm, where the aqueduct patrol walks; the valley run down the terraces above the road bridge, nearest the bridge and the way home, the longest carry up to the piers. The canisters leave after the second, fourth and sixth man (data/rules.json canisters).",
+  "dropRuns": [
+    {
+      "id": "west",
+      "label": "West run",
+      "tag": "quiet",
+      "description": "The hillside below the aqueduct: olives, terraces and the torrent's bed, under cover from the first step. Rough ground: a canister may come down among the rocks.",
+      "from": [1, 5],
+      "to": [-3, 11],
+      "jumpAt": 0,
+      "spacing": 1,
+      "wind": "SW"
+    },
+    {
+      "id": "north",
+      "label": "North run",
+      "tag": "steady",
+      "description": "The plough beside the farm: soft landings and the canisters in plain sight, a short walk to the piers. A patrol walks the fields: empty the canisters and pack your chutes.",
+      "from": [5, 1],
+      "to": [13, 1],
+      "jumpAt": 1,
+      "spacing": 1,
+      "wind": "SE"
+    },
+    {
+      "id": "valley",
+      "label": "Valley run",
+      "tag": "fast",
+      "description": "The terraces above the road bridge: down closest to the bridge and the way to the boat, with the longest carry back up to the aqueduct.",
+      "from": [11, 3],
+      "to": [2, 7],
+      "jumpAt": 1,
+      "spacing": 1,
+      "wind": "W"
+    }
+  ],
+  "_enemies": "SPEC.md §6, §14. Six, the fewest of any mission: the alert budget (MISSION-AQUEDUCT.md) wants few finders and few bodies. Posts: the aqueduct guard at the farm end, looking west along the south side of the piers (the north side is hidden from him by the aqueduct itself); the bridge post above the road bridge; the coast watcher in the hamlet, looking along the beach. Patrols: one across the plough north of the aqueduct, where the north run lands; one on the road between the hamlet and the bend above the bridge; one through the terraces from the east slope to the west hillside, across the valley and west runs' ground.",
+  "enemies": [
+    {
+      "id": "post-aqueduct",
+      "label": "Aqueduct guard",
+      "type": "sentry",
+      "at": [5, 4],
+      "facing": "W"
+    },
+    {
+      "id": "post-bridge",
+      "label": "Bridge post",
+      "type": "sentry",
+      "at": [7, 7],
+      "facing": "SW"
+    },
+    {
+      "id": "post-coast",
+      "label": "Coast watcher",
+      "type": "sentry",
+      "at": [1, 11],
+      "facing": "E"
+    },
+    {
+      "id": "patrol-aqueduct",
+      "label": "Aqueduct patrol",
+      "type": "patrol",
+      "facing": "E",
+      "loop": false,
+      "route": [
+        [1, 1],
+        [8, 1]
+      ]
+    },
+    {
+      "id": "patrol-road",
+      "label": "Road patrol",
+      "type": "patrol",
+      "facing": "NE",
+      "loop": false,
+      "route": [
+        [3, 10],
+        [5, 8],
+        [8, 6],
+        [11, 4]
+      ]
+    },
+    {
+      "id": "patrol-terraces",
+      "label": "Terrace patrol",
+      "type": "patrol",
+      "facing": "W",
+      "loop": false,
+      "route": [
+        [10, 6],
+        [7, 5],
+        [0, 6],
+        [-2, 9]
+      ]
+    }
+  ],
+  "_reserve": "SPEC.md §6. Down the road from the north-east at Alarmed, to stand above the beach. Never, once the road bridge is down (its kind's payoff).",
+  "reserve": {
+    "id": "reserve",
+    "label": "Reserve squad",
+    "type": "reserve",
+    "facing": "SW",
+    "entryHexes": [
+      [15, 0],
+      [14, 1],
+      [13, 2]
+    ],
+    "guardHex": [2, 10],
+    "guardFacing": "SE"
+  },
+  "_reinforcements": "SPEC.md §6, §14. By lorry down the same road when the aqueduct goes up (one squad on Normal, two on Hard, none on Easy; none once the road bridge is down), to posts on the ways onto the beach: the torrent's mouth first, the quiet way down.",
+  "reinforcements": {
+    "id": "reinforcements",
+    "label": "Reinforcements",
+    "type": "patrol",
+    "facing": "SW",
+    "entryHexes": [
+      [15, 0],
+      [14, 1],
+      [13, 2]
+    ],
+    "posts": [
+      {
+        "guardHex": [4, 10],
+        "guardFacing": "SE"
+      },
+      {
+        "guardHex": [2, 9],
+        "guardFacing": "SE"
+      },
+      {
+        "guardHex": [-1, 10],
+        "guardFacing": "E"
+      }
+    ]
+  },
+  "_objectives": "SPEC.md §7, §14. The aqueduct is the primary: its footprint is the channel on its piers and the arch the torrent runs under; six charge points at the piers' feet, three on each side, of which the job needs four (its kind's chargesNeeded). The road bridge carries the road over the torrent lower down: two charge points in the torrent's bed under it, one needed; down, it becomes ravine and nothing more comes down the road.",
+  "objectives": [
+    {
+      "id": "aqueduct",
+      "label": "Aqueduct",
+      "kind": "aqueduct",
+      "primary": true,
+      "hexes": [
+        [0, 3],
+        [1, 3],
+        [2, 3],
+        [3, 3],
+        [4, 3],
+        [5, 3]
+      ],
+      "chargeHexes": [
+        [1, 2],
+        [2, 2],
+        [5, 2],
+        [0, 4],
+        [1, 4],
+        [4, 4]
+      ],
+      "noteNudge": [-8.5, 5.2]
+    },
+    {
+      "id": "road-bridge",
+      "label": "Road Bridge",
+      "kind": "roadBridge",
+      "primary": false,
+      "hexes": [
+        [5, 8]
+      ],
+      "chargeHexes": [
+        [4, 8],
+        [5, 9]
+      ],
+      "noteNudge": [-0.7, 1.5]
+    }
+  ],
+  "_exfil": "SPEC.md §10, §14. The beach: three hexes at the water's edge, shut until the boat is in (data/missions.json rules exfil.opensTurn). `exfilArt` picks its picture, the boat. `boatRun` (M41, art only) is the line the boat comes in along, from out at sea to the beach: it is seen on it for the two turns before the beach opens.",
+  "exfil": [
+    [1, 12],
+    [2, 12],
+    [3, 12]
+  ],
+  "exfilArt": "boat",
+  "boatRun": {
+    "from": [12, 11],
+    "to": [3, 12]
+  },
+  "exfilNoteNudge": [0.2, -0.4],
+  "dropCueAt": [10.5, 5],
+  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
+  "places": [
+    {
+      "name": "Torrente Tragino",
+      "kind": "wadi",
+      "at": [3, 7],
+      "angle": 28,
+      "dy": -0.1
+    },
+    {
+      "name": "Masseria Lauro",
+      "kind": "farm",
+      "at": [7, 3],
+      "dy": -0.85,
+      "dx": 0.5
+    },
+    {
+      "name": "Marina",
+      "kind": "village",
+      "at": [0, 10],
+      "dy": -0.8,
+      "dx": -0.3
+    },
+    {
+      "name": "Monte Carruozzo",
+      "kind": "high",
+      "at": [-2, 6],
+      "dy": 0.2,
+      "dx": 0.4
+    }
+  ],
+  "legend": {
+    "H": "hillside",
+    "G": "crag",
+    "V": "ravine",
+    "Y": "terrace",
+    "O": "olives",
+    "P": "plough",
+    "Q": "aqueduct",
+    "N": "arch",
+    "S": "shingle",
+    "K": "rocks",
+    "Z": "sea",
+    "T": "track",
+    "B": "farmhouse",
+    "R": "ridge",
+    "W": "wood",
+    "X": "bridge"
+  },
+  "rows": [
+    "GGHHVHPPPPPPWWHTHH",
+    "GHHHVHPPPPPPWWTHHH",
+    "GHNNVHNPPPPPPHTHHH",
+    "HQQQNQQBBOOYHTHHGG",
+    "HHNNVHNYYYOOYTHHHG",
+    "HRRHVHHHOOYTTHHHGG",
+    "GRRYHVVHYYTTHHHHHG",
+    "GGROYHVVHTHYHGGHGG",
+    "GOYYHHHHVXHOYHGZZG",
+    "HOOGGYYHTVHOOYZZZZ",
+    "HYYOOBBHTHVHKZZZZZ",
+    "HHOOOBBTSSVZZZZZZZ",
+    "HHHHHKKSSSKZZZZZZZ"
+  ]
+}

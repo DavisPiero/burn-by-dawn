@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, BOAT, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -701,6 +701,8 @@ export function renderPieces(layers, state, view) {
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
+  // A supply canister (SPEC.md §9, M41), across the hex from the charges in it.
+  for (const canister of state.canisters ?? []) drawOnGround(layers, 'marker-canister', canister, -1, MARKER.canisterSize);
   for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
 
@@ -1624,7 +1626,16 @@ function drawArt(layers, state, view) {
     // Moved by the map's `exfilArtNudge`, in hex radii (M31d, art only).
     const [nx, ny] = map.exfilArtNudge ?? [0, 0];
     const x = p.x + nx * map.hexSize, y = p.y + ny * map.hexSize;
-    layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
+    // Where the way out is a boat on a timetable (M41) it is drawn where it
+    // has got to, out at sea and fainter until it is in, and not at all before.
+    if (!map.boatRun) layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
+    else if (view.boat) {
+      const at = axialToPixel(view.boat.q, view.boat.r, map.hexSize);
+      layers.art.appendChild(el('use', {
+        href: `#${BOAT.art}`, x: at.x - BOAT.width / 2, y: at.y - BOAT.height / 2, width: BOAT.width, height: BOAT.height,
+        ...(view.boat.here ? {} : { opacity: BOAT.comingOpacity }),
+      }));
+    }
   }
 }
 
@@ -1745,7 +1756,7 @@ function drawSites(layers, state, view) {
 
   drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
   const exfilAt = labelPoint(map, view.exfil);
-  layers.sites.appendChild(casedText('EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, EXFIL.label));
+  layers.sites.appendChild(casedText(view.exfilLabel ?? 'EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, EXFIL.label));
 
   // Where a blast only wounds our men (M20) is printed lighter than where it kills.
   if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);

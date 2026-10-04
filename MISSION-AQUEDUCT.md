@@ -3,9 +3,10 @@
 This is §14 of the specification, kept in a file of its own, as MISSION-AIRFIELD.md is
 §13. It is as authoritative as SPEC.md. Section numbers in it (§6, §10) are SPEC.md's.
 
-**Specified 5 Oct 2026 (M39). The engine has its two rules (M40); the mission itself is
-not yet built.** The rules are written in SPEC.md (§9 Supply canisters, §10 The way out
-on a timetable) and its numbers are here. Every number is a first guess for the balance
+**Specified 5 Oct 2026 (M39). A draft since M41: played by its address,
+`?mission=aqueduct`, and still stamped NEXT YEAR'S ANNUAL on the contents page. Not yet
+balanced (M42).** Its two rules are in the engine and written in SPEC.md (§9 Supply
+canisters, §10 The way out on a timetable); its numbers are here. Every number is a first guess for the balance
 milestone (M42) unless it says the operator chose it. The words and names are placeholder
 copy for the operator to reword. Once the mission is playable this file says how things
 are, and keeps no history (DECISIONS.md has it).
@@ -119,7 +120,7 @@ Swim is not offered, and no telephone, so Cut the line is not.
 
 ### The map
 
-`data/map-aqueduct.json`, drawn at M41. What it must hold:
+`data/map-aqueduct.json`, a first drawing (M41). What it holds:
 
 - **The aqueduct** in the north-west, carried over the **ravine** on its piers. Six
   charge points under its arches, on both banks of the torrent, of which the job needs
@@ -136,11 +137,12 @@ Swim is not offered, and no telephone, so Cut the line is not.
   **sea** beyond. The exfil is three hexes at the water's edge. The boat's run in across
   the sea (`boatRun`, art only) ends there.
 - **Three drop runs**, all landing north and west of the road bridge so nobody starts
-  below the job, told apart as France's are: one along the ravine above the aqueduct
-  (QUIET: the canisters come down in cover, some in the torrent's bed where a landing
-  costs a turn), one over the plough beside the farm (STEADY: soft landings, the
-  aqueduct's guard close), one down the valley toward the road bridge (FAST: nearest the
-  bridge and the way home, the longest carry up to the piers).
+  below the job, told apart as France's are: **West**, down the hillside south of the
+  aqueduct (QUIET: olives, terraces and the torrent's bed, where a landing costs a
+  turn); **North**, over the plough beside the farm (STEADY: soft landings and the
+  canisters in plain sight, where the aqueduct patrol walks); **Valley**, down the
+  terraces above the road bridge (FAST: nearest the bridge and the way home, the longest
+  carry up to the piers).
 - **Nobody and nothing lands in the sea or on a crag**, and no canister on a man.
 
 ### The garrison
@@ -149,12 +151,14 @@ Swim is not offered, and no telephone, so Cut the line is not.
 The real aqueduct had no guard at all; this one has enough to be feared and few enough
 to keep the dial down.
 
-- **Sentries**: the **aqueduct guard** at the farm, looking along the piers; the
-  **bridge post** on the road bridge; the **coast watcher** in the hamlet, looking over
-  the beach.
-- **Patrols**: one along the aqueduct and round the farm; one on the road between the
-  bridge and the hamlet; one through the terraces, crossing the landing grounds, so
-  that on every run something can be found.
+- **Sentries**: the **aqueduct guard** at the farm end, looking west along the south
+  side of the piers (the aqueduct itself hides the north side from him); the **bridge
+  post** above the road bridge; the **coast watcher** in the hamlet, looking along the
+  beach.
+- **Patrols**: one across the plough north of the aqueduct, where the North run lands;
+  one on the road between the hamlet and the bend above the bridge; one through the
+  terraces from the east slope to the west hillside, across the Valley and West runs'
+  ground. So on every run something can be found.
 - **The patrols set out on turn 2**, as on the airfield: with canisters to find, turn 1
   is a heavier regroup than either other mission's.
 - **The reserve** comes down the road at Alarmed and guards the way onto the beach.
@@ -258,10 +262,30 @@ For M43, all of it data in `missions.json` and the map. Placeholder copy:
 
 ### Balance
 
-Targets are §10's. The bot has to learn two things before its numbers mean anything
-(M41): to fetch from the canisters, the nearest man with room going to the nearest
-charge, and to keep the boat's time, lying up in the shore rocks until the beach opens.
-Baselines are written here when M42 has them.
+Targets are §10's. The bot fetches from the canisters (the nearest man with room goes,
+a man the charge would slow only if he is well the nearest) and keeps the boat's time,
+lying up in heavy cover within three hexes of the beach until it opens.
+
+**The draft's first numbers** (M41, 100 seeds, Normal, `KNIFE=1`, west / north /
+valley), before any balancing. They are here to say where M42 starts, not as baselines:
+
+| Bot | Wins | Reached Alarmed | Aqueduct down, turn |
+|---|---|---|---|
+| naive, the timer offered | 80 / 82 / 99 | 91 / 97 / 99 | 14.3 / 13.4 / 13.6 |
+| naive, timers to one turn (`PENCIL=sync`) | 75 / 84 / 98 | 72 / 86 / 93 | 13.6 / 13.1 / 12.3 |
+| careful, timers to one turn | 71 / 93 / 99 | 66 / 92 / 94 | 13.2 / 12.7 / 12.2 |
+
+What they say M42 has to do:
+- **The alert budget is missed.** The garrison is Alarmed in two games in three at
+  best, where the measure wants the careful bot below it in six in ten. One bang does
+  help (the West run falls from 91 to 72), but the bot knifes three to five of the six
+  enemies a game and their bodies are found, and two to four parachutes besides. By the
+  spec the answer is the map and the beats, not the alert's numbers.
+- **The Valley run is too kind** (98 or 99 in 100), though it has two bad landings a
+  game in the torrent's bed. The West run loses a quarter of its games to dawn.
+- **The aqueduct goes up on turn 12 to 14**, two turns later than guessed, so the stick
+  reaches the beach about as dawn comes. The boat's turn and dawn want moving together.
+- The squad the bang calls comes on in nearly every game, from the far corner.
 
 ### The order it is built in
 

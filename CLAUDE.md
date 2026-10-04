@@ -15,7 +15,7 @@ writing code.
   - `MISSION-AIRFIELD.md` — SPEC §13: mission 2. **Read it before working on the
     airfield**, and as the pattern when specifying a new mission. Each later mission gets
     a `MISSION-<NAME>.md` like it, written before the mission is built.
-  - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, specified and being built. **Read it
+  - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, a draft being built. **Read it
     before working on the aqueduct.**
 - `ART-ASSETS.md` — the art asset manifest. **Read it at milestone M7**, and whenever you
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.

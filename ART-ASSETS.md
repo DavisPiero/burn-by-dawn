@@ -137,6 +137,21 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-pen.svg` | 80 x 92 | 1: a ring of sandbags round a floor of sand |
 | `terrain-camp-01..02.svg` | 80 x 92 | 2: bell tents |
 
+**The winter hills (M41, the aqueduct, SPEC.md §14)**, under a pale wash of the cold blue. *All drawn by code.*
+
+| Asset | viewBox | Variants |
+|---|---|---|
+| `terrain-hillside-01..03.svg` | 80 x 92 | 3: slope hachures and a stone; on about three hexes in five |
+| `terrain-crag-01..02.svg` | 80 x 92 | 2: angular rock faces, toned, over the crags' area (ink) |
+| `terrain-ravine-01..03.svg` | 80 x 92 | 3: the torrent's thread of water among stones, over the ravine's area (blue darkened with ink) |
+| `terrain-terrace-01..02.svg` | 80 x 92 | 2: three dry-stone walls bowed with the slope |
+| `terrain-olives-01..03.svg` | 80 x 92 | 3: small grey-green crowns over their shadows, over the grove's area |
+| `terrain-plough-01..02.svg` | 80 x 92 | 2: furrows |
+| `terrain-arch.svg` | 80 x 92 | 1: dressed stone at a pier's foot, faint under the charge point |
+| `terrain-shingle-01..02.svg` | 80 x 92 | 2: pebbles |
+| `terrain-rocks-01..02.svg` | 80 x 92 | 2: sea-worn boulders |
+| `terrain-sea-01..02.svg` | 80 x 92 | 2: wave marks on the canal's blue, with its bank where it meets land |
+
 The perimeter wire is a line, not a motif: board.js lays it like a hedge (`WIRE` in
 theme.js), a strand of ink with concertina coils and a picket every third coil.
 
@@ -182,6 +197,9 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-bomb-store.svg`, `-destroyed` | 84 x 76 | M33, the airfield's bomb store from above: bombs laid in rows, noses east, fins and a red band each, inside a low ring of sandbags; blown, the ring broken open round a scorched pit, alight. A bomb trolley's rails run from (42, 14) to its charge point (`hose` with `style: 'rails'`). *Drawn by code; a reference painting would be redrawn from, as the aircraft were (ART-PROMPTS.md Priority 17).* |
 | `objective-signals-tent.svg`, `-cut`, `-destroyed` | 80 x 92 | a marquee with its wireless mast, the field telephones' wires ending at the mast's crossarm (60, 12); cut, its lit door dark; blown, collapsed and burning. *Drawn by code.* |
 | `objective-trucks.svg` | 80 x 92 | the airfield's exfil (the map's `exfilArt: "trucks"`): two desert trucks, a scrap of netting and the pick-up party's green lamp. *Drawn by code.* |
+| `objective-aqueduct.svg`, `-destroyed` | 480 x 92 | M41, the aqueduct from the south and a little above, six hexes long: the channel with its water on top, the masonry face with an arch a hex, the torrent's taller arch the fourth; blown, the third span gone, water pouring from both broken ends onto the fallen stone. *Drawn by code.* |
+| `objective-road-bridge.svg`, `-destroyed` | 80 x 92 | M41, the road bridge: the road from the hex's upper right to its lower left over the torrent's bed; blown, the deck broken off at both banks. *Drawn by code.* |
+| `objective-boat.svg` | 80 x 92 | M41, the aqueduct's exfil (the map's `exfilArt: "boat"`): a ship's boat from above, thwarts, oars and the hooded green lamp. Printed out at sea, fainter, while it is coming in. *Drawn by code.* |
 | `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art draws the church inside itself, beside the building (`church()` in theme.js; M25 took out the stand-alone `landmark-church` sprite nothing used); the church stands whether or not the exchange does. |
 
 ---
@@ -193,6 +211,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | Asset | viewBox |
 |---|---|
 | `marker-charge.svg` | 28 x 28 |
+| `marker-canister.svg` | 28 x 28 (M41, a supply canister on the ground, SPEC.md §9: a banded steel drum in army green with its parachute lines. *Drawn by code.*) |
 | `marker-parachute.svg` | 28 x 28 (an abandoned canopy, §9 — must read as spent kit on the ground, not as a chute in the air) |
 | `marker-fuse-L-N.svg` | 28 x 28 (a stopwatch for a charge set with an L-turn fuse and N turns left, L 1 to 6, N 1 to L; M30: the face is divided into the charge's own length, a tick a turn, and the burning `.fire` wedge is N of the L parts, from twelve to the hand, full when set; the last turn's wedge red with a burst behind the watch. Drawn at 34 on the board. M15 had `marker-fuse-1..5`, a quarter of the face a turn) |
 | `marker-wounded.svg` | 28 x 28 |

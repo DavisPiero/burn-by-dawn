@@ -270,7 +270,25 @@ function goalFor(state, unit, map, assign) {
   if (job && U.canCarryCharges(unit) && U.chargeCapacity(unit, rules) > 0) {
     return job.chargeHexes.map((h) => ({ ...h, standby: true }));
   }
+  // The way out not open yet (M41, the aqueduct's boat): he lies up in heavy
+  // cover near it until it is, as a player would, rather than stand on the beach.
+  if (!SB.exfilOpen(state.turn, rules)) {
+    const near = lieUpHexes(map);
+    if (near.length > 0) return near;
+  }
   return map.exfil.map(([q, r]) => ({ q, r }));
+}
+
+/** Heavy cover within three hexes of the exfil: where a man waits for it to open. */
+function lieUpHexes(map) {
+  const out = [];
+  M.forEachCell(map, (q, r) => {
+    if (!M.isInPlay(map, q, r) || SB.isExfil(map, { q, r })) return;
+    const terrain = M.terrainAt(map, q, r);
+    if (!M.isPassable(terrain) || terrain.cover !== 'heavy') return;
+    if (map.exfil.some(([eq, er]) => (Math.abs(q - eq) + Math.abs(q + r - eq - er) + Math.abs(r - er)) / 2 <= 3)) out.push({ q, r });
+  });
+  return out;
 }
 
 function assignCharges(state, map) {
@@ -286,11 +304,16 @@ function assignCharges(state, map) {
   }
   const carriers = state.units.filter((u) => U.onBoard(u) && u.charges > 0);
   // A dropped charge the job still needs: the nearest man who can carry it fetches it.
-  const short = wanted.length - carriers.length;
+  // Counted in charges, not men (M41: a sapper may carry two where they come
+  // down in canisters; elsewhere a carrier has one, and the count is the same).
+  const short = wanted.length - carriers.reduce((n, u) => n + u.charges, 0);
   if (short > 0) {
     for (const dc of state.droppedCharges.slice(0, short)) {
-      const fetchers = state.units.filter((u) => U.onBoard(u) && u.charges === 0 && U.canCarryCharges(u) && U.chargeRoom(u, rules) > 0 && !assign.has(u.id));
-      fetchers.sort((a, b) => (Math.abs(a.q - dc.q) + Math.abs(a.r - dc.r)) - (Math.abs(b.q - dc.q) + Math.abs(b.r - dc.r)));
+      // Any man with room for one more; where the charges are in canisters, a
+      // man it would slow (M38's weight) goes only if he is well the nearest.
+      const fetchers = state.units.filter((u) => U.onBoard(u) && u.charges < U.chargeRoom(u, rules) && U.canCarryCharges(u) && !assign.has(u.id));
+      const far = (u) => Math.abs(u.q - dc.q) + Math.abs(u.r - dc.r) + (rules.canisters && u.charges + 1 > U.chargeCapacity(u, rules) ? 3 : 0);
+      fetchers.sort((a, b) => far(a) - far(b));
       if (fetchers[0]) assign.set(fetchers[0].id, { q: dc.q, r: dc.r, pickUp: true });
     }
   }

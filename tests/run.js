@@ -2,6 +2,7 @@
 // [name, fn] pairs; fn may be async and throws to fail.
 
 import airfieldTests from './airfield.test.js';
+import aqueductTests from './aqueduct.test.js';
 import canisterTests from './canisters.test.js';
 import combatTests from './combat.test.js';
 import difficultyTests from './difficulty.test.js';
@@ -15,7 +16,7 @@ import speechTests from './speech.test.js';
 import trainTests from './train.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests], ['difficulty', difficultyTests], ['missions', missionTests], ['airfield', airfieldTests], ['train', trainTests], ['canisters', canisterTests], ['sound', soundTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests], ['difficulty', difficultyTests], ['missions', missionTests], ['airfield', airfieldTests], ['train', trainTests], ['canisters', canisterTests], ['aqueduct', aqueductTests], ['sound', soundTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');

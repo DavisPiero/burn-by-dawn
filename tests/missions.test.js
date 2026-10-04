@@ -38,6 +38,9 @@ async function loadFrance() {
   return { json, mission, map, rules, traits, roster };
 }
 
+// A mission printed on the contents page and not yet playable: all it needs.
+const COMING = { id: 'someday', status: 'coming', title: 'Someday', place: 'Somewhere', page: 99, blurb: 'Not yet.' };
+
 export default [
   ['France is the default mission, and its patch leaves the files as they are but for its goods train (M34) and its dawn (M38)', async () => {
     const { json, mission, map, rules } = await loadFrance();
@@ -53,8 +56,9 @@ export default [
   }],
 
   ['the contents page lists every mission; a coming one needs only what is printed, and cannot be picked', async () => {
-    const { json } = await loadFrance();
-    assert(json.missions.some((m) => m.status === 'coming'), 'at least one mission stamped for next year');
+    // M41: the aqueduct became a draft, so the file may have no coming mission; one is added here.
+    const { json: file } = await loadFrance();
+    const json = validateMissions({ ...file, missions: [...file.missions, COMING] });
     equal(missionFromQuery('?mission=france', json), 'france', '?mission= picks a playable one');
     const coming = json.missions.find((m) => m.status === 'coming');
     equal(missionFromQuery(`?mission=${coming.id}`, json), null, 'a coming one cannot be picked');
@@ -70,7 +74,7 @@ export default [
     throws(() => validateMissions(withMission({ map: undefined })), /"map"/, 'a playable mission without its map');
     throws(() => validateMissions(withMission({ win: { condition: 'winEverything' } })), /condition/, 'an unknown win condition');
     throws(() => validateMissions(withMission({ win: { condition: 'destroyCount', kind: 'fuelDump' } })), /count/, 'destroyCount without its count');
-    throws(() => validateMissions({ ...json, default: json.missions.find((m) => m.status === 'coming').id }), /default/, 'a default that cannot be played');
+    throws(() => validateMissions({ ...json, missions: [...json.missions, COMING], default: COMING.id }), /default/, 'a default that cannot be played');
     const rules = await loadJson('data/rules.json');
     throws(() => missionRules({ ...france, rules: { turnLimt: 16 } }, rules), /turnLimt/, 'a mistyped rules key');
     const added = missionRules({ ...france, rules: { objectives: { aircraft: { label: 'Aircraft', chargesNeeded: 1 } } } }, rules);

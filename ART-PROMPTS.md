@@ -669,6 +669,12 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   perimeter car's counter until its painting (M31c). The
   airfield's own title card (`titleCard` in data/missions.json) is France's until the
   operator paints one (Priority 13).
+- The aqueduct (M41, SPEC.md §14), a first drawing for the draft, all of it in the
+  palette as it stands (a pale wash of the cold blue for winter ground, no new colour):
+  the hillside, crags, the ravine with its torrent, terraces, olive groves, plough,
+  shingle, shore rocks and the sea; the aqueduct whole and blown, the road bridge whole
+  and blown, the ship's boat and the supply canister. Its title card and portraits are
+  France's until the operator offers its own; nothing is asked for yet (that is M43).
 - The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.
 - The airfield's jeep raid's muzzle flashes (M31), blinking at the painted jeep's guns. Its three sounds
   are made in code as the fallback; recordings supplied since M31c.

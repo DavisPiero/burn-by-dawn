@@ -16,11 +16,12 @@ import {
   exfilWouldFail, setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
-  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, isExfil, kindOf,
+  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, exfilOpen, isExfil, kindOf,
   objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencils,
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
+import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import {
@@ -236,6 +237,9 @@ function deriveView() {
     traitEffectsById,
     // The goods train where it stands (M34), each car with the line's direction under it.
     train: trainView(),
+    // The boat coming in, and what the exfil is called while it is shut (M41).
+    boat: boatAt(state.turn, rules, baseMap),
+    exfilLabel: exfilOpen(state.turn, rules) ? 'EXFIL' : `BOAT · TURN ${rules.exfil.opensTurn}`,
     // What the win needs, for the board's star (M28: no longer the map's primary flag).
     winTargetIds: new Set(winTargets(state, rules).targets.map((o) => o.id)),
     // Hexes carry no printed coordinates (SPEC.md §11), so text names places.
@@ -381,11 +385,24 @@ function deriveView() {
       { label: 'HERE', text: `found by an enemy on or next to it: alert +${rules.alert.parachuteFound}` },
       { label: 'PACK', text: `any man standing here can pack it: [U] ${rules.actions.packParachute.apCost} AP` },
     ] };
+  } else if (hex && (state.canisters ?? []).some((c) => c.q === hex.q && c.r === hex.r)) {
+    // A supply canister (SPEC.md §9, M41): what is in it, and that it is evidence.
+    const canister = state.canisters.find((c) => c.q === hex.q && c.r === hex.r);
+    const inside = state.droppedCharges.filter((c) => c.q === hex.q && c.r === hex.r).length;
+    view.site = { title: 'Supply canister', rows: [
+      { label: 'HERE', text: `${inside} ${inside === 1 ? 'charge' : 'charges'}: a man standing here takes one, [P] ${rules.actions.pickUpCharge.apCost} AP` },
+      canister.found
+        ? { label: 'FOUND', text: 'The garrison has found it. Its charges are still in it' }
+        : { label: 'RISK', text: `found by an enemy on or next to it: alert +${rules.alert.parachuteFound}. It keeps its charges` },
+      { label: 'EMPTY', text: 'Once its last charge is taken it is pulled under cover: nothing left to find' },
+    ] };
   } else if (hex && view.train?.cars.some((c) => c.q === hex.q && c.r === hex.r)) {
     view.site = { title: rules.train.label, rows: trainRows(view.train) };
   } else if (hex && isExfil(baseMap, hex)) {
     view.site = { title: 'Exfil', rows: [
-      { label: 'HERE', text: 'a man who ends his move here is out' },
+      exfilOpen(state.turn, rules)
+        ? { label: 'HERE', text: `a man who ends his move here is out${rules.exfil.opensTurn ? `: the boat leaves at dawn, the end of turn ${rules.turnLimit}` : ''}` }
+        : { label: 'HERE', text: `The boat is not in yet: nobody can go out here before turn ${rules.exfil.opensTurn}. It leaves at dawn, the end of turn ${rules.turnLimit}`, tone: 'warn' },
       { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with ${winWords(state, rules)} down, by dawn` },
       // Only for a man with a charge to leave, or nobody picked (M22: room).
       ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it where he stepped off, for another to pick up [P]' }]),
@@ -595,7 +612,7 @@ function deriveDrop(view, hex) {
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
       // `exfilNoteNudge` (M29c, art only) moves it, as an objective's `noteNudge` does.
-      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: baseMap.exfilNoteNudge ?? null, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'] },
+      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: baseMap.exfilNoteNudge ?? null, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE', ...(rules.exfil.opensTurn ? [`THE BOAT IS IN ON TURN ${rules.exfil.opensTurn}`] : [])] },
     ];
   }
   if (!hex) {
@@ -637,7 +654,7 @@ function alertSources() {
   const a = rules.alert;
   const bangs = [...new Set(Object.values(rules.objectives).map((k) => k.alert))].sort((x, y) => x - y);
   return [
-    `seen +${a.spotted}`, `stone +${a.stone}`, `parachute or body found +${a.parachuteFound}`,
+    `seen +${a.spotted}`, `stone +${a.stone}`, `parachute${rules.canisters ? ', canister' : ''} or body found +${a.parachuteFound}`,
     `silenced shot +${a.silenced}`, `gunfire +${a.gunfire}`, `a bang +${bangs.join(' or +')}`,
   ];
 }
@@ -838,6 +855,15 @@ function missionPanelObjectives() {
     if (grouped && targets.includes(o)) continue;
     lines.push(describePanelObjective(o, targets.includes(o)));
   }
+  // The boat (M41): when it is in, and that it goes at dawn.
+  if (rules.exfil.opensTurn) {
+    const open = exfilOpen(state.turn, rules);
+    lines.push({
+      label: 'Boat', win: false, destroyed: false, cut: false, points: null,
+      detail: open ? `The boat is in. It leaves at dawn, the end of turn ${rules.turnLimit}` : `The boat is in on turn ${rules.exfil.opensTurn} and leaves at dawn, the end of turn ${rules.turnLimit}. No way out before it`,
+      progress: open ? 'in' : `turn ${rules.exfil.opensTurn}`,
+    });
+  }
   // The goods train (M34): its turn, and whether it was caught.
   const crossed = trainObjective(state, rules);
   if (crossed) {
@@ -911,7 +937,8 @@ function actionsFor(unit) {
     // A man who is no gunner has it too, to return fire (M36), where the rules allow.
     ...(role.suppress || returnsFire(unit, rules) ? [] : ['suppress']),
     ...(role.kill ? [] : ['kill']),
-    ...(role.cutLine ? [] : ['cut']),
+    // Nor where the map has no line to cut (M41: the aqueduct).
+    ...(role.cutLine && state.objectives.some((o) => kindOf(o, rules).cutLine) ? [] : ['cut']),
     // A man whose loadout is no charges (M37) can still carry one he picks up
     // or is handed: Pick up shows while one lies on his hex, Charge and Pass
     // while he carries one, so his strip stays short the rest of the time.
@@ -1779,6 +1806,7 @@ function alarmReasons() {
     if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) add(id, { kind: 'spotted', words: `spotted ${e.unitName} in ${place(e)}` });
     if (e.kind === 'bodyFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s body in ${place(e)}` });
     if (e.kind === 'parachuteFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s parachute in ${place(e)}` });
+    if (e.kind === 'canisterFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found a canister in ${place(e)}` });
   }
   return reasons;
 }
@@ -1808,7 +1836,7 @@ function describeGarrisonShow(after) {
   const alarmed = new Map();
   for (const e of after.report) {
     if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
-    if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound') && e.enemyId && !alarmed.has(e.enemyId)) {
+    if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound' || e.kind === 'canisterFound') && e.enemyId && !alarmed.has(e.enemyId)) {
       const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
       alarmed.set(e.enemyId, walked * msPerHex);
     }
@@ -2107,6 +2135,9 @@ function describeBriefing(which, view) {
           { bold: `Blow ${winWords(state, rules, { upper: true })} before dawn,` },
           { bold: `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.` },
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
+          // The aqueduct's two rules (M41), said where a mission has them.
+          ...(rules.exfil.opensTurn ? [{ bold: `The BOAT is in on turn ${rules.exfil.opensTurn} and gone at dawn. There is no way out before it.` }] : []),
+          ...(rules.canisters ? [{ bold: `The charges are in the ${rules.canisters.count} CANISTERS, ${rules.canisters.charges} in each. Nobody jumps with one.` }] : []),
         ],
         // The timer named where charges take one, and the last sentence on a
         // line of its own (M31d, the operator's).
@@ -2133,7 +2164,7 @@ function describeBriefing(which, view) {
           // game calls them charge points from then on.
           'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
           // The operator's words (M31d): "charge target", and "Stukas- 1ea".
-          `You don’t fill every charge target. Charges needed: ${needs}. The squad carries ${carried}.`
+          `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P]. A canister is found like a parachute until it is empty` : `The squad carries ${carried}`}.`
             + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
           ...(timerLine ? [timerLine] : []),
           ...setterLines,

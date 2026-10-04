@@ -120,7 +120,10 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   if (won && out < rules.mission.minimumOut) {
     const need = rules.mission.minimumOut - out;
     const job = single ? `The ${winTargets(state, rules).targets[0].label} is down` : `${capitalFirst(winWords(state, rules))} are down`;
-    hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
+    // Where the way out opens on a turn (M41) and has not yet: when, and what to do till then.
+    const opens = rules.exfil?.opensTurn ?? null;
+    if (opens !== null && state.turn < opens) hints.push(`${job}. The boat is in on turn ${opens}, in ${opens - state.turn} ${plural(opens - state.turn, 'turn', 'turns')}: get ${need} ${plural(need, 'man', 'men')} down to the shore and lie up out of sight until it comes.`);
+    else hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
   }
 
   // Charges burning: the soonest on each objective.
@@ -188,6 +191,14 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   if (alert >= 2 && diversionOk && leader && !pickle) {
     const label = rules.alert.states[alert].label;
     hints.push(`The garrison is ${label.toUpperCase()}. The ${diversionName} [D] can reduce it by one level: ${callsLeft(state, rules)}, and only while ${leader.shortName} lives.`);
+  }
+
+  // Supply canisters (SPEC.md §9, M41): where the charges are, while any are left in one.
+  const canisters = (state.canisters ?? []).length;
+  if (canisters > 0 && state.turn <= 4) {
+    const inside = state.droppedCharges.filter((c) => state.canisters.some((k) => k.q === c.q && k.r === c.r)).length;
+    const how = state.turn === 1 ? ' Stand a man on one and Pick up [P]; a canister is found like a parachute until it is empty.' : '';
+    hints.push(`${inside} ${plural(inside, 'charge is', 'charges are')} still in ${canisters} ${plural(canisters, 'canister', 'canisters')}.${how}`);
   }
 
   const chutes = state.parachutes.length;
