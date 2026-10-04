@@ -93,7 +93,9 @@ export function createUnits(roster, traits, rules, rosterUrl = 'data/roster.json
       ap: role.actionPoints,
     };
     // Loadout is fixed at creation: onChargeCapacity is called once, here.
-    return { ...unit, charges: chargeCapacity(unit, rules) };
+    // Where the charges come down in canisters (SPEC.md §9, M40) he jumps with
+    // none: his loadout is then only the room he has at full pace.
+    return { ...unit, charges: rules.canisters ? 0 : chargeCapacity(unit, rules) };
   });
 
   return fillActionPoints(units, rules);

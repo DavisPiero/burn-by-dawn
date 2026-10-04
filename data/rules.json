@@ -55,6 +55,12 @@
   "_train": "SPEC.md §7, M34: the goods train, scenery with a timetable. null here; a mission gives { label, objective, turn, window, score, speed, length }: it runs the map's `railway` from its first end and is on the objective of kind `objective` in the enemy phase of turn `turn`, `speed` hexes a turn, `length` hexes long. That objective destroyed within `window` turns of `turn` pays `score` on the back page. It sees nobody, raises nothing and blocks no hex.",
   "train": null,
 
+  "_canisters": "SPEC.md §9, M40: supply canisters. null here; a mission gives { count, charges, scatterWeights }: the men jump with no charges, and `count` canisters holding `charges` each leave the aircraft among them and scatter as the men do, by their own `scatterWeights` (one weight per distance from 0, as landing.scatterWeights). A canister is a pile of charges to pick up from, and evidence until it is empty: found like a parachute (alert.parachuteFound), once, keeping its charges.",
+  "canisters": null,
+
+  "_exfil": "SPEC.md §10, M40: the way out on a timetable. `opensTurn` null: the exfil is open all night. A mission gives a turn: before that turn's player phase no man may enter an exfil hex; from then until dawn it is the way out as ever.",
+  "exfil": { "opensTurn": null },
+
   "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27).",
   "mission": { "minimumOut": 3, "win": { "condition": "destroyPrimary" } },
 
