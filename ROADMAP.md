@@ -40,6 +40,14 @@ Updated 29 Sep 2026 at build M27b. **v1.0 is tagged** (on the M27 merge).
 M33), then the goods train for France (done, M34), then **Phase 4, the aqueduct: next**,
 specified first in `MISSION-AQUEDUCT.md`.
 
+**Phase 4 is specified** (M39, 5 Oct 2026) in `MISSION-AQUEDUCT.md`, SPEC.md §14, which
+supersedes the outline below where they differ. The operator's calls: southern Italy,
+February 1941 (Colossus); every charge down in a canister, the men empty-handed; the boat
+on a timetable like the goods train; a tidy Normal win ending at Alert, not Alarmed.
+From play since M38b the operator finds return fire, the 16-turn night and the weight of
+a carried charge all good, and may yet adjust them. Built as M40 (the engine, no
+gameplay change), M41 (the map, a draft), M42 (balance), M43 (words, sounds, art).
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
