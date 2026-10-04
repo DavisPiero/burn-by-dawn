@@ -197,6 +197,73 @@ export function scatterStick(map, rules, run, units, enemies, rng) {
   });
 }
 
+/**
+ * Where each canister leaves the aircraft (SPEC.md §9, M40): spread evenly
+ * through the stick, the last with the last man. Three among six men leave
+ * after the second, the fourth and the sixth.
+ */
+export function canisterPoints(run, men, count) {
+  const points = jumpPoints(run, men);
+  return Array.from({ length: count }, (_, k) => points[Math.min(men - 1, Math.ceil(((k + 1) * men) / count) - 1)]);
+}
+
+/**
+ * Roll where every canister comes down, as scatterStick does the men, by the
+ * canisters' own `scatterWeights`. `units` are the men as they have landed: a
+ * canister never comes down on one, on another canister, in water or on
+ * ground nobody can stand on. Returns { id, aim, distance, q, r } each. Call it
+ * with the generator scatterStick has finished with, so the men's landings do
+ * not depend on whether there are canisters.
+ */
+export function scatterCanisters(map, rules, run, units, enemies, rng) {
+  const { count, scatterWeights } = rules.canisters;
+  const taken = new Set(units.filter((u) => u.landed).map((u) => hexKey(u.q, u.r)));
+  const windDir = NEIGHBOR_DIRS[DIRECTION_NAMES.indexOf(run.wind)];
+  const wind = axialToPixel(windDir.q, windDir.r, 1);
+  const lands = (h, clearance) => canLandOn(map, rules, h, taken, enemies, { clearance }) && isPassable(terrainAt(map, h.q, h.r));
+
+  return canisterPoints(run, units.length, count).map((aim, k) => {
+    const distance = rng.weighted(scatterWeights);
+    const limit = map.width + map.height;
+    const tries = [distance];
+    for (let step = 1; step <= limit; step++) {
+      if (distance - step >= 0) tries.push(distance - step);
+      tries.push(distance + step);
+    }
+    for (const d of tries) {
+      const ring = hexRing(aim, d).filter((h) => lands(h, true));
+      const pick = rng.weighted(ring.map((h) => windWeight(aim, h, wind, rules.landing.windWeights)));
+      if (pick < 0) continue;
+      const hex = ring[pick];
+      taken.add(hexKey(hex.q, hex.r));
+      return { id: `canister-${k + 1}`, aim, distance: d, q: hex.q, r: hex.r };
+    }
+    throw new Error(`${run.label}: nowhere on the map for a canister to land`);
+  });
+}
+
+/**
+ * Put the canisters on the ground (SPEC.md §9, M40): each is a marker in
+ * `canisters` and its charges in `droppedCharges` on its hex, taken with the
+ * ordinary Pick up. `drops` is scatterCanisters' list, or any list of
+ * { id, q, r }. Returns { state, events }, as landStick does, the report added to.
+ */
+export function landCanisters(state, drops, rules) {
+  const events = drops.map((d) => ({ kind: 'canisterLanded', id: d.id, q: d.q, r: d.r, charges: rules.canisters.charges, distance: d.distance ?? null }));
+  return {
+    state: {
+      ...state,
+      canisters: [...(state.canisters ?? []), ...drops.map((d) => ({ id: d.id, q: d.q, r: d.r, found: false }))],
+      droppedCharges: [
+        ...state.droppedCharges,
+        ...drops.flatMap((d) => Array.from({ length: rules.canisters.charges }, () => ({ q: d.q, r: d.r }))),
+      ],
+      report: [...state.report, ...events],
+    },
+    events,
+  };
+}
+
 function windWeight(aim, hex, wind, weights) {
   const v = axialToPixel(hex.q - aim.q, hex.r - aim.r, 1);
   const len = Math.hypot(v.x, v.y);

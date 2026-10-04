@@ -1341,7 +1341,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 
 function render() {
   syncMusic();
-  map = effectiveMap(baseMap, state.objectives, rules);
+  map = effectiveMap(baseMap, state.objectives, rules, state.turn);
   const view = deriveView();
   currentView = view;
   noteHeard();

@@ -409,7 +409,7 @@ function actFor(state, unit, map) {
 function playTurn(state) {
   // Each man acts until he has nothing better to do.
   for (let guard = 0; guard < 60 && !state.outcome; guard++) {
-    const map = SB.effectiveMap(map0, state.objectives, rules);
+    const map = SB.effectiveMap(map0, state.objectives, rules, state.turn);
     const actors = state.units.filter((u) => U.onBoard(u) && u.ap > 0);
     if (actors.length === 0) break;
     let progressed = false;

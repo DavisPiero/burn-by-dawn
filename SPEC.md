@@ -69,7 +69,7 @@ tests.html        every test suite, in the browser
   traits.js       the trait hook system (§5)
   enemy.js        patrols, detection, hearing, alert
   sabotage.js     charges, fuses, explosions, payoffs, reinforcements
-  drop.js         drop runs, scatter
+  drop.js         drop runs, scatter, supply canisters
   scoring.js      win, withdraw, lose, score
   hints.js        the turn card's hints (§11)
   difficulty.js   the difficulty patches (§10)
@@ -730,6 +730,29 @@ does about it is the second decision of turn 1.
 
 Stealth costs action points, speed costs alert: the design spine on the drop.
 
+### Supply canisters
+
+(`canisters`; null in France and on the airfield, where the men jump with their charges.)
+Where a mission gives `{ count, charges, scatterWeights }`, **the men jump with no
+charges**, and `count` canisters holding `charges` each leave the aircraft among them:
+spread evenly through the stick, the last with the last man, so three among six leave
+after the second, the fourth and the sixth. Each scatters as a man does, leaning
+downwind, by the canisters' own weights, onto ground a man can stand on: never on a man,
+on another canister, in water, on the exfil, or within 2 hexes of an enemy. They are
+rolled after the men from the same seed, so a seed lands the men the same way with
+canisters or without.
+
+- A canister is **a pile of charges**: a man standing on it takes one with the ordinary
+  Pick up (§4), 1 AP, if he has room.
+- A man's role still says how many he carries at full pace; one more than that costs him
+  1 AP while he carries it (§4), as for any charge he did not jump with.
+- It is **evidence until it is empty**. An enemy coming onto or beside it finds it as it
+  would a parachute: alert +1, a noise there, once. A found canister stays where it is
+  and **keeps its charges**. It cannot be packed; when its last charge is taken it is
+  pulled under cover and is gone.
+- Its charges count toward what the stick can still do (§10 Withdrawn) like any charge
+  left lying.
+
 ---
 
 ## 10. Win, lose, score
@@ -759,6 +782,13 @@ finish the job are counted.
 **Exfil** is a short run of hexes on the **south map edge**, away from all three drop runs.
 A trooper who ends a move on an exfil hex is out: removed, safe, and counted. A man
 carrying a charge does not take it out: he leaves it on the hex he stepped off from.
+
+**The way out on a timetable** (`exfil.opensTurn`; null in France and on the airfield,
+whose exfil is open all night). Where a mission gives a turn, **no man may enter an exfil
+hex before that turn's player phase**: until then those hexes are not ground at all, to
+the men or the garrison. From that turn until dawn they are the way out as above. Nobody
+is taken off the board by its opening: a man goes out by ending a move there, with the
+card above if it would end the mission short.
 
 **The results page** is the back page of the annual: all six by name and fate (out,
 killed, left behind), the level, and the score, whatever the outcome:
@@ -908,13 +938,14 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M40, the aqueduct's engine work** (Phase 4; §14, `MISSION-AQUEDUCT.md`): its two rules
-as data, off in both playable missions, whose bot output must come out unchanged, byte
-for byte. **Supply canisters** (`canisters`): the men jump with no charges, and the
-charges come down in containers that scatter with them, each a pile to pick up from and
-evidence until it is empty. **The way out on a timetable** (`exfil.opensTurn`): the
-exfil cannot be entered before that turn. Then M41, the map as a draft; M42, balance;
-M43, words, sounds and the art hand-off. v1.0 is tagged.
+**M41, the aqueduct's map as a draft** (Phase 4; §14, `MISSION-AQUEDUCT.md`): played by
+its address, `?mission=aqueduct`, still stamped NEXT YEAR'S ANNUAL on the contents page.
+`data/map-aqueduct.json` and its terrain, drawn in code; the garrison, the two
+objectives and the three drop runs; the canister and the closed exfil on the board, in
+the hovers, the orders and the turn report (M40 gave them rules and no pictures or
+words); the boat as scenery; and the balance bot taught to fetch from the canisters and
+to wait for the boat. Read `ART-DIRECTION.md` first. Then M42, balance; M43, words,
+sounds and the art hand-off. v1.0 is tagged.
 
 ### Done
 
@@ -931,6 +962,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M40 | The aqueduct's engine work, off in both missions: supply canisters (§9) and the way out on a timetable (§10) |
 | M39 | Mission 3, the aqueduct, specified (§14): southern Italy 1941, every charge in a canister, a boat on a timetable, a tidy win ending at Alert. The airfield's line on the contents page reworded |
 | M38–M38b | France's dawn at the end of turn 16 (15 for a turn), its top rating from 40; a charge a man did not jump with costs him 1 AP while he carries it |
 | M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
@@ -956,5 +988,5 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 **In `MISSION-AQUEDUCT.md`**, specified and not yet built: southern Italy, February 1941.
 One big target that takes four charges, every charge down in a supply canister, and a
-boat that is in to the beach from turn 15 and gone at dawn. Its two rules, supply
-canisters and the way out on a timetable, join this file as the engine gains them.
+boat that is in to the beach from turn 15 and gone at dawn. Its two rules are engine
+rules, written above: supply canisters (§9) and the way out on a timetable (§10).

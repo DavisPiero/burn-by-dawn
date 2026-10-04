@@ -17,7 +17,7 @@
 import {
   createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, raiseAlert, runDetection, runEnemyPhase, turnSentriesNow,
 } from './enemy.js';
-import { landStick, runById, scatterStick, validateDrop } from './drop.js';
+import { landCanisters, landStick, runById, scatterCanisters, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
 import {
   applyPayoff, checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
@@ -59,6 +59,9 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     droppedCharges: [],
     // SPEC.md §9: { unitId, name, q, r }, one per man until packed or found.
     parachutes: [],
+    // SPEC.md §9 Supply canisters (M40): { id, q, r, found }, each until it is
+    // emptied. Its charges lie on its hex in `droppedCharges`.
+    canisters: [],
     reserveDeployed: false,
     // A bonus target's payoff has kept the reserve away (SPEC.md §7, M11b).
     reserveCancelled: false,
@@ -204,6 +207,21 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
       throw new Error(`${rulesUrl}: "train" needs a "label" and the objective kind it crosses`);
     }
   }
+  // Supply canisters (M40): null, or how many, what each holds and how far they drift.
+  if (rules.canisters !== null) {
+    for (const key of ['count', 'charges']) {
+      if (!Number.isInteger(rules.canisters?.[key]) || rules.canisters[key] < 1) throw new Error(`${rulesUrl}: "canisters.${key}" must be a positive integer`);
+    }
+    const weights = rules.canisters.scatterWeights;
+    if (!Array.isArray(weights) || !weights.every((w) => Number.isInteger(w) && w >= 0) || !weights.some((w) => w > 0)) {
+      throw new Error(`${rulesUrl}: "canisters.scatterWeights" must be a list of non-negative integers, one per scatter distance from 0, with at least one above 0`);
+    }
+  }
+  // The way out on a timetable (M40): null, or the turn the exfil opens.
+  const opens = rules.exfil?.opensTurn;
+  if (opens !== null && !(Number.isInteger(opens) && opens >= 1 && opens <= rules.turnLimit)) {
+    throw new Error(`${rulesUrl}: "exfil.opensTurn" must be null or a turn from 1 to the turn limit, got ${JSON.stringify(opens)}`);
+  }
   requireCount(rules.mission?.minimumOut, '"mission.minimumOut"', rulesUrl);
   requireCount(rules.diversion?.uses, '"diversion.uses"', rulesUrl);
   requireCount(rules.diversion.statesDown, '"diversion.statesDown"', rulesUrl);
@@ -239,9 +257,16 @@ export function jump(state, map, rules) {
   if (state.phase !== 'drop') return state;
   const run = runById(map, state.dropRunId);
   if (!run) return state;
-  const landings = scatterStick(map, rules, run, state.units, state.enemies, createRng(state.seed));
+  const rng = createRng(state.seed);
+  const landings = scatterStick(map, rules, run, state.units, state.enemies, rng);
   const landed = landStick(state, landings, map, rules);
-  return { ...landed.state, speech: speechFrom(landed.events, landed.state.units) };
+  let next = landed.state;
+  // The canisters come down after the men, off the same generator, so a seed
+  // lands the men the same way with or without them (SPEC.md §9, M40).
+  if (rules.canisters) {
+    next = landCanisters(next, scatterCanisters(map, rules, run, next.units, state.enemies, rng), rules).state;
+  }
+  return { ...next, speech: speechFrom(landed.events, next.units) };
 }
 
 /**
@@ -489,10 +514,13 @@ export function pickUpCharge(state, unitId, rules) {
   if (!check.ok) return state;
   const index = state.droppedCharges.findIndex((c) => c.q === unit.q && c.r === unit.r);
   const picked = spend(state, unitId, check.cost, { charges: unit.charges + 1 });
+  const droppedCharges = state.droppedCharges.filter((_, i) => i !== index);
   return {
     ...picked,
     units: picked.units.map((u) => (u.id === unitId ? takeWeight(u, rules) : u)),
-    droppedCharges: state.droppedCharges.filter((_, i) => i !== index),
+    droppedCharges,
+    // An emptied canister is pulled under cover: no longer there to find (M40).
+    canisters: (state.canisters ?? []).filter((c) => !(c.q === unit.q && c.r === unit.r) || droppedCharges.some((d) => d.q === c.q && d.r === c.r)),
   };
 }
 
@@ -615,7 +643,7 @@ export function endTurn(state, rules, map) {
  * as the demolitions have left it.
  */
 function playOutTurn(state, rules, baseMap, dawn) {
-  const map = effectiveMap(baseMap, state.objectives, rules);
+  const map = effectiveMap(baseMap, state.objectives, rules, state.turn);
   const detected = runDetection(state, map, rules);
   const moved = runEnemyPhase(detected.state, map, rules);
   // Detection before the enemy phase, so a man shot and killed is gone before

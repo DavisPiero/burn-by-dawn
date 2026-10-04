@@ -657,6 +657,7 @@ export function runEnemyPhase(state, map, rules) {
   let alert = state.alert;
   let bodies = state.bodies;
   let parachutes = state.parachutes ?? [];
+  let canisters = state.canisters ?? [];
   const alertBefore = state.alert.points;
   const noises = [];
   const living = state.units.filter(onBoard);
@@ -781,12 +782,20 @@ export function runEnemyPhase(state, map, rules) {
       events.push({ kind: 'parachuteFound', label: moved.label, enemyId: moved.id, name: chute.name, q: chute.q, r: chute.r });
       return false;
     });
+    // A found canister stays where it is, its charges with it: found once (SPEC.md §9, M40).
+    canisters = canisters.map((canister) => {
+      if (canister.found || !walkedOn(canister)) return canister;
+      alert = raiseAlert(alert, rules.alert.parachuteFound, rules);
+      noises.push({ kind: 'found', q: canister.q, r: canister.r });
+      events.push({ kind: 'canisterFound', label: moved.label, enemyId: moved.id, q: canister.q, r: canister.r });
+      return { ...canister, found: true };
+    });
   }
 
   enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false, openToKill: true } : e));
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
-    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, alert, bodies, parachutes, noises },
+    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, alert, bodies, parachutes, canisters, noises },
     events,
   };
 }

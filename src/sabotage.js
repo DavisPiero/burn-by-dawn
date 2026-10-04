@@ -160,6 +160,15 @@ export function isExfil(map, hex) {
   return map.exfil.some(([q, r]) => q === hex.q && r === hex.r);
 }
 
+/**
+ * Is the way out open this turn (SPEC.md §10, M40)? Always, unless the mission
+ * gives `exfil.opensTurn`: then not before that turn's player phase.
+ */
+export function exfilOpen(turn, rules) {
+  const opens = rules.exfil?.opensTurn ?? null;
+  return opens === null || turn >= opens;
+}
+
 // --- the map as the demolitions have left it -----------------------------------
 
 const effectiveMaps = new WeakMap();
@@ -173,10 +182,15 @@ const effectiveMaps = new WeakMap();
  * readout — should be handed this, not the loaded map. The same objectives
  * list always gives back the same map object, so callers can compare by
  * identity.
+ *
+ * `turn` (M40): where the mission's exfil opens on a turn (`exfil.opensTurn`)
+ * and this is before it, the map carries `closed`, the exfil's hexes, which
+ * nobody may enter (map.js enterCost). Left out, the exfil is taken as open.
  */
-export function effectiveMap(map, objectives, rules) {
+export function effectiveMap(map, objectives, rules, turn = null) {
+  const shut = turn !== null && !exfilOpen(turn, rules);
   const cached = effectiveMaps.get(objectives);
-  if (cached && cached.base === map) return cached.map;
+  if (cached && cached.base === map && cached.shut === shut) return cached.map;
   let rows = map.rows;
   for (const o of objectives) {
     const terrain = kindOf(o, rules).destroyedTerrain;
@@ -195,8 +209,9 @@ export function effectiveMap(map, objectives, rules) {
     const cost = kindOf(o, rules).chargePointMoveCost;
     if (cost != null) for (const h of o.chargeHexes) moveCosts.set(hexKey(h.q, h.r), cost);
   }
-  const damaged = rows === map.rows && moveCosts.size === 0 ? map : { ...map, rows, moveCosts };
-  effectiveMaps.set(objectives, { base: map, map: damaged });
+  const closed = shut ? new Set(map.exfil.map(([q, r]) => hexKey(q, r))) : null;
+  const damaged = rows === map.rows && moveCosts.size === 0 && !closed ? map : { ...map, rows, moveCosts, ...(closed ? { closed } : {}) };
+  effectiveMaps.set(objectives, { base: map, shut, map: damaged });
   return damaged;
 }
 

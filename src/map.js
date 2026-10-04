@@ -305,6 +305,8 @@ export function enterCost(map, q, r, blocked, adjust = null) {
   if (!isInPlay(map, q, r)) return null;
   const terrain = terrainAt(map, q, r);
   if (!isPassable(terrain)) return null;
+  // An exfil that has not opened yet is no ground at all (sabotage.js effectiveMap, M40).
+  if (map.closed?.has(hexKey(q, r))) return null;
   // A charge point may cost less than its ground (sabotage.js effectiveMap).
   const cost = map.moveCosts?.get(hexKey(q, r)) ?? terrain.moveCost;
   return adjust ? adjust(cost) : cost;
@@ -313,7 +315,7 @@ export function enterCost(map, q, r, blocked, adjust = null) {
 /** What entering this hex costs before any trait: its ground's, or a charge point's own. */
 export function moveCostAt(map, q, r) {
   const terrain = terrainAt(map, q, r);
-  if (!isPassable(terrain)) return null;
+  if (!isPassable(terrain) || map.closed?.has(hexKey(q, r))) return null;
   return map.moveCosts?.get(hexKey(q, r)) ?? terrain.moveCost;
 }
 
