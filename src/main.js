@@ -28,7 +28,7 @@ import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
@@ -112,6 +112,10 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
+// The canisters' rings pop on one by one once the stick is down, a thump with
+// each (M43b, the operator's): when that began, and the thumps still to come.
+let canisterCueSince = null;
+let canisterThumps = [];
 // The Dakota's drone over the drop (M15), cut short if the show is skipped.
 let dropSound = null;
 // The RAF flyover (M11): the Dakota over the garrison when the diversion is
@@ -360,6 +364,7 @@ function deriveView() {
   // to move the Germans). Ringed until the player first selects a man.
   if (state.selectedUnitId) menPicked = true;
   view.selectCue = !menPicked && !dropShow && !state.outcome;
+  view.canisterCueSince = canisterCueSince;
 
   const next = forecast();
   if (next) {
@@ -1943,6 +1948,7 @@ function endBangHold() {
  */
 function restartMission() {
   clearTimeout(dropShowTimer);
+  stopCanisterThumps();
   dropSound?.stop();
   dropSound = null;
   clearTimeout(flyShowTimer);
@@ -2421,12 +2427,20 @@ function endDropShow() {
   dropSound?.stop();
   dropSound = null;
   dropShow = null;
-  // The canisters come down behind the stick (M43): a thump for them as the
-  // last canopy is down, or as the drop is skipped.
-  if (state.report.some((e) => e.kind === 'canisterLanded')) playCue('canister');
+  // The canisters come down behind the stick (M43): as the last canopy is
+  // down, or the drop is skipped, each is ringed in its turn with a thump.
+  stopCanisterThumps();
+  canisterCueSince = performance.now();
+  canisterThumps = (state.canisters ?? []).map((_, i) => setTimeout(() => playCue('canister'), canisterPopAt(i)));
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
   render();
+}
+
+function stopCanisterThumps() {
+  for (const timer of canisterThumps) clearTimeout(timer);
+  canisterThumps = [];
+  canisterCueSince = null;
 }
 
 function endFlyShow() {

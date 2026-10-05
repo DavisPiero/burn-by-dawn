@@ -1135,10 +1135,15 @@ export const CUE = {
 // `dots`: a fire-orange dot for each charge still in it, as a man's counter
 // counts his, under the hex's middle and over any counter, so they show with
 // a man standing on it. `cue`: once the stick is down, each is ringed and
-// named in blue until the player first selects a man.
+// named in blue until the player first selects a man. The ring is round the
+// canister's picture, not the hex's middle (`ringAt`, M43b, the operator's),
+// and the rings pop on one by one, a thump with each (`firstMs`, `stepMs`).
 export const CANISTER = {
   dots: { radius: 4.6, pitch: 11.5, y: 31, fill: PALETTE.fire, stroke: PALETTE.ink, strokeWidth: 1.2 },
-  cue: { colour: PALETTE.leader, halo: PALETTE.paper, ringRadius: 30, ringWidth: 3.5, size: 15, words: 'CHARGE CANISTER', advance: 0.7, gap: 8 },
+  cue: {
+    colour: PALETTE.leader, halo: PALETTE.paper, ringRadius: 30, ringWidth: 3.5, size: 15, words: 'CHARGE CANISTER', advance: 0.7, gap: 8,
+    ringAt: { x: -18, y: 22 }, firstMs: 250, stepMs: 550, popMs: 220, popScale: 1.5,
+  },
 };
 
 export const RINGS = {

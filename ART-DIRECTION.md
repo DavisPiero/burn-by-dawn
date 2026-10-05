@@ -134,8 +134,7 @@ board must read at a glance.
   turn left, red with a burst on its last turn.
 - **An enemy** counter prints its type on its strip (`counterLabel`; the reserve squad's
   reads RESERVES). A mission may have its own garrison's painted chips (`enemyChips`,
-  a folder tried before the usual one, type by type): the aqueduct's are Italian, and
-  wear the German chips until they are painted. A suppressed enemy is printed faint with a red SUPPRESSED band. The turn
+  a folder tried before the usual one, type by type): the aqueduct's are Italian. A suppressed enemy is printed faint with a red SUPPRESSED band. The turn
   after a suppression, when it sees and fires again but can still be killed, it wears a
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
@@ -292,8 +291,11 @@ board must read at a glance.
   man who can act wears a gently throbbing red pen ring, with CLICK A MAN TO START in the
   middle of the men, until the player first selects a man; never again that game.
   **With them, each supply canister is ringed in leader blue and lettered CHARGE
-  CANISTER** in the same blue, still, on whichever side of it is clearest of counters,
-  the other names, the start note and the board's edge.
+  CANISTER** in the same blue, on whichever side of it is clearest of counters, the
+  other rings and names, the start note and the board's edge. The ring is round the
+  canister's picture and its dots, down and left of the hex's middle. **They pop on one
+  by one** as the stick lands, about half a second apart, each a little big and then
+  its size, with its thump.
 - **The drop is shown.** A Dakota flies the chosen line, in from off the board and on
   until it has left it, whatever the line's own ends, and each man's canopy opens where
   he jumps, drifts downwind to where the rules have already put him, lands and collapses
@@ -364,7 +366,7 @@ siren close by (made in code until recordings are supplied). France's goods trai
 whistles as it comes onto the board, one long blast and a short one, far off, with its
 chuffing dying away after: made in code until a recording is supplied. **The
 aqueduct's three** are made in code too until recordings are found: its canisters
-thump down as the last canopy lands, one thump each; the boat's oars are heard far off
+thump down as the last canopy lands, one thump each as its blue ring pops on; the boat's oars are heard far off
 the turn it is sighted or answers the signal; and the turn it lands, its last strokes
 with a wave breaking on the shingle under them. Its back page is France's bells.
 

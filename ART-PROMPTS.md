@@ -596,7 +596,9 @@ and wire the wreck in if asked:
 
 ---
 
-## Priority 19 — Italian enemy counters for the aqueduct — **to make**
+## Priority 19 — Italian enemy counters for the aqueduct ✅ done (2026-10-05)
+
+In since M43b, as supplied: the aqueduct's sentries, patrols and reserve wear them.
 
 **Why** (M41c, the operator's): the aqueduct is southern Italy in February 1941, and its
 garrison is Italian (its cries already are: ALLARME!), but the chips are Priority 7's
@@ -628,7 +630,10 @@ the helmet*. **No fasces or other party insignia**, as with Priority 7.
 
 ---
 
-## Priority 20 — the aqueduct's title card — **to make**
+## Priority 20 — the aqueduct's title card ✅ done (2026-10-05)
+
+In since M43b, with BURN BY DAWN painted in. The 2400 × 600 painting is kept as
+`title-card-aqueduct_full.jpg` and the game loads a 1600 × 400 copy.
 
 Its own painting in place of France's, across the top of its orders and its back page.
 Wired in M43: drop the file in and reload; until then the aqueduct shows France's card.
@@ -867,8 +872,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   and blown, the ship's boat and the supply canister. Since M43 the winter ground's wash
   is a little stronger (the cold blue at 0.18 over the paper, 0.1 before), and the
   hand-off is written: its title card (Priority 20), winter portraits (21), references
-  to redraw the board's pictures from (22) and its sounds (23). Its title card and
-  portraits are France's, and its garrison's chips the German ones (19), until then.
+  to redraw the board's pictures from (22) and its sounds (23). The Italian chips and
+  the title card are painted and in (M43b); its portraits are France's.
 - The aqueduct's three sounds (M43), made with Web Audio until recordings are found:
   the canisters' thump, the boat's oars and the surf it lands in (Priority 23).
 - The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.

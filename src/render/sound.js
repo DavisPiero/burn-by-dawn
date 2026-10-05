@@ -650,9 +650,9 @@ const CUES = {
   // France's goods train coming onto the board (M35): its whistle.
   train: [['train', 0.5, 0]],
   // The aqueduct's (M43): the canisters down after the stick, one thump
-  // each; the boat far off as it is sighted or answers the signal; and its
+  // each, played as its ring pops on (M43b); the boat far off as it is sighted or answers the signal; and its
   // last strokes with the surf under them as it lands.
-  canister: [['canister-thump', 0.5, 0.15], ['canister-thump', 0.38, 0.5], ['canister-thump', 0.44, 0.78]],
+  canister: [['canister-thump', 0.5, 0]],
   boatComing: [['oars', 0.3, 0.2]],
   boatIn: [['oars', 0.5, 0], ['surf', 0.5, 1.6]],
   // The opening screens' music (M17): one pass of it; startMusic loops it.

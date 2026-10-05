@@ -92,6 +92,10 @@ the placeholder copy, and the two balance questions above (the hunter; Hard's No
 Tests: 192 headless, 194 in tests.html. **Next:** the operator's play and art; then a choice from "More
 missions after that" or "Parked" below.
 
+**M43b**, the operator's notes: the Italian chips and the aqueduct's title card are
+painted and in; the canisters' rings pop on one by one, a thump with each, round
+their pictures. Still asked for: Priorities 21 to 23. Tests: 193 headless.
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is

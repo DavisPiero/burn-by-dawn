@@ -287,8 +287,7 @@ operator to reword.
 - **The garrison is Italian**: in February 1941 the aqueduct's guards were. Its cries
   are (ALLARME!, CHI VA LÀ?, MADONNA!), where the other two missions' are German, and
   its chips have a folder of their own (`enemyChips`: `assets/enemies/italian`), tried
-  type by type before the usual one. **Until the Italian chips are painted
-  (ART-PROMPTS.md Priority 19) it wears the German ones.**
+  type by type before the usual one: the operator's three paintings (M43b).
 - **The contents page** keeps its line: "A great aqueduct in the mountains that wants
   every charge you carry, and a boat on the coast that will not wait."
 - **The diversion** is the RAF again, as it was in 1941: BOMBERS OVER FOGGIA.
@@ -296,14 +295,12 @@ operator to reword.
   (Fitch's olives, Vance's aqueduct, Barrow's trees in Italy), and Nunn's, who carries
   no spare down here: "Nothing to carry down, Sarge. Where's that canister?"
 - **Sounds**, made in code until recordings are found (ART-PROMPTS.md Priority 23): the
-  canisters' thump as the stick lands, the boat's oars far off the turn it is sighted
+  canisters' thumps as the stick lands, one as each canister's ring pops on, the boat's oars far off the turn it is sighted
   or signalled, and oars and surf the turn it lands. The back page is France's bells
   and toll.
 - **Pictures.** Drawn in code (M41): the canister, the boat, the aqueduct and its
-  arches, the road bridge, the eleven kinds of ground. Painted: its contents panel.
-  Asked of the operator in ART-PROMPTS.md, each with a slot that falls back until its
-  file is there: the Italian chips (19), its own title card (20; France's until then),
-  the six in winter kit (21, optional; `portraits`: `assets/portraits/winter`), and
+  arches, the road bridge, the eleven kinds of ground. Painted: its contents panel, its title card with BURN BY DAWN painted in, and the
+  Italian chips. Still asked of the operator in ART-PROMPTS.md: the six in winter kit (21, optional; `portraits`: `assets/portraits/winter`), and
   references to redraw the board's pictures from (22).
 
 ### Balance
