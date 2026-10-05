@@ -239,12 +239,15 @@ export function loadSuppliedBlast() {
 // needs only its picture.
 export const ENEMY_CHIP_FILES = { dir: 'assets/enemies', box: { x: 11, y: 3, size: 34 } };
 
-export function loadSuppliedEnemyChips(types) {
+// A mission's own garrison (M43: the aqueduct's Italians, `enemyChips` in
+// data/missions.json) is a folder of the same file names, tried first type by
+// type, as a mission's portraits are, so its chips can come in one at a time.
+export function loadSuppliedEnemyChips(types, missionDir = null) {
   return Promise.all(types.map((type) => {
     const id = enemySymbolId(type);
-    const url = `${ENEMY_CHIP_FILES.dir}/${id}.png`;
-    return picture(url).then((ok) => {
-      if (!ok) return;
+    const urls = [missionDir, ENEMY_CHIP_FILES.dir].filter(Boolean).map((dir) => `${dir}/${id}.png`);
+    return firstPicture(urls).then((url) => {
+      if (!url) return;
       const { x, y, size } = ENEMY_CHIP_FILES.box;
       document.getElementById(id)?.replaceChildren(svg('image', { href: url, x, y, width: size, height: size }));
     });

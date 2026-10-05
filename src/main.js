@@ -1546,6 +1546,10 @@ function cueReport(report) {
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
   // The goods train's whistle as it comes onto the board (M35).
   if (report.some((e) => e.kind === 'train' && e.what === 'comes')) playCue('train');
+  // The aqueduct's boat (M43): its oars far off as it is sighted or answers
+  // the signal, the surf under them as it lands.
+  if (report.some((e) => e.kind === 'boat' && e.what === 'in')) playCue('boatIn');
+  else if (report.some((e) => e.kind === 'boat')) playCue('boatComing');
 }
 
 function showShot(kind, from, to) {
@@ -2417,6 +2421,9 @@ function endDropShow() {
   dropSound?.stop();
   dropSound = null;
   dropShow = null;
+  // The canisters come down behind the stick (M43): a thump for them as the
+  // last canopy is down, or as the drop is skipped.
+  if (state.report.some((e) => e.kind === 'canisterLanded')) playCue('canister');
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
   render();
@@ -2799,7 +2806,7 @@ try {
     loadSuppliedAircraft(),
     loadSuppliedVehicle(baseMap.diversionRun?.art),
     loadSuppliedBlast(),
-    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes)),
+    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes), mission.enemyChips ?? null),
   ];
   renderGutter(gutterNote);
   renderKeys(keysTab);

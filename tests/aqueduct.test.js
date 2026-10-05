@@ -13,6 +13,7 @@ import { chooseDropRun, createInitialState, endTurn, isDawn, jump, knifeEnemy, p
 import { validateTraits } from '../src/traits.js';
 import { chargeCapacity, chargeRoom } from '../src/units.js';
 import { hintsFor } from '../src/hints.js';
+import { CUE_NAMES } from '../src/render/sound.js';
 import { exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
@@ -310,5 +311,20 @@ export default [
     for (const [q, r] of [[1, 3], [0, 3], [-1, 3], [8, 3], [9, 2], [10, 1], [11, 0]]) assert(terrainIdAt(map, q, r) !== 'track', `(${q},${r}) is not a track`);
     equal(terrainIdAt(map, 8, 3), 'hillside', 'the hex the way leaves the aqueduct by is open hillside');
     equal(terrainIdAt(map, 8, 4), 'farmhouse', 'the farmhouse that stood on it is down and to the right');
+  }],
+
+  ['its words, sounds and pictures (M43): Italian cries, lines that named France replaced, its own folders for chips and portraits, its own title card', async () => {
+    const { json, mission, roster } = await loadAqueduct();
+    const said = roster.troopers.flatMap((t) => Object.values(t.dialogue)).join(' ');
+    for (const word of ['church', 'France', 'bridge', 'cabbages', 'spare']) assert(!said.includes(word), `nobody says "${word}" in Italy`);
+    assert(mission.words.cries.spotted.includes('ALLARME!'), 'the garrison cries out in Italian');
+    equal(mission.enemyChips, 'assets/enemies/italian', 'its garrison\'s chips have a folder of their own');
+    equal(mission.portraits, 'assets/portraits/winter', 'and the six in winter kit');
+    equal(mission.titleCard, 'assets/title/title-card-aqueduct.jpg', 'its own title card (France\'s until painted)');
+    for (const cue of ['canister', 'boatComing', 'boatIn', mission.endSounds.success, mission.endSounds.otherwise]) assert(CUE_NAMES.includes(cue), `the cue ${cue} is scored`);
+    const broken = { ...json, missions: json.missions.map((m) => (m.id === 'aqueduct' ? { ...m, enemyChips: '' } : m)) };
+    let threw = false;
+    try { validateMissions(broken); } catch { threw = true; }
+    assert(threw, 'a chip folder with no name is refused');
   }],
 ];
