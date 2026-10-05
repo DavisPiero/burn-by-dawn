@@ -65,6 +65,8 @@ German: new paintings (ART-PROMPTS Priority 19) and a per-mission folder for ene
 chips; and its contents panel is asked for (Priority 14).
 **M41d** (6 Oct): the panel is in and the aqueduct is **playable** from the contents
 page, ahead of its balance (the operator's); the airfield's West gap is kept.
+**M41e**: the gap moved two rows north (the operator's idea), which gives Hard's North
+run back what the gap at the strip had cost it.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
