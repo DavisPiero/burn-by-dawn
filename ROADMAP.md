@@ -68,6 +68,15 @@ page, ahead of its balance (the operator's); the airfield's West gap is kept.
 **M41e**: the gap moved two rows north (the operator's idea), which gives Hard's North
 run back what the gap at the strip had cost it.
 
+**M42** (the aqueduct's balance, by the bot): eight pier feet (one side is enough for
+Normal's four charges), a mule track up the west bank, the West and Valley runs and
+three beats redrawn, the longest timer offered first and then the one that makes one
+bang, the boat two turns on Hard. A tidy Normal win stays below Alarmed in 94 / 62 / 84
+games in 100; naive wins Easy 95 / 95 / 93, Normal 81 / 83 / 80, Hard 33 / 21 / 40.
+Tests: 189 headless. **Open for the operator** (MISSION-AQUEDUCT.md, Balance): the
+hunter bot is level with careful play on Normal and above it on Hard; Hard's North run
+is 4 under its target. **Next: M43**, the aqueduct's words, sounds and art hand-off.
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is

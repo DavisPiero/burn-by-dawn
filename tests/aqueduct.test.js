@@ -8,8 +8,8 @@ import { applyDifficulty, levelById, validateDifficulty } from '../src/difficult
 import { hexDistance } from '../src/hex.js';
 import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets } from '../src/missions.js';
-import { applyPayoff, boatLands, checkSignalBoat, effectiveMap, exfilOpen, isExfil, kindOf, lastTurn } from '../src/sabotage.js';
-import { chooseDropRun, createInitialState, endTurn, isDawn, jump, knifeEnemy, signalBoat } from '../src/state.js';
+import { applyPayoff, boatLands, checkSignalBoat, effectiveMap, exfilOpen, isExfil, kindOf, lastTurn, offeredPencil, pencilWithTheOthers } from '../src/sabotage.js';
+import { chooseDropRun, createInitialState, endTurn, isDawn, jump, knifeEnemy, placeCharge, signalBoat } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { chargeCapacity, chargeRoom } from '../src/units.js';
 import { hintsFor } from '../src/hints.js';
@@ -45,7 +45,7 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['one primary that takes four charges of six points (three on Easy, five on Hard), six charges in three canisters, nobody carrying one', async () => {
+  ['one primary that takes four charges of eight points (three on Easy, five on Hard), six charges in three canisters, nobody carrying one', async () => {
     for (const [level, charges, squads] of [['easy', 3, 0], ['normal', 4, 1], ['hard', 5, 2]]) {
       const { map, rules, traits, roster } = await loadAqueduct(level);
       const state = createInitialState(roster, traits, rules, map, 1);
@@ -53,7 +53,7 @@ export default [
       equal(targets.map((o) => o.id).join(), 'aqueduct', `${level}: the win is the aqueduct`);
       equal(kindOf(targets[0], rules).chargesNeeded, charges, `${level}: charges it takes`);
       equal(kindOf(targets[0], rules).reinforcements, squads, `${level}: squads it calls`);
-      equal(targets[0].chargeHexes.length, 6, `${level}: six charge points`);
+      equal(targets[0].chargeHexes.length, 8, `${level}: eight charge points`);
       equal(rules.canisters.count * rules.canisters.charges, 6, `${level}: six charges in the canisters`);
       assert(state.units.every((u) => u.charges === 0), `${level}: nobody jumps with one`);
     }
@@ -224,5 +224,51 @@ export default [
     assert(hintsFor(done, rules, {}, 9).some((h) => /boat is in on turn 15, in 3 turns/.test(h)), 'the boat, once the aqueduct is down');
     // A whole turn can be played out with both rules on.
     equal(endTurn(landed, rules, map).turn, 2, 'turn 1 ends');
+  }],
+
+  ['the tin offers the longest timer first, and then the one that goes off with the charges already set (M42): one bang', async () => {
+    const { map, rules, traits, roster } = await loadAqueduct();
+    const start = { ...createInitialState(roster, traits, rules, map, 1), phase: 'play', turn: 5 };
+    const aqueduct = start.objectives.find((o) => o.primary);
+    const [a, b, c] = aqueduct.chargeHexes;
+    // Three men who are no Steady Hands, each on a pier foot with two charges (enough between
+    // them for the job, or the mission would end as lost); the rest far off.
+    const setters = start.units.filter((u) => !u.traits.some((t) => t.hook === 'onPlaceCharge' && t.modifier?.stat === 'fuse')).slice(0, 3);
+    const at = new Map(setters.map((u, i) => [u.id, [a, b, c][i]]));
+    const placed = (state) => ({ ...state, units: state.units.map((u, i) => (at.has(u.id) ? { ...u, ...at.get(u.id), landed: true, charges: 2, ap: 3, apMax: 3 } : { ...u, q: 14 + (i % 2), r: 5, landed: true })) });
+    let state = placed(start);
+    const first = state.units.find((u) => u.id === setters[0].id);
+    equal(pencilWithTheOthers(state, first, rules), null, 'nothing burning yet: no pencil goes with the others');
+    equal(offeredPencil(state, map, first, rules).fuse, 6, 'the first is offered the longest, the aqueduct\'s default');
+    state = placeCharge(state, first.id, rules, offeredPencil(state, map, first, rules).fuse);
+    // Two turns on, the second man's offer goes off with the first charge.
+    state = { ...endTurn(endTurn(state, rules, map), rules, map) };
+    state = { ...state, units: state.units.map((u) => (at.has(u.id) ? { ...u, ap: 3 } : u)) };
+    const second = state.units.find((u) => u.id === setters[1].id);
+    const burning = state.charges[0];
+    equal(state.turn + burning.fuse - 1, 10, 'the first charge goes at the end of turn 10');
+    equal(offeredPencil(state, map, second, rules).blows, 10, 'the second man is offered the pencil for turn 10');
+    equal(pencilWithTheOthers(state, second, rules).fuse, burning.fuse, 'as long as the first has left to burn');
+    // France has one fuse and no choice.
+    const france = missionRules(missionById(validateMissions(await loadJson('data/missions.json')), null), await loadJson('data/rules.json'));
+    equal(pencilWithTheOthers(state, second, france), null, 'where there is no choice of timer there is none to offer');
+  }],
+
+  ['M42\'s map: four pier feet a side, two either side of the torrent; a mule track up the west bank; on Hard the boat stays two turns', async () => {
+    const { map, rules, traits, roster } = await loadAqueduct();
+    const aqueduct = createInitialState(roster, traits, rules, map, 1).objectives.find((o) => o.primary);
+    const north = aqueduct.chargeHexes.filter((h) => h.r === 2);
+    const south = aqueduct.chargeHexes.filter((h) => h.r === 4);
+    equal(`${north.length} ${south.length}`, '4 4', 'four on each side');
+    const torrent = 5; // the arch the torrent runs under is at q 5 on the aqueduct's row
+    equal(`${north.filter((h) => h.q < torrent).length} ${south.filter((h) => h.q + 1 < torrent).length}`, '2 2', 'two west of the torrent on each side');
+    for (const h of aqueduct.chargeHexes) equal(terrainIdAt(map, h.q, h.r), 'arch', `(${h.q},${h.r}) is a pier foot`);
+    // The mule track: a way up the west bank at a track's pace, from the road to the piers.
+    for (const r of [5, 6, 7, 8, 9]) equal(terrainIdAt(map, 3, r), 'track', `(3,${r}) is the mule track`);
+    equal(rules.charges.fuseTurns, 6, 'the default timer is the longest');
+    equal(`${rules.exfil.opensTurn} ${rules.exfil.openFor}`, '15 3', 'Normal: in on 15 for three turns');
+    const hard = (await loadAqueduct('hard')).rules;
+    equal(`${hard.exfil.opensTurn} ${hard.exfil.openFor}`, '15 2', 'Hard: in on 15 for two');
+    equal(lastTurn({ turn: 1 }, hard), 16, 'so Hard\'s night ends with turn 16');
   }],
 ];

@@ -130,11 +130,11 @@
       "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT",
       "map": "data/map-aqueduct.json",
       "roster": "data/roster.json",
-      "_rules": "MISSION-AQUEDUCT.md (SPEC.md §14), M41: a draft, every number a first guess for M42. Its two rules: `canisters` (the men jump with none; three canisters of two) and `exfil.opensTurn` (the boat is in on 15, gone at dawn, 18). A sapper has room for two charges, so the sappers and Nunn carry five at full pace. Time pencils as on the airfield. The patrols set out on turn 2. The aqueduct calls one squad down the road when it goes; the road bridge down stops the reserve and the squads (the exchange's payoff in France).",
+      "_rules": "MISSION-AQUEDUCT.md (SPEC.md §14). Balanced at M42 (DECISIONS.md): the default timer is the longest, 6 (it was 4: a first charge on a short timer left the others no time to be set to the same turn, and one bang is the alert budget); the boat in on 15 and gone with 17 stands, measured; on Hard it stays two turns. Its two rules: `canisters` (the men jump with none; three canisters of two) and `exfil.opensTurn` (the boat is in on 15, gone at dawn, 18). A sapper has room for two charges, so the sappers and Nunn carry five at full pace. Time pencils as on the airfield. The patrols set out on turn 2. The aqueduct calls one squad down the road when it goes; the road bridge down stops the reserve and the squads (the exchange's payoff in France).",
       "rules": {
         "turnLimit": 17,
         "roles": { "sapper": { "charges": 2 } },
-        "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
+        "charges": { "fuseTurns": 6, "fuseChoice": { "min": 2, "max": 6 } },
         "canisters": { "count": 3, "charges": 2, "scatterWeights": [0, 4, 4, 2, 1] },
         "exfil": { "opensTurn": 15, "openFor": 3, "call": { "apCost": 1, "leadTurns": 2 } },
         "reserve": { "replacements": 1 },
@@ -149,7 +149,7 @@
       "win": { "condition": "destroyPrimary" },
       "levels": {
         "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it goes.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
-        "hard": { "summary": "The aqueduct takes five charges of your six, and two squads come down the road when it goes: none once the Road Bridge is down.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 5, "reinforcements": 2 } } } }
+        "hard": { "summary": "The aqueduct takes five charges of your six, two squads come down the road when it goes (none once the Road Bridge is down), and the boat stays two turns, not three.", "rules": { "exfil": { "openFor": 2 }, "objectives": { "aqueduct": { "chargesNeeded": 5, "reinforcements": 2 } } } }
       },
       "briefing": "Tonight six men are to drop into the mountains of southern Italy.",
       "_words": "M41. Placeholder copy for the operator to reword. The line words are asked for by every mission: nothing here has a line to cut, and `lineIsDown` is what stops the squads coming, the road bridge. The diversion is the RAF again, as in 1941: bombers over Foggia.",
@@ -163,12 +163,12 @@
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},
-      "_ratings": "M41d: first guesses, so that a mission accomplished is rated at all, for M42 to set with the rest: the bot's winning games score 20 to 25 as the draft stands, and the job with every man out, the Road Bridge and a clean run is 35 before kills.",
+      "_ratings": "M42, set against the bot's winning scores on Normal (SCORES=1): the naive bot's middle half is 26 to 31 (North 23 to 29), the tidy bot's 22 to 28 with no kills, and a stick that takes the Road Bridge too scores 32 to 35, its best quarter 35 and over. The job with every man out unseen, the Road Bridge and a clean run is 35 before kills.",
       "ratings": [
         { "from": 0, "label": "SCRAPED HOME" },
-        { "from": 20, "label": "A GOOD NIGHT'S WORK" },
-        { "from": 25, "label": "MENTIONED IN DESPATCHES" },
-        { "from": 30, "label": "ONE FOR THE ANNUAL" }
+        { "from": 24, "label": "A GOOD NIGHT'S WORK" },
+        { "from": 30, "label": "MENTIONED IN DESPATCHES" },
+        { "from": 35, "label": "ONE FOR THE ANNUAL" }
       ],
       "titleCard": "assets/title/title-card.jpg",
       "endSounds": { "success": "victory", "otherwise": "defeat" }

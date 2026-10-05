@@ -1,18 +1,18 @@
 {
-  "_comment": "The aqueduct (SPEC.md §14, MISSION-AQUEDUCT.md, M41): mission 3's map, in the same shape as data/map.json. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. Terrain ids must exist in data/terrain.json; the winter hills are printed under a pale wash of the cold blue (SPEC.md §11). A first drawing, for M42's balance to move.",
+  "_comment": "The aqueduct (SPEC.md §14, MISSION-AQUEDUCT.md, M41): mission 3's map, in the same shape as data/map.json. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. Terrain ids must exist in data/terrain.json; the winter hills are printed under a pale wash of the cold blue (SPEC.md §11). Redrawn at M42 for its balance (DECISIONS.md): eight pier feet, a mule track up the west bank of the torrent, the West and Valley runs and two of the patrols' beats moved.",
   "name": "The aqueduct on the Tragino",
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md §9, §14. All three land north and west of the road bridge, so nobody starts below the job. West comes down the hillside south of the aqueduct, in the olives and terraces and beside the torrent's bed; north over the plough beside the farm, where the aqueduct patrol walks; the valley run down the terraces above the road bridge, nearest the bridge and the way home, the longest carry up to the piers. The canisters leave after the second, fourth and sixth man (data/rules.json canisters).",
+  "_dropRuns": "SPEC.md §9, §14. All three land north and west of the road bridge, so nobody starts below the job. West comes down across the hillside three rows below the aqueduct's west end (M42: it ran down the slope to the hamlet, and its tail was a night's climb from the job); north over the plough beside the farm; the valley run astride the torrent above the road bridge (M42: two hexes further down its line, off the feet of the east piers), nearest the bridge and the way home. The canisters leave after the second, fourth and sixth man (data/rules.json canisters).",
   "dropRuns": [
     {
       "id": "west",
       "label": "West run",
       "tag": "quiet",
-      "description": "The hillside below the aqueduct: olives, terraces and the torrent's bed, under cover from the first step. Rough ground: a canister may come down among the rocks.",
-      "from": [1, 5],
-      "to": [-3, 11],
+      "description": "The hillside below the aqueduct: olives, terraces and the ridge, with nobody near and the mule track up to the piers. The slowest ground on the map, and the longest walk to the boat.",
+      "from": [3, 6],
+      "to": [-2, 6],
       "jumpAt": 0,
       "spacing": 1,
       "wind": "SW"
@@ -32,15 +32,15 @@
       "id": "valley",
       "label": "Valley run",
       "tag": "fast",
-      "description": "The terraces above the road bridge: down closest to the bridge and the way to the boat, with the longest carry back up to the aqueduct.",
+      "description": "Astride the torrent above the road bridge: down closest to the bridge and the way to the boat. Some of you will come down in the torrent's bed, and the bridge post is close.",
       "from": [10, 4],
       "to": [1, 8],
-      "jumpAt": 1,
+      "jumpAt": 3,
       "spacing": 1,
       "wind": "W"
     }
   ],
-  "_enemies": "SPEC.md §6, §14. Six, the fewest of any mission: the alert budget (MISSION-AQUEDUCT.md) wants few finders and few bodies. Posts: the aqueduct guard at the farm end, looking west along the south side of the piers (the north side is hidden from him by the aqueduct itself); the bridge post above the road bridge; the coast watcher in the hamlet, looking along the beach. Patrols: one across the plough north of the aqueduct, where the north run lands; one on the road between the hamlet and the bend above the bridge; one through the terraces from the east slope to the west hillside, across the valley and west runs' ground. M41b, the operator's: each post sweeps (`sweep`, its second facing), looking one way and then the other, turn and turn about, so an approach can be timed: the aqueduct guard west along the piers then south-east down the valley, the bridge post down at the bridge then up the road, the coast watcher along the beach then up the road.",
+  "_enemies": "SPEC.md §6, §14. Six, the fewest of any mission: the alert budget (MISSION-AQUEDUCT.md) wants few finders and few bodies. Posts: the aqueduct guard at the farm end, looking west along the south side of the piers (the north side is hidden from him by the aqueduct itself); the bridge post above the road bridge; the coast watcher in the hamlet, looking along the beach. Patrols (M42, redrawn for the alert budget: a beat guards something and touches a landing ground at one end, where the first drawing's walked along two of them and beside two of the posts): one along the north side of the piers to the edge of the plough; one on the road between the hamlet and the bend above the bridge; one across the west hillside, between the west run's ground and the south-west piers. M41b, the operator's: each post sweeps (`sweep`, its second facing), looking one way and then the other, turn and turn about, so an approach can be timed: the aqueduct guard west along the piers then south-east down the valley, the bridge post down at the bridge then up the road, the coast watcher along the beach then up the road.",
   "enemies": [
     {
       "id": "post-aqueduct",
@@ -73,8 +73,8 @@
       "facing": "E",
       "loop": false,
       "route": [
-        [2, 1],
-        [12, 1]
+        [1, 1],
+        [7, 1]
       ]
     },
     {
@@ -87,24 +87,22 @@
         [3, 10],
         [5, 8],
         [8, 6],
-        [11, 4]
+        [10, 5]
       ]
     },
     {
       "id": "patrol-terraces",
-      "label": "Terrace patrol",
+      "label": "Hill patrol",
       "type": "patrol",
       "facing": "W",
       "loop": false,
       "route": [
-        [10, 6],
-        [7, 5],
-        [0, 6],
-        [-2, 9]
+        [3, 5],
+        [-1, 5]
       ]
     }
   ],
-  "_reserve": "SPEC.md §6. Down the road from the north-east at Alarmed, to stand above the beach. Never, once the road bridge is down (its kind's payoff).",
+  "_reserve": "SPEC.md §6. Down the road from the north-east at Alarmed, to stand on the road above the beach (M42: a hex up the road, off the coast watcher's shoulder). Never, once the road bridge is down (its kind's payoff).",
   "reserve": {
     "id": "reserve",
     "label": "Reserve squad",
@@ -115,7 +113,7 @@
       [14, 1],
       [13, 2]
     ],
-    "guardHex": [2, 10],
+    "guardHex": [3, 10],
     "guardFacing": "SE"
   },
   "_reinforcements": "SPEC.md §6, §14. By lorry down the same road when the aqueduct goes up (one squad on Normal, two on Hard, none on Easy; none once the road bridge is down), to posts on the ways onto the beach: the torrent's mouth first, the quiet way down.",
@@ -144,7 +142,7 @@
       }
     ]
   },
-  "_objectives": "SPEC.md §7, §14. The aqueduct is the primary: its footprint is the channel on its piers and the hex of ravine the torrent runs under it by, which a man can walk through; six charge points at the piers' feet, three on each side, of which the job needs four (its kind's chargesNeeded). The road bridge carries the road over the torrent lower down: two charge points in the torrent's bed under it, one needed; down, it becomes ravine and nothing more comes down the road. M41b, the operator's: the aqueduct and the ravine are two hexes further east than first drawn, so the west end can be walked round and the plough to the north-east is used.",
+  "_objectives": "SPEC.md §7, §14. The aqueduct is the primary: its footprint is the channel on its piers and the hex of ravine the torrent runs under it by, which a man can walk through; eight charge points at the piers' feet, four on each side, two either side of the torrent (M42: six, three a side, meant no four could be reached without crossing under the aqueduct, and so no one bang), of which the job needs four (its kind's chargesNeeded). The road bridge carries the road over the torrent lower down: two charge points in the torrent's bed under it, one needed; down, it becomes ravine and nothing more comes down the road. M41b, the operator's: the aqueduct and the ravine are two hexes further east than first drawn, so the west end can be walked round and the plough to the north-east is used.",
   "objectives": [
     {
       "id": "aqueduct",
@@ -162,9 +160,11 @@
       "chargeHexes": [
         [3, 2],
         [4, 2],
+        [6, 2],
         [7, 2],
         [2, 4],
         [3, 4],
+        [5, 4],
         [6, 4]
       ],
       "noteNudge": [-8.5, 5.2]
@@ -249,14 +249,14 @@
   "rows": [
     "GGHHHHVHPPPPPPHTWW",
     "GHHHHHVHPPPPPPTHWW",
-    "GHHHNNVHNPPPPPTHHH",
+    "GHHHNNVNNPPPPPTHHH",
     "HHHQQQVQQBBYHTHYGG",
-    "HHHHNNVHNHOOYTHOHG",
-    "HRRHOHVHOOYTTHOYGG",
-    "GRRYHOHVYYTTHHHHHG",
-    "GGROYHHVHTHYHGGHGG",
-    "GOYOHHHHVXHOYHGZZG",
-    "HOOGGYYHTVHOOYZZZZ",
+    "HHHHNNVNNHOOYTHOHG",
+    "HRRHOTVHOOYTTHOYGG",
+    "GRRYHOTVYYTTHHHHHG",
+    "GGROYHTVHTHYHGGHGG",
+    "GOYOHHHTVXHOYHGZZG",
+    "HOOGGYYTTVHOOYZZZZ",
     "HYYOOBBHTHVHKZZZZZ",
     "HHOOOBBTSSVZZZZZZZ",
     "HHHHHKKSSSZZZZZZZZ"
