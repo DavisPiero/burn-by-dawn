@@ -845,7 +845,7 @@ export function renderPieces(layers, state, view) {
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
-  if (view.selectCue) drawSelectCue(layers, state, now);
+  if (view.selectCue) drawSelectCue(layers, state, now, view.canisterCueSince ?? null);
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.strikeShow?.kind === 'cut') {
     const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
@@ -1003,7 +1003,7 @@ function drawDropCue(layers, cue, names) {
  * Once the stick is down (M21): a pen ring round each man who can act, until
  * the player first selects one, and a note over the topmost saying so.
  */
-function drawSelectCue(layers, state, now) {
+function drawSelectCue(layers, state, now, canistersSince = null) {
   const { map } = layers;
   const men = state.units.filter((u) => u.landed && !u.dead && !u.out && u.ap > 0);
   if (!men.length) return;
@@ -1028,16 +1028,18 @@ function drawSelectCue(layers, state, now) {
   const x = Math.min(Math.max(middle.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
   const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
-  drawCanisterCue(layers, state, { x, y: y - CUE.noteSize / 2, w: width, h: CUE.noteSize * 1.4 });
+  drawCanisterCue(layers, state, { x, y: y - CUE.noteSize / 2, w: width, h: CUE.noteSize * 1.4 }, canistersSince === null ? null : now - canistersSince);
 }
 
 /**
  * With the men's rings (M42b, the operator's: canisters were hard to find
  * among everything else, the more so after a scattered drop): each canister
  * ringed in blue and named, the name on whichever side of it is clearest of
- * counters, the other names, the start note and the board's edge.
+ * counters, the other names, the start note and the board's edge. The ring
+ * is round the canister's picture, and each pops on in its turn, `elapsed` ms
+ * after the stick came down, as its thump is heard (M43b, the operator's).
  */
-function drawCanisterCue(layers, state, startNote) {
+function drawCanisterCue(layers, state, startNote, elapsed = null) {
   const { map } = layers;
   const cue = CANISTER.cue;
   const edge = boardEdges(map);
@@ -1045,21 +1047,25 @@ function drawCanisterCue(layers, state, startNote) {
   const busy = [
     ...state.units.filter((u) => u.landed && !u.dead && !u.out).map(at),
     ...state.enemies.map(at),
-    ...(state.canisters ?? []).map(at),
   ].map((p) => ({ x: p.x, y: p.y, w: COUNTER.drawn, h: COUNTER.drawn }));
+  // Every canister's ring, where it is drawn (M43b: a name was set under the
+  // next canister's ring).
+  const ringAt = (h) => ({ x: at(h).x + cue.ringAt.x, y: at(h).y + cue.ringAt.y });
+  const rings = (state.canisters ?? []).map(ringAt).map((p) => ({ x: p.x, y: p.y, w: (cue.ringRadius + cue.ringWidth) * 2, h: (cue.ringRadius + cue.ringWidth) * 2 }));
   const taken = [startNote];
   const w = cue.words.length * cue.size * cue.advance, h = cue.size * 1.3;
   const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w / 2, b.x + b.w / 2) - Math.max(a.x - a.w / 2, b.x - b.w / 2))
     * Math.max(0, Math.min(a.y + a.h / 2, b.y + b.h / 2) - Math.max(a.y - a.h / 2, b.y - b.h / 2));
-  for (const canister of state.canisters ?? []) {
-    const p = at(canister);
+  for (const [i, canister] of (state.canisters ?? []).entries()) {
+    const hex = at(canister);
+    const p = ringAt(canister);
     const out = cue.ringRadius + cue.gap;
     // Right, left, above, below: boxes by their middles.
     const places = [
       { x: p.x + out + w / 2, y: p.y }, { x: p.x - out - w / 2, y: p.y },
       { x: p.x, y: p.y - out - h / 2 }, { x: p.x, y: p.y + out + h / 2 },
     ].map((c) => ({ ...c, w, h }));
-    const cost = (box) => [...busy.filter((b) => b.x !== p.x || b.y !== p.y), ...taken].reduce((sum, b) => sum + overlap(box, b), 0)
+    const cost = (box) => [...busy.filter((b) => b.x !== hex.x || b.y !== hex.y), ...rings.filter((_, n) => n !== i), ...taken].reduce((sum, b) => sum + overlap(box, b), 0)
       + (box.x - w / 2 < edge.left || box.x + w / 2 > edge.right || box.y - h / 2 < edge.top || box.y + h / 2 > edge.bottom ? 1e6 : 0);
     const best = places.reduce((a, b) => (cost(b) < cost(a) ? b : a));
     taken.push(best);
@@ -1071,6 +1077,12 @@ function drawCanisterCue(layers, state, startNote) {
       fill: cue.colour, stroke: cue.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
     }));
     layers.effects.appendChild(g);
+    if (elapsed !== null) {
+      g.style.transformOrigin = `${p.x}px ${p.y}px`;
+      g.style.transformBox = 'view-box';
+      playFrom(g, [{ opacity: 0, transform: `scale(${cue.popScale})` }, { opacity: 1, transform: 'scale(1)' }],
+        { delay: canisterPopAt(i), duration: cue.popMs, easing: 'ease-out' }, elapsed);
+    }
   }
 }
 
@@ -1133,6 +1145,11 @@ export function dropTimeline(map, show) {
     last = Math.max(last, landAt + DROP_SHOW.collapseMs);
   }
   return { start, end, angle: (Math.atan2(uy, ux) * 180) / Math.PI, byUnit, length: last + DROP_SHOW.tailMs };
+}
+
+/** When the `index`th canister's ring pops on, in ms after the stick is down (M43b): main.js plays its thump then. */
+export function canisterPopAt(index) {
+  return CANISTER.cue.firstMs + index * CANISTER.cue.stepMs;
 }
 
 /** Hide something until its man is down, then show it at once. */

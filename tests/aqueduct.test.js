@@ -14,7 +14,8 @@ import { validateTraits } from '../src/traits.js';
 import { chargeCapacity, chargeRoom } from '../src/units.js';
 import { hintsFor } from '../src/hints.js';
 import { CUE_NAMES } from '../src/render/sound.js';
-import { exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
+import { canisterPopAt } from '../src/render/board.js';
+import { CANISTER, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -326,5 +327,13 @@ export default [
     let threw = false;
     try { validateMissions(broken); } catch { threw = true; }
     assert(threw, 'a chip folder with no name is refused');
+  }],
+
+  ['the canisters\' rings pop on one by one, each round its picture (M43b, the operator\'s)', async () => {
+    const { rules } = await loadAqueduct();
+    const times = Array.from({ length: rules.canisters.count }, (_, i) => canisterPopAt(i));
+    assert(times.every((t, i) => i === 0 || t - times[i - 1] >= CANISTER.cue.popMs), 'each after the one before has landed');
+    assert(times.at(-1) < 2000, 'all of them inside two seconds');
+    assert(CANISTER.cue.ringAt.x < 0 && CANISTER.cue.ringAt.y > 0, 'the ring sits down and to the left of the hex\'s middle, where the canister is drawn');
   }],
 ];
