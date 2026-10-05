@@ -121,11 +121,12 @@
     },
     {
       "id": "aqueduct",
-      "status": "draft",
+      "status": "playable",
       "title": "The Aqueduct",
       "place": "Southern Italy",
       "page": 32,
       "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait.",
+      "panel": "assets/title/contents-aqueduct.jpg",
       "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT",
       "map": "data/map-aqueduct.json",
       "roster": "data/roster.json",
@@ -162,6 +163,13 @@
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},
+      "_ratings": "M41d: first guesses, so that a mission accomplished is rated at all, for M42 to set with the rest: the bot's winning games score 20 to 25 as the draft stands, and the job with every man out, the Road Bridge and a clean run is 35 before kills.",
+      "ratings": [
+        { "from": 0, "label": "SCRAPED HOME" },
+        { "from": 20, "label": "A GOOD NIGHT'S WORK" },
+        { "from": 25, "label": "MENTIONED IN DESPATCHES" },
+        { "from": 30, "label": "ONE FOR THE ANNUAL" }
+      ],
       "titleCard": "assets/title/title-card.jpg",
       "endSounds": { "success": "victory", "otherwise": "defeat" }
     }

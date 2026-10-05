@@ -7,9 +7,9 @@ A turn-based, hex tactical game. Six named British paratroopers land behind enem
 and sabotage German infrastructure before dawn. It is an engine plus missions: §1–§11
 describe the engine through mission 1, the rail bridge in occupied France. How it looks
 and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), is in
-`MISSION-AIRFIELD.md`, where it differs. Both missions are playable. Mission 3, the
-aqueduct (§14, `MISSION-AQUEDUCT.md`), is a draft: played by its address, not yet
-balanced or announced.
+`MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
+`MISSION-AQUEDUCT.md`), is playable too, picked from the contents page, and not yet
+balanced.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -993,6 +993,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M41d | The aqueduct playable from the contents page, with its painted panel (the operator's); the airfield's West gap kept |
 | M41c | Signal the boat's button in red while a man could send it; the aqueduct's contents panel and Italian enemy chips asked for in ART-PROMPTS |
 | M41b | The operator's notes on the draft: posts that sweep, a reserve that can be killed and is replaced, the boat signalled in early behind a card that asks, the aqueduct two hexes east with its arch open, the shut beach in red, the boat rowed in, enemy cries, soot where charges went off, ALL CHARGES SET on a target; the airfield's West run opened and its names quiet in play |
 | M41 | The aqueduct as a draft (`?mission=aqueduct`): its map and eleven kinds of ground, the aqueduct and the road bridge, the canister, the closed beach and the boat drawn and worded, the bot taught to fetch and to wait |
@@ -1020,7 +1021,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 ## 14. Mission 3 — the aqueduct
 
-**In `MISSION-AQUEDUCT.md`**, a draft played by `?mission=aqueduct` and not yet balanced:
+**In `MISSION-AQUEDUCT.md`**, playable from the contents page and not yet balanced:
 southern Italy, February 1941.
 One big target that takes four charges, every charge down in a supply canister, and a
 boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine

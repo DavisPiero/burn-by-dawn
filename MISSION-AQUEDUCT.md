@@ -3,9 +3,8 @@
 This is §14 of the specification, kept in a file of its own, as MISSION-AIRFIELD.md is
 §13. It is as authoritative as SPEC.md. Section numbers in it (§6, §10) are SPEC.md's.
 
-**Specified 5 Oct 2026 (M39). A draft since M41: played by its address,
-`?mission=aqueduct`, and still stamped NEXT YEAR'S ANNUAL on the contents page. Not yet
-balanced (M42).** Its two rules are in the engine and written in SPEC.md (§9 Supply
+**Specified 5 Oct 2026 (M39). Playable since M41d (6 Oct 2026, the operator's): picked
+from the contents page, with its painted panel. Not yet balanced (M42).** Its two rules are in the engine and written in SPEC.md (§9 Supply
 canisters, §10 The way out on a timetable); its numbers are here. Every number is a first guess for the balance
 milestone (M42) unless it says the operator chose it. The words and names are placeholder
 copy for the operator to reword. Once the mission is playable this file says how things
@@ -310,6 +309,8 @@ What they say M42 has to do:
 - **The aqueduct goes up on turn 12 to 14**, two turns later than guessed, so the stick
   reaches the beach about as dawn comes. The boat's turn and dawn want moving together.
 - The squad the bang calls comes on in nearly every game, from the far corner.
+
+**The rating's bands** (SPEC.md §10): 20, 25 and 30, first guesses for M42.
 
 ### The order it is built in
 
