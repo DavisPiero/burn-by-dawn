@@ -330,14 +330,32 @@ export function caughtBy(state, map, setter, objective, fuse, rules) {
 }
 
 /**
+ * The pencil that would go off with the charges already burning on this
+ * man's target (M42): the same turn as the last of them, so the target goes
+ * up in one bang (SPEC.md §7 "One objective, one explosion"). Null where no
+ * charge burns on it, or none of his pencils reaches that turn.
+ */
+export function pencilWithTheOthers(state, unit, rules) {
+  const objective = objectiveForChargeHex(state.objectives, unit);
+  const on = objective ? state.charges.filter((c) => c.objectiveId === objective.id) : [];
+  if (!rules.charges.fuseChoice || on.length === 0) return null;
+  const blows = state.turn + Math.max(...on.map((c) => c.fuse)) - 1;
+  return pencils(state, unit, rules).find((p) => !p.afterDawn && p.blows === blows) ?? null;
+}
+
+/**
  * The pencil the game offers first, the one C or Enter takes (M30b): the
  * default, or if that would catch one of the stick, the shortest longer one
- * that lets them all get clear. With no choice (France), the one fuse.
+ * that lets them all get clear. Where charges already burn on his target
+ * (M42), the one that goes off with them, if it lets every man get clear.
+ * With no choice (France), the one fuse.
  */
 export function offeredPencil(state, map, unit, rules) {
   const plain = defaultPencil(state, unit, rules);
   const objective = objectiveForChargeHex(state.objectives, unit);
   if (!rules.charges.fuseChoice || !plain || !objective) return plain;
+  const together = pencilWithTheOthers(state, unit, rules);
+  if (together && caughtBy(state, map, unit, objective, together.fuse, rules).length === 0) return together;
   const longer = pencils(state, unit, rules).filter((p) => !p.afterDawn && p.fuse >= plain.fuse);
   return longer.find((p) => caughtBy(state, map, unit, objective, p.fuse, rules).length === 0) ?? plain;
 }

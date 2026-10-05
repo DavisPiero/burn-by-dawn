@@ -31,9 +31,15 @@
 //
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
+// SENSE=1 (M42) mends two faults in his play (below): the aqueduct's reference.
 //
 // PACK=1 has every man pack the parachute he landed on, first thing on turn 1.
 // Without it the bot never packs, so `chutes found` is what packing would save.
+//
+// The `tidy` style (M42) is the player the aqueduct's alert budget is measured
+// by (MISSION-AQUEDUCT.md): the `careful` mover who packs his parachute on
+// turn 1 (PACK=1), plans one bang (PENCIL=plan), has SENSE=1, and would rather
+// lose a turn than be seen, to the last turn of the night. KNIFE is as given.
 //
 // The `hunter` style (M26) is the exception: it goes looking for kills, to
 // check that kill-everything is never the best way to play. Each hunter walks
@@ -51,7 +57,11 @@
 // longer one that lets every man get clear of the blast), `long` (the longest that goes off before dawn, to be walking to
 // the trucks when it blows), or `sync` (the same turn as a charge already
 // burning, if a pencil reaches it, so the bangs come together; else the
-// default). Where there is no choice (France) every policy is the one fuse.
+// default), or `plan` (M42: the first charge on a target that takes several
+// gets a pencil long enough for the others to reach their points and set
+// theirs to the same turn, and waits hidden if none is; the rest take the
+// game's offer, which goes off with it). Where there is no choice (France)
+// every policy is the one fuse.
 //
 // BOWSER=1 (M30) has the bot go for a target that sets off its neighbours
 // (the airfield's bowser) when that takes more of the job for its charges
@@ -72,6 +82,14 @@
 // find would still get him shot, as a person would), or `always` (whenever
 // he can, first thing: a check that firing is not a free way out of being
 // seen). Without it the bot never returns fire.
+// ALERT=1 (M42) adds a line per run saying where the dial's points came from
+// (first sightings, parachutes, canisters, bodies and bangs, a game); of the
+// wins, how many never reached the last state, how many were one bang, and
+// the slips (everything but the bangs) in them; how many games reached the
+// last state before the job was done; and the turn the stick is at the shore
+// with the job done (as many men as must get out, within three hexes of the
+// way out). The aqueduct's alert budget and the boat's turn are set by it
+// (MISSION-AQUEDUCT.md). ALERT=who adds who raised it, before the job or after.
 // The bot never uses the RAF diversion or stabilise, so a person should do a
 // little better than it does. Its win rate shows which way a change pushes
 // and roughly how hard, not the absolute answer.
@@ -135,13 +153,21 @@ const OPTS = {
   naivegreedy: { fight: false, secondaries: true, naive: true },
   naivefight: { fight: true, secondaries: true, naive: true },
   hunter: { fight: true, secondaries: false, hunt: true },
+  tidy: { fight: false, secondaries: false, tidy: true },
 }[STRATEGY];
 if (!OPTS) throw new Error(`unknown style "${STRATEGY}"`);
 const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
-const PACK = process.env.PACK === '1';
+// SENSE=1 (M42): two faults in the bot's play, found on the aqueduct, mended.
+// It never takes the knife (his whole turn) while he stands in a blast that
+// goes this turn; and on a job target with more charge points than it wants
+// charges it takes the points nearest the men, not the first listed. France's
+// and the airfield's baselines were measured without it and are kept so; the
+// aqueduct's reference is with it.
+const SENSE = process.env.SENSE === '1' || Boolean(OPTS.tidy);
+const PACK = process.env.PACK === '1' || Boolean(OPTS.tidy);
 const TRAIN = process.env.TRAIN === '1';
-const PENCIL = process.env.PENCIL ?? 'default';
-if (!['default', 'long', 'sync'].includes(PENCIL)) throw new Error(`PENCIL must be default, long or sync, not "${PENCIL}"`);
+const PENCIL = process.env.PENCIL ?? (OPTS.tidy ? 'plan' : 'default');
+if (!['default', 'long', 'sync', 'plan'].includes(PENCIL)) throw new Error(`PENCIL must be default, long, sync or plan, not "${PENCIL}"`);
 const BOWSER = process.env.BOWSER === '1' ? true : process.env.BOWSER || false;
 const HUNT_TURNS = Number(process.env.HUNT_TURNS ?? 12);
 const FIRE = process.env.FIRE ?? null;
@@ -238,8 +264,10 @@ function jobTargets(state) {
   return pick(left, toGo);
 }
 
-// The pencil this man sets his charge with, by PENCIL (M30).
-function pencilFor(state, unit, map) {
+// The pencil this man sets his charge with, by PENCIL (M30). WAIT (M42, `plan`
+// only): none yet, he holds his charge until the others are nearer.
+const WAIT = Symbol('wait');
+function pencilFor(state, unit, map, assign) {
   const open = SB.pencils(state, unit, rules).filter((p) => !p.afterDawn);
   const fallback = SB.offeredPencil(state, map, unit, rules)?.fuse;
   if (PENCIL === 'long') return open[open.length - 1]?.fuse ?? fallback;
@@ -247,8 +275,53 @@ function pencilFor(state, unit, map) {
     const latest = Math.max(0, ...state.charges.map((c) => state.turn + c.fuse - 1));
     return open.find((p) => p.blows === latest)?.fuse ?? fallback;
   }
+  if (PENCIL === 'plan') return plannedPencil(state, unit, map, assign, open, fallback);
   return fallback;
 }
+
+// PENCIL=plan (M42): one bang for a target that takes several charges, as a
+// player who has read the orders sets them. With charges already burning on
+// it, the game's offer goes off with them. The first charge takes the
+// shortest pencil that leaves the others time to walk to their points and
+// set theirs to the same turn; if none is long enough he waits, hidden,
+// while the night still has the turns for it.
+function plannedPencil(state, unit, map, assign, open, fallback) {
+  const o = state.objectives.find((x) => x.chargeHexes.some((h) => h.q === unit.q && h.r === unit.r));
+  if (!o || state.charges.some((c) => c.objectiveId === o.id)) return fallback;
+  const need = rules.objectives[o.kind].chargesNeeded - o.detonated;
+  if (need <= 1) return fallback;
+  // How many turns off the others are: men on their way to this target's
+  // points, and men fetching a charge for it, who have that walk first.
+  const points = distanceField(map, o.chargeHexes);
+  const turnsOver = (cost) => Math.ceil(cost / 3);
+  // A man with a second charge has the walk to the next point nobody is making for.
+  const taken = new Set([...assign.values()].filter((g) => !g.pickUp).map((g) => M.hexKey(g.q, g.r)));
+  const spare = o.chargeHexes.filter((h) => !taken.has(M.hexKey(h.q, h.r)) && !state.charges.some((c) => c.q === h.q && c.r === h.r));
+  const onward = (from) => (spare.length ? Math.max(1, turnsOver(Math.min(...spare.map((h) => distanceField(map, [h]).get(M.hexKey(from.q, from.r)) ?? 99)))) : 99);
+  let latest = unit.charges > 1 ? onward(unit) : 0;
+  let coming = unit.charges;
+  for (const [id, goal] of assign) {
+    const man = U.unitById(state.units, id);
+    if (id === unit.id || goal.cut) continue;
+    if (!goal.pickUp && !o.chargeHexes.some((h) => h.q === goal.q && h.r === goal.r)) continue;
+    const walk = goal.pickUp
+      ? (distanceField(map, [goal]).get(M.hexKey(man.q, man.r)) ?? 99) + (points.get(M.hexKey(goal.q, goal.r)) ?? 99)
+      : (distanceField(map, [goal]).get(M.hexKey(man.q, man.r)) ?? 99);
+    latest = Math.max(latest, turnsOver(walk) + (goal.pickUp ? 1 : 0) + (!goal.pickUp && man.charges > 1 ? onward(goal) : 0));
+    coming += goal.pickUp ? 1 : man.charges;
+  }
+  // Fewer charges on their way than the job wants: somebody has yet to be sent.
+  if (coming < need) latest = Math.max(latest, 99);
+  // The last man sets his on turn + latest with the shortest pencil, which
+  // goes off a turn after: this one must last at least that long.
+  const pick = open.find((p) => p.blows >= state.turn + latest + 1 + PLAN_SLACK);
+  if (pick) return pick.fuse;
+  const longest = open[open.length - 1];
+  const turnsLeft = SB.lastTurn(state, rules) - state.turn;
+  return longest && turnsLeft > PLAN_WAIT_UNTIL ? WAIT : longest?.fuse ?? fallback;
+}
+const PLAN_WAIT_UNTIL = Number(process.env.PLAN_WAIT_UNTIL ?? 7);
+const PLAN_SLACK = Number(process.env.PLAN_SLACK ?? 1);
 
 // Is this man hunting now? Until the job is done or HUNT_TURNS is up; the
 // free men by default, everyone with HUNTERS=all.
@@ -291,6 +364,18 @@ function lieUpHexes(map) {
   return out;
 }
 
+// Charge points in order of the walk to each from the nearest man who has, or
+// could fetch, a charge; points beside one already charged first, so the
+// stick works one side of a target and not both.
+function nearestPoints(state, map, free) {
+  const men = state.units.filter((u) => U.onBoard(u) && U.canCarryCharges(u) && (u.charges > 0 || U.chargeCapacity(u, rules) > 0));
+  const walk = new Map(free.map((h) => {
+    const field = distanceField(map, [h]);
+    return [h, Math.min(99, ...men.map((u) => field.get(M.hexKey(u.q, u.r)) ?? 99))];
+  }));
+  return [...free].sort((a, b) => walk.get(a) - walk.get(b));
+}
+
 function assignCharges(state, map) {
   // Nearest carriers to the free charge hexes of objectives still to do.
   const assign = new Map();
@@ -299,7 +384,10 @@ function assignCharges(state, map) {
   const objectives = state.objectives.filter((o) => !o.destroyed && (job.includes(o) || (OPTS.secondaries && !MI.isWinTarget(state, rules, o))));
   for (const o of objectives) {
     const need = rules.objectives[o.kind].chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length;
-    const free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
+    let free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
+    // A job target with more points than it wants charges (M42, the aqueduct's
+    // six for four): the points the shortest walk from the men who will set them.
+    if (SENSE && job.includes(o) && need > 0 && free.length > need) free = nearestPoints(state, map, free);
     wanted.push(...free.slice(0, Math.max(0, need)).map((h) => ({ ...h, o })));
   }
   const carriers = state.units.filter((u) => U.onBoard(u) && u.charges > 0);
@@ -347,15 +435,18 @@ function actFor(state, unit, map) {
       if (U.checkPickUpCharge(state.droppedCharges, unit, rules).ok) return S.pickUpCharge(state, unit.id, rules);
     } else if (goal.cut) {
       if (SB.checkCutLine(state, unit, rules).ok) return S.cutLine(state, unit.id, rules);
-    } else if (SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit, map)).ok) {
-      // TRAIN=1 (M34): on the goods train's target he holds his charge until
-      // it would go off within the train's window, standing where he is.
-      const check = SB.checkPlaceCharge(state, unit, rules, pencilFor(state, unit, map));
-      const early = TRAIN && rules.train && check.objective.kind === rules.train.objective
-        && state.turn + check.fuse - 1 < rules.train.turn - rules.train.window;
-      if (!early) return S.placeCharge(state, unit.id, rules, pencilFor(state, unit, map));
-      if (U.checkHide?.(unit, rules)?.ok) return S.hideUnit(state, unit.id, rules);
-      return null;
+    } else {
+      const pencil = pencilFor(state, unit, map, assign);
+      const check = pencil === WAIT ? { ok: false } : SB.checkPlaceCharge(state, unit, rules, pencil);
+      if (check.ok) {
+        // TRAIN=1 (M34): on the goods train's target he holds his charge until
+        // it would go off within the train's window, standing where he is.
+        const early = TRAIN && rules.train && check.objective.kind === rules.train.objective
+          && state.turn + check.fuse - 1 < rules.train.turn - rules.train.window;
+        if (!early) return S.placeCharge(state, unit.id, rules, pencil);
+        if (U.checkHide?.(unit, rules)?.ok) return S.hideUnit(state, unit.id, rules);
+        return null;
+      }
     }
   }
   if (FIRE === 'always') { const fired = returnFire(state, unit, map); if (fired) return fired; }
@@ -368,7 +459,7 @@ function actFor(state, unit, map) {
   }
   // KNIFE=1 (M12b): any man beside an enemy that cannot see him knifes it,
   // as a player would who noticed. The bot never goes looking for one.
-  if (KNIFE) {
+  if (KNIFE && !(SENSE && SB.inBlast(SB.blastHexesThisTurn(state, rules), unit))) {
     for (const e of state.enemies) if (U.checkKnife(unit, e, rules).ok) return S.knifeEnemy(state, unit.id, e.id, rules);
   }
   if (unit.ap <= 0) return null;
@@ -409,13 +500,17 @@ function actFor(state, unit, map) {
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
       const left = SB.lastTurn(state, rules) - state.turn;
       const done = MI.winMet(state, rules) || !assign.has(unit.id);
-      const urgency = done ? Math.min(1, left / 6) : Math.min(1, Math.max(0.2, (left - 8) / 6));
+      // The tidy man (M42) would rather lose a turn than be seen, to the last turn of the night.
+      const urgency = OPTS.tidy ? (left > 0 ? 1 : 0.2) : done ? Math.min(1, left / 6) : Math.min(1, Math.max(0.2, (left - 8) / 6));
       if (r.spotted && !unit.inContact) score += 45 * urgency;
       if (r.shot === 'hit') score += 400;
       if (r.shot === 'pinned') score += 60 * urgency;
       if (r.spotted && unit.inContact && !r.shot) score += 5;
       if (hide) score += 2;
-      if (exfil) score -= 1000;
+      // A careful man does not walk out to a boat under an enemy's eye while
+      // there is another turn to do it in (M42: the coast watcher sweeps).
+      const waits = exfil && !OPTS.naive && rules.exfil?.opensTurn && r.spotted && !unit.inContact && left > 0;
+      if (exfil && !waits) score -= 1000;
       if (!best || score < best.score) best = { score, c, plan, hide, shot: r.shot };
     }
   }
@@ -452,13 +547,15 @@ function play(seed, runId) {
   let state = S.createInitialState(roster, traits, rules, map0, seed);
   state = S.jump(S.chooseDropRun(state, map0, runId), map0, rules);
   let bridgeTurn = null;
-  const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0, chutes: 0, reinforced: 0 };
+  const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0, chutes: 0, reinforced: 0, canisters: 0, bodies: 0, bangs: 0, alarmedTurn: null, beachTurn: null, by: {}, spotted1: 0, slipsBefore: 0 };
+  const top = rules.alert.states.at(-1).from;
   // How the stick came down: hurt in the water, or a bad landing that costs turns.
   const landings = state.report.filter((e) => e.kind === 'landed');
   ev.wet = landings.filter((e) => e.outcome === 'wounds').length;
   ev.bad = landings.filter((e) => e.outcome === 'bad').length;
   while (!state.outcome) {
     state = playTurn(state);
+    if (TRACE_ON) console.log(`turn ${state.turn - 1}: ${(state.report ?? []).map((e) => `${e.kind}${e.label ? ` ${e.label}` : ''}${e.unitName ? ` ${e.unitName}` : ''}${e.enemyLabel ? ` by ${e.enemyLabel}` : ''}${e.q !== undefined ? ` (${e.q},${e.r})` : ''}`).join(' · ')}\n   men ${state.units.map((u) => `${u.shortName}${u.out ? ' out' : u.dead ? ' dead' : ` (${u.q},${u.r})${u.charges ? ` c${u.charges}` : ''}`}`).join(', ')}\n   charges ${state.charges.map((c) => `(${c.q},${c.r}) f${c.fuse}`).join(' ')}  dial ${state.alert.points}  enemies ${state.enemies.map((e) => `${e.label.split(' ')[0]}(${e.q},${e.r})`).join(' ')}`);
     for (const e of state.report ?? []) {
       if (e.kind === 'spotted') ev.spotted++;
       if (e.kind === 'pinned') ev.pinned++;
@@ -470,7 +567,22 @@ function play(seed, runId) {
       if (e.kind === 'parachuteFound') ev.chutes++;
       // Squads a bang called up coming on (M21b, Hard).
       if (e.kind === 'reinforcements') ev.reinforced++;
+      // ALERT=1 (M42): the rest of what raises the dial.
+      if (e.kind === 'canisterFound') ev.canisters++;
+      if (e.kind === 'bodyFound') ev.bodies++;
+      if (e.kind === 'explosion') ev.bangs++;
+      // Who raised it, and whether the job was done yet.
+      const who = e.kind === 'spotted' ? e.enemyLabel : ['bodyFound', 'parachuteFound', 'canisterFound'].includes(e.kind) ? e.label : null;
+      if (e.kind === 'spotted' && e.first) ev.spotted1++;
+      if (who && (e.kind !== 'spotted' || e.first)) { const k = `${e.kind} ${who} ${bridgeTurn === null ? 'before' : 'after'}`; ev.by[k] = (ev.by[k] ?? 0) + 1; }
     }
+    if (ev.alarmedTurn === null && (state.alert.peak ?? 0) >= top) ev.alarmedTurn = state.turn;
+    // The turn the stick is at the shore with the job done: as many men as
+    // must get out, out or within three hexes of the way out. What the boat's turn is set by.
+    if (ev.beachTurn === null && MI.winMet(state, rules)
+      && state.units.filter((u) => u.out || (U.onBoard(u) && map0.exfil.some(([q, r]) => H.hexDistance(u, { q, r }) <= 3))).length >= rules.mission.minimumOut) ev.beachTurn = state.turn - 1;
+    // The dial's points before and at the job, bangs left out: the slips.
+    if (bridgeTurn === null && !MI.winMet(state, rules)) ev.slipsBefore = ev.spotted1 + ev.chutes + ev.canisters + ev.bodies;
     // When the job was done (the key keeps France's name for it).
     if (MI.winMet(state, rules) && bridgeTurn === null) bridgeTurn = state.turn;
     if (state.turn > 25) break;
@@ -488,13 +600,17 @@ function play(seed, runId) {
 }
 
 // The win's targets, so the bonus targets are the rest (M28).
+// TRACE=1 (M42) prints every turn of every game: the report, the men, the charges, the dial. For one seed and one run.
+const TRACE_ON = Boolean(process.env.TRACE);
+// SEED=<n> starts the batch at the nth seed (1 otherwise): with a count of 1, that one game.
+const FIRST_SEED = Number(process.env.SEED ?? 1);
 const WIN_IDS = new Set(MI.winTargets({ objectives: SB.createObjectives(map0) }, rules).targets.map((o) => o.id));
 const runs = map0.dropRuns.map((r) => r.id).filter((id) => !process.env.RUN || id === process.env.RUN);
 if (runs.length === 0) throw new Error(`unknown drop run "${process.env.RUN}"`);
 const summary = {};
 for (const run of runs) {
   const res = [];
-  for (let seed = 1; seed <= N; seed++) res.push(play(seed * 7919, run));
+  for (let seed = FIRST_SEED; seed < FIRST_SEED + N; seed++) res.push(play(seed * 7919, run));
   const count = (k) => res.filter((r) => r.kind === k).length;
   const avg = (f) => (res.reduce((n, r) => n + f(r), 0) / res.length).toFixed(2);
   const reasons = {};
@@ -514,6 +630,24 @@ for (const run of runs) {
     cleanPct: `${((100 * res.filter((r) => r.clean).length) / N).toFixed(0)}%`,
     alarmedPct: `${((100 * res.filter((r) => (r.peak ?? 0) >= rules.alert.states.at(-1).from).length) / N).toFixed(0)}%`,
   };
+  if (process.env.ALERT) {
+    const wins = res.filter((r) => r.kind === 'success');
+    const top = rules.alert.states.at(-1).from;
+    const pct = (n, of) => (of ? `${((100 * n) / of).toFixed(0)}%` : '-');
+    const mean = (list, f) => (list.length ? (list.reduce((n, r) => n + f(r), 0) / list.length).toFixed(1) : '-');
+    summary[run].alert = {
+      sightings: avg((r) => r.spotted1), chutes: avg((r) => r.chutes), canisters: avg((r) => r.canisters), bodies: avg((r) => r.bodies), bangs: avg((r) => r.bangs),
+      winsBelow: pct(wins.filter((r) => (r.peak ?? 0) < top).length, wins.length),
+      slips: mean(wins, (r) => r.spotted1 + r.chutes + r.canisters + r.bodies),
+      slipsBefore: mean(wins, (r) => r.slipsBefore),
+      slips3: pct(wins.filter((r) => r.spotted1 + r.chutes + r.canisters + r.bodies <= 3).length, wins.length),
+      oneBang: pct(wins.filter((r) => r.bangs === 1).length, wins.length),
+      beforeJob: pct(res.filter((r) => r.alarmedTurn !== null && (r.bridgeTurn === null || r.alarmedTurn < r.bridgeTurn)).length, N),
+      beachTurn: mean(res.filter((r) => r.beachTurn !== null && r.bridgeTurn !== null), (r) => r.beachTurn),
+      winBeachTurn: mean(wins.filter((r) => r.beachTurn !== null), (r) => r.beachTurn),
+      by: (() => { const all = {}; for (const r of res) for (const [k, n] of Object.entries(r.by)) all[k] = (all[k] ?? 0) + n; return Object.entries(all).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${(n / N).toFixed(2)}`); })(),
+    };
+  }
 }
 if (AS_JSON) {
   console.log(JSON.stringify({ strategy: STRATEGY, seeds: N, patch: DATA_OVERRIDE, summary }, null, 1));
@@ -522,6 +656,8 @@ if (AS_JSON) {
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
       + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}${rules.scoring.salvo ? `  salvo ${v.salvoPct}` : ''}${rules.train ? `  train ${v.trainPct}` : ''}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
+    if (v.alert) console.log(`      dial: sightings ${v.alert.sightings}  chutes ${v.alert.chutes}  canisters ${v.alert.canisters}  bodies ${v.alert.bodies}  bangs ${v.alert.bangs}\n      wins: below ${rules.alert.states.at(-1).label} ${v.alert.winsBelow}  one bang ${v.alert.oneBang}  slips ${v.alert.slips} (${v.alert.slipsBefore} before the job), three or fewer ${v.alert.slips3}  |  ${rules.alert.states.at(-1).label} before the job ${v.alert.beforeJob}  |  stick at the shore, turn ${v.alert.winBeachTurn}`);
+    if (v.alert && process.env.ALERT === 'who') console.log(`      who: ${v.alert.by.join(' · ')}`);
     if (process.env.SCORES) console.log(`      winning scores, lowest / quartiles / highest: ${v.winScores.join(' / ')}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
   }
