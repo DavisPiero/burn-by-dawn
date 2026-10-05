@@ -326,17 +326,18 @@ const TERRAIN_ART = {
   pen: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-pen' },
   aircraft: { base: 'paper', tint: ['ochre', 0.3], motif: null },
   camp: { base: 'paper', motif: 'terrain-camp', variants: 2, building: true },
-  // The winter hills (SPEC.md §14, M41): a pale wash of the cold blue over the
-  // paper where the desert has its ochre, the ravine the blue darkened with
+  // The winter hills (SPEC.md §14, M41): a wash of the cold blue over the
+  // paper where the desert has its ochre (0.18 since M43; at 0.1 the slopes
+  // read grey, not cold, beside the plough's bare paper), the ravine the blue darkened with
   // ink as the wadi is, the crags in ink. The plough and the beach stay bare
   // paper, and the sea is the canal's blue. No new colour.
-  hillside: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-hillside', variants: 3, sparse: 0.6 },
-  crag: { base: 'paper', tint: ['blue', 0.1], area: { tint: ['ink', 0.3], outline: 1.8 }, motif: 'terrain-crag', variants: 2 },
-  ravine: { base: 'paper', tint: ['blue', 0.1], area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
+  hillside: { base: 'paper', tint: ['blue', 0.18], motif: 'terrain-hillside', variants: 3, sparse: 0.6 },
+  crag: { base: 'paper', tint: ['blue', 0.18], area: { tint: ['ink', 0.3], outline: 1.8 }, motif: 'terrain-crag', variants: 2 },
+  ravine: { base: 'paper', tint: ['blue', 0.18], area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
   terrace: { base: 'paper', tint: ['green', 0.14], motif: 'terrain-terrace', variants: 2 },
-  olives: { base: 'paper', tint: ['blue', 0.1], area: { tint: ['green', 0.1], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-olives', variants: 3 },
+  olives: { base: 'paper', tint: ['blue', 0.18], area: { tint: ['green', 0.1], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-olives', variants: 3 },
   plough: { base: 'paper', motif: 'terrain-plough', variants: 2 },
-  aqueduct: { base: 'paper', tint: ['blue', 0.1], motif: null },
+  aqueduct: { base: 'paper', tint: ['blue', 0.18], motif: null },
   arch: { base: 'paper', tint: ['ink', 0.1], motif: 'terrain-arch' },
   shingle: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-shingle', variants: 2 },
   rocks: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-rocks', variants: 2 },

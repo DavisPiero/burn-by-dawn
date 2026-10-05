@@ -4,7 +4,8 @@ This is §14 of the specification, kept in a file of its own, as MISSION-AIRFIEL
 §13. It is as authoritative as SPEC.md. Section numbers in it (§6, §10) are SPEC.md's.
 
 **Specified 5 Oct 2026 (M39). Playable since M41d (6 Oct 2026, the operator's): picked
-from the contents page, with its painted panel. Balanced by the bot at M42.** Its two rules are in the engine and written in SPEC.md (§9 Supply
+from the contents page, with its painted panel. Balanced by the bot at M42; its words,
+sounds and art hand-off at M43.** Its two rules are in the engine and written in SPEC.md (§9 Supply
 canisters, §10 The way out on a timetable); its numbers are here, set at M42 unless it
 says the operator chose them. The words and names are placeholder
 copy for the operator to reword. Once the mission is playable this file says how things
@@ -101,9 +102,10 @@ sapper drops two charges on his hex. Whoever carries a charge can set it.
 ### The ground
 
 New terrain, as data in `terrain.json` and drawn in `theme.js`. Only this map has these
-types, so no code asks which mission is on. Its wash is for the art milestone (M43); a
-proposal is a cold **slate blue** for rock and winter ground, as the desert's ochre is
-for sand, with every colour that means something left alone.
+types, so no code asks which mission is on. Its wash is the palette's **cold blue**,
+thin over the paper, for rock and winter ground, as the desert's ochre is for sand
+(ART-DIRECTION.md, Colour): no new colour, and every colour that means something left
+alone.
 
 | Terrain | Move cost | Cover | Blocks sight | Notes |
 |---|---|---|---|---|
@@ -275,26 +277,34 @@ the board gets out, boat or no boat. The back page's words for it are the missio
 
 ### Its words, sounds and pictures
 
-For M43, all of it data in `missions.json` and the map. Placeholder copy:
+All of it data in `missions.json` and the map (M43). The copy is placeholder for the
+operator to reword.
 
-- **The orders** say the two rules in a line each: where the charges are ("The charges
-  are in the CANISTERS: 2 in each. Nobody jumps with one") and when the boat is ("The
-  BOAT is in on turn 15 and gone at dawn. Not before").
+- **The orders** say the two rules in a line each, from the rules' own numbers: "The
+  BOAT is in on turn 15 and stays 3 turns. There is no way out before it", with how to
+  signal it, and "The charges are in the 3 CANISTERS, 2 in each. Nobody jumps with one."
 - **The tagline**: SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT.
-- **The garrison's chips are still the German ones.** Italian chips are asked for in
-  ART-PROMPTS.md (Priority 19); they need a per-mission folder for enemy chips wired
-  first, as the men's portraits have (M43).
-- **The garrison's cries** are Italian (ALLARME!, CHI VA LÀ?, MADONNA!): in February
-  1941 the aqueduct's guards were. The other two missions' are German.
+- **The garrison is Italian**: in February 1941 the aqueduct's guards were. Its cries
+  are (ALLARME!, CHI VA LÀ?, MADONNA!), where the other two missions' are German, and
+  its chips have a folder of their own (`enemyChips`: `assets/enemies/italian`), tried
+  type by type before the usual one. **Until the Italian chips are painted
+  (ART-PROMPTS.md Priority 19) it wears the German ones.**
 - **The contents page** keeps its line: "A great aqueduct in the mountains that wants
   every charge you carry, and a boat on the coast that will not wait."
 - **The diversion** is the RAF again, as it was in 1941: BOMBERS OVER FOGGIA.
-- **The six's lines**: only those that name France's ground change, as on the airfield.
-- **To be drawn in code first, then painted** (ART-PROMPTS.md at M43): the canister, the
-  boat, the aqueduct and its arches, the eleven terrain chips, a title card, a contents
-  panel. A winter set of portraits is the operator's to offer, as the desert's was.
-- **Sounds**: the canister's thump, surf on the beach, the boat's oars; the back page's
-  own two if the operator records them.
+- **The six's lines**: only those that name France's ground change, as on the airfield
+  (Fitch's olives, Vance's aqueduct, Barrow's trees in Italy), and Nunn's, who carries
+  no spare down here: "Nothing to carry down, Sarge. Where's that canister?"
+- **Sounds**, made in code until recordings are found (ART-PROMPTS.md Priority 23): the
+  canisters' thump as the stick lands, the boat's oars far off the turn it is sighted
+  or signalled, and oars and surf the turn it lands. The back page is France's bells
+  and toll.
+- **Pictures.** Drawn in code (M41): the canister, the boat, the aqueduct and its
+  arches, the road bridge, the eleven kinds of ground. Painted: its contents panel.
+  Asked of the operator in ART-PROMPTS.md, each with a slot that falls back until its
+  file is there: the Italian chips (19), its own title card (20; France's until then),
+  the six in winter kit (21, optional; `portraits`: `assets/portraits/winter`), and
+  references to redraw the board's pictures from (22).
 
 ### Balance
 
@@ -349,4 +359,4 @@ on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at
 | **M40** | The engine: canisters and the exfil's opening turn, as data, off in both missions; France's and the airfield's bot output unchanged, byte for byte |
 | **M41** | The map as a draft (`?mission=aqueduct`): terrain drawn in code, the garrison, the objectives, the boat as scenery; the bot taught to fetch and to wait |
 | **M42** | Balance (done): the map and beats redrawn to the alert budget, the boat's turn and dawn measured and kept, the levels against the §10 targets, the rating's bands |
-| **M43** | Words, sounds and the art hand-off; `playable` on the operator's word |
+| **M43** | Words, sounds and the art hand-off (done): the garrison's own chip folder, the six's lines, three made sounds, slots for its title card and winter portraits, the art asked for |

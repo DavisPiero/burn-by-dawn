@@ -83,6 +83,15 @@ Normal 81 / 74 / 77, Hard 33 / 15 / 37. The hunter bot is still not below carefu
 **M42c**: the squad for a body stands where the body was found (the operator's), four
 at most; Normal 79 / 74 / 76, Hard 31 / 15 / 35; the hunter is still not below careful.
 
+**M43** (the aqueduct's words, sounds and art hand-off): a folder of its own for its
+garrison's chips, Italian once painted; the six's lines for Italy; the canisters' thump
+and the boat's oars and surf, made in code; slots for its own title card and winter
+portraits; the winter ground a little colder. **Phase 4 is done as planned.** Open, and
+the operator's: the paintings and recordings in ART-PROMPTS.md (Priorities 19 to 23),
+the placeholder copy, and the two balance questions above (the hunter; Hard's North).
+Tests: 192 headless, 194 in tests.html. **Next:** the operator's play and art; then a choice from "More
+missions after that" or "Parked" below.
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is

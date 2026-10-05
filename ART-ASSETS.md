@@ -76,7 +76,9 @@ Names: holloway, fitch, vance, barrow, speers, nunn — the trooper's `id` in
 A mission may have the six in its own kit (M29b): `portraits` in `data/missions.json` names
 a folder with the same file names, tried before `/assets/portraits/` man by man. The
 airfield's is `/assets/portraits/desert/` (ART-PROMPTS.md Priority 12): the same sizes and
-rules, on a desert-ochre background.
+rules, on a desert-ochre background. The aqueduct's is `/assets/portraits/winter/` (M43,
+ART-PROMPTS.md Priority 21), empty until the operator offers a winter set: until then the
+aqueduct shows the usual six.
 
 A trooper with no portrait of his own is drawn with `portrait-fallback-full` and
 `portrait-fallback-chip`, which live in code and are not to be supplied: they are what
@@ -99,6 +101,11 @@ also had a drawn face of his own in code; the painted ones replaced them, so the
 | `counter-enemy-patrol.svg` | 56 x 56 | foot patrol |
 | `counter-enemy-vehicle.svg` | 56 x 56 | Kübelwagen or motorcycle. M29: the airfield's perimeter car (enemy type `vehicle`), a Kübelwagen from the side with two helmets aboard. *Drawn by code.* Or a painted chip, `counter-enemy-vehicle.png` |
 | `counter-enemy-reserve.svg` | 56 x 56 | the reserve squad, arrives at Alarmed |
+
+A mission may have its own garrison's chips (M43): `enemyChips` in `data/missions.json`
+names a folder with the same file names, tried before `/assets/enemies/` type by type. The
+aqueduct's is `/assets/enemies/italian/` (ART-PROMPTS.md Priority 19): until a file is
+there that type wears the usual, German, chip.
 
 Counters are drawn in a 56px viewBox and printed at 64px inside an 80px hex (M7b, so the
 name strip reads at board scale); the hex edge stays visible underneath. **Do not draw a
@@ -277,7 +284,9 @@ size and format, dropped beside it under its own name. The contents page opens u
 the game's card, France's. The airfield's will be `assets/title/title-card-airfield.jpg`
 (ART-PROMPTS.md Priority 13), wired in M31: until the file is there the airfield shows
 France's. If it is painted without the title, set `titleCardLettered: false` on the
-airfield in `data/missions.json` and code sets BURN BY DAWN over it.
+airfield in `data/missions.json` and code sets BURN BY DAWN over it. The aqueduct's is
+`assets/title/title-card-aqueduct.jpg` (M43, ART-PROMPTS.md Priority 20), wired the same
+way: France's card until the file is there.
 
 **Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 150 x 100; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
 id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:2,
@@ -356,6 +365,9 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `bugle.mp3` | the airfield's back page, mission accomplished (M31b): bright and triumphant, not a Last Post; supplied (M31c) as a drum roll and trumpet fanfare | ~2–4 s |
 | `siren.mp3` | the airfield's back page, withdrawn or failed (M31): an air-raid siren close by, winding up, wailing and winding down | ~5–6 s |
 | `train.mp3` | France's goods train coming onto the board (M35): a steam whistle far off, one long blast and a short one, then the engine chuffing away. **Not supplied: made in code** (ART-PROMPTS.md Priority 18) | ~3 s |
+| `canister-thump.mp3` | the aqueduct's supply canisters coming down (M43), as the last canopy lands: a steel drum hitting hard ground, a dull thud and a clank; the cue plays it three times. **Not supplied: made in code** (ART-PROMPTS.md Priority 23) | ~0.3 s |
+| `oars.mp3` | the aqueduct's boat (M43): quiet as it is sighted or answers the signal, nearer as it lands. Three strokes of a pulling boat, rowlocks creaking, blades dipping. **Not supplied: made in code** | ~3 s |
+| `surf.mp3` | under the oars as the boat lands (M43): one small wave breaking on shingle and dragging back. **Not supplied: made in code** | ~2.5 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.
