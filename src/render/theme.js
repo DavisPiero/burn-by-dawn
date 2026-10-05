@@ -1133,7 +1133,7 @@ export const CUE = {
 // a man standing on it. `cue`: once the stick is down, each is ringed and
 // named in blue until the player first selects a man.
 export const CANISTER = {
-  dots: { radius: 4.6, pitch: 11.5, y: 38, fill: PALETTE.fire, stroke: PALETTE.ink, strokeWidth: 1.2 },
+  dots: { radius: 4.6, pitch: 11.5, y: 31, fill: PALETTE.fire, stroke: PALETTE.ink, strokeWidth: 1.2 },
   cue: { colour: PALETTE.leader, halo: PALETTE.paper, ringRadius: 30, ringWidth: 3.5, size: 15, words: 'CHARGE CANISTER', advance: 0.7, gap: 8 },
 };
 

@@ -400,7 +400,10 @@ function drawRoadArt(layer, map) {
   const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
   let d = '';
   for (const line of map.roadArt ?? []) {
-    const points = line.map(([q, r]) => axialToPixel(q, r, map.hexSize));
+    // A plain list of hexes, or { through, nudge: [x, y] } in hex radii, to
+    // lay the line where a picture's own road is (M42c: the aqueduct's channel).
+    const [nx, ny] = (line.nudge ?? [0, 0]).map((v) => v * map.hexSize);
+    const points = (line.through ?? line).map(([q, r]) => axialToPixel(q, r, map.hexSize)).map((p) => ({ x: p.x + nx, y: p.y + ny }));
     if (points.length < 2) continue;
     d += `M${f(points[0])} `;
     for (let i = 1; i < points.length - 1; i++) d += `L${f(mid(points[i - 1], points[i]))} Q${f(points[i])} ${f(mid(points[i], points[i + 1]))} `;

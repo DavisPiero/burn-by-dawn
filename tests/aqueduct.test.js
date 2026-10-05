@@ -272,27 +272,33 @@ export default [
     equal(lastTurn({ turn: 1 }, hard), 16, 'so Hard\'s night ends with turn 16');
   }],
 
-  ['an enemy found dead calls up a squad (M42b), while a post is left and the road bridge stands; in France a body calls nobody', async () => {
+  ['an enemy found dead calls up a squad to stand where he fell (M42b, M42c), up to the limit and while the road bridge stands; in France a body calls nobody', async () => {
     const { map, rules, traits, roster } = await loadAqueduct();
-    equal(rules.bodyFound.reinforcements, 1, 'one squad a body');
+    equal(`${rules.bodyFound.reinforcements} ${rules.bodyFound.limit}`, '1 4', 'one squad a body, four in a night');
     const start = { ...createInitialState(roster, traits, rules, map, 1), phase: 'play', turn: 3 };
     const away = start.units.map((u, i) => ({ ...u, q: 14 + (i % 2), r: 6 + (i % 3), landed: true }));
     const patrol = start.enemies.find((e) => e.route);
-    const dead = (state, n) => ({ ...state, units: away, bodies: Array.from({ length: n }, (_, i) => ({ enemyId: `gone-${i}`, name: 'Sentry', q: patrol.q, r: patrol.r, found: false })) });
+    const dead = (state, n) => ({ ...state, units: away, bodies: Array.from({ length: n }, (_, i) => ({ enemyId: `gone-${i}`, name: 'Sentry', q: patrol.q, r: patrol.r, found: false, facing: 5 })) });
     const found = runEnemyPhase(dead(start, 1), map, rules);
     assert(found.events.some((e) => e.kind === 'bodyFound'), 'the patrol finds it');
     assert(found.events.some((e) => e.kind === 'reinforcementsCalled' && e.body && e.count === 1), 'and a squad is called for it');
-    equal(found.state.reinforcementsDue, 1, 'due next turn');
+    equal(found.state.bodySquadsDue.length, 1, 'due next turn');
+    equal(found.state.reinforcementsDue, 0, 'not one of the bang\'s squads: the beach posts are theirs');
     const on = runEnemyPhase({ ...found.state, turn: 4 }, map, rules);
-    assert(on.events.some((e) => e.kind === 'reinforcements'), 'it comes on down the road in the next enemy phase');
-    // No more squads than there are posts for them.
-    const many = runEnemyPhase(dead(start, 5), map, rules);
-    equal(many.state.reinforcementsDue, map.reinforcements.posts.length, 'five bodies, a squad for each post and no more');
+    assert(on.events.some((e) => e.kind === 'reinforcements' && e.toBody), 'it comes on down the road in the next enemy phase');
+    const squad = on.state.enemies.find((e) => /body/.test(e.id));
+    equal(`${squad.guard.q},${squad.guard.r} ${squad.homeFacing}`, `${patrol.q},${patrol.r} 5`, 'making for where the body lay, to look the way the dead man looked');
+    equal(`${on.state.bodySquadsDue.length} ${on.state.bodySquadsSent}`, '0 1', 'and it is counted');
+    // No more squads than the limit, in a night.
+    const many = runEnemyPhase(dead(start, 6), map, rules);
+    equal(many.state.bodySquadsDue.length, 4, 'six bodies, four squads');
+    const spent = runEnemyPhase({ ...dead(start, 1), bodySquadsSent: 4 }, map, rules);
+    equal(spent.state.bodySquadsDue.length, 0, 'four already sent: no more');
     // One of ours found dead calls nobody, and nor does anything once the road is cut.
     const ours = runEnemyPhase({ ...dead(start, 0), bodies: [{ unitId: 'x', name: 'DUTCH', q: patrol.q, r: patrol.r, found: false }] }, map, rules);
-    equal(ours.state.reinforcementsDue, 0, 'a man of ours found: no squad');
+    equal(ours.state.bodySquadsDue.length, 0, 'a man of ours found: no squad');
     const cut = runEnemyPhase({ ...dead(start, 1), reserveCancelled: true }, map, rules);
-    equal(cut.state.reinforcementsDue, 0, 'the road bridge down: no squad');
+    equal(cut.state.bodySquadsDue.length, 0, 'the road bridge down: no squad');
     const france = missionRules(missionById(validateMissions(await loadJson('data/missions.json')), null), await loadJson('data/rules.json'));
     equal(france.bodyFound.reinforcements, 0, 'France: none');
   }],
@@ -300,6 +306,7 @@ export default [
   ['the drawn roads (M42b) are art: no hex under them is a track, and the farm is off the aqueduct\'s east end', async () => {
     const { map } = await loadAqueduct();
     assert(map.roadArt.length === 3, 'three drawn roads');
+    equal(map.roadArt[1].nudge[1], -0.2, 'the two beside the aqueduct lifted to its channel');
     for (const [q, r] of [[1, 3], [0, 3], [-1, 3], [8, 3], [9, 2], [10, 1], [11, 0]]) assert(terrainIdAt(map, q, r) !== 'track', `(${q},${r}) is not a track`);
     equal(terrainIdAt(map, 8, 3), 'hillside', 'the hex the way leaves the aqueduct by is open hillside');
     equal(terrainIdAt(map, 8, 4), 'farmhouse', 'the farmhouse that stood on it is down and to the right');

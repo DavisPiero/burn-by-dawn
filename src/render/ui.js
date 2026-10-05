@@ -385,6 +385,9 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     // any other key or click backs out.
     const button = html('button', 'btn', boldKeys(briefing.confirm.label));
     button.type = 'button';
+    // The button over the way back, each on a line of its own (M42c, the
+    // operator's: the button lay over NOT YET).
+    foot.classList.add('confirming');
     button.addEventListener('click', (event) => {
       event.stopPropagation();
       briefing.confirm.onConfirm();
@@ -604,7 +607,7 @@ export function describeEvent(event, place) {
     }[event.what];
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
-    case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for the way to the exfil.`;
+    case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for ${event.toBody ? 'where the body was found' : 'the way to the exfil'}.`;
     case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements ${event.body ? 'for the body it found' : `after the ${event.label}`}: on next turn.`;
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;

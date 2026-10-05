@@ -138,7 +138,7 @@
         "canisters": { "count": 3, "charges": 2, "scatterWeights": [0, 4, 4, 2, 1] },
         "exfil": { "opensTurn": 15, "openFor": 3, "call": { "apCost": 1, "leadTurns": 2 } },
         "reserve": { "replacements": 1 },
-        "bodyFound": { "reinforcements": 1 },
+        "bodyFound": { "reinforcements": 1, "limit": 4 },
         "patrols": { "setOutTurn": 2 },
         "objectives": {
           "aqueduct": { "label": "Aqueduct", "chargesNeeded": 4, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 1, "score": 10, "setsOff": false },

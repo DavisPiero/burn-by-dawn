@@ -72,6 +72,9 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     reserveCancelled: false,
     // Squads called up by a bang and not yet on, and how many posts are taken (M21b).
     reinforcementsDue: 0,
+    // Squads called for a body found (M42c): where each is to stand, and how many have come.
+    bodySquadsDue: [],
+    bodySquadsSent: 0,
     reinforcementsSent: 0,
     // SPEC.md §7: the objectives as they stand, and charges set and burning:
     // { objectiveId, q, r, fuse, length, unitId } (`length`, M30: the fuse it was set with). `explosions` counts bangs, for the
@@ -459,10 +462,17 @@ export function killEnemy(state, unitId, enemyId, map, rules) {
   const fired = {
     ...spend(state, unitId, check.cost),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
-    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
+    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, facing: restFacing(enemy) }],
   };
   const shot = reserveLost(makeNoise(fired, 'silenced', unit, alert, rules).state, enemy, rules);
   return { ...shot, speech: say(shot.speech, unitId, unit.dialogue?.onKill ?? null) };
+}
+
+// The way a dead enemy looked at rest, kept on his body (M42c): a squad sent
+// for him stands where he fell and looks the same way. A post's first facing,
+// a walker's as he was.
+function restFacing(enemy) {
+  return enemy.speed === 0 ? (enemy.sweep?.[0] ?? enemy.homeFacing ?? enemy.facing) : enemy.facing;
 }
 
 /**
@@ -481,7 +491,7 @@ export function knifeEnemy(state, unitId, enemyId, rules) {
     ...spent,
     speech: say(spent.speech, unitId, unit.dialogue?.onKill ?? null),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
-    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, knifed: true }],
+    bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, knifed: true, facing: restFacing(enemy) }],
   };
 }
 

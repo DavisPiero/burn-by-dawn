@@ -64,8 +64,8 @@
   "_reserve": "SPEC.md §6 Exfil watched, M41b (the operator's). `replacements`: where a mission makes its reserve squad killable (its enemies patch), how many more squads come, one for each killed, while the garrison is Alarmed and nothing has stopped the reserve. 0 here: France's and the airfield's reserve cannot be killed.",
   "reserve": { "replacements": 0 },
 
-  "_bodyFound": "SPEC.md §6 Reinforcements, M42b (the operator's: on the aqueduct, killing every enemy was the best way to play). `reinforcements`: how many squads the garrison calls up when it finds one of its own dead, as it does for a bang: on in the next enemy phase, each to the next post, while a post is left for one, and none once a target's payoff has stopped the reserve. 0 here: France and the airfield are as they were.",
-  "bodyFound": { "reinforcements": 0 },
+  "_bodyFound": "SPEC.md §6 Reinforcements, M42b (the operator's: on the aqueduct, killing every enemy was the best way to play). `reinforcements`: how many squads the garrison calls up when it finds one of its own dead, as it does for a bang: on in the next enemy phase, each to stand where its body was found, looking the way the dead man looked (M42c: they went to the beach posts, and a garrison that had been killed stayed killed), `limit` of them at most in a mission, and none once a target's payoff has stopped the reserve. 0 here: France and the airfield are as they were.",
+  "bodyFound": { "reinforcements": 0, "limit": 0 },
 
   "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27).",
   "mission": { "minimumOut": 3, "win": { "condition": "destroyPrimary" } },
