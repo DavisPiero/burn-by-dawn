@@ -192,11 +192,11 @@
   ],
   "exfilArt": "boat",
   "boatRun": {
-    "from": [12, 11],
+    "from": [11, 11],
     "to": [3, 12]
   },
-  "exfilNoteNudge": [0.2, -0.4],
-  "dropCueAt": [10.5, 5],
+  "exfilNoteNudge": [0.2, -1.7],
+  "dropCueAt": [11.8, 2.5],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
   "places": [
     {

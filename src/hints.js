@@ -123,7 +123,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     // Where the way out opens on a turn (M41) and has not yet: when, and what to do till then.
     const opens = boatLands(state, rules);
     if (opens !== null && state.turn < opens) hints.push(`${job}. The boat is in on turn ${opens}, in ${opens - state.turn} ${plural(opens - state.turn, 'turn', 'turns')}: get ${need} ${plural(need, 'man', 'men')} down to the shore and lie up out of sight until it comes.`);
-    else hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
+    else hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil ${rules.exfil?.openFor ? 'before the boat goes' : 'before dawn'}: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
   }
 
   // Charges burning: the soonest on each objective.

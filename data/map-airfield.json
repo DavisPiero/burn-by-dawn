@@ -532,6 +532,7 @@
       { "id": "west", "from": [1, -2], "to": [-7, 14] }
     ]
   },
+  "_rows": "M41b, the operator's (the West run was the least fun: wire, dunes and ridge hemmed it in): a second way through the west wire, level with the strip, and the escarpment a hex thinner on the three rows beside it, with a hex of dune given to sand above.",
   "_namesInPlay": "M41b, art only (the operator's: the board was all words in play). false: the targets' names are printed before the jump and under the mouse; once the stick is down the aircraft keep their stars and nothing else is named.",
   "namesInPlay": false,
   "exfilArt": "trucks",
@@ -599,11 +600,11 @@
     "UUUUUSCCSSTSCCSSCS",
     "UUUUUSSCCSTSCSSCCS",
     "UUSXXXXXXXTXXXXXSS",
-    "UUUXTTTTTTTTTTTTKK",
+    "UUSXTTTTTTTTTTTTKK",
     "URSXTSPSPSEPSPSTKK",
-    "RRSXTSASASSASASTKK",
-    "RRSXTLLLLLLLLLLTTT",
-    "RRSXTSASASDASASTKK",
+    "RSSXTSASASSASASTKK",
+    "RSSSTLLLLLLLLLLTTT",
+    "RSSXTSASASDASASTKK",
     "RRSXTWPSPSSSPPETKK",
     "RRSXWWTTTTTTTTTTKK",
     "SSSWWXXXXXXXXXXXSS",
