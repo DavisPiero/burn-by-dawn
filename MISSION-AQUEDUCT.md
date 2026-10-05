@@ -181,6 +181,9 @@ to keep the dial down.
 - **Reinforcements**: the aqueduct going up calls **one squad** (Hard two) down the road
   to a post above the beach, in the enemy phase after the bang. They are patrols: they
   can be suppressed, knifed and killed.
+- **A body found calls a squad** (SPEC.md §6, `bodyFound.reinforcements` 1; the
+  operator's, M42b): the garrison finding one of its own dead sends for one, as the
+  bang does, while one of the three posts is left for it.
 - **None of them comes once the road bridge is down**, reserve or reinforcements: the
   exchange's payoff in France, by road instead of by telephone.
 
@@ -305,25 +308,30 @@ signals the boat or blows the road bridge unless `greedy`.
 
 | Level | Naive | Seeds | Target |
 |---|---|---|---|
-| Easy | **95 / 95 / 93** | 300 | 95 or more: Valley 2 under |
-| Normal | **81 / 83 / 80** | 300 | 75 to 90 |
-| Hard | **33 / 21 / 40** | 400 | 25 to 45: North 4 under |
+| Easy | **95 / 92 / 94** | 200 | 95 or more: North 3 under, Valley 1 |
+| Normal | **81 / 74 / 77** | 300 | 75 to 90: North 1 under |
+| Hard | **33 / 15 / 37** | 400 | 25 to 45: North 10 under |
 
-Normal, other styles (200 seeds): careful 91 / 96 / 90; tidy 84 / 87 / 70 (300); naive
-packing 79 / 85 / 83; greedy with planned timers 94 / 95 / 90, the Road Bridge down in
-87 to 93 games in 100.
+Since M42b (a squad for a body, cover on the plough, the farmhouse off the aqueduct's
+east end). Before it: 95 / 95 / 93, 81 / 83 / 80, 33 / 21 / 40. The naive bot knifes
+whoever it finds itself behind, so the squads are what the North run lost: they come
+in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 88;
+tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
 
 **Known and left for the operator:**
-- **The hunter check fails.** Kill-everything is level with careful play on Normal
-  (hunter 95 / 100 / 91 against 91 / 96 / 90, scoring three points more) and above it
-  on Hard (75 / 81 / 69 against 71 / 68 / 60). Six enemies, three of them posts that
-  turn their backs every other turn, are few enough to be cleared by turn 8, and a
-  cleared valley is quicker to work in than a watched one. With every man hunting
-  (`HUNTERS=all`) it collapses (31 / 7 / 57): the job is not done in time. Levers not
-  tried, each a design choice: a seventh enemy; a body found calling a squad as a bang
-  does; the posts sweeping less often.
-- **Hard's North run is under** (21): its plough is open ground under a garrison that
-  sees four hexes, and the squads come in through it.
+- **The hunter check still fails, with a squad for every body found.** Normal: hunter
+  96 / 99 / 88 against careful 91 / 93 / 88; Hard: 72 / 65 / 68 against 71 / 45 / 51
+  (before the rule: 95 / 100 / 91 against 91 / 96 / 90, and 75 / 81 / 69 against 71 /
+  68 / 60). Nearly three squads come in every hunter's game and it wins as often: they
+  march to posts above the beach and stand there with their backs to the hills, where
+  they are knifed in turn, and with the garrison dead few bodies are ever found. The
+  rule costs the careless more than the killer. Levers not tried: a squad called for a
+  body takes the dead man's place, not a beach post; a seventh enemy; posts that sweep
+  less often.
+- **Hard's North run is well under** (15). Cover on the plough (olives at three hexes,
+  a terrace at one) did not move it, with the rule or without: what loses it is the
+  squads coming in through its landing ground and a garrison Alarmed before the job in
+  two games in three.
 - **The Valley run's tidy bot wins least** (70) though its naive bot is level with the
   others: men who land in the torrent's bed lose turn 1 and the tidy bot waits for them.
 

@@ -97,6 +97,11 @@ board must read at a glance.
   the hexes it made, 300 ms a hex, coming on from off the board's edge and its tail
   running off the far one, and a wrecked car keeps to the line until it gets there,
   then is thrown off it.
+- **A road may be only drawn** (`roadArt` in a map, art only): a line through hexes'
+  centres, on or off the board, printed as the roads are over ground that is whatever
+  terrain it was. The aqueduct's: the road to the beach runs on past the exfil and off
+  the bottom of the map, and the way along the top of the aqueduct runs off the map to
+  the west and, a hex past its east end, away to the north-east.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
   water, the rest in italic, each nudged off its hex (`dx`, `dy`) to sit in what it names.
   The turn report uses them ("the field by Ferme Lebrun").
@@ -142,6 +147,10 @@ board must read at a glance.
   (the airfield's bowser's goes up, the Ju 52's beside it down). A `stampShift` (art
   only) moves a stamp always: the Rail Bridge's is three quarters of a hex lower, below
   the bridge, clear of the wreck and the train.
+- **A supply canister counts its charges in fire-orange dots**, one for each still in
+  it, as a man's counter counts his: under the middle of its hex and over any counter,
+  so they show with a man standing on it. They stand in for the satchel drawn where a
+  charge lies loose.
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all
@@ -249,8 +258,9 @@ board must read at a glance.
 - **Targets are ringed** in red marker pen, the primary twice, each with a hand-lettered
   note beside it (the primary's: PRIMARY TARGET! / BLOW IT WITH TWO CHARGES!, the count
   from its kind; the exchange's says a scout can cut its lines), and the exfil in green.
-  Each ring takes in the objective's name and is drawn under the names, charge points and
-  counters, as a pen mark on a map would be. Picking a run clears them. Where the win is
+  Each ring takes in the objective's name and is drawn **over the garrison's chips**
+  (the operator's, M42b: a chip on a ringed target cut the pen mark in two), kept to
+  the board, with the notes on top. Picking a run clears them. Where the win is
   any few of many (the airfield), each target's ring is tight and takes in its charge
   points too, so target and point read as one; where every target takes one charge, only
   the win's note says so, and a bonus target's note names it (BOWSER: BONUS +2). A map may move a note into clear ground (`noteNudge` on an
@@ -271,6 +281,9 @@ board must read at a glance.
   Jumping needs **Space** or a second click on the same run. Once the stick is down, every
   man who can act wears a gently throbbing red pen ring, with CLICK A MAN TO START in the
   middle of the men, until the player first selects a man; never again that game.
+  **With them, each supply canister is ringed in leader blue and lettered CHARGE
+  CANISTER** in the same blue, still, on whichever side of it is clearest of counters,
+  the other names, the start note and the board's edge.
 - **The drop is shown.** A Dakota flies the chosen line, in from off the board and on
   until it has left it, whatever the line's own ends, and each man's canopy opens where
   he jumps, drifts downwind to where the rules have already put him, lands and collapses
