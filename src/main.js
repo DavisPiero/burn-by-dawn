@@ -17,7 +17,7 @@ import {
 } from './state.js';
 import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, boatLands, checkSignalBoat, effectiveMap, inBlast, exfilOpen, isExfil, kindOf, lastTurn,
-  objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencils,
+  objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencilWithTheOthers, pencils,
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
@@ -1157,7 +1157,12 @@ function timerTin(unit, objective) {
       const base = rules.charges.fuseChoice?.min ?? rules.charges.fuseTurns;
       const his = choices[0]?.fuse ?? base;
       const trait = unit.traits.find((t) => t.hook === 'onPlaceCharge' && t.modifier?.stat === 'fuse') ?? unit.traits.find((t) => t.hook === 'onPlaceCharge');
-      return his === base ? null : `${unit.shortName}'s timers run ${Math.abs(base - his)} ${Math.abs(base - his) === 1 ? 'turn' : 'turns'} ${his < base ? 'shorter' : 'longer'} than the others'${trait?.name ? `: ${trait.name}` : ''}.`;
+      const hisOwn = his === base ? null : `${unit.shortName}'s timers run ${Math.abs(base - his)} ${Math.abs(base - his) === 1 ? 'turn' : 'turns'} ${his < base ? 'shorter' : 'longer'} than the others'${trait?.name ? `: ${trait.name}` : ''}.`;
+      // Which pencil makes one bang of it (M42): the one that goes off with
+      // the charges already burning on this target, the one offered first.
+      const together = pencilWithTheOthers(state, unit, rules);
+      const oneBang = together ? `${together.fuse} ${together.fuse === 1 ? 'turn' : 'turns'} goes off with the charges already set: one bang.` : null;
+      return [hisOwn, oneBang].filter(Boolean).join(' ') || null;
     })(),
     range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}`,
     pencils: choices.map((p) => {
