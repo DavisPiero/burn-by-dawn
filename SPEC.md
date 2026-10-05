@@ -569,9 +569,12 @@ called and when they come on.
 
 **A body found may call them too** (`bodyFound.reinforcements`; 0 in the files, 1 on
 the aqueduct, §14). Where a mission sets it, the garrison finding **one of its own
-dead** calls up that many squads, exactly as a bang does: on in the next enemy phase,
-each to the next post, while a post is left for one, and none once a target's payoff
-has stopped the reserve. One of our men found dead calls nobody. The knife's and the
+dead** calls up that many squads, as a bang does: on down the road in the next enemy
+phase, and none once a target's payoff has stopped the reserve. **Each goes to stand
+where its body was found**, looking the way the dead man looked at rest, so ground
+that has been cleared is garrisoned again; no more than `bodyFound.limit` of them in a
+mission (the aqueduct's: 4). The bang's squads keep the posts by the exfil. One of our
+men found dead calls nobody. The knife's and the
 kill's rollovers and the turn card's knife hint say so, and the turn report says when
 a squad is called for a body. It is what a kill costs later, where the alert alone was
 not cost enough.
@@ -993,9 +996,9 @@ comes after the current milestone is in `ROADMAP.md`.
 **None chosen.** M42 balanced the aqueduct (§14) and M42b built the operator's notes on
 it. Next is **M43**: the aqueduct's words, sounds and art hand-off (Italian enemy chips
 and the per-mission folder they need, the winter wash, the operator's rewording of the
-placeholder copy), after the operator has played M42b and said how a squad for a body
-feels: by the bot it does not yet put kill-everything below careful play, and Hard's
-North run is further under its target (`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
+placeholder copy), after the operator has played M42c and said how a squad for a body
+feels now that it takes the dead man's place: by the bot it still does not put
+kill-everything below careful play, and Hard's North run is well under its target (`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
 
 ### Done
 
@@ -1012,6 +1015,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M42c | A squad called for a body stands where the body was found; canister dots higher; the drawn roads beside the aqueduct lifted to its channel; the confirm cards' button above the way back |
 | M42b | The operator's notes on the aqueduct: a found enemy body calls a squad; cover on the plough; roads that are only drawn, off the bottom of the map and along the aqueduct; canisters ringed and named in blue at the start and their charges counted in dots; the target rings over the garrison's chips; labels moved |
 | M42 | The aqueduct balanced by the bot: eight pier feet, a mule track up the west bank, the West and Valley runs and three beats redrawn, the longest timer offered first and then the one that makes one bang, Hard's boat two turns, rating bands; the bot's `tidy` style and `ALERT=1` |
 | M41e | The airfield's west gap moved two rows north, level with the north pens: Hard's runs back inside the targets |

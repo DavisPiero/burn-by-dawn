@@ -181,9 +181,10 @@ to keep the dial down.
 - **Reinforcements**: the aqueduct going up calls **one squad** (Hard two) down the road
   to a post above the beach, in the enemy phase after the bang. They are patrols: they
   can be suppressed, knifed and killed.
-- **A body found calls a squad** (SPEC.md §6, `bodyFound.reinforcements` 1; the
-  operator's, M42b): the garrison finding one of its own dead sends for one, as the
-  bang does, while one of the three posts is left for it.
+- **A body found calls a squad** (SPEC.md §6, `bodyFound.reinforcements` 1, `limit` 4;
+  the operator's, M42b and M42c): the garrison finding one of its own dead sends for
+  one, and it comes down the road to **stand where the body was found**, looking as the
+  dead man looked. Four at most in a night.
 - **None of them comes once the road bridge is down**, reserve or reinforcements: the
   exchange's payoff in France, by road instead of by telephone.
 
@@ -308,26 +309,27 @@ signals the boat or blows the road bridge unless `greedy`.
 
 | Level | Naive | Seeds | Target |
 |---|---|---|---|
-| Easy | **95 / 92 / 94** | 200 | 95 or more: North 3 under, Valley 1 |
-| Normal | **81 / 74 / 77** | 300 | 75 to 90: North 1 under |
-| Hard | **33 / 15 / 37** | 400 | 25 to 45: North 10 under |
+| Easy | **95 / 93 / 93** | 200 | 95 or more: North and Valley 2 under |
+| Normal | **79 / 74 / 76** | 300 | 75 to 90: North 1 under |
+| Hard | **31 / 15 / 35** | 400 | 25 to 45: North 10 under |
 
-Since M42b (a squad for a body, cover on the plough, the farmhouse off the aqueduct's
-east end). Before it: 95 / 95 / 93, 81 / 83 / 80, 33 / 21 / 40. The naive bot knifes
+Since M42c (a squad for a body, standing where the body lay; cover on the plough; the
+farmhouse off the aqueduct's east end). Before M42b: 95 / 95 / 93, 81 / 83 / 80,
+33 / 21 / 40. The naive bot knifes
 whoever it finds itself behind, so the squads are what the North run lost: they come
-in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 88;
+in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 87;
 tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
 
 **Known and left for the operator:**
-- **The hunter check still fails, with a squad for every body found.** Normal: hunter
-  96 / 99 / 88 against careful 91 / 93 / 88; Hard: 72 / 65 / 68 against 71 / 45 / 51
-  (before the rule: 95 / 100 / 91 against 91 / 96 / 90, and 75 / 81 / 69 against 71 /
-  68 / 60). Nearly three squads come in every hunter's game and it wins as often: they
-  march to posts above the beach and stand there with their backs to the hills, where
-  they are knifed in turn, and with the garrison dead few bodies are ever found. The
-  rule costs the careless more than the killer. Levers not tried: a squad called for a
-  body takes the dead man's place, not a beach post; a seventh enemy; posts that sweep
-  less often.
+- **The hunter check still fails, with a squad for every body found that takes the
+  dead man's place.** Normal: hunter 95 / 99 / 88 against careful 91 / 93 / 87; Hard:
+  73 / 59 / 63 against 72 / 43 / 50. Four or five squads come in a hunter's game and it
+  wins as often, scoring a point less on the North run: a squad standing where a
+  sentry stood is knifed as the sentry was. The limit makes no difference (3, 4 and 6
+  measured the same). What the bot cannot say is how it plays: a cleared piece of
+  ground is no longer clear two turns later. If killing is still the best plan in the
+  operator's hands, the levers left are the knife's own price here (a kill that is
+  heard, or a second turn to make it) and a seventh enemy, not more squads.
 - **Hard's North run is well under** (15). Cover on the plough (olives at three hexes,
   a terrace at one) did not move it, with the rule or without: what loses it is the
   squads coming in through its landing ground and a garrison Alarmed before the job in
