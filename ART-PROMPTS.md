@@ -446,7 +446,7 @@ without one shows its line as now.
 
 | | |
 |---|---|
-| Files | `assets/title/contents-france.jpg`, `assets/title/contents-airfield.jpg` (later `contents-aqueduct.jpg`) |
+| Files | `assets/title/contents-france.jpg`, `assets/title/contents-airfield.jpg`, and **to make: `assets/title/contents-aqueduct.jpg`** (M41c) |
 | Size | **3:2, 1200 × 800 px** (never below 600 × 400) |
 | Format | JPEG, quality about 85, sRGB, opaque |
 | Shown at | About 180 × 120 px beside the entry, so it must read small: one clear subject, strong light and dark, like a single comic panel |
@@ -469,6 +469,21 @@ without one shows its line as now.
 > engines lit orange, sandbagged pen walls, black smoke against a starry sky. Warm
 > ochre sand, deep night blue, fire orange. Strong simple shapes that read at thumbnail
 > size.
+
+### Prompt — the aqueduct (add the style block) — **to make**
+
+Save it as `assets/title/contents-aqueduct.jpg` (1200 × 800); Claude makes the 480 × 320
+copy and adds `"panel"` to the mission's entry.
+
+> A single comic-book panel, a cold winter night in the mountains of southern Italy,
+> February 1941: a tall stone aqueduct of pale masonry arches spanning a rocky ravine,
+> seen from low in the torrent's bed, the moment a demolition charge goes off at the
+> foot of its middle pier, a huge orange blast, stone blocks flying and water bursting
+> from the broken channel above. In the foreground the dark silhouettes of two British
+> paratroopers in rimless jump helmets and smocks crouched among the boulders, one
+> shielding his face. Bare hillsides with a dusting of snow, a few olive trees, a
+> starry sky. Deep slate blue and cold grey, fire orange. Strong simple shapes that
+> read at thumbnail size. No text.
 
 ---
 
@@ -578,6 +593,38 @@ and wire the wreck in if asked:
 > A wartime steam goods train seen from directly overhead, running left to right on a
 > single track: a black tank locomotive and three dark green covered wagons, plain
 > ground either side.
+
+---
+
+## Priority 19 — Italian enemy counters for the aqueduct — **to make**
+
+**Why** (M41c, the operator's): the aqueduct is southern Italy in February 1941, and its
+garrison is Italian (its cries already are: ALLARME!), but the chips are Priority 7's
+Germans in coal-scuttle helmets. Three new chips, the same painter, light and scale of
+head as those, so the two sets could come from one box.
+
+| | |
+|---|---|
+| Files | `assets/enemies/italian/counter-enemy-sentry.png`, `counter-enemy-patrol.png`, `counter-enemy-reserve.png` |
+| Size | **1:1, 128 × 128 px** |
+| Format | PNG, 8-bit sRGB, **transparent background** |
+| Shown at | About **20 px**, inside the black clipped-corner counter. It must read at a glance as *not the German chip* and as *which kind* |
+| Tell them apart | Sentry: **one** man. Patrol: **two** heads side by side. Reserve squad: **three** heads and a Breda machine-gun barrel across the front |
+| What makes it Italian at 20 px | The **M33 helmet**: a smooth round bowl with a short even brim, no flared neck guard (the Stahlhelm's is its whole silhouette). Grey-green uniform, lighter than feldgrau, a cape or greatcoat collar. For one of the three, the **Bersaglieri's cockerel-feather plume** on the helmet's right side would read best of all |
+| Code does | Nothing yet: **Claude has to wire a per-mission folder for enemy chips**, as `portraits` is for our men's, before these load. Until then the aqueduct shows the German chips |
+
+### Prompt (add the style block)
+
+> Counter icon for a board game, head and shoulders of a WW2 Italian Army soldier of
+> 1941 in a smooth round M33 steel helmet with a short brim, seen from the front, grim,
+> shadowed eyes under the rim, grey-green greatcoat collar, simple bold shapes that
+> read at thumbnail size, isolated on a plain transparent background, no text, no
+> insignia, no symbols.
+
+For the patrol and the reserve, ask for *two* / *three soldiers' helmeted heads close
+together, overlapping*, and for the reserve add *a Breda machine-gun barrel across the
+front*. For a plumed one add *a spray of black cockerel feathers on the right side of
+the helmet*. **No fasces or other party insignia**, as with Priority 7.
 
 ---
 

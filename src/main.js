@@ -482,7 +482,7 @@ function deriveView() {
   // playtester could not tell why Speers could kill one two hexes off and not
   // the two beside him — those had not been suppressed, and could see him).
   if (hoverEnemy && !state.targeting) view.enemyActs = enemyActsFor(unit, hoverEnemy);
-  view.aidLabel = ['stabilise', 'pass'].map((kind) => aidFor(unit, kind)).filter(Boolean).join(' ');
+  view.aidLabel = [...['stabilise', 'pass'].map((kind) => aidFor(unit, kind)), signalFor(unit)].filter(Boolean).join(' ');
   if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
@@ -1016,7 +1016,7 @@ function actionsFor(unit) {
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
-    { id: 'signal', key: 'B', label: 'Signal boat', tight: 'Signal', help: rules.exfil.call ? `Signal the boat in early from beside the water: it lands ${rules.exfil.call.leadTurns} turns from now and stays only ${rules.exfil.openFor}. It asks first` : '', ...withCost(checkSignalBoat(state, unit, rules, baseMap), ap) },
+    { id: 'signal', key: 'B', label: 'Signal boat', tight: 'Signal', help: rules.exfil.call ? `Signal the boat in early from beside the water: it lands ${rules.exfil.call.leadTurns} turns from now and stays only ${rules.exfil.openFor}. It asks first` : '', suggest: signalFor(unit), ...withCost(checkSignalBoat(state, unit, rules, baseMap), ap) },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: `Take a dropped charge from this hex.${weightFor(unit)}`, ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
@@ -1031,6 +1031,13 @@ function actionsFor(unit) {
 function aidFor(unit, kind) {
   const prompt = aidPrompts(state, rules).find((p) => p.unitId === unit.id && p.kind === kind);
   return prompt ? aidWords(prompt, state.units, rules) : null;
+}
+
+// Signal the boat, if this man could right now (M41c, the operator's: it was
+// easy to miss): the words for the button's red mark and the readout, or null.
+function signalFor(unit) {
+  const check = checkSignalBoat(state, unit, rules, baseMap);
+  return check.ok ? `${unit.shortName} is beside the water and can signal the boat in early: [B]. In on turn ${check.lands}, gone after turn ${check.leaves}. It asks first.` : null;
 }
 
 // What an action costs, under its name on the button (M19, the operator's):
