@@ -63,6 +63,8 @@ targets' names are quiet in play. Tests: 187 headless. **Next is still M42.**
 **For M43** (the operator's, 6 Oct): the aqueduct's enemy chips are to be Italian, not
 German: new paintings (ART-PROMPTS Priority 19) and a per-mission folder for enemy
 chips; and its contents panel is asked for (Priority 14).
+**M41d** (6 Oct): the panel is in and the aqueduct is **playable** from the contents
+page, ahead of its balance (the operator's); the airfield's West gap is kept.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the

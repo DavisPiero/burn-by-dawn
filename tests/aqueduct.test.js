@@ -37,9 +37,10 @@ async function loadAqueduct(levelId = 'normal') {
 const SEEDS = Array.from({ length: 30 }, (_, i) => i * 7919 + 3);
 
 export default [
-  ['the aqueduct is a draft: played by its address, stamped on the contents page, France still the default', async () => {
+  ['the aqueduct is playable (M41d, the operator\'s): picked on the contents page with its panel, or by ?mission=aqueduct', async () => {
     const { json, mission } = await loadAqueduct();
-    equal(mission.status, 'draft', 'not announced yet');
+    equal(mission.status, 'playable', 'announced');
+    equal(mission.panel, 'assets/title/contents-aqueduct.jpg', 'its painting beside its line');
     equal(missionFromQuery('?mission=aqueduct', json), 'aqueduct', 'the address opens it');
     equal(json.default, 'france', 'France still opens by default');
   }],

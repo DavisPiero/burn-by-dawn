@@ -446,7 +446,7 @@ without one shows its line as now.
 
 | | |
 |---|---|
-| Files | `assets/title/contents-france.jpg`, `assets/title/contents-airfield.jpg`, and **to make: `assets/title/contents-aqueduct.jpg`** (M41c) |
+| Files | `assets/title/contents-france.jpg`, `assets/title/contents-airfield.jpg`, `assets/title/contents-aqueduct.jpg` (in since M41d) |
 | Size | **3:2, 1200 × 800 px** (never below 600 × 400) |
 | Format | JPEG, quality about 85, sRGB, opaque |
 | Shown at | About 180 × 120 px beside the entry, so it must read small: one clear subject, strong light and dark, like a single comic panel |
@@ -470,10 +470,10 @@ without one shows its line as now.
 > ochre sand, deep night blue, fire orange. Strong simple shapes that read at thumbnail
 > size.
 
-### Prompt — the aqueduct (add the style block) — **to make**
+### Prompt — the aqueduct (add the style block) ✅ done (2026-10-06)
 
-Save it as `assets/title/contents-aqueduct.jpg` (1200 × 800); Claude makes the 480 × 320
-copy and adds `"panel"` to the mission's entry.
+Wired in M41d: the 1200 × 800 painting is kept as `contents-aqueduct_full.jpg` and the
+game loads a 480 × 320 copy.
 
 > A single comic-book panel, a cold winter night in the mountains of southern Italy,
 > February 1941: a tall stone aqueduct of pale masonry arches spanning a rocky ravine,
