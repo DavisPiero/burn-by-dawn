@@ -611,7 +611,7 @@ head as those, so the two sets could come from one box.
 | Shown at | About **20 px**, inside the black clipped-corner counter. It must read at a glance as *not the German chip* and as *which kind* |
 | Tell them apart | Sentry: **one** man. Patrol: **two** heads side by side. Reserve squad: **three** heads and a Breda machine-gun barrel across the front |
 | What makes it Italian at 20 px | The **M33 helmet**: a smooth round bowl with a short even brim, no flared neck guard (the Stahlhelm's is its whole silhouette). Grey-green uniform, lighter than feldgrau, a cape or greatcoat collar. For one of the three, the **Bersaglieri's cockerel-feather plume** on the helmet's right side would read best of all |
-| Code does | Nothing yet: **Claude has to wire a per-mission folder for enemy chips**, as `portraits` is for our men's, before these load. Until then the aqueduct shows the German chips |
+| Code does | **Wired in M43**: drop a file into `assets/enemies/italian/` and reload. Each type that has no file there yet keeps its German chip, so they can come in one at a time. The frame, the red strip and its name, the facing arrow and the marks are code's, as for Priority 7 |
 
 ### Prompt (add the style block)
 
@@ -625,6 +625,150 @@ For the patrol and the reserve, ask for *two* / *three soldiers' helmeted heads 
 together, overlapping*, and for the reserve add *a Breda machine-gun barrel across the
 front*. For a plumed one add *a spray of black cockerel feathers on the right side of
 the helmet*. **No fasces or other party insignia**, as with Priority 7.
+
+---
+
+## Priority 20 — the aqueduct's title card — **to make**
+
+Its own painting in place of France's, across the top of its orders and its back page.
+Wired in M43: drop the file in and reload; until then the aqueduct shows France's card.
+Say whether BURN BY DAWN is painted in: if not, Claude sets `titleCardLettered: false`.
+
+| | |
+|---|---|
+| File | `assets/title/title-card-aqueduct.jpg` (keep your full-size original beside it as `title-card-aqueduct_full.jpg`; Claude makes the 1600 × 400 copy the game loads) |
+| Size, format | **Exactly as Priority 2b**: 4:1, 2400 × 600, JPEG quality about 85, sRGB, opaque |
+| Composition | As France's: the middle 60% open and dark for the title, the action toward the left and right edges, the ground along the bottom fifth |
+
+### Prompt (add the style block)
+
+> Wide panoramic night scene, February 1941, the mountains of southern Italy: a stick of
+> British paratroopers coming down under round canopies over bare moonlit hillsides
+> dusted with snow, an Armstrong Whitworth Whitley bomber flying away low, and among the
+> canopies two or three long cylindrical supply containers on smaller coloured
+> parachutes. Along the bottom edge a tall stone aqueduct of pale masonry arches
+> crossing a rocky ravine, stone-walled terraces and a few olive trees, and far off on
+> the right a sliver of dark sea. A cold clear sky with a low moon. The centre of the
+> picture is open dark night sky; the canopies and the aircraft are grouped toward the
+> left and right edges. Deep slate-blue and cold grey night palette, cream moonlight on
+> the canopies and the stone.
+
+The aircraft is a Whitley here, not a Dakota: the 1941 raid flew in them (twin engines,
+a long slab-sided fuselage, twin fins). The board's own aircraft stays the Dakota.
+
+---
+
+## Priority 21 — the six in winter kit (the aqueduct) — optional, yours to offer
+
+The same six, dressed for a February night in the Apennines, as Priority 12 dressed
+them for the desert. Wired in M43: each loads the moment it is in the folder, and any
+one missing falls back to his France portrait, so they can come in one at a time, or
+not at all. France's portraits do not look wrong here; this is for the rail to say
+"winter, Italy" at a glance.
+
+| | |
+|---|---|
+| Files | `assets/portraits/winter/portrait-<id>-full.png` × 6, and `portrait-<id>-chip.png` × 6 if the chips change too |
+| ids | `holloway`, `fitch`, `vance`, `barrow`, `speers`, `nunn` |
+| Size, format, framing | **Exactly as Priority 1 and 2** (full 4:5, 960 × 1200, opaque PNG; chip 1:1, 128 × 128, transparent) |
+| Background | Flat **cold slate blue**, a little paler and greyer than France's, or the board's winter ground (`#3D5A73` washed well down toward the paper) |
+| Code does | The same as for France. Send the PNGs; Claude makes the 480 × 600 JPEGs the game loads |
+
+### Base prompt (all six)
+
+> Head-and-shoulders portrait of a British airborne paratrooper, southern Italy,
+> February 1941, on a cold clear night. He wears the early padded cloth-covered jump
+> helmet with chin strap and a plain grey-green gabardine jump jacket with a high
+> collar, a wool scarf at the throat, breath showing faintly in the cold. Face lightly
+> blackened with burnt cork. Three-quarter view, looking slightly off-camera,
+> determined. Lit from one side by moonlight, with deep shadow on the other. Face
+> centred, eyes about 40% down the frame, shoulders filling the bottom of the frame.
+> Flat plain pale slate-blue background. [PER-MAN DETAILS] [STYLE BLOCK]
+
+If the 1941 helmet makes them read as different men at 56 × 70 px, keep the rimless
+steel one of the other two sets: the same six matter more than the right year.
+
+### Per-man details
+
+Each man keeps his feature. Vance's net and Barrow's twig need a steel helmet to sit
+on; with the cloth one, give Vance his binoculars held up at his chest and Barrow a
+sprig of olive tucked in his collar.
+
+| id | Per-man details (paste into the prompt) | The one feature that must read |
+|---|---|---|
+| `holloway` | *As in France: sergeant, weathered, late thirties, square jaw, a thick dark moustache, chevrons on the sleeve.* | the moustache |
+| `fitch` | *As in France: young, thin face, jug ears, freckles, lopsided grin, an unlit cigarette in the corner of his mouth.* | the cigarette |
+| `vance` | *As in France: lean, narrow watchful eyes; binoculars held ready at his chest.* | the binoculars (or the helmet net) |
+| `barrow` | *Young, lanky, big ears, open-mouthed half-laugh; a sprig of olive leaves tucked into his collar.* | the olive sprig (or the twig) |
+| `speers` | *As in France: broad face, dark stubble, a thin scar, a slate-blue scarf knotted at the throat, Bren sling.* | the scarf |
+| `nunn` | *As in France: enormous build, thick neck, broken nose, placid and gentle expression.* | the sheer width |
+
+---
+
+## Priority 22 — reference art for the aqueduct's board (for Claude to redraw) — **to make**
+
+As Priorities 5, 9 and 15: the board's pictures stay SVG, since they are recoloured,
+blown up and drawn at 30 to 90 px, so these are **references**, the look to match, and
+Claude redraws the code's first drawings (M41) from them. Into `assets/reference/`
+(the game never loads them). In the order they buy the most:
+
+| File | Spec |
+|---|---|
+| `Aqueduct_Reference_01` | **The one that matters.** Seen from the south and a little above, wide (about 5:1): a stone aqueduct of pale masonry, six tall arches on square piers, the open water channel along the top, crossing a ravine with a torrent under the middle arches. And if you can, the same view **blown**: two middle piers down, the channel broken and water pouring from both ends |
+| `RoadBridge_Reference_01` | From directly above: a small single-arch stone road bridge over a torrent in a rocky bed, a dirt road running on from each end |
+| `Boat_Reference_01` | From directly above, bow to the left: a Royal Navy ship's boat (a whaler or a folding canvas boat from a submarine), two or three thwarts, oars shipped along the sides, one sailor at the tiller with a hooded lamp |
+| `Canister_Reference_01` | From above, lying on the ground: a 1941 airborne supply container, a long steel cylinder in dark green with carrying handles and a band or two, its small parachute spilled beside it |
+| `Terraces_Reference_01` | From directly above: a hillside cut into stone-walled terraces, the dry-stone walls as curving parallel lines, bare winter earth and a few vines or stakes between |
+| `OliveGrove_Reference_01` | From directly above: an olive grove in winter, grey-green crowns smaller and more ragged than an apple orchard's, widely spaced on bare stony ground |
+
+### Prompts (add the style block to each)
+
+- **The aqueduct:**
+  > A tall stone aqueduct in the mountains of southern Italy seen from the south and a
+  > little above, wide panoramic view: pale masonry, six tall round arches on square
+  > piers, an open water channel along the top, crossing a rocky ravine with a torrent
+  > running under the middle arches, bare winter hillside either side. Simple bold
+  > shapes, like a symbol on a wargame map.
+- **The road bridge:**
+  > Top-down view from directly above of a small single-arch stone road bridge carrying
+  > a dirt road over a mountain torrent in a rocky bed. Simple bold shapes, like a
+  > symbol on a wargame map.
+- **The boat:**
+  > Top-down view from directly above of a small wooden ship's boat on dark water, bow
+  > pointing left, oars laid along the thwarts, one sailor in a duffel coat at the
+  > tiller holding a hooded lamp, isolated, no shore.
+- **The canister:**
+  > Top-down view of a WW2 British airborne supply container lying on stony ground: a
+  > long dark green steel cylinder with carrying handles and two bands, a small
+  > collapsed parachute and its lines spilled beside it.
+- **Terraces:**
+  > Top-down view from directly above of a southern Italian hillside in winter cut into
+  > narrow terraces, curving dry-stone walls in parallel lines, bare earth between.
+  > Simple bold shapes, like a symbol on a wargame map.
+- **Olive grove:**
+  > Top-down view from directly above of an olive grove in winter, small ragged
+  > grey-green tree crowns with dark shadows, widely spaced on pale stony ground.
+  > Simple bold shapes, like a symbol on a wargame map.
+
+---
+
+## Priority 23 — the aqueduct's sounds (find, don't generate) — **to find**
+
+Made in code since M43, and they sound like it. As Priorities 11 and 16:
+freesound.org (CC0) or Pixabay, into `assets/audio/` by these names; each replaces its
+made sound on reload. Claude can find, cut and level them, as it did the others, if
+asked.
+
+| File | What | Length |
+|---|---|---|
+| `canister-thump.m4a` / `.mp3` | a steel drum or heavy metal container dropped onto hard ground once: a dull thud with a short clank, no ringing on | ~0.3 s |
+| `oars.m4a` / `.mp3` | a rowing boat, three or four strokes: rowlocks creaking, blades dipping and pulling, no voices, no gulls | ~3 s |
+| `surf.m4a` / `.mp3` | one small wave breaking on a shingle beach at night and dragging back down the stones | ~2.5 s |
+
+**The back page** rings France's church bells for a win here and tolls its bell for the
+rest, which suits an Italian hill village well enough. If you would rather it had its
+own, as the airfield has its bugle and siren, say what (a ship's bell and the
+submarine's klaxon? a Whitley going home?) and Claude will wire the two cues.
 
 ---
 
@@ -720,8 +864,13 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   palette as it stands (a pale wash of the cold blue for winter ground, no new colour):
   the hillside, crags, the ravine with its torrent, terraces, olive groves, plough,
   shingle, shore rocks and the sea; the aqueduct whole and blown, the road bridge whole
-  and blown, the ship's boat and the supply canister. Its title card and portraits are
-  France's until the operator offers its own; nothing is asked for yet (that is M43).
+  and blown, the ship's boat and the supply canister. Since M43 the winter ground's wash
+  is a little stronger (the cold blue at 0.18 over the paper, 0.1 before), and the
+  hand-off is written: its title card (Priority 20), winter portraits (21), references
+  to redraw the board's pictures from (22) and its sounds (23). Its title card and
+  portraits are France's, and its garrison's chips the German ones (19), until then.
+- The aqueduct's three sounds (M43), made with Web Audio until recordings are found:
+  the canisters' thump, the boat's oars and the surf it lands in (Priority 23).
 - The strip's two thick ink edges (M31b) along its rolled sand, so it reads as a runway.
 - The airfield's jeep raid's muzzle flashes (M31), blinking at the painted jeep's guns. Its three sounds
   are made in code as the fallback; recordings supplied since M31c.

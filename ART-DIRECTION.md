@@ -51,7 +51,10 @@ board must read at a glance.
   second colour the airfield's story is printed in (and the yellow time pencil's band). One
   counter colour, **burnt orange `#B4592A`**, used only for our men's counters on the
   airfield (a mission's `counterColour`: army green on the desert sat too close to the
-  garrison's dark chits). Nothing else.
+  garrison's dark chits). Nothing else. **The aqueduct's winter ground** (§14) takes no
+  new colour: its hillside, crags, ravine and olive groves are the paper under a wash
+  of the cold blue (18%), the ravine and the sea stronger, the plough, the terraces and
+  the beach left warm, so the slopes read cold beside them.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, objectives,
   the enemy's vision and in the chrome, printed faint, close to the colour beneath.
   Open ground is flat spot colour.
@@ -130,7 +133,9 @@ board must read at a glance.
   strength. A burning charge is counted down on a stopwatch, a quarter of its face per
   turn left, red with a burst on its last turn.
 - **An enemy** counter prints its type on its strip (`counterLabel`; the reserve squad's
-  reads RESERVES). A suppressed enemy is printed faint with a red SUPPRESSED band. The turn
+  reads RESERVES). A mission may have its own garrison's painted chips (`enemyChips`,
+  a folder tried before the usual one, type by type): the aqueduct's are Italian, and
+  wear the German chips until they are painted. A suppressed enemy is printed faint with a red SUPPRESSED band. The turn
   after a suppression, when it sees and fires again but can still be killed, it wears a
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
@@ -357,7 +362,11 @@ and diversion sounds: the airfield's jeep raid is an engine going by and bursts 
 its success a bugle call, the rest its own air-raid
 siren close by (made in code until recordings are supplied). France's goods train
 whistles as it comes onto the board, one long blast and a short one, far off, with its
-chuffing dying away after: made in code until a recording is supplied.
+chuffing dying away after: made in code until a recording is supplied. **The
+aqueduct's three** are made in code too until recordings are found: its canisters
+thump down as the last canopy lands, one thump each; the boat's oars are heard far off
+the turn it is sighted or answers the signal; and the turn it lands, its last strokes
+with a wave breaking on the shingle under them. Its back page is France's bells.
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
 choice, fading at the jump and never between turns. A new game brings it back from the

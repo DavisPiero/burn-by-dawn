@@ -553,6 +553,68 @@ const SYNTHS = {
       noiseThrough(ctx, out, t, 0.14, [filter(ctx, 'bandpass', 420, 0.9), envelope(ctx, t, loud, 0.13, 0.012)], v * 0.11 + i * 0.09);
     }
   },
+
+  // The aqueduct's three (M43, SPEC.md §14), made in code until recordings
+  // are supplied. A supply canister coming down: a steel drum's dull thud on
+  // hard ground, its clank on top, short and close.
+  'canister-thump': (ctx, out, at, v) => {
+    const thud = ctx.createOscillator();
+    thud.frequency.setValueAtTime(130 - v * 4, at);
+    thud.frequency.exponentialRampToValueAtTime(48, at + 0.16);
+    thud.connect(envelope(ctx, at, 0.9, 0.24, 0.003)).connect(out);
+    thud.start(at);
+    thud.stop(at + 0.28);
+    for (const [f, amp, length] of [[523, 0.16, 0.2], [817, 0.1, 0.13], [1340, 0.06, 0.08]]) {
+      const ring = ctx.createOscillator();
+      ring.type = 'triangle';
+      ring.frequency.value = f * (1 + v * 0.012);
+      ring.connect(envelope(ctx, at, amp, length, 0.002)).connect(out);
+      ring.start(at);
+      ring.stop(at + length + 0.03);
+    }
+    noiseThrough(ctx, out, at, 0.07, [filter(ctx, 'bandpass', 900, 0.8), envelope(ctx, at, 0.5, 0.06, 0.002)], v * 0.19);
+  },
+
+  // The boat's oars, out on the water: three strokes, each a creak in the
+  // rowlocks and then the blades' dip and pull, the wash of it dying away.
+  oars: (ctx, out, at, v) => {
+    const far = filter(ctx, 'lowpass', 2200, 0.6);
+    far.connect(out);
+    for (let i = 0; i < 3; i++) {
+      const t = at + i * 0.95;
+      const creak = ctx.createOscillator();
+      creak.type = 'sawtooth';
+      creak.frequency.setValueAtTime(190 + i * 12, t);
+      creak.frequency.linearRampToValueAtTime(250 + i * 12, t + 0.16);
+      const wood = filter(ctx, 'bandpass', 760, 5);
+      creak.connect(wood).connect(envelope(ctx, t, 0.22, 0.2, 0.05)).connect(far);
+      creak.start(t);
+      creak.stop(t + 0.22);
+      const dip = filter(ctx, 'bandpass', 520, 0.7);
+      dip.frequency.setValueAtTime(380, t + 0.2);
+      dip.frequency.linearRampToValueAtTime(900, t + 0.5);
+      dip.frequency.linearRampToValueAtTime(420, t + 0.85);
+      noiseThrough(ctx, far, t + 0.2, 0.7, [dip, envelope(ctx, t + 0.2, 0.8, 0.68, 0.16)], v * 0.17 + i * 0.31);
+    }
+  },
+
+  // Surf on the shingle: one small wave that gathers, breaks, and drags back
+  // down the stones.
+  surf: (ctx, out, at, v) => {
+    const length = 2.4;
+    const wave = filter(ctx, 'lowpass', 500, 0.5);
+    wave.frequency.setValueAtTime(350, at);
+    wave.frequency.exponentialRampToValueAtTime(2600, at + 0.9);
+    wave.frequency.exponentialRampToValueAtTime(700, at + length);
+    const swell = ctx.createGain();
+    swell.gain.setValueAtTime(0.0001, at);
+    swell.gain.exponentialRampToValueAtTime(0.8, at + 0.9);
+    swell.gain.exponentialRampToValueAtTime(0.25, at + 1.4);
+    swell.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    noiseThrough(ctx, out, at, length, [wave, swell], v * 0.11);
+    // The stones dragged back: a thinner hiss under the wave's tail.
+    noiseThrough(ctx, out, at + 1.1, 1.2, [filter(ctx, 'highpass', 2800, 0.5), envelope(ctx, at + 1.1, 0.12, 1.15, 0.3)], v * 0.11 + 0.7);
+  },
 };
 
 export const SOUND_IDS = Object.keys(SYNTHS);
@@ -587,6 +649,12 @@ const CUES = {
   desertDefeat: [['siren', 0.7, 0.35]],
   // France's goods train coming onto the board (M35): its whistle.
   train: [['train', 0.5, 0]],
+  // The aqueduct's (M43): the canisters down after the stick, one thump
+  // each; the boat far off as it is sighted or answers the signal; and its
+  // last strokes with the surf under them as it lands.
+  canister: [['canister-thump', 0.5, 0.15], ['canister-thump', 0.38, 0.5], ['canister-thump', 0.44, 0.78]],
+  boatComing: [['oars', 0.3, 0.2]],
+  boatIn: [['oars', 0.5, 0], ['surf', 0.5, 1.6]],
   // The opening screens' music (M17): one pass of it; startMusic loops it.
   titleMusic: [['music-title', 0.5, 0]],
 };

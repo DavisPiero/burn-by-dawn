@@ -898,7 +898,9 @@ contents page prints them. A mission is data only, and no code asks which is on:
   the phrases for its cut line and the diversion's name, card and log line, its title card
   (the game's, France's, until its own is painted; `titleCardLettered` false if the title
   is not painted in), the diversion's sound and its back-page sounds. A `dialogue` patch may replace any of the men's lines for it;
-  they are still the one roster.
+  they are still the one roster. It may name folders of its own pictures, each tried
+  before the usual one, file by file: the six in its kit (`portraits`) and its
+  garrison's chips (`enemyChips`: the aqueduct's Italians).
 - The map's `primary` flag is asked for only by `destroyPrimary`, which wants exactly one;
   a `destroyCount` map has none, and at least `count` of its kind. The target rings, the
   ★, the mission panel, the hints, the Pass prompt and the bot all ask the win condition
@@ -993,12 +995,12 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**None chosen.** M42 balanced the aqueduct (§14) and M42b built the operator's notes on
-it. Next is **M43**: the aqueduct's words, sounds and art hand-off (Italian enemy chips
-and the per-mission folder they need, the winter wash, the operator's rewording of the
-placeholder copy), after the operator has played M42c and said how a squad for a body
-feels now that it takes the dead man's place: by the bot it still does not put
-kill-everything below careful play, and Hard's North run is well under its target (`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
+**None chosen.** M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+ends Phase 4 as it was planned. What is open is the operator's: the paintings and
+recordings asked for in `ART-PROMPTS.md` (Priorities 19 to 23), the rewording of its
+placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
+Balance): kill-everything is still not below careful play there, and Hard's North run
+is well under its target. After that, `ROADMAP.md`. v1.0 is tagged.
 
 ### Done
 
@@ -1015,6 +1017,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M43 | The aqueduct's words, sounds and art hand-off: a mission's own folder for its garrison's chips (the Italians), the six's lines for Italy, the canisters' thump and the boat's oars and surf made in code, slots for its own title card and winter portraits, a colder wash on its winter ground, and the paintings and recordings asked for |
 | M42c | A squad called for a body stands where the body was found; canister dots higher; the drawn roads beside the aqueduct lifted to its channel; the confirm cards' button above the way back |
 | M42b | The operator's notes on the aqueduct: a found enemy body calls a squad; cover on the plough; roads that are only drawn, off the bottom of the map and along the aqueduct; canisters ringed and named in blue at the start and their charges counted in dots; the target rings over the garrison's chips; labels moved |
 | M42 | The aqueduct balanced by the bot: eight pier feet, a mule track up the west bank, the West and Valley runs and three beats redrawn, the longest timer offered first and then the one that makes one bang, Hard's boat two turns, rating bands; the bot's `tidy` style and `ALERT=1` |
