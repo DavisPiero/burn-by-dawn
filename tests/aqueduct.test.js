@@ -45,7 +45,7 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['one primary that takes four charges of six points (three on Easy, five on Hard), six charges in three canisters, nobody carrying one', async () => {
+  ['one primary that takes four charges of eight points (three on Easy, five on Hard), six charges in three canisters, nobody carrying one', async () => {
     for (const [level, charges, squads] of [['easy', 3, 0], ['normal', 4, 1], ['hard', 5, 2]]) {
       const { map, rules, traits, roster } = await loadAqueduct(level);
       const state = createInitialState(roster, traits, rules, map, 1);
@@ -53,7 +53,7 @@ export default [
       equal(targets.map((o) => o.id).join(), 'aqueduct', `${level}: the win is the aqueduct`);
       equal(kindOf(targets[0], rules).chargesNeeded, charges, `${level}: charges it takes`);
       equal(kindOf(targets[0], rules).reinforcements, squads, `${level}: squads it calls`);
-      equal(targets[0].chargeHexes.length, 6, `${level}: six charge points`);
+      equal(targets[0].chargeHexes.length, 8, `${level}: eight charge points`);
       equal(rules.canisters.count * rules.canisters.charges, 6, `${level}: six charges in the canisters`);
       assert(state.units.every((u) => u.charges === 0), `${level}: nobody jumps with one`);
     }

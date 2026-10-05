@@ -364,16 +364,23 @@ function lieUpHexes(map) {
   return out;
 }
 
-// Charge points in order of the walk to each from the nearest man who has, or
-// could fetch, a charge; points beside one already charged first, so the
-// stick works one side of a target and not both.
-function nearestPoints(state, map, free) {
-  const men = state.units.filter((u) => U.onBoard(u) && U.canCarryCharges(u) && (u.charges > 0 || U.chargeCapacity(u, rules) > 0));
-  const walk = new Map(free.map((h) => {
-    const field = distanceField(map, [h]);
-    return [h, Math.min(99, ...men.map((u) => field.get(M.hexKey(u.q, u.r)) ?? 99))];
-  }));
-  return [...free].sort((a, b) => walk.get(a) - walk.get(b));
+// The points to use on a target with more than it wants (SENSE=1, M42):
+// the one the shortest walk from the stick first, then the others in order of
+// the walk from that one, so the men work one end of a target together. The
+// order is settled once a game and kept, or the men would change their minds
+// every turn as they moved.
+const pointOrder = new Map();
+function nearestPoints(state, map, o, free) {
+  if (!pointOrder.has(o.id)) {
+    const men = state.units.filter(U.onBoard);
+    const walkFrom = (h) => distanceField(map, [h]);
+    const toMen = (h) => { const f = walkFrom(h); return men.reduce((n, u) => n + (f.get(M.hexKey(u.q, u.r)) ?? 99), 0); };
+    const first = [...o.chargeHexes].sort((a, b) => toMen(a) - toMen(b))[0];
+    const fromFirst = walkFrom(first);
+    pointOrder.set(o.id, [...o.chargeHexes].sort((a, b) => (fromFirst.get(M.hexKey(a.q, a.r)) ?? 99) - (fromFirst.get(M.hexKey(b.q, b.r)) ?? 99)).map((h) => M.hexKey(h.q, h.r)));
+  }
+  const order = pointOrder.get(o.id);
+  return [...free].sort((a, b) => order.indexOf(M.hexKey(a.q, a.r)) - order.indexOf(M.hexKey(b.q, b.r)));
 }
 
 function assignCharges(state, map) {
@@ -387,7 +394,7 @@ function assignCharges(state, map) {
     let free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
     // A job target with more points than it wants charges (M42, the aqueduct's
     // six for four): the points the shortest walk from the men who will set them.
-    if (SENSE && job.includes(o) && need > 0 && free.length > need) free = nearestPoints(state, map, free);
+    if (SENSE && job.includes(o) && need > 0 && free.length > need) free = nearestPoints(state, map, o, free);
     wanted.push(...free.slice(0, Math.max(0, need)).map((h) => ({ ...h, o })));
   }
   const carriers = state.units.filter((u) => U.onBoard(u) && u.charges > 0);
@@ -544,6 +551,7 @@ function playTurn(state) {
 }
 
 function play(seed, runId) {
+  pointOrder.clear();
   let state = S.createInitialState(roster, traits, rules, map0, seed);
   state = S.jump(S.chooseDropRun(state, map0, runId), map0, rules);
   let bridgeTurn = null;

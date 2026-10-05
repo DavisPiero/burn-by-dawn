@@ -134,7 +134,7 @@
       "rules": {
         "turnLimit": 17,
         "roles": { "sapper": { "charges": 2 } },
-        "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
+        "charges": { "fuseTurns": 6, "fuseChoice": { "min": 2, "max": 6 } },
         "canisters": { "count": 3, "charges": 2, "scatterWeights": [0, 4, 4, 2, 1] },
         "exfil": { "opensTurn": 15, "openFor": 3, "call": { "apCost": 1, "leadTurns": 2 } },
         "reserve": { "replacements": 1 },
@@ -149,7 +149,7 @@
       "win": { "condition": "destroyPrimary" },
       "levels": {
         "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it goes.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
-        "hard": { "summary": "The aqueduct takes five charges of your six, and two squads come down the road when it goes: none once the Road Bridge is down.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 5, "reinforcements": 2 } } } }
+        "hard": { "summary": "The aqueduct takes five charges of your six, two squads come down the road when it goes (none once the Road Bridge is down), and the boat stays two turns, not three.", "rules": { "exfil": { "openFor": 2 }, "objectives": { "aqueduct": { "chargesNeeded": 5, "reinforcements": 2 } } } }
       },
       "briefing": "Tonight six men are to drop into the mountains of southern Italy.",
       "_words": "M41. Placeholder copy for the operator to reword. The line words are asked for by every mission: nothing here has a line to cut, and `lineIsDown` is what stops the squads coming, the road bridge. The diversion is the RAF again, as in 1941: bombers over Foggia.",
