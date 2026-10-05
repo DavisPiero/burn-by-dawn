@@ -195,11 +195,11 @@
     "from": [11, 11],
     "to": [3, 12]
   },
-  "_roadArt": "SPEC.md §11, M42b (the operator's). Art only: roads that are drawn and are no terrain, each a line through hexes' centres, on or off the board. The road to the beach runs on past the exfil and off the bottom of the map, where it came to a dead end; and the way along the top of the aqueduct runs off the map to the west, and to the east one hex on and then away to the north-east over the plough, where it stopped at each end. The hexes under them are what they were, at the same cost.",
+  "_roadArt": "SPEC.md §11, M42b (the operator's). Art only: roads that are drawn and are no terrain, each a line through hexes' centres, on or off the board. The road to the beach runs on past the exfil and off the bottom of the map, where it came to a dead end; and the way along the top of the aqueduct runs off the map to the west, and to the east one hex on and then away to the north-east over the plough, where it stopped at each end. The hexes under them are what they were, at the same cost. A line may be { through, nudge }: the two beside the aqueduct are lifted a fifth of a hex radius (9 px) to meet the channel in its picture (M42c).",
   "roadArt": [
     [[1, 12], [0, 13], [-1, 14]],
-    [[2, 3], [1, 3], [0, 3], [-1, 3], [-2, 3], [-3, 3]],
-    [[7, 3], [8, 3], [9, 2], [10, 1], [11, 0], [12, -1], [13, -2]]
+    { "through": [[2, 3], [1, 3], [0, 3], [-1, 3], [-2, 3], [-3, 3]], "nudge": [0, -0.2] },
+    { "through": [[7, 3], [8, 3], [9, 2], [10, 1], [11, 0], [12, -1], [13, -2]], "nudge": [0, -0.2] }
   ],
   "exfilNoteNudge": [-3.3, -1.7],
   "dropCueAt": [11.8, 2.5],

@@ -101,7 +101,9 @@ board must read at a glance.
   centres, on or off the board, printed as the roads are over ground that is whatever
   terrain it was. The aqueduct's: the road to the beach runs on past the exfil and off
   the bottom of the map, and the way along the top of the aqueduct runs off the map to
-  the west and, a hex past its east end, away to the north-east.
+  the west and, a hex past its east end, away to the north-east. A line may be nudged
+  (`{ through, nudge }`, in hex radii) to meet a picture's own road: those two are
+  lifted to the aqueduct's channel.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
   water, the rest in italic, each nudged off its hex (`dx`, `dy`) to sit in what it names.
   The turn report uses them ("the field by Ferme Lebrun").
@@ -148,7 +150,7 @@ board must read at a glance.
   only) moves a stamp always: the Rail Bridge's is three quarters of a hex lower, below
   the bridge, clear of the wreck and the train.
 - **A supply canister counts its charges in fire-orange dots**, one for each still in
-  it, as a man's counter counts his: under the middle of its hex and over any counter,
+  it, as a man's counter counts his: under the middle of its hex, clear of its edge, and over any counter,
   so they show with a man standing on it. They stand in for the satchel drawn where a
   charge lies loose.
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
@@ -207,6 +209,9 @@ board must read at a glance.
   in bold red. ▲ ▼ buttons down its right edge scroll it, hidden when it all fits.
 
 ### Cards
+
+- **A card that asks** (signal the boat, out anyway) has its button on a line of its own
+  above the way back (NOT YET — any other key or click), never beside it.
 
 - **The contents page comes first** (§10 Missions), as the annual's contents: the title
   card with PARACHUTE RAIDS BEHIND THE LINES, then each mission as a contents line, its

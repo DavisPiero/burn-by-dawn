@@ -80,6 +80,8 @@ is 4 under its target. **Next: M43**, the aqueduct's words, sounds and art hand-
 **M42b**, the operator's notes on it: a found enemy body calls a squad; cover on the
 plough; drawn roads off the map; canisters ringed, named and counted in dots. Naive
 Normal 81 / 74 / 77, Hard 33 / 15 / 37. The hunter bot is still not below careful play.
+**M42c**: the squad for a body stands where the body was found (the operator's), four
+at most; Normal 79 / 74 / 76, Hard 31 / 15 / 35; the hunter is still not below careful.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the

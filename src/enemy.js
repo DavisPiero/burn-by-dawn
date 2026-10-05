@@ -712,6 +712,19 @@ export function runEnemyPhase(state, map, rules) {
     events.push({ kind: 'reinforcements', label: placed.label, q: placed.q, r: placed.r });
   }
   if (!help || reinforcementsSent >= help.posts.length) reinforcementsDue = 0;
+  // Squads called for a body (M42c): on the same way, each to where its body lay.
+  let bodySquadsDue = state.bodySquadsDue ?? [];
+  let bodySquadsSent = state.bodySquadsSent ?? 0;
+  while (help && bodySquadsDue.length > 0) {
+    const [at, ...rest] = bodySquadsDue;
+    const post = { guardHex: [at.q, at.r], guardFacing: at.facing === null ? help.facing : DIRECTION_NAMES[at.facing] };
+    const placed = deployReinforcement({ ...help, posts: [post], id: `${help.id}-body-${bodySquadsSent + 1}` }, 0, map, living, enemies, '');
+    if (!placed) break;
+    enemies = [...enemies, placed];
+    bodySquadsDue = rest;
+    bodySquadsSent++;
+    events.push({ kind: 'reinforcements', label: placed.label, q: placed.q, r: placed.r, toBody: true });
+  }
 
   const heard = hearNoises(enemies, state.noises, state.contact, state.alert.points, rules);
   enemies = heard.enemies;
@@ -800,11 +813,13 @@ export function runEnemyPhase(state, map, rules) {
       noises.push({ kind: 'found', q: body.q, r: body.r });
       events.push({ kind: 'bodyFound', label: moved.label, enemyId: moved.id, name: body.name, q: body.q, r: body.r });
       // One of its own found dead (M42b; `bodyFound.reinforcements`, 0 in the
-      // files): the garrison calls up squads as it does for a bang, while a
-      // post is left for one and nothing has cut the call (SPEC.md §6).
-      const calls = body.enemyId ? Math.min(rules.bodyFound.reinforcements, help ? help.posts.length - reinforcementsSent - reinforcementsDue : 0) : 0;
-      if (calls > 0 && !state.reserveCancelled) {
-        reinforcementsDue += calls;
+      // files): the garrison calls up squads as it does for a bang, to stand
+      // where he fell (M42c), up to `bodyFound.limit` in a mission and none
+      // once the call has been cut (SPEC.md §6).
+      const calls = body.enemyId && help && !state.reserveCancelled
+        ? Math.min(rules.bodyFound.reinforcements, rules.bodyFound.limit - bodySquadsSent - bodySquadsDue.length) : 0;
+      if (calls > 0) {
+        bodySquadsDue = [...bodySquadsDue, ...Array.from({ length: calls }, () => ({ q: body.q, r: body.r, facing: body.facing ?? null }))];
         events.push({ kind: 'reinforcementsCalled', count: calls, body: true, label: 'body found', q: body.q, r: body.r });
       }
       return { ...body, found: true };
@@ -830,7 +845,7 @@ export function runEnemyPhase(state, map, rules) {
   enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false, openToKill: true } : e));
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
-    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, alert, bodies, parachutes, canisters, noises },
+    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, bodySquadsDue, bodySquadsSent, alert, bodies, parachutes, canisters, noises },
     events,
   };
 }
@@ -843,12 +858,12 @@ function deployReserve(map, units, enemies) {
 }
 
 /** The `index`-th squad of reinforcements, for the post of that number (M21b), or null if the road is blocked. */
-function deployReinforcement(help, index, map, units, enemies) {
+function deployReinforcement(help, index, map, units, enemies, suffix = `-${index + 1}`) {
   const taken = blockedFor(units, enemies, null);
   const free = help.entryHexes.find(([q, r]) => !taken.has(hexKey(q, r)));
   if (!free) return null;
   const post = help.posts[index];
-  const placement = { id: `${help.id}-${index + 1}`, label: help.label, type: help.type, facing: help.facing, guardHex: post.guardHex, guardFacing: post.guardFacing };
+  const placement = { id: `${help.id}${suffix}`, label: help.label, type: help.type, facing: help.facing, guardHex: post.guardHex, guardFacing: post.guardFacing };
   return makeEnemy(placement, map.enemyTypes[help.type], free);
 }
 
