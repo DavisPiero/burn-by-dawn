@@ -272,7 +272,7 @@ function goalFor(state, unit, map, assign) {
   }
   // The way out not open yet (M41, the aqueduct's boat): he lies up in heavy
   // cover near it until it is, as a player would, rather than stand on the beach.
-  if (!SB.exfilOpen(state.turn, rules)) {
+  if (!SB.exfilOpen(state, rules)) {
     const near = lieUpHexes(map);
     if (near.length > 0) return near;
   }
@@ -407,7 +407,7 @@ function actFor(state, unit, map) {
       const exfil = SB.isExfil(map, c) && !assign.has(unit.id) && !hunting;
       let score = d * 10;
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
-      const left = rules.turnLimit - state.turn;
+      const left = SB.lastTurn(state, rules) - state.turn;
       const done = MI.winMet(state, rules) || !assign.has(unit.id);
       const urgency = done ? Math.min(1, left / 6) : Math.min(1, Math.max(0.2, (left - 8) / 6));
       if (r.spotted && !unit.inContact) score += 45 * urgency;
@@ -432,7 +432,7 @@ function actFor(state, unit, map) {
 function playTurn(state) {
   // Each man acts until he has nothing better to do.
   for (let guard = 0; guard < 60 && !state.outcome; guard++) {
-    const map = SB.effectiveMap(map0, state.objectives, rules, state.turn);
+    const map = SB.effectiveMap(map0, state.objectives, rules, state);
     const actors = state.units.filter((u) => U.onBoard(u) && u.ap > 0);
     if (actors.length === 0) break;
     let progressed = false;

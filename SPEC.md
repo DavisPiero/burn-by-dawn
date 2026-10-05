@@ -254,6 +254,13 @@ gives the full cost and, when it cannot be used, why not.
   bridge guards the bonus, never the mission. `requiresDestroyed` can gate it on an
   objective.
 - **Pack a parachute** — 1 AP, standing on one, his own or anyone's (§9).
+- **Signal the boat** (`exfil.call`; only where a mission's way out is a boat that can
+  be called, §10) — 1 AP, by a man **beside an exfil hex**, once a mission. The boat
+  lands two turns after the turn he signals and stays its three, and the mission ends
+  when it goes. It is never done at a keypress: a card says the turn it will land, the
+  turn it will be gone, who is not near the beach yet and whether the job is done, and
+  only **Enter** or its button sends the signal. Not offered once the boat has been
+  called, is in, or would land no sooner than it is coming anyway.
 - **RAF diversion** (once per mission, while the leader is alive) — no AP, called at any
   point in the player phase. A raid on the town pulls the garrison's attention: the
   **alert drops one state** (to the start of the state below), **every enemy abandons
@@ -301,7 +308,7 @@ to be casual while still being strategic.
   `R` patrol-route overlay, `?` or `/` how to play (§11), `M` sound on or off. Actions:
   `H` hide, `S` suppress or return fire, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid),
   `P` pick up a charge, `E` pass a charge, `C` place a charge, `X` cut the line, `W` swim,
-  `U` pack a parachute, `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
+  `U` pack a parachute, `B` signal the boat, `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
   for a click; `Esc` backs out of it.
 
 ---
@@ -485,6 +492,13 @@ turns to a man it spots and holds him, and goes to a noise as ever. The airfield
 patrols come round. An enemy's hover says it stands this turn, the turn card says so on
 turn 1, and next turn's facing is shown as ever.
 
+**A post may sweep** (`sweep` on a sentry in the map; none in France or on the
+airfield). It looks its first way through the player phase of every odd turn and its
+second through every even one, turning in the enemy phase, so the ground it covers is
+open every other turn and an approach can be timed. The dashed wedge shows the turn to
+come, as for any enemy. A noise or a man it has spotted turns it as it would any
+sentry, and it goes back to its sweep after.
+
 **Sentries cannot leave their post.** A sentry that hears a noise turns to face it in the
 enemy phase and holds that facing through the next player phase and detection check,
 then turns back to its facing in `map.json`. A thrown stone turns sentries in earshot
@@ -534,6 +548,12 @@ a guard hex beside the exfil, and stands there as a sentry facing it. The player
 exit narrowing and routes around it. It **cannot be killed** (`killable: false`): it is a
 squad, not one man, and at Alarmed a kill would cost nothing and reopen the exfil for
 free. It can be suppressed for a turn to slip past. Its counter reads RESERVES.
+
+**Where a mission makes it killable** (its enemies patch; the aqueduct, §14) it is
+knifed, shot or blown up like a patrol, and the garrison sends another for each one
+killed, up to `reserve.replacements` (0 in the files; the aqueduct's is 1): it comes in
+the next enemy phase the alert is at Alarmed, as the first did, and not at all once a
+target's payoff has stopped the reserve. So a kill buys turns, not a free way out.
 
 ### Reinforcements
 
@@ -787,12 +807,19 @@ finish the job are counted.
 A trooper who ends a move on an exfil hex is out: removed, safe, and counted. A man
 carrying a charge does not take it out: he leaves it on the hex he stepped off from.
 
-**The way out on a timetable** (`exfil.opensTurn`; null in France and on the airfield,
-whose exfil is open all night). Where a mission gives a turn, **no man may enter an exfil
-hex before that turn's player phase**: until then those hexes are not ground at all, to
-the men or the garrison. From that turn until dawn they are the way out as above. Nobody
-is taken off the board by its opening: a man goes out by ending a move there, with the
-card above if it would end the mission short.
+**The way out on a timetable** (`exfil`; `opensTurn` null in France and on the airfield,
+whose exfil is open all night). Where a mission gives a turn, a **boat** lands on it, and
+**no man may enter an exfil hex before it lands**: until then those hexes are not ground
+at all, to the men or the garrison. Nobody is taken off the board by its landing: a man
+goes out by ending a move there, with the card above if it would end the mission short.
+- **How long it stays** (`openFor`): that many turns, the turn it lands included, and
+  **the mission ends with the last of them** as it would at dawn. Null: until dawn.
+- **It can be called in early** (`call`: `{ apCost, leadTurns }`, or null): a man beside
+  an exfil hex signals (§4), and the boat lands `leadTurns` turns after that turn, if
+  that is sooner than `opensTurn`. It still stays only `openFor`, so the night is then
+  that much shorter for everyone: the turn counter, the dawn strip, the last turn a
+  timer can be set for and the outcome's words ("the boat has gone") all follow it.
+- Unsignalled, it comes on `opensTurn` regardless.
 
 **The results page** is the back page of the annual: all six by name and fate (out,
 killed, left behind), the level, and the score, whatever the outcome:
@@ -942,7 +969,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M42, the aqueduct's balance** (Phase 4; §14, `MISSION-AQUEDUCT.md`, whose Balance
+**M42, the aqueduct's balance** (after M41b, the operator's notes on the draft) (Phase 4; §14, `MISSION-AQUEDUCT.md`, whose Balance
 section says where the draft stands). By the bot, before any art is asked for: the
 **alert budget** met by redrawing the map and the patrols' beats, not the alert's
 numbers (a careful Normal win below Alarmed in six games in ten); the **boat's turn and
@@ -965,6 +992,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M41b | The operator's notes on the draft: posts that sweep, a reserve that can be killed and is replaced, the boat signalled in early behind a card that asks, the aqueduct two hexes east with its arch open, the shut beach in red, the boat rowed in, enemy cries, soot where charges went off, ALL CHARGES SET on a target; the airfield's West run opened and its names quiet in play |
 | M41 | The aqueduct as a draft (`?mission=aqueduct`): its map and eleven kinds of ground, the aqueduct and the road bridge, the canister, the closed beach and the boat drawn and worded, the bot taught to fetch and to wait |
 | M40 | The aqueduct's engine work, off in both missions: supply canisters (§9) and the way out on a timetable (§10) |
 | M39 | Mission 3, the aqueduct, specified (§14): southern Italy 1941, every charge in a canister, a boat on a timetable, a tidy win ending at Alert. The airfield's line on the contents page reworded |
@@ -993,5 +1021,5 @@ mission is built, and this spec gains only the engine rules the mission needs.
 **In `MISSION-AQUEDUCT.md`**, a draft played by `?mission=aqueduct` and not yet balanced:
 southern Italy, February 1941.
 One big target that takes four charges, every charge down in a supply canister, and a
-boat that is in to the beach from turn 15 and gone at dawn. Its two rules are engine
+boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine
 rules, written above: supply canisters (§9) and the way out on a timetable (§10).

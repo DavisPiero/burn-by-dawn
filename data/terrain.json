@@ -124,7 +124,7 @@
     "olives": {"label": "Olive grove", "moveCost": 1, "cover": "light", "blocksLOS": true, "spotBonus": 0, "notes": "as the orchard"},
     "plough": {"label": "Plough", "moveCost": 1, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "open winter fields: fast, exposed, soft landings"},
     "aqueduct": {"label": "Aqueduct", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "the channel on its piers; the objective stands on it"},
-    "arch": {"label": "Arch", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "under the aqueduct and at its piers' feet; its charge points"},
+    "arch": {"label": "Pier foot", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "the dressed stone at the foot of the aqueduct's piers; its charge points"},
     "shingle": {"label": "Shingle", "moveCost": 1, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "the beach"},
     "rocks": {"label": "Shore rocks", "moveCost": 2, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "where men lie up for the boat"},
     "sea": {"label": "Sea", "moveCost": null, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "no swim; nothing lands in it"}

@@ -9,7 +9,7 @@
 
 import { hexDistance, NEIGHBOR_DIRS } from './hex.js';
 import { columnOf, hexKey, isInPlay, isPassable, reachableWithin, terrainAt, terrainIdAt } from './map.js';
-import { applyHit, makeNoise } from './enemy.js';
+import { applyHit, makeNoise, reserveLost } from './enemy.js';
 import { applyHook } from './traits.js';
 import { canAct, chargeCapacity, isWounded, occupiedHexes, onBoard, result, woundedLine } from './units.js';
 
@@ -161,12 +161,50 @@ export function isExfil(map, hex) {
 }
 
 /**
- * Is the way out open this turn (SPEC.md §10, M40)? Always, unless the mission
- * gives `exfil.opensTurn`: then not before that turn's player phase.
+ * The turn the boat lands and the way out opens (SPEC.md §10), or null where
+ * it is open all night: the mission's `exfil.opensTurn`, or sooner if a man
+ * has signalled (state.boatCalledTurn, M41b), `call.leadTurns` after he did.
  */
-export function exfilOpen(turn, rules) {
+export function boatLands(state, rules) {
   const opens = rules.exfil?.opensTurn ?? null;
-  return opens === null || turn >= opens;
+  if (opens === null) return null;
+  const called = state.boatCalledTurn ?? null;
+  const lead = rules.exfil.call?.leadTurns ?? null;
+  return called !== null && lead !== null ? Math.min(opens, called + lead) : opens;
+}
+
+/** Is the way out open this turn (SPEC.md §10)? Always, unless the mission has a boat that has not landed. */
+export function exfilOpen(state, rules) {
+  const lands = boatLands(state, rules);
+  return lands === null || state.turn >= lands;
+}
+
+/**
+ * The last turn of the night (SPEC.md §4, §10): the turn limit, or where the
+ * boat stays only `exfil.openFor` turns, the last of those if that is sooner.
+ */
+export function lastTurn(state, rules) {
+  const lands = boatLands(state, rules);
+  const stays = rules.exfil?.openFor ?? null;
+  return lands === null || stays === null ? rules.turnLimit : Math.min(rules.turnLimit, lands + stays - 1);
+}
+
+/**
+ * Signal the boat (SPEC.md §10, M41b): a man beside an exfil hex calls it in
+ * early. Not where the mission has no call, once it has been called or is in,
+ * or when it would land no sooner than it is coming anyway.
+ */
+export function checkSignalBoat(state, unit, rules, map) {
+  const call = rules.exfil?.call ?? null;
+  const cost = call?.apCost ?? 0;
+  if (!call || boatLands(state, rules) === null) return result(cost, 'no boat to signal');
+  const busy = canAct(unit, cost);
+  if (busy) return result(cost, busy);
+  if (exfilOpen(state, rules)) return result(cost, 'the boat is in');
+  if ((state.boatCalledTurn ?? null) !== null) return result(cost, `the boat has the signal: in on turn ${boatLands(state, rules)}`);
+  if (state.turn + call.leadTurns >= rules.exfil.opensTurn) return result(cost, `the boat is already on its way: in on turn ${rules.exfil.opensTurn}`);
+  if (!map.exfil.some(([q, r]) => hexDistance(unit, { q, r }) === 1)) return result(cost, 'he must be beside the water at the exfil');
+  return { ...result(cost, null), lands: state.turn + call.leadTurns, leaves: state.turn + call.leadTurns + (rules.exfil.openFor ?? 1) - 1 };
 }
 
 // --- the map as the demolitions have left it -----------------------------------
@@ -183,12 +221,13 @@ const effectiveMaps = new WeakMap();
  * list always gives back the same map object, so callers can compare by
  * identity.
  *
- * `turn` (M40): where the mission's exfil opens on a turn (`exfil.opensTurn`)
- * and this is before it, the map carries `closed`, the exfil's hexes, which
+ * `state` (M40, M41b): where the mission's exfil waits for a boat that has not
+ * landed (exfilOpen), the map carries `closed`, the exfil's hexes, which
  * nobody may enter (map.js enterCost). Left out, the exfil is taken as open.
+ * Only its `turn` and `boatCalledTurn` are read.
  */
-export function effectiveMap(map, objectives, rules, turn = null) {
-  const shut = turn !== null && !exfilOpen(turn, rules);
+export function effectiveMap(map, objectives, rules, state = null) {
+  const shut = state !== null && !exfilOpen(state, rules);
   const cached = effectiveMaps.get(objectives);
   if (cached && cached.base === map && cached.shut === shut) return cached.map;
   let rows = map.rows;
@@ -245,7 +284,7 @@ export function pencils(state, unit, rules) {
   return lengths.map((turns) => {
     const fuse = pencilFuse(unit, turns);
     const blows = state.turn + fuse - 1;
-    return { fuse, blows, afterDawn: Boolean(choice) && blows > rules.turnLimit, isDefault: turns === rules.charges.fuseTurns };
+    return { fuse, blows, afterDawn: Boolean(choice) && blows > lastTurn(state, rules), isDefault: turns === rules.charges.fuseTurns };
   });
 }
 
@@ -500,6 +539,8 @@ export function runFusePhase(state, rules) {
     // Every charge that went off, and its blast radius, so the board can
     // show each bang where it happened, as big as it was (M11).
     const at = charges.map((c) => ({ q: c.q, r: c.r }));
+    // Where each went off stays marked on the ground (M41b, art only).
+    next = { ...next, scorched: [...(next.scorched ?? []), ...at] };
     events.push({ kind: 'explosion', label: objective.label, destroyed, q: at[0].q, r: at[0].r, at, blastRadius: kind.blastRadius });
 
     const centre = objective.hexes[Math.floor(objective.hexes.length / 2)];
@@ -574,6 +615,7 @@ function feelBlast(state, at, kind, label, rules) {
   const caught = next.enemies.filter((e) => e.killable && inBlast(blasts, e));
   if (caught.length > 0) {
     next = { ...next, enemies: next.enemies.filter((e) => !caught.includes(e)) };
+    for (const e of caught) next = reserveLost(next, e, rules);
     for (const e of caught) events.push({ kind: 'enemyBlastKilled', enemyId: e.id, enemyLabel: e.label, label, q: e.q, r: e.r });
   }
   return { state: next, events };

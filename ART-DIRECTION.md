@@ -128,6 +128,8 @@ board must read at a glance.
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
   chip, never a selected man's solid frame.
+- A map may print its targets' names only before the jump and under the mouse
+  (`namesInPlay` false: the airfield), leaving the win's stars in play.
 - An objective's name is printed above it; a map may move one (`nameNudge`, art only:
   the airfield's Stukas' are under them, clear of their pens' charge points) or print it
   a word to a line (`nameWrap`: BOMB STORE). A target that is not stood on and whose
@@ -146,6 +148,19 @@ board must read at a glance.
   game.
 - A man killed floats straight up about a hex and fades over his body before the turn's
   card is laid.
+- **An enemy that raises the alarm says so** (a mission's `words.cries`): a small
+  paper bubble over its chip beside the "!", lettered in red, ACHTUNG! or HALT! for a
+  man seen, MEIN GOTT! for something found (Italian on the aqueduct). It stays with the
+  "!" through the player's turn.
+- **Where a charge went off** a black scorch is left on its hex for the rest of the
+  night, under any wreck.
+- **A target with every charge it needs set** says ALL CHARGES SET · GET CLEAR in red
+  under its name until it goes up; the pen note of the same words is only for the
+  moment it is set.
+- **A shut exfil** (a boat not yet in, §10) has the sea washed over its hexes, its
+  outline dashed in danger red and its label in red with the turn (BOAT · TURN 15);
+  open, it is green and reads EXFIL. **The boat** is drawn bow toward the beach, a
+  little faint out at sea, and is rowed in from where it stood at each turn's start.
 - Hovering any marker explains it: the "!", the spotted marker, the wound, the hidden
   mark, the orders chevron.
 
@@ -239,7 +254,9 @@ board must read at a glance.
   any few of many (the airfield), each target's ring is tight and takes in its charge
   points too, so target and point read as one; where every target takes one charge, only
   the win's note says so, and a bonus target's note names it (BOWSER: BONUS +2). A map may move a note into clear ground (`noteNudge` on an
-  objective, `exfilNoteNudge` on the map for the exfil's; art only).
+  objective, `exfilNoteNudge` on the map for the exfil's; art only). A ring may carry
+  one thing in bigger letters under its note: the exfil's, where there is a boat (NO WAY
+  OUT BEFORE THE BOAT: TURN 15).
 - **Ghost Dakotas**: until a run is picked, a faint grey Dakota flies each drop line again
   and again, staggered, so the lines read as flight paths. Silent.
 - Each run's tab sits on its line (`labelAlong`, `labelNudge` in `map.json`) with its word,

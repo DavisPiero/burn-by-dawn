@@ -54,6 +54,12 @@ with its map, ground, targets, canisters and boat drawn in code and the bot taug
 fetch and to wait. Its first numbers miss the alert budget (the garrison Alarmed in two
 games in three at best) and the Valley run is too kind: **next, M42, its balance**, by
 the map and the beats. Tests: 184 headless.
+**M41b** (6 Oct 2026), the operator's notes from playing the draft: every post sweeps
+between two facings; the reserve can be killed here and one more comes; the boat can be
+signalled in early from the beach (a card asks first) and stays three turns; the
+aqueduct and ravine two hexes east; the shut beach in red; cries, soot marks and ALL
+CHARGES SET. On the airfield the West run has a second way through the wire, and the
+targets' names are quiet in play. Tests: 187 headless. **Next is still M42.**
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the

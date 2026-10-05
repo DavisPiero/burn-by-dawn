@@ -15,12 +15,12 @@
 // man can take one; these take it.
 
 import {
-  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, raiseAlert, runDetection, runEnemyPhase, turnSentriesNow,
+  createAlert, createEnemies, decayAlert, divertGarrison, makeNoise, raiseAlert, runDetection, runEnemyPhase, turnSentriesNow, reserveLost,
 } from './enemy.js';
 import { landCanisters, landStick, runById, scatterCanisters, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
 import {
-  applyPayoff, checkCutLine, checkPlaceCharge, checkSwim, createObjectives, effectiveMap, isExfil, runFusePhase, validateSabotage,
+  applyPayoff, checkCutLine, checkPlaceCharge, checkSignalBoat, checkSwim, createObjectives, effectiveMap, isExfil, lastTurn, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
 import { boatEvents } from './boat.js';
@@ -60,6 +60,10 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     droppedCharges: [],
     // SPEC.md §9: { unitId, name, q, r }, one per man until packed or found.
     parachutes: [],
+    // Where charges have gone off (M41b, art only): { q, r }, a soot mark each.
+    scorched: [],
+    // The turn a man signalled the boat (SPEC.md §10, M41b), or null.
+    boatCalledTurn: null,
     // SPEC.md §9 Supply canisters (M40): { id, q, r, found }, each until it is
     // emptied. Its charges lie on its hex in `droppedCharges`.
     canisters: [],
@@ -223,6 +227,15 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   if (opens !== null && !(Number.isInteger(opens) && opens >= 1 && opens <= rules.turnLimit)) {
     throw new Error(`${rulesUrl}: "exfil.opensTurn" must be null or a turn from 1 to the turn limit, got ${JSON.stringify(opens)}`);
   }
+  // How long the boat stays, and whether it can be called in early (M41b).
+  const stays = rules.exfil.openFor ?? null;
+  if (stays !== null && !(Number.isInteger(stays) && stays >= 1)) throw new Error(`${rulesUrl}: "exfil.openFor" must be null or a whole number of turns, at least 1`);
+  const call = rules.exfil.call ?? null;
+  if (call !== null) {
+    requireCount(call.apCost, '"exfil.call.apCost"', rulesUrl);
+    if (!Number.isInteger(call.leadTurns) || call.leadTurns < 1) throw new Error(`${rulesUrl}: "exfil.call.leadTurns" must be a whole number of turns, at least 1`);
+  }
+  requireCount(rules.reserve?.replacements, '"reserve.replacements"', rulesUrl);
   requireCount(rules.mission?.minimumOut, '"mission.minimumOut"', rulesUrl);
   requireCount(rules.diversion?.uses, '"diversion.uses"', rulesUrl);
   requireCount(rules.diversion.statesDown, '"diversion.statesDown"', rulesUrl);
@@ -448,7 +461,7 @@ export function killEnemy(state, unitId, enemyId, map, rules) {
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false }],
   };
-  const shot = makeNoise(fired, 'silenced', unit, alert, rules).state;
+  const shot = reserveLost(makeNoise(fired, 'silenced', unit, alert, rules).state, enemy, rules);
   return { ...shot, speech: say(shot.speech, unitId, unit.dialogue?.onKill ?? null) };
 }
 
@@ -463,7 +476,7 @@ export function knifeEnemy(state, unitId, enemyId, rules) {
   const check = checkKnife(unit, enemy, rules);
   if (!check.ok) return state;
   // `knifed` is for the board only (M16): a stain is drawn under the body.
-  const spent = spend(state, unitId, unit.ap);
+  const spent = reserveLost(spend(state, unitId, unit.ap), enemy, rules);
   return {
     ...spent,
     speech: say(spent.speech, unitId, unit.dialogue?.onKill ?? null),
@@ -506,6 +519,18 @@ export function packParachute(state, unitId, rules) {
     // One a time: the first on his hex, whoever's it was (M15).
     parachutes: state.parachutes.filter((p, i, all) => i !== all.findIndex((c) => c.q === unit.q && c.r === unit.r)),
   };
+}
+
+/**
+ * Signal the boat (SPEC.md §10, M41b): it lands `call.leadTurns` turns from
+ * now and stays `openFor`. The caller asks first (the card): it cannot be
+ * taken back once the turn has gone.
+ */
+export function signalBoat(state, unitId, rules, map) {
+  const unit = unitById(state.units, unitId);
+  const check = checkSignalBoat(state, unit, rules, map);
+  if (!check.ok) return state;
+  return { ...spend(state, unitId, check.cost), boatCalledTurn: state.turn };
 }
 
 /** Pick up one dropped charge from his own hex. */
@@ -644,7 +669,7 @@ export function endTurn(state, rules, map) {
  * as the demolitions have left it.
  */
 function playOutTurn(state, rules, baseMap, dawn) {
-  const map = effectiveMap(baseMap, state.objectives, rules, state.turn);
+  const map = effectiveMap(baseMap, state.objectives, rules, state);
   const detected = runDetection(state, map, rules);
   const moved = runEnemyPhase(detected.state, map, rules);
   // Detection before the enemy phase, so a man shot and killed is gone before
@@ -718,7 +743,7 @@ export function exfilWouldFail(state, unitId, plan, rules, map) {
 }
 
 export function isDawn(state, rules) {
-  return state.turn >= rules.turnLimit;
+  return state.turn >= lastTurn(state, rules);
 }
 
 export function selectedUnit(state) {

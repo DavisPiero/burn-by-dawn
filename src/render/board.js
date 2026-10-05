@@ -21,16 +21,17 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, BOAT, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, BOAT, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-function el(name, attrs = {}) {
+function el(name, attrs = {}, children = []) {
   const node = document.createElementNS(SVG_NS, name);
   for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  for (const child of children) node.appendChild(child);
   return node;
 }
 
@@ -739,7 +740,14 @@ export function renderPieces(layers, state, view) {
         { opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1.25)', offset: 0.5 }, { opacity: 1, transform: 'scale(1)' },
       ], { delay: alarm, duration: GARRISON_SHOW.popMs, easing: 'steps(3, end)' }, elapsed);
       counter.appendChild(pop);
+      const cry = cryBubble(view.cries?.get(enemy.id));
+      if (cry) {
+        playFrom(cry, [{ opacity: 0 }, { opacity: 1 }], { delay: alarm, duration: GARRISON_SHOW.popMs }, elapsed);
+        counter.appendChild(cry);
+      }
     } else if (view.alarmed?.has(enemy.id)) {
+      const cry = cryBubble(view.cries?.get(enemy.id));
+      if (cry) counter.appendChild(cry);
       const node = marker('marker-spotted', ...alarmAt, GARRISON_SHOW.alarmSize);
       node.setAttribute('pointer-events', 'all');
       node.dataset.q = enemy.q;
@@ -897,6 +905,14 @@ function drawTargetRings(layers, rings, now) {
       const y = ny + (ring.beside ? c.y - ((lines.length - 1) / 2 - k) * lead
         : above ? c.y - ry - 8 - (lines.length - 1 - k) * lead : c.y + ry + 16 + k * lead);
       const span = el('tspan', { x, y });
+      span.textContent = words;
+      note.appendChild(span);
+    });
+    // `bigNote` (M41b, the operator's): lines under the note in bigger letters,
+    // for the one thing about this ring the player must not miss.
+    (ring.bigNote ?? []).forEach((words, k) => {
+      const size = RINGS.noteSize * RINGS.bigNoteScale;
+      const span = el('tspan', { x, y: ny + c.y + ((lines.length - 1) / 2) * lead + (k + 1) * size * RINGS.noteLeading + 4, 'font-size': size, fill: RINGS.red });
       span.textContent = words;
       note.appendChild(span);
     });
@@ -1619,6 +1635,11 @@ function drawArt(layers, state, view) {
       href: `#${art.id}`, x: at.x - art.width / 2, y: at.y - art.height / 2, width: art.width, height: art.height,
     }));
   }
+  // Where charges have gone off (M41b): a scorch on the ground, under the wreck.
+  for (const at of state.scorched ?? []) {
+    const p = axialToPixel(at.q, at.r, map.hexSize);
+    layers.art.appendChild(el('use', { href: '#effect-soot', x: p.x - 40, y: p.y - 46, width: 80, height: 92, 'pointer-events': 'none' }));
+  }
   drawTrain(layers, view.train, performance.now());
   if (view.exfil.length > 0) {
     const middle = view.exfil[Math.floor(view.exfil.length / 2)];
@@ -1629,14 +1650,35 @@ function drawArt(layers, state, view) {
     // Where the way out is a boat on a timetable (M41) it is drawn where it
     // has got to, out at sea and fainter until it is in, and not at all before.
     if (!map.boatRun) layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
-    else if (view.boat) {
-      const at = axialToPixel(view.boat.q, view.boat.r, map.hexSize);
-      layers.art.appendChild(el('use', {
-        href: `#${BOAT.art}`, x: at.x - BOAT.width / 2, y: at.y - BOAT.height / 2, width: BOAT.width, height: BOAT.height,
-        ...(view.boat.here ? {} : { opacity: BOAT.comingOpacity }),
-      }));
-    }
+    else if (view.boat) drawBoat(layers, view.boat, performance.now());
+    else boatShown = null;
   }
+}
+
+// Where the boat was last drawn, and when it set off from there: so that
+// between turns it is rowed in from where it was, whatever redraws the board
+// meanwhile (M41b, the operator's). Display only.
+let boatShown = null;
+
+/** The boat, bow toward the beach, rowing in from where it stood last turn. */
+function drawBoat(layers, boat, now) {
+  const { map } = layers;
+  const at = axialToPixel(boat.q, boat.r, map.hexSize);
+  const from = axialToPixel(map.boatRun.from[0], map.boatRun.from[1], map.hexSize);
+  const to = axialToPixel(map.boatRun.to[0], map.boatRun.to[1], map.hexSize);
+  // The sprite is drawn bow up; turn it to the line it comes in along.
+  const heading = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI + 90;
+  if (!boatShown) boatShown = { at, from: at, since: now };
+  else if (boatShown.at.x !== at.x || boatShown.at.y !== at.y) boatShown = { at, from: boatShown.at, since: now };
+  const node = el('g', { opacity: boat.here ? 1 : BOAT.comingOpacity, 'pointer-events': 'none' }, [
+    el('use', {
+      href: `#${BOAT.art}`, x: at.x - BOAT.width / 2, y: at.y - BOAT.height / 2, width: BOAT.width, height: BOAT.height,
+      transform: `rotate(${heading.toFixed(1)} ${at.x.toFixed(1)} ${at.y.toFixed(1)})`,
+    }),
+  ]);
+  layers.art.appendChild(node);
+  const dx = boatShown.from.x - at.x, dy = boatShown.from.y - at.y;
+  if (dx || dy) playFrom(node, [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: 'translate(0px, 0px)' }], { duration: BOAT.rowMs, easing: 'ease-out' }, now - boatShown.since);
 }
 
 /**
@@ -1754,9 +1796,21 @@ function drawSites(layers, state, view) {
   const { map } = layers;
   const areaOf = (hexes) => new Map(hexes.map((h) => [hexKey(h.q, h.r), h]));
 
-  drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
+  // Shut until its boat is in (M41b, the operator's): the sea washed over its
+  // hexes and its outline and label in danger red, dashed; open, green as ever.
+  if (view.exfilShut) {
+    for (const h of view.exfil) {
+      layers.sites.appendChild(el('polygon', {
+        points: cornersToPoints(axialToPixel(h.q, h.r, map.hexSize), layers.corners), fill: EXFIL.shutWash, 'fill-opacity': EXFIL.shutWashOpacity, 'pointer-events': 'none',
+      }));
+    }
+    drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth]]);
+    drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.shutStroke, EXFIL.width]], { 'stroke-dasharray': EXFIL.shutDash });
+  } else {
+    drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
+  }
   const exfilAt = labelPoint(map, view.exfil);
-  layers.sites.appendChild(casedText(view.exfilLabel ?? 'EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, EXFIL.label));
+  layers.sites.appendChild(casedText(view.exfilLabel ?? 'EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
 
   // Where a blast only wounds our men (M20) is printed lighter than where it kills.
   if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);
@@ -1794,7 +1848,16 @@ function drawSites(layers, state, view) {
     // clear of their pens' charge points, and BOMB STORE is two lines.
     const mapObjective = map.objectives?.find((o) => o.id === objective.id);
     const [nameX, nameY] = (mapObjective?.nameNudge ?? [0, 0]).map((v) => v * map.hexSize);
-    const words = mapObjective?.nameWrap ? name.split(' ') : [name];
+    // Where the map says so (`namesInPlay` false, M41b: the airfield's board was
+    // all words), a name is printed only before the jump and under the mouse;
+    // in play the win's targets keep their star and the rest say nothing.
+    const quiet = map.namesInPlay === false && state.phase !== 'drop' && !hovered;
+    const words = quiet ? (needed ? ['★'] : []) : mapObjective?.nameWrap ? name.split(' ') : [name];
+    // Every charge it needs is set and burning (M41b, the operator's: the pen
+    // note went with the next click): said under its name until it goes up.
+    if (!objective.destroyed && view.chargedObjectiveIds?.has(objective.id)) {
+      labels.push(casedText('ALL CHARGES SET · GET CLEAR', at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY + OBJECTIVE.labelSize * OBJECTIVE.labelLeading, OBJECTIVE.primaryLabel));
+    }
     words.forEach((word, k) => {
       const up = (words.length - 1 - k) * OBJECTIVE.labelSize * OBJECTIVE.labelLeading;
       labels.push(casedText(word, at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY - up, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
@@ -1998,6 +2061,19 @@ function casedText(content, x, y, fill) {
   const attrs = { x, y, 'font-size': OBJECTIVE.labelSize, 'font-weight': 'bold', 'letter-spacing': 1 };
   g.appendChild(text(content, { ...attrs, fill: 'none', stroke: OBJECTIVE.labelCasing, 'stroke-width': 5, 'stroke-linejoin': 'round' }));
   g.appendChild(text(content, { ...attrs, fill }));
+  return g;
+}
+
+/** What an enemy calls out (M41b): a small bubble above its chip, right of the "!", or null. */
+function cryBubble(words) {
+  if (!words) return null;
+  const width = words.length * CRY.size * CRY.advance + CRY.padX * 2;
+  const x = COUNTER.size / 2 + GARRISON_SHOW.alarmSize / 2, y = -CRY.height - CRY.lift;
+  const g = el('g', { 'pointer-events': 'none' });
+  g.appendChild(el('rect', { x, y, width, height: CRY.height, rx: 6, fill: PALETTE.paper, stroke: PALETTE.ink, 'stroke-width': 1.4 }));
+  g.appendChild(el('path', { d: `M${x + 6} ${y + CRY.height - 0.5} l-5 7 l11 -7 Z`, fill: PALETTE.paper, stroke: PALETTE.ink, 'stroke-width': 1.2, 'stroke-linejoin': 'round' }));
+  g.appendChild(el('rect', { x: x + 4, y: y + CRY.height - 2.4, width: 12, height: 2.4, fill: PALETTE.paper }));
+  g.appendChild(text(words, { x: x + width / 2, y: y + CRY.height / 2 + 0.5, 'font-family': SPEECH.font, 'font-weight': 'bold', 'font-size': CRY.size, fill: PALETTE.red }));
   return g;
 }
 

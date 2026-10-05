@@ -36,6 +36,7 @@
         "diversionName": "RAF diversion",
         "diversionKicker": "BOMBERS OVER THE TOWN",
         "diversionLog": "bombers over the town",
+        "cries": { "spotted": ["ACHTUNG!", "HALT!", "ALARM!"], "found": ["MEIN GOTT!", "WAS IST DAS?", "ALARM!"] },
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},
@@ -96,6 +97,7 @@
         "diversionName": "jeep raid",
         "diversionKicker": "JEEPS ON THE NORTH WIRE",
         "diversionLog": "jeeps shoot up the north wire",
+        "cries": { "spotted": ["ACHTUNG!", "HALT!", "ALARM!"], "found": ["MEIN GOTT!", "WAS IST DAS?", "ALARM!"] },
         "cleanOrders": "Getting in with as little enemy attention as possible earns a special bonus!"
       },
       "_dialogue": "M31: only the lines that name France or its ground (Fitch's cabbages and dirt, Vance's church, Barrow's trees, bridge and mud).",
@@ -124,23 +126,25 @@
       "place": "Southern Italy",
       "page": 32,
       "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait.",
-      "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT LEAVES AT DAWN",
+      "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT",
       "map": "data/map-aqueduct.json",
       "roster": "data/roster.json",
       "_rules": "MISSION-AQUEDUCT.md (SPEC.md §14), M41: a draft, every number a first guess for M42. Its two rules: `canisters` (the men jump with none; three canisters of two) and `exfil.opensTurn` (the boat is in on 15, gone at dawn, 18). A sapper has room for two charges, so the sappers and Nunn carry five at full pace. Time pencils as on the airfield. The patrols set out on turn 2. The aqueduct calls one squad down the road when it goes; the road bridge down stops the reserve and the squads (the exchange's payoff in France).",
       "rules": {
-        "turnLimit": 18,
+        "turnLimit": 17,
         "roles": { "sapper": { "charges": 2 } },
         "charges": { "fuseTurns": 4, "fuseChoice": { "min": 2, "max": 6 } },
         "canisters": { "count": 3, "charges": 2, "scatterWeights": [0, 4, 4, 2, 1] },
-        "exfil": { "opensTurn": 15 },
+        "exfil": { "opensTurn": 15, "openFor": 3, "call": { "apCost": 1, "leadTurns": 2 } },
+        "reserve": { "replacements": 1 },
         "patrols": { "setOutTurn": 2 },
         "objectives": {
           "aqueduct": { "label": "Aqueduct", "chargesNeeded": 4, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 1, "score": 10, "setsOff": false },
           "roadBridge": { "label": "Road Bridge", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "ravine", "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4, "setsOff": false }
         }
       },
-      "enemies": {},
+      "_enemies": "M41b, the operator's: with men all round it, a reserve squad that could not be killed read as a fault. Here it can be, and one more comes down the road for it (rules reserve.replacements).",
+      "enemies": { "types": { "reserve": { "killable": true } } },
       "win": { "condition": "destroyPrimary" },
       "levels": {
         "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it goes.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
@@ -154,6 +158,7 @@
         "diversionName": "RAF diversion",
         "diversionKicker": "BOMBERS OVER FOGGIA",
         "diversionLog": "bombers over Foggia",
+        "cries": { "spotted": ["ALLARME!", "CHI VA LÀ?", "ALTO LÀ!"], "found": ["MADONNA!", "MAMMA MIA!", "ALLARME!"] },
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},

@@ -97,6 +97,7 @@ const KEYS = [
   ['1–6', 'select a man'],
   ['A', 'stabilise a wounded man (aid)'],
   ['C', 'place a charge'],
+  ['B', 'signal the boat in early, from the beach (where there is one)'],
   ['D', 'the diversion (the leader\'s radio)'],
   ['E', 'pass a charge'],
   ['Esc', 'deselect, or back out of aiming (or right-click)'],
@@ -618,8 +619,9 @@ export function describeEvent(event, place) {
     case 'canisterFound': return `${event.label} finds a canister in ${at()}. Its charges are still in it.`;
     // The boat (SPEC.md §10, M41): scenery, said as it is sighted and as it comes in.
     case 'boat': return {
+      called: `The boat has the signal and is coming in: on the beach on turn ${event.opens}, gone at the end of turn ${event.leaves}.`,
       sighted: `The boat is sighted, coming in: on the beach on turn ${event.opens}.`,
-      in: `The boat is in. The way out is open until dawn, the end of turn ${event.leaves}.`,
+      in: `The boat is in. The way out is open until the end of turn ${event.leaves}.`,
     }[event.what];
     case 'explosion': if (event.setOffBy) return `The ${event.label} beside it goes up with the ${event.setOffBy}. Destroyed.`;
       return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;
@@ -1154,6 +1156,7 @@ export function renderTimerTin(element, tin, board, map, on) {
     html('div', 'tin-card', [
       html('div', 'tin-head', [html('b', null, 'SET THE TIMER'), html('span', null, tin.title)]),
       html('div', 'tin-rows', rows),
+      ...(tin.why ? [html('div', 'tin-why', tin.why)] : []),
       html('div', 'tin-foot', [
         html('span', 'tin-say', lifted ? `Goes off at the end of turn ${lifted.blows}.` : 'Pick a pencil.'),
         back,

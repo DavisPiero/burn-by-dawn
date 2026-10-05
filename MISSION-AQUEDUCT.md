@@ -13,7 +13,7 @@ are, and keeps no history (DECISIONS.md has it).
 
 The operator's calls (5 Oct 2026): southern Italy, February 1941; **every charge comes
 down in a canister** and the men jump empty-handed; **the boat keeps a timetable**, like
-the goods train, with no signal to make; and **a tidy win on Normal ends with the
+the goods train (and, since 6 Oct, can be signalled in early); and **a tidy win on Normal ends with the
 garrison at Alert, not Alarmed**.
 
 ---
@@ -31,8 +31,10 @@ the stick has **six, all of them in three canisters** that come down along the r
 the men. Nobody lands holding a charge. So the first job of the night is not the walk
 to the target but finding out where the explosive is, and who goes to fetch it.
 
-The way out is **a boat from the submarine**, in to the beach from **turn 15** and gone
-at dawn, the end of **turn 18**. Before turn 15 there is no way off the board. So the
+The way out is **a boat from the submarine**: in on **turn 15**, there for **three
+turns**, gone at the end of **turn 17**. A man who reaches the beach can **signal it in
+early**: it then lands two turns later and still stays only three. Before it lands
+there is no way off the board. So the
 job cannot be done and run from: a bang too early is three or four turns hunted on the
 shore with nowhere to go, and one too late is a boat missed. The time pencils (SPEC.md
 §7) are what answer it: set the charges on long timers, be most of the way down the
@@ -64,13 +66,18 @@ parachute (alert +1, once, and that hex is a last known contact), but the charge
 where they are. When the last charge is taken the canister is pulled under cover and is
 gone.
 
-**The way out on a timetable** (SPEC.md §10, `exfil.opensTurn` in the rules patch): 15.
-Before that turn's player phase the exfil hexes are surf: no man may enter them, and
-they are drawn closed, with the turn the boat comes. From then until dawn they are the
-way out as in any mission. The boat is scenery, as the train is: it is seen coming in
-across the sea for two turns before, its place follows from the turn, and the exfil's
-hover, the orders, the mission panel and the turn card say when it comes and when it
-goes.
+**The way out on a timetable** (SPEC.md §10, `exfil` in the rules patch): `opensTurn`
+15, `openFor` 3, `call` `{ apCost: 1, leadTurns: 2 }`. Until the boat lands the exfil
+hexes are surf: no man may enter them, and they are drawn shut, in red, with the turn
+the boat comes. The boat is seen rowing in across the sea for the two turns before it
+lands, bow toward the beach. The exfil's hover, the orders, the mission panel and the
+turn card say when it comes and when it goes.
+
+**Signalling it** (the operator's, 6 Oct 2026: a fast game should be possible, with the
+pressure kept on). A man beside the water presses **B**, and a card asks first: the turn
+it will land, the turn it will be gone, who is not near the beach, whether the aqueduct
+is down. Only Enter sends it. From then the night is five turns long at most, and the
+turn counter says so.
 
 What carries over unchanged, and so costs none of the two: **time pencils** (the
 airfield's rule, 2 to 6 turns, the default 4), **reinforcements** (France's Hard rule,
@@ -122,10 +129,12 @@ Swim is not offered, and no telephone, so Cut the line is not.
 
 `data/map-aqueduct.json`, a first drawing (M41). What it holds:
 
-- **The aqueduct** in the north-west, carried over the **ravine** on its piers. Six
-  charge points under its arches, on both banks of the torrent, of which the job needs
-  four: a choice of where to stand, as the exchange's three are in France. The **farm**
-  stands beside it, as it did.
+- **The aqueduct** across the north of the board, carried over the **ravine** on its
+  piers, two hexes east of where it was first drawn so its west end can be walked
+  round. The hex the torrent runs under it by is ravine, open, and a man can walk
+  through it. Six charge points at the piers' feet, three on each side, of which the
+  job needs four: a choice of where to stand, as the exchange's three are in France.
+  The **farm** stands at its east end, as it did.
 - **The ravine** runs from the aqueduct south-east down to the sea: the quiet way home,
   under cover all the way and slow.
 - **The road** comes in from the north-east edge, crosses the ravine by the **road
@@ -133,8 +142,8 @@ Swim is not offered, and no telephone, so Cut the line is not.
   beach: the fast way home, and the way the garrison's lorries come. The bridge has two
   charge points and needs one.
 - **Terraces and olive groves** on the slopes between the two: the middle way.
-- **The beach** in the south-east corner, **shore rocks** at either end of it, the
-  **sea** beyond. The exfil is three hexes at the water's edge. The boat's run in across
+- **The beach** in the south, west of the torrent's mouth, **shore rocks** at its west
+  end, the **sea** open to its east, where the boat comes from. The exfil is three hexes at the water's edge. The boat's run in across
   the sea (`boatRun`, art only) ends there.
 - **Three drop runs**, all landing north and west of the road bridge so nobody starts
   below the job, told apart as France's are: **West**, down the hillside south of the
@@ -151,10 +160,11 @@ Swim is not offered, and no telephone, so Cut the line is not.
 The real aqueduct had no guard at all; this one has enough to be feared and few enough
 to keep the dial down.
 
-- **Sentries**: the **aqueduct guard** at the farm end, looking west along the south
-  side of the piers (the aqueduct itself hides the north side from him); the **bridge
-  post** above the road bridge; the **coast watcher** in the hamlet, looking along the
-  beach.
+- **Sentries, and every one sweeps** (SPEC.md §6; the operator's: fixed posts on the
+  charge points made every approach a fight): the **aqueduct guard** at the farm end
+  looks west along the south side of the piers, then south-east down the valley; the
+  **bridge post** down at the bridge, then up the road; the **coast watcher** along
+  the beach, then up the road. The aqueduct itself hides its north side from the guard.
 - **Patrols**: one across the plough north of the aqueduct, where the North run lands;
   one on the road between the hamlet and the bend above the bridge; one through the
   terraces from the east slope to the west hillside, across the Valley and West runs'
@@ -162,6 +172,8 @@ to keep the dial down.
 - **The patrols set out on turn 2**, as on the airfield: with canisters to find, turn 1
   is a heavier regroup than either other mission's.
 - **The reserve** comes down the road at Alarmed and guards the way onto the beach.
+  **Here it can be killed**, and one more squad comes for it (SPEC.md §6; the
+  operator's: with men all round it, a squad that could not be touched read as a fault).
 - **Reinforcements**: the aqueduct going up calls **one squad** (Hard two) down the road
   to a post above the beach, in the enemy phase after the bang. They are patrols: they
   can be suppressed, knifed and killed.
@@ -249,7 +261,9 @@ For M43, all of it data in `missions.json` and the map. Placeholder copy:
 - **The orders** say the two rules in a line each: where the charges are ("The charges
   are in the CANISTERS: 2 in each. Nobody jumps with one") and when the boat is ("The
   BOAT is in on turn 15 and gone at dawn. Not before").
-- **The tagline**: SIX MEN · ONE AQUEDUCT · THE BOAT LEAVES AT DAWN.
+- **The tagline**: SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT.
+- **The garrison's cries** are Italian (ALLARME!, CHI VA LÀ?, MADONNA!): in February
+  1941 the aqueduct's guards were. The other two missions' are German.
 - **The contents page** keeps its line: "A great aqueduct in the mountains that wants
   every charge you carry, and a boat on the coast that will not wait."
 - **The diversion** is the RAF again, as it was in 1941: BOMBERS OVER FOGGIA.
@@ -265,6 +279,13 @@ For M43, all of it data in `missions.json` and the map. Placeholder copy:
 Targets are §10's. The bot fetches from the canisters (the nearest man with room goes,
 a man the charge would slow only if he is well the nearest) and keeps the boat's time,
 lying up in heavy cover within three hexes of the beach until it opens.
+
+**After the operator's notes** (M41b, 100 seeds, `KNIFE=1`, west / north / valley; the
+bot does not signal the boat or time the posts' sweeps): Normal naive **67 / 78 / 90**
+wins, the garrison Alarmed in 88 / 98 / 99, the aqueduct down on turn 13.7 to 13.9;
+careful with timers to one turn 60 / 92 / 89, Alarmed in 61 / 92 / 98; Easy 82 / 75 /
+89; Hard 29 / 24 / 53. With the reserve killable the bot kills more (five to seven a
+game). Everything the first numbers said still stands, and the night is a turn shorter.
 
 **The draft's first numbers** (M41, 100 seeds, Normal, `KNIFE=1`, west / north /
 valley), before any balancing. They are here to say where M42 starts, not as baselines:

@@ -58,8 +58,11 @@
   "_canisters": "SPEC.md §9, M40: supply canisters. null here; a mission gives { count, charges, scatterWeights }: the men jump with no charges, and `count` canisters holding `charges` each leave the aircraft among them and scatter as the men do, by their own `scatterWeights` (one weight per distance from 0, as landing.scatterWeights). A canister is a pile of charges to pick up from, and evidence until it is empty: found like a parachute (alert.parachuteFound), once, keeping its charges.",
   "canisters": null,
 
-  "_exfil": "SPEC.md §10, M40: the way out on a timetable. `opensTurn` null: the exfil is open all night. A mission gives a turn: before that turn's player phase no man may enter an exfil hex; from then until dawn it is the way out as ever.",
-  "exfil": { "opensTurn": null },
+  "_exfil": "SPEC.md §10: the way out on a timetable (M40) that can be called in early (M41b, the operator's). `opensTurn` null: the exfil is open all night, and the rest is unused. A mission gives a turn: before the boat lands no man may enter an exfil hex. `openFor`: how many turns it then stays, the turn it lands included; the mission ends with the last of them, dawn or not (null: until turnLimit). `call` null, or { apCost, leadTurns }: a man beside an exfil hex may signal, and the boat lands `leadTurns` turns after the turn he does, if that is sooner than `opensTurn`.",
+  "exfil": { "opensTurn": null, "openFor": null, "call": null },
+
+  "_reserve": "SPEC.md §6 Exfil watched, M41b (the operator's). `replacements`: where a mission makes its reserve squad killable (its enemies patch), how many more squads come, one for each killed, while the garrison is Alarmed and nothing has stopped the reserve. 0 here: France's and the airfield's reserve cannot be killed.",
+  "reserve": { "replacements": 0 },
 
   "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27).",
   "mission": { "minimumOut": 3, "win": { "condition": "destroyPrimary" } },

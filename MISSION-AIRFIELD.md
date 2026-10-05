@@ -81,7 +81,9 @@ with none of the swim's `across` terrain does not offer Swim at all.
 - **The camp** in the east: tents, the **signals tent** with its mast, the AA pits, and
   the gate where the road comes in from the east edge (Hard's reinforcements come this
   way).
-- **The escarpment** runs north–south on the west, looking down over the wire.
+- **The escarpment** runs north–south on the west, looking down over the wire. There
+  is a **second way through the west wire**, level with the strip, and the escarpment
+  is a hex thinner beside it (M41b, the operator's: the West run was hemmed in).
 - **The wadi** winds in from the south-west corner under the escarpment, through a gap in
   the wire, to the south dispersal: the quiet way in, like the towpath.
 - **The dunes** in the north-west, slow and blind, lead to the north dispersal.
@@ -189,6 +191,9 @@ All of it data in `missions.json` and the map.
   desert set (`assets/portraits/desert`).
 - **The back page**: a bugle call for success (`desertVictory`), the landing ground's
   siren for the rest (`desertDefeat`).
+- **The targets' names are printed before the jump and under the mouse only**
+  (`namesInPlay` false in the map; the operator's: the board was all words). In play
+  the aircraft keep their stars and nothing else is named.
 - **Our men's counters** are burnt orange here, and a fallen man's grave mound with them.
 - **Its title card** is `assets/title/title-card-airfield.jpg`, with BURN BY DAWN painted
   in. The tagline is SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY.
@@ -209,6 +214,12 @@ hit in the first three turns, North and South: 0.54 and 0.16 a game before, 0.01
 after) without moving the win rate. Returning fire only when cornered (`FIRE=cornered`)
 leaves every one of these where it is. The hunter against `careful`, and what each rule
 is worth to the bot, are in DECISIONS.md.
+
+**Since the West run was opened** (M41b), the same runs give **Normal 87 / 93 / 78, Hard
+22 / 26 / 28**, and the careful bot's Normal 100 / 100 / 98 (scoring 46.5 / 41.2 /
+41.7): Normal is where it was, and Hard's West is 3 under the target and its North 10
+lower than before, since the garrison now has a second way out to a noise. For the
+operator to keep or take back.
 
 **The rating's bands** (SPEC.md §10): 36, 43 and 50.
 
