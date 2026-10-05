@@ -8,8 +8,7 @@ and sabotage German infrastructure before dawn. It is an engine plus missions: �
 describe the engine through mission 1, the rail bridge in occupied France. How it looks
 and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
-`MISSION-AQUEDUCT.md`), is playable too, picked from the contents page, and not yet
-balanced.
+`MISSION-AQUEDUCT.md`), is playable too, picked from the contents page.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -631,7 +630,10 @@ fuse hook applies to whichever he picks (Steady Hands: a turn off each).
   Click a pencil or press its number to lift it; **SET**, **Enter** or **C** again sets
   the charge with the one lifted; **Esc** or Back puts the tin away. Undo takes it back.
 - **Which is offered first:** the default (`fuseTurns`), or if that is too short, the
-  shortest longer one that lets every man get clear.
+  shortest longer one that lets every man get clear. **Where charges already burn on
+  his target**, the one that goes off the same turn as the last of them, if one of his
+  reaches it and lets every man get clear: one bang, by pressing Enter. The tin says so
+  in a line ("4 turns goes off with the charges already set: one bang.").
 - **Getting clear.** While the tin is open the board shows the charge's blast in red, the
   chain's included. A timer that would catch a man who could not walk off that ground in
   time (his AP left this turn, a full pool each turn after) reads **too short** in red and
@@ -944,7 +946,16 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Normal** | Most win within three tries | 75 to 90 | Below careful on the same run (a few points over is the bot's noise) |
 | **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
-Today France's runs are inside them but Normal's East, 4 over; the airfield's are in §13.
+Today France's runs are inside them but Normal's East, 4 over; the airfield's are in §13
+and the aqueduct's in §14.
+
+The aqueduct has a third style, **`tidy`**, the player its alert budget is measured by
+(§14): the `careful` mover who packs his parachute on turn 1, times a target's charges
+to one bang, and would rather lose a turn than be seen. `ALERT=1` prints where the
+dial's points came from. `SENSE=1` mends two faults in the bot's play found there (it
+knifed standing in its own blast; it took a target's first-listed charge points, not
+the nearest): the aqueduct's numbers are with it, and France's and the airfield's were
+measured without it and are kept so.
 
 ---
 
@@ -970,13 +981,12 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M42, the aqueduct's balance** (after M41b, the operator's notes on the draft) (Phase 4; §14, `MISSION-AQUEDUCT.md`, whose Balance
-section says where the draft stands). By the bot, before any art is asked for: the
-**alert budget** met by redrawing the map and the patrols' beats, not the alert's
-numbers (a careful Normal win below Alarmed in six games in ten); the **boat's turn and
-dawn** set to when a stick straight from the job reaches the shore; the three runs and
-the three levels inside the §10 targets; the rating's bands. Then the operator's own
-play of the draft, and M43: words, sounds and the art hand-off. v1.0 is tagged.
+**None chosen.** M42 balanced the aqueduct (§14). Next is **M43**: the aqueduct's words,
+sounds and art hand-off (Italian enemy chips and the per-mission folder they need, the
+winter wash, the operator's rewording of the placeholder copy), after the operator has
+played M42 and answered what it left open: the hunter bot is level with careful play on
+Normal and above it on Hard, and Hard's North run is under its target
+(`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
 
 ### Done
 
@@ -993,6 +1003,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M42 | The aqueduct balanced by the bot: eight pier feet, a mule track up the west bank, the West and Valley runs and three beats redrawn, the longest timer offered first and then the one that makes one bang, Hard's boat two turns, rating bands; the bot's `tidy` style and `ALERT=1` |
 | M41e | The airfield's west gap moved two rows north, level with the north pens: Hard's runs back inside the targets |
 | M41d | The aqueduct playable from the contents page, with its painted panel (the operator's); the airfield's West gap kept |
 | M41c | Signal the boat's button in red while a man could send it; the aqueduct's contents panel and Italian enemy chips asked for in ART-PROMPTS |
@@ -1022,7 +1033,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 ## 14. Mission 3 — the aqueduct
 
-**In `MISSION-AQUEDUCT.md`**, playable from the contents page and not yet balanced:
+**In `MISSION-AQUEDUCT.md`**, playable from the contents page and balanced at M42:
 southern Italy, February 1941.
 One big target that takes four charges, every charge down in a supply canister, and a
 boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine

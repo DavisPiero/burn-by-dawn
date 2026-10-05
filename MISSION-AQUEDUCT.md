@@ -4,9 +4,9 @@ This is §14 of the specification, kept in a file of its own, as MISSION-AIRFIEL
 §13. It is as authoritative as SPEC.md. Section numbers in it (§6, §10) are SPEC.md's.
 
 **Specified 5 Oct 2026 (M39). Playable since M41d (6 Oct 2026, the operator's): picked
-from the contents page, with its painted panel. Not yet balanced (M42).** Its two rules are in the engine and written in SPEC.md (§9 Supply
-canisters, §10 The way out on a timetable); its numbers are here. Every number is a first guess for the balance
-milestone (M42) unless it says the operator chose it. The words and names are placeholder
+from the contents page, with its painted panel. Balanced by the bot at M42.** Its two rules are in the engine and written in SPEC.md (§9 Supply
+canisters, §10 The way out on a timetable); its numbers are here, set at M42 unless it
+says the operator chose them. The words and names are placeholder
 copy for the operator to reword. Once the mission is playable this file says how things
 are, and keeps no history (DECISIONS.md has it).
 
@@ -79,7 +79,7 @@ is down. Only Enter sends it. From then the night is five turns long at most, an
 turn counter says so.
 
 What carries over unchanged, and so costs none of the two: **time pencils** (the
-airfield's rule, 2 to 6 turns, the default 4), **reinforcements** (France's Hard rule,
+airfield's rule, 2 to 6 turns, here the default 6), **reinforcements** (France's Hard rule,
 here on Normal too), the reserve, the RAF diversion, and "one objective, one explosion".
 
 ### Who carries what
@@ -126,13 +126,14 @@ Swim is not offered, and no telephone, so Cut the line is not.
 
 ### The map
 
-`data/map-aqueduct.json`, a first drawing (M41). What it holds:
+`data/map-aqueduct.json`, redrawn at M42 for the balance. What it holds:
 
 - **The aqueduct** across the north of the board, carried over the **ravine** on its
   piers, two hexes east of where it was first drawn so its west end can be walked
   round. The hex the torrent runs under it by is ravine, open, and a man can walk
-  through it. Six charge points at the piers' feet, three on each side, of which the
-  job needs four: a choice of where to stand, as the exchange's three are in France.
+  through it. **Eight charge points** at the piers' feet, four on each side and two
+  either side of the torrent, of which the job needs four: a choice of where to stand,
+  and one side is enough, so the party can work together. (Hard's five need both.)
   The **farm** stands at its east end, as it did.
 - **The ravine** runs from the aqueduct south-east down to the sea: the quiet way home,
   under cover all the way and slow.
@@ -141,16 +142,19 @@ Swim is not offered, and no telephone, so Cut the line is not.
   beach: the fast way home, and the way the garrison's lorries come. The bridge has two
   charge points and needs one.
 - **Terraces and olive groves** on the slopes between the two: the middle way.
+- **A mule track** up the west bank of the torrent, from the road below the bridge to
+  the south-west piers: a track's pace on the slowest side of the map, in the open,
+  beside a ravine that is cover and half the speed.
 - **The beach** in the south, west of the torrent's mouth, **shore rocks** at its west
   end, the **sea** open to its east, where the boat comes from. The exfil is three hexes at the water's edge. The boat's run in across
   the sea (`boatRun`, art only) ends there.
 - **Three drop runs**, all landing north and west of the road bridge so nobody starts
-  below the job, told apart as France's are: **West**, down the hillside south of the
-  aqueduct (QUIET: olives, terraces and the torrent's bed, where a landing costs a
-  turn); **North**, over the plough beside the farm (STEADY: soft landings and the
-  canisters in plain sight, where the aqueduct patrol walks); **Valley**, down the
-  terraces above the road bridge (FAST: nearest the bridge and the way home, the longest
-  carry up to the piers).
+  below the job, told apart as France's are: **West**, across the hillside three rows below the
+  aqueduct's west end (QUIET: nobody near, the slowest ground and the longest walk to
+  the boat); **North**, over the plough beside the farm (STEADY: soft landings and the
+  canisters in plain sight, beside the road the squads come down); **Valley**, astride
+  the torrent above the road bridge (FAST: nearest the bridge and the way home, with
+  men down in the torrent's bed and the bridge post close).
 - **Nobody and nothing lands in the sea or on a crag**, and no canister on a man.
 
 ### The garrison
@@ -164,13 +168,14 @@ to keep the dial down.
   looks west along the south side of the piers, then south-east down the valley; the
   **bridge post** down at the bridge, then up the road; the **coast watcher** along
   the beach, then up the road. The aqueduct itself hides its north side from the guard.
-- **Patrols**: one across the plough north of the aqueduct, where the North run lands;
-  one on the road between the hamlet and the bend above the bridge; one through the
-  terraces from the east slope to the west hillside, across the Valley and West runs'
-  ground. So on every run something can be found.
+- **Patrols**, each guarding something and touching a landing ground at one end only:
+  the **aqueduct patrol** along the north side of the piers to the edge of the plough;
+  the **road patrol** between the hamlet and the bend above the bridge; the **hill
+  patrol** across the west hillside, between the West run's ground and the south-west
+  piers. So on every run something can be found, and none is walked from end to end.
 - **The patrols set out on turn 2**, as on the airfield: with canisters to find, turn 1
   is a heavier regroup than either other mission's.
-- **The reserve** comes down the road at Alarmed and guards the way onto the beach.
+- **The reserve** comes down the road at Alarmed and stands on it above the beach.
   **Here it can be killed**, and one more squad comes for it (SPEC.md §6; the
   operator's: with men all round it, a squad that could not be touched read as a fault).
 - **Reinforcements**: the aqueduct going up calls **one squad** (Hard two) down the road
@@ -185,16 +190,19 @@ Numbers are Normal's, per kind in the mission's rules patch.
 
 | Objective | Needs | Blast / kills within | Alert | Score | Pays |
 |---|---|---|---|---|---|
-| **Aqueduct** (PRIMARY) | 4 charges, of 6 points | 1 / 1 | +3 | 10 | the win; calls up 1 squad |
+| **Aqueduct** (PRIMARY) | 4 charges, of 8 points | 1 / 1 | +3 | 10 | the win; calls up 1 squad |
 | **Road bridge** | 1 charge, of 2 points | 1 / 1 | +3 | 4 | no reserve, no reinforcements; becomes ravine |
 
 **The win**: `destroyPrimary`, and at least the level's `minimumOut` men **in the boat**
-by dawn. Easy: three charges, and no squad is called. Hard: five charges, two squads.
+by dawn. Easy: three charges, and no squad is called. Hard: five charges, two squads,
+and **the boat stays two turns** (in on 15, gone with 16).
 
-**Time pencils**: 2 to 6 turns, the default 4 (Dutch, Steady Hands: 1 to 5). A timer
-that would go off after dawn cannot be picked, as ever. Four charges are four men's
-work or two turns', so timers set a turn apart to the same turn make **one bang**, and
-that is worth a whole step of the dial here.
+**Time pencils**: 2 to 6 turns, and **the longest, 6, is the one offered first**
+(Dutch, Steady Hands: 1 to 5, and 5). A timer that would go off after dawn cannot be
+picked, as ever. Four charges are four men's work or two turns', so timers set to the
+same turn make **one bang**, and that is worth a whole step of the dial here. The game
+helps: a first charge on six turns leaves the others five to arrive in, and the tin
+then offers each of them the timer that goes off with it (SPEC.md §7).
 
 **The score**: as France's, with no train and no salvo. The clean run is France's too:
 never Alarmed, no diversion, 3.
@@ -219,29 +227,37 @@ costs.**
 So the plan the dial rewards is one bang and a quiet walk, and the road bridge is a
 real trade: the beach kept clear, for the clean run and a hunting garrison.
 
-What the map has to do to keep that true, checked by the bot at M41 and M42 before any
-art is asked for:
+**The measure** (M42) is the bot's `tidy` style (SPEC.md §10): careful movement, every
+parachute packed on turn 1, the charges timed to one bang, no knife. **Its Normal wins
+never reach Alarmed in at least six games in ten on every run.** Measured, 300 seeds,
+west / north / valley: **94 / 62 / 84**, with 1.8 / 2.2 / 2.4 slips a win (three or
+fewer in 92 / 86 / 80). The map and the beats were redrawn to get there, not the
+alert's numbers.
 
-- There are **nine pieces of evidence** on the ground after the drop (six parachutes,
-  three canisters), three more than France. With nobody packing and no canister
-  emptied, the patrols' beats find **no more than two** of them on any run before the
-  aqueduct goes. Tidying up is worth doing; not doing it is not the whole budget.
-- With only six enemies there are few bodies to find and few finders.
-- **The measure**: the careful bot's Normal wins end below Alarmed in **at least six
-  games in ten** on every run, and the naive bot's in at least three in ten. If the
-  first map misses that, the map and the beats are redrawn, not the alert's numbers.
+What it costs to be less tidy, the same way:
+- **The knife** (`KNIFE=1`, every enemy a man finds himself behind): 67 / 35 / 92. A
+  body on the road is found by whatever comes down it, and on the North run that is
+  the squad the bang calls.
+- **Not packing** (the naive bot, which also knifes and takes the timer offered):
+  43 / 10 / 45; packing alone (`PACK=1`) makes it 48 / 21 / 51.
+- A find leads to the next: whoever finds a parachute walks to it, and finds the ones
+  beside it. So "no more than two found with nobody packing", asked for when this
+  mission was specified, **cannot be held by any beat that touches a landing ground**,
+  here or in France (3.5 of six found on its North run). What the beats do instead is
+  touch each landing ground at one end, and the patrols stand through turn 1, so a
+  stick that packs loses none.
 - Four quiet turns take a state off the dial (§6), so a stick lying up for the boat can
   earn its way back down; the explosion floor still holds it at Suspicious.
 
 ### The boat and the clock
 
-The lesson of the goods train (M37) was that waiting is dull: at turn 17 most of the
-night was spent beside the bridge. So the boat's turn is set the same way the train's
-was, **to be in time for, not to wait for**: the turn a stick that has come straight
-from the job reaches the shore. The first guess is the aqueduct up on turns 10 to 12, a
-five or six turn walk down, the boat in on 15 and dawn at 18. M42 sets it by the bot:
-`opensTurn` is the turn the naive bot's first man reaches the beach on Normal, and dawn
-three turns after.
+The lesson of the goods train (M37) was that waiting is dull, so the boat is **to be
+in time for, not to wait for**. Measured at M42 (Normal, naive): the aqueduct goes up at
+the end of turn 12 or 13, and three men are at the shore with it down on turn 12 or 13
+(Hard: 14). So **the boat in on 15 and gone with 17 stands**: a turn or two in hand for
+a stick that has come straight from the job, none for one that has dawdled. A turn
+earlier (14 to 16) the runs fall to 75 / 75 / 84 and a turn later (16 to 18) they rise
+to 84 / 83 / 89, against 81 / 83 / 80 as it is.
 
 What the closed beach is for, since a well-timed stick barely waits: nobody can bail out
 early with the job half done; the squad the bang called has time to reach its post, so
@@ -278,39 +294,42 @@ For M43, all of it data in `missions.json` and the map. Placeholder copy:
 
 ### Balance
 
-Targets are §10's. The bot fetches from the canisters (the nearest man with room goes,
-a man the charge would slow only if he is well the nearest) and keeps the boat's time,
-lying up in heavy cover within three hexes of the beach until it opens.
+Targets are §10's. The aqueduct's reference is `MISSION=aqueduct KNIFE=1 SENSE=1 node
+tools/balance-bot.mjs 300 naive` (SENSE: SPEC.md §10). The bot fetches from the
+canisters (the nearest man with room goes, a man the charge would slow only if he is
+well the nearest), works the pier feet nearest the stick, and keeps the boat's time,
+lying up in heavy cover within three hexes of the beach until it opens. It never
+signals the boat or blows the road bridge unless `greedy`.
 
-**After the operator's notes** (M41b, 100 seeds, `KNIFE=1`, west / north / valley; the
-bot does not signal the boat or time the posts' sweeps): Normal naive **67 / 78 / 90**
-wins, the garrison Alarmed in 88 / 98 / 99, the aqueduct down on turn 13.7 to 13.9;
-careful with timers to one turn 60 / 92 / 89, Alarmed in 61 / 92 / 98; Easy 82 / 75 /
-89; Hard 29 / 24 / 53. With the reserve killable the bot kills more (five to seven a
-game). Everything the first numbers said still stands, and the night is a turn shorter.
+**Baselines** (M42; win %, west / north / valley):
 
-**The draft's first numbers** (M41, 100 seeds, Normal, `KNIFE=1`, west / north /
-valley), before any balancing. They are here to say where M42 starts, not as baselines:
-
-| Bot | Wins | Reached Alarmed | Aqueduct down, turn |
+| Level | Naive | Seeds | Target |
 |---|---|---|---|
-| naive, the timer offered | 80 / 82 / 99 | 91 / 97 / 99 | 14.3 / 13.4 / 13.6 |
-| naive, timers to one turn (`PENCIL=sync`) | 75 / 84 / 98 | 72 / 86 / 93 | 13.6 / 13.1 / 12.3 |
-| careful, timers to one turn | 71 / 93 / 99 | 66 / 92 / 94 | 13.2 / 12.7 / 12.2 |
+| Easy | **95 / 95 / 93** | 300 | 95 or more: Valley 2 under |
+| Normal | **81 / 83 / 80** | 300 | 75 to 90 |
+| Hard | **33 / 21 / 40** | 400 | 25 to 45: North 4 under |
 
-What they say M42 has to do:
-- **The alert budget is missed.** The garrison is Alarmed in two games in three at
-  best, where the measure wants the careful bot below it in six in ten. One bang does
-  help (the West run falls from 91 to 72), but the bot knifes three to five of the six
-  enemies a game and their bodies are found, and two to four parachutes besides. By the
-  spec the answer is the map and the beats, not the alert's numbers.
-- **The Valley run is too kind** (98 or 99 in 100), though it has two bad landings a
-  game in the torrent's bed. The West run loses a quarter of its games to dawn.
-- **The aqueduct goes up on turn 12 to 14**, two turns later than guessed, so the stick
-  reaches the beach about as dawn comes. The boat's turn and dawn want moving together.
-- The squad the bang calls comes on in nearly every game, from the far corner.
+Normal, other styles (200 seeds): careful 91 / 96 / 90; tidy 84 / 87 / 70 (300); naive
+packing 79 / 85 / 83; greedy with planned timers 94 / 95 / 90, the Road Bridge down in
+87 to 93 games in 100.
 
-**The rating's bands** (SPEC.md §10): 20, 25 and 30, first guesses for M42.
+**Known and left for the operator:**
+- **The hunter check fails.** Kill-everything is level with careful play on Normal
+  (hunter 95 / 100 / 91 against 91 / 96 / 90, scoring three points more) and above it
+  on Hard (75 / 81 / 69 against 71 / 68 / 60). Six enemies, three of them posts that
+  turn their backs every other turn, are few enough to be cleared by turn 8, and a
+  cleared valley is quicker to work in than a watched one. With every man hunting
+  (`HUNTERS=all`) it collapses (31 / 7 / 57): the job is not done in time. Levers not
+  tried, each a design choice: a seventh enemy; a body found calling a squad as a bang
+  does; the posts sweeping less often.
+- **Hard's North run is under** (21): its plough is open ground under a garrison that
+  sees four hexes, and the squads come in through it.
+- **The Valley run's tidy bot wins least** (70) though its naive bot is level with the
+  others: men who land in the torrent's bed lose turn 1 and the tidy bot waits for them.
+
+**The rating's bands** (SPEC.md §10): **24, 30 and 35**. The naive bot's winning scores
+on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at 22 to
+28; with the Road Bridge the middle half is 31 to 35 and the best games 39 or 40.
 
 ### The order it is built in
 
@@ -319,5 +338,5 @@ What they say M42 has to do:
 | **M39** | This file, and the operator's four calls |
 | **M40** | The engine: canisters and the exfil's opening turn, as data, off in both missions; France's and the airfield's bot output unchanged, byte for byte |
 | **M41** | The map as a draft (`?mission=aqueduct`): terrain drawn in code, the garrison, the objectives, the boat as scenery; the bot taught to fetch and to wait |
-| **M42** | Balance: the alert budget measured, the boat's turn and dawn set, the three levels inside the §10 targets, the rating's bands |
+| **M42** | Balance (done): the map and beats redrawn to the alert budget, the boat's turn and dawn measured and kept, the levels against the §10 targets, the rating's bands |
 | **M43** | Words, sounds and the art hand-off; `playable` on the operator's word |
