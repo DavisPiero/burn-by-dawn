@@ -259,7 +259,8 @@ gives the full cost and, when it cannot be used, why not.
   lands two turns after the turn he signals and stays its three, and the mission ends
   when it goes. It is never done at a keypress: a card says the turn it will land, the
   turn it will be gone, who is not near the beach yet and whether the job is done, and
-  only **Enter** or its button sends the signal. Not offered once the boat has been
+  only **Enter** or its button sends the signal. While a man could send it, its button
+  is set in red and the readout says so, as for Stabilise and Pass. Not offered once the boat has been
   called, is in, or would land no sooner than it is coming anyway.
 - **RAF diversion** (once per mission, while the leader is alive) — no AP, called at any
   point in the player phase. A raid on the town pulls the garrison's attention: the
@@ -992,6 +993,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M41c | Signal the boat's button in red while a man could send it; the aqueduct's contents panel and Italian enemy chips asked for in ART-PROMPTS |
 | M41b | The operator's notes on the draft: posts that sweep, a reserve that can be killed and is replaced, the boat signalled in early behind a card that asks, the aqueduct two hexes east with its arch open, the shut beach in red, the boat rowed in, enemy cries, soot where charges went off, ALL CHARGES SET on a target; the airfield's West run opened and its names quiet in play |
 | M41 | The aqueduct as a draft (`?mission=aqueduct`): its map and eleven kinds of ground, the aqueduct and the road bridge, the canister, the closed beach and the boat drawn and worded, the bot taught to fetch and to wait |
 | M40 | The aqueduct's engine work, off in both missions: supply canisters (§9) and the way out on a timetable (§10) |

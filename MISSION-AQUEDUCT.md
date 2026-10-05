@@ -262,6 +262,9 @@ For M43, all of it data in `missions.json` and the map. Placeholder copy:
   are in the CANISTERS: 2 in each. Nobody jumps with one") and when the boat is ("The
   BOAT is in on turn 15 and gone at dawn. Not before").
 - **The tagline**: SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT.
+- **The garrison's chips are still the German ones.** Italian chips are asked for in
+  ART-PROMPTS.md (Priority 19); they need a per-mission folder for enemy chips wired
+  first, as the men's portraits have (M43).
 - **The garrison's cries** are Italian (ALLARME!, CHI VA LÀ?, MADONNA!): in February
   1941 the aqueduct's guards were. The other two missions' are German.
 - **The contents page** keeps its line: "A great aqueduct in the mountains that wants
