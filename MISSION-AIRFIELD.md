@@ -82,8 +82,9 @@ with none of the swim's `across` terrain does not offer Swim at all.
   the gate where the road comes in from the east edge (Hard's reinforcements come this
   way).
 - **The escarpment** runs north–south on the west, looking down over the wire. There
-  is a **second way through the west wire**, level with the strip, and the escarpment
-  is a hex thinner beside it (M41b, the operator's: the West run was hemmed in).
+  is a **second way through the west wire**, level with the north dispersal's pens,
+  and the escarpment is a hex thinner below it (the operator's: the West run was
+  hemmed in).
 - **The wadi** winds in from the south-west corner under the escarpment, through a gap in
   the wire, to the south dispersal: the quiet way in, like the towpath.
 - **The dunes** in the north-west, slow and blind, lead to the north dispersal.
@@ -215,19 +216,13 @@ after) without moving the win rate. Returning fire only when cornered (`FIRE=cor
 leaves every one of these where it is. The hunter against `careful`, and what each rule
 is worth to the bot, are in DECISIONS.md.
 
-**Since the West run was opened** (M41b), the same runs give **Normal 87 / 93 / 78, Hard
-22 / 26 / 28**, and the careful bot's Normal 100 / 100 / 98 (scoring 46.5 / 41.2 /
-41.7): Normal is where it was, and Hard's West is 3 under the target and its North 10
-lower than before. **Kept** (the operator's, 6 Oct 2026). Over 600 seeds Hard's North is
-22 against 29 without the gap (the 36 was a lucky 300), and the gap alone does it, not
-the thinner escarpment (24 with only the gap, 31 with only the escarpment). It is the
-bot's own doing: its stick now leaves by the gap, the shorter way to the trucks, 1.7
-times a game where it never did, and walks half as far in the wadi (1.1 hexes a game
-for 2.4), so it crosses open sand where it had heavy cover. On Hard four must get out
-and every enemy sees four hexes, so a man lost on the way out is the game. Taking the
-West patrol off the board leaves the same gap in the numbers (40 to 34), so it is not
-the garrison coming in by it. A person chooses the wadi; the naive bot takes the
-shortest way.
+**Since the West run was opened** (M41b, the gap moved in M41e), naive as above:
+**Normal 86 / 94 / 79** (300 seeds), **Hard 28 / 33 / 30** (400 seeds), every Hard run
+inside the targets. The gap was first cut at the strip, where it was the shortest way
+out to the trucks: the bot's stick left by it over open sand instead of by the wadi,
+and Hard's North fell to 24 and its West to 23. Level with the north pens it is a way
+in for the West run and not the way out, and Hard is where it was with no gap at all
+(29 / 32 / 29). At the top corner of the wire the West run falls to 21.
 
 **The rating's bands** (SPEC.md §10): 36, 43 and 50.
 
