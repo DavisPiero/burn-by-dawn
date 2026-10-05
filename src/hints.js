@@ -182,7 +182,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     if (man.inContact || man.ap < rules.actions.knife.apCost) continue;
     const back = state.enemies.find((e) => e.killable && hexDistance(e, man) === 1 && !inArc(e, e.facing, man, e.arcDegrees));
     if (back) {
-      hints.push(`${man.shortName} is right behind the ${back.label.toLowerCase()}, and it cannot see him: he can knife it [N], silently${rules.actions.knife.fullTurn ? ', if he does it before he moves' : ''}. It leaves a body.`);
+      hints.push(`${man.shortName} is right behind the ${back.label.toLowerCase()}, and it cannot see him: he can knife it [N], silently${rules.actions.knife.fullTurn ? ', if he does it before he moves' : ''}. It leaves a body${rules.bodyFound.reinforcements > 0 ? ', and a body found brings reinforcements' : ''}.`);
       break;
     }
   }

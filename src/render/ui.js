@@ -605,7 +605,7 @@ export function describeEvent(event, place) {
     case 'alertDecay': return `Alert eases: ${event.from} → ${event.to}.`;
     case 'reserve': return `${event.label} arrives on the road, ${at()}.`;
     case 'reinforcements': return `${event.label} come on down the road, ${at()}, making for the way to the exfil.`;
-    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements after the ${event.label}: on next turn.`;
+    case 'reinforcementsCalled': return `The garrison calls up ${event.count === 1 ? 'a squad' : `${event.count} squads`} of reinforcements ${event.body ? 'for the body it found' : `after the ${event.label}`}: on next turn.`;
     case 'searched': return `${event.label} reaches ${at()} and searches it.`;
     case 'wounded': return `${event.unitName} is hit by ${listOf(event.by)} — wounded.`;
     case 'killed': return `${event.unitName} is hit by ${listOf(event.by)} — killed.`;

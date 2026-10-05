@@ -799,6 +799,14 @@ export function runEnemyPhase(state, map, rules) {
       alert = raiseAlert(alert, rules.alert.bodyFound, rules);
       noises.push({ kind: 'found', q: body.q, r: body.r });
       events.push({ kind: 'bodyFound', label: moved.label, enemyId: moved.id, name: body.name, q: body.q, r: body.r });
+      // One of its own found dead (M42b; `bodyFound.reinforcements`, 0 in the
+      // files): the garrison calls up squads as it does for a bang, while a
+      // post is left for one and nothing has cut the call (SPEC.md §6).
+      const calls = body.enemyId ? Math.min(rules.bodyFound.reinforcements, help ? help.posts.length - reinforcementsSent - reinforcementsDue : 0) : 0;
+      if (calls > 0 && !state.reserveCancelled) {
+        reinforcementsDue += calls;
+        events.push({ kind: 'reinforcementsCalled', count: calls, body: true, label: 'body found', q: body.q, r: body.r });
+      }
       return { ...body, found: true };
     });
     // A found parachute is gone: taken away as evidence (SPEC.md §9).

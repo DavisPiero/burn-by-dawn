@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, BOAT, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, BOAT, CANISTER, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -163,6 +163,7 @@ export function createBoard(svg, map, handlers) {
   drawHedges(lines, map);
   drawFences(lines, map);
   drawRoads(lines, map, edge, railway);
+  drawRoadArt(lines, map);
   drawRailway(lines, map, edge);
   drawPlaces(lines, map);
   terrain.appendChild(lines);
@@ -382,6 +383,29 @@ function drawRoads(layer, map, edge, railway) {
       d += `M${f(edgeMiddle(map, q, r, crossing))} L${f(axialToPixel(q + n.q, r + n.r, map.hexSize))} `;
     }
   });
+  if (!d) return;
+  layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.edge, 'stroke-width': ROAD.edgeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.fill, 'stroke-width': ROAD.fillWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+}
+
+/**
+ * Roads that are only drawn (`roadArt` in the map, art only; M42b, the
+ * operator's): each a line through its hexes' centres, which may lie off the
+ * board, so a road can run on past the exfil it leads to or along the top of
+ * the aqueduct and away, over ground whose terrain is whatever it was. Drawn
+ * as the roads are, its corners rounded the same way.
+ */
+function drawRoadArt(layer, map) {
+  const f = (p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  let d = '';
+  for (const line of map.roadArt ?? []) {
+    const points = line.map(([q, r]) => axialToPixel(q, r, map.hexSize));
+    if (points.length < 2) continue;
+    d += `M${f(points[0])} `;
+    for (let i = 1; i < points.length - 1; i++) d += `L${f(mid(points[i - 1], points[i]))} Q${f(points[i])} ${f(mid(points[i], points[i + 1]))} `;
+    d += `L${f(points.at(-1))} `;
+  }
   if (!d) return;
   layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.edge, 'stroke-width': ROAD.edgeWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
   layer.appendChild(el('path', { d, fill: 'none', stroke: ROAD.fill, 'stroke-width': ROAD.fillWidth, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
@@ -703,8 +727,13 @@ export function renderPieces(layers, state, view) {
   const elapsed = show ? now - view.dropShow.since : 0;
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
   // A supply canister (SPEC.md §9, M41), across the hex from the charges in it.
-  for (const canister of state.canisters ?? []) drawOnGround(layers, 'marker-canister', canister, -1, MARKER.canisterSize);
-  for (const charge of state.droppedCharges) drawOnGround(layers, 'marker-charge', charge, 1);
+  // Its charges are counted in dots (M42b), not drawn as one satchel on another.
+  const inCanister = (hex) => (state.canisters ?? []).some((c) => c.q === hex.q && c.r === hex.r);
+  for (const canister of state.canisters ?? []) {
+    drawOnGround(layers, 'marker-canister', canister, -1, MARKER.canisterSize);
+    drawCanisterDots(layers, canister, state.droppedCharges.filter((c) => c.q === canister.q && c.r === canister.r).length);
+  }
+  for (const charge of state.droppedCharges) if (!inCanister(charge)) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
 
   if (state.selectedHex) {
@@ -846,6 +875,10 @@ function drawTargetRings(layers, rings, now) {
   const { map } = layers;
   const edge = boardEdges(map);
   const midX = (edge.left + edge.right) / 2;
+  // Over the garrison's chips (M42b, the operator's: a chip on a ringed
+  // target cut the pen mark in two), kept to the board; the notes stay on top.
+  const pen = el('g', { 'clip-path': 'url(#board-edge)' });
+  layers.tokens.appendChild(pen);
   rings.forEach((ring, i) => {
     const points = ring.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
     const half = { x: map.hexSize * Math.sqrt(3) / 2, y: map.hexSize };
@@ -875,10 +908,7 @@ function drawTargetRings(layers, rings, now) {
         d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
       }
       const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: RINGS.opacity });
-      // Under the objectives' names, charge points and counters, as a pen
-      // mark on the map would be, so where it crosses one the print still
-      // reads over it (M12); the notes stay on top.
-      layers.sites.insertBefore(path, layers.sites.firstChild);
+      pen.appendChild(path);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
         delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
       }, elapsed);
@@ -995,6 +1025,50 @@ function drawSelectCue(layers, state, now) {
   const x = Math.min(Math.max(middle.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
   const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
   layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
+  drawCanisterCue(layers, state, { x, y: y - CUE.noteSize / 2, w: width, h: CUE.noteSize * 1.4 });
+}
+
+/**
+ * With the men's rings (M42b, the operator's: canisters were hard to find
+ * among everything else, the more so after a scattered drop): each canister
+ * ringed in blue and named, the name on whichever side of it is clearest of
+ * counters, the other names, the start note and the board's edge.
+ */
+function drawCanisterCue(layers, state, startNote) {
+  const { map } = layers;
+  const cue = CANISTER.cue;
+  const edge = boardEdges(map);
+  const at = (h) => axialToPixel(h.q, h.r, map.hexSize);
+  const busy = [
+    ...state.units.filter((u) => u.landed && !u.dead && !u.out).map(at),
+    ...state.enemies.map(at),
+    ...(state.canisters ?? []).map(at),
+  ].map((p) => ({ x: p.x, y: p.y, w: COUNTER.drawn, h: COUNTER.drawn }));
+  const taken = [startNote];
+  const w = cue.words.length * cue.size * cue.advance, h = cue.size * 1.3;
+  const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w / 2, b.x + b.w / 2) - Math.max(a.x - a.w / 2, b.x - b.w / 2))
+    * Math.max(0, Math.min(a.y + a.h / 2, b.y + b.h / 2) - Math.max(a.y - a.h / 2, b.y - b.h / 2));
+  for (const canister of state.canisters ?? []) {
+    const p = at(canister);
+    const out = cue.ringRadius + cue.gap;
+    // Right, left, above, below: boxes by their middles.
+    const places = [
+      { x: p.x + out + w / 2, y: p.y }, { x: p.x - out - w / 2, y: p.y },
+      { x: p.x, y: p.y - out - h / 2 }, { x: p.x, y: p.y + out + h / 2 },
+    ].map((c) => ({ ...c, w, h }));
+    const cost = (box) => [...busy.filter((b) => b.x !== p.x || b.y !== p.y), ...taken].reduce((sum, b) => sum + overlap(box, b), 0)
+      + (box.x - w / 2 < edge.left || box.x + w / 2 > edge.right || box.y - h / 2 < edge.top || box.y + h / 2 > edge.bottom ? 1e6 : 0);
+    const best = places.reduce((a, b) => (cost(b) < cost(a) ? b : a));
+    taken.push(best);
+    const g = el('g', { 'pointer-events': 'none' });
+    g.appendChild(el('circle', { cx: p.x, cy: p.y, r: cue.ringRadius + 2, fill: 'none', stroke: cue.halo, 'stroke-width': cue.ringWidth + 3, opacity: 0.8 }));
+    g.appendChild(el('circle', { cx: p.x, cy: p.y, r: cue.ringRadius, fill: 'none', stroke: cue.colour, 'stroke-width': cue.ringWidth }));
+    g.appendChild(text(cue.words, {
+      x: best.x, y: best.y + cue.size * 0.35, 'text-anchor': 'middle', 'font-family': SPEECH.font, 'font-weight': 'bold', 'font-size': cue.size,
+      fill: cue.colour, stroke: cue.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
+    }));
+    layers.effects.appendChild(g);
+  }
 }
 
 /**
@@ -2106,6 +2180,17 @@ function drawOnGround(layers, id, at, side, size = MARKER.groundSize, offset = M
     ...extra,
     href: `#${id}`, x: p.x + side * offset.x - size / 2, y: p.y + offset.y - size / 2, width: size, height: size,
   }));
+}
+
+/** A fire-orange dot for each charge left in a canister, over any counter on its hex. */
+function drawCanisterDots(layers, canister, count) {
+  const p = axialToPixel(canister.q, canister.r, layers.map.hexSize);
+  const dots = CANISTER.dots;
+  for (let i = 0; i < count; i++) {
+    layers.tokens.appendChild(el('circle', {
+      cx: p.x + (i - (count - 1) / 2) * dots.pitch, cy: p.y + dots.y, r: dots.radius, fill: dots.fill, stroke: dots.stroke, 'stroke-width': dots.strokeWidth,
+    }));
+  }
 }
 
 // A parachute (SPEC.md §9) sits on the left edge of its hex, over the counters:

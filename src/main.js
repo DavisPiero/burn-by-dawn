@@ -1302,6 +1302,12 @@ function nearestInPlay(unit) {
 // The actions aimed at an enemy (M15: a crosshair while aiming).
 const AIMED = new Set(['suppress', 'kill', 'knife']);
 
+/** What finding a body brings, where a mission says it brings anything (M42b): for the knife's and the kill's rollovers. */
+function bodyFoundWords() {
+  const squads = rules.bodyFound.reinforcements;
+  return squads > 0 ? `: found, it brings ${squads === 1 ? 'a squad' : `${squads} squads`} of reinforcements` : '';
+}
+
 function deriveTargeting(view, unit, hex, hoverEnemy) {
   const targets = new Map();
   const add = (h) => targets.set(hexKey(h.q, h.r), { q: h.q, r: h.r });
@@ -1327,7 +1333,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const check = checkKill(map, unit, hoverEnemy, rules);
       view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
-        ? `Kill the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP, one silenced shot: alert +${applyHook(unit, 'onFire', 'alert', rules.alert.silenced).value}, heard ${hearingRadius('silenced', state.alert.points, rules)} hexes off. Leaves a body. Click to fire.`
+        ? `Kill the ${hoverEnemy.label.toLowerCase()} — ${check.cost} AP, one silenced shot: alert +${applyHook(unit, 'onFire', 'alert', rules.alert.silenced).value}, heard ${hearingRadius('silenced', state.alert.points, rules)} hexes off. Leaves a body${bodyFoundWords()}. Click to fire.`
         : `Kill: ${check.reason}.`;
     } else {
       view.targetLabel = `Kill: click a suppressed enemy inside ${unit.shortName}'s spot radius with a clear line. Esc to cancel.`;
@@ -1338,7 +1344,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const check = checkKnife(unit, hoverEnemy, rules);
       view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
-        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${rules.actions.knife.fullTurn ? 'all' : `${check.cost} AP and the rest`} of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body. Click to strike.`
+        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${rules.actions.knife.fullTurn ? 'all' : `${check.cost} AP and the rest`} of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body${bodyFoundWords()}. Click to strike.`
         : `Knife: ${check.reason}.`;
     } else {
       view.targetLabel = `Knife: click an enemy beside ${unit.shortName} that is looking the other way. Esc to cancel.`;

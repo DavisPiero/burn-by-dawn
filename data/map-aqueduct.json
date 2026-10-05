@@ -167,7 +167,7 @@
         [5, 4],
         [6, 4]
       ],
-      "noteNudge": [-8.5, 5.2]
+      "noteNudge": [-6.8, 2.2]
     },
     {
       "id": "road-bridge",
@@ -181,7 +181,7 @@
         [4, 8],
         [5, 9]
       ],
-      "noteNudge": [-0.7, 1.5]
+      "noteNudge": [6.2, 3.0]
     }
   ],
   "_exfil": "SPEC.md §10, §14. The beach: three hexes at the water's edge, shut until the boat is in (data/missions.json rules exfil.opensTurn). `exfilArt` picks its picture, the boat. `boatRun` (M41, art only) is the line the boat comes in along, from out at sea to the beach: it is seen on it for the two turns before the beach opens.",
@@ -195,14 +195,20 @@
     "from": [11, 11],
     "to": [3, 12]
   },
-  "exfilNoteNudge": [0.2, -1.7],
+  "_roadArt": "SPEC.md §11, M42b (the operator's). Art only: roads that are drawn and are no terrain, each a line through hexes' centres, on or off the board. The road to the beach runs on past the exfil and off the bottom of the map, where it came to a dead end; and the way along the top of the aqueduct runs off the map to the west, and to the east one hex on and then away to the north-east over the plough, where it stopped at each end. The hexes under them are what they were, at the same cost.",
+  "roadArt": [
+    [[1, 12], [0, 13], [-1, 14]],
+    [[2, 3], [1, 3], [0, 3], [-1, 3], [-2, 3], [-3, 3]],
+    [[7, 3], [8, 3], [9, 2], [10, 1], [11, 0], [12, -1], [13, -2]]
+  ],
+  "exfilNoteNudge": [-3.3, -1.7],
   "dropCueAt": [11.8, 2.5],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
   "places": [
     {
       "name": "Torrente Tragino",
       "kind": "wadi",
-      "at": [4, 7],
+      "at": [4, 6],
       "angle": 62,
       "dy": -0.1
     },
@@ -217,8 +223,8 @@
       "name": "Marina",
       "kind": "village",
       "at": [0, 10],
-      "dy": -0.8,
-      "dx": -0.3
+      "dy": 2.2,
+      "dx": -1.2
     },
     {
       "name": "Monte Carruozzo",
@@ -248,10 +254,10 @@
   },
   "rows": [
     "GGHHHHVHPPPPPPHTWW",
-    "GHHHHHVHPPPPPPTHWW",
-    "GHHHNNVNNPPPPPTHHH",
-    "HHHQQQVQQBBYHTHYGG",
-    "HHHHNNVNNHOOYTHOHG",
+    "GHHHHHVHPOPYOPTHWW",
+    "GHHHNNVNNPPOPPTHHH",
+    "HHHQQQVQQHBYHTHYGG",
+    "HHHHNNVNNHBOYTHOHG",
     "HRRHOTVHOOYTTHOYGG",
     "GRRYHOTVYYTTHHHHHG",
     "GGROYHTVHTHYHGGHGG",
