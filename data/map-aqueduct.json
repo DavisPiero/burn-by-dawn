@@ -22,8 +22,8 @@
       "label": "North run",
       "tag": "steady",
       "description": "The plough beside the farm: soft landings and the canisters in plain sight, a short walk to the piers. A patrol walks the fields: empty the canisters and pack your chutes.",
-      "from": [5, 1],
-      "to": [13, 1],
+      "from": [7, 1],
+      "to": [15, 1],
       "jumpAt": 1,
       "spacing": 1,
       "wind": "SE"
@@ -33,35 +33,38 @@
       "label": "Valley run",
       "tag": "fast",
       "description": "The terraces above the road bridge: down closest to the bridge and the way to the boat, with the longest carry back up to the aqueduct.",
-      "from": [11, 3],
-      "to": [2, 7],
+      "from": [10, 4],
+      "to": [1, 8],
       "jumpAt": 1,
       "spacing": 1,
       "wind": "W"
     }
   ],
-  "_enemies": "SPEC.md §6, §14. Six, the fewest of any mission: the alert budget (MISSION-AQUEDUCT.md) wants few finders and few bodies. Posts: the aqueduct guard at the farm end, looking west along the south side of the piers (the north side is hidden from him by the aqueduct itself); the bridge post above the road bridge; the coast watcher in the hamlet, looking along the beach. Patrols: one across the plough north of the aqueduct, where the north run lands; one on the road between the hamlet and the bend above the bridge; one through the terraces from the east slope to the west hillside, across the valley and west runs' ground.",
+  "_enemies": "SPEC.md §6, §14. Six, the fewest of any mission: the alert budget (MISSION-AQUEDUCT.md) wants few finders and few bodies. Posts: the aqueduct guard at the farm end, looking west along the south side of the piers (the north side is hidden from him by the aqueduct itself); the bridge post above the road bridge; the coast watcher in the hamlet, looking along the beach. Patrols: one across the plough north of the aqueduct, where the north run lands; one on the road between the hamlet and the bend above the bridge; one through the terraces from the east slope to the west hillside, across the valley and west runs' ground. M41b, the operator's: each post sweeps (`sweep`, its second facing), looking one way and then the other, turn and turn about, so an approach can be timed: the aqueduct guard west along the piers then south-east down the valley, the bridge post down at the bridge then up the road, the coast watcher along the beach then up the road.",
   "enemies": [
     {
       "id": "post-aqueduct",
       "label": "Aqueduct guard",
       "type": "sentry",
-      "at": [5, 4],
-      "facing": "W"
+      "at": [7, 4],
+      "facing": "W",
+      "sweep": "SE"
     },
     {
       "id": "post-bridge",
       "label": "Bridge post",
       "type": "sentry",
       "at": [7, 7],
-      "facing": "SW"
+      "facing": "SW",
+      "sweep": "NE"
     },
     {
       "id": "post-coast",
       "label": "Coast watcher",
       "type": "sentry",
       "at": [1, 11],
-      "facing": "E"
+      "facing": "E",
+      "sweep": "NE"
     },
     {
       "id": "patrol-aqueduct",
@@ -70,8 +73,8 @@
       "facing": "E",
       "loop": false,
       "route": [
-        [1, 1],
-        [8, 1]
+        [2, 1],
+        [12, 1]
       ]
     },
     {
@@ -141,7 +144,7 @@
       }
     ]
   },
-  "_objectives": "SPEC.md §7, §14. The aqueduct is the primary: its footprint is the channel on its piers and the arch the torrent runs under; six charge points at the piers' feet, three on each side, of which the job needs four (its kind's chargesNeeded). The road bridge carries the road over the torrent lower down: two charge points in the torrent's bed under it, one needed; down, it becomes ravine and nothing more comes down the road.",
+  "_objectives": "SPEC.md §7, §14. The aqueduct is the primary: its footprint is the channel on its piers and the hex of ravine the torrent runs under it by, which a man can walk through; six charge points at the piers' feet, three on each side, of which the job needs four (its kind's chargesNeeded). The road bridge carries the road over the torrent lower down: two charge points in the torrent's bed under it, one needed; down, it becomes ravine and nothing more comes down the road. M41b, the operator's: the aqueduct and the ravine are two hexes further east than first drawn, so the west end can be walked round and the plough to the north-east is used.",
   "objectives": [
     {
       "id": "aqueduct",
@@ -149,20 +152,20 @@
       "kind": "aqueduct",
       "primary": true,
       "hexes": [
-        [0, 3],
-        [1, 3],
         [2, 3],
         [3, 3],
         [4, 3],
-        [5, 3]
+        [5, 3],
+        [6, 3],
+        [7, 3]
       ],
       "chargeHexes": [
-        [1, 2],
-        [2, 2],
-        [5, 2],
-        [0, 4],
-        [1, 4],
-        [4, 4]
+        [3, 2],
+        [4, 2],
+        [7, 2],
+        [2, 4],
+        [3, 4],
+        [6, 4]
       ],
       "noteNudge": [-8.5, 5.2]
     },
@@ -199,14 +202,14 @@
     {
       "name": "Torrente Tragino",
       "kind": "wadi",
-      "at": [3, 7],
-      "angle": 28,
+      "at": [4, 7],
+      "angle": 62,
       "dy": -0.1
     },
     {
       "name": "Masseria Lauro",
       "kind": "farm",
-      "at": [7, 3],
+      "at": [9, 3],
       "dy": -0.85,
       "dx": 0.5
     },
@@ -244,18 +247,18 @@
     "X": "bridge"
   },
   "rows": [
-    "GGHHVHPPPPPPWWHTHH",
-    "GHHHVHPPPPPPWWTHHH",
-    "GHNNVHNPPPPPPHTHHH",
-    "HQQQNQQBBOOYHTHHGG",
-    "HHNNVHNYYYOOYTHHHG",
-    "HRRHVHHHOOYTTHHHGG",
-    "GRRYHVVHYYTTHHHHHG",
-    "GGROYHVVHTHYHGGHGG",
-    "GOYYHHHHVXHOYHGZZG",
+    "GGHHHHVHPPPPPPHTWW",
+    "GHHHHHVHPPPPPPTHWW",
+    "GHHHNNVHNPPPPPTHHH",
+    "HHHQQQVQQBBYHTHYGG",
+    "HHHHNNVHNHOOYTHOHG",
+    "HRRHOHVHOOYTTHOYGG",
+    "GRRYHOHVYYTTHHHHHG",
+    "GGROYHHVHTHYHGGHGG",
+    "GOYOHHHHVXHOYHGZZG",
     "HOOGGYYHTVHOOYZZZZ",
     "HYYOOBBHTHVHKZZZZZ",
     "HHOOOBBTSSVZZZZZZZ",
-    "HHHHHKKSSSKZZZZZZZ"
+    "HHHHHKKSSSZZZZZZZZ"
   ]
 }

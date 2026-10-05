@@ -13,13 +13,13 @@ import { createRng, freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit,
   jump, killEnemy, knifeEnemy, moveUnit, nextUnitId, packParachute, passCharge, pickUpCharge, placeCharge, selectHex, selectUnit, selectedUnit, setHover,
-  exfilWouldFail, setTargeting, settleMission, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
+  exfilWouldFail, setTargeting, settleMission, signalBoat, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
-  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, effectiveMap, inBlast, exfilOpen, isExfil, kindOf,
+  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, boatLands, checkSignalBoat, effectiveMap, inBlast, exfilOpen, isExfil, kindOf, lastTurn,
   objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencils,
 } from './sabotage.js';
-import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winWords } from './missions.js';
+import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
@@ -238,8 +238,10 @@ function deriveView() {
     // The goods train where it stands (M34), each car with the line's direction under it.
     train: trainView(),
     // The boat coming in, and what the exfil is called while it is shut (M41).
-    boat: boatAt(state.turn, rules, baseMap),
-    exfilLabel: exfilOpen(state.turn, rules) ? 'EXFIL' : `BOAT · TURN ${rules.exfil.opensTurn}`,
+    boat: boatAt(state, rules, baseMap),
+    exfilLabel: exfilOpen(state, rules) ? 'EXFIL' : `BOAT · TURN ${boatLands(state, rules)}`,
+    // Shut until the boat lands: the board prints it in red (M41b, the operator's).
+    exfilShut: !exfilOpen(state, rules),
     // What the win needs, for the board's star (M28: no longer the map's primary flag).
     winTargetIds: new Set(winTargets(state, rules).targets.map((o) => o.id)),
     // Hexes carry no printed coordinates (SPEC.md §11), so text names places.
@@ -256,6 +258,8 @@ function deriveView() {
     garrisonShow,
     // Why each enemy wears the red "!", for its rollover and readout (M20).
     alarmed: alarmReasons(),
+    // What each of them called out (M41b): the mission's own words.
+    cries: enemyCries(),
     hoverEnemy,
     hoverEnemyVision: hoverEnemy ? visionRadiusOf(map, hoverEnemy, state.alert.points, rules) : null,
     hoverEnemyFacing: hoverEnemy ? DIRECTION_NAMES[hoverEnemy.facing] : null,
@@ -400,9 +404,13 @@ function deriveView() {
     view.site = { title: rules.train.label, rows: trainRows(view.train) };
   } else if (hex && isExfil(baseMap, hex)) {
     view.site = { title: 'Exfil', rows: [
-      exfilOpen(state.turn, rules)
-        ? { label: 'HERE', text: `a man who ends his move here is out${rules.exfil.opensTurn ? `: the boat leaves at dawn, the end of turn ${rules.turnLimit}` : ''}` }
-        : { label: 'HERE', text: `The boat is not in yet: nobody can go out here before turn ${rules.exfil.opensTurn}. It leaves at dawn, the end of turn ${rules.turnLimit}`, tone: 'warn' },
+      exfilOpen(state, rules)
+        ? { label: 'HERE', text: `a man who ends his move here is out${rules.exfil.opensTurn ? `: the boat leaves at the end of turn ${lastTurn(state, rules)}` : ''}` }
+        : { label: 'HERE', text: `NO WAY OUT YET. The boat is in on turn ${boatLands(state, rules)} and gone at the end of turn ${lastTurn(state, rules)}`, tone: 'warn' },
+      // Calling it in early (M41b): what that buys and what it costs, before anyone does.
+      ...(rules.exfil.call && !exfilOpen(state, rules) ? [{ label: 'SIGNAL', text: (state.boatCalledTurn ?? null) !== null
+        ? 'The boat has the signal'
+        : `a man beside the water can signal it in early [B]: in ${rules.exfil.call.leadTurns} turns from then, and gone ${rules.exfil.openFor} turns after it lands, with everyone who is going` }] : []),
       { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with ${winWords(state, rules)} down, by dawn` },
       // Only for a man with a charge to leave, or nobody picked (M22: room).
       ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it where he stepped off, for another to pick up [P]' }]),
@@ -551,6 +559,13 @@ function exfilFailure(unit, plan) {
   return plan?.affordable ? exfilWouldFail(state, unit.id, plan, rules, baseMap) : null;
 }
 
+/** The signal card's Signal: call the boat in. */
+function confirmSignal() {
+  const { unitId } = briefing;
+  briefing = null;
+  commit(signalBoat(state, unitId, rules, baseMap));
+}
+
 /** The exfil card's Exfil anyway: make the move it held back. */
 function confirmExfil() {
   const { unitId, plan } = briefing;
@@ -612,7 +627,9 @@ function deriveDrop(view, hex) {
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
       // `exfilNoteNudge` (M29c, art only) moves it, as an objective's `noteNudge` does.
-      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: baseMap.exfilNoteNudge ?? null, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE', ...(rules.exfil.opensTurn ? [`THE BOAT IS IN ON TURN ${rules.exfil.opensTurn}`] : [])] },
+      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: baseMap.exfilNoteNudge ?? null, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'],
+        // In bigger letters (M41b, the operator's: the shut beach was a surprise).
+        bigNote: rules.exfil.opensTurn ? [`NO WAY OUT BEFORE THE BOAT: TURN ${rules.exfil.opensTurn}`, ...(rules.exfil.call ? ['OR SIGNAL IT IN FROM THE BEACH'] : [])] : null },
     ];
   }
   if (!hex) {
@@ -857,11 +874,12 @@ function missionPanelObjectives() {
   }
   // The boat (M41): when it is in, and that it goes at dawn.
   if (rules.exfil.opensTurn) {
-    const open = exfilOpen(state.turn, rules);
+    const open = exfilOpen(state, rules);
+    const lands = boatLands(state, rules), leaves = lastTurn(state, rules);
     lines.push({
       label: 'Boat', win: false, destroyed: false, cut: false, points: null,
-      detail: open ? `The boat is in. It leaves at dawn, the end of turn ${rules.turnLimit}` : `The boat is in on turn ${rules.exfil.opensTurn} and leaves at dawn, the end of turn ${rules.turnLimit}. No way out before it`,
-      progress: open ? 'in' : `turn ${rules.exfil.opensTurn}`,
+      detail: open ? `The boat is in. It leaves at the end of turn ${leaves}` : `The boat is in on turn ${lands} and leaves at the end of turn ${leaves}. No way out before it${rules.exfil.call && (state.boatCalledTurn ?? null) === null ? '. A man beside the water can signal it in early [B]' : ''}`,
+      progress: open ? `in · to ${leaves}` : `turn ${lands}–${leaves}`,
     });
   }
   // The goods train (M34): its turn, and whether it was caught.
@@ -937,6 +955,8 @@ function actionsFor(unit) {
     // A man who is no gunner has it too, to return fire (M36), where the rules allow.
     ...(role.suppress || returnsFire(unit, rules) ? [] : ['suppress']),
     ...(role.kill ? [] : ['kill']),
+    // Signal the boat (M41b): only where there is one to call, and until it is called.
+    ...(rules.exfil.call && !exfilOpen(state, rules) && (state.boatCalledTurn ?? null) === null ? [] : ['signal']),
     // Nor where the map has no line to cut (M41: the aqueduct).
     ...(role.cutLine && state.objectives.some((o) => kindOf(o, rules).cutLine) ? [] : ['cut']),
     // A man whose loadout is no charges (M37) can still carry one he picks up
@@ -995,6 +1015,7 @@ function actionsFor(unit) {
       help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
+    { id: 'signal', key: 'B', label: 'Signal boat', tight: 'Signal', help: rules.exfil.call ? `Signal the boat in early from beside the water: it lands ${rules.exfil.call.leadTurns} turns from now and stays only ${rules.exfil.openFor}. It asks first` : '', ...withCost(checkSignalBoat(state, unit, rules, baseMap)) },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: `Take a dropped charge from this hex.${weightFor(unit)}`, ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
@@ -1122,6 +1143,14 @@ function timerTin(unit, objective) {
   return {
     anchor: { q: unit.q, r: unit.r },
     title: `CHARGE ON THE ${objective.label.toUpperCase()}`,
+    // Why his pencils are not the next man's (M41b, the operator's: Dutch's run 1 to 5
+    // where the others' run 2 to 6): the trait that changes them, by name.
+    why: (() => {
+      const base = rules.charges.fuseChoice?.min ?? rules.charges.fuseTurns;
+      const his = choices[0]?.fuse ?? base;
+      const trait = unit.traits.find((t) => t.hook === 'onPlaceCharge' && t.modifier?.stat === 'fuse') ?? unit.traits.find((t) => t.hook === 'onPlaceCharge');
+      return his === base ? null : `${unit.shortName}'s timers run ${Math.abs(base - his)} ${Math.abs(base - his) === 1 ? 'turn' : 'turns'} ${his < base ? 'shorter' : 'longer'} than the others'${trait?.name ? `: ${trait.name}` : ''}.`;
+    })(),
     range: open.length > 1 ? `${open[0]}–${open.at(-1)}` : `${open[0] ?? ''}`,
     pencils: choices.map((p) => {
       const caught = p.afterDawn ? [] : caughtBy(state, map, unit, objective, p.fuse, rules);
@@ -1368,7 +1397,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 
 function render() {
   syncMusic();
-  map = effectiveMap(baseMap, state.objectives, rules, state.turn);
+  map = effectiveMap(baseMap, state.objectives, rules, state);
   const view = deriveView();
   currentView = view;
   noteHeard();
@@ -1376,9 +1405,11 @@ function render() {
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex, earlierReports);
   syncReportScroll?.();
-  renderTurnCounter(turnCounter, state, rules);
-  renderDawnStrip(dawnStrip, state, rules);
-  renderEndTurnButton(endTurnButton, state, rules);
+  // The clock runs to the night's last turn, which a boat called in early brings forward (M41b).
+  const clock = { ...rules, turnLimit: lastTurn(state, rules) };
+  renderTurnCounter(turnCounter, state, clock);
+  renderDawnStrip(dawnStrip, state, clock);
+  renderEndTurnButton(endTurnButton, state, clock);
   renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
@@ -1645,6 +1676,13 @@ function handleAction(id) {
     case 'pack':
       commit(packParachute(state, unit.id, rules));
       break;
+    case 'signal':
+      // Never at once (M41b, the operator's): a card says what it starts, and Enter does it.
+      if (checkSignalBoat(state, unit, rules, baseMap).ok) {
+        briefing = { kind: 'signal', unitId: unit.id };
+        render();
+      }
+      break;
     case 'charge':
       // Time pencils (M30): C opens them, and C again takes the default.
       if (rules.charges.fuseChoice && !pencilsOpen(unit)) {
@@ -1809,6 +1847,28 @@ function alarmReasons() {
     if (e.kind === 'canisterFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found a canister in ${place(e)}` });
   }
   return reasons;
+}
+
+/**
+ * What each alarmed enemy calls out this turn (M41b, the operator's: a body
+ * found went unnoticed), from the mission's `words.cries`: one of `spotted`
+ * for a man seen, one of `found` for a body, parachute or canister. Which one
+ * is fixed by the turn and the enemy, never rolled.
+ */
+function enemyCries() {
+  const cries = new Map();
+  const words = mission.words.cries;
+  if (!words || state.phase !== 'play') return cries;
+  const pick = (list, id) => {
+    let hash = state.turn;
+    for (const ch of String(id)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return list?.length ? list[hash % list.length] : null;
+  };
+  for (const [id, reasons] of alarmReasons()) {
+    const cry = pick(reasons.some((r) => r.kind === 'spotted') ? words.spotted : words.found, id);
+    if (cry) cries.set(id, cry);
+  }
+  return cries;
 }
 
 /** The "!" on an enemy's chip in words: what raised it, and what comes of it (M20). */
@@ -2049,6 +2109,28 @@ function describeBriefing(which, view) {
       toggle: musicToggle(),
     };
   }
+  if (which.kind === 'signal') {
+    const man = state.units.find((u) => u.id === which.unitId);
+    const check = checkSignalBoat(state, man, rules, baseMap);
+    const stays = rules.exfil.openFor;
+    const job = winMet(state, rules) ? null : `${capitalise(winWords(state, rules))} must be down by then too, or a charge set that will bring it down.`;
+    const elsewhere = state.units.filter((u) => onBoard(u) && !baseMap.exfil.some(([q, r]) => hexDistance(u, { q, r }) <= 3)).map((u) => u.shortName);
+    return {
+      title: 'SIGNAL THE BOAT?',
+      kicker: 'EARLY EXTRACTION',
+      tone: 'warn',
+      paragraphs: [[
+        { bold: `It will land on turn ${check.lands} and be GONE at the end of turn ${check.leaves}.` },
+        `That is ${stays} ${stays === 1 ? 'turn' : 'turns'} on the beach for every man who is going: anyone not aboard by then is left behind, and the mission ends.`,
+        ...(job ? [job] : []),
+        ...(elsewhere.length ? [`Not near the beach yet: ${elsewhere.join(', ')}.`] : []),
+        `Unsignalled, it comes on turn ${rules.exfil.opensTurn} and leaves at the end of turn ${rules.turnLimit}. Once sent, the signal cannot be taken back after this turn.`,
+      ]],
+      sections: [],
+      confirm: { label: `${man.shortName} SIGNALS [Enter]`, onConfirm: confirmSignal },
+      go: 'NOT YET — any other key or click',
+    };
+  }
   if (which.kind === 'exfil') {
     const { kind, reason } = which.failure;
     const man = state.units.find((u) => u.id === which.unitId);
@@ -2124,7 +2206,7 @@ function describeBriefing(which, view) {
       // The mission's title heads its orders (M31d, the operator's), and
       // ORDERS goes to the kicker, so the card is no taller.
       title: mission.title.toUpperCase(),
-      kicker: `ORDERS · ${before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${rules.turnLimit}`}`,
+      kicker: `ORDERS · ${before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${lastTurn(state, rules)}`}`,
       paragraphs: [
         // The opening on a line of its own (M13), then the job.
         [
@@ -2136,7 +2218,8 @@ function describeBriefing(which, view) {
           { bold: `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.` },
           `Dawn comes at the end of turn ${rules.turnLimit}.`,
           // The aqueduct's two rules (M41), said where a mission has them.
-          ...(rules.exfil.opensTurn ? [{ bold: `The BOAT is in on turn ${rules.exfil.opensTurn} and gone at dawn. There is no way out before it.` }] : []),
+          ...(rules.exfil.opensTurn ? [{ bold: `The BOAT is in on turn ${rules.exfil.opensTurn} and stays ${rules.exfil.openFor ?? 'till dawn'}${rules.exfil.openFor ? ' turns' : ''}. There is no way out before it.` }] : []),
+          ...(rules.exfil.call ? [`A man on the beach can signal it in early [B]: it lands ${rules.exfil.call.leadTurns} turns later and still stays only ${rules.exfil.openFor}, so signal when the stick is ready to go.`] : []),
           ...(rules.canisters ? [{ bold: `The charges are in the ${rules.canisters.count} CANISTERS, ${rules.canisters.charges} in each. Nobody jumps with one.` }] : []),
         ],
         // The timer named where charges take one, and the last sentence on a
@@ -2189,7 +2272,7 @@ function describeBriefing(which, view) {
   const shown = 6;
   const alert = rules.alert.states[alertIndex(state.alert.points, rules)];
   return {
-    title: `TURN ${state.turn} OF ${rules.turnLimit}`,
+    title: `TURN ${state.turn} OF ${lastTurn(state, rules)}`,
     kicker: `GARRISON ${alert.label.toUpperCase()}`,
     sections: [
       {
@@ -2394,8 +2477,9 @@ function handleKey(event) {
   if (briefing) {
     event.preventDefault();
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
+    if (briefing.kind === 'signal' && event.key === 'Enter') return confirmSignal();
     // ? over a turn card swaps it for the orders (M17), as the button does.
-    if (isHelpKey(event) && !['orders', 'exfil', 'contents'].includes(briefing.kind)) return openHelp();
+    if (isHelpKey(event) && !['orders', 'exfil', 'signal', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
     closeBriefing();
     // A man's number, or Tab, puts a turn card away and picks him (M23), as a click on him does.
@@ -2517,6 +2601,10 @@ function handleKey(event) {
     case 'u':
     case 'U':
       handleAction('pack');
+      return;
+    case 'b':
+    case 'B':
+      handleAction('signal');
       return;
     case 'c':
     case 'C':

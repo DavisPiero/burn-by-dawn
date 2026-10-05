@@ -29,7 +29,7 @@ export function missionCheck(state, rules, { dawn = false } = {}) {
   if (alive.length === 0) return { kind: 'failed', reason: 'every man is dead', withdraw: false };
   if (dawn) {
     return succeeded(state, rules)
-      ? { kind: 'success', reason: 'dawn: the job is done', withdraw: false }
+      ? { kind: 'success', reason: `${nightEnd(rules)}: the job is done`, withdraw: false }
       : { kind: 'failed', reason: failedAtDawn(state, rules), withdraw: false };
   }
   if (!state.units.some(onBoard)) {
@@ -44,6 +44,11 @@ export function missionCheck(state, rules, { dawn = false } = {}) {
   return null;
 }
 
+/** What ends the night, in the outcome's words: dawn, or where the way out is a boat that stays only so long (M41b), its going. */
+function nightEnd(rules) {
+  return rules.exfil?.openFor ? 'the boat has gone' : 'dawn';
+}
+
 function succeeded(state, rules) {
   return winMet(state, rules) && state.units.filter((u) => u.out).length >= rules.mission.minimumOut;
 }
@@ -51,9 +56,9 @@ function succeeded(state, rules) {
 function failedAtDawn(state, rules) {
   if (!winMet(state, rules)) {
     const words = winWords(state, rules);
-    return winTargets(state, rules).needed === 1 ? `dawn, and ${words} still stands` : `dawn, and fewer than ${words} destroyed`;
+    return winTargets(state, rules).needed === 1 ? `${nightEnd(rules)}, and ${words} still stands` : `${nightEnd(rules)}, and fewer than ${words} destroyed`;
   }
-  return `dawn, and fewer than ${rules.mission.minimumOut} men got out`;
+  return `${nightEnd(rules)}, and fewer than ${rules.mission.minimumOut} men got out`;
 }
 
 /**

@@ -532,6 +532,8 @@
       { "id": "west", "from": [1, -2], "to": [-7, 14] }
     ]
   },
+  "_namesInPlay": "M41b, art only (the operator's: the board was all words in play). false: the targets' names are printed before the jump and under the mouse; once the stick is down the aircraft keep their stars and nothing else is named.",
+  "namesInPlay": false,
   "exfilArt": "trucks",
   "dropCueAt": [7.2, 5.5],
   "exfilNoteNudge": [-4.25, 0],

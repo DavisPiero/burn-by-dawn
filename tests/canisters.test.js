@@ -42,8 +42,8 @@ export default [
     const s = dropOn(env, env.rules, env.map.dropRuns[0].id, 3);
     equal(s.canisters.length, 0, 'none on the board');
     for (const u of s.units) if (u.hits === 0) equal(u.charges, chargeCapacity(u, env.rules), `${u.id} jumps with his loadout`);
-    assert(exfilOpen(1, env.rules), 'open on turn 1');
-    equal(effectiveMap(env.map, s.objectives, env.rules, 1), effectiveMap(env.map, s.objectives, env.rules), 'the same map with or without the turn');
+    assert(exfilOpen({ turn: 1 }, env.rules), 'open on turn 1');
+    equal(effectiveMap(env.map, s.objectives, env.rules, { turn: 1 }), effectiveMap(env.map, s.objectives, env.rules), 'the same map with or without the turn');
   }],
 
   ['canisters leave the aircraft spread through the stick: after the second, fourth and sixth man of six', async () => {
@@ -144,17 +144,17 @@ export default [
   ['an exfil with an opening turn cannot be entered before it, and is the way out from then on', async () => {
     const env = await loadAll();
     const { map, traits, roster } = env;
-    const rules = { ...env.rules, exfil: { opensTurn: 5 } };
+    const rules = { ...env.rules, exfil: { ...env.rules.exfil, opensTurn: 5 } };
     const s = landedState(roster, traits, rules, map);
     const [eq, er] = map.exfil[0];
     const man = s.units[0];
     const units = s.units.map((u, i) => (u.id === man.id ? { ...u, q: eq, r: er - 1 } : { ...u, q: 200 + i, r: 0 }));
-    assert(!exfilOpen(4, rules) && exfilOpen(5, rules), 'shut on turn 4, open on turn 5');
+    assert(!exfilOpen({ turn: 4 }, rules) && exfilOpen({ turn: 5 }, rules), 'shut on turn 4, open on turn 5');
 
-    const shut = effectiveMap(map, s.objectives, rules, 4);
+    const shut = effectiveMap(map, s.objectives, rules, { turn: 4 });
     equal(planMove(shut, units, unitById(units, man.id), { q: eq, r: er }, rules, []), null, 'turn 4: no way onto it');
-    assert(effectiveMap(map, s.objectives, rules, 3) === shut, 'still shut the turn before: the same map back');
-    const open = effectiveMap(map, s.objectives, rules, 5);
+    assert(effectiveMap(map, s.objectives, rules, { turn: 3 }) === shut, 'still shut the turn before: the same map back');
+    const open = effectiveMap(map, s.objectives, rules, { turn: 5 });
     const plan = planMove(open, units, unitById(units, man.id), { q: eq, r: er }, rules, []);
     assert(plan && plan.affordable, 'turn 5: he can step onto it');
   }],
@@ -165,9 +165,9 @@ export default [
     const tryWith = (patch) => {
       try { createInitialState(roster, traits, { ...env.rules, ...patch }, map); return null; } catch (error) { return error.message; }
     };
-    assert(/exfil\.opensTurn/.test(tryWith({ exfil: { opensTurn: env.rules.turnLimit + 1 } }) ?? ''), 'an opening turn after dawn');
+    assert(/exfil\.opensTurn/.test(tryWith({ exfil: { ...env.rules.exfil, opensTurn: env.rules.turnLimit + 1 } }) ?? ''), 'an opening turn after dawn');
     assert(/canisters\.charges/.test(tryWith({ canisters: { ...CANISTERS, charges: 0 } }) ?? ''), 'empty canisters');
     assert(/canisters\.scatterWeights/.test(tryWith({ canisters: { count: 3, charges: 2 } }) ?? ''), 'no scatter');
-    equal(tryWith({ canisters: CANISTERS, exfil: { opensTurn: 5 } }), null, 'both on is fine');
+    equal(tryWith({ canisters: CANISTERS, exfil: { ...env.rules.exfil, opensTurn: 5 } }), null, 'both on is fine');
   }],
 ];

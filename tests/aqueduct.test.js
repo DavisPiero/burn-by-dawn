@@ -3,12 +3,13 @@
 // against the real data files.
 
 import { boatAt, boatEvents } from '../src/boat.js';
+import { runEnemyPhase } from '../src/enemy.js';
 import { applyDifficulty, levelById, validateDifficulty } from '../src/difficulty.js';
 import { hexDistance } from '../src/hex.js';
 import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets } from '../src/missions.js';
-import { applyPayoff, effectiveMap, exfilOpen, isExfil, kindOf } from '../src/sabotage.js';
-import { chooseDropRun, createInitialState, endTurn, jump } from '../src/state.js';
+import { applyPayoff, boatLands, checkSignalBoat, effectiveMap, exfilOpen, isExfil, kindOf, lastTurn } from '../src/sabotage.js';
+import { chooseDropRun, createInitialState, endTurn, isDawn, jump, knifeEnemy, signalBoat } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { chargeCapacity, chargeRoom } from '../src/units.js';
 import { hintsFor } from '../src/hints.js';
@@ -113,7 +114,7 @@ export default [
 
   ['a man can walk from every run to the aqueduct, the road bridge and the beach', async () => {
     const { map, rules, traits, roster } = await loadAqueduct();
-    const open = effectiveMap(map, createInitialState(roster, traits, rules, map, 1).objectives, rules, rules.exfil.opensTurn);
+    const open = effectiveMap(map, createInitialState(roster, traits, rules, map, 1).objectives, rules, { turn: rules.exfil.opensTurn });
     for (const run of map.dropRuns) {
       const s = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 5), map, run.id), map, rules);
       const reach = reachableWithin(open, s.units[0], 999, null);
@@ -122,24 +123,96 @@ export default [
     }
   }],
 
-  ['the beach is shut until turn 15, the boat is seen coming for two turns before, and dawn is the end of turn 18', async () => {
+  ['the beach is shut until turn 15, the boat is seen coming for two turns before and stays three: the night ends with turn 17', async () => {
     const { map, rules, traits, roster } = await loadAqueduct();
-    equal(rules.exfil.opensTurn, 15, 'the boat is in on 15');
-    equal(rules.turnLimit, 18, 'dawn');
-    assert(!exfilOpen(14, rules) && exfilOpen(15, rules), 'shut on 14, open on 15');
-    equal(boatAt(12, rules, map), null, 'nothing to see on turn 12');
-    const coming = boatAt(13, rules, map), nearer = boatAt(14, rules, map), there = boatAt(15, rules, map);
+    const start = createInitialState(roster, traits, rules, map, 1);
+    const at = (turn, extra = {}) => ({ ...start, turn, ...extra });
+    equal(`${rules.exfil.opensTurn} ${rules.exfil.openFor} ${rules.turnLimit}`, '15 3 17', 'in on 15, three turns, dawn at 17');
+    assert(!exfilOpen(at(14), rules) && exfilOpen(at(15), rules), 'shut on 14, open on 15');
+    equal(lastTurn(at(3), rules), 17, 'unsignalled, the last turn is 17');
+    equal(boatAt(at(12), rules, map), null, 'nothing to see on turn 12');
+    const coming = boatAt(at(13), rules, map), nearer = boatAt(at(14), rules, map), there = boatAt(at(15), rules, map);
     assert(coming && !coming.here && nearer && !nearer.here, 'coming in on 13 and 14');
     const [eq, er] = map.boatRun.to;
     const off = (b) => Math.hypot(b.q - eq, b.r - er);
     assert(off(coming) > off(nearer) && off(nearer) > 0, 'nearer each turn');
     assert(there.here && off(there) === 0 && isExfil(map, { q: eq, r: er }), 'on the beach on 15');
-    assert(boatAt(18, rules, map).here, 'and still there at dawn');
-    // The turn report says so as it happens.
-    const at = (turn) => ({ ...createInitialState(roster, traits, rules, map, 1), turn });
     equal(boatEvents(at(12), at(13), rules, map)[0]?.what, 'sighted', 'sighted as turn 13 begins');
     equal(boatEvents(at(14), at(15), rules, map)[0]?.what, 'in', 'in as turn 15 begins');
     equal(boatEvents(at(13), at(14), rules, map).length, 0, 'nothing said in between');
+    // Nothing but sea lies between the boat's line and the beach it lands on.
+    assert(map.exfil.every(([q, r]) => terrainIdAt(map, q, r) === 'shingle'), 'the exfil is beach');
+    assert(map.exfil.some(([q, r]) => terrainIdAt(map, q + 1, r) === 'sea'), 'with the sea beside it');
+  }],
+
+  ['a man beside the water can signal the boat in early: it lands two turns on, stays three, and the night ends with it', async () => {
+    const { map, rules, traits, roster } = await loadAqueduct();
+    const landed = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 4), map, 'north'), map, rules);
+    const man = landed.units[0];
+    const [eq, er] = map.exfil[0];
+    const beside = { q: eq, r: er - 1 };
+    const place = (state, hex) => ({ ...state, units: state.units.map((u) => (u.id === man.id ? { ...u, ...hex, ap: u.apMax } : u)) });
+    const inland = { ...landed, turn: 6 };
+    equal(checkSignalBoat(inland, inland.units[0], rules, map).reason, 'he must be beside the water at the exfil', 'not from up the valley');
+    const onBeach = place(inland, beside);
+    const check = checkSignalBoat(onBeach, onBeach.units[0], rules, map);
+    assert(check.ok, 'from beside the exfil he can');
+    equal(`${check.lands} ${check.leaves}`, '8 10', 'signalled on 6: in on 8, gone with turn 10');
+    const called = signalBoat(onBeach, man.id, rules, map);
+    equal(called.boatCalledTurn, 6, 'the signal is kept');
+    equal(called.units[0].ap, onBeach.units[0].ap - rules.exfil.call.apCost, 'it costs him its AP');
+    equal(`${boatLands(called, rules)} ${lastTurn(called, rules)}`, '8 10', 'the boat and the night follow it');
+    assert(!exfilOpen({ ...called, turn: 7 }, rules) && exfilOpen({ ...called, turn: 8 }, rules), 'shut on 7, open on 8');
+    assert(!isDawn({ ...called, turn: 9 }, rules) && isDawn({ ...called, turn: 10 }, rules), 'turn 10 is the last');
+    assert(boatAt(called, rules, map) && !boatAt(called, rules, map).here, 'the boat is on the board at once, coming');
+    equal(checkSignalBoat(called, called.units[0], rules, map).ok, false, 'not twice');
+    equal(boatEvents(called, { ...called, turn: 7 }, rules, map)[0]?.what, 'called', 'the turn report says it has the signal');
+    // Too late to bring it forward: it is coming anyway.
+    const late = place({ ...landed, turn: 13 }, beside);
+    equal(checkSignalBoat(late, late.units[0], rules, map).ok, false, 'no signal once it is already on its way');
+    // France has no boat to call.
+    const france = await loadJson('data/rules.json');
+    equal(checkSignalBoat(landed, man, france, map).reason, 'no boat to signal', 'nothing to signal where the exfil is open all night');
+  }],
+
+  ['each post sweeps: one way, then the other, turn and turn about, and back', async () => {
+    const { map, rules, traits, roster } = await loadAqueduct();
+    const start = { ...createInitialState(roster, traits, rules, map, 1), phase: 'play' };
+    const parked = { ...start, units: start.units.map((u, i) => ({ ...u, q: 200 + i, r: 0, landed: true })) };
+    const facingOf = (state, id) => state.enemies.find((e) => e.id === id).facing;
+    for (const id of ['post-aqueduct', 'post-bridge', 'post-coast']) {
+      const post = parked.enemies.find((e) => e.id === id);
+      assert(post.sweep && post.sweep[0] !== post.sweep[1], `${id} has two facings`);
+      equal(post.facing, post.sweep[0], `${id}: its first on turn 1`);
+      const two = runEnemyPhase(parked, map, rules).state;
+      equal(facingOf(two, id), post.sweep[1], `${id}: its other on turn 2`);
+      const three = runEnemyPhase({ ...two, turn: 2 }, map, rules).state;
+      equal(facingOf(three, id), post.sweep[0], `${id}: back again on turn 3`);
+    }
+  }],
+
+  ['the reserve can be killed here, and one more squad comes for it: once', async () => {
+    const { map, rules, traits, roster } = await loadAqueduct();
+    equal(map.enemyTypes.reserve.killable, true, 'killable on this map');
+    equal(rules.reserve.replacements, 1, 'one replacement');
+    const start = { ...createInitialState(roster, traits, rules, map, 1), phase: 'play' };
+    const alarmed = { ...start, units: start.units.map((u, i) => ({ ...u, q: 200 + i, r: 0, landed: true })), alert: { ...start.alert, points: rules.alert.states.at(-1).from } };
+    const out = runEnemyPhase(alarmed, map, rules).state;
+    const first = out.enemies.find((e) => e.isReserve);
+    assert(first && out.reserveDeployed, 'the reserve comes at Alarmed');
+    // A man beside it, behind it, knifes it.
+    const knifer = out.units[0];
+    const behind = { ...out, units: out.units.map((u) => (u.id === knifer.id ? { ...u, q: first.q, r: first.r - 1, ap: 3, apMax: 3 } : u)), enemies: out.enemies.map((e) => (e.isReserve ? { ...e, facing: 3 } : e)) };
+    const killed = knifeEnemy(behind, knifer.id, first.id, rules);
+    assert(!killed.enemies.some((e) => e.isReserve), 'it is dead');
+    equal(`${killed.reserveDeployed} ${killed.reserveReplaced}`, 'false 1', 'and the garrison may send another');
+    const again = runEnemyPhase({ ...killed, units: alarmed.units }, map, rules).state;
+    const second = again.enemies.find((e) => e.isReserve);
+    assert(second, 'another comes down the road');
+    const twice = knifeEnemy({ ...again, units: again.units.map((u) => (u.id === knifer.id ? { ...u, q: second.q, r: second.r - 1, ap: 3, apMax: 3 } : u)), enemies: again.enemies.map((e) => (e.isReserve ? { ...e, facing: 3 } : e)) }, knifer.id, second.id, rules);
+    equal(twice.reserveDeployed, true, 'that one is the last');
+    // France's reserve is as it was.
+    equal((await loadMap()).enemyTypes.reserve.killable, false, 'France: cannot be killed');
   }],
 
   ['the first turn card says where the charges are; with the job done and the beach shut it says when the boat comes', async () => {

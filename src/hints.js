@@ -6,7 +6,7 @@
 
 import { alertIndex } from './enemy.js';
 import { chargeCapacity, checkPassCharge, checkStabilise, onBoard } from './units.js';
-import { chainFrom, checkCutLine, kindOf } from './sabotage.js';
+import { boatLands, chainFrom, checkCutLine, kindOf, lastTurn } from './sabotage.js';
 import { hexDistance, inArc } from './hex.js';
 import { winMet, winTargets, winTargetsLeft, winWords } from './missions.js';
 
@@ -113,7 +113,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   const out = state.units.filter((u) => u.out).length;
   const won = winMet(state, rules);
   const single = rules.mission.win.condition === 'destroyPrimary';
-  const turnsLeft = rules.turnLimit - state.turn;
+  const turnsLeft = lastTurn(state, rules) - state.turn;
   const leader = men.find((u) => u.leader);
 
   // The win is in reach: say how far off it is.
@@ -121,7 +121,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     const need = rules.mission.minimumOut - out;
     const job = single ? `The ${winTargets(state, rules).targets[0].label} is down` : `${capitalFirst(winWords(state, rules))} are down`;
     // Where the way out opens on a turn (M41) and has not yet: when, and what to do till then.
-    const opens = rules.exfil?.opensTurn ?? null;
+    const opens = boatLands(state, rules);
     if (opens !== null && state.turn < opens) hints.push(`${job}. The boat is in on turn ${opens}, in ${opens - state.turn} ${plural(opens - state.turn, 'turn', 'turns')}: get ${need} ${plural(need, 'man', 'men')} down to the shore and lie up out of sight until it comes.`);
     else hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil before dawn: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
   }

@@ -906,6 +906,12 @@ export const EXFIL = {
   casingWidth: 8,
   label: PALETTE.green,
   art: 'objective-rally-point',
+  // Shut, while its boat is not in (M41b, the operator's): danger red, dashed,
+  // its label in red, and a wash of the sea over its hexes.
+  shutStroke: PALETTE.red,
+  shutDash: '9 8',
+  shutWash: PALETTE.blue,
+  shutWashOpacity: 0.28,
 };
 
 // The goods train (M34): a car to a hex along the railway, engine first. A
@@ -934,7 +940,14 @@ const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks', b
 
 // The boat on its way in (M41): the exfil's own picture, printed out at sea
 // and a little fainter until it is on the beach.
-export const BOAT = { art: 'objective-boat', width: 80, height: 92, comingOpacity: 0.75 };
+// It is drawn bow up, so it is turned to the way it is going, and between
+// turns it is rowed in from where it was (M41b, the operator's).
+export const BOAT = { art: 'objective-boat', width: 80, height: 92, comingOpacity: 0.8, rowMs: 2200 };
+
+// What an enemy calls out when it spots a man or finds something (M41b, the
+// operator's): a small bubble over its chip beside the "!", in the mission's
+// own words (data/missions.json `words.cries`).
+export const CRY = { size: 12, padX: 6, height: 17, advance: 0.66, lift: 6 };
 
 export function exfilArtId(name) {
   return EXFIL_ART[name] ?? EXFIL.art;
@@ -1117,6 +1130,7 @@ export const CUE = {
 export const RINGS = {
   red: PALETTE.red,
   green: PALETTE.green,
+  bigNoteScale: 1.45, // a ring's `bigNote` lines (M41b): the boat's turn
   width: 4.5,
   margin: 14, // beyond the footprint's hexes
   tightMargin: 2, // where many targets are ringed with their charge points (M29b)
@@ -2320,45 +2334,60 @@ const ITALY_TERRAIN = {
 
 // The aqueduct, seen from the south and a little above, as the rail bridge is:
 // the channel on top with its water, the masonry face below it with an arch
-// between every pair of piers, and the tall arch the torrent runs under. Six
-// hexes long, a hex to 80; the torrent's arch is the fourth.
+// between every pair of piers. Six hexes long, a hex to 80. The fourth hex is
+// the torrent's: there the face is left open, pier to pier, so the ravine
+// printed under it runs on through and reads as the way under (M41b, the
+// operator's), with only the channel carried across overhead.
 function aqueduct(blown) {
   const parts = [];
-  // Whole, it is one run; blown, the span over the third hex is gone.
-  const runs = blown ? [[4, 176], [262, 476]] : [[4, 476]];
-  parts.push(fill('M4 72 H476 V80 H4 Z', 'ink', { 'fill-opacity': 0.22 }));
-  for (const [x0, x1] of runs) {
+  const GAP = [248, 312]; // the open arch over the torrent
+  // Whole, the face is two runs either side of the torrent; blown, the pier
+  // west of it is gone and the two spans it carried with it.
+  const faces = blown ? [[4, 152], [344, 476]] : [[4, GAP[0]], [GAP[1], 476]];
+  const tops = blown ? [[4, 152], [344, 476]] : [[4, 476]];
+  for (const [x0, x1] of faces) parts.push(fill(`M${x0} 72 H${x1} V80 H${x0} Z`, 'ink', { 'fill-opacity': 0.22 }));
+  for (const [x0, x1] of faces) {
     const face = `M${x0} 46 H${x1} V72 H${x0} Z`;
     parts.push(...inked(face, 'paper', 2), fill(face, toneClass('ink', 20)));
-    // An arch a hex, between the piers; the torrent's is taller and wider.
     for (let k = 0; k < 6; k++) {
-      const cx = 40 + 80 * k, big = k === 3, r = big ? 24 : 15;
-      if (cx - r < x0 + 4 || cx + r > x1 - 4) continue;
-      const arch = `M${cx - r} 72 V${big ? 62 : 66} A${r} ${big ? 15 : 10} 0 0 1 ${cx + r} ${big ? 62 : 66} V72 Z`;
-      parts.push(fill(arch, big ? 'blue' : 'ink', big ? {} : { 'fill-opacity': 0.75 }), line(arch, 1.4));
+      const cx = 40 + 80 * k, r = 15;
+      if (k === 3 || cx - r < x0 + 4 || cx + r > x1 - 4) continue;
+      const arch = `M${cx - r} 72 V66 A${r} 10 0 0 1 ${cx + r} 66 V72 Z`;
+      parts.push(fill(arch, 'ink', { 'fill-opacity': 0.75 }), line(arch, 1.4));
     }
-    // The channel on top: stone kerbs, the water between them.
+  }
+  for (const [x0, x1] of tops) {
     const top = `M${x0} 28 H${x1} V46 H${x0} Z`;
     parts.push(...inked(top, 'paper', 2), fill(`M${x0 + 2} 33 H${x1 - 2} V41 H${x0 + 2} Z`, 'blue'));
     let joints = '';
     for (let x = x0 + 20; x < x1 - 6; x += 20) joints += `M${x} 28 V33 M${x} 41 V46 `;
     parts.push(line(joints, 0.9, 'stroke-ink', { opacity: 0.5 }), line(`M${x0 + 2} 37 H${x1 - 2}`, 1, 'stroke-paper', { opacity: 0.6, 'stroke-dasharray': '9 7' }));
   }
-  if (blown) {
-    // The broken ends, the water pouring out of them, and the fallen pier.
-    parts.push(
-      ...inked('M176 28 L186 34 L178 44 L188 58 L176 72 Z', toneClass('ink', 20), 1.8),
-      ...inked('M262 28 L252 36 L260 46 L250 60 L262 72 Z', toneClass('ink', 20), 1.8),
-      fill('M178 34 Q196 44 190 78 L204 80 Q208 44 184 30 Z', 'blue', { 'fill-opacity': 0.85 }),
-      fill('M260 34 Q244 46 248 78 L236 80 Q232 46 256 30 Z', 'blue', { 'fill-opacity': 0.85 }),
-      line('M184 40 Q196 52 194 76 M256 40 Q246 52 244 76', 1.1, 'stroke-paper', { opacity: 0.8 }),
-      ...[[204, 70, 12, 8, -14], [222, 76, 14, 7, 10], [232, 64, 9, 7, 28], [212, 60, 8, 6, -30]].flatMap(([x, y, w, h, a]) => [
-        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
-        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.3, transform: `rotate(${a} ${x} ${y})` }),
-      ]),
-      ...smoke(218, 30, 1.3),
-    );
+  if (!blown) {
+    // The soffit of the open arch: a light line under the channel, no wall.
+    parts.push(line(`M${GAP[0]} 60 Q${(GAP[0] + GAP[1]) / 2} 44 ${GAP[1]} 60`, 1.2, 'stroke-ink', { opacity: 0.45 }));
+    return parts;
   }
+  const block = ([x, y, w, h, a]) => [
+    svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
+    svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.3, transform: `rotate(${a} ${x} ${y})` }),
+  ];
+  parts.push(
+    // Scorched ground under the breach, and the standing masonry blackened and cracked beside it.
+    svg('ellipse', { cx: 248, cy: 70, rx: 104, ry: 16, class: 'ink', opacity: 0.28 }),
+    fill('M112 28 H152 V72 H112 Z', 'ink', { 'fill-opacity': 0.28 }), fill('M344 28 H388 V72 H344 Z', 'ink', { 'fill-opacity': 0.28 }),
+    line('M120 28 L128 42 L118 54 L130 72 M96 46 L104 58 L98 72 M372 28 L364 44 L376 56 L366 72 M400 46 L394 60 L402 72', 1.3),
+    // The broken ends, and the water pouring out of them.
+    ...inked('M152 28 L164 34 L154 44 L166 58 L152 72 Z', toneClass('ink', 35), 1.8),
+    ...inked('M344 28 L332 36 L342 46 L330 60 L344 72 Z', toneClass('ink', 35), 1.8),
+    fill('M154 34 Q176 44 170 82 L186 84 Q190 44 160 30 Z', 'blue', { 'fill-opacity': 0.85 }),
+    fill('M342 34 Q322 46 326 82 L312 84 Q308 46 338 30 Z', 'blue', { 'fill-opacity': 0.85 }),
+    line('M160 40 Q176 52 176 80 M338 40 Q324 52 320 80', 1.1, 'stroke-paper', { opacity: 0.8 }),
+    // The fallen pier and spans, strewn across the bed.
+    ...[[196, 70, 14, 9, -14], [218, 78, 16, 8, 10], [236, 64, 11, 8, 28], [206, 56, 9, 7, -30], [258, 74, 15, 9, -8], [280, 62, 12, 8, 36], [300, 76, 13, 8, 14], [268, 52, 9, 6, -40], [232, 46, 8, 6, 20]].flatMap(block),
+    ...flame(206, 62, 0.5), ...flame(292, 66, 0.45),
+    ...smoke(216, 26, 1.3), ...smoke(286, 22, 1.1),
+  );
   return parts;
 }
 
@@ -2407,6 +2436,16 @@ const ITALY_OBJECTIVES = {
   'objective-road-bridge': { viewBox: '0 0 80 92', draw: () => roadBridge(false) },
   'objective-road-bridge-destroyed': { viewBox: '0 0 80 92', draw: () => roadBridge(true) },
   'objective-boat': { viewBox: '0 0 80 92', draw: shipsBoat },
+  // Where a charge went off (M41b, the operator's): a black scorch on the
+  // ground, ragged at the edge, left for the rest of the night.
+  'effect-soot': {
+    viewBox: '0 0 80 92',
+    draw: () => [
+      starburst(40, 48, 11, 30, 19, 'ink', { 'fill-opacity': 0.22 }),
+      starburst(40, 48, 9, 21, 13, 'ink', { 'fill-opacity': 0.3 }),
+      svg('ellipse', { cx: 40, cy: 48, rx: 11, ry: 9, class: 'ink', opacity: 0.4 }),
+    ],
+  },
   // A supply canister on the ground (SPEC.md §9): a steel drum in army green,
   // banded, with the lines of its own small parachute trailing off it.
   'marker-canister': {

@@ -32,6 +32,25 @@ const DIRECTIONS = DIRECTION_NAMES.length;
 
 // --- setup -------------------------------------------------------------------
 
+/** A post's two facings where the map gives it a `sweep`, or null. */
+function sweepOf(placement) {
+  if (placement.sweep === undefined) return null;
+  const other = DIRECTION_NAMES.indexOf(placement.sweep);
+  if (other < 0) throw new Error(`enemy "${placement.id}": "sweep" must be one of ${DIRECTION_NAMES.join(', ')}, got ${JSON.stringify(placement.sweep)}`);
+  return [DIRECTION_NAMES.indexOf(placement.facing), other];
+}
+
+/**
+ * An enemy has been killed (a gunner's shot, a knife, a blast). Where it was
+ * the reserve squad and the mission sends replacements (`reserve.replacements`,
+ * M41b), the garrison may send the next: the reserve is no longer out, so it
+ * comes in the next enemy phase the alert is at Alarmed, as the first did.
+ */
+export function reserveLost(state, enemy, rules) {
+  if (!enemy.isReserve || (state.reserveReplaced ?? 0) >= (rules.reserve?.replacements ?? 0)) return state;
+  return { ...state, reserveDeployed: false, reserveReplaced: (state.reserveReplaced ?? 0) + 1 };
+}
+
 /** One enemy from a placement in map.json and its type from enemies.json. */
 function makeEnemy(placement, type, at) {
   return {
@@ -53,6 +72,9 @@ function makeEnemy(placement, type, at) {
     // reserve's is the way it faces at its guard post.
     homeFacing: DIRECTION_NAMES.indexOf(placement.guardFacing ?? placement.facing),
     turned: false,
+    // A post that sweeps (SPEC.md §6, M41b): the two ways it looks, turn and
+    // turn about, its `facing` first. Null for one that looks one way.
+    sweep: sweepOf(placement),
     route: placement.route ? placement.route.map(([q, r]) => ({ q, r })) : null,
     loop: placement.loop === true,
     // Index of the waypoint it is walking to, and which way along the route it
@@ -652,7 +674,12 @@ function sameHex(a, b) {
 export function runEnemyPhase(state, map, rules) {
   const events = [];
   const stateId = alertStateOf(state.alert.points, rules).id;
-  let enemies = state.enemies.map((e) => (e.turned ? { ...e, facing: e.homeFacing, turned: false } : e));
+  // A sweeping post (M41b) looks its other way each turn: where it looks
+  // through the player phase of turn N is sweep[(N - 1) % 2].
+  let enemies = state.enemies.map((e) => {
+    const post = e.sweep ? { ...e, homeFacing: e.sweep[state.turn % 2] } : e;
+    return post.turned || post.sweep ? { ...post, facing: post.homeFacing, turned: false } : post;
+  });
   let reserveDeployed = state.reserveDeployed;
   let alert = state.alert;
   let bodies = state.bodies;
@@ -668,7 +695,7 @@ export function runEnemyPhase(state, map, rules) {
     if (placed) {
       enemies = [...enemies, placed];
       reserveDeployed = true;
-      events.push({ kind: 'reserve', label: placed.label, q: placed.q, r: placed.r });
+      events.push({ kind: 'reserve', label: placed.label, q: placed.q, r: placed.r, again: (state.reserveReplaced ?? 0) > 0 });
     }
   }
 
@@ -804,7 +831,7 @@ function deployReserve(map, units, enemies) {
   const reserve = map.reserve;
   const taken = blockedFor(units, enemies, null);
   const free = reserve.entryHexes.find(([q, r]) => !taken.has(hexKey(q, r)));
-  return free ? makeEnemy(reserve, map.enemyTypes[reserve.type], free) : null;
+  return free ? { ...makeEnemy(reserve, map.enemyTypes[reserve.type], free), isReserve: true } : null;
 }
 
 /** The `index`-th squad of reinforcements, for the post of that number (M21b), or null if the road is blocked. */
