@@ -36,7 +36,7 @@ import {
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
-  describeDiversion, hidePopup, placeName, rankedReport, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
+  describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
   capitalise, renderContentsBack, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
@@ -598,7 +598,7 @@ function deriveDrop(view, hex) {
   // Nothing of the drop is drawn on the board under the orders: a run's line
   // showed through the title card as if it were part of the picture, and the
   // rings are drawn on as the card is put away, where they can be seen.
-  if (briefing?.kind === 'orders') return view;
+  if (briefing?.kind === 'orders' || briefing?.kind === 'help') return view;
   // What to do next, in big pen lettering among the runs' names (M21).
   view.dropCue = selected ? 'jump' : 'pick';
   view.drop = {
@@ -1454,7 +1454,7 @@ function render() {
     state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null);
   // Every man's name is set in bold on the card, as in the report.
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
-  showCounterKey(briefing?.kind === 'orders');
+  showCounterKey(briefing?.kind === 'help');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
   dropStalePopup();
@@ -2020,9 +2020,13 @@ function handleContentsBackClick() {
   openContents();
 }
 
-/** The orders again, with the counter key beside them, at any time (M16, the operator's). */
+/**
+ * How to play, with the counter key beside it, at any time (M16, the
+ * operator's). A card of its own since M44: the orders say what tonight asks,
+ * and this says how the game is played. Over the orders it goes back to them.
+ */
 function openHelp() {
-  if (state.outcome || briefing?.kind === 'orders' || briefing?.kind === 'contents') return;
+  if (state.outcome || briefing?.kind === 'help' || briefing?.kind === 'contents') return;
   // M17, the operator's: the button did nothing while a turn card was up, as
   // it is most of the time a player reaches for it. Anything being shown is
   // cut short, as a key would, and the card it leads to waits under the
@@ -2031,7 +2035,14 @@ function openHelp() {
   if (flyShow) endFlyShow();
   if (bangTimer) endBangHold();
   hidePopup();
-  briefing = { kind: 'orders', under: briefing };
+  briefing = { kind: 'help', under: briefing };
+  render();
+}
+
+/** From how to play to the orders (M44): the same card under both, so putting either away lays it back down. */
+function openOrdersFromHelp() {
+  const under = briefing?.under?.kind === 'orders' ? briefing.under.under ?? null : briefing?.under ?? null;
+  briefing = { kind: 'orders', under };
   render();
 }
 
@@ -2177,18 +2188,12 @@ function describeBriefing(which, view) {
       go: 'STAY — any other key or click',
     };
   }
-  if (which.kind === 'orders') {
-    // Opened again in play with ? (M16): the same card, the level fixed and
-    // the drop's own lines gone.
+  if (which.kind === 'orders' || which.kind === 'help') {
+    // Either may be opened in play (M16): the level fixed and the drop's own
+    // lines gone.
     const before = state.phase === 'drop';
     // Places in capitals, as the operator's orders name them (M12).
     const bonusTargets = state.objectives.filter((o) => !isWinTarget(state, rules, o));
-    const bonus = bonusTargets.map((o) => `the ${o.label.toUpperCase()}`);
-    // What each pays: one number if they all pay the same, as France's do;
-    // else each in the order they are named (M33: names again ran a line over).
-    const bonusScores = [...new Set(bonusTargets.map((o) => kindOf(o, rules).score))];
-    const bonusPts = bonusScores.length === 1 ? `+${bonusScores[0]}pts${bonus.length === 1 ? '' : ' ea'}` : `${bonusTargets.map((o) => `+${kindOf(o, rules).score}`).join(', ')}pts`;
-    const bonusText = bonus.length > 1 ? `${bonus.slice(0, -1).join(', ')} and ${bonus.at(-1)}` : bonus.join('');
     // Each target's charges against its points, and what the stick carries
     // between them, so a target with three points is not read as three charges.
     // Targets of one name and one need said once (M31: the airfield's eight
@@ -2234,6 +2239,53 @@ function describeBriefing(which, view) {
     const setterLines = setters.length === 0 ? [] : [
       `${takes.length > 1 ? `${takes.slice(0, -1).join(', ')} and ${takes.at(-1)}` : takes[0]}: ${setsOffList(setters[0]).length + 1} targets for one charge${setters.length > 1 ? ' each time' : ''}, and one bang.`,
     ];
+    // How to play (M44): everything the orders said about playing, on a card
+    // of its own behind ?, with the counter key. The mission's own rules (its
+    // boat, canisters, timers, train) are said here in full; the orders name them.
+    if (which.kind === 'help') {
+      return {
+        wide: true,
+        title: 'HOW TO PLAY',
+        kicker: mission.title.toUpperCase(),
+        paragraphs: [],
+        sections: [{
+          heading: 'THE BASICS',
+          lines: [
+            ...(before ? [`The Dakota flies your choice of ${runList} run; the men jump along it, drifting a hex or two downwind. Pick one with 1–3, then SPACE to jump.`] : []),
+            'Click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+            'The red dashed hexes are charge points: stand a man with a charge on one and press C.',
+            'Hover anything for detail. KEYBOARD lists every key.',
+          ],
+        }, {
+          heading: 'TONIGHT',
+          lines: [
+            // The operator's words (M31d): "charge target", and "Stukas- 1ea".
+            `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P]. A canister is found like a parachute until it is empty` : `The squad carries ${carried}`}.`
+              + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
+            ...(timerLine ? [timerLine] : []),
+            ...setterLines,
+            ...(rules.exfil.call ? [`A man on the beach can signal the boat in early [B]: it lands ${rules.exfil.call.leadTurns} turns later and still stays only ${rules.exfil.openFor}, so signal when the stick is ready to go.`] : []),
+            ...(rules.train ? [`The ${rules.train.label.toUpperCase()} ${trainDue().replace(/ \(charges.*\)$/, '').replace(trainObjective(state, rules).label, trainObjective(state, rules).label.toUpperCase())}.`] : []),
+            `Every bang alerts the garrison, so plan the order${rules.charges.fuseChoice ? ' and timer duration' : ''} of the charges you set. It’s good to be slow and stealthy, but be sure to finish before dawn!`,
+            // The clean run in the mission's own words (M32c, the operator's).
+            ...(mission.words.cleanOrders ? [mission.words.cleanOrders] : []),
+          ],
+        }],
+        link: { label: 'THE ORDERS', onClick: openOrdersFromHelp },
+        go: 'BACK — any key or click',
+      };
+    }
+    // The orders in five lines (M44, from playtesting: there was too much to
+    // read before the first move): the place, the job, the clock, and what
+    // pays extra. A mission's own rule (canisters) has a line more. How to
+    // play is behind ?.
+    const boat = rules.exfil.opensTurn;
+    const extras = [
+      ...bonusTargets.map((o) => `${o.label.toUpperCase()} +${kindOf(o, rules).score}`),
+      ...(rules.train ? [`${rules.train.label.toUpperCase()} +${rules.train.score}`] : []),
+      ...(salvo ? [`${salvo.count} in one bang +${salvo.points}`] : []),
+      ...(rules.scoring.clean ? [`${mission.words.cleanBonus ?? 'a quiet night'} +${rules.scoring.clean}`] : []),
+    ];
     return {
       banner: { title: GAME_TITLE, tagline: mission.tagline },
       // The mission's title heads its orders (M31d, the operator's), and
@@ -2241,52 +2293,21 @@ function describeBriefing(which, view) {
       title: mission.title.toUpperCase(),
       kicker: `ORDERS · ${before ? 'BEFORE THE DROP' : `TURN ${state.turn} OF ${lastTurn(state, rules)}`}`,
       paragraphs: [
-        // The opening on a line of its own (M13), then the job.
         [
           mission.briefing,
-          // Dawn on a line of its own (M22, the operator's).
           // Split at the comma (M31d, the operator's): EXFIL sat alone on a line.
           // In bold, the job standing out from the words round it (M31d, the operator's).
           { bold: `Blow ${winWords(state, rules, { upper: true })} before dawn,` },
           { bold: `then get at least ${rules.mission.minimumOut} of the men out at the EXFIL.` },
-          `Dawn comes at the end of turn ${rules.turnLimit}.`,
-          // The aqueduct's two rules (M41), said where a mission has them.
-          ...(rules.exfil.opensTurn ? [{ bold: `The BOAT is in on turn ${rules.exfil.opensTurn} and stays ${rules.exfil.openFor ?? 'till dawn'}${rules.exfil.openFor ? ' turns' : ''}. There is no way out before it.` }] : []),
-          ...(rules.exfil.call ? [`A man on the beach can signal it in early [B]: it lands ${rules.exfil.call.leadTurns} turns later and still stays only ${rules.exfil.openFor}, so signal when the stick is ready to go.`] : []),
+          // The clock: dawn, or the boat where the way out is one (M41).
+          boat
+            ? { bold: `The BOAT is in on turn ${boat} and stays ${rules.exfil.openFor ?? 'till dawn'}${rules.exfil.openFor ? ' turns' : ''}. There is no way out before it.` }
+            : `Dawn comes at the end of turn ${rules.turnLimit}. Every bang alerts the garrison.`,
           ...(rules.canisters ? [{ bold: `The charges are in the ${rules.canisters.count} CANISTERS, ${rules.canisters.charges} in each. Nobody jumps with one.` }] : []),
+          ...(extras.length ? [`Bonus: ${extras.join(', ')}.`] : []),
         ],
-        // The timer named where charges take one, and the last sentence on a
-        // line of its own (M31d, the operator's).
-        ...(bonus.length ? [[
-          `${bonusText[0].toUpperCase()}${bonusText.slice(1)} ${bonus.length === 1 ? 'is a bonus target' : 'are bonus targets'} (${bonusPts}). ${rules.charges.fuseChoice
-            ? 'Every bang alerts the garrison, so carefully plan the order and timer duration of the charges you set.'
-            : 'Every bang alerts the garrison, so plan the order you set charges carefully.'}`,
-          'It’s good to be slow and stealthy, but be sure to finish before dawn!',
-          // The goods train (M34), where the mission has one.
-          ...(rules.train ? [`The ${rules.train.label.toUpperCase()} ${trainDue().replace(/ \(charges.*\)$/, '').replace(trainObjective(state, rules).label, trainObjective(state, rules).label.toUpperCase())}.`] : []),
-          // The clean run said up front (M32c, the operator's): until now only
-          // the back page told of it. The mission's own words, as its condition is.
-          ...(mission.words.cleanOrders ? [mission.words.cleanOrders] : []),
-        ]] : []),
       ],
-      sections: [{
-        heading: 'HOW TO PLAY',
-        lines: [
-          ...(before ? [
-            `The Dakota troop aircraft flies on your choice of ${runList} run; your men jump along it, drifting a hex or two downwind. Pick one with 1–3.`,
-            'Hit SPACE to jump. Then click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
-          ] : ['Click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.']),
-          // The operator's words (M13): "vulnerable points" here only; the
-          // game calls them charge points from then on.
-          'The red dashed hexes are vulnerable points: to destroy, stand a man with a charge on one and press C.',
-          // The operator's words (M31d): "charge target", and "Stukas- 1ea".
-          `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P]. A canister is found like a parachute until it is empty` : `The squad carries ${carried}`}.`
-            + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
-          ...(timerLine ? [timerLine] : []),
-          ...setterLines,
-          'Hover anything for detail; KEYBOARD lists every key, and ? brings this card back.',
-        ],
-      }],
+      sections: [],
       // SPEC.md §10: the level, chosen here and fixed once the stick jumps.
       // At the top (M13): the level changes numbers in the text under it.
       choice: {
@@ -2298,11 +2319,14 @@ function describeBriefing(which, view) {
       },
       // Bottom left (M21, the operator's): the music plays only before the jump.
       toggle: before ? musicToggle() : null,
+      link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
-  const lines = rankedReport(state.report, view.place);
-  const shown = 6;
+  // What happened, each line with the board's own mark for it, and one hint
+  // (M44: six lines and three hints were a page to read every turn).
+  const lines = markedReport(state.report, view.place);
+  const shown = 4;
   const alert = rules.alert.states[alertIndex(state.alert.points, rules)];
   return {
     title: `TURN ${state.turn} OF ${lastTurn(state, rules)}`,
@@ -2313,7 +2337,7 @@ function describeBriefing(which, view) {
         lines: lines.length ? lines.slice(0, shown) : ['A quiet night. Nothing seen.'],
         more: lines.length > shown ? `…and ${lines.length - shown} more in the report under the map.` : null,
       },
-      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName }) },
+      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName }, 1) },
     ],
     toggle: { on: briefingsOn },
   };
@@ -2566,7 +2590,7 @@ function handleKey(event) {
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     if (briefing.kind === 'signal' && event.key === 'Enter') return confirmSignal();
     // ? over a turn card swaps it for the orders (M17), as the button does.
-    if (isHelpKey(event) && !['orders', 'exfil', 'signal', 'contents'].includes(briefing.kind)) return openHelp();
+    if (isHelpKey(event) && !['help', 'exfil', 'signal', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
     closeBriefing();
     // A man's number, or Tab, puts a turn card away and picks him (M23), as a click on him does.

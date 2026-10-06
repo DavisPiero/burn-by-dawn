@@ -101,6 +101,10 @@ come down in the drop on blue canopies and are on the ground only as each lands;
 charge points are ringed for a man carrying a charge near a target. **Phase 5 below is
 proposed** from the same playtests. Tests: 194 headless.
 
+**M44** (7 Oct 2026), the text diet, Phase 5's first: the orders are five lines (what
+tonight asks); how to play is a card of its own behind **?** with the counter key; the
+turn card is four marked lines and one short hint. Tests: 195 headless. **Next: M45.**
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
@@ -337,9 +341,9 @@ Left as it is: Normal's North run on the airfield is 5 over the target (95), and
 the kill-everything bot is level with the careful one on the West and South runs
 (69 / 41 / 67 against 67 / 68 / 60), where it was below.
 
-## Phase 5 — Show, don't tell: teaching the game (proposed 7 Oct 2026)
+## Phase 5 — Show, don't tell: teaching the game (agreed 7 Oct 2026)
 
-**Proposed, not agreed: the operator confirms or changes it before M44.** From the
+**Agreed by the operator, 7 Oct 2026. M44 is done; M45 is next.** From the
 first playtests with new players: there is too much to read before the first move, and
 key rules are not found by looking (a player stood a sapper on the Rail Bridge and
 could not see why he could not set his charge). M43c fixed that one case; this phase
@@ -388,32 +392,73 @@ and never has to read a paragraph to learn a rule.
 
 ### The training mission
 
-A playtester's idea, and the operator's: **a tutorial, one thing to do at a time, with
-the board holding the player's hand.** First on the contents page, marked START HERE.
-A training drop in England, 1942 (the parked idea): a practice ground, umpires for a
-garrison, a dummy bridge. It needs its own `MISSION-TRAINING.md` before it is built.
+A playtester's idea, taken up by the operator (notes of 7 Oct 2026, kept here): **a
+tutorial, one thing to do at a time, with the board holding the player's hand.** First
+on the contents page, marked START HERE. Set at **a paratrooper training school in
+England**: a practice ground, umpires for a garrison, a dummy bridge. It needs its own
+`MISSION-TRAINING.md` before it is built (M47).
 
-- **Three men** (a sapper, a scout, a gunner: a roster file of its own, as Phase 2
-  allowed for), a small corner of the board in play, about ten turns.
-- **Lessons, in order, each one step with one thing allowed:** jump; select and move;
-  pack a parachute; cross a sentry's view by the hedge (dots, cover); hide while a
-  patrol passes (next turn's wedge, End turn); throw a stone to turn a sentry; knife
-  an umpire from behind; fetch a charge, stand on a charge point, set it, get clear,
-  the bang and the dial; a man seen and a gunner suppressing his watcher; the leader's
-  orders; out at the exfil before dawn.
+**It is a course of lessons, each a qualification.** A lesson teaches one thing with
+pictures and movement first and few words, the player does it once, and it is stamped
+passed. The operator's list, with what I would add:
+
+| # | Lesson | What is shown and done |
+|---|---|---|
+| 1 | **The drop** | Pick the run, jump, watch the stick and its scatter |
+| 2 | **Parachutes** | A patrol's route runs over a chute: pack it, and why |
+| 3 | **Action points** | Move a man and watch the dots empty; the turn ends, they fill |
+| 4 | **Ground** | Field, hedge, wood, marsh, water: what each costs to cross and how much it hides |
+| 5 | **Not being seen** | A sentry's view, the dots filling, cover, going to ground; then being spotted on purpose, and breaking contact |
+| 6 | **Watching the garrison** | Hover a patrol for its route and next turn's facing; time a crossing; a stone to turn a sentry's head |
+| 7 | **Fighting** | The knife from behind; a gunner's suppress, then kill; firing back when seen; what a body found costs |
+| 8 | **Charges** | A canister to find; pick up, carry (and its weight), pass; the charge points; a time pencil; get clear; the bang and the alert |
+| 9 | **The leader** | His orders (the extra AP near him) and his radio: calling the diversion |
+| 10 | **The men** | Each man's own skill, shown by using it: Steady Hands, Quick Work, Cat's Eyes, Treetops, Cool Head, Ox |
+| 11 | **Getting out** | The exfil, dawn, how many must be out, and the card that asks before a withdrawal |
+| + | **The alert** (mine) | Its own short lesson: what raises it, what each state does, that it decays. It is the spine and nothing above teaches it whole |
+| + | **A wounded man** (mine) | Wounds, and stabilising: rare in play and never found unaided (M26) |
+| + | **Reading the page** (mine) | Folded into lesson 1: the readout, the log, the roster, undo, **?** |
+| + | **The passing-out exercise** (mine) | A last short raid on the dummy bridge with no hand held, so the lessons are used together once before France |
+
+**What the operator asks of it, as requirements:**
+
+- **Pictures first.** Every lesson has a demonstration that moves, drawn with the
+  board's own counters and cues, and painted panels where the operator supplies them.
+- **Any lesson can be taken again on its own**, to learn it better or as a refresher,
+  from a list of the course, at any time: so each lesson sets up its own small
+  situation (its men, its ground, its garrison) and needs nothing from the one before.
+- **A clipboard at the end**: the course's summary, every skill learnt ticked off as a
+  qualification, in the annual's manner.
+- **Idiot proof.** A wrong click at the wrong moment never breaks a lesson or leaves
+  the player lost: only what the step asks for does anything; anything else is ignored
+  or answered by the board pointing at what is wanted. **Steps can be gone back
+  through**, one at a time, and a lesson restarted.
 - **Nobody is hurt and it cannot be lost.** Caught out, an umpire's whistle blows and
   the step is put back to its start, with the reason shown on the board.
-- **Engine work, as data** (so no code asks which mission is on): a mission may carry
-  `lessons`, a list of steps, each `{ say, show, allow, until }`: a pen line, what to
-  ring, the one action and hexes allowed, and a condition from a short fixed list in
-  the spirit of the win conditions (selected, moved to, hidden, turn ended, charge set,
-  enemy down, target destroyed, man out). And a fixed landing (no scatter) so the
-  lessons can name hexes. It is the same cue language as the main game, which is why
-  the cues are built first.
+
+**What that means for how it is built** (to be settled in M47's spec):
+
+- **Lessons are mission data**, so no code asks which mission is on: a mission may
+  carry `lessons`, each with its own start (who is where, with what, on which turn)
+  and a list of steps, each `{ say, show, allow, until }`: a pen line of a few words,
+  what to ring or animate, the one action and hexes allowed, and a condition from a
+  short fixed list in the spirit of the win conditions (selected, moved to, hidden,
+  turn ended, charge set, enemy down, target destroyed, man out).
+- **Going back and redoing come from one thing:** every step begins from a state the
+  lesson can rebuild, so "back" is the step before's state and "again" is the lesson's
+  start. The rules being pure functions over state (CLAUDE.md rule 7) is what makes
+  this cheap.
+- **Nothing is stored** (rule 9), so the clipboard shows what was passed this session,
+  and the course can always be opened at any lesson. Whether passes should be carried
+  in the address, as the level and music are, is a question for the spec.
+- A fixed landing (no scatter) where a lesson names hexes; the six as they are, since
+  lesson 10 is about them; a small part of the board in play for each lesson.
+- It is the same cue language as the main game, which is why the cues (M45, M46) are
+  built first.
 
 ### Order of work (a milestone each)
 
-- **M44 — the text diet.** Orders cut to five lines and split from the instructions;
+- **M44 — the text diet. Done.** Orders cut to five lines and split from the instructions;
   HOW TO PLAY and the counter key move behind **?**; the turn card down to icons and
   one hint. Mostly deleting. ART-DIRECTION's Cards section is rewritten with it.
 - **M45 — seeing and being seen.** The danger wash, the sight line and filling pips,
@@ -424,11 +469,15 @@ garrison, a dummy bridge. It needs its own `MISSION-TRAINING.md` before it is bu
 - **M47 — the training mission specified** (`MISSION-TRAINING.md`) and its lesson
   engine built, off in every other mission.
 - **M48 — the training mission built**, with the **?** pages' diagrams drawn from the
-  same lessons.
+  same lessons. Fifteen lessons is more than one session: expect M48 to be two or
+  three (M48, M48b…), a few lessons each, each playable when merged.
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 
 ### Open questions for the operator
+
+(Phase 5 was agreed with these unanswered, so each stands as I advised until the
+operator says otherwise.)
 
 - **The danger wash changes how the game feels**: SPEC §4 makes hover the way risk is
   read, and a wash shows it before any hover. It could be Easy and Normal only, or on a

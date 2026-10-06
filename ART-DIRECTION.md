@@ -223,35 +223,50 @@ board must read at a glance.
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. Clicking a playable one, or any key, opens its
   orders. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
-- **The orders are the first thing seen** after it. The orders card opens under the title card (a
-  painted picture of the drop with the title lettered in; drawn in code if the file is
-  missing), 820 wide, centred, standing off the page on a deep soft shadow while the
-  whole spread is put in shade under a coarse halftone. The difficulty is in the black bar
-  at the top, because it changes the numbers written below; under it the mission's title
-  (THE AIRFIELD) heads the card, with ORDERS · BEFORE THE DROP beside it. The job is two
-  lines, split at its comma so the EXFIL never stands alone; "Dawn comes…" has a line of
-  its own, and so does the bonus paragraph's last
-  sentence. Where charges take a timer, the bang sentence says to plan "the order and
-  timer duration of the charges you set". A card too tall for the window is set tighter a
-  step at a time (less air, then 14 px, then 13) before anything is cut.
-  **Music off** is at its foot.
-- **The counter key** lies beside the orders over the crease, drawn with the board's own
-  counters: one of our men with every mark labelled, the leader and the marks a man can
-  wear, and an enemy with its facing, next turn's facing, type and marks. Its middle is on
-  the crease where the window has room (at 1280 it sits as near as it can without covering
-  the orders). WHO sits above NEXT TURN so their pointers do not cross, and points at the
-  end of the enemy's name; BLUE AP's pointer ends in a blue dot beside the dot it means.
-- **How to play, at any time:** a **?** button beside KEYBOARD, and the `?` or `/` key,
-  open the orders again with the counter key, over a turn card too; in play the level is
-  shown but fixed and the drop's own lines are left out. Any key or click puts it away,
-  laying a turn card back down if one was up.
+- **The orders are the first thing seen** after it, and they are short: **what tonight
+  asks, never how to play.** The orders card opens under the title card (a painted
+  picture of the drop with the title lettered in; drawn in code if the file is missing),
+  820 wide, centred, standing off the page on a deep soft shadow while the whole spread
+  is put in shade under a coarse halftone. The difficulty is in the black bar at the
+  top, because it changes the numbers written below; under it the mission's title (THE
+  AIRFIELD) heads the card, with ORDERS · BEFORE THE DROP beside it. Then **five lines
+  at most, and one more for a rule only this mission has**: where they are dropping;
+  the job in bold, two lines, split at its comma so the EXFIL never stands alone; the
+  clock ("Dawn comes at the end of turn 16. Every bang alerts the garrison.", or the
+  boat's turn in bold where the way out is a boat); the canisters in bold where there
+  are any; and one Bonus line naming everything that pays extra with its points (the
+  bonus targets, the goods train, the salvo, the clean run in the mission's two or three
+  words, `words.cleanBonus`). At its foot: **Music off**, a **HOW TO PLAY [?]** button,
+  and CARRY ON. A card too tall for the window is set tighter a step at a time (less
+  air, then 14 px, then 13) before anything is cut.
+- **How to play is a card of its own**, at any time: a **?** button beside KEYBOARD, the
+  `?` or `/` key, or the orders' button, over a turn card too. It has the orders' place
+  and width, headed HOW TO PLAY with the mission's name: THE BASICS (the run and the
+  jump before the drop; click, hover, click, Space; the charge points; hover anything),
+  and TONIGHT (the charges each target needs and what the stick carries, the timers,
+  what sets off its neighbours, signalling the boat, the goods train, the order of the
+  bangs, the clean run in the mission's own sentence). A **THE ORDERS** button at its
+  foot opens the orders, where in play the level is shown but fixed. Any key or click
+  puts either away, laying back down whatever card was under it. It is the reference a
+  player asks for; nothing in it is pushed at him. (Phase 5 replaces its lines with
+  small moving diagrams.)
+- **The counter key** lies beside how to play over the crease, never beside the orders,
+  drawn with the board's own counters: one of our men with every mark labelled, the
+  leader and the marks a man can wear, and an enemy with its facing, next turn's facing,
+  type and marks. Its middle is on the crease where the window has room (at 1280 it sits
+  as near as it can without covering the card). WHO sits above NEXT TURN so their
+  pointers do not cross, and points at the end of the enemy's name; BLUE AP's pointer
+  ends in a blue dot beside the dot it means.
 - **Turn cards.** At the start of every turn (turn 1 after the drop has been shown) a card
   sits in the bottom right of the map, narrow, with nothing darkened: what happened at the
-  turn boundary, most important first, and up to three hints worked out from the state (a
-  pure function in `src/hints.js`, numbers from `rules.json`). A key puts it away and does
-  nothing else, except that a man's number or Tab also selects him; a click on one of our
-  men puts it away and selects him, any other click only puts it away. A box on the card
-  turns the turn cards off for the session; the orders still open on a new game.
+  turn boundary, most important first, **four lines at most, each with the board's own
+  mark for it** as in the turn log (the rest are counted and left to the log), and
+  **one hint** worked out from the state (a pure function in `src/hints.js`, numbers
+  from `rules.json`): the most pressing thing, in a line or two, with its key. A key
+  puts it away and does nothing else, except that a man's number or Tab also selects
+  him; a click on one of our men puts it away and selects him, any other click only puts
+  it away. A box on the card turns the turn cards off for the session; the orders still
+  open on a new game.
 - **The RAF diversion** flies the Dakota across the board over the garrison (display only,
   skipped by any key or click), its engines heard half a second first; where the map gives
   a `diversionRun` (the airfield), the vehicle its `art` names (a jeep, guns flashing)

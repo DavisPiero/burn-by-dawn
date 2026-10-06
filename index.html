@@ -1149,6 +1149,12 @@
     #briefing li::before { content: "▸"; position: absolute; left: 0; }
     #briefing .brief-hints li::before { content: "→"; color: var(--red); font-weight: bold; }
     #briefing .brief-more { opacity: 0.65; }
+    /* A turn card's line with the board's mark for what happened (M44), as the log's. */
+    #briefing li.brief-marked { padding-left: 22px; }
+    #briefing li.brief-marked::before { content: none; }
+    #briefing li.brief-marked .rep-mark { position: absolute; left: 0; top: 1px; width: 17px; height: 17px; }
+    #briefing .rep-dot { fill: var(--ink); opacity: 0.5; }
+    #briefing .brief-link { font-size: 13px; padding: 4px 12px; }
     /* The difficulty on the orders (SPEC.md §10), in the foot where the
        turn cards keep their checkbox: the levels as buttons, the picked one
        inked in. What each changes is its rollover. */

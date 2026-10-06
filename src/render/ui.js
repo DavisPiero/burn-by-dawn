@@ -319,6 +319,11 @@ export function rankedReport(events, place) {
   return orderReport(events).map((event) => describeEvent(event, place));
 }
 
+/** The same lines for the turn card (M44), each with the kind the board's mark for it is drawn by: [{ mark, text }]. */
+export function markedReport(events, place) {
+  return orderReport(events).map((event) => ({ mark: event.kind, text: describeEvent(event, place) }));
+}
+
 /**
  * The title card, drawn or painted (theme.js TITLE_CARD), with the title set
  * over it in type and the tagline along its foot. Heads the orders, and the
@@ -341,7 +346,8 @@ function titleBanner({ title, tagline }) {
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
-  backdrop.classList.toggle('orders', Boolean(briefing?.banner));
+  // The orders' place and width, for them and for how to play (`wide`, M44).
+  backdrop.classList.toggle('orders', Boolean(briefing?.banner || briefing?.wide));
   if (!briefing) return;
   card.replaceChildren();
   card.className = briefing.tone ? `tone-${briefing.tone}` : '';
@@ -363,7 +369,11 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
-    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => html('li', null, boldNames(line, briefing.names))));
+    // A line given as { mark, text } wears the board's own mark for what
+    // happened, as the turn log's does (M44), in place of the bullet.
+    const list = html('ul', section.hints ? 'brief-hints' : null, section.lines.map((line) => (typeof line === 'string'
+      ? html('li', null, boldNames(line, briefing.names))
+      : html('li', 'brief-marked', [reportMark(line.mark), ...boldNames(line.text, briefing.names)]))));
     if (section.more) list.appendChild(html('li', 'brief-more', section.more));
     card.appendChild(list);
   }
@@ -378,6 +388,8 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     const label = html('label', null, [box, briefing.toggle.label ?? ' Brief me at the start of every turn']);
     label.addEventListener('click', (event) => event.stopPropagation());
     foot.appendChild(label);
+  } else if (briefing.link) {
+    foot.appendChild(html('span'));
   } else if (briefing.choice && !briefing.choice.top) {
     foot.appendChild(briefChoice(briefing.choice));
   } else if (briefing.confirm) {
@@ -395,6 +407,17 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     foot.appendChild(button);
   } else {
     foot.appendChild(html('span'));
+  }
+  // A way to another card (M44: the orders to how to play, and back), in the
+  // middle of the foot. It acts; any other key or click carries on.
+  if (briefing.link) {
+    const button = html('button', 'btn brief-link', boldKeys(briefing.link.label));
+    button.type = 'button';
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.link.onClick();
+    });
+    foot.appendChild(button);
   }
   foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
   card.appendChild(foot);
