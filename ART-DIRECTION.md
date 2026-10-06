@@ -293,13 +293,18 @@ board must read at a glance.
   **With them, each supply canister is ringed in leader blue and lettered CHARGE
   CANISTER** in the same blue, on whichever side of it is clearest of counters, the
   other rings and names, the start note and the board's edge. The ring is round the
-  canister's picture and its dots, down and left of the hex's middle. **They pop on one
-  by one** as the stick lands, about half a second apart, each a little big and then
-  its size, with its thump.
+  canister's picture and its dots, a little down and left of the hex's middle, clear of
+  the dots. **A canister is not on the ground until it lands**: its picture, its dots,
+  its ring and its name pop on together as its canopy comes down in the drop, a little
+  big and then its size, with its thump. If the drop is skipped, those still in the air
+  pop on one by one, about half a second apart. CLICK A MAN TO START is lettered over
+  the canisters' rings and names, never under them.
 - **The drop is shown.** A Dakota flies the chosen line, in from off the board and on
   until it has left it, whatever the line's own ends, and each man's canopy opens where
   he jumps, drifts downwind to where the rules have already put him, lands and collapses
-  into his parachute marker. Display only; a click or Space skips it.
+  into his parachute marker. **Each supply canister comes down the same way**, on a
+  canopy of its own with its gores in the blue of its ring, opening a moment behind the
+  man it leaves with. Display only; a click or Space skips it.
 
 ### Motion and feedback
 
@@ -321,6 +326,12 @@ board must read at a glance.
   goes to it.
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
   its counter flashing. A kill is one dim shot.
+- **Where the charge goes**: while the selected man carries a charge within three hexes
+  of a target that still wants one (of the target or any of its charge points), each of
+  its empty charge points wears a throbbing red pen ring, lettered once in the pen:
+  STAND ON A RING TO SET A CHARGE (STAND HERE TO SET THE CHARGE where there is one
+  point). Standing on a point, only his own is ringed, and it reads PRESS C TO SET THE
+  CHARGE if he can set it now. Not while he aims an action or the tin of timers is open.
 - **The charges are set**: when a target is given the last charge it needs, the player's
   pen letters **CHARGES ARE SET. / GET CLEAR!** over it (CHARGE IS SET where it needs one),
   red with a paper outline, a little askew, over the counters and any speech bubble, kept
@@ -366,7 +377,7 @@ siren close by (made in code until recordings are supplied). France's goods trai
 whistles as it comes onto the board, one long blast and a short one, far off, with its
 chuffing dying away after: made in code until a recording is supplied. **The
 aqueduct's three** are made in code too until recordings are found: its canisters
-thump down as the last canopy lands, one thump each as its blue ring pops on; the boat's oars are heard far off
+thump down in the drop, one thump each as its canopy lands and its blue ring pops on; the boat's oars are heard far off
 the turn it is sighted or answers the signal; and the turn it lands, its last strokes
 with a wave breaking on the shingle under them. Its back page is France's bells.
 

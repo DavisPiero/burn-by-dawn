@@ -288,6 +288,10 @@ to be casual while still being strategic.
   (a kill wants it suppressed first; a knife wants it looking the other way).
 - **Hover an objective**: what it needs (charges, fuse, blast radius) and what it pays.
 - **Hover one of our men**: his particulars in the readout (§11).
+- **Where the charge goes.** A man is never on a target to set a charge, only on one of
+  its charge points (§7), and new players stood on the bridge. While the selected man
+  carries a charge near a target that still wants one, its empty charge points are
+  ringed and lettered (§11, Motion and feedback).
 - **A prompt while Stabilise or Pass a charge is open.** Both are used only now and then
   and were hard to find, so while a man could take either right now (the same check the
   button makes: for Stabilise a wounded man beside him and his whole pool unspent; for
@@ -1000,7 +1004,9 @@ ends Phase 4 as it was planned. What is open is the operator's: the paintings an
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
 Balance): kill-everything is still not below careful play there, and Hard's North run
-is well under its target. After that, `ROADMAP.md`. v1.0 is tagged.
+is well under its target. After that, `ROADMAP.md`, whose Phase 5 (teaching the game by
+showing, and a training mission) is proposed from the first playtests and waits on the
+operator's word. v1.0 is tagged.
 
 ### Done
 
@@ -1017,6 +1023,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M43c | The operator's notes and the first playtest fix: the canisters come down in the drop on blue canopies of their own and are on the ground, ringed, only as each lands; their rings clear of the charge dots; CLICK A MAN TO START over them; the charge points ringed and lettered while the selected man carries a charge near a target; the revised aqueduct title card. The plan for teaching the game by showing, and a training mission, in ROADMAP.md (Phase 5) |
 | M43b | The operator's notes on M43: the canisters' rings pop on one by one with their thumps and sit round their pictures; the Italian chips and the aqueduct's title card painted and in |
 | M43 | The aqueduct's words, sounds and art hand-off: a mission's own folder for its garrison's chips (the Italians), the six's lines for Italy, the canisters' thump and the boat's oars and surf made in code, slots for its own title card and winter portraits, a colder wash on its winter ground, and the paintings and recordings asked for |
 | M42c | A squad called for a body stands where the body was found; canister dots higher; the drawn roads beside the aqueduct lifted to its channel; the confirm cards' button above the way back |

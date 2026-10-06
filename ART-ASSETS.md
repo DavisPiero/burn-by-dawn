@@ -248,6 +248,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `vehicle-jeep.svg`, `vehicle-jeep-flash.svg` | 60 x 60 (M31: the airfield's diversion, a jeep raid driven along the north scrub, SPEC.md §13. From above, **nose to the east**, sand-painted, two men aboard, jerrycans and spare wheel behind, twin guns over its **left** side; the flash is two fire-orange bursts at the muzzles, blinked by code. *Drawn by code.* **Or a painted PNG**, `/assets/vehicles/vehicle-jeep.png`, 512 x 512, transparent, the same view: it replaces the drawn jeep on load, and the drawn flashes stay where the drawn guns end, about (325, 110) and (155, 160) of the 512, so paint the guns there) |
 | `parachute-canopy.svg` | 40 x 40 (an open canopy from above, in the air — distinct from `marker-parachute`, which is spent on the ground) |
 | `parachute-canopy-shadow.svg` | 40 x 40 (its silhouette, one flat fill) |
+| `parachute-canopy-supply.svg` | 40 x 40 (M43c, a supply canister's canopy in the air: the men's, its gores in leader blue. *Drawn by code.*) |
 
 ---
 

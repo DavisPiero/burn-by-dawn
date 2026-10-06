@@ -96,6 +96,11 @@ missions after that" or "Parked" below.
 painted and in; the canisters' rings pop on one by one, a thump with each, round
 their pictures. Still asked for: Priorities 21 to 23. Tests: 193 headless.
 
+**M43c** (7 Oct 2026), the operator's notes and the first playtest fix: the canisters
+come down in the drop on blue canopies and are on the ground only as each lands; the
+charge points are ringed for a man carrying a charge near a target. **Phase 5 below is
+proposed** from the same playtests. Tests: 194 headless.
+
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
 first bang goes) and its jeep raid is urged only for men in contact, since its garrison is
@@ -332,6 +337,112 @@ Left as it is: Normal's North run on the airfield is 5 over the target (95), and
 the kill-everything bot is level with the careful one on the West and South runs
 (69 / 41 / 67 against 67 / 68 / 60), where it was below.
 
+## Phase 5 — Show, don't tell: teaching the game (proposed 7 Oct 2026)
+
+**Proposed, not agreed: the operator confirms or changes it before M44.** From the
+first playtests with new players: there is too much to read before the first move, and
+key rules are not found by looking (a player stood a sapper on the Rail Bridge and
+could not see why he could not set his charge). M43c fixed that one case; this phase
+does the same for every key mechanic, then adds a training mission.
+
+**The aim:** a new player makes a first move within a minute of the contents page,
+and never has to read a paragraph to learn a rule.
+
+### How it is done (the rules of the phase)
+
+1. **Orders and instructions are two things.** The orders say what tonight asks: the
+   target, the way out, dawn, the bonus. Instructions say how to play. Today both are
+   on one card of about 250 words, with the counter key beside it.
+2. **Teach where it happens, when it matters.** A rule is shown on the board, on the
+   thing it is about, the first moment the player needs it: never in a list beforehand.
+3. **One cue language**, already begun: the player's **red pen** (a throbbing ring, a
+   few capitals) means *do this, here*; **blue** means *our kit*; a **faint ghost**
+   moving shows *how*. A pen note is six words at most.
+4. **A text budget.** Orders: five lines. A turn card: what happened in icons, and one
+   hint. The readout keeps its detail: it is asked for by hovering, not pushed.
+5. **The spine and the second pillar stand.** Nothing here changes a rule or a number;
+   it is all display, so the bot's baselines do not move.
+
+### Each mechanic: from words to pictures
+
+| Mechanic | What a new player has to read today | What the board shows instead |
+|---|---|---|
+| The job | The orders' paragraphs | The orders cut to five lines over the map's own pen rings (target, exfil), which are already there |
+| Jump | Pen cue (done, M21) | Keep |
+| Select and move, AP | HOW TO PLAY; the counter key | After the first select: a ghost counter walks a short path, its AP dots emptying, under HOVER A HEX. CLICK TO GO. Once |
+| Being seen | The DOTS row; the counter key | **A danger wash**: with a man selected, every hex he can reach where he would be spotted is tinted red, so the risk map is read without hovering. On hover, a sight line from the enemy to the hex, and the pips fill one at a time |
+| Cover | The readout's ground note | A small shield on the hovered hex: none, half, full |
+| In contact, fired on | The spotted marker's rollover (90 words) | The watcher's dashed line turns into a crosshair that closes over the turn; hexes that break contact are tinted green; BREAK CONTACT! in the pen |
+| Hide | The Hide button's rollover | The **H** button throbs when hiding here would turn SPOTTED into UNSEEN |
+| Knife, suppress, kill, fire back | The enemy's hover rows; hints | **Opportunity marks**: a knife or crosshair on any enemy's chip the selected man could strike now. An enemy's blind side is shaded when a man is beside it |
+| Charge points | HOW TO PLAY ("vulnerable points") | Done, M43c: ringed and lettered near a man with a charge |
+| Fuse and blast | BANG row; turn card | The turn a charge will blow, its blast ground throbs red and each man inside wears GET CLEAR with an arrow to the nearest safe hex |
+| The alert | The dial's rollover; the log | Whatever raised it sends a red pip flying from its hex to the dial, which jolts. The cause is seen, not read |
+| Noise | NOISE rows | Keep the ripple; add an arrow from each patrol that will come |
+| Parachutes | Turn 1's hint | On turn 1, a chute lying on a patrol's route is joined to that patrol by its route line, with **U** on it |
+| Leader's orders | The chevron's rollover | Keep (radius and chevrons already show it) |
+| The way out, dawn | The orders; the turn counter | Once the job is done the exfil throbs green with GET OUT; in the last three turns the dawn strip reddens and a man too far to reach it wears a clock |
+| Actions | 13 buttons, each with a rollover | The buttons he can use now are full size and inked; the rest shrink to their key. A button that has just become usable pops once |
+| What to do next | Up to three hints of 20 to 40 words | One hint, twelve words, and it **points**: each hint names a hex or a man, ringed in the pen while the card is up |
+| Reference | The orders card again (**?**) | **?** opens a few small pages (Moving, Being seen, Charges, Fighting, Getting out), each one moving diagram drawn with the board's own counters, and the counter key |
+
+### The training mission
+
+A playtester's idea, and the operator's: **a tutorial, one thing to do at a time, with
+the board holding the player's hand.** First on the contents page, marked START HERE.
+A training drop in England, 1942 (the parked idea): a practice ground, umpires for a
+garrison, a dummy bridge. It needs its own `MISSION-TRAINING.md` before it is built.
+
+- **Three men** (a sapper, a scout, a gunner: a roster file of its own, as Phase 2
+  allowed for), a small corner of the board in play, about ten turns.
+- **Lessons, in order, each one step with one thing allowed:** jump; select and move;
+  pack a parachute; cross a sentry's view by the hedge (dots, cover); hide while a
+  patrol passes (next turn's wedge, End turn); throw a stone to turn a sentry; knife
+  an umpire from behind; fetch a charge, stand on a charge point, set it, get clear,
+  the bang and the dial; a man seen and a gunner suppressing his watcher; the leader's
+  orders; out at the exfil before dawn.
+- **Nobody is hurt and it cannot be lost.** Caught out, an umpire's whistle blows and
+  the step is put back to its start, with the reason shown on the board.
+- **Engine work, as data** (so no code asks which mission is on): a mission may carry
+  `lessons`, a list of steps, each `{ say, show, allow, until }`: a pen line, what to
+  ring, the one action and hexes allowed, and a condition from a short fixed list in
+  the spirit of the win conditions (selected, moved to, hidden, turn ended, charge set,
+  enemy down, target destroyed, man out). And a fixed landing (no scatter) so the
+  lessons can name hexes. It is the same cue language as the main game, which is why
+  the cues are built first.
+
+### Order of work (a milestone each)
+
+- **M44 — the text diet.** Orders cut to five lines and split from the instructions;
+  HOW TO PLAY and the counter key move behind **?**; the turn card down to icons and
+  one hint. Mostly deleting. ART-DIRECTION's Cards section is rewritten with it.
+- **M45 — seeing and being seen.** The danger wash, the sight line and filling pips,
+  the cover shield, contact's closing crosshair and green ways out, the Hide prompt.
+  The biggest single gain: detection is the game, and today it is read off a row.
+- **M46 — doing.** Opportunity marks, the first-move ghost, blast and GET CLEAR, the
+  alert's flying pip, the exfil's GET OUT, the action bar, hints that point.
+- **M47 — the training mission specified** (`MISSION-TRAINING.md`) and its lesson
+  engine built, off in every other mission.
+- **M48 — the training mission built**, with the **?** pages' diagrams drawn from the
+  same lessons.
+- **M49 — playtest it on people who have never seen the game**, and fix what they
+  trip on. Measure: time to the first move, to the first charge set, and what they ask.
+
+### Open questions for the operator
+
+- **The danger wash changes how the game feels**: SPEC §4 makes hover the way risk is
+  read, and a wash shows it before any hover. It could be Easy and Normal only, or on a
+  key. My advice: on everywhere, since the hover still gives the why.
+- **Does the training mission come first?** It is the playtester's headline, but it
+  reuses the cues, and the main game must stand without it (many players skip a
+  tutorial). Hence M44 to M46 before it. It could be pulled forward if the operator
+  would rather.
+- **The words in the pen** are mine and placeholder, as the aqueduct's copy is.
+- **Painted lesson panels?** The parked comic panels would suit the training mission's
+  step cards. Code can draw every diagram; paintings would be the operator's to make.
+
+---
+
 ## More missions after that (candidates, from the historical notes)
 
 - **Bruneval** (France, 1942): drop onto the cliffs, take the radar parts, fight down to
@@ -357,7 +468,7 @@ the kill-everything bot is level with the careful one on the West and South runs
   per mission in missions.json, so that a new team later is new data and portraits, not
   new code.
 
-- A short training drop in England as a tutorial mission. Cheap once Phase 2 exists.
+- (The training drop in England is now Phase 5's last part, above.)
 - A service record (medals per mission) or unlocks. This needs saved progress, which
   CLAUDE.md rule 9 forbids. Missions stay standalone for now (the operator's call).
 - Minifying the JS. See below.
