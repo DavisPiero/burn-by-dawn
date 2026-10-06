@@ -37,6 +37,7 @@
         "diversionKicker": "BOMBERS OVER THE TOWN",
         "diversionLog": "bombers over the town",
         "cries": { "spotted": ["ACHTUNG!", "HALT!", "ALARM!"], "found": ["MEIN GOTT!", "WAS IST DAS?", "ALARM!"] },
+        "cleanBonus": "a quiet night",
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "dialogue": {},
@@ -98,6 +99,7 @@
         "diversionKicker": "JEEPS ON THE NORTH WIRE",
         "diversionLog": "jeeps shoot up the north wire",
         "cries": { "spotted": ["ACHTUNG!", "HALT!", "ALARM!"], "found": ["MEIN GOTT!", "WAS IST DAS?", "ALARM!"] },
+        "cleanBonus": "a quiet way in",
         "cleanOrders": "Getting in with as little enemy attention as possible earns a special bonus!"
       },
       "_dialogue": "M31: only the lines that name France or its ground (Fitch's cabbages and dirt, Vance's church, Barrow's trees, bridge and mud).",
@@ -161,6 +163,7 @@
         "diversionKicker": "BOMBERS OVER FOGGIA",
         "diversionLog": "bombers over Foggia",
         "cries": { "spotted": ["ALLARME!", "CHI VA LÀ?", "ALTO LÀ!"], "found": ["MADONNA!", "MAMMA MIA!", "ALLARME!"] },
+        "cleanBonus": "a quiet night",
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "_dialogue": "M43: only the lines that name France or its ground (Fitch's cabbages, Vance's church, Barrow's trees and bridge), and Nunn's, who carries no spare down here: nobody jumps with a charge. Placeholder copy for the operator to reword.",

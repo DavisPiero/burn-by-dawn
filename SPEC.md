@@ -309,7 +309,7 @@ to be casual while still being strategic.
   (only the drop does), so undo can never re-roll anything: it is a mis-click safety net,
   not a scouting tool.
 - **Keyboard**: `1`–`6` select trooper, `Tab` cycle, `Space` end turn, `Esc` cancel,
-  `R` patrol-route overlay, `?` or `/` how to play (§11), `M` sound on or off. Actions:
+  `R` patrol-route overlay, `?` or `/` how to play (§11: a card of its own, apart from the orders), `M` sound on or off. Actions:
   `H` hide, `S` suppress or return fire, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid),
   `P` pick up a charge, `E` pass a charge, `C` place a charge, `X` cut the line, `W` swim,
   `U` pack a parachute, `B` signal the boat, `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
@@ -999,14 +999,14 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**None chosen.** M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+**M44, done: the text diet**, the first of Phase 5 (`ROADMAP.md`, agreed 7 Oct 2026:
+teaching the game by showing, then a training mission). **Next: M45, seeing and being
+seen.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
 Balance): kill-everything is still not below careful play there, and Hard's North run
-is well under its target. After that, `ROADMAP.md`, whose Phase 5 (teaching the game by
-showing, and a training mission) is proposed from the first playtests and waits on the
-operator's word. v1.0 is tagged.
+is well under its target. v1.0 is tagged.
 
 ### Done
 
@@ -1023,6 +1023,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M44 | The text diet (Phase 5): the orders cut to five lines, what tonight asks and nothing of how to play; how to play a card of its own behind **?**, with the counter key; the turn card four marked lines and one short hint; every hint shortened |
 | M43c | The operator's notes and the first playtest fix: the canisters come down in the drop on blue canopies of their own and are on the ground, ringed, only as each lands; their rings clear of the charge dots; CLICK A MAN TO START over them; the charge points ringed and lettered while the selected man carries a charge near a target; the revised aqueduct title card. The plan for teaching the game by showing, and a training mission, in ROADMAP.md (Phase 5) |
 | M43b | The operator's notes on M43: the canisters' rings pop on one by one with their thumps and sit round their pictures; the Italian chips and the aqueduct's title card painted and in |
 | M43 | The aqueduct's words, sounds and art hand-off: a mission's own folder for its garrison's chips (the Italians), the six's lines for Italy, the canisters' thump and the boat's oars and surf made in code, slots for its own title card and winter portraits, a colder wash on its winter ground, and the paintings and recordings asked for |

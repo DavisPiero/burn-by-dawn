@@ -29,6 +29,14 @@ export default [
     const quiet = hintsFor({ ...state, turn: 9, parachutes: [] }, rules);
     assert(quiet.length === 1 && has(quiet, 'Hover an enemy'), `a quiet turn falls back to the general hint: ${quiet}`);
   }],
+  ['the turn card\'s one hint is short, and on turn 1 it is the parachutes (M44)', async () => {
+    const { rules, state } = await start();
+    const one = hintsFor({ ...state, turn: 1 }, rules, {}, 1);
+    assert(one.length === 1 && one[0].includes('pack it [U]'), `turn 1: ${one}`);
+    const all = hintsFor({ ...state, turn: 1 }, rules, { diversionOk: true }, 20);
+    const words = (h) => h.split(/\s+/).length;
+    assert(all.every((h) => words(h) <= 30), `none is a paragraph: ${all.filter((h) => words(h) > 30).join(' | ')}`);
+  }],
   ['a charge about to go off comes before anything else', async () => {
     const { rules, state } = await start();
     const bridge = state.objectives.find((o) => o.primary);
