@@ -5,7 +5,7 @@
 import {
   alertIndex, busyFor, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
 } from './enemy.js';
-import { canLandOn, dropArea, jumpPoints, runById } from './drop.js';
+import { canLandOn, canisterPoints, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, axialToPixel, hexDistance } from './hex.js';
 import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
@@ -32,7 +32,7 @@ import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCo
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -112,9 +112,10 @@ let lastSelectedId = null;
 // key or click skips to the end.
 let dropShow = null;
 let dropShowTimer = null;
-// The canisters' rings pop on one by one once the stick is down, a thump with
-// each (M43b, the operator's): when that began, and the thumps still to come.
-let canisterCueSince = null;
+// The canisters' rings pop on with a thump each (M43b, the operator's), each
+// as its canister lands (M43c): { since, at: { id: ms after `since` } }, and
+// the thumps still to come.
+let canisterCue = null;
 let canisterThumps = [];
 // The Dakota's drone over the drop (M15), cut short if the show is skipped.
 let dropSound = null;
@@ -364,7 +365,9 @@ function deriveView() {
   // to move the Germans). Ringed until the player first selects a man.
   if (state.selectedUnitId) menPicked = true;
   view.selectCue = !menPicked && !dropShow && !state.outcome;
-  view.canisterCueSince = canisterCueSince;
+  // The canisters' rings are there from the drop, each as it lands (M43c).
+  view.canisterRings = !menPicked && !state.outcome && Boolean(state.canisters?.length);
+  view.canisterCue = canisterCue;
 
   const next = forecast();
   if (next) {
@@ -443,6 +446,7 @@ function deriveView() {
   // The leader selected, or under the mouse (M12): where a man must stand at
   // the start of a turn to get his orders (SPEC.md §5 Command, M11). A flag,
   // never a name (CLAUDE.md rule 6).
+  view.chargeCue = chargeCue(unit);
   const leader = unit?.leader ? unit : (!state.targeting && leaderAt(hex));
   if (leader) {
     const hexes = new Map();
@@ -2396,6 +2400,30 @@ function leaderOrdersWords(leader) {
   return `${leader.shortName}'s orders — at the start of a turn, ${ordersWords(rules.command)}`;
 }
 
+/**
+ * Where the charge goes (M43c, from playtesting: new players stood on the
+ * target itself and could not set a charge there). While the selected man
+ * carries a charge within CUE.pointRange hexes of a target that still wants
+ * one, its empty charge points are ringed and lettered: [{ hexes, words }].
+ */
+function chargeCue(unit) {
+  if (!unit || !onBoard(unit) || unit.charges <= 0 || state.targeting || state.outcome || pencilsOpen(unit)) return null;
+  const cue = [];
+  for (const o of state.objectives) {
+    if (o.destroyed || chargesWanted(o) === 0) continue;
+    if (![...o.hexes, ...o.chargeHexes].some((h) => hexDistance(unit, h) <= CUE.pointRange)) continue;
+    const hexes = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
+    if (!hexes.length) continue;
+    const here = hexes.some((h) => h.q === unit.q && h.r === unit.r);
+    cue.push({
+      hexes: here ? hexes.filter((h) => h.q === unit.q && h.r === unit.r) : hexes,
+      // On a point: what to press, if he can set it now; the button says why not.
+      words: here ? (checkPlaceCharge(state, unit, rules).ok ? 'PRESS C TO SET THE CHARGE' : null) : hexes.length > 1 ? 'STAND ON A RING TO SET A CHARGE' : 'STAND HERE TO SET THE CHARGE',
+    });
+  }
+  return cue.length ? cue : null;
+}
+
 /** Jump, and show the stick going out and coming down. */
 function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
@@ -2412,8 +2440,15 @@ function jumpNow() {
       to: { q: run.to[0], r: run.to[1] },
       jumps: landed.map((e) => ({ unitId: e.unitId, jump: jumps[order.indexOf(e.unitId)], land: { q: e.q, r: e.r } })),
     };
+    // The canisters leave among the men (SPEC.md §9), each on its own canopy.
+    const canisters = state.report.filter((e) => e.kind === 'canisterLanded');
+    const leaves = canisters.length ? canisterPoints(run, order.length, canisters.length) : [];
+    dropShow.canisters = canisters.map((e, k) => ({ id: e.id, jump: leaves[k], land: { q: e.q, r: e.r } }));
+    const timeline = dropTimeline(baseMap, dropShow);
     clearTimeout(dropShowTimer);
-    dropShowTimer = setTimeout(endDropShow, dropTimeline(baseMap, dropShow).length);
+    dropShowTimer = setTimeout(endDropShow, timeline.length);
+    // Each is on the ground, ringed, with its thump, as its canopy lands.
+    startCanisterCue(dropShow.since, Object.fromEntries([...timeline.byCanister].map(([id, t]) => [id, t.landAt])));
     dropSound = playCue('drop');
     briefingAfterDrop = briefingsOn;
   } else if (state.phase !== 'drop' && briefingsOn) {
@@ -2427,20 +2462,32 @@ function endDropShow() {
   dropSound?.stop();
   dropSound = null;
   dropShow = null;
-  // The canisters come down behind the stick (M43): as the last canopy is
-  // down, or the drop is skipped, each is ringed in its turn with a thump.
-  stopCanisterThumps();
-  canisterCueSince = performance.now();
-  canisterThumps = (state.canisters ?? []).map((_, i) => setTimeout(() => playCue('canister'), canisterPopAt(i)));
+  // The drop skipped with canisters still in the air (M43, M43c): those pop
+  // on one by one from now, each ringed with its thump; the ones already
+  // down stay as they are.
+  if (canisterCue) {
+    const elapsed = performance.now() - canisterCue.since;
+    const at = { ...canisterCue.at };
+    Object.keys(at).filter((id) => at[id] > elapsed).sort((a, b) => at[a] - at[b]).forEach((id, k) => { at[id] = elapsed + canisterPopAt(k); });
+    startCanisterCue(canisterCue.since, at);
+  }
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
   render();
 }
 
+/** Each canister lands `at[id]` ms after `since`: its thump is played then, and the board shows it from then. */
+function startCanisterCue(since, at) {
+  stopCanisterThumps();
+  canisterCue = { since, at };
+  const elapsed = performance.now() - since;
+  canisterThumps = Object.values(at).filter((ms) => ms > elapsed).map((ms) => setTimeout(() => playCue('canister'), ms - elapsed));
+}
+
 function stopCanisterThumps() {
   for (const timer of canisterThumps) clearTimeout(timer);
   canisterThumps = [];
-  canisterCueSince = null;
+  canisterCue = null;
 }
 
 function endFlyShow() {

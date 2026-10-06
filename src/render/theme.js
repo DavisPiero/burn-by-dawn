@@ -1127,6 +1127,17 @@ export const CUE = {
   // CHARGE IS SET. GET CLEAR! over a target a charge was just set on (M37).
   chargeNoteSize: 30,
   chargeNoteTilt: -5,
+  // Where the charge goes (M43c, from playtesting: new players stood on the
+  // bridge and could not set a charge there). While the selected man carries
+  // a charge within `pointRange` hexes of a target that still wants one, each
+  // of its empty charge points wears a throbbing pen ring, lettered once.
+  pointRange: 3,
+  pointRingRadius: 34,
+  pointRingWidth: 5,
+  pointRingOpacity: 0.85,
+  pointPulseMs: 1100,
+  pointPulseScale: 1.12,
+  pointNoteSize: 20,
   noteAdvance: 0.72, // a letter's width in the pen lettering, in note sizes, for keeping a note on the board
   noteEdgeGap: 14,
 };
@@ -1138,11 +1149,16 @@ export const CUE = {
 // named in blue until the player first selects a man. The ring is round the
 // canister's picture, not the hex's middle (`ringAt`, M43b, the operator's),
 // and the rings pop on one by one, a thump with each (`firstMs`, `stepMs`).
+// Since M43c (the operator's) each comes down in the drop on a canopy of its
+// own, `lagMs` behind the man it leaves with, and its picture, dots, ring and
+// thump all arrive as it lands; `firstMs` and `stepMs` time only those still
+// in the air when the drop is skipped. The ring moved up and right, clear of
+// the dots.
 export const CANISTER = {
   dots: { radius: 4.6, pitch: 11.5, y: 31, fill: PALETTE.fire, stroke: PALETTE.ink, strokeWidth: 1.2 },
   cue: {
-    colour: PALETTE.leader, halo: PALETTE.paper, ringRadius: 30, ringWidth: 3.5, size: 15, words: 'CHARGE CANISTER', advance: 0.7, gap: 8,
-    ringAt: { x: -18, y: 22 }, firstMs: 250, stepMs: 550, popMs: 220, popScale: 1.5,
+    colour: PALETTE.leader, halo: PALETTE.paper, ringRadius: 32, ringWidth: 3.5, size: 15, words: 'CHARGE CANISTER', advance: 0.7, gap: 8,
+    ringAt: { x: -8, y: 15 }, firstMs: 250, stepMs: 550, popMs: 220, popScale: 1.5, lagMs: 260,
   },
 };
 
@@ -2481,6 +2497,22 @@ const ITALY_OBJECTIVES = {
   },
 };
 
+/** An open canopy from above: eight gores, alternate ones in `colour`, round a vent. */
+function canopy(colour) {
+  const parts = [circle(20, 20, 18, 'paper')];
+  for (let i = 0; i < 8; i += 2) {
+    const a1 = (i / 8) * Math.PI * 2, a2 = ((i + 1) / 8) * Math.PI * 2;
+    parts.push(fill(`M20 20 L${(20 + Math.cos(a1) * 18).toFixed(2)} ${(20 + Math.sin(a1) * 18).toFixed(2)} A18 18 0 0 1 ${(20 + Math.cos(a2) * 18).toFixed(2)} ${(20 + Math.sin(a2) * 18).toFixed(2)} Z`, colour));
+  }
+  let gores = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    gores += `M20 20 L${(20 + Math.cos(a) * 18).toFixed(2)} ${(20 + Math.sin(a) * 18).toFixed(2)} `;
+  }
+  parts.push(line(gores, 1.2), ring(20, 20, 18, 2), circle(20, 20, 3, 'paper'), ring(20, 20, 3, 1.2));
+  return parts;
+}
+
 const SPRITES = {
   // --- counters and symbols (ART-ASSETS.md §3) ---
   'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('ink') },
@@ -2809,23 +2841,10 @@ const SPRITES = {
   'parachute-canopy-shadow': { viewBox: '0 0 40 40', draw: () => [circle(20, 20, 18, 'ink')] },
   // An open canopy seen from above: eight gores, alternate ones printed in
   // green, round a vent. The man is under it and out of sight.
-  'parachute-canopy': {
-    viewBox: '0 0 40 40',
-    draw: () => {
-      const parts = [circle(20, 20, 18, 'paper')];
-      for (let i = 0; i < 8; i += 2) {
-        const a1 = (i / 8) * Math.PI * 2, a2 = ((i + 1) / 8) * Math.PI * 2;
-        parts.push(fill(`M20 20 L${(20 + Math.cos(a1) * 18).toFixed(2)} ${(20 + Math.sin(a1) * 18).toFixed(2)} A18 18 0 0 1 ${(20 + Math.cos(a2) * 18).toFixed(2)} ${(20 + Math.sin(a2) * 18).toFixed(2)} Z`, 'green'));
-      }
-      let gores = '';
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        gores += `M20 20 L${(20 + Math.cos(a) * 18).toFixed(2)} ${(20 + Math.sin(a) * 18).toFixed(2)} `;
-      }
-      parts.push(line(gores, 1.2), ring(20, 20, 18, 2), circle(20, 20, 3, 'paper'), ring(20, 20, 3, 1.2));
-      return parts;
-    },
-  },
+  'parachute-canopy': { viewBox: '0 0 40 40', draw: () => canopy('green') },
+  // A supply canister's canopy (M43c, the operator's): the men's, with its
+  // gores in the blue its ring and name are lettered in.
+  'parachute-canopy-supply': { viewBox: '0 0 40 40', draw: () => canopy('leader') },
 
   // --- markers (ART-ASSETS.md §6) ---
   'marker-spotted': {
@@ -3411,6 +3430,8 @@ function printCss() {
     // The where-to-start cues throb gently, so the eye goes to them (M21).
     `@keyframes nd-throb{0%,100%{transform:scale(1)}50%{transform:scale(${CUE.pulseScale})}}`,
     `.nd-throb{animation:nd-throb ${CUE.pulseMs}ms ease-in-out infinite;transform-box:fill-box;transform-origin:center}`,
+    `@keyframes nd-point{0%,100%{transform:scale(1)}50%{transform:scale(${CUE.pointPulseScale})}}`,
+    `.nd-point{animation:nd-point ${CUE.pointPulseMs}ms ease-in-out infinite;transform-box:fill-box;transform-origin:center}`,
   ];
   return [...colours, ...tones, misregister, ...motion].join('\n');
 }

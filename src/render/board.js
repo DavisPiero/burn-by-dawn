@@ -732,9 +732,16 @@ export function renderPieces(layers, state, view) {
   // A supply canister (SPEC.md §9, M41), across the hex from the charges in it.
   // Its charges are counted in dots (M42b), not drawn as one satchel on another.
   const inCanister = (hex) => (state.canisters ?? []).some((c) => c.q === hex.q && c.r === hex.r);
+  // Neither is there until it has come down (M43c, the operator's: they were
+  // on the ground the moment the stick jumped).
+  const canisterCue = view.canisterCue ?? null;
   for (const canister of state.canisters ?? []) {
-    drawOnGround(layers, 'marker-canister', canister, -1, MARKER.canisterSize);
-    drawCanisterDots(layers, canister, state.droppedCharges.filter((c) => c.q === canister.q && c.r === canister.r).length);
+    const nodes = [
+      drawOnGround(layers, 'marker-canister', canister, -1, MARKER.canisterSize),
+      ...drawCanisterDots(layers, canister, state.droppedCharges.filter((c) => c.q === canister.q && c.r === canister.r).length),
+    ];
+    const landAt = canisterCue?.at[canister.id];
+    if (landAt !== undefined) for (const node of nodes) appear(node, { landAt }, now - canisterCue.since);
   }
   for (const charge of state.droppedCharges) if (!inCanister(charge)) drawOnGround(layers, 'marker-charge', charge, 1);
   for (const enemy of state.enemies) if (enemy.watching) drawWatch(layers, enemy);
@@ -845,7 +852,8 @@ export function renderPieces(layers, state, view) {
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
   if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
-  if (view.selectCue) drawSelectCue(layers, state, now, view.canisterCueSince ?? null);
+  if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
+  if (view.selectCue || view.canisterRings) drawSelectCue(layers, state, now, { men: view.selectCue, canisters: view.canisterRings, canisterCue });
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.strikeShow?.kind === 'cut') {
     const objective = state.objectives.find((o) => o.id === view.strikeShow.objectiveId);
@@ -1003,15 +1011,16 @@ function drawDropCue(layers, cue, names) {
  * Once the stick is down (M21): a pen ring round each man who can act, until
  * the player first selects one, and a note over the topmost saying so.
  */
-function drawSelectCue(layers, state, now, canistersSince = null) {
+function drawSelectCue(layers, state, now, { men: forMen = true, canisters = false, canisterCue = null } = {}) {
   const { map } = layers;
   const men = state.units.filter((u) => u.landed && !u.dead && !u.out && u.ap > 0);
   if (!men.length) return;
   const points = men.map((u) => axialToPixel(u.q, u.r, map.hexSize));
   // Each ring throbs about its own man (M22, the operator's: one group for
   // all of them swelled from the group's middle, so the rings slid off the
-  // counters), at half strength.
-  for (const p of points) {
+  // counters), at half strength. Not while the drop is still being shown,
+  // when only the canisters' rings are drawn, as each lands (M43c).
+  for (const p of forMen ? points : []) {
     const g = throbbing(layers, 'select', now);
     g.setAttribute('opacity', CUE.ringOpacity);
     g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.ringRadius + 3, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.ringWidth + 4, opacity: 0.8 }));
@@ -1027,8 +1036,48 @@ function drawSelectCue(layers, state, now, canistersSince = null) {
   const width = 'CLICK A MAN TO START'.length * CUE.noteSize * CUE.noteAdvance;
   const x = Math.min(Math.max(middle.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
   const y = Math.min(Math.max(middle.y, edge.top + CUE.noteSize), edge.bottom - 8);
-  layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
-  drawCanisterCue(layers, state, { x, y: y - CUE.noteSize / 2, w: width, h: CUE.noteSize * 1.4 }, canistersSince === null ? null : now - canistersSince);
+  // The canisters' names keep clear of where the note is, or will be once
+  // the stick is down, so no name moves when it is lettered.
+  if (canisters) drawCanisterCue(layers, state, { x, y: y - CUE.noteSize / 2, w: width, h: CUE.noteSize * 1.4 }, canisterCue, now);
+  // Over the canisters' rings (M43c, the operator's: a ring crossed its letters).
+  if (forMen) layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
+}
+
+/**
+ * Where the charge goes (M43c, from playtesting: new players stood on the
+ * target and could not set a charge there). Each empty charge point of a
+ * target the selected man is close to with a charge wears a throbbing pen
+ * ring, and the first of each target's is lettered. `cue` is main.js's list
+ * of { hexes, words }.
+ */
+function drawChargeCue(layers, cue, now) {
+  const { map } = layers;
+  const edge = boardEdges(map);
+  for (const target of cue) {
+    const points = target.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+    for (const p of points) {
+      const g = el('g', { class: 'nd-point', 'pointer-events': 'none', opacity: CUE.pointRingOpacity });
+      layers.cueSince ??= {};
+      layers.cueSince.point ??= now;
+      g.style.animationDelay = `${-Math.round(now - layers.cueSince.point)}ms`;
+      g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
+      g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
+      layers.effects.appendChild(g);
+    }
+    if (!target.words || !points.length) continue;
+    // Under the lowest point, or over the highest if that would leave the board.
+    const size = CUE.pointNoteSize;
+    const width = target.words.length * size * CUE.noteAdvance;
+    const low = points.reduce((a, b) => (b.y > a.y ? b : a)), high = points.reduce((a, b) => (b.y < a.y ? b : a));
+    const under = low.y + CUE.pointRingRadius + size * 1.1 <= edge.bottom - 4;
+    const at = under ? low : high;
+    const x = Math.min(Math.max(at.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
+    const y = under ? at.y + CUE.pointRingRadius + size * 0.9 : at.y - CUE.pointRingRadius - size * 0.5;
+    const note = penLetters([target.words], x, y, [size]);
+    note.setAttribute('text-anchor', 'middle');
+    note.setAttribute('pointer-events', 'none');
+    layers.effects.appendChild(note);
+  }
 }
 
 /**
@@ -1036,10 +1085,11 @@ function drawSelectCue(layers, state, now, canistersSince = null) {
  * among everything else, the more so after a scattered drop): each canister
  * ringed in blue and named, the name on whichever side of it is clearest of
  * counters, the other names, the start note and the board's edge. The ring
- * is round the canister's picture, and each pops on in its turn, `elapsed` ms
- * after the stick came down, as its thump is heard (M43b, the operator's).
+ * is round the canister's picture, and each pops on as its canister lands,
+ * with its thump (M43b, M43c, the operator's): `landing` is main.js's
+ * { since, at: { id: ms } }.
  */
-function drawCanisterCue(layers, state, startNote, elapsed = null) {
+function drawCanisterCue(layers, state, startNote, landing = null, now = 0) {
   const { map } = layers;
   const cue = CANISTER.cue;
   const edge = boardEdges(map);
@@ -1077,11 +1127,12 @@ function drawCanisterCue(layers, state, startNote, elapsed = null) {
       fill: cue.colour, stroke: cue.halo, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
     }));
     layers.effects.appendChild(g);
-    if (elapsed !== null) {
+    const landAt = landing?.at[canister.id];
+    if (landAt !== undefined) {
       g.style.transformOrigin = `${p.x}px ${p.y}px`;
       g.style.transformBox = 'view-box';
       playFrom(g, [{ opacity: 0, transform: `scale(${cue.popScale})` }, { opacity: 1, transform: 'scale(1)' }],
-        { delay: canisterPopAt(i), duration: cue.popMs, easing: 'ease-out' }, elapsed);
+        { delay: landAt, duration: cue.popMs, easing: 'ease-out' }, now - landing.since);
     }
   }
 }
@@ -1144,10 +1195,22 @@ export function dropTimeline(map, show) {
     byUnit.set(j.unitId, { jumpAt, landAt, from: p, to: px(j.land) });
     last = Math.max(last, landAt + DROP_SHOW.collapseMs);
   }
-  return { start, end, angle: (Math.atan2(uy, ux) * 180) / Math.PI, byUnit, length: last + DROP_SHOW.tailMs };
+  // The canisters (M43c, the operator's), each a little behind the man it
+  // leaves with, so the two canopies do not open as one. `show.canisters` is
+  // [{ id, jump, land }].
+  const byCanister = new Map();
+  for (const c of show.canisters ?? []) {
+    const p = px(c.jump);
+    const along = (p.x - start.x) * ux + (p.y - start.y) * uy;
+    const jumpAt = Math.max(0, (along / total) * DROP_SHOW.flightMs) + CANISTER.cue.lagMs;
+    const landAt = jumpAt + DROP_SHOW.openMs + DROP_SHOW.driftMs;
+    byCanister.set(c.id, { jumpAt, landAt, from: p, to: px(c.land) });
+    last = Math.max(last, landAt + Math.max(DROP_SHOW.collapseMs, CANISTER.cue.popMs));
+  }
+  return { start, end, angle: (Math.atan2(uy, ux) * 180) / Math.PI, byUnit, byCanister, length: last + DROP_SHOW.tailMs };
 }
 
-/** When the `index`th canister's ring pops on, in ms after the stick is down (M43b): main.js plays its thump then. */
+/** When the `index`th canister still in the air pops on, in ms after a drop is skipped (M43b, M43c): main.js plays its thump then. */
 export function canisterPopAt(index) {
   return CANISTER.cue.firstMs + index * CANISTER.cue.stepMs;
 }
@@ -1173,7 +1236,11 @@ function drawDropShow(layers, show, timeline, elapsed) {
   const canopy = DROP_SHOW.canopySize;
   const open = DROP_SHOW.openMs, drift = DROP_SHOW.driftMs, collapse = DROP_SHOW.collapseMs;
   const whole = open + drift + collapse;
-  for (const t of timeline.byUnit.values()) {
+  const falling = [
+    ...[...timeline.byUnit.values()].map((t) => ({ ...t, art: 'parachute-canopy' })),
+    ...[...timeline.byCanister.values()].map((t) => ({ ...t, art: 'parachute-canopy-supply' })),
+  ];
+  for (const t of falling) {
     if (elapsed >= t.landAt + collapse) continue;
     const move = (p, scale, opacity) => ({ transform: `translate(${p.x}px, ${p.y}px) scale(${scale})`, opacity });
     const shadow = el('g', {});
@@ -1187,7 +1254,7 @@ function drawDropShow(layers, show, timeline, elapsed) {
       { ...move(shifted(t.to, 2), 0.4, 0), offset: 1 },
     ], { delay: t.jumpAt, duration: whole }, elapsed);
     const body = el('g', {});
-    body.appendChild(el('use', { href: '#parachute-canopy', x: -canopy / 2, y: -canopy / 2, width: canopy, height: canopy }));
+    body.appendChild(el('use', { href: `#${t.art}`, x: -canopy / 2, y: -canopy / 2, width: canopy, height: canopy }));
     playFrom(body, [
       { ...move(t.from, 0.3, 0), offset: 0 },
       { ...move(t.from, 1, 1), offset: open / whole },
@@ -2196,21 +2263,25 @@ function hoverMarker(layers, id, x, y, unit, size = MARKER.size) {
 // side and dropped charges to the other, so both show when they share it.
 function drawOnGround(layers, id, at, side, size = MARKER.groundSize, offset = MARKER.groundOffset, extra = {}) {
   const p = axialToPixel(at.q, at.r, layers.map.hexSize);
-  layers.highlight.appendChild(el('use', {
+  const node = el('use', {
     ...extra,
     href: `#${id}`, x: p.x + side * offset.x - size / 2, y: p.y + offset.y - size / 2, width: size, height: size,
-  }));
+  });
+  layers.highlight.appendChild(node);
+  return node;
 }
 
 /** A fire-orange dot for each charge left in a canister, over any counter on its hex. */
 function drawCanisterDots(layers, canister, count) {
   const p = axialToPixel(canister.q, canister.r, layers.map.hexSize);
   const dots = CANISTER.dots;
+  const nodes = [];
   for (let i = 0; i < count; i++) {
-    layers.tokens.appendChild(el('circle', {
+    nodes.push(layers.tokens.appendChild(el('circle', {
       cx: p.x + (i - (count - 1) / 2) * dots.pitch, cy: p.y + dots.y, r: dots.radius, fill: dots.fill, stroke: dots.stroke, 'stroke-width': dots.strokeWidth,
-    }));
+    })));
   }
+  return nodes;
 }
 
 // A parachute (SPEC.md §9) sits on the left edge of its hex, over the counters:

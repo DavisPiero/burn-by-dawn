@@ -3,6 +3,7 @@
 // against the real data files.
 
 import { boatAt, boatEvents } from '../src/boat.js';
+import { canisterPoints, jumpPoints } from '../src/drop.js';
 import { runEnemyPhase } from '../src/enemy.js';
 import { applyDifficulty, levelById, validateDifficulty } from '../src/difficulty.js';
 import { hexDistance } from '../src/hex.js';
@@ -14,8 +15,8 @@ import { validateTraits } from '../src/traits.js';
 import { chargeCapacity, chargeRoom } from '../src/units.js';
 import { hintsFor } from '../src/hints.js';
 import { CUE_NAMES } from '../src/render/sound.js';
-import { canisterPopAt } from '../src/render/board.js';
-import { CANISTER, exfilArtId, objectiveArt, terrainArt } from '../src/render/theme.js';
+import { canisterPopAt, dropTimeline } from '../src/render/board.js';
+import { CANISTER, exfilArtId, hasSprite, objectiveArt, terrainArt } from '../src/render/theme.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -335,5 +336,30 @@ export default [
     assert(times.every((t, i) => i === 0 || t - times[i - 1] >= CANISTER.cue.popMs), 'each after the one before has landed');
     assert(times.at(-1) < 2000, 'all of them inside two seconds');
     assert(CANISTER.cue.ringAt.x < 0 && CANISTER.cue.ringAt.y > 0, 'the ring sits down and to the left of the hex\'s middle, where the canister is drawn');
+  }],
+
+  ['the canisters come down in the drop on canopies of their own (M43c, the operator\'s)', async () => {
+    const { map, rules } = await loadAqueduct();
+    for (const run of map.dropRuns) {
+      const men = jumpPoints(run, 6);
+      const leaves = canisterPoints(run, 6, rules.canisters.count);
+      const show = {
+        from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
+        jumps: men.map((jump, i) => ({ unitId: `m${i}`, jump, land: jump })),
+        canisters: leaves.map((jump, k) => ({ id: `canister-${k + 1}`, jump, land: jump })),
+      };
+      const t = dropTimeline(map, show);
+      equal(t.byCanister.size, rules.canisters.count, `${run.id}: every canister is flown`);
+      const lands = [...t.byCanister.values()].map((c) => c.landAt);
+      assert(lands.every((ms, i) => i === 0 || ms > lands[i - 1]), `${run.id}: they land in the order they leave`);
+      const manAt = (k) => t.byUnit.get(`m${men.findIndex((m) => m.q === leaves[k].q && m.r === leaves[k].r)}`);
+      assert(lands.every((ms, k) => Math.abs(ms - manAt(k).landAt - CANISTER.cue.lagMs) < 1e-6), `${run.id}: each a little behind the man it leaves with`);
+      assert(t.length >= lands.at(-1) + CANISTER.cue.popMs, `${run.id}: the show outlasts the last ring's pop`);
+      equal(dropTimeline(map, { ...show, canisters: undefined }).byCanister.size, 0, `${run.id}: none where a mission has none`);
+    }
+    assert(hasSprite('parachute-canopy-supply'), 'the supply canopy is in the sprite registry');
+    const { x, y } = CANISTER.cue.ringAt;
+    const dotEdge = (rules.canisters.charges - 1) / 2 * CANISTER.dots.pitch + CANISTER.dots.radius;
+    assert(Math.hypot(dotEdge - x, CANISTER.dots.y - y) + CANISTER.dots.radius < CANISTER.cue.ringRadius - CANISTER.cue.ringWidth / 2 - 1, 'the ring clears the charge dots');
   }],
 ];
