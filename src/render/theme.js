@@ -560,6 +560,13 @@ export const PATH = {
   // reads on both a cream field and a dark wood.
   reachableFill: PALETTE.blue,
   reachableOpacity: 0.3,
+  // The danger wash (M45, from playtesting: risk was read off a row of the
+  // readout, one hex at a time): a hex he would be spotted going to is red,
+  // not blue; for a man in contact, one that breaks contact is green.
+  dangerFill: PALETTE.red,
+  dangerOpacity: 0.34,
+  clearFill: PALETTE.green,
+  clearOpacity: 0.42,
   reachableEdgeCasing: PALETTE.paper,
   reachableEdgeCasingWidth: 12,
   reachableEdge: PALETTE.blue,
@@ -737,6 +744,17 @@ export const MARKER = {
 };
 
 export const RISK = {
+  // Who sees him there (M45): a line from the enemy to the hex the pips are
+  // noted on, red if he is spotted, ink and dashed if only seen; that hex's
+  // pips fill one at a time; and its cover as a shield at its top left.
+  sightSpotted: PALETTE.red,
+  sightSeen: PALETTE.ink,
+  sightWidth: 2.5,
+  sightDash: '2 7',
+  sightOpacity: 0.75,
+  pipFillMs: 130,
+  shieldSize: 20,
+  shieldAt: { x: -30, y: -32 },
   badgeFill: PALETTE.paper,
   badgeStroke: PALETTE.ink,
   spottedStroke: PALETTE.red,
@@ -1127,6 +1145,12 @@ export const CUE = {
   // CHARGE IS SET. GET CLEAR! over a target a charge was just set on (M37).
   chargeNoteSize: 30,
   chargeNoteTilt: -5,
+  // A man in contact who will be fired on as things stand (M45): a crosshair
+  // throbs over his counter; selected, BREAK CONTACT! is lettered under it.
+  sightsSize: 92,
+  sightsOpacity: 0.85,
+  manNoteSize: 17,
+  manNoteDrop: 50, // under the middle of his counter
   // Where the charge goes (M43c, from playtesting: new players stood on the
   // bridge and could not set a charge there). While the selected man carries
   // a charge within `pointRange` hexes of a target that still wants one, each
@@ -2845,6 +2869,16 @@ const SPRITES = {
   // A supply canister's canopy (M43c, the operator's): the men's, with its
   // gores in the blue its ring and name are lettered in.
   'parachute-canopy-supply': { viewBox: '0 0 40 40', draw: () => canopy('leader') },
+
+  // The cover on a hex he might move to (M45): a shield, empty for none,
+  // half green for light, all green for heavy.
+  ...Object.fromEntries([['none', []], ['light', ['M10 1.5 L3 4.5 V10 C3 14 6 17 10 18.5 Z']], ['heavy', ['M10 1.5 L17 4.5 V10 C17 14 14 17 10 18.5 C6 17 3 14 3 10 V4.5 Z']]].map(([cover, filled]) => [`marker-cover-${cover}`, {
+    viewBox: '0 0 20 20',
+    draw: () => {
+      const shield = 'M10 1.5 L17 4.5 V10 C17 14 14 17 10 18.5 C6 17 3 14 3 10 V4.5 Z';
+      return [fill(shield, 'paper'), ...filled.map((d) => fill(d, 'green')), line(shield, 1.8), ...(cover === 'light' ? [line('M10 1.5 V18.5', 1)] : [])];
+    },
+  }])),
 
   // --- markers (ART-ASSETS.md §6) ---
   'marker-spotted': {

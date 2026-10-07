@@ -21,6 +21,7 @@ import {
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
+import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -132,6 +133,12 @@ let garrisonShow = null;
 // Whether the player has picked out a man yet this game (M21): until then,
 // once the stick is down, the men who can act are ringed as where to start.
 let menPicked = false;
+// HOVER A HEX. CLICK TO GO. under the selected man until the first move of
+// the game (M45: the orders no longer say how, since M44).
+let firstMoveMade = false;
+// The danger wash and who is fired on, kept for the state they were worked
+// out on: the mouse moving redraws the board, and neither changes with it.
+let sightFor = { state: null, unitId: null, wash: null, firedState: null, firedOn: new Set() };
 // The title music turned off from the orders (M21, the operator's): music
 // only, for the session; M still turns every sound off. Carried in the
 // address as `?music=off` when the contents page loads another mission (M29b).
@@ -368,6 +375,9 @@ function deriveView() {
   // The canisters' rings are there from the drop, each as it lands (M43c).
   view.canisterRings = !menPicked && !state.outcome && Boolean(state.canisters?.length);
   view.canisterCue = canisterCue;
+  // The men in contact who will be fired on as things stand (M45): a crosshair on each.
+  if (sightFor.firedState !== state) sightFor = { ...sightFor, firedState: state, firedOn: state.outcome ? new Set() : firedOn(map, rules, state) };
+  view.firedOn = sightFor.firedOn;
 
   const next = forecast();
   if (next) {
@@ -495,6 +505,15 @@ function deriveView() {
   if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
+  // What going to each of those hexes would do (M45): red where he would be
+  // spotted, green where a man in contact would break it.
+  if (sightFor.state !== state || sightFor.unitId !== unit.id) sightFor = { ...sightFor, state, unitId: unit.id, wash: dangerWash(map, rules, state, unit, view.reachable) };
+  view.dangerWash = sightFor.wash;
+  // A few words under him: how to move, until the first move of the game;
+  // then, for a man about to be fired on, what to do about it.
+  const moving = hex && !hoverEnemy && (hex.q !== unit.q || hex.r !== unit.r);
+  if (!firstMoveMade && unit.ap > 0) view.manNote = { q: unit.q, r: unit.r, words: 'HOVER A HEX. CLICK TO GO.' };
+  else if (view.firedOn.has(unit.id) && !moving) view.manNote = { q: unit.q, r: unit.r, words: 'BREAK CONTACT!' };
   if (!hex || hoverEnemy) return view;
 
   const plan = planMove(map, state.units, unit, hex, rules, state.enemies);
@@ -517,6 +536,8 @@ function deriveView() {
     });
     view.riskLabel = describeRisk(plan, view.risk, view.place);
     const end = plan.path[plan.path.length - 1];
+    // The cover where the move ends, as a shield on the hex (M45).
+    if (plan.steps > 0) view.coverAt = { q: end.q, r: end.r, cover: terrainAt(map, end.q, end.r).cover ?? 'none' };
     const blast = isExfil(baseMap, end) ? null : blastEffect(blastHexesThisTurn(state, rules), end);
     if (blast === 'killed' || (blast === 'wounded' && unit.hits > 0)) {
       view.blastLabel = `BLAST — a charge goes off this turn with him in it: KILLED${blast === 'wounded' ? ' (at its edge, but already wounded)' : ''}`;
@@ -1002,7 +1023,8 @@ function actionsFor(unit) {
   const ap = (n) => `${n} AP`;
   return [
     {
-      id: 'hide', key: 'H', label: 'Hide', ...withCost(checkHide(unit, rules), ap),
+      // Set in red while hiding here would turn SPOTTED into unseen (M45).
+      id: 'hide', key: 'H', label: 'Hide', suggest: hideSaves(map, rules, state, unit), ...withCost(checkHide(unit, rules), ap),
       help: `Go to ground: +${rules.actions.hide.concealment} concealment on this hex only, and it ends his turn. `
         + `It does not cover the hexes he crossed to get here. Here: ${hideEffect(unit)}`,
     },
@@ -1528,6 +1550,7 @@ function commit(next, cue = 'action') {
 /** A move, in silence (M24, the operator's: neither M23's slides nor the snap before them suited it). */
 function commitMove(unitId, plan) {
   commit(moveUnit(state, unitId, plan, baseMap), null);
+  firstMoveMade = true;
 }
 
 /** Sound on or off (M, or the word in the margin). Not remembered: the game stores nothing (CLAUDE.md rule 9). */
@@ -2109,6 +2132,7 @@ function startMission(nextLevel, seed) {
   state = createInitialState(roster, traits, rules, baseMap, seed);
   undoStack = [];
   menPicked = false;
+  firstMoveMade = false;
   earlierReports = [];
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }

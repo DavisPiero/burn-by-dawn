@@ -72,6 +72,7 @@ tests.html        every test suite, in the browser
   drop.js         drop runs, scatter, supply canisters
   scoring.js      win, withdraw, lose, score
   hints.js        the turn card's hints (§11)
+  sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
   difficulty.js   the difficulty patches (§10)
   missions.js     the missions and their win conditions (§10)
   train.js        the goods train's timetable (§7)
@@ -281,8 +282,19 @@ it). Its name is the mission's
 Hover is a first-class mechanic, not a nicety. It is what makes the game readable enough
 to be casual while still being strategic.
 
+- **The danger wash: risk before any hover.** With a man selected, every hex he can
+  reach this turn is tinted by what going there would do, by the path the game would
+  take and the sums the detection check will do (`sight.js`): **red** where he would be
+  spotted on the way or there, blue where he would not. For a man in contact, **green**
+  where nobody would spot him, which breaks contact. The hover still gives the why.
 - **Hover a hex** with a trooper selected: draw the path, its AP cost, and a detection
-  risk readout for every hex on it. The player commits only on click.
+  risk readout for every hex on it; a line from the enemy that sees him most to the hex
+  the pips are noted on; and the cover where the move ends, as a shield. The player
+  commits only on click.
+- **A man about to be fired on is marked**: a man in contact whom a free enemy would
+  spot again as things stand wears a crosshair, gone the moment he would not be.
+- **Hide is urged where it works**: its button is set in red, as Stabilise and Pass are
+  below, while hiding where he stands would turn spotted into unseen.
 - **Hover an enemy**: its vision arc and patrol route, and what it will see next turn.
   With a man selected, whether he can suppress, kill or knife it now, and if not, why not
   (a kill wants it suppressed first; a knife wants it looking the other way).
@@ -999,9 +1011,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M44, done: the text diet**, the first of Phase 5 (`ROADMAP.md`, agreed 7 Oct 2026:
-teaching the game by showing, then a training mission). **Next: M45, seeing and being
-seen.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+**M45, done: seeing and being seen**, the second of Phase 5 (`ROADMAP.md`, agreed
+7 Oct 2026: teaching the game by showing, then a training mission). **Next: M46,
+doing.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -1023,6 +1035,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M45 | Seeing and being seen (Phase 5): the danger wash on the ground a man can reach, red where he would be spotted and green where a man in contact would break it; a sight line, pips that fill and a cover shield on a hovered move; a crosshair on a man about to be fired on, BREAK CONTACT! under him; Hide urged where it works; HOVER A HEX. CLICK TO GO. until the first move |
 | M44 | The text diet (Phase 5): the orders cut to five lines, what tonight asks and nothing of how to play; how to play a card of its own behind **?**, with the counter key; the turn card four marked lines and one short hint; every hint shortened |
 | M43c | The operator's notes and the first playtest fix: the canisters come down in the drop on blue canopies of their own and are on the ground, ringed, only as each lands; their rings clear of the charge dots; CLICK A MAN TO START over them; the charge points ringed and lettered while the selected man carries a charge near a target; the revised aqueduct title card. The plan for teaching the game by showing, and a training mission, in ROADMAP.md (Phase 5) |
 | M43b | The operator's notes on M43: the canisters' rings pop on one by one with their thumps and sit round their pictures; the Italian chips and the aqueduct's title card painted and in |
