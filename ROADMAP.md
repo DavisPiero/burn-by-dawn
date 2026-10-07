@@ -103,7 +103,12 @@ proposed** from the same playtests. Tests: 194 headless.
 
 **M44** (7 Oct 2026), the text diet, Phase 5's first: the orders are five lines (what
 tonight asks); how to play is a card of its own behind **?** with the counter key; the
-turn card is four marked lines and one short hint. Tests: 195 headless. **Next: M45.**
+turn card is four marked lines and one short hint. Tests: 195 headless.
+
+**M45** (7 Oct 2026), seeing and being seen: the danger wash, the sight line, filling
+pips and cover shield, the crosshair on a man about to be fired on, Hide urged where it
+works, and HOVER A HEX. CLICK TO GO. until the first move. Tests: 199 headless.
+**Next: M46.**
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
@@ -343,7 +348,7 @@ the kill-everything bot is level with the careful one on the West and South runs
 
 ## Phase 5 — Show, don't tell: teaching the game (agreed 7 Oct 2026)
 
-**Agreed by the operator, 7 Oct 2026. M44 is done; M45 is next.** From the
+**Agreed by the operator, 7 Oct 2026. M44 and M45 are done; M46 is next.** From the
 first playtests with new players: there is too much to read before the first move, and
 key rules are not found by looking (a player stood a sapper on the Rail Bridge and
 could not see why he could not set his charge). M43c fixed that one case; this phase
@@ -461,7 +466,8 @@ passed. The operator's list, with what I would add:
 - **M44 — the text diet. Done.** Orders cut to five lines and split from the instructions;
   HOW TO PLAY and the counter key move behind **?**; the turn card down to icons and
   one hint. Mostly deleting. ART-DIRECTION's Cards section is rewritten with it.
-- **M45 — seeing and being seen.** The danger wash, the sight line and filling pips,
+- **M45 — seeing and being seen. Done** (with the hover-and-click cue pulled forward
+  from M46, in words; the ghost counter is still M46's). The danger wash, the sight line and filling pips,
   the cover shield, contact's closing crosshair and green ways out, the Hide prompt.
   The biggest single gain: detection is the game, and today it is read off a row.
 - **M46 — doing.** Opportunity marks, the first-move ghost, blast and GET CLEAR, the
@@ -479,9 +485,10 @@ passed. The operator's list, with what I would add:
 (Phase 5 was agreed with these unanswered, so each stands as I advised until the
 operator says otherwise.)
 
-- **The danger wash changes how the game feels**: SPEC §4 makes hover the way risk is
-  read, and a wash shows it before any hover. It could be Easy and Normal only, or on a
-  key. My advice: on everywhere, since the hover still gives the why.
+- **The danger wash changes how the game feels**: SPEC §4 made hover the way risk is
+  read, and a wash shows it before any hover. **Built at M45, on at every level**, as
+  advised; one line in main.js would keep it to Easy and Normal if Hard plays too
+  plainly with it.
 - **Does the training mission come first?** It is the playtester's headline, but it
   reuses the cues, and the main game must stand without it (many players skip a
   tutorial). Hence M44 to M46 before it. It could be pulled forward if the operator

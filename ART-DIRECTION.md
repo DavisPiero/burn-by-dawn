@@ -176,11 +176,25 @@ board must read at a glance.
   outline dashed in danger red and its label in red with the turn (BOAT · TURN 15);
   open, it is green and reads EXFIL. **The boat** is drawn bow toward the beach, a
   little faint out at sea, and is rowed in from where it stood at each turn's start.
+- **A man about to be fired on** (in contact, and a free enemy would spot him again as
+  things stand) wears the aiming crosshair over his counter, big and gently throbbing,
+  until he would not be. Selected, with no move hovered, **BREAK CONTACT!** is lettered
+  under him in the pen.
 - Hovering any marker explains it: the "!", the spotted marker, the wound, the hidden
   mark, the orders chevron.
 
 ### The hover readout and the turn log
 
+- **The danger wash.** A selected man's move range is tinted hex by hex: cold blue
+  where he can go unseen, **danger red** where he would be spotted going there (a
+  little stronger than the blue, and well over the faint red of the garrison's view),
+  and for a man in contact **army green** where he would break it. Flat tint, no
+  halftone, under the range's one outline.
+- **Who sees him.** On a hovered move, a thin line runs from the enemy that sees him
+  most to the hex the pen note is on: solid red if he is spotted there, dotted ink if
+  only seen. That hex's pips fill one at a time, about an eighth of a second each. The
+  hex where the move ends wears a small **shield** at its top left for its cover: empty
+  for none, half green for light, all green for heavy.
 - **The move path counts.** Each step on the path shows the AP spent by the time he gets
   there, grey past what he has. A hex where he would be spotted is crossed out in red
   marker over its risk pips. The line is cold blue, and red from the first hex where he
@@ -305,6 +319,9 @@ board must read at a glance.
   Jumping needs **Space** or a second click on the same run. Once the stick is down, every
   man who can act wears a gently throbbing red pen ring, with CLICK A MAN TO START in the
   middle of the men, until the player first selects a man; never again that game.
+  **Then HOVER A HEX. CLICK TO GO.** is lettered under the selected man, whoever is
+  selected, until the first move of the game is made; never again that game. (Still
+  words: M46 shows it with a ghost counter walking.)
   **With them, each supply canister is ringed in leader blue and lettered CHARGE
   CANISTER** in the same blue, on whichever side of it is clearest of counters, the
   other rings and names, the start note and the board's edge. The ring is round the

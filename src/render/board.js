@@ -697,7 +697,7 @@ export function renderPieces(layers, state, view) {
   // Where he can go and the leader's orders: every outline's paper casing
   // first, then every line, so where two run along the same hex edge neither
   // casing blanks out the other's line (M13: Dutch's two rings).
-  if (view.reachable) drawReachable(layers, view.reachable);
+  if (view.reachable) drawReachable(layers, view.reachable, view.dangerWash);
   const outlines = [
     view.reachable && { area: view.reachable, casing: [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth], line: [PATH.reachableEdge, PATH.reachableEdgeWidth], extra: {} },
     view.commandArea && { area: view.commandArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.dash } },
@@ -713,7 +713,7 @@ export function renderPieces(layers, state, view) {
   if (view.throwPreview) drawThrow(layers, view.throwPreview);
 
   if (view.plan) drawPlan(layers, view.plan, view.risk);
-  if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk);
+  if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk, { enemies: state.enemies, cover: view.coverAt, now });
   else if (view.landing) drawRisk(layers, view.landing.plan, view.landing.risk);
 
   for (const hex of view.searchHexes) drawContact(layers, hex);
@@ -828,6 +828,14 @@ export function renderPieces(layers, state, view) {
     // Under the mouse (M23): the dashed ring a hovered enemy wears, his card in the readout.
     if (unit.id === view.hoverManId && unit.id !== state.selectedUnitId) hoverRing(counter);
     if (view.aidTargetIds?.has(unit.id)) targetRing(counter);
+    // In an enemy's sights, and fired on as things stand (M45): a crosshair
+    // throbs over him until he has broken contact.
+    if (view.firedOn?.has(unit.id)) {
+      const size = CUE.sightsSize;
+      const sights = el('g', { class: 'nd-point', 'pointer-events': 'none', opacity: CUE.sightsOpacity });
+      sights.appendChild(marker('marker-aim', (COUNTER.size - size) / 2 - 2, (COUNTER.size - size) / 2 - 2, size));
+      counter.appendChild(sights);
+    }
     // In contact top right, where the eye goes first; his condition top left.
     // Each marker has a rollover saying what it means (M11).
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
@@ -853,6 +861,7 @@ export function renderPieces(layers, state, view) {
   drawTargetRings(layers, view.targetRings, now);
   if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
   if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
+  if (view.manNote) drawManNote(layers, view.manNote);
   if (view.selectCue || view.canisterRings) drawSelectCue(layers, state, now, { men: view.selectCue, canisters: view.canisterRings, canisterCue });
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.strikeShow?.kind === 'cut') {
@@ -1041,6 +1050,24 @@ function drawSelectCue(layers, state, now, { men: forMen = true, canisters = fal
   if (canisters) drawCanisterCue(layers, state, { x, y: y - CUE.noteSize / 2, w: width, h: CUE.noteSize * 1.4 }, canisterCue, now);
   // Over the canisters' rings (M43c, the operator's: a ring crossed its letters).
   if (forMen) layers.effects.appendChild(penLetters(['CLICK A MAN TO START'], x, y, [CUE.noteSize]));
+}
+
+/**
+ * A few words in the pen under one of our men (M45): HOVER A HEX. CLICK TO GO.
+ * until the first move of the game, and BREAK CONTACT! under a man who will
+ * be fired on. `note` is { q, r, words }. Kept whole on the board.
+ */
+function drawManNote(layers, note) {
+  const { map } = layers;
+  const p = axialToPixel(note.q, note.r, map.hexSize);
+  const edge = boardEdges(map);
+  const size = CUE.manNoteSize;
+  const width = note.words.length * size * CUE.noteAdvance;
+  const x = Math.min(Math.max(p.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
+  const under = p.y + CUE.manNoteDrop + size <= edge.bottom;
+  const letters = penLetters([note.words], x, under ? p.y + CUE.manNoteDrop : p.y - CUE.manNoteDrop + size * 0.4, [size]);
+  letters.setAttribute('pointer-events', 'none');
+  layers.effects.appendChild(letters);
 }
 
 /**
@@ -2517,9 +2544,30 @@ function drawContact(layers, contact) {
 // means that hex gets him spotted. A hex no enemy can see gets no pips. The
 // last hex with pips has a pen note saying what they are (M19).
 
-function drawRisk(layers, plan, risk) {
+function drawRisk(layers, plan, risk, { enemies = [], cover = null, now = 0 } = {}) {
   const { map } = layers;
   const noted = risk.findLastIndex((r, i) => r && i < plan.path.length);
+  // Who sees him on the noted hex (M45): a line from that enemy to it.
+  const watcher = noted >= 0 ? enemies.find((e) => e.id === risk[noted].enemyId) : null;
+  if (watcher) {
+    const a = axialToPixel(watcher.q, watcher.r, map.hexSize), b = axialToPixel(plan.path[noted].q, plan.path[noted].r, map.hexSize);
+    const spotted = risk[noted].spotted;
+    layers.risk.appendChild(polyline([a, b], {
+      stroke: spotted ? RISK.sightSpotted : RISK.sightSeen, 'stroke-width': RISK.sightWidth, opacity: RISK.sightOpacity,
+      'stroke-linecap': 'round', ...(spotted ? {} : { 'stroke-dasharray': RISK.sightDash }), 'pointer-events': 'none',
+    }));
+  }
+  // The cover where the move ends, as a shield (M45).
+  if (cover) {
+    const p = axialToPixel(cover.q, cover.r, map.hexSize);
+    layers.risk.appendChild(el('use', {
+      href: `#marker-cover-${cover.cover}`, x: p.x + RISK.shieldAt.x, y: p.y + RISK.shieldAt.y, width: RISK.shieldSize, height: RISK.shieldSize, 'pointer-events': 'none',
+    }));
+  }
+  // The noted hex's pips fill one at a time, from when it was first hovered;
+  // a redraw carries on where it was.
+  const pipKey = noted >= 0 ? `${plan.path[noted].q},${plan.path[noted].r}:${risk[noted].score}` : null;
+  if (layers.pipShow?.key !== pipKey) layers.pipShow = { key: pipKey, since: now };
   plan.path.forEach((hex, i) => {
     const result = risk[i];
     if (!result) return;
@@ -2556,14 +2604,16 @@ function drawRisk(layers, plan, risk) {
     }
     for (let p = 0; p < count; p++) {
       const colour = result.spotted ? RISK.spottedFill : RISK.pipFill;
-      layers.risk.appendChild(el('circle', {
+      const pip = el('circle', {
         cx: at.x - ((count - 1) * RISK.pipGap) / 2 + p * RISK.pipGap,
         cy: y,
         r: RISK.pipRadius,
         fill: p < filled ? colour : 'none',
         stroke: colour,
         'stroke-width': 1.2,
-      }));
+      });
+      layers.risk.appendChild(pip);
+      if (i === noted && p < filled) playFrom(pip, [{ fillOpacity: 0 }, { fillOpacity: 1 }], { delay: p * RISK.pipFillMs, duration: RISK.pipFillMs }, now - layers.pipShow.since);
     }
     if (i === noted) drawRiskNote(layers, at, y, width, result);
   });
@@ -2617,14 +2667,18 @@ function edgeCorners(corners, size) {
  * reachable. The trooper's own hex counts as inside, so the line never cuts
  * between him and his range.
  */
-function drawReachable(layers, reachable) {
+function drawReachable(layers, reachable, wash = null) {
   const { corners, map } = layers;
   for (const { q, r, cost } of reachable.values()) {
     if (cost === 0) continue;
+    // The danger wash (M45): what going there would do, by main.js's reckoning.
+    const kind = wash?.get(hexKey(q, r));
+    const [fill, opacity] = kind === 'spotted' || kind === 'shot' ? [PATH.dangerFill, PATH.dangerOpacity]
+      : kind === 'clear' ? [PATH.clearFill, PATH.clearOpacity] : [PATH.reachableFill, PATH.reachableOpacity];
     layers.reachable.appendChild(el('polygon', {
       points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners),
-      fill: PATH.reachableFill,
-      'fill-opacity': PATH.reachableOpacity,
+      fill,
+      'fill-opacity': opacity,
     }));
   }
   // Its outline is drawn with the leader's, in renderPieces.
