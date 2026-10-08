@@ -73,6 +73,7 @@ tests.html        every test suite, in the browser
   scoring.js      win, withdraw, lose, score
   hints.js        the turn card's hints (§11)
   sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
+  cues.js         what the board points at: who he could strike, get clear, the way out (§4)
   difficulty.js   the difficulty patches (§10)
   missions.js     the missions and their win conditions (§10)
   train.js        the goods train's timetable (§7)
@@ -300,10 +301,27 @@ to be casual while still being strategic.
   (a kill wants it suppressed first; a knife wants it looking the other way).
 - **Hover an objective**: what it needs (charges, fuse, blast radius) and what it pays.
 - **Hover one of our men**: his particulars in the readout (§11).
-- **Where the charge goes.** A man is never on a target to set a charge, only on one of
-  its charge points (§7), and new players stood on the bridge. While the selected man
-  carries a charge near a target that still wants one, its empty charge points are
-  ringed and lettered (§11, Motion and feedback).
+- **What he could do to an enemy now is marked on its chip**: a knife where the selected
+  man could knife it, a crosshair where he could fire on it, a crosshair struck through
+  where a gunner could kill it. One mark, the quietest; it is the action's own check.
+- **A blast this turn throbs**, and so does the exfil, in green, once the job is done
+  and the way out is open. In the night's last three turns the dawn strip reddens, and a
+  man who can no longer reach the exfil in time wears a clock.
+- **What raised the alert is seen**: a red pip flies from its hex to the dial, which
+  jolts.
+- **Only what he can do now is a button.** The actions the selected man cannot take
+  shrink to their keys, each still with its rollover saying what it is and why not.
+- **Play tips** (a box on the orders and the contents page, beside Music off; **off**
+  unless ticked; `?tips=on` in the address). With them on, the player's pen coaches on
+  the board: how to move, shown by a ghost of the man walking a short path, until the
+  first move; where the charge goes (below); BREAK CONTACT!; GET CLEAR! with an arrow
+  to the nearest clear hex; GET OUT! by the exfil. None of it changes a rule, and
+  everything in the list above is shown whether they are on or off.
+- **Where the charge goes** (a play tip). A man is never on a target to set a charge,
+  only on one of its charge points (§7), and new players stood on the bridge. While the
+  selected man carries a charge **within one hex** of a target that still wants one, its
+  empty charge points are ringed, and the nearest target's are lettered (§11, Motion and
+  feedback).
 - **A prompt while Stabilise or Pass a charge is open.** Both are used only now and then
   and were hard to find, so while a man could take either right now (the same check the
   button makes: for Stabilise a wounded man beside him and his whole pool unspent; for
@@ -1011,9 +1029,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M45, done: seeing and being seen**, the second of Phase 5 (`ROADMAP.md`, agreed
-7 Oct 2026: teaching the game by showing, then a training mission). **Next: M46,
-doing.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+**M46, done: doing**, the third of Phase 5 (`ROADMAP.md`, agreed 7 Oct 2026: teaching
+the game by showing, then a training mission). **Next: M47, the training mission
+specified** (`MISSION-TRAINING.md`) and its lesson engine. Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -1035,6 +1053,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M46 | Doing (Phase 5): marks on the enemies a man could strike; the first move shown by a ghost; a blast this turn throbbing, GET CLEAR! and an arrow; GET OUT! and a green exfil once the job is done, a reddening dawn strip and a clock on a man too far away; the alert's flying pip; the action strip down to what he can do now; the turn card's hint ringed on the board. The operator's notes: the pen's coaching behind a Play tips box, off unless ticked; the drop chosen in blue; the charge points ringed only from one hex off, lettered once |
 | M45 | Seeing and being seen (Phase 5): the danger wash on the ground a man can reach, red where he would be spotted and green where a man in contact would break it; a sight line, pips that fill and a cover shield on a hovered move; a crosshair on a man about to be fired on, BREAK CONTACT! under him; Hide urged where it works; HOVER A HEX. CLICK TO GO. until the first move |
 | M44 | The text diet (Phase 5): the orders cut to five lines, what tonight asks and nothing of how to play; how to play a card of its own behind **?**, with the counter key; the turn card four marked lines and one short hint; every hint shortened |
 | M43c | The operator's notes and the first playtest fix: the canisters come down in the drop on blue canopies of their own and are on the ground, ringed, only as each lands; their rings clear of the charge dots; CLICK A MAN TO START over them; the charge points ringed and lettered while the selected man carries a charge near a target; the revised aqueduct title card. The plan for teaching the game by showing, and a training mission, in ROADMAP.md (Phase 5) |

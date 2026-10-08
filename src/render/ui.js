@@ -378,16 +378,22 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     card.appendChild(list);
   }
   const foot = html('div', 'brief-foot');
-  if (briefing.toggle) {
-    const box = html('input');
-    box.type = 'checkbox';
-    box.checked = briefing.toggle.on;
-    box.addEventListener('click', (event) => event.stopPropagation());
-    box.addEventListener('change', () => (briefing.toggle.onChange ?? onToggle)(box.checked));
-    // The turn cards' box, or another card's own (M21: music off, on the orders).
-    const label = html('label', null, [box, briefing.toggle.label ?? ' Brief me at the start of every turn']);
-    label.addEventListener('click', (event) => event.stopPropagation());
-    foot.appendChild(label);
+  // The turn cards' box, or a card's own (M21: music off, on the orders); a
+  // card may have several side by side (M46: play tips beside the music).
+  const toggles = briefing.toggles ?? (briefing.toggle ? [briefing.toggle] : []);
+  if (toggles.length) {
+    const boxes = toggles.map((toggle) => {
+      const box = html('input');
+      box.type = 'checkbox';
+      box.checked = toggle.on;
+      box.addEventListener('click', (event) => event.stopPropagation());
+      box.addEventListener('change', () => (toggle.onChange ?? onToggle)(box.checked));
+      const label = html('label', null, [box, toggle.label ?? ' Brief me at the start of every turn']);
+      label.addEventListener('click', (event) => event.stopPropagation());
+      if (toggle.help) attachPopup(label, toggle.help);
+      return label;
+    });
+    foot.appendChild(boxes.length === 1 ? boxes[0] : html('span', 'brief-toggles', boxes));
   } else if (briefing.link) {
     foot.appendChild(html('span'));
   } else if (briefing.choice && !briefing.choice.top) {
@@ -822,11 +828,15 @@ export function renderTurnCounter(element, state, rules) {
  * The dawn strip (ART-ASSETS.md ui-dawn-strip): night lightening to dawn, one
  * cell per turn from rules.json, the turns gone shaded and this one ringed.
  */
-export function renderDawnStrip(svg, state, rules) {
+export function renderDawnStrip(svg, state, rules, closing = 0) {
   svg.replaceChildren(svgEl('use', { href: '#ui-dawn-strip', width: 600, height: 60 }));
   const turns = rules.turnLimit;
   const cell = 600 / turns;
   const now = state.phase === 'drop' ? 0 : state.turn;
+  // The night's last turns, once they are here (M46): printed over in red.
+  if (closing > 0) {
+    svg.appendChild(svgEl('rect', { x: (turns - closing) * cell, y: 0, width: closing * cell, height: 60, fill: DAWN.closing, 'fill-opacity': DAWN.closingOpacity }));
+  }
   if (now > 1) {
     svg.appendChild(svgEl('rect', { x: 0, y: 0, width: (now - 1) * cell, height: 60, fill: DAWN.burnt, 'fill-opacity': DAWN.burntOpacity }));
   }
@@ -1074,21 +1084,34 @@ export function renderVersion(element, version) {
  * help, active }]. What an action does, and why it cannot be taken, are its
  * rollover.
  */
-export function renderActions(element, actions, onAction) {
+export function renderActions(element, actions, onAction, owner = null) {
   element.replaceChildren();
   element.classList.remove('runs');
   if (!actions) {
+    delete element.dataset.owner;
     element.classList.add('idle');
     // One span: the strip is a flex box, which would space out each bold key.
     element.replaceChildren(html('span', null, boldKeys('Select a man: 1–6, Tab, or click him.')));
     return;
   }
   element.classList.remove('idle');
-  // Three rows at most (index.html): a man with more than nine actions — a
-  // gunner who also carries a charge — gets a fourth column instead.
-  const four = actions.filter((a) => !a.heading).length > 9;
+  // What he can do now is a full button; what he cannot shrinks to its key,
+  // in a row under them (M46: thirteen buttons, most of them greyed, hid the
+  // two or three that mattered). Not the timers, whose strip is its own.
+  const compact = !actions.some((a) => a.heading);
+  const open = (a) => a.ok || a.active;
+  const full = compact ? actions.filter(open) : actions;
+  const keys = compact ? actions.filter((a) => !open(a)) : [];
+  // Three rows at most (index.html): a man with more than nine actions open
+  // at once gets a fourth column instead.
+  const four = full.filter((a) => !a.heading).length > 9;
   element.classList.toggle('four', four);
-  for (const action of actions) {
+  // A button that has just become usable pops once: the ids open at the last
+  // draw for this man are kept on the strip itself.
+  const before = element.dataset.owner === (owner ?? '') ? new Set((element.dataset.open ?? '').split(' ')) : null;
+  element.dataset.owner = owner ?? '';
+  element.dataset.open = full.map((a) => a.id).join(' ');
+  for (const action of full) {
     // A line across the strip saying what to do (M30b: the timers).
     if (action.heading) {
       element.appendChild(html('div', 'actions-heading', action.heading));
@@ -1113,17 +1136,37 @@ export function renderActions(element, actions, onAction) {
     if (action.danger) button.classList.add('danger');
     // A use is open right now (M26): Stabilise or Pass, marked on the button.
     if (action.suggest && action.ok) button.classList.add('suggest');
+    if (compact && before && !before.has(action.id)) button.classList.add('pop');
     button.disabled = !action.ok && !action.active;
     button.addEventListener('click', () => onAction(action.id));
     // A disabled button gets no mouse events in some browsers, and "why not"
     // is exactly the rollover a disabled one needs, so it goes on a wrapper.
     const wrap = html('div', 'action-wrap', button);
-    attachPopup(wrap, () => [
-      html('b', null, action.label.toUpperCase()),
-      `\n${action.suggest && action.ok ? `${action.suggest}\n` : ''}${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
-    ]);
+    attachPopup(wrap, () => actionPopup(action));
     element.appendChild(wrap);
   }
+  if (!keys.length) return;
+  // The rest, as their keys alone: each still says what it is and why not.
+  const row = html('div', 'action-keys', keys.map((action) => {
+    const chip = html('span', 'action-key-only', action.key);
+    attachPopup(chip, () => actionPopup(action));
+    return chip;
+  }));
+  // In what is left of the buttons' last row, or on a row of their own; with
+  // three full rows of buttons there is no room, and the strip never grows.
+  const columns = four ? 4 : 3;
+  const over = full.length % columns;
+  if (over === 0 && full.length >= columns * 3) return;
+  row.style.gridColumn = over === 0 ? '1 / -1' : `span ${columns - over}`;
+  element.appendChild(row);
+}
+
+/** An action's rollover: its full name, what it does, and its cost or why not now. */
+function actionPopup(action) {
+  return [
+    html('b', null, action.label.toUpperCase()),
+    `\n${action.suggest && action.ok ? `${action.suggest}\n` : ''}${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
+  ];
 }
 
 /**

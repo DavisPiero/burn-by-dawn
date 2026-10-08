@@ -1,6 +1,6 @@
 // M7b: the briefing card's hints (SPEC.md §11), a pure function of the state.
 
-import { aidPrompts, aidWords, diversionPrompt, hintsFor } from '../src/hints.js';
+import { aidPrompts, aidWords, diversionPrompt, hintsFor, pointedHints } from '../src/hints.js';
 import { orderReport } from '../src/render/ui.js';
 import { loadJson, loadMap } from '../src/map.js';
 import { validateTraits } from '../src/traits.js';
@@ -35,13 +35,24 @@ export default [
     assert(one.length === 1 && one[0].includes('pack it [U]'), `turn 1: ${one}`);
     const all = hintsFor({ ...state, turn: 1 }, rules, { diversionOk: true }, 20);
     const words = (h) => h.split(/\s+/).length;
-    assert(all.every((h) => words(h) <= 30), `none is a paragraph: ${all.filter((h) => words(h) > 30).join(' | ')}`);
+    assert(all.every((h) => words(h) <= 24), `none is a paragraph: ${all.filter((h) => words(h) > 24).join(' | ')}`);
+  }],
+  ['every hint points at something on the board, or at the way out (M46)', async () => {
+    const { rules, state } = await start();
+    const pointed = pointedHints({ ...state, turn: 1 }, rules, { diversionOk: true }, 20);
+    assert(pointed.map((h) => h.text).join('|') === hintsFor({ ...state, turn: 1 }, rules, { diversionOk: true }, 20).join('|'), 'the same words as hintsFor');
+    for (const h of pointed) assert(h.at === 'exfil' || (h.at.length > 0 && h.at.every((p) => Number.isInteger(p.q) && Number.isInteger(p.r))), `points nowhere: ${h.text}`);
+    const chutes = pointed.find((h) => h.text.includes('pack it [U]'));
+    assert(chutes.at.length === state.parachutes.length && chutes.at.every((p) => state.parachutes.some((c) => c.q === p.q && c.r === p.r)), 'the parachutes hint rings the parachutes');
+    const bridge = state.objectives.find((o) => o.primary);
+    const out = pointedHints({ ...state, turn: 15, objectives: state.objectives.map((o) => (o.id === bridge.id ? { ...o, destroyed: true } : o)) }, rules, {}, 1);
+    assert(out[0].at === 'exfil', `with the job done it points at the way out: ${JSON.stringify(out[0])}`);
   }],
   ['a charge about to go off comes before anything else', async () => {
     const { rules, state } = await start();
     const bridge = state.objectives.find((o) => o.primary);
     const hints = hintsFor({ ...state, charges: [{ objectiveId: bridge.id, q: 9, r: 5, fuse: 1 }] }, rules);
-    assert(hints[0].includes('goes off at the end of this turn'), hints[0]);
+    assert(hints[0].includes('blows at the end of this turn'), hints[0]);
   }],
   ['a wounded man is named, and the leader by his flag, never by name in code', async () => {
     const { rules, state } = await start();
@@ -50,7 +61,7 @@ export default [
     assert(has(hints, `${units[1].shortName} is wounded`), hints.join(' | '));
     const leader = units.find((u) => u.leader);
     const regroup = hintsFor({ ...state, turn: 1, parachutes: [] }, rules);
-    assert(has(regroup, `${leader.shortName}'s orders`), regroup.join(' | '));
+    assert(has(regroup, `Regroup on ${leader.shortName}`), regroup.join(' | '));
     assert(has(regroup, `+${rules.command.closeBonusActionPoints} AP beside him, +${rules.command.bonusActionPoints} AP within ${rules.command.radius} hexes of him`), regroup.join(' | '));
   }],
   ['with the primary down, it counts the men still to get out and the turns left', async () => {
@@ -66,9 +77,9 @@ export default [
     const scout = state.units.find((u) => rules.roles[u.role].cutLine);
     const units = state.units.map((u) => (u.id === scout.id ? { ...u, q: point.q, r: point.r, ap: u.apMax, inContact: true } : u));
     const hints = hintsFor({ ...state, turn: 9, parachutes: [], units }, rules);
-    assert(has(hints, `${scout.shortName} is on a charge point`) && has(hints, 'cut all the same'), hints.join(' | '));
+    assert(has(hints, `${scout.shortName} can cut the`) && has(hints, 'cut all the same'), hints.join(' | '));
     const spent = units.map((u) => (u.id === scout.id ? { ...u, ap: 0 } : u));
-    assert(!has(hintsFor({ ...state, turn: 9, parachutes: [], units: spent }, rules), 'is on a charge point'), 'not once he has spent his AP');
+    assert(!has(hintsFor({ ...state, turn: 9, parachutes: [], units: spent }, rules), 'can cut the'), 'not once he has spent his AP');
   }],
   ['Stabilise is prompted to the man beside a wounded one, only while he has his whole turn (M26)', async () => {
     const { rules, state } = await start();

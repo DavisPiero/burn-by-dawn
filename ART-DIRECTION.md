@@ -17,7 +17,9 @@ board must read at a glance.
 
 - The whole game is a **double-page spread**. Board on the left page. The right page
   carries, from the top: a fixed strip (the turn counter; End turn, which is the JUMP!
-  button before the drop, and Undo; the selected man's actions), the alert dial and the
+  button before the drop, and Undo; the selected man's actions: a full button for each
+  he can take now, the rest as their keys alone, small and grey, in what is left of the
+  last row; a button that has just become usable pops once), the alert dial and the
   RAF diversion, the mission panel, and the **roster rail: all six portraits, always
   visible**, six compact slots that fit at 1280x800 without scrolling, greying out as men
   are lost.
@@ -246,12 +248,12 @@ board must read at a glance.
   AIRFIELD) heads the card, with ORDERS · BEFORE THE DROP beside it. Then **five lines
   at most, and one more for a rule only this mission has**: where they are dropping;
   the job in bold, two lines, split at its comma so the EXFIL never stands alone; the
-  clock ("Dawn comes at the end of turn 16. Every bang alerts the garrison.", or the
+  clock ("Dawn comes at the end of turn 16. Every bang stirs the garrison.", or the
   boat's turn in bold where the way out is a boat); the canisters in bold where there
   are any; and one Bonus line naming everything that pays extra with its points (the
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
-  words, `words.cleanBonus`). At its foot: **Music off**, a **HOW TO PLAY [?]** button,
-  and CARRY ON. A card too tall for the window is set tighter a step at a time (less
+  words, `words.cleanBonus`). At its foot: **Music off** and beside it **Play tips**
+  (unticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON. A card too tall for the window is set tighter a step at a time (less
   air, then 14 px, then 13) before anything is cut.
 - **How to play is a card of its own**, at any time: a **?** button beside KEYBOARD, the
   `?` or `/` key, or the orders' button, over a turn card too. It has the orders' place
@@ -310,18 +312,22 @@ board must read at a glance.
 - Each run's tab sits on its line (`labelAlong`, `labelNudge` in `map.json`) with its word,
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
-  the player's red pen among the runs' tabs (or centred on the map's `dropCueAt` hex where
+  the player's pen, **in the blue of our kit** (the canisters' blue: in red it read as one
+  with the targets' rings), with a blue pen ring round each run's tab, among the runs' tabs (or centred on the map's `dropCueAt` hex where
   that is busy: the airfield's is on the strip), still, on the map at 1280x800. Every
   pen note is kept whole on the map: CLICK A MAN TO START is moved in from an edge the
   men landed beside. Once one is
-  picked it reads **HIT SPACE TO JUMP**, "or click the run again", the JUMP! button turns
+  picked it reads **HIT SPACE TO JUMP**, "or click the run again", in the same blue with
+  the one ring round the run chosen, the JUMP! button turns
   danger red and throbs, and the run's rollover ends PRESS SPACE TO JUMP, OR CLICK AGAIN.
   Jumping needs **Space** or a second click on the same run. Once the stick is down, every
   man who can act wears a gently throbbing red pen ring, with CLICK A MAN TO START in the
   middle of the men, until the player first selects a man; never again that game.
-  **Then HOVER A HEX. CLICK TO GO.** is lettered under the selected man, whoever is
-  selected, until the first move of the game is made; never again that game. (Still
-  words: M46 shows it with a ghost counter walking.)
+  **Then, with the play tips on, HOVER A HEX. CLICK TO GO.** is lettered under the
+  selected man, whoever is selected, and **a ghost of his counter**, printed faint, steps
+  along a short path he could take unseen, its AP dots emptying, rests and starts again,
+  until the first move of the game is made; never again that game. The ghost stands
+  aside while a move is hovered.
   **With them, each supply canister is ringed in leader blue and lettered CHARGE
   CANISTER** in the same blue, on whichever side of it is clearest of counters, the
   other rings and names, the start note and the board's edge. The ring is round the
@@ -358,17 +364,36 @@ board must read at a glance.
   goes to it.
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
   its counter flashing. A kill is one dim shot.
-- **Where the charge goes**: while the selected man carries a charge within three hexes
-  of a target that still wants one (of the target or any of its charge points), each of
-  its empty charge points wears a throbbing red pen ring, lettered once in the pen:
-  STAND ON A RING TO SET A CHARGE (STAND HERE TO SET THE CHARGE where there is one
-  point). Standing on a point, only his own is ringed, and it reads PRESS C TO SET THE
+- **The pen's coaching is the play tips** (SPEC.md §4): off unless the box is ticked.
+  Where the charge goes, the ghost, BREAK CONTACT!, GET CLEAR! and GET OUT! are tips;
+  the marks, throbs and the pip below are not.
+- **Where the charge goes** (a tip): while the selected man carries a charge within one
+  hex of a target that still wants one (of the target or any of its charge points), each
+  of its empty charge points wears a throbbing red pen ring. Only the target nearest him
+  is lettered, once: STAND ON A RING TO SET A CHARGE (STAND HERE TO SET THE CHARGE where
+  there is one point). Standing on a point, only his own is ringed, and it reads PRESS C TO SET THE
   CHARGE if he can set it now. Not while he aims an action or the tin of timers is open.
 - **The charges are set**: when a target is given the last charge it needs, the player's
   pen letters **CHARGES ARE SET. / GET CLEAR!** over it (CHARGE IS SET where it needs one),
   red with a paper outline, a little askew, over the counters and any speech bubble, kept
   whole on the board. The next click or key anywhere puts it away. A target that wants
   more than one says nothing until the last is set.
+- **A blast that goes off this turn throbs**: its red ground swells and fades, about
+  once a second. With the tips on, each man standing in it has **GET CLEAR!** lettered
+  under him and a short pen arrow toward the nearest clear hex he can still reach.
+- **What he could strike** (SPEC.md §4): the pen's red disc on the enemy chip's top left
+  corner, gently throbbing, a paper knife, crosshair, or crosshair struck through in it.
+- **Time to go**: once the job is done and the way out is open, the exfil's ground
+  throbs army green, slowly, and with the tips on **GET OUT!** is lettered over it in
+  the same green. Through the night's last three turns those cells of the dawn strip
+  are printed over in red, and a man who cannot reach the exfil in time wears a small
+  red clock over his counter; its rollover says so.
+- **The alert's pip**: whatever raised the alert sends a red pip from its hex across
+  the spread to the dial, one for each place it rose from, a moment apart, and the dial
+  jolts as each lands.
+- **The hint points**: while a turn card is up, what its hint is about (the parachutes,
+  the man in contact, the charge about to blow, the exfil) wears the pen's throbbing
+  ring on the board, six at most.
 - **A bang lands**: the page flashes, the board jolts, a shock ring runs out to the edge of
   the blast under the starburst, smoke rolls up, and BOOM! in the pen lettering, with a
   paper outline and tipped up 16°, all before that turn's card is laid over it. It is the

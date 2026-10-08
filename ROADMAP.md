@@ -108,7 +108,12 @@ turn card is four marked lines and one short hint. Tests: 195 headless.
 **M45** (7 Oct 2026), seeing and being seen: the danger wash, the sight line, filling
 pips and cover shield, the crosshair on a man about to be fired on, Hide urged where it
 works, and HOVER A HEX. CLICK TO GO. until the first move. Tests: 199 headless.
-**Next: M46.**
+**M46** (9 Oct 2026), doing, with the operator's notes on M45: marks on the enemies a
+man could strike, the first move's ghost, a throbbing blast and GET CLEAR!, GET OUT! and
+the clocks, the alert's flying pip, the action strip cut to what can be done, the hint
+ringed on the board. The pen's coaching is behind a **Play tips** box, off unless
+ticked (the operator's); the drop is chosen in blue; the charge points are ringed from
+one hex off. Tests: 204 headless, 206 in tests.html. **Next: M47**, the training mission specified.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
@@ -348,7 +353,7 @@ the kill-everything bot is level with the careful one on the West and South runs
 
 ## Phase 5 — Show, don't tell: teaching the game (agreed 7 Oct 2026)
 
-**Agreed by the operator, 7 Oct 2026. M44 and M45 are done; M46 is next.** From the
+**Agreed by the operator, 7 Oct 2026. M44 to M46 are done; M47 is next.** From the
 first playtests with new players: there is too much to read before the first move, and
 key rules are not found by looking (a player stood a sapper on the Rail Bridge and
 could not see why he could not set his charge). M43c fixed that one case; this phase
@@ -470,8 +475,14 @@ passed. The operator's list, with what I would add:
   from M46, in words; the ghost counter is still M46's). The danger wash, the sight line and filling pips,
   the cover shield, contact's closing crosshair and green ways out, the Hide prompt.
   The biggest single gain: detection is the game, and today it is read off a row.
-- **M46 — doing.** Opportunity marks, the first-move ghost, blast and GET CLEAR, the
-  alert's flying pip, the exfil's GET OUT, the action bar, hints that point.
+- **M46 — doing. Done.** Opportunity marks, the first-move ghost, blast and GET CLEAR, the
+  alert's flying pip, the exfil's GET OUT, the action bar, hints that point. The pen's
+  coaching among them is the **play tips**, off unless ticked (the operator's, 9 Oct):
+  so a new player who does not tick the box gets the marks, throbs and washes but none
+  of the pen's words after CLICK A MAN TO START. The training mission is then where a
+  new player is taught, which makes M47 and M48 matter more. Not built, from the
+  table above: an enemy's blind side shaded, the noise arrows from patrols that will
+  come, the chute joined to a patrol's route, and the **?** pages' diagrams (M48).
 - **M47 — the training mission specified** (`MISSION-TRAINING.md`) and its lesson
   engine built, off in every other mission.
 - **M48 — the training mission built**, with the **?** pages' diagrams drawn from the

@@ -1,6 +1,7 @@
-// Hints for the briefing card (SPEC.md §11): up to three things worth doing
-// next, worked out from the state. A pure function: it reads state and rules
-// and returns words; it decides nothing and changes nothing (CLAUDE.md rule 7).
+// Hints for the briefing card (SPEC.md §11): the things worth doing next,
+// worked out from the state, most pressing first, each with what it is about
+// so the board can ring it (M46). Pure functions: they read state and rules
+// and return words; they decide and change nothing (CLAUDE.md rule 7).
 // Every number comes from data/rules.json (rule 5), and nobody is named in
 // code: the leader is whoever carries the flag (rule 6).
 
@@ -108,8 +109,24 @@ export function aidWords(prompt, units, rules) {
  * @returns {string[]} most pressing first, at most `max`. The turn card shows one (M44),
  *   so each is a line or two: what to do, and its key.
  */
-export function hintsFor(state, rules, { diversionOk = false, diversionName = 'RAF diversion' } = {}, max = 3) {
-  const hints = [];
+export function hintsFor(state, rules, extra = {}, max = 3) {
+  return pointedHints(state, rules, extra, max).map((h) => h.text);
+}
+
+/**
+ * The hints with what each points at (M46): `{ text, at }`, where `at` is the
+ * hexes the board rings while the card is up, or 'exfil' for the way out
+ * (the map's, which no hint is handed). Arguments as hintsFor's.
+ * @returns {{ text: string, at: { q: number, r: number }[] | 'exfil' }[]}
+ */
+export function pointedHints(state, rules, { diversionOk = false, diversionName = 'RAF diversion' } = {}, max = 3) {
+  const list = [];
+  const here = (things) => things.map((t) => ({ q: t.q, r: t.r }));
+  // `at`: men, enemies, charges or hexes, anything with a q and an r.
+  const hints = {
+    push: (text, at = []) => list.push({ text, at: at === 'exfil' ? at : here(at) }),
+    unshift: (text, at = []) => list.unshift({ text, at: here(at) }),
+  };
   const men = state.units.filter(onBoard);
   const out = state.units.filter((u) => u.out).length;
   const won = winMet(state, rules);
@@ -123,8 +140,8 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     const job = single ? `The ${winTargets(state, rules).targets[0].label} is down` : `${capitalFirst(winWords(state, rules))} are down`;
     // Where the way out opens on a turn (M41) and has not yet: when, and what to do till then.
     const opens = boatLands(state, rules);
-    if (opens !== null && state.turn < opens) hints.push(`${job}. The boat is in on turn ${opens}, in ${opens - state.turn} ${plural(opens - state.turn, 'turn', 'turns')}: get ${need} ${plural(need, 'man', 'men')} to the shore and lie low.`);
-    else hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil ${rules.exfil?.openFor ? 'before the boat goes' : 'before dawn'}: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`);
+    if (opens !== null && state.turn < opens) hints.push(`${job}. The boat is in on turn ${opens}, in ${opens - state.turn} ${plural(opens - state.turn, 'turn', 'turns')}: get ${need} ${plural(need, 'man', 'men')} to the shore and lie low.`, 'exfil');
+    else hints.push(`${job}. Get ${need} more ${plural(need, 'man', 'men')} onto the exfil ${rules.exfil?.openFor ? 'before the boat goes' : 'before dawn'}: ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')} left.`, 'exfil');
   }
 
   // Charges burning: the soonest on each objective.
@@ -135,14 +152,14 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   }
   for (const [objectiveId, fuse] of burning) {
     const label = state.objectives.find((o) => o.id === objectiveId)?.label ?? 'objective';
-    const when = fuse <= 1 ? 'goes off at the end of this turn' : `goes off in ${fuse} turns`;
-    hints.push(`The charge on the ${label} ${when}. Get everyone clear of the blast!`);
+    const on = state.charges.filter((c) => c.objectiveId === objectiveId);
+    hints.push(fuse <= 1 ? `The ${label} blows at the end of this turn. Get everyone clear!` : `The ${label} blows in ${fuse} turns. Be off the red ground by then.`, on);
   }
 
   // In a pickle (M26d): the diversion next, after any charge about to blow.
   const pickle = leader ? diversionPrompt(state, rules, diversionOk) : null;
   if (pickle) {
-    hints.push(`In a pickle: ${pickle}. Call the ${diversionName} [D] now.`);
+    hints.push(`In a pickle: ${pickle}. Call the ${diversionName} [D] now.`, men.filter((u) => u.inContact));
   }
 
   // A scout starting his turn on a point he can cut (M20: a playtester could
@@ -152,12 +169,12 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   if (cutter) {
     const { objective } = checkCutLine(state, cutter, rules);
     const seen = cutter.inContact ? ' He will be fired on, but the line is cut all the same.' : '';
-    hints.push(`${cutter.shortName} is on a charge point of the ${objective.label}: cut the line now [X], a whole turn.${seen}`);
+    hints.push(`${cutter.shortName} can cut the ${objective.label}'s line now [X]: his whole turn, and no noise.${seen}`, [cutter]);
   }
 
   const inContact = men.filter((u) => u.inContact);
   if (inContact.length) {
-    hints.push(`${names(inContact)} ${plural(inContact.length, 'is', 'are')} in contact and will be fired on: get out of view, hide [H], or ${rules.actions.returnFire ? 'fire back [S]' : 'have a gunner suppress [S]'}.`);
+    hints.push(`${names(inContact)} ${plural(inContact.length, 'has', 'have')} been seen. Break contact: get out of sight, hide [H], or ${rules.actions.returnFire ? 'fire back [S]' : 'have a gunner suppress [S]'}.`, inContact);
   }
 
   const wounded = men.filter((u) => u.hits > 0 && !u.stabilised);
@@ -168,14 +185,14 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     const help = aiders.length
       ? `${who} can stabilise ${plural(wounded.length, 'him', 'them')} [A]`
       : `A man beside ${plural(wounded.length, 'him', 'them')} can stabilise [A]`;
-    hints.push(`${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded. ${help}: a whole turn.`);
+    hints.push(`${names(wounded)} ${plural(wounded.length, 'is', 'are')} wounded. ${help}: a whole turn.`, wounded);
   }
 
   if (!won && turnsLeft <= 5) {
     const { targets, needed } = winTargets(state, rules);
     const toGo = needed - targets.filter((o) => o.destroyed).length;
     const still = single ? `the ${targets[0].label} still stands` : `${toGo} more ${kindOf(targets[0], rules).label} still to go`;
-    hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and ${still}.`);
+    hints.push(`Dawn in ${turnsLeft} ${plural(turnsLeft, 'turn', 'turns')}, and ${still}.`, targets.filter((o) => !o.destroyed).flatMap((o) => o.hexes));
   }
 
   // A man behind an enemy (M12b): the knife is there to be used.
@@ -183,7 +200,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     if (man.inContact || man.ap < rules.actions.knife.apCost) continue;
     const back = state.enemies.find((e) => e.killable && hexDistance(e, man) === 1 && !inArc(e, e.facing, man, e.arcDegrees));
     if (back) {
-      hints.push(`${man.shortName} is behind the ${back.label.toLowerCase()}, unseen: knife it [N]${rules.actions.knife.fullTurn ? ' before he moves' : ''}. It leaves a body${rules.bodyFound.reinforcements > 0 ? ', and a body found brings reinforcements' : ''}.`);
+      hints.push(`${man.shortName} is behind the ${back.label.toLowerCase()}, unseen: knife it [N]${rules.actions.knife.fullTurn ? ' before he moves' : ''}. ${rules.bodyFound.reinforcements > 0 ? 'A body found brings a squad' : 'It leaves a body'}.`, [back]);
       break;
     }
   }
@@ -191,7 +208,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
   const alert = alertIndex(state.alert.points, rules);
   if (alert >= 2 && diversionOk && leader && !pickle) {
     const label = rules.alert.states[alert].label;
-    hints.push(`The garrison is ${label.toUpperCase()}. The ${diversionName} [D] drops it a level: ${callsLeft(state, rules)}.`);
+    hints.push(`The garrison is ${label.toUpperCase()}. The ${diversionName} [D] drops it a level: ${callsLeft(state, rules)}.`, [leader]);
   }
 
   // Before the canisters since M44, when the card took one hint: a chute is
@@ -202,19 +219,19 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     // Where the patrols have not set out yet (M36, the airfield), this is the turn to do it.
     const wait = state.turn < rules.patrols.setOutTurn ? ` The patrols set out at the end of turn ${rules.patrols.setOutTurn}.` : '';
     const how = state.turn === 1 ? ` Stand on one and pack it [U] before a patrol finds it.${wait}` : '';
-    hints.push(`${chutes} ${plural(chutes, 'parachute lies', 'parachutes lie')} where the men landed.${how}`);
+    hints.push(`${chutes} ${plural(chutes, 'parachute lies', 'parachutes lie')} where the men landed.${how}`, state.parachutes);
   }
 
   // Supply canisters (SPEC.md §9, M41): where the charges are, while any are left in one.
   const canisters = (state.canisters ?? []).length;
   if (canisters > 0 && state.turn <= 4) {
     const inside = state.droppedCharges.filter((c) => state.canisters.some((k) => k.q === c.q && k.r === c.r)).length;
-    const how = state.turn === 1 ? ' Stand a man on one and Pick up [P].' : '';
-    hints.push(`${inside} ${plural(inside, 'charge is', 'charges are')} still in ${canisters} ${plural(canisters, 'canister', 'canisters')}.${how}`);
+    const how = state.turn === 1 ? ' Stand a man on one and pick up [P].' : '';
+    hints.push(`${inside} ${plural(inside, 'charge is', 'charges are')} still in ${canisters} ${plural(canisters, 'canister', 'canisters')}.${how}`, state.canisters);
   }
 
   if (state.turn === 1 && leader) {
-    hints.push(`Regroup: ${leader.shortName}'s orders give ${ordersWords(rules.command)}.`);
+    hints.push(`Regroup on ${leader.shortName}: ${ordersWords(rules.command)}, each turn.`, [leader]);
   }
 
   if (state.turn <= 2) {
@@ -222,7 +239,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     if (carriers.length) {
       // Where charges take a timer (M31), the second step is said too.
       const timer = rules.charges.fuseChoice ? ', then pick a timer' : '';
-      hints.push(`${names(carriers)} ${plural(carriers.length, 'carries', 'carry')} the charges: stand on a red dashed charge point and press [C]${timer}.`);
+      hints.push(`${names(carriers)} ${plural(carriers.length, 'carries', 'carry')} the charges: stand one on a red dashed hex beside a target and press [C]${timer}.`, carriers);
     }
     // Whatever sets off its neighbours (M31, the airfield's bowser), while it
     // still stands and would take something with it.
@@ -232,7 +249,7 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
       if (caught.length === 0) continue;
       const labels = [...new Set(caught.map((c) => c.objective.label))];
       const what = labels.length === 1 && caught.length > 1 ? `${caught.length} ${labels[0]}s` : caught.length === 1 ? labels[0] : `${caught.length} targets`;
-      hints.push(`The ${setter.label} sets off the ${what} beside it: ${caught.length + 1} for one charge.`);
+      hints.push(`The ${setter.label} sets off the ${what} beside it: ${caught.length + 1} for one charge.`, setter.hexes);
     }
   }
 
@@ -245,12 +262,14 @@ export function hintsFor(state, rules, { diversionOk = false, diversionName = 'R
     const burn = rules.charges.fuseTurns - 1;
     const from = turn - window - burn, to = turn + window - burn;
     if (state.turn >= from && state.turn <= to) {
-      hints.unshift(`A charge set on the ${crossed.label} this turn goes off on turn ${state.turn + burn}: under the ${label.toLowerCase()}, +${score}.`);
+      hints.unshift(`A charge set on the ${crossed.label} this turn goes off on turn ${state.turn + burn}: under the ${label.toLowerCase()}, +${score}.`, crossed.chargeHexes);
     } else if (state.turn < from) {
-      hints.push(`The ${label.toLowerCase()} crosses the ${crossed.label} on turn ${turn}. Charges set on turns ${from} to ${to} bring it down under the train: +${score}.`);
+      hints.push(`The ${label.toLowerCase()} crosses the ${crossed.label} on turn ${turn}. Charges set on turns ${from} to ${to} wreck it: +${score}.`, crossed.hexes);
     }
   }
 
-  hints.push('Hover an enemy to see what it sees and where it walks.');
-  return hints.slice(0, max);
+  // The enemy nearest any of the men: the one worth looking at first.
+  const near = state.enemies.map((e) => ({ e, d: Math.min(...men.map((u) => hexDistance(u, e))) })).sort((a, b) => a.d - b.d)[0]?.e;
+  hints.push('Hover an enemy to see what it sees and where it walks.', near && men.length ? [near] : []);
+  return list.slice(0, max);
 }

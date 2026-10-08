@@ -797,6 +797,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   green, a supply canister's in blue (M43c).
 - The soft drop shadow under counters.
 - The cover shields on a hovered move (M45): empty, half green, all green.
+- The strike marks on an enemy's chip (M46: knife, crosshair, crosshair struck through,
+  each in the pen's red disc) and the red clock on a man too far from the exfil.
 - The counter markers (spotted, wounded, hidden, and since M11 the leader-blue orders
   chevron on a man who has the leader's +AP this turn).
 - The bowser's fuel hose to its charge point (M30b), and the faint dashed ground of a
