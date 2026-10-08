@@ -1155,7 +1155,9 @@ export const CUE = {
   // bridge and could not set a charge there). While the selected man carries
   // a charge within `pointRange` hexes of a target that still wants one, each
   // of its empty charge points wears a throbbing pen ring, lettered once.
-  pointRange: 3,
+  // 1 since M46 (the operator's: at 3 the rings were on far too much, and on
+  // the airfield every pen in reach was lettered at once).
+  pointRange: 1,
   pointRingRadius: 34,
   pointRingWidth: 5,
   pointRingOpacity: 0.85,
@@ -1164,6 +1166,30 @@ export const CUE = {
   pointNoteSize: 20,
   noteAdvance: 0.72, // a letter's width in the pen lettering, in note sizes, for keeping a note on the board
   noteEdgeGap: 14,
+  // Choosing the drop is lettered and ringed in the blue of our kit (M46, the
+  // operator's: in red it read as part of the targets' rings).
+  kit: PALETTE.leader,
+  runRing: { padX: 16, padY: 13, width: 4, opacity: 0.85 },
+  // What the selected man could do to an enemy now (M46): a mark on its chip.
+  strikeSize: 24,
+  strikeAt: { x: -11, y: -13 }, // its top left corner; under the no-kill mark where a chip wears that
+  // The first move shown (M46): a faint counter steps along a short path, its
+  // AP dots emptying, and starts again, until the first move of the game.
+  ghost: { opacity: 0.5, stepMs: 620, restMs: 1100 },
+  // GET CLEAR! under a man in a blast that goes off this turn, and an arrow
+  // to the nearest clear hex he can reach (M46).
+  clearArrow: { width: 5, head: 13, start: 0.42, end: 0.82 }, // of the way to that hex
+  blastPulseMs: 900, // the ground of this turn's blast throbs
+  blastPulse: 0.55, // its strength at the low of the throb
+  // GET OUT! by the exfil once the job is done, its ground throbbing green (M46).
+  go: PALETTE.green,
+  goOpacity: 0.3,
+  goPulseMs: 1600,
+  goNoteSize: 26,
+  lateSize: 24, // the clock on a man who cannot reach the exfil in time
+  lateAt: { x: 16, y: -15 },
+  // What raised the alert flies to the dial as a red pip (M46).
+  pip: { size: 16, ms: 620, staggerMs: 140, joltMs: 320 },
 };
 
 // A supply canister on the board (SPEC.md §9, §11; M42b, the operator's).
@@ -1268,6 +1294,9 @@ export const DAWN = {
   burnt: PALETTE.ink,
   burntOpacity: 0.55,
   now: PALETTE.red,
+  // The night's last turns, once they are here (M46).
+  closing: PALETTE.red,
+  closingOpacity: 0.38,
 };
 
 // ---------------------------------------------------------------------------
@@ -2880,6 +2909,41 @@ const SPRITES = {
     },
   }])),
 
+  // What the selected man could do to an enemy right now (M46), on its chip:
+  // the pen's red disc with the weapon in paper. A knife; a crosshair for a
+  // gunner's suppress or anyone's return fire; a crosshair struck through for
+  // a gunner's kill.
+  'marker-strike-knife': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'red'),
+      fill('M20.5 5 L22.5 7 L12.5 17.5 L10 18 L10.5 15.5 Z', 'paper'),
+      line('M8.2 15.2 L12.8 19.8', 2.4, 'stroke-paper'),
+      line('M9.6 18.4 L6.2 21.8', 3, 'stroke-paper'),
+      ring(14, 14, 12),
+    ],
+  },
+  ...Object.fromEntries([['fire', []], ['kill', ['M8.5 8.5 L19.5 19.5 M19.5 8.5 L8.5 19.5']]].map(([what, struck]) => [`marker-strike-${what}`, {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'red'),
+      ring(14, 14, 6, 2, 'stroke-paper'),
+      line('M14 4.5 V9.5 M14 18.5 V23.5 M4.5 14 H9.5 M18.5 14 H23.5', 2, 'stroke-paper'),
+      ...struck.map((d) => line(d, 2.4, 'stroke-paper')),
+      ring(14, 14, 12),
+    ],
+  }])),
+  // A man who cannot reach the exfil before the night ends (M46): a clock.
+  'marker-late': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 15, 11, 'paper'),
+      svg('rect', { x: 12, y: 1, width: 4, height: 4, class: 'ink' }),
+      line('M14 15 V8.5 M14 15 L19 17.5', 2.4, 'stroke-red'),
+      ring(14, 15, 11, 2.4, 'stroke-red'),
+    ],
+  },
+
   // --- markers (ART-ASSETS.md §6) ---
   'marker-spotted': {
     viewBox: '0 0 28 28',
@@ -3466,6 +3530,10 @@ function printCss() {
     `.nd-throb{animation:nd-throb ${CUE.pulseMs}ms ease-in-out infinite;transform-box:fill-box;transform-origin:center}`,
     `@keyframes nd-point{0%,100%{transform:scale(1)}50%{transform:scale(${CUE.pointPulseScale})}}`,
     `.nd-point{animation:nd-point ${CUE.pointPulseMs}ms ease-in-out infinite;transform-box:fill-box;transform-origin:center}`,
+    // This turn's blast and the open way out throb in strength, not size (M46).
+    `@keyframes nd-pulse{0%,100%{opacity:1}50%{opacity:${CUE.blastPulse}}}`,
+    `.nd-pulse{animation:nd-pulse ${CUE.blastPulseMs}ms ease-in-out infinite}`,
+    `.nd-pulse-slow{animation:nd-pulse ${CUE.goPulseMs}ms ease-in-out infinite}`,
   ];
   return [...colours, ...tones, misregister, ...motion].join('\n');
 }

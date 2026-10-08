@@ -20,8 +20,9 @@ import {
   objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencilWithTheOthers, pencils,
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
-import { aidPrompts, aidWords, diversionPrompt, hintsFor, ordersWords } from './hints.js';
+import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
+import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -69,6 +70,10 @@ const helpTab = document.getElementById('help-tab');
 const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
+
+// The night's last turns (M46): the dawn strip reddens through them, and a
+// man who can no longer reach the way out wears a clock. Display only.
+const CLOSING_TURNS = 3;
 
 // The game's title, set over the title card on the orders and the back page.
 const GAME_TITLE = 'BURN BY DAWN';
@@ -138,7 +143,15 @@ let menPicked = false;
 let firstMoveMade = false;
 // The danger wash and who is fired on, kept for the state they were worked
 // out on: the mouse moving redraws the board, and neither changes with it.
-let sightFor = { state: null, unitId: null, wash: null, firedState: null, firedOn: new Set() };
+let sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedOn: new Set() };
+// What the board points at (M46, cues.js), kept the same way: who must get
+// clear and the way out for the board as it stands, and for the selected man
+// the enemies he could strike and the first move's ghost.
+let cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
+// Play tips (M46, the operator's): the pen's coaching on the board, the rings
+// and words that say what to do next. Off unless the box on the orders is
+// ticked; carried in the address as `?tips=on`, as the music is.
+let tipsOn = new URLSearchParams(window.location.search).get('tips') === 'on';
 // The title music turned off from the orders (M21, the operator's): music
 // only, for the session; M still turns every sound off. Carried in the
 // address as `?music=off` when the contents page loads another mission (M29b).
@@ -180,6 +193,13 @@ let pencilLifted = null;
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
+
+// What the board's sums depend on. The mouse moving makes a new state (its
+// hover) but none of these, so what was worked out for them is kept.
+function boardStamp() {
+  return [state.units, state.enemies, state.alert, state.charges, state.objectives, state.turn, state.outcome, state.boatCalledTurn, map];
+}
+const sameStamp = (a, b) => Boolean(a) && a.every((part, i) => part === b[i]);
 
 // Vision only changes when an enemy moves or the alert changes, not on every
 // hover, so it is worked out once per enemy phase rather than per mouse move.
@@ -376,8 +396,19 @@ function deriveView() {
   view.canisterRings = !menPicked && !state.outcome && Boolean(state.canisters?.length);
   view.canisterCue = canisterCue;
   // The men in contact who will be fired on as things stand (M45): a crosshair on each.
-  if (sightFor.firedState !== state) sightFor = { ...sightFor, firedState: state, firedOn: state.outcome ? new Set() : firedOn(map, rules, state) };
+  const stamp = boardStamp();
+  if (!sameStamp(sightFor.firedStamp, stamp)) sightFor = { ...sightFor, firedStamp: stamp, firedOn: state.outcome ? new Set() : firedOn(map, rules, state) };
   view.firedOn = sightFor.firedOn;
+  // A blast this turn and the way out (M46): the ground throbs whatever the
+  // tips; the pen's words and arrows are tips.
+  if (!sameStamp(cuesFor.stamp, stamp)) cuesFor = { ...cuesFor, stamp, clear: getClear(map, rules, state), out: wayOut(map, rules, state, CLOSING_TURNS) };
+  view.blastPulse = !state.outcome && view.blastArea.size > 0;
+  view.getClear = tipsOn ? cuesFor.clear : null;
+  view.goOut = cuesFor.out.go ? { words: tipsOn ? 'GET OUT!' : null } : null;
+  view.late = cuesFor.out.late;
+  view.manNotes = tipsOn ? cuesFor.clear.map((c) => ({ q: c.q, r: c.r, words: 'GET CLEAR!' })) : [];
+  // What the turn card's hint is about, ringed while the card is up (M46).
+  if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
 
   const next = forecast();
   if (next) {
@@ -431,7 +462,7 @@ function deriveView() {
         : `a man beside the water can signal it in early [B]: in ${rules.exfil.call.leadTurns} turns from then, and gone ${rules.exfil.openFor} turns after it lands, with everyone who is going` }] : []),
       { label: 'NEEDS', text: `${rules.mission.minimumOut} men out, with ${winWords(state, rules)} down, by dawn` },
       // Only for a man with a charge to leave, or nobody picked (M22: room).
-      ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it where he stepped off, for another to pick up [P]' }]),
+      ...(selectedUnit(state)?.charges === 0 ? [] : [{ label: 'CHARGE', text: 'a man carrying one leaves it on the hex he stepped off, for another to pick up [P]' }]),
     ] };
   }
 
@@ -456,7 +487,7 @@ function deriveView() {
   // The leader selected, or under the mouse (M12): where a man must stand at
   // the start of a turn to get his orders (SPEC.md §5 Command, M11). A flag,
   // never a name (CLAUDE.md rule 6).
-  view.chargeCue = chargeCue(unit);
+  view.chargeCue = tipsOn ? chargeCue(unit) : null;
   const leader = unit?.leader ? unit : (!state.targeting && leaderAt(hex));
   if (leader) {
     const hexes = new Map();
@@ -507,13 +538,24 @@ function deriveView() {
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
   // What going to each of those hexes would do (M45): red where he would be
   // spotted, green where a man in contact would break it.
-  if (sightFor.state !== state || sightFor.unitId !== unit.id) sightFor = { ...sightFor, state, unitId: unit.id, wash: dangerWash(map, rules, state, unit, view.reachable) };
+  if (!sameStamp(sightFor.stamp, stamp) || sightFor.unitId !== unit.id) sightFor = { ...sightFor, stamp, unitId: unit.id, wash: dangerWash(map, rules, state, unit, view.reachable) };
   view.dangerWash = sightFor.wash;
-  // A few words under him: how to move, until the first move of the game;
-  // then, for a man about to be fired on, what to do about it.
+  // The enemies he could strike now, marked on their chips (M46), and the
+  // first move's ghost.
+  if (!sameStamp(cuesFor.unitStamp, stamp) || cuesFor.unitId !== unit.id) {
+    cuesFor = { ...cuesFor, unitStamp: stamp, unitId: unit.id, strikes: opportunities(map, rules, state, unit), ghost: firstMoveGhost(unit, view.reachable, sightFor.wash) };
+  }
+  view.strikes = cuesFor.strikes;
+  // A few words under him, with the tips on: how to move, until the first
+  // move of the game; then, for a man about to be fired on, what to do about
+  // it. GET CLEAR! comes before either.
   const moving = hex && !hoverEnemy && (hex.q !== unit.q || hex.r !== unit.r);
-  if (!firstMoveMade && unit.ap > 0) view.manNote = { q: unit.q, r: unit.r, words: 'HOVER A HEX. CLICK TO GO.' };
-  else if (view.firedOn.has(unit.id) && !moving) view.manNote = { q: unit.q, r: unit.r, words: 'BREAK CONTACT!' };
+  if (tipsOn && !view.manNotes.some((n) => n.q === unit.q && n.r === unit.r)) {
+    if (!firstMoveMade && unit.ap > 0) view.manNotes.push({ q: unit.q, r: unit.r, words: 'HOVER A HEX. CLICK TO GO.' });
+    else if (view.firedOn.has(unit.id) && !moving) view.manNotes.push({ q: unit.q, r: unit.r, words: 'BREAK CONTACT!' });
+  }
+  // The ghost shows the move until the player tries one himself.
+  if (tipsOn && !firstMoveMade && !moving && !briefing) view.ghost = cuesFor.ghost;
   if (!hex || hoverEnemy) return view;
 
   const plan = planMove(map, state.units, unit, hex, rules, state.enemies);
@@ -1032,21 +1074,21 @@ function actionsFor(unit) {
       ? {
         // One line, so its cost always shows: "Fire back", or "Fire" where the strip has four columns.
         id: 'suppress', key: 'S', label: 'Return fire', short: 'Fire back', tight: 'Fire',
-        help: `Fire back at an enemy that has him in its sights: it keeps its head down — it will not see, fire or move until its next go — so he can get away, or a gunner can kill it. Only a gunner fires first. Loud: alert +${fireAlert}, and the patrols in earshot come.`,
+        help: `Fire back at an enemy that has him in its sights. It keeps its head down — it will not see, fire or move until its next go — so he can get away, or a gunner can kill it. Only a gunner fires first. Loud: alert +${fireAlert}, and the patrols in earshot come.`,
         ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'the enemy that saw him is gone' } : suppress, ap),
       }
-      : { id: 'suppress', key: 'S', label: 'Suppress', help: 'Fire on an enemy he can see: it keeps its head down — it will not see, fire or move until its next go — so the others can move past it. Loud.', ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
+      : { id: 'suppress', key: 'S', label: 'Suppress', help: `Fire on an enemy he can see. It keeps its head down — it will not see, fire or move until its next go — so the others can slip past, or a gunner can kill it. Loud: alert +${fireAlert}, and the patrols in earshot come.`, ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
       id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, rules.actions.knife.fullTurn ? () => 'full turn' : ap),
-      help: 'Creep up behind an enemy beside him that cannot see him — he is outside its arc — and kill it without a sound: no alert, no noise, '
+      help: 'From behind, without a sound: an enemy beside him that is looking the other way. No alert and no noise, '
         + `but it leaves a body, and ${knifeTurnWords()}. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
     },
     { id: 'kill', key: 'K', label: 'Kill', help: `Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed. ${killScoreWords()}`, ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
       id: 'stone', key: 'T', label: 'Throw stone', short: 'Stone', ...withCost(stoneCheck, ap),
-      help: `He stays put and lobs a stone onto a hex up to ${rules.actions.throwStone.range} away, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase — use it to turn a sentry's back now or pull a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
+      help: `He stays put and lobs a stone up to ${rules.actions.throwStone.range} hexes, over anything. Sentries in earshot turn to face it at once, for the rest of this turn; patrols walk over to look in the enemy phase. It turns a sentry's back now, or pulls a patrol off your path. Alert +${rules.alert.stone}. Press T, then click where it lands`,
     },
-    { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'A full turn beside a wounded man', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
+    { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'Dress the wound of a man beside him: it takes his whole turn, and the wounded man gets his full AP back. He is still one hit from death', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
     { id: 'signal', key: 'B', label: 'Signal boat', tight: 'Signal', help: rules.exfil.call ? `Signal the boat in early from beside the water: it lands ${rules.exfil.call.leadTurns} turns from now and stays only ${rules.exfil.openFor}. It asks first` : '', suggest: signalFor(unit), ...withCost(checkSignalBoat(state, unit, rules, baseMap), ap) },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: `Take a dropped charge from this hex.${weightFor(unit)}`, ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
@@ -1458,12 +1500,13 @@ function render() {
   // The clock runs to the night's last turn, which a boat called in early brings forward (M41b).
   const clock = { ...rules, turnLimit: lastTurn(state, rules) };
   renderTurnCounter(turnCounter, state, clock);
-  renderDawnStrip(dawnStrip, state, clock);
+  // Its last turns redden once they are here (M46).
+  renderDawnStrip(dawnStrip, state, clock, cuesFor.out?.closing && !state.outcome ? CLOSING_TURNS : 0);
   renderEndTurnButton(endTurnButton, state, clock);
   renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
-  else renderActions(actionBar, view.actions, handleAction);
+  else renderActions(actionBar, view.actions, handleAction, state.selectedUnitId);
   renderTimerTin(timerTinBox, view.timerTin, svg, map, {
     pick: (fuse) => handleAction(`pencil-${fuse}`),
     set: () => handleAction('pencil-set'),
@@ -1543,8 +1586,10 @@ function commit(next, cue = 'action') {
   undoStack.push(state);
   const { steps } = rules.undo;
   if (steps !== null && undoStack.length > steps) undoStack = undoStack.slice(-steps);
+  const before = state;
   state = settleMission(next, rules, baseMap);
   if (cue) playCue(cue);
+  flyAlertPips(alertOrigins(before, state, selectedUnit(before)));
 }
 
 /** A move, in silence (M24, the operator's: neither M23's slides nor the snap before them suited it). */
@@ -1829,7 +1874,9 @@ function endTurnNow() {
   const before = new Map(state.units.map((u) => [u.id, u.dead]));
   earlierReports = [{ turn: state.turn, events: state.report }, ...earlierReports].slice(0, 2);
   const trainWas = trainView();
+  const ended = state;
   state = endTurn(state, rules, baseMap);
+  flyAlertPips(alertOrigins(ended, state));
   // The goods train runs to its new place (M35): how far its engine went, or
   // its own pace where it has just come on or gone off.
   const trainNow = trainView();
@@ -1854,6 +1901,39 @@ function endTurnNow() {
     }
   }
   render();
+}
+
+/**
+ * Whatever raised the alert sends a red pip from its hex to the dial, which
+ * jolts as each lands (M46: the cause is seen, not read off the log). Display
+ * only, laid over the page; nothing waits for it.
+ */
+function flyAlertPips(origins) {
+  if (!origins.length || typeof document.body.animate !== 'function') return;
+  const dial = alertDial.getBoundingClientRect();
+  const to = { x: dial.left + dial.width / 2, y: dial.top + dial.height / 2 };
+  origins.forEach((hex, i) => {
+    const from = svg.querySelector(`g[data-q="${hex.q}"][data-r="${hex.r}"]`)?.getBoundingClientRect();
+    if (!from) return;
+    const pip = document.createElement('div');
+    pip.className = 'alert-pip';
+    pip.style.left = `${from.left + from.width / 2}px`;
+    pip.style.top = `${from.top + from.height / 2}px`;
+    document.body.appendChild(pip);
+    const dx = to.x - (from.left + from.width / 2), dy = to.y - (from.top + from.height / 2);
+    const flight = pip.animate([
+      { transform: 'translate(0, 0) scale(0.4)', opacity: 0 },
+      { transform: 'translate(0, -14px) scale(1.5)', opacity: 1, offset: 0.18 },
+      { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1 },
+    ], { duration: CUE.pip.ms, delay: i * CUE.pip.staggerMs, easing: 'ease-in', fill: 'both' });
+    flight.onfinish = () => {
+      pip.remove();
+      alertDial.classList.remove('jolt');
+      // Read back, so the class going on again starts the jolt again.
+      void alertDial.getBoundingClientRect();
+      alertDial.classList.add('jolt');
+    };
+  });
 }
 
 // The counter key beside the orders (M15), drawn once per game from its men
@@ -2102,6 +2182,8 @@ function openMission(id) {
   query.delete('seed');
   if (musicOff) query.set('music', 'off');
   else query.delete('music');
+  if (tipsOn) query.set('tips', 'on');
+  else query.delete('tips');
   window.location.search = query.toString();
 }
 
@@ -2133,6 +2215,8 @@ function startMission(nextLevel, seed) {
   undoStack = [];
   menPicked = false;
   firstMoveMade = false;
+  sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedOn: new Set() };
+  cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
   earlierReports = [];
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
@@ -2174,7 +2258,7 @@ function describeBriefing(which, view) {
       sections: [],
       go: `TURN TO PAGE ${mission.page} — any key, or click a mission`,
       // Bottom left, as on the orders (M29b, the operator's).
-      toggle: musicToggle(),
+      toggles: [musicToggle(), tipsToggle()],
     };
   }
   if (which.kind === 'signal') {
@@ -2275,10 +2359,11 @@ function describeBriefing(which, view) {
         sections: [{
           heading: 'THE BASICS',
           lines: [
-            ...(before ? [`The Dakota flies your choice of ${runList} run; the men jump along it, drifting a hex or two downwind. Pick one with 1–3, then SPACE to jump.`] : []),
-            'Click a man (or press 1–6), hover a hex to see what the move costs and risks, and click to go. SPACE ends a turn.',
+            ...(before ? [`Pick the ${runList} run with 1–3. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
+            'Click a man (or press 1–6). Hover a hex to see what the move costs and risks; click to go. SPACE ends the turn.',
+            'Red ground gets him spotted on the way; blue is safe. Spotted once is a warning: break contact before the turn ends, or he is fired on.',
             'The red dashed hexes are charge points: stand a man with a charge on one and press C.',
-            'Hover anything for detail. KEYBOARD lists every key.',
+            'Hover anything to ask what it is. KEYBOARD lists every key. Play tips, on the orders, has the pen say what to do next.',
           ],
         }, {
           heading: 'TONIGHT',
@@ -2326,7 +2411,7 @@ function describeBriefing(which, view) {
           // The clock: dawn, or the boat where the way out is one (M41).
           boat
             ? { bold: `The BOAT is in on turn ${boat} and stays ${rules.exfil.openFor ?? 'till dawn'}${rules.exfil.openFor ? ' turns' : ''}. There is no way out before it.` }
-            : `Dawn comes at the end of turn ${rules.turnLimit}. Every bang alerts the garrison.`,
+            : `Dawn comes at the end of turn ${rules.turnLimit}. Every bang stirs the garrison.`,
           ...(rules.canisters ? [{ bold: `The charges are in the ${rules.canisters.count} CANISTERS, ${rules.canisters.charges} in each. Nobody jumps with one.` }] : []),
           ...(extras.length ? [`Bonus: ${extras.join(', ')}.`] : []),
         ],
@@ -2342,7 +2427,9 @@ function describeBriefing(which, view) {
         onChoose: handleChooseLevel,
       },
       // Bottom left (M21, the operator's): the music plays only before the jump.
-      toggle: before ? musicToggle() : null,
+      // Play tips beside it (M46, the operator's), in play too: they can be
+      // turned on or off at any time.
+      toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
     };
   }
@@ -2361,9 +2448,44 @@ function describeBriefing(which, view) {
         lines: lines.length ? lines.slice(0, shown) : ['A quiet night. Nothing seen.'],
         more: lines.length > shown ? `…and ${lines.length - shown} more in the report under the map.` : null,
       },
-      { heading: 'WHAT NEXT', hints: true, lines: hintsFor(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName }, 1) },
+      { heading: 'WHAT NEXT', hints: true, lines: turnHint(view).map((h) => h.text) },
     ],
     toggle: { on: briefingsOn },
+  };
+}
+
+/** The turn card's one hint (M44), with what it points at (M46). */
+function turnHint(view) {
+  return pointedHints(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName }, 1);
+}
+
+/** The hexes the turn card's hint is about: the board rings each while the card is up. A handful at most. */
+function hintRings(view) {
+  const at = turnHint(view)[0]?.at ?? [];
+  return (at === 'exfil' ? view.exfil : at).slice(0, 6);
+}
+
+/**
+ * The first move shown (M46): a short path the selected man could take now,
+ * two or three steps to a hex where nobody would spot him, toward the nearest
+ * target the win needs, and the AP he would have left on each step. Null if
+ * he has nowhere to go.
+ */
+function firstMoveGhost(unit, reachable, wash) {
+  if (firstMoveMade || unit.ap <= 0) return null;
+  const goals = winTargets(state, rules).targets.filter((o) => !o.destroyed).flatMap((o) => o.chargeHexes);
+  const far = (h) => Math.min(...goals.map((g) => hexDistance(h, g)), 99);
+  const plans = [...reachable.values()]
+    .filter((h) => h.cost > 0 && wash?.get(hexKey(h.q, h.r)) !== 'spotted' && wash?.get(hexKey(h.q, h.r)) !== 'shot')
+    .map((h) => planMove(map, state.units, unit, h, rules, state.enemies))
+    .filter((plan) => plan?.affordable && plan.steps >= 1 && plan.steps <= 3);
+  if (!plans.length) return null;
+  // The longest of them first, then the one that ends nearest the job.
+  const best = plans.sort((a, b) => Math.min(b.steps, 2) - Math.min(a.steps, 2) || far(a.path.at(-1)) - far(b.path.at(-1)))[0];
+  return {
+    unit, number: state.units.indexOf(unit) + 1,
+    path: best.path.slice(1).map((h) => ({ q: h.q, r: h.r })),
+    aps: best.costs.slice(1).map((cost) => Math.max(0, unit.ap - cost)),
   };
 }
 
@@ -2375,6 +2497,25 @@ function musicToggle() {
     onChange: (on) => {
       musicOff = on;
       syncMusic();
+    },
+  };
+}
+
+/** Play tips (M46, the operator's), beside Music off: off until ticked. */
+function tipsToggle() {
+  return {
+    on: tipsOn,
+    label: ' Play tips',
+    help: titled('PLAY TIPS', 'The red pen on the map says what to do next: how to move, where a charge goes, when to break contact, get clear or get out. For a first game.'),
+    onChange: (on) => {
+      tipsOn = on;
+      // Carried in the address, so Play again and a reload keep it.
+      const query = new URLSearchParams(window.location.search);
+      if (on) query.set('tips', 'on');
+      else query.delete('tips');
+      const search = query.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+      renderBoard();
     },
   };
 }
@@ -2412,11 +2553,10 @@ function describeDiversionCard(before) {
 function describeMarker(id, unit) {
   const name = unit.shortName;
   if (id === 'marker-spotted') {
-    return ['SPOTTED — IN CONTACT', `${name} has been seen, and whoever saw him is watching him (the dashed line). `
-      + `If he is seen again at the end of this turn he is fired on: hit in the open or light cover, pinned in heavy cover — `
-      + `and pinned, never hit, if every enemy firing is more than ${rules.combat.hitRange} hexes away. `
-      + 'An enemy fires at one man a turn, the one it is watching first, so another man in its sights can draw its fire.\n'
-      + `Break contact now: get out of its sight, hide where the readout says he is not spotted [H], or ${fireBackWords()}.`];
+    return ['SPOTTED — IN CONTACT', `${name} has been seen, and the enemy on the dashed line is watching him. `
+      + `Seen again at the end of this turn, he is fired on: hit in the open or light cover, only pinned in heavy cover or from more than ${rules.combat.hitRange} hexes off. `
+      + 'An enemy fires at one man a turn, the one it is watching first.\n'
+      + `Break contact now: get out of its sight (green ground), hide where that leaves him unseen [H], or ${fireBackWords()}.`];
   }
   if (id === 'marker-wounded') {
     const left = rules.combat.hitsToKill - unit.hits;
@@ -2424,7 +2564,11 @@ function describeMarker(id, unit) {
       + 'A man beside him can stabilise him [A]: a full turn, and he gets his full AP back.'];
   }
   if (id === 'marker-hidden') {
-    return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP: leave him where he is and he stays down.`];
+    return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP. Leave him be and he stays down.`];
+  }
+  if (id === 'marker-late') {
+    const left = lastTurn(state, rules) - state.turn;
+    return ['TOO FAR', `${name} cannot reach the exfil before ${rules.exfil?.openFor ? 'the boat goes' : 'dawn'}: ${left === 0 ? 'this is the last turn' : `${left + 1} turns left`}. A man still on the board then is left behind.`];
   }
   if (id === 'marker-orders') {
     const leader = state.units.find((u) => u.leader);
@@ -2469,7 +2613,13 @@ function chargeCue(unit) {
       words: here ? (checkPlaceCharge(state, unit, rules).ok ? 'PRESS C TO SET THE CHARGE' : null) : hexes.length > 1 ? 'STAND ON A RING TO SET A CHARGE' : 'STAND HERE TO SET THE CHARGE',
     });
   }
-  return cue.length ? cue : null;
+  if (!cue.length) return null;
+  // Lettered once, on the target nearest him (M46, the operator's: on the
+  // airfield every pen in reach said STAND HERE, one over another). The
+  // others keep their rings.
+  const near = (c) => Math.min(...c.hexes.map((h) => hexDistance(unit, h)));
+  const lettered = cue.filter((c) => c.words).sort((a, b) => near(a) - near(b))[0];
+  return cue.map((c) => (c === lettered ? c : { ...c, words: null }));
 }
 
 /** Jump, and show the stick going out and coming down. */

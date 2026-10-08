@@ -764,6 +764,14 @@ export function renderPieces(layers, state, view) {
     if (enemy.suppressed) counter.appendChild(marker('marker-suppressed', 38, -12));
     else if (enemy.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
     if (!enemy.killable) counter.appendChild(marker('marker-no-kill', -10, -12));
+    // What the selected man could do to it now (M46): the pen's red disc,
+    // a knife or a crosshair, on its top left corner.
+    const strike = view.strikes?.get(enemy.id);
+    if (strike) {
+      const mark = el('g', { class: 'nd-point', 'pointer-events': 'none' });
+      mark.appendChild(marker(`marker-strike-${strike}`, CUE.strikeAt.x, CUE.strikeAt.y + (enemy.killable ? 0 : MARKER.size), CUE.strikeSize));
+      counter.appendChild(mark);
+    }
     // The garrison's turn (M15): a red "!" pops on each enemy that spotted a
     // man or found something, once it has got there. After the show it stays
     // on the chip for the player's turn, with a rollover saying what it saw or
@@ -841,6 +849,8 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', MARKER.hiddenAt.x, MARKER.hiddenAt.y, unit));
+    // Too far from the way out to make it before the night ends (M46).
+    if (view.late?.has(unit.id)) counter.appendChild(hoverMarker(layers, 'marker-late', CUE.lateAt.x, CUE.lateAt.y, unit, CUE.lateSize));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
     // One chevron for the ordinary orders, two for the strongest, beside him.
     // Smaller since M14's blue AP dots say the same (M15: it outshone Dutch's own rank flash),
@@ -861,7 +871,12 @@ export function renderPieces(layers, state, view) {
   drawTargetRings(layers, view.targetRings, now);
   if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
   if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
-  if (view.manNote) drawManNote(layers, view.manNote);
+  // What the turn card's hint is about, ringed while the card is up (M46).
+  for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now);
+  if (view.ghost) drawGhost(layers, view.ghost, now);
+  else if (layers.cueSince) layers.cueSince.ghostFor = null;
+  if (view.getClear) drawGetClear(layers, view.getClear);
+  for (const note of view.manNotes ?? []) drawManNote(layers, note);
   if (view.selectCue || view.canisterRings) drawSelectCue(layers, state, now, { men: view.selectCue, canisters: view.canisterRings, canisterCue });
   if (view.shotShow) drawShot(layers, view.shotShow, now);
   if (view.strikeShow?.kind === 'cut') {
@@ -913,20 +928,7 @@ function drawTargetRings(layers, rings, now) {
     const colour = RINGS[ring.colour] ?? RINGS.red;
     const loops = ring.primary ? 2 : 1;
     for (let loop = 0; loop < loops; loop++) {
-      const start = -2.2 + loop * 0.9 + wobbleAt(c.x, c.y);
-      const phase = (wobbleAt(c.y + loop, c.x) + 1) * Math.PI;
-      const turns = 1 + RINGS.overshoot;
-      let d = '';
-      const steps = 64;
-      for (let k = 0; k <= steps; k++) {
-        const t = start + (k / steps) * turns * Math.PI * 2;
-        // The pen drifts outward as it goes round, so the ends pass each other.
-        // A hand's sway, not pen noise: two slow waves, phased by where it is.
-        const sway = Math.sin(2 * t + phase) * 0.6 + Math.sin(3 * t + phase * 2) * 0.4;
-        const grow = 1 + (k / steps) * 0.07 + loop * 0.05 + sway * RINGS.wobble;
-        const x = c.x + Math.cos(t) * rx * grow, y = c.y + Math.sin(t) * ry * grow;
-        d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
-      }
+      const d = penLoop(c, rx, ry, loop);
       const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: RINGS.opacity });
       pen.appendChild(path);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
@@ -971,12 +973,31 @@ function drawTargetRings(layers, rings, now) {
   });
 }
 
+/** One turn of the pen round an ellipse, a little past where it began: a path's `d`. */
+function penLoop(c, rx, ry, loop = 0) {
+  const start = -2.2 + loop * 0.9 + wobbleAt(c.x, c.y);
+  const phase = (wobbleAt(c.y + loop, c.x) + 1) * Math.PI;
+  const turns = 1 + RINGS.overshoot;
+  let d = '';
+  const steps = 64;
+  for (let k = 0; k <= steps; k++) {
+    const t = start + (k / steps) * turns * Math.PI * 2;
+    // The pen drifts outward as it goes round, so the ends pass each other.
+    // A hand's sway, not pen noise: two slow waves, phased by where it is.
+    const sway = Math.sin(2 * t + phase) * 0.6 + Math.sin(3 * t + phase * 2) * 0.4;
+    const grow = 1 + (k / steps) * 0.07 + loop * 0.05 + sway * RINGS.wobble;
+    const x = c.x + Math.cos(t) * rx * grow, y = c.y + Math.sin(t) * ry * grow;
+    d += `${k === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)} `;
+  }
+  return d;
+}
+
 // --- where to start (M21) --------------------------------------------------------
 
 /** Pen lettering, haloed in paper so it reads over the map. */
-function penLetters(lines, x, y, sizes) {
+function penLetters(lines, x, y, sizes, colour = CUE.colour) {
   const note = text('', {
-    'font-family': SPEECH.font, 'font-weight': 'bold', fill: CUE.colour,
+    'font-family': SPEECH.font, 'font-weight': 'bold', fill: colour,
     stroke: CUE.halo, 'stroke-width': 6, 'paint-order': 'stroke', 'stroke-linejoin': 'round',
   });
   let dy = 0;
@@ -1002,7 +1023,9 @@ function throbbing(layers, key, now) {
  * Before the jump (M21, from playtesting: a first-timer did not know where to
  * begin): PICK A DROP DIRECTION among the runs' names until one is picked,
  * then HIT SPACE TO JUMP, in the player's pen. Still since M24 (the
- * operator's): the throb is kept for the men's rings.
+ * operator's): the throb is kept for the men's rings. In the blue of our
+ * kit, with a blue ring round each run to choose from, or round the one
+ * chosen (M46, the operator's: in red it read as one with the targets' rings).
  */
 function drawDropCue(layers, cue, names) {
   // A map may say where it starts (M29b, art only: `dropCueAt`, a hex), where
@@ -1012,7 +1035,13 @@ function drawDropCue(layers, cue, names) {
   const y = at ? at.y : names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
   const lines = cue === 'pick' ? ['PICK A DROP DIRECTION', 'click a run\'s name, or press 1-3'] : ['HIT SPACE TO JUMP', 'or click the run again'];
   const g = el('g', { 'pointer-events': 'none' });
-  g.appendChild(penLetters(lines, x, y, [CUE.size, CUE.subSize]));
+  const { padX, padY, width, opacity } = CUE.runRing;
+  for (const tab of names.filter((t) => cue === 'pick' || t.selected)) {
+    const d = penLoop(tab, tab.w / 2 + padX, tab.h / 2 + padY);
+    g.appendChild(el('path', { d, fill: 'none', stroke: CUE.halo, 'stroke-width': width + 4, 'stroke-linecap': 'round', opacity: 0.7 }));
+    g.appendChild(el('path', { d, fill: 'none', stroke: CUE.kit, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity }));
+  }
+  g.appendChild(penLetters(lines, x, y, [CUE.size, CUE.subSize], CUE.kit));
   layers.effects.appendChild(g);
 }
 
@@ -1070,6 +1099,69 @@ function drawManNote(layers, note) {
   layers.effects.appendChild(letters);
 }
 
+/** A throbbing pen ring round a hex's middle: where the charge goes (M43c), what a hint is about (M46). */
+function penRing(layers, p, now) {
+  const g = el('g', { class: 'nd-point', 'pointer-events': 'none', opacity: CUE.pointRingOpacity });
+  layers.cueSince ??= {};
+  layers.cueSince.point ??= now;
+  g.style.animationDelay = `${-Math.round(now - layers.cueSince.point)}ms`;
+  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
+  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
+  layers.effects.appendChild(g);
+}
+
+/**
+ * The first move shown (M46): a faint copy of the selected man's counter
+ * steps along a short path he could take, its AP dots emptying as it goes,
+ * rests, and starts again. `ghost` is main.js's { unit, number, path, aps }:
+ * the hexes after his own, and the AP he would have left on each. Drawing
+ * memory, like the throb: a redraw carries on from where it was.
+ */
+function drawGhost(layers, ghost, now) {
+  const { stepMs, restMs, opacity } = CUE.ghost;
+  layers.cueSince ??= {};
+  if (layers.cueSince.ghostFor !== ghost.unit.id) layers.cueSince = { ...layers.cueSince, ghostFor: ghost.unit.id, ghost: now };
+  const steps = ghost.path.length;
+  const total = steps * stepMs + restMs;
+  const g = el('g', { 'pointer-events': 'none', opacity });
+  ghost.path.forEach((hex, i) => {
+    const counter = drawCounter({ ...ghost.unit, q: hex.q, r: hex.r, ap: ghost.aps[i], hidden: false, trail: null }, ghost.number, layers.map, false);
+    // On show for its own step, the last through the rest; never eased.
+    const from = (i * stepMs + stepMs * 0.5) / total, to = i === steps - 1 ? 1 : ((i + 1) * stepMs + stepMs * 0.5) / total;
+    playFrom(counter, [
+      { opacity: 0, offset: 0 }, { opacity: 0, offset: Math.max(0, from - 0.001) }, { opacity: 1, offset: from },
+      { opacity: 1, offset: Math.min(1, to - 0.001) }, { opacity: to >= 1 ? 1 : 0, offset: Math.min(1, to) }, { opacity: to >= 1 ? 1 : 0, offset: 1 },
+    ], { duration: total, iterations: Infinity }, now - layers.cueSince.ghost);
+    g.appendChild(counter);
+  });
+  layers.effects.appendChild(g);
+}
+
+/**
+ * GET CLEAR (M46): from each man standing in a blast that goes off this turn,
+ * a pen arrow toward the nearest clear hex he can still reach. `caught` is
+ * cues.js getClear's list; the words are a man's note, lettered by main.js.
+ */
+function drawGetClear(layers, caught) {
+  const { map } = layers;
+  const { width, head, start, end } = CUE.clearArrow;
+  for (const man of caught) {
+    if (!man.to) continue;
+    const a = axialToPixel(man.q, man.r, map.hexSize), b = axialToPixel(man.to.q, man.to.r, map.hexSize);
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    // Never longer than a hex and a bit: it says which way, the path says how.
+    const reach = Math.min(len * end, map.hexSize * 2.1);
+    const at = (d) => ({ x: a.x + ((b.x - a.x) / len) * d, y: a.y + ((b.y - a.y) / len) * d });
+    const from = at(Math.min(map.hexSize * 0.75, len * start)), tip = at(reach);
+    const g = el('g', { 'pointer-events': 'none' });
+    for (const [stroke, w] of [[CUE.halo, width + 5], [CUE.colour, width]]) {
+      g.appendChild(polyline([from, tip], { stroke, 'stroke-width': w }));
+      g.appendChild(arrow(tip, from, stroke, w, head));
+    }
+    layers.effects.appendChild(g);
+  }
+}
+
 /**
  * Where the charge goes (M43c, from playtesting: new players stood on the
  * target and could not set a charge there). Each empty charge point of a
@@ -1082,15 +1174,7 @@ function drawChargeCue(layers, cue, now) {
   const edge = boardEdges(map);
   for (const target of cue) {
     const points = target.hexes.map((h) => axialToPixel(h.q, h.r, map.hexSize));
-    for (const p of points) {
-      const g = el('g', { class: 'nd-point', 'pointer-events': 'none', opacity: CUE.pointRingOpacity });
-      layers.cueSince ??= {};
-      layers.cueSince.point ??= now;
-      g.style.animationDelay = `${-Math.round(now - layers.cueSince.point)}ms`;
-      g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
-      g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
-      layers.effects.appendChild(g);
-    }
+    for (const p of points) penRing(layers, p, now);
     if (!target.words || !points.length) continue;
     // Under the lowest point, or over the highest if that would leave the board.
     const size = CUE.pointNoteSize;
@@ -1999,6 +2083,20 @@ function drawSites(layers, state, view) {
   }
   const exfilAt = labelPoint(map, view.exfil);
   layers.sites.appendChild(casedText(view.exfilLabel ?? 'EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
+  // The job is done and the way out is open (M46): its ground throbs green,
+  // and with the tips on GET OUT! is lettered over it in the same green.
+  if (view.goOut) {
+    fillArea(layers, areaOf(view.exfil), CUE.goOpacity, CUE.go, pulsing(layers, 'nd-pulse-slow', 'go'));
+    if (view.goOut.words) {
+      const edge = boardEdges(map);
+      const size = CUE.goNoteSize;
+      const half = view.goOut.words.length * size * CUE.noteAdvance / 2;
+      const x = Math.min(Math.max(exfilAt.x, edge.left + half + CUE.noteEdgeGap), edge.right - half - CUE.noteEdgeGap);
+      const note = penLetters([view.goOut.words], x, exfilAt.top - map.hexSize * 1.25, [size], CUE.go);
+      note.setAttribute('pointer-events', 'none');
+      layers.effects.appendChild(note);
+    }
+  }
 
   // Where a blast only wounds our men (M20) is printed lighter than where it kills.
   if (view.previewBlastArea) fillArea(layers, view.previewBlastArea, BLAST.previewOpacity);
@@ -2009,6 +2107,8 @@ function drawSites(layers, state, view) {
     drawAreaEdge(layers, layers.sites, view.laterBlastArea, [[BLAST.stroke, BLAST.laterEdgeWidth]], { 'stroke-dasharray': BLAST.laterEdgeDash });
   }
   if (view.blastArea.size > 0) {
+    // Going off this turn (M46): the ground throbs.
+    if (view.blastPulse) fillArea(layers, view.blastArea, BLAST.opacity, BLAST.fill, pulsing(layers, 'nd-pulse', 'blast'));
     fillArea(layers, view.blastArea, BLAST.woundOpacity);
     fillArea(layers, view.blastKillArea, BLAST.opacity - BLAST.woundOpacity);
     drawAreaEdge(layers, layers.sites, view.blastArea, [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
@@ -2225,13 +2325,23 @@ function drawWires(layers, objective) {
   layers.sites.appendChild(g);
 }
 
-function fillArea(layers, area, opacity, fill = BLAST.fill) {
+function fillArea(layers, area, opacity, fill = BLAST.fill, into = layers.sites) {
   const { corners, map } = layers;
   for (const { q, r } of area.values()) {
-    layers.sites.appendChild(el('polygon', {
-      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners), fill, 'fill-opacity': opacity,
+    into.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners), fill, 'fill-opacity': opacity, 'pointer-events': 'none',
     }));
   }
+}
+
+/** A group on the sites layer whose strength throbs, from where it began, so a redraw does not restart it. */
+function pulsing(layers, className, key) {
+  const g = el('g', { class: className, 'pointer-events': 'none' });
+  layers.cueSince ??= {};
+  layers.cueSince[key] ??= performance.now();
+  g.style.animationDelay = `${-Math.round(performance.now() - layers.cueSince[key])}ms`;
+  layers.sites.appendChild(g);
+  return g;
 }
 
 /** The middle of a group of hexes, in pixels, and the top row's centre line. */
@@ -2418,7 +2528,7 @@ function runTab(layers, run, at) {
   tab.addEventListener('mouseenter', () => layers.handlers.onRunHover?.(run.id, tab));
   tab.addEventListener('mouseleave', () => layers.handlers.onRunLeave?.());
   tab.addEventListener('click', () => layers.handlers.onRunChoose?.(run.id));
-  tab.at = at;
+  tab.at = { x: at.x, y: at.y, w: width, h: height, selected: run.selected };
   return tab;
 }
 

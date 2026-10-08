@@ -643,6 +643,23 @@
       color: var(--red);
     }
     .action.active .action-tag { color: var(--paper); }
+    /* What he cannot do now (M46): its key alone, small and grey, in what is
+       left of the last row. Its rollover still says what it is and why not. */
+    .action-keys { display: flex; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px; min-width: 0; min-height: 20px; }
+    .action-key-only {
+      min-width: 11px;
+      padding: 0 3px;
+      font-size: 11px;
+      font-weight: bold;
+      line-height: 16px;
+      text-align: center;
+      color: var(--paper);
+      background: rgba(26, 26, 24, 0.38);
+      cursor: default;
+    }
+    /* A button that has just become usable pops once. */
+    @keyframes action-pop { 0% { transform: scale(0.82); } 55% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .action.pop { animation: action-pop 260ms steps(4, end) 1; }
     .action.struck .action-words { text-decoration: line-through; text-decoration-thickness: 2px; }
     .action.danger:not(:disabled) .action-cost { color: var(--red); font-weight: bold; }
     .actions-heading {
@@ -679,6 +696,22 @@
       width: 76px;
       height: 76px;
     }
+    /* What raised the alert flies to the dial as a red pip, and the dial
+       jolts as it lands (M46, main.js flyAlertPips). */
+    .alert-pip {
+      position: fixed;
+      z-index: 40;
+      box-sizing: border-box;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--red);
+      pointer-events: none;
+    }
+    @keyframes dial-jolt { 0% { transform: scale(1); } 30% { transform: scale(1.18) rotate(-5deg); } 60% { transform: scale(0.96) rotate(3deg); } 100% { transform: scale(1); } }
+    #alert-dial.jolt { animation: dial-jolt 320ms steps(5, end) 1; }
     .alert-heading {
       font-family: var(--slab);
       font-weight: bold;
@@ -1211,6 +1244,8 @@
     /* The box sits on the line's middle, so the label's words line up with
        CARRY ON beside it rather than dropping below it. */
     #briefing .brief-foot label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    /* Two boxes side by side (M46: play tips beside the music). */
+    #briefing .brief-toggles { display: inline-flex; align-items: center; gap: 14px; }
     /* The palette's army green, not the browser's blue. */
     #briefing .brief-foot input { margin: 0; accent-color: var(--green); }
     /* Music off on the orders (M22, the operator's: a near miss on the small

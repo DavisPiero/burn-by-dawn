@@ -246,7 +246,7 @@ board must read at a glance.
   AIRFIELD) heads the card, with ORDERS · BEFORE THE DROP beside it. Then **five lines
   at most, and one more for a rule only this mission has**: where they are dropping;
   the job in bold, two lines, split at its comma so the EXFIL never stands alone; the
-  clock ("Dawn comes at the end of turn 16. Every bang alerts the garrison.", or the
+  clock ("Dawn comes at the end of turn 16. Every bang stirs the garrison.", or the
   boat's turn in bold where the way out is a boat); the canisters in bold where there
   are any; and one Bonus line naming everything that pays extra with its points (the
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
