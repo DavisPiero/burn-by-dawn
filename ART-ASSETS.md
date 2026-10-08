@@ -228,6 +228,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-aim.svg`, `marker-aim-no.svg` | 100 x 100 (M15: the crosshair over an enemy while aiming a suppress, kill or knife — red if it can be done, grey if not) |
 | `marker-spotted.svg` | 28 x 28 |
 | `marker-cover-none.svg`, `marker-cover-light.svg`, `marker-cover-heavy.svg` | 20 x 20 (M45, the cover on a hex a move ends on: a shield, empty, half green, all green. *Drawn by code.*) |
+| `marker-strike-knife.svg`, `marker-strike-fire.svg`, `marker-strike-kill.svg` | 28 x 28 (M46, on an enemy the selected man could strike now: a red disc with a paper knife, crosshair, or crosshair struck through. *Drawn by code.*) |
+| `marker-late.svg` | 28 x 28 (M46, on a man who cannot reach the exfil before the night ends: a red clock on paper. *Drawn by code.*) |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide; paper with an ink eye since M21, printed at full strength over the faint counter) |
 | `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
 | `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
