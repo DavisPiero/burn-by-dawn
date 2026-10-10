@@ -113,7 +113,15 @@ man could strike, the first move's ghost, a throbbing blast and GET CLEAR!, GET 
 the clocks, the alert's flying pip, the action strip cut to what can be done, the hint
 ringed on the board. The pen's coaching is behind a **Play tips** box, off unless
 ticked (the operator's); the drop is chosen in blue; the charge points are ringed from
-one hex off. Tests: 204 headless, 206 in tests.html. **Next: M47**, the training mission specified.
+one hex off. Tests: 204 headless, 206 in tests.html.
+
+**M47** (10 Oct 2026): the training mission is specified in `MISSION-TRAINING.md`
+(SPEC §15) and its lesson engine is built (`src/lessons.js`), off in every other
+mission. A draft, `?mission=training`: a sketch of the practice ground and two lessons
+that prove the engine (Action points; Not being seen), each played through by a test.
+Tests: 210 headless, 212 in tests.html. **Next: M48**, the course, a few lessons a
+session; the first should be the operator's rewording of these two, since the other
+thirteen will be written to their pattern.
 
 **M32** (1 Oct 2026), a review before Phase 4, from the balance bot's numbers
 (DECISIONS.md): the airfield has its own clean run (the garrison below Alert when the
@@ -353,7 +361,7 @@ the kill-everything bot is level with the careful one on the West and South runs
 
 ## Phase 5 — Show, don't tell: teaching the game (agreed 7 Oct 2026)
 
-**Agreed by the operator, 7 Oct 2026. M44 to M46 are done; M47 is next.** From the
+**Agreed by the operator, 7 Oct 2026. M44 to M47 are done; M48 is next.** From the
 first playtests with new players: there is too much to read before the first move, and
 key rules are not found by looking (a player stood a sapper on the Rail Bridge and
 could not see why he could not set his charge). M43c fixed that one case; this phase
@@ -483,7 +491,7 @@ passed. The operator's list, with what I would add:
   new player is taught, which makes M47 and M48 matter more. Not built, from the
   table above: an enemy's blind side shaded, the noise arrows from patrols that will
   come, the chute joined to a patrol's route, and the **?** pages' diagrams (M48).
-- **M47 — the training mission specified** (`MISSION-TRAINING.md`) and its lesson
+- **M47 — the training mission specified. Done** (`MISSION-TRAINING.md`) and its lesson
   engine built, off in every other mission.
 - **M48 — the training mission built**, with the **?** pages' diagrams drawn from the
   same lessons. Fifteen lessons is more than one session: expect M48 to be two or

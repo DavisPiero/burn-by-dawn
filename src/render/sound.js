@@ -521,6 +521,32 @@ const SYNTHS = {
   // blast and a short one, two reedy notes a little out of tune that scoop up
   // as the steam comes and sag as it goes, breath in it; then the engine's
   // chuffing dying away. Made in code until a recording is supplied.
+  // The umpire's whistle (M47): a pea whistle, two shrill notes close
+  // together fluttering as the pea turns, one short blast.
+  whistle: (ctx, out, at) => {
+    const length = 0.42;
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0.0001, at);
+    level.gain.exponentialRampToValueAtTime(0.22, at + 0.02);
+    level.gain.setValueAtTime(0.22, at + length - 0.05);
+    level.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    level.connect(out);
+    const pea = ctx.createOscillator();
+    pea.frequency.value = 38;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.1;
+    pea.connect(depth).connect(level.gain);
+    pea.start(at);
+    pea.stop(at + length);
+    for (const f of [2750, 2930]) {
+      const pipe = ctx.createOscillator();
+      pipe.type = 'sine';
+      pipe.frequency.value = f;
+      pipe.connect(level);
+      pipe.start(at);
+      pipe.stop(at + length);
+    }
+  },
   train: (ctx, out, at, v) => {
     const far = filter(ctx, 'lowpass', 2600, 0.6);
     far.connect(out);
@@ -649,6 +675,8 @@ const CUES = {
   desertDefeat: [['siren', 0.7, 0.35]],
   // France's goods train coming onto the board (M35): its whistle.
   train: [['train', 0.5, 0]],
+  // A man caught out in a lesson (M47): the umpire blows.
+  whistle: [['whistle', 0.5, 0]],
   // The aqueduct's (M43): the canisters down after the stick, one thump
   // each, played as its ring pops on (M43b); the boat far off as it is sighted or answers the signal; and its
   // last strokes with the surf under them as it lands.

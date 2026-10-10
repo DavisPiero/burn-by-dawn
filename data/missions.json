@@ -5,6 +5,59 @@
 
   "missions": [
     {
+      "id": "training",
+      "status": "draft",
+      "title": "The Practice Ground",
+      "place": "Tatton Park, England",
+      "page": 2,
+      "blurb": "Start here. The parachute school's course, a lesson at a time: umpires for a garrison, a dummy bridge, and nobody hurt.",
+      "tagline": "SIX MEN · ONE DUMMY BRIDGE · NOBODY HURT",
+      "map": "data/map-training.json",
+      "roster": "data/roster.json",
+      "_lessons": "MISSION-TRAINING.md (SPEC.md §15), M47: a mission that names a lessons file is a course. Its orders are the course's list, each lesson sets up its own men and umpires on the map, and the lesson engine (src/lessons.js) lets only what a step asks for do anything. A draft: two lessons that prove the engine; M48 builds the course.",
+      "lessons": "data/lessons-training.json",
+      "_rules": "An exercise (data/rules.json `mission.exercise`) is never settled: nobody withdraws and there is no back page. And it has no dawn: the night is long enough that no lesson meets it.",
+      "rules": {
+        "turnLimit": 99,
+        "mission": {
+          "exercise": true
+        }
+      },
+      "enemies": {},
+      "win": {
+        "condition": "destroyPrimary"
+      },
+      "briefing": "Today six men are on the practice ground at the parachute school.",
+      "_words": "Placeholder copy, mine, for the operator to reword. The whistle and the umpire's words are the lesson engine's.",
+      "words": {
+        "lineGoesDead": "its telephones go dead",
+        "lineIsDown": "the telephones are already down",
+        "diversionName": "RAF diversion",
+        "diversionKicker": "THE INSTRUCTOR'S THUNDERFLASH",
+        "diversionLog": "a thunderflash goes off behind the umpires",
+        "cries": {
+          "spotted": [
+            "ACHTUNG!",
+            "HALT!",
+            "ALARM!"
+          ],
+          "found": [
+            "MEIN GOTT!",
+            "WAS IST DAS?",
+            "ALARM!"
+          ]
+        },
+        "cleanBonus": "a quiet night",
+        "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
+      },
+      "dialogue": {},
+      "titleCard": "assets/title/title-card.jpg",
+      "endSounds": {
+        "success": "victory",
+        "otherwise": "defeat"
+      }
+    },
+    {
       "id": "france",
       "status": "playable",
       "title": "The Rail Bridge",

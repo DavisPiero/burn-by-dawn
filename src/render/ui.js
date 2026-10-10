@@ -491,6 +491,35 @@ function contentsList({ entries, onChoose }) {
 }
 
 /**
+ * The lesson card (M47, SPEC.md §15), in the turn card's place while a
+ * lesson is on: which lesson and step, the step's one sentence, the umpire's
+ * word if the last try was whistled, and the ways back. It takes clicks
+ * only on its buttons; the board round it is played on. `view` is null to
+ * put it away. `on` is { next(), back(), again(), course() }.
+ */
+export function renderLesson(element, view, on) {
+  element.hidden = !view;
+  if (!view) return;
+  const button = (label, act, className = 'btn') => {
+    const b = html('button', className, boldKeys(label));
+    b.type = 'button';
+    b.addEventListener('click', act);
+    return b;
+  };
+  const back = button('◀ BACK', on.back);
+  back.disabled = !view.canBack;
+  element.replaceChildren(
+    html('div', 'lesson-head', [html('span', 'lesson-title', `LESSON ${view.number} · ${view.title.toUpperCase()}`), html('span', 'lesson-step', `STEP ${view.step} OF ${view.steps}`)]),
+    ...(view.whistle ? [html('p', 'lesson-whistle', `WHISTLE! ${view.whistle} Try that step again.`)] : []),
+    html('p', 'lesson-tell', boldKeys(view.tell)),
+    html('div', 'lesson-foot', [
+      html('span', 'lesson-ways', [back, button('AGAIN', on.again), button('THE COURSE', on.course)]),
+      ...(view.next ? [button('NEXT ▶', on.next, 'btn lesson-next')] : []),
+    ]),
+  );
+}
+
+/**
  * A row of buttons in the card's foot, one picked; what each changes is its
  * rollover, as the orders have no room for another line at 1280x800. A click
  * picks and does not put the card away, as every other click on the card does.
