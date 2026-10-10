@@ -1,7 +1,7 @@
 # CLAUDE.md — working agreement
 
 Read `SPEC.md` before doing anything. It is the source of truth, with the files that
-hold its §11, §13 and §14 (below). If a request conflicts with any of them, say so before
+hold its §11, §13, §14 and §15 (below). If a request conflicts with any of them, say so before
 writing code.
 
 ## Files in this repo
@@ -17,6 +17,8 @@ writing code.
     a `MISSION-<NAME>.md` like it, written before the mission is built.
   - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, playable, not yet balanced. **Read it
     before working on the aqueduct.**
+  - `MISSION-TRAINING.md` — SPEC §15: the training course and its lesson engine. **Read
+    it before working on a lesson or on `src/lessons.js`.**
 - `ART-ASSETS.md` — the art asset manifest. **Read it at milestone M7**, and whenever you
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
 - `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.

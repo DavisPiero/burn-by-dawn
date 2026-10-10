@@ -189,7 +189,7 @@
     },
     {
      "say": "GO BY THE HEDGE.",
-     "tell": "Three dots and he is spotted. A hedge takes two of them away. Move him into it: anywhere red, and the umpire blows his whistle.",
+     "tell": "Three dots and he is spotted. A hedge takes two of them away. Move him into it. End a turn on the red ground and the umpire blows his whistle.",
      "ring": [
       [
        2,
@@ -204,7 +204,8 @@
       "select": [
        "fitch"
       ],
-      "move": "any"
+      "move": "any",
+      "endTurn": true
      },
      "until": {
       "kind": "movedTo",

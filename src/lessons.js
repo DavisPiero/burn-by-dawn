@@ -53,6 +53,8 @@ export function validateLessons(json, known, url = 'lessons') {
     for (const key of ['title', 'qualification']) {
       if (typeof lesson[key] !== 'string' || !lesson[key]) throw new Error(`${at} needs a "${key}"`);
     }
+    // Its place in the course, as the list prints it.
+    if (!Number.isInteger(lesson.number) || lesson.number < 1) throw new Error(`${at} needs its "number" in the course`);
     const start = lesson.start;
     if (typeof start !== 'object' || start === null) throw new Error(`${at} needs a "start"`);
     const men = Object.entries(start.men ?? {});

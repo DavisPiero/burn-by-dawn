@@ -23,6 +23,7 @@ import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery,
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
+import { advance, allows, back, beginLesson, caughtOut, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -40,7 +41,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  capitalise, renderContentsBack, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderLesson, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -70,6 +71,7 @@ const helpTab = document.getElementById('help-tab');
 const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
+const lessonCard = document.getElementById('lesson');
 
 // The night's last turns (M46): the dawn strip reddens through them, and a
 // man who can no longer reach the way out wears a clock. Display only.
@@ -193,6 +195,14 @@ let pencilLifted = null;
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
+
+// The course (M47, SPEC.md §15): where a mission names a lessons file, its
+// lessons, those passed this session (nothing is stored), the lesson being
+// taken and where the player is in it (lessons.js), and the umpire's word if
+// the last try was whistled. Null in every other mission.
+let course = null;
+// Every action a step may allow, for checking a lessons file.
+const ACTION_IDS = ['hide', 'suppress', 'knife', 'kill', 'stone', 'stabilise', 'signal', 'pack', 'pickUp', 'pass', 'charge', 'cut', 'swim', 'diversion'];
 
 // What the board's sums depend on. The mouse moving makes a new state (its
 // hover) but none of these, so what was worked out for them is kept.
@@ -409,6 +419,14 @@ function deriveView() {
   view.manNotes = tipsOn ? cuesFor.clear.map((c) => ({ q: c.q, r: c.r, words: 'GET CLEAR!' })) : [];
   // What the turn card's hint is about, ringed while the card is up (M46).
   if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
+  // A lesson's step (M47): what it rings, and its line in the pen.
+  const step = lessonStep();
+  if (step && !briefing) {
+    const men = state.units.filter(onBoard);
+    view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
+    const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
+    if (about) view.manNotes.push({ q: about.q, r: about.r, words: step.say });
+  }
 
   const next = forecast();
   if (next) {
@@ -1488,6 +1506,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 }
 
 function render() {
+  lessonCheck();
   syncMusic();
   map = effectiveMap(baseMap, state.objectives, rules, state);
   const view = deriveView();
@@ -1522,6 +1541,7 @@ function render() {
   showCounterKey(briefing?.kind === 'help');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
+  renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
@@ -1570,6 +1590,8 @@ function renderBoard() {
  * every hover stutter.
  */
 function renderHover() {
+  // A step may wait for the mouse to be on a hex (M47): then the page is drawn again.
+  if (lessonStep()?.until.kind === 'hovered' && lessonCheck()) return render();
   renderBoard();
   renderReadout(readout, state, map, currentView);
   dropStalePopup();
@@ -1649,6 +1671,8 @@ function showStrike(show, ms) {
 
 /** Take back the last move or action, keeping where the mouse is. */
 function undoLast() {
+  // A lesson goes back by its steps, not by moves.
+  if (course?.lesson) return;
   if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
   const previous = undoStack.pop();
   pencilsFor = null;
@@ -1664,6 +1688,12 @@ function handleHexClick(q, r) {
   if (flyShow) return endFlyShow();
   if (bangTimer) return endBangHold();
   if (state.outcome || state.phase === 'drop') return;
+  // In a lesson only what the step asks for does anything (M47). A target
+  // click belongs to the action that is being aimed, already allowed.
+  if (lessonStep() && !state.targeting) {
+    const man = unitAt(state.units, q, r);
+    if (!lessonAllows(man ? { kind: 'select', unitId: man.id } : { kind: 'move', to: { q, r } })) return;
+  }
   highlightHex = null;
   pencilsFor = null;
   if (state.targeting) {
@@ -1742,6 +1772,8 @@ function handleTargetClick(q, r) {
 function handleAction(id) {
   if (bangTimer) return endBangHold();
   if (state.outcome) return;
+  // The tin's own buttons go with the charge that opened it.
+  if (lessonStep() && !id.startsWith('pencil-') && !lessonAllows({ kind: 'action', id })) return;
   if (id === 'diversion') {
     if (flyShow) return;
     const before = state;
@@ -1855,6 +1887,7 @@ function handleRosterClick(unitId) {
   if (flyShow) return endFlyShow();
   if (bangTimer) return endBangHold();
   if (state.outcome) return;
+  if (lessonStep() && !lessonAllows({ kind: 'select', unitId })) return;
   state = selectUnit(state, unitId);
   render();
 }
@@ -1869,6 +1902,7 @@ function handleEndTurn() {
 }
 
 function endTurnNow() {
+  if (lessonStep() && !lessonAllows({ kind: 'endTurn' })) return;
   undoStack = [];
   pencilsFor = null;
   const before = new Map(state.units.map((u) => [u.id, u.dead]));
@@ -1892,7 +1926,8 @@ function endTurnNow() {
     // A man killed floats away before the card (M21).
     state.units.some((u) => u.dead && !before.get(u.id)) ? DEATH.delayMs + DEATH.floatMs : 0,
   );
-  if (!state.outcome && briefingsOn) {
+  // No turn card in a lesson: its own card says what next.
+  if (!state.outcome && briefingsOn && !course?.lesson) {
     if (hold > 0) {
       clearTimeout(bangTimer);
       bangTimer = setTimeout(endBangHold, hold);
@@ -2072,6 +2107,7 @@ function restartMission() {
   lastSelectedId = null;
   hidePopup();
   resetBoardMemory(layers);
+  if (course) course = { ...course, lesson: null, progress: null, whistle: null };
   // A seed in the address would replay the old drop on a reload: the new one is fresh.
   const query = new URLSearchParams(window.location.search);
   query.delete('seed');
@@ -2152,6 +2188,14 @@ function openOrdersFromHelp() {
 function closeBriefing() {
   // The contents page is put away by opening a mission: the one loaded.
   if (briefing?.kind === 'contents') return openMission(mission.id);
+  // The course's list is put away by taking a lesson: the next not yet
+  // passed. A lesson passed leads on to the one after it, or back to the list.
+  if (course && !course.lesson && briefing?.kind === 'orders') return startLesson(nextLesson().id);
+  if (briefing?.kind === 'passed') {
+    const at = course.lessons.findIndex((l) => l.id === briefing.lessonId);
+    const next = course.lessons[at + 1];
+    return next ? startLesson(next.id) : openCourse();
+  }
   briefing = briefing?.under ?? null;
   render();
 }
@@ -2294,6 +2338,38 @@ function describeBriefing(which, view) {
       sections: [],
       confirm: { label: `${man.shortName} OUT ANYWAY [Enter]`, onConfirm: confirmExfil },
       go: 'STAY — any other key or click',
+    };
+  }
+  if (which.kind === 'passed') {
+    const lesson = course.lessons.find((l) => l.id === which.lessonId);
+    const left = course.lessons.filter((l) => !course.passed.has(l.id)).length;
+    return {
+      title: 'PASSED',
+      kicker: `QUALIFIED: ${lesson.qualification}`,
+      paragraphs: [[`Lesson ${lesson.number}, ${lesson.title}.`, left ? `${left} of the course's ${course.lessons.length} still to pass.` : 'That is the whole course.']],
+      sections: [],
+      link: { label: 'THE COURSE', onClick: openCourse },
+      go: `${course.lessons[course.lessons.indexOf(lesson) + 1] ? 'NEXT LESSON' : 'THE COURSE'} — any key or click`,
+    };
+  }
+  // A course's orders are its list of lessons (M47): any of them, at any time.
+  if (which.kind === 'orders' && course) {
+    const next = nextLesson();
+    return {
+      banner: { title: GAME_TITLE, tagline: mission.tagline },
+      title: mission.title.toUpperCase(),
+      kicker: `THE COURSE · ${course.passed.size} OF ${course.lessons.length} PASSED`,
+      paragraphs: [[mission.briefing, 'One thing at a time. Take any lesson, as often as you like: nobody is hurt, and nothing is at stake.']],
+      contents: {
+        entries: course.lessons.map((l) => ({
+          id: l.id, page: l.number, title: l.title, place: `Qualifies: ${l.qualification}`,
+          blurb: course.passed.has(l.id) ? '✓ PASSED' : 'Not yet taken', playable: true, panel: null,
+        })),
+        onChoose: startLesson,
+      },
+      sections: [],
+      toggles: [musicToggle()],
+      go: `LESSON ${next.number} — any key, or click a lesson`,
     };
   }
   if (which.kind === 'orders' || which.kind === 'help') {
@@ -2486,6 +2562,110 @@ function firstMoveGhost(unit, reachable, wash) {
     unit, number: state.units.indexOf(unit) + 1,
     path: best.path.slice(1).map((h) => ({ q: h.q, r: h.r })),
     aps: best.costs.slice(1).map((cost) => Math.max(0, unit.ap - cost)),
+  };
+}
+
+// --- the course (M47, SPEC.md §15) -----------------------------------------------
+
+/** The step being taken, or null: no course, no lesson on, or the lesson just passed. */
+function lessonStep() {
+  const on = course?.lesson;
+  return on && !course.progress.done ? on.steps[course.progress.step] : null;
+}
+
+/** May the player do this now? If not, the lesson card shakes its head and nothing happens. */
+function lessonAllows(input) {
+  if (allows(lessonStep(), input)) return true;
+  lessonCard.classList.remove('nudge');
+  void lessonCard.getBoundingClientRect();
+  lessonCard.classList.add('nudge');
+  return false;
+}
+
+/** The first lesson not yet passed this session, or the first of all. */
+function nextLesson() {
+  return course.lessons.find((l) => !course.passed.has(l.id)) ?? course.lessons[0];
+}
+
+/** Take a lesson, from its own start: its men and its umpires on the board, in play. */
+function startLesson(id) {
+  const lesson = course.lessons.find((l) => l.id === id);
+  const base = createInitialState(roster, traits, rules, baseMap, state.seed);
+  layLessonState(lessonStart(base, lesson, baseMap, rules));
+  course = { ...course, lesson, progress: beginLesson(lesson, state), whistle: null, ack: false };
+  briefing = null;
+  // The game's own first-game cues stand aside: the lesson has its own.
+  menPicked = true;
+  firstMoveMade = true;
+  render();
+}
+
+/** Put a state on the board whole, as a step's start is: nothing carried over from the one before. */
+function layLessonState(next) {
+  clearTimeout(bangTimer);
+  bangTimer = null;
+  garrisonShow = null;
+  undoStack = [];
+  earlierReports = [];
+  pencilsFor = null;
+  chargeSetNote = null;
+  resetBoardMemory(layers);
+  state = { ...next, hoverHex: state.hoverHex };
+}
+
+/**
+ * After anything has changed: a man caught out puts the step back as it
+ * began, with the umpire's whistle; a step whose condition is met leads to
+ * the next, and the last to PASSED. Returns whether the step changed.
+ */
+function lessonCheck() {
+  const step = lessonStep();
+  if (!step) return false;
+  const { lesson, progress } = course;
+  const from = stepStart(progress);
+  const why = caughtOut(step, from, state);
+  if (why) {
+    layLessonState(from);
+    course = { ...course, whistle: why, ack: false };
+    playCue('whistle');
+    return true;
+  }
+  if (!stepMet(step, from, state, { acknowledged: course.ack })) return false;
+  course = { ...course, progress: advance(progress, lesson, state), whistle: null, ack: false };
+  if (course.progress.done) {
+    course.passed.add(lesson.id);
+    briefing = { kind: 'passed', lessonId: lesson.id };
+  }
+  return true;
+}
+
+/** NEXT on the lesson card: for a step that only shows something. */
+function lessonNext() {
+  course = { ...course, ack: true };
+  render();
+}
+
+/** BACK on the lesson card: the step before, as it began. */
+function lessonBack() {
+  course = { ...course, progress: back(course.progress), whistle: null, ack: false };
+  layLessonState(stepStart(course.progress));
+  render();
+}
+
+/** The course's list, from a lesson or from PASSED: the lesson on the board is given up. */
+function openCourse() {
+  course = { ...course, lesson: null, progress: null, whistle: null };
+  restartMission();
+}
+
+/** What the lesson card says, or null where there is none to show. */
+function lessonView() {
+  const step = lessonStep();
+  if (!step || briefing) return null;
+  const { lesson, progress } = course;
+  return {
+    number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
+    tell: step.tell ?? '', whistle: course.whistle, canBack: progress.step > 0, next: step.until.kind === 'acknowledged',
   };
 }
 
@@ -2825,6 +3005,7 @@ function handleKey(event) {
 
   if (key >= '1' && key <= '9') {
     const unit = state.units[Number(key) - 1];
+    if (unit && onBoard(unit) && lessonStep() && !lessonAllows({ kind: 'select', unitId: unit.id })) return;
     if (unit && onBoard(unit)) {
       state = selectUnit(state, unit.id);
       render();
@@ -2836,6 +3017,7 @@ function handleKey(event) {
     case 'Tab': {
       event.preventDefault();
       const next = nextUnitId(state);
+      if (next && lessonStep() && !lessonAllows({ kind: 'select', unitId: next })) return;
       if (next) state = selectUnit(state, next);
       break;
     }
@@ -2995,6 +3177,11 @@ try {
   // with the difficulty, which `?difficulty=` picks the same way (§10).
   const seed = seedFromQuery(window.location.search) ?? freshSeed(Date.now());
   startMission(levelById(difficulty, difficultyFromQuery(window.location.search, difficulty)), seed);
+  // A course (M47): the mission's lessons, checked against its map and men.
+  if (mission.lessons) {
+    const known = { map: baseMap, unitIds: state.units.map((u) => u.id), objectiveIds: state.objectives.map((o) => o.id), actionIds: ACTION_IDS };
+    course = { lessons: validateLessons(await loadJson(mission.lessons), known, mission.lessons).lessons, passed: new Set(), lesson: null, progress: null, whistle: null, ack: false };
+  }
 
   const bounds = boardPixelBounds(map);
   svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);

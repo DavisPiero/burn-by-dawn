@@ -74,6 +74,7 @@ tests.html        every test suite, in the browser
   hints.js        the turn card's hints (§11)
   sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
   cues.js         what the board points at: who he could strike, get clear, the way out (§4)
+  lessons.js      the lesson engine: a course's lessons, steps and what each allows (§15)
   difficulty.js   the difficulty patches (§10)
   missions.js     the missions and their win conditions (§10)
   train.js        the goods train's timetable (§7)
@@ -90,6 +91,8 @@ tests.html        every test suite, in the browser
   map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
   map-airfield.json  the airfield's (§13), in the same shape
   map-aqueduct.json  the aqueduct's (§14)
+  map-training.json  the practice ground's (§15)
+  lessons-training.json  the training course's lessons (§15)
   terrain.json    terrain types (§3)
   roster.json     the six, their traits and dialogue (§5)
   traits.json     trait definitions (hook + modifier)
@@ -941,6 +944,10 @@ contents page prints them. A mission is data only, and no code asks which is on:
   which objectives it needs. Where any few of many will do, each is ringed once and the
   first carries one note ("ANY FOUR AIRCRAFT!"), and the mission panel gives the kind one
   line.
+- A mission may be **a course** (§15): it names a `lessons` file, its orders are the
+  list of its lessons, and its rules patch makes it an **exercise**
+  (`mission.exercise`: never settled, so nobody withdraws, no dawn ends it and there is
+  no back page). Where a mission names no lessons, none of that exists.
 - A **coming** mission is printed on the contents page but stamped NEXT YEAR'S ANNUAL,
   and cannot be picked. A **draft** one is printed and stamped the same, but can be
   played by its address: how a mission is tried on the live site before it is announced.
@@ -1029,9 +1036,10 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M46, done: doing**, the third of Phase 5 (`ROADMAP.md`, agreed 7 Oct 2026: teaching
-the game by showing, then a training mission). **Next: M47, the training mission
-specified** (`MISSION-TRAINING.md`) and its lesson engine. Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+**M47, done: the training mission specified** (§15, `MISSION-TRAINING.md`) **and its
+lesson engine built**, the fourth of Phase 5 (`ROADMAP.md`), with a draft of the
+mission (`?mission=training`) holding two lessons that prove it. **Next: M48, the
+course built**, a few lessons a session. Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -1053,6 +1061,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M47 | The training mission specified (§15) and its lesson engine: a mission that names a lessons file is a course; each lesson its own situation and steps, only what a step lists doing anything; the umpire's whistle putting a step back; BACK, AGAIN and the course's list; an exercise never settled. A draft practice ground with two lessons, each played through by a test |
 | M46 | Doing (Phase 5): marks on the enemies a man could strike; the first move shown by a ghost; a blast this turn throbbing, GET CLEAR! and an arrow; GET OUT! and a green exfil once the job is done, a reddening dawn strip and a clock on a man too far away; the alert's flying pip; the action strip down to what he can do now; the turn card's hint ringed on the board. The operator's notes: the pen's coaching behind a Play tips box, off unless ticked; the drop chosen in blue; the charge points ringed only from one hex off, lettered once |
 | M45 | Seeing and being seen (Phase 5): the danger wash on the ground a man can reach, red where he would be spotted and green where a man in contact would break it; a sight line, pips that fill and a cover shield on a hovered move; a crosshair on a man about to be fired on, BREAK CONTACT! under him; Hide urged where it works; HOVER A HEX. CLICK TO GO. until the first move |
 | M44 | The text diet (Phase 5): the orders cut to five lines, what tonight asks and nothing of how to play; how to play a card of its own behind **?**, with the counter key; the turn card four marked lines and one short hint; every hint shortened |
@@ -1086,6 +1095,14 @@ sounds and pictures, and its balance baselines.
 
 Each mission after the first has a file like it (`MISSION-<NAME>.md`), written before the
 mission is built, and this spec gains only the engine rules the mission needs.
+
+---
+
+## 15. The training mission — the practice ground
+
+**In `MISSION-TRAINING.md`**: a course of lessons at a parachute school in England, and
+the lesson engine that runs it. The engine is built and the mission is a draft
+(`?mission=training`) with two lessons; M48 builds the course.
 
 ---
 

@@ -273,6 +273,19 @@ board must read at a glance.
   as near as it can without covering the card). WHO sits above NEXT TURN so their
   pointers do not cross, and points at the end of the enemy's name; BLUE AP's pointer
   ends in a blue dot beside the dot it means.
+- **A course's orders are its list of lessons** (§15), set as the contents page is:
+  each lesson's title run to its number with a dotted leader, what it qualifies in
+  italic, and ✓ PASSED or Not yet taken. No level, no HOW TO PLAY button; Music off at
+  its foot.
+- **The lesson card** lies in the turn card's place while a lesson is on, and no turn
+  card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's one
+  sentence, and at its foot ◀ BACK, AGAIN and THE COURSE (and NEXT ▶ where a step only
+  shows something). After a whistle, **WHISTLE! FITCH was seen. Try that step again.**
+  in red above the sentence. Only its buttons take clicks. A click the step does not
+  ask for makes the card shake its head, twice, a few pixels. The step's own line is
+  on the board in the red pen, at the hex it is about, with the pen's throbbing ring on
+  each hex it names. **PASSED** is a card in the same place, headed with the
+  qualification.
 - **Turn cards.** At the start of every turn (turn 1 after the drop has been shown) a card
   sits in the bottom right of the map, narrow, with nothing darkened: what happened at the
   turn boundary, most important first, **four lines at most, each with the board's own
@@ -436,7 +449,8 @@ chuffing dying away after: made in code until a recording is supplied. **The
 aqueduct's three** are made in code too until recordings are found: its canisters
 thump down in the drop, one thump each as its canopy lands and its blue ring pops on; the boat's oars are heard far off
 the turn it is sighted or answers the signal; and the turn it lands, its last strokes
-with a wave breaking on the shingle under them. Its back page is France's bells.
+with a wave breaking on the shingle under them. Its back page is France's bells. **The umpire's whistle** in a
+lesson (§15) is made in code: one short blast of a pea whistle.
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
 choice, fading at the jump and never between turns. A new game brings it back from the
