@@ -717,6 +717,8 @@ function spendLostTurn(unit) {
  */
 export function settleMission(state, rules, map, { dawn = false } = {}) {
   if (state.outcome || state.phase !== 'play') return state;
+  // An exercise is never settled (M47): nothing is at stake in a lesson.
+  if (rules.mission.exercise) return state;
   const check = missionCheck(state, rules, { dawn });
   if (!check) return state;
 

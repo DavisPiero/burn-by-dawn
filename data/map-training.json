@@ -1,0 +1,195 @@
+{
+  "_comment": "The practice ground (MISSION-TRAINING.md, SPEC.md §15; M47): the training mission's map, in the shape of data/map.json. A draft: M47 needs it only to hold the lesson engine's two proving lessons, and M48 finishes it with the course. Each lesson puts its own men and umpires on it (data/lessons-training.json), so the enemies here are only what stands on the board behind the course's list.",
+  "name": "The practice ground at Tatton Park",
+  "width": 18,
+  "height": 13,
+  "hexSize": 46,
+  "dropRuns": [
+    {
+      "id": "practice",
+      "label": "Practice run",
+      "tag": "steady",
+      "description": "Over the park from the west: open grass, soft landings, the umpires watching from the bridge.",
+      "from": [
+        0,
+        2
+      ],
+      "to": [
+        15,
+        2
+      ],
+      "jumpAt": 2,
+      "spacing": 1,
+      "wind": "SE",
+      "labelAlong": 0.3
+    }
+  ],
+  "enemies": [
+    {
+      "id": "umpire-bridge",
+      "label": "Bridge umpire",
+      "type": "sentry",
+      "at": [
+        10,
+        6
+      ],
+      "facing": "W"
+    },
+    {
+      "id": "umpire-lane",
+      "label": "Lane umpire",
+      "type": "patrol",
+      "facing": "W",
+      "loop": false,
+      "route": [
+        [
+          12,
+          6
+        ],
+        [
+          9,
+          6
+        ]
+      ]
+    }
+  ],
+  "reserve": {
+    "id": "reserve",
+    "label": "Reserve squad",
+    "type": "reserve",
+    "facing": "SE",
+    "entryHexes": [
+      [
+        13,
+        6
+      ],
+      [
+        14,
+        6
+      ]
+    ],
+    "guardHex": [
+      3,
+      11
+    ],
+    "guardFacing": "SW"
+  },
+  "reinforcements": {
+    "id": "reinforcements",
+    "label": "Reinforcements",
+    "type": "patrol",
+    "facing": "SE",
+    "entryHexes": [
+      [
+        13,
+        6
+      ],
+      [
+        14,
+        6
+      ]
+    ],
+    "posts": [
+      {
+        "guardHex": [
+          3,
+          11
+        ],
+        "guardFacing": "SW"
+      }
+    ]
+  },
+  "objectives": [
+    {
+      "id": "dummy-bridge",
+      "label": "Dummy Bridge",
+      "kind": "bridge",
+      "primary": true,
+      "hexes": [
+        [
+          8,
+          6
+        ]
+      ],
+      "chargeHexes": [
+        [
+          8,
+          5
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    }
+  ],
+  "exfil": [
+    [
+      0,
+      12
+    ],
+    [
+      1,
+      12
+    ],
+    [
+      2,
+      12
+    ]
+  ],
+  "places": [
+    {
+      "name": "Tatton Park",
+      "kind": "farm",
+      "at": [
+        7,
+        3
+      ]
+    },
+    {
+      "name": "The Mere Brook",
+      "kind": "water",
+      "at": [
+        7,
+        9
+      ],
+      "angle": 80
+    },
+    {
+      "name": "Home Wood",
+      "kind": "wood",
+      "at": [
+        1,
+        0
+      ],
+      "dy": -0.2
+    }
+  ],
+  "legend": {
+    "F": "field",
+    "T": "track",
+    "H": "hedgerow",
+    "W": "wood",
+    "O": "orchard",
+    "M": "marsh",
+    "C": "canal",
+    "R": "ridge",
+    "B": "farmhouse",
+    "X": "bridge"
+  },
+  "rows": [
+    "WWWFFFFFFFFFFFFFFF",
+    "WWFFFHHHHFFFFFOOFF",
+    "WFFFFHFFFFFFFFOOFF",
+    "FFFFFHFFFFFCFFFFFF",
+    "FFRRFHFFFFFCFFHHHF",
+    "FFRRFFFFFFFCFFHFFF",
+    "FTTTTTTTTTTXTTTTFF",
+    "FFFFFHFFFFMCFFHFFF",
+    "FFBFFHFFFFMCFFHFFF",
+    "FFFFFHHHFFFCFFFFFF",
+    "FFFOOFFTFFFCCFFFFF",
+    "FFFOOFFTFFFFCFFFFF",
+    "FFFFFFFTFFFFCFFFFF"
+  ]
+}

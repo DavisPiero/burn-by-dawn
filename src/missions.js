@@ -72,6 +72,8 @@ export function validateMissions(json, url = 'data/missions.json') {
     for (const key of ['portraits', 'enemyChips']) {
       if (m[key] !== undefined && (typeof m[key] !== 'string' || !m[key])) throw new Error(`${where} "${key}" must name a folder`);
     }
+    // A course (M47, SPEC.md §15): the file its lessons are in, optional.
+    if (m.lessons !== undefined && (typeof m.lessons !== 'string' || !m.lessons)) throw new Error(`${where} "lessons" must name a lessons file`);
     for (const key of ['tagline', 'map', 'roster', 'briefing', 'titleCard']) {
       if (typeof m[key] !== 'string' || !m[key]) throw new Error(`${where} can be played, so needs a "${key}"`);
     }

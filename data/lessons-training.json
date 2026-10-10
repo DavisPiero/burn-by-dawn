@@ -1,0 +1,239 @@
+{
+ "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about); `tell`, one sentence on the lesson card; `ring`, hexes to ring, or \"men\"; `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], endTurn }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson. M47 has two, to prove the engine: lessons 3 and 5 of the course. M48 writes the rest.",
+ "lessons": [
+  {
+   "id": "action-points",
+   "number": 3,
+   "title": "Action points",
+   "qualification": "MOVEMENT",
+   "start": {
+    "men": {
+     "holloway": {
+      "at": [
+       1,
+       2
+      ]
+     }
+    },
+    "enemies": []
+   },
+   "steps": [
+    {
+     "say": "CLICK DUTCH.",
+     "tell": "Every man is a counter. Click one to give him his orders.",
+     "ring": "men",
+     "allow": {
+      "select": [
+       "holloway"
+      ]
+     },
+     "until": {
+      "kind": "selected",
+      "unit": "holloway"
+     }
+    },
+    {
+     "say": "CLICK THE RING TO GO.",
+     "tell": "The dots on his counter are action points. Open ground costs one a hex: hover the ringed hex to see the cost, then click it.",
+     "ring": [
+      [
+       3,
+       2
+      ]
+     ],
+     "at": [
+      3,
+      2
+     ],
+     "allow": {
+      "select": [
+       "holloway"
+      ],
+      "move": [
+       [
+        3,
+        2
+       ]
+      ]
+     },
+     "until": {
+      "kind": "movedTo",
+      "unit": "holloway",
+      "hexes": [
+       [
+        3,
+        2
+       ]
+      ]
+     }
+    },
+    {
+     "say": "PRESS SPACE: END THE TURN.",
+     "tell": "Two dots spent, one left. What he does not use is lost: the pool fills again when the turn ends.",
+     "allow": {
+      "select": [
+       "holloway"
+      ],
+      "endTurn": true
+     },
+     "until": {
+      "kind": "turnEnded"
+     }
+    },
+    {
+     "say": "A HEDGE COSTS TWO. GO THERE.",
+     "tell": "His dots are full again. Rough ground costs more to cross, and hides him better.",
+     "ring": [
+      [
+       4,
+       2
+      ]
+     ],
+     "at": [
+      4,
+      2
+     ],
+     "allow": {
+      "select": [
+       "holloway"
+      ],
+      "move": [
+       [
+        4,
+        2
+       ]
+      ]
+     },
+     "until": {
+      "kind": "movedTo",
+      "unit": "holloway",
+      "hexes": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "not-being-seen",
+   "number": 5,
+   "title": "Not being seen",
+   "qualification": "FIELDCRAFT",
+   "start": {
+    "men": {
+     "fitch": {
+      "at": [
+       1,
+       7
+      ]
+     }
+    },
+    "enemies": [
+     {
+      "id": "umpire",
+      "label": "Umpire",
+      "type": "sentry",
+      "at": [
+       5,
+       7
+      ],
+      "facing": "W"
+     }
+    ]
+   },
+   "steps": [
+    {
+     "say": "CLICK FITCH.",
+     "tell": "The umpire by the brook is looking this way. The faint red in front of him is what he can see.",
+     "ring": "men",
+     "allow": {
+      "select": [
+       "fitch"
+      ]
+     },
+     "until": {
+      "kind": "selected",
+      "unit": "fitch"
+     }
+    },
+    {
+     "say": "HOVER THE RED GROUND.",
+     "tell": "The ground he can reach is tinted: red where going there would get him spotted, blue where it would not. Hovering a hex says why.",
+     "ring": [
+      [
+       3,
+       7
+      ]
+     ],
+     "at": [
+      3,
+      7
+     ],
+     "allow": {
+      "select": [
+       "fitch"
+      ]
+     },
+     "until": {
+      "kind": "hovered",
+      "hexes": [
+       [
+        3,
+        7
+       ]
+      ]
+     }
+    },
+    {
+     "say": "GO BY THE HEDGE.",
+     "tell": "Three dots and he is spotted. A hedge takes two of them away. Move him into it: anywhere red, and the umpire blows his whistle.",
+     "ring": [
+      [
+       2,
+       7
+      ]
+     ],
+     "at": [
+      2,
+      7
+     ],
+     "allow": {
+      "select": [
+       "fitch"
+      ],
+      "move": "any"
+     },
+     "until": {
+      "kind": "movedTo",
+      "unit": "fitch",
+      "hexes": [
+       [
+        2,
+        7
+       ]
+      ]
+     }
+    },
+    {
+     "say": "PRESS H TO HIDE.",
+     "tell": "Going to ground makes him harder still to see, and ends his turn. He stays hidden until he next moves.",
+     "allow": {
+      "select": [
+       "fitch"
+      ],
+      "actions": [
+       "hide"
+      ]
+     },
+     "until": {
+      "kind": "hidden",
+      "unit": "fitch"
+     }
+    }
+   ]
+  }
+ ]
+}

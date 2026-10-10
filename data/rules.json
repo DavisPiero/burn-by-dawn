@@ -67,8 +67,8 @@
   "_bodyFound": "SPEC.md §6 Reinforcements, M42b (the operator's: on the aqueduct, killing every enemy was the best way to play). `reinforcements`: how many squads the garrison calls up when it finds one of its own dead, as it does for a bang: on in the next enemy phase, each to stand where its body was found, looking the way the dead man looked (M42c: they went to the beach posts, and a garrison that had been killed stayed killed), `limit` of them at most in a mission, and none once a target's payoff has stopped the reserve. 0 here: France and the airfield are as they were.",
   "bodyFound": { "reinforcements": 0, "limit": 0 },
 
-  "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27).",
-  "mission": { "minimumOut": 3, "win": { "condition": "destroyPrimary" } },
+  "_mission": "SPEC.md §10. Success needs the win condition met and at least `minimumOut` troopers out by the end of the last turn. `win` is one of the fixed conditions in src/missions.js; each mission in data/missions.json sets its own over this one (M27). `exercise` (M47, SPEC.md §15): true where nothing is at stake, a training course: the mission is never settled, so nobody withdraws, no dawn ends it and there is no back page.",
+  "mission": { "minimumOut": 3, "exercise": false, "win": { "condition": "destroyPrimary" } },
 
   "_undo": "SPEC.md §4 Undo. How many moves or actions of this player phase can be taken back, most recent first; null is every one of them. Never further than the start of the turn, and never across the jump, so nothing the garrison has done is undone. Normal and Hard keep one step, a mis-click net; Easy lets a new player walk the whole turn back (M11b, data/difficulty.json).",
   "undo": {
