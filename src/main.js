@@ -174,6 +174,7 @@ let strikeShowTimer = null;
 // man on the bridge's other point could not tell why he had nothing to set),
 // until the next click or key. Display only.
 let chargeSetNote = null;
+let chargeNoteTimer = null;
 // The briefing card (SPEC.md §11): which one is open, if any, whether turn
 // updates are wanted this session, and whether one is waiting for the drop
 // to finish being shown. Interface only, never game state.
@@ -1308,6 +1309,9 @@ function setCharge(unit, fuse) {
   commit(placeCharge(state, unit.id, rules, fuse ?? offeredPencil(state, map, unit, rules)?.fuse));
   const set = state.charges.find((c) => !before.includes(c));
   if (set && !state.outcome) chargeSetNote = describeChargeNote(set);
+  // It goes of itself after a moment (M48), if nothing has put it away.
+  clearTimeout(chargeNoteTimer);
+  if (chargeSetNote) chargeNoteTimer = setTimeout(dropChargeNote, CUE.chargeNoteMs);
 }
 
 /**
@@ -1325,11 +1329,20 @@ function describeChargeNote(charge) {
   return { hexes: objective.hexes, lines: [needed > 1 ? 'CHARGES ARE SET.' : 'CHARGE IS SET.', 'GET CLEAR!'] };
 }
 
-/** The player's next click or key puts the charge note away (M37). */
-function dropChargeNote() {
+/**
+ * The player's next click or key puts the charge note away (M37), and it goes
+ * of itself after a moment. Space or Esc pressed at it does only that (M48,
+ * the operator's: Space, pressed to clear GET CLEAR!, ended the turn).
+ */
+function dropChargeNote(event) {
   if (!chargeSetNote) return;
+  clearTimeout(chargeNoteTimer);
   chargeSetNote = null;
   renderBoard();
+  if (event?.type === 'keydown' && (event.key === ' ' || event.key === 'Escape')) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
 }
 
 /**
@@ -2083,18 +2096,15 @@ function endBangHold() {
   render();
 }
 
-/**
- * Start a new game on a fresh seed at the same level, without reloading the
- * page (M12): the restart in the margin, and Play again on the back page. The
- * orders open again, as on any new game (SPEC.md §11).
- */
-function restartMission() {
+/** Whatever is being shown on the board, and what the interface remembers of the game on it, put away. */
+function clearShows() {
   clearTimeout(dropShowTimer);
   stopCanisterThumps();
   dropSound?.stop();
   dropSound = null;
   clearTimeout(flyShowTimer);
   clearTimeout(bangTimer);
+  clearTimeout(chargeNoteTimer);
   dropShow = null;
   flyShow = null;
   bangTimer = null;
@@ -2106,6 +2116,15 @@ function restartMission() {
   hoverUnitId = null;
   lastSelectedId = null;
   hidePopup();
+}
+
+/**
+ * Start a new game on a fresh seed at the same level, without reloading the
+ * page (M12): the restart in the margin, and Play again on the back page. The
+ * orders open again, as on any new game (SPEC.md §11).
+ */
+function restartMission() {
+  clearShows();
   resetBoardMemory(layers);
   if (course) course = { ...course, lesson: null, progress: null, whistle: null };
   // A seed in the address would replay the old drop on a reload: the new one is fresh.
@@ -2186,8 +2205,9 @@ function openOrdersFromHelp() {
 }
 
 function closeBriefing() {
-  // The contents page is put away by opening a mission: the one loaded.
-  if (briefing?.kind === 'contents') return openMission(mission.id);
+  // The contents page is put away only by picking a mission (M48): with no
+  // map behind it, a stray key no longer turns to one unasked.
+  if (briefing?.kind === 'contents') return;
   // The course's list is put away by taking a lesson: the next not yet
   // passed. A lesson passed leads on to the one after it, or back to the list.
   if (course && !course.lesson && briefing?.kind === 'orders') return startLesson(nextLesson().id);
@@ -2213,22 +2233,103 @@ function openContents() {
 
 /**
  * A mission picked on the contents page. The one loaded opens its orders; any
- * other is its own files, so the page loads again with `?mission=` naming it.
+ * other is its own files, loaded in place (M48, the operator's: the page
+ * loaded again, and the whole spread with it). The address names it, so a
+ * reload comes back to it.
  */
-function openMission(id) {
-  if (id === mission.id) {
-    briefing = { kind: 'orders', opening: true };
-    render();
-    return;
+let missionLoading = false;
+async function openMission(id) {
+  if (missionLoading) return;
+  if (id !== mission.id) {
+    missionLoading = true;
+    try {
+      const pictures = await loadMission(id, freshSeed(Date.now()));
+      // Its pictures, but never for long: whatever is late fills in as it arrives.
+      await Promise.race([Promise.all(pictures), new Promise((resolve) => setTimeout(resolve, LOADING.switchWaitMs))]);
+    } catch (error) {
+      renderError(errorBox, error);
+      return;
+    } finally {
+      missionLoading = false;
+    }
+    const query = new URLSearchParams(window.location.search);
+    query.set('mission', id);
+    query.delete('seed');
+    window.history.replaceState(null, '', `${window.location.pathname}?${query}`);
   }
-  const query = new URLSearchParams(window.location.search);
-  query.set('mission', id);
-  query.delete('seed');
-  if (musicOff) query.set('music', 'off');
-  else query.delete('music');
-  if (tipsOn) query.set('tips', 'on');
-  else query.delete('tips');
-  window.location.search = query.toString();
+  briefing = { kind: 'orders', opening: true };
+  render();
+}
+
+/**
+ * Load a mission's own files and lay its board (M27; in place since M48):
+ * its map, roster and patches, the levels with its own part of each, its
+ * words and colours, a fresh state on `seed`, its lessons if it is a course,
+ * and the board drawn. Everything is fetched before anything is changed, so
+ * the page is never drawn half one mission and half another. Returns its
+ * supplied pictures, still loading.
+ */
+async function loadMission(id, seed) {
+  const next = missionById(missions, id);
+  const nextMap = await loadMap(next.map, undefined, undefined, (types) => missionEnemyTypes(next, types));
+  const nextRules = missionRules(next, await loadJson('data/rules.json'));
+  const nextRoster = missionRoster(next, await loadJson(next.roster));
+  // The levels, with the mission's own part of each (M28) carried on them.
+  const nextDifficulty = missionLevels(next, validateDifficulty(await loadJson('data/difficulty.json'), nextRules, { types: nextMap.enemyTypes }), nextRules, nextMap.enemyTypes);
+  const lessons = next.lessons ? await loadJson(next.lessons) : null;
+
+  if (layers) {
+    clearShows();
+    resetBoardMemory(layers);
+  }
+  mission = next;
+  rawMap = nextMap;
+  rawRules = nextRules;
+  roster = nextRoster;
+  difficulty = nextDifficulty;
+  useMissionWords(mission.words);
+  // Our men's counters in the mission's own colour, if it has one (M31d).
+  applyCounterColour(mission.counterColour ?? null);
+  // The level being played is kept from one mission to the next; the address's at first.
+  const levelId = level && difficulty.levels.some((l) => l.id === level.id) ? level.id : difficultyFromQuery(window.location.search, difficulty);
+  startMission(levelById(difficulty, levelId), seed);
+  // A course (M47): the mission's lessons, checked against its map and men.
+  course = null;
+  if (lessons) {
+    const known = { map: baseMap, unitIds: state.units.map((u) => u.id), objectiveIds: state.objectives.map((o) => o.id), actionIds: ACTION_IDS };
+    course = { lessons: validateLessons(lessons, known, mission.lessons).lessons, passed: new Set(), lesson: null, progress: null, whistle: null, ack: false };
+  }
+
+  const bounds = boardPixelBounds(map);
+  svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);
+  layers = createBoard(svg, map, {
+    onHexClick: handleHexClick,
+    onHexHover: handleHexHover,
+    onHexLeave: handleHexLeave,
+    // A drop run's name on the board has the same rollover as its button.
+    onRunHover: (runId, anchor) => showPopup(anchor, describeRun(currentView.dropRuns.find((r) => r.id === runId))),
+    onRunLeave: hidePopup,
+    onRunChoose: handleChooseRun,
+    onMarkerHover: (markerId, unitId, anchor) => showPopup(anchor, titled(...describeMarker(markerId, state.units.find((u) => u.id === unitId)))),
+    onMarkerLeave: hidePopup,
+    onEnemyMarkerHover: (enemyId, anchor) => {
+      const enemy = state.enemies.find((e) => e.id === enemyId);
+      if (enemy) showPopup(anchor, describeAlarm(enemy));
+    },
+  });
+  // Portrait art dropped into assets/portraits replaces the drawn stand-in
+  // as each file arrives (ART-ASSETS.md §2). So do a painted title card in
+  // assets/title (§7), a painted aircraft in assets/aircraft and a painted
+  // blast in assets/markers (§6). The sprites were drawn afresh with the
+  // board, so each mission's are loaded over them.
+  return [
+    loadSuppliedPortraits(state.units.map((u) => u.id), () => render(), mission.portraits ?? null),
+    loadSuppliedTitleCard(mission.titleCard, mission.titleCardLettered ?? true),
+    loadSuppliedAircraft(),
+    loadSuppliedVehicle(baseMap.diversionRun?.art),
+    loadSuppliedBlast(),
+    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes), mission.enemyChips ?? null),
+  ];
 }
 
 // A turn card, or the diversion's, lets the board be seen and clicked round
@@ -2294,13 +2395,14 @@ function describeBriefing(which, view) {
       banner: { title: GAME_TITLE, tagline: CONTENTS_TAGLINE },
       title: 'CONTENTS',
       kicker: 'IN THIS ANNUAL',
-      paragraphs: ['Pick a mission. Each one stands alone: one night behind the lines, and out by dawn.'],
+      paragraphs: ['Click a mission to play it. Each one stands alone: one night behind the lines, and out by dawn.'],
       contents: {
         entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null })),
         onChoose: openMission,
       },
       sections: [],
-      go: `TURN TO PAGE ${mission.page} — any key, or click a mission`,
+      onTable: true,
+      go: false,
       // Bottom left, as on the orders (M29b, the operator's).
       toggles: [musicToggle(), tipsToggle()],
     };
@@ -2343,13 +2445,19 @@ function describeBriefing(which, view) {
   if (which.kind === 'passed') {
     const lesson = course.lessons.find((l) => l.id === which.lessonId);
     const left = course.lessons.filter((l) => !course.passed.has(l.id)).length;
+    const next = course.lessons[course.lessons.indexOf(lesson) + 1];
+    // The operator's words (M48): "LESSON 3 - Action Points - PASSED.", PASSED in green.
+    const title = lesson.title.replace(/\b\w/g, (c) => c.toUpperCase());
     return {
       title: 'PASSED',
       kicker: `QUALIFIED: ${lesson.qualification}`,
-      paragraphs: [[`Lesson ${lesson.number}, ${lesson.title}.`, left ? `${left} of the course's ${course.lessons.length} still to pass.` : 'That is the whole course.']],
+      paragraphs: [[
+        { parts: [`LESSON ${lesson.number} - ${title} - `, { good: 'PASSED' }, '.'] },
+        ...(left ? [] : ['That is every lesson of the course.']),
+      ]],
       sections: [],
       link: { label: 'THE COURSE', onClick: openCourse },
-      go: `${course.lessons[course.lessons.indexOf(lesson) + 1] ? 'NEXT LESSON' : 'THE COURSE'} — any key or click`,
+      go: `${next ? `LESSON ${next.number}` : 'THE COURSE'} — any key or click`,
     };
   }
   // A course's orders are its list of lessons (M47): any of them, at any time.
@@ -2369,7 +2477,8 @@ function describeBriefing(which, view) {
       },
       sections: [],
       toggles: [musicToggle()],
-      go: `LESSON ${next.number} — any key, or click a lesson`,
+      go: `START LESSON ${next.number} — any key, or click a lesson`,
+      goBig: true,
     };
   }
   if (which.kind === 'orders' || which.kind === 'help') {
@@ -2507,6 +2616,8 @@ function describeBriefing(which, view) {
       // turned on or off at any time.
       toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
+      // The one button that starts the game (M48, the operator's): named, and the biggest.
+      ...(before ? { go: 'START GAME — any key or click', goBig: true } : {}),
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
@@ -3107,7 +3218,7 @@ function handleKey(event) {
 // Ready, it asks for a key or a click, which opens the spread on the orders —
 // and, being the player's first touch, lets the browser start the title music
 // with them.
-const LOADING = { maxWaitMs: 8000 };
+const LOADING = { maxWaitMs: 8000, switchWaitMs: 1500 };
 const loadingPage = document.getElementById('loading');
 let loadingDone = 0;
 let loadingTotal = 0;
@@ -3159,16 +3270,7 @@ try {
   // The mission (M27): `?mission=` picks one, as `?seed=` picks a seed; its
   // files and patches are loaded here, before the level's go over them.
   missions = validateMissions(await loadJson('data/missions.json'));
-  mission = missionById(missions, missionFromQuery(window.location.search, missions));
-  rawMap = await loadMap(mission.map, undefined, undefined, (types) => missionEnemyTypes(mission, types));
-  rawRules = missionRules(mission, await loadJson('data/rules.json'));
   traits = validateTraits(await loadJson('data/traits.json'));
-  roster = missionRoster(mission, await loadJson(mission.roster));
-  // The levels, with the mission's own part of each (M28) carried on them.
-  difficulty = missionLevels(mission, validateDifficulty(await loadJson('data/difficulty.json'), rawRules, { types: rawMap.enemyTypes }), rawRules, rawMap.enemyTypes);
-  useMissionWords(mission.words);
-  // Our men's counters in the mission's own colour, if it has one (M31d).
-  applyCounterColour(mission.counterColour ?? null);
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
 
@@ -3176,35 +3278,14 @@ try {
   // none, the clock picks a fresh one. It is shown on the page either way,
   // with the difficulty, which `?difficulty=` picks the same way (§10).
   const seed = seedFromQuery(window.location.search) ?? freshSeed(Date.now());
-  startMission(levelById(difficulty, difficultyFromQuery(window.location.search, difficulty)), seed);
-  // A course (M47): the mission's lessons, checked against its map and men.
-  if (mission.lessons) {
-    const known = { map: baseMap, unitIds: state.units.map((u) => u.id), objectiveIds: state.objectives.map((o) => o.id), actionIds: ACTION_IDS };
-    course = { lessons: validateLessons(await loadJson(mission.lessons), known, mission.lessons).lessons, passed: new Set(), lesson: null, progress: null, whistle: null, ack: false };
-  }
+  const missionPictures = await loadMission(missionFromQuery(window.location.search, missions), seed);
 
-  const bounds = boardPixelBounds(map);
-  svg.setAttribute('viewBox', `${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`);
   // The board takes all the room the window gives it (SPEC.md §11 layout).
+  // Every mission's board is the same 18×13 (§10), so this is done once.
+  const bounds = boardPixelBounds(map);
   const aspect = (bounds.maxX - bounds.minX) / (bounds.maxY - bounds.minY);
   fitSpread(aspect);
   window.addEventListener('resize', () => fitSpread(aspect));
-
-  layers = createBoard(svg, map, {
-    onHexClick: handleHexClick,
-    onHexHover: handleHexHover,
-    onHexLeave: handleHexLeave,
-    // A drop run's name on the board has the same rollover as its button.
-    onRunHover: (runId, anchor) => showPopup(anchor, describeRun(currentView.dropRuns.find((r) => r.id === runId))),
-    onRunLeave: hidePopup,
-    onRunChoose: handleChooseRun,
-    onMarkerHover: (id, unitId, anchor) => showPopup(anchor, titled(...describeMarker(id, state.units.find((u) => u.id === unitId)))),
-    onMarkerLeave: hidePopup,
-    onEnemyMarkerHover: (enemyId, anchor) => {
-      const enemy = state.enemies.find((e) => e.id === enemyId);
-      if (enemy) showPopup(anchor, describeAlarm(enemy));
-    },
-  });
 
   // Right-click cancels (SPEC.md §4), so the browser menu has to get out of
   // the way over the board.
@@ -3240,28 +3321,17 @@ try {
   // Sound files dropped into assets/audio replace the placeholders (ART-ASSETS.md §9).
   loadSuppliedSounds();
 
-  // Portrait art dropped into assets/portraits replaces the drawn stand-in
-  // as each file arrives (ART-ASSETS.md §2). So do a painted title card in
-  // assets/title (§7), a painted aircraft in assets/aircraft and a painted
-  // blast in assets/markers (§6). The page waits for them (M17), so it opens
-  // whole rather than filling in bit by bit.
-  const pictures = [
-    paperLoaded,
-    loadSuppliedPortraits(state.units.map((u) => u.id), () => render(), mission.portraits ?? null),
-    loadSuppliedTitleCard(mission.titleCard, mission.titleCardLettered ?? true),
-    loadSuppliedAircraft(),
-    loadSuppliedVehicle(baseMap.diversionRun?.art),
-    loadSuppliedBlast(),
-    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes), mission.enemyChips ?? null),
-  ];
+  // The page waits for the mission's pictures (M17), so it opens whole
+  // rather than filling in bit by bit.
+  const pictures = [paperLoaded, ...missionPictures];
   renderGutter(gutterNote);
   renderKeys(keysTab);
   attachPopup(helpTab, () => titled('HOW TO PLAY [?]', 'The orders, how to play and how to read a counter, at any time.'));
   helpTab.addEventListener('click', () => openHelp());
   attachPopup(alertBox, () => describeAlertStates(currentView.alert));
   attachPopup(diversionButton, () => describeDiversion(rules.diversion.uses));
-  // The contents page opens over the board before anything else (M27), then
-  // the orders (SPEC.md §11), with the title music over both. A mission named
+  // The contents page opens before anything else (M27), on the bare table
+  // (M48), then the orders (SPEC.md §11), with the title music over both. A mission named
   // in the address goes straight to its orders.
   briefing = { kind: missionFromQuery(window.location.search, missions) ? 'orders' : 'contents', opening: true };
   briefingBackdrop.addEventListener('click', () => closeBriefing());

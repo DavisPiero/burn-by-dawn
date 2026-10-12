@@ -8,7 +8,7 @@ import { dangerWash } from '../src/sight.js';
 import { advance, allows, back, beginLesson, caughtOut, lessonStart, stepMet, stepStart, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
-import { createInitialState, endTurn, hideUnit, moveUnit, selectUnit, setHover } from '../src/state.js';
+import { createInitialState, endTurn, hideUnit, moveUnit, packParachute, selectUnit, setHover } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { planMove, reachableFor } from '../src/units.js';
 
@@ -45,7 +45,7 @@ export default [
     const { json, known } = await course();
     const broken = (change) => {
       const copy = JSON.parse(JSON.stringify(json));
-      change(copy.lessons[0]);
+      change(copy.lessons.find((l) => l.id === 'action-points'));
       return throws(() => validateLessons(copy, known));
     };
     assert(broken((l) => { l.start.men = { nobody: { at: [0, 0] } }; }), 'a man who is not in the roster');
@@ -54,6 +54,12 @@ export default [
     assert(broken((l) => { l.steps[0].allow = { actions: ['fly'] }; }), 'an action that does not exist');
     assert(broken((l) => { l.steps[0].say = 'THIS PEN LINE HAS FAR TOO MANY WORDS IN IT'; }), 'a pen line longer than seven words');
     assert(broken((l) => { l.steps = []; }), 'a lesson with no steps');
+  }],
+
+  ['the lessons built so far run on from one another, in order', async () => {
+    const { lessons } = await course();
+    const numbers = lessons.map((l) => l.number);
+    assert(numbers.every((n, i) => i === 0 || n === numbers[i - 1] + 1), `PASSED leads to the next number, with none skipped: ${numbers}`);
   }],
 
   ['a lesson begins with only its own men and garrison on the board, in play', async () => {
@@ -107,6 +113,9 @@ export default [
         } else if (until.kind === 'turnEnded') {
           assert(allows(step, { kind: 'endTurn' }), `${where}: ending the turn is allowed`);
           state = endTurn(state, rules, map);
+        } else if (until.kind === 'packed') {
+          assert(allows(step, { kind: 'action', id: 'pack' }), `${where}: packing is allowed`);
+          state = packParachute(state, man.id, rules);
         } else if (until.kind === 'hidden') {
           assert(allows(step, { kind: 'action', id: 'hide' }), `${where}: hiding is allowed`);
           state = hideUnit(state, man.id, rules);

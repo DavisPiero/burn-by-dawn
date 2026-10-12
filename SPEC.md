@@ -952,6 +952,8 @@ contents page prints them. A mission is data only, and no code asks which is on:
   and cannot be picked. A **draft** one is printed and stamped the same, but can be
   played by its address: how a mission is tried on the live site before it is announced.
 
+A mission picked on the contents page is loaded in place, its files fetched and its board
+drawn without the page loading again, and the address then names it.
 `?mission=<id>` in the address picks a playable or draft mission and goes straight to its orders;
 `MISSION=<id>` does the same for the balance bot. Every mission keeps the 18×13 board.
 
@@ -1036,10 +1038,10 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M47, done: the training mission specified** (§15, `MISSION-TRAINING.md`) **and its
-lesson engine built**, the fourth of Phase 5 (`ROADMAP.md`), with a draft of the
-mission (`?mission=training`) holding two lessons that prove it. **Next: M48, the
-course built**, a few lessons a session. Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+**M48, under way: the course built** (§15, `MISSION-TRAINING.md`), a few lessons a
+session. Its first session did the operator's notes on M47 and has lessons 2 to 5 of
+fifteen on a redrawn practice ground; the mission is still a draft
+(`?mission=training`). **Next: lesson 1 (the drop) and 6 onward.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -1061,6 +1063,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M48 (first session) | The operator's notes: the contents page on the bare table, a picked mission loaded in place; the cards' way on a button, START GAME on the orders; (UNAVAILABLE) on an action that is closed; the charge note goes of itself and Space at it does not end the turn. The practice ground redrawn as a park, the brook a hex west; lessons 2 (parachutes) and 4 (ground), and 3 and 5 reworded |
 | M47 | The training mission specified (§15) and its lesson engine: a mission that names a lessons file is a course; each lesson its own situation and steps, only what a step lists doing anything; the umpire's whistle putting a step back; BACK, AGAIN and the course's list; an exercise never settled. A draft practice ground with two lessons, each played through by a test |
 | M46 | Doing (Phase 5): marks on the enemies a man could strike; the first move shown by a ghost; a blast this turn throbbing, GET CLEAR! and an arrow; GET OUT! and a green exfil once the job is done, a reddening dawn strip and a clock on a man too far away; the alert's flying pip; the action strip down to what he can do now; the turn card's hint ringed on the board. The operator's notes: the pen's coaching behind a Play tips box, off unless ticked; the drop chosen in blue; the charge points ringed only from one hex off, lettered once |
 | M45 | Seeing and being seen (Phase 5): the danger wash on the ground a man can reach, red where he would be spotted and green where a man in contact would break it; a sight line, pips that fill and a cover shield on a hovered move; a crosshair on a man about to be fired on, BREAK CONTACT! under him; Hide urged where it works; HOVER A HEX. CLICK TO GO. until the first move |
@@ -1102,7 +1105,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 **In `MISSION-TRAINING.md`**: a course of lessons at a parachute school in England, and
 the lesson engine that runs it. The engine is built and the mission is a draft
-(`?mission=training`) with two lessons; M48 builds the course.
+(`?mission=training`) with lessons 2 to 5 of fifteen; M48 builds the rest.
 
 ---
 

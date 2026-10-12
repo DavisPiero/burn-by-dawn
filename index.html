@@ -1034,6 +1034,11 @@
       background-image: radial-gradient(circle, rgba(10, 8, 5, 0.38) 0.9px, transparent 1.5px);
       background-size: 5px 5px;
     }
+    /* The contents page lies on the bare table, as the loading page does
+       (M48, the operator's): no mission's map behind it until one is picked. */
+    #briefing-backdrop.orders.on-table::before {
+      background: radial-gradient(ellipse 60% 50% at 50% 45%, rgba(242, 232, 213, 0.06), transparent), #2d2b26;
+    }
     /* The orders: wider than a turn card, with more air between its parts (M13).
        820 since M31d (800 since M22, 720 before), the operator's: the job's line ends
        at the EXFIL and the bonus paragraph at "before dawn!" unbroken. */
@@ -1284,10 +1289,26 @@
     #briefing-backdrop.orders #briefing .brief-foot label { padding: 4px 14px 4px 0; font-size: 14px; font-weight: bold; }
     #briefing-backdrop.orders #briefing .brief-foot input { width: 20px; height: 20px; }
     #briefing .brief-foot.confirming { flex-direction: column; align-items: center; gap: 10px; }
+    /* The way on, as a button (M48, the operator's): filled in army green,
+       what it does in bold and how beside it, smaller. */
+    #briefing .brief-foot { flex-wrap: wrap; gap: 6px 10px; }
     #briefing .brief-go {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-left: auto;
+      padding: 4px 12px;
+      font-size: inherit;
       font-weight: bold;
       letter-spacing: 1px;
     }
+    #briefing .brief-go.primary { color: var(--paper); background: var(--green); }
+    #briefing .brief-go .go-note { font-size: 12px; font-weight: normal; letter-spacing: 0; opacity: 0.9; }
+    #briefing .brief-foot.confirming .brief-go { margin-left: 0; }
+    /* The one that starts a game: the biggest thing in the card's foot. */
+    #briefing .brief-go.big { padding: 7px 18px; box-shadow: 3px 3px 0 var(--ink); }
+    #briefing .brief-go.big .go-label { font-family: var(--slab); font-size: 20px; letter-spacing: 2px; }
+    #briefing .brief-good { color: var(--green); }
     /* The contents page (M27): the annual's contents, one line a mission,
        its title run to its page number with a dotted leader. A mission not
        yet written is printed faint and stamped in red rubber, askew. */

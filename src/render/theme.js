@@ -1144,6 +1144,7 @@ export const CUE = {
   noteSize: 22,
   // CHARGE IS SET. GET CLEAR! over a target a charge was just set on (M37).
   chargeNoteSize: 30,
+  chargeNoteMs: 4000, // it goes of itself (M48), if no click or key has put it away
   chargeNoteTilt: -5,
   // A man in contact who will be fired on as things stand (M45): a crosshair
   // throbs over his counter; selected, BREAK CONTACT! is lettered under it.

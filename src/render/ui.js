@@ -340,6 +340,7 @@ function titleBanner({ title, tagline }) {
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
+ *   go?: its way on, "LABEL — how" (a button; `goBig` for the one that starts a game),
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
  *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel? }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
@@ -348,6 +349,9 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   backdrop.hidden = !briefing;
   // The orders' place and width, for them and for how to play (`wide`, M44).
   backdrop.classList.toggle('orders', Boolean(briefing?.banner || briefing?.wide));
+  // The contents page lies on the bare table (M48, the operator's): no
+  // mission's map is seen behind it until one is picked.
+  backdrop.classList.toggle('on-table', Boolean(briefing?.onTable));
   if (!briefing) return;
   card.replaceChildren();
   card.className = briefing.tone ? `tone-${briefing.tone}` : '';
@@ -360,9 +364,16 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
   card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
   // A paragraph may be several lines, each on its own line (M13); a line given
-  // as { bold } is set in bold whole (M31d: the job on the orders).
+  // as { bold } is set in bold whole (M31d: the job on the orders), and one
+  // given as { parts } is its words in order, a { good } among them in green
+  // (M48: PASSED).
+  const inLine = (line) => {
+    if (typeof line === 'string') return boldNames(line, briefing.names);
+    if (line.parts) return line.parts.map((part) => (typeof part === 'string' ? part : html('b', 'brief-good', part.good)));
+    return [html('b', null, line.bold)];
+  };
   for (const text of briefing.paragraphs ?? []) {
-    const lines = [].concat(text).map((line) => (typeof line === 'string' ? boldNames(line, briefing.names) : [html('b', null, line.bold)]));
+    const lines = [].concat(text).map(inLine);
     card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
   }
   if (briefing.contents) card.appendChild(contentsList(briefing.contents));
@@ -425,7 +436,20 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     });
     foot.appendChild(button);
   }
-  foot.appendChild(html('span', 'brief-go', boldKeys(briefing.go ?? 'CARRY ON — any key or click')));
+  // The way on is a button (M48, the operator's: among a card's other buttons
+  // the line "any key or click" was lost). Its click is the card's own: any
+  // click on a card carries on. Filled, but for a card that asks, whose own
+  // button is the one to stand out.
+  // `go: false` is a card with no way on but a choice on it (the contents page).
+  if (briefing.go !== false) {
+    const [label, how] = (briefing.go ?? 'CARRY ON — any key or click').split(' — ');
+    const go = html('button', `btn brief-go${briefing.confirm ? '' : ' primary'}${briefing.goBig ? ' big' : ''}`, [
+      html('span', 'go-label', boldKeys(label)),
+      ...(how ? [html('span', 'go-note', how)] : []),
+    ]);
+    go.type = 'button';
+    foot.appendChild(go);
+  }
   card.appendChild(foot);
   fitBriefing(card);
 }
@@ -1192,8 +1216,11 @@ export function renderActions(element, actions, onAction, owner = null) {
 
 /** An action's rollover: its full name, what it does, and its cost or why not now. */
 function actionPopup(action) {
+  // An action he cannot take now says so in its heading (M48, the operator's:
+  // a grey key's rollover read as if it could be pressed).
+  const open = action.ok || action.active;
   return [
-    html('b', null, action.label.toUpperCase()),
+    html('b', null, `${action.label.toUpperCase()}${open ? '' : ' (UNAVAILABLE)'}`),
     `\n${action.suggest && action.ok ? `${action.suggest}\n` : ''}${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
   ];
 }
