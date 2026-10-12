@@ -7,8 +7,8 @@ Section numbers in it (§4, §6) are SPEC.md's. Like SPEC.md it says how things 
 and what is **to be built next**, each marked; it keeps no history (DECISIONS.md has it).
 The words and names are placeholder copy for the operator to reword.
 
-**State: the lesson engine is built (M47) with two lessons that prove it; the mission is
-a draft, played by `?mission=training`. M48 builds the course.**
+**State: the lesson engine is built (M47); M48 is building the course, and has lessons
+2 to 5 of fifteen. The mission is a draft, played by `?mission=training`.**
 
 ---
 
@@ -65,7 +65,7 @@ page. Its `turnLimit` is 99.
 | Field | What it is |
 |---|---|
 | `say` | The pen's line on the board, **seven words at most**, at hex `at` or under the man it is about |
-| `tell` | One sentence on the lesson card: the why |
+| `tell` | The lesson card's words, two or three short sentences: what he is looking at, the rule with its number (a hedge is 2 AP a hex), and what to do |
 | `ring` | Hexes ringed in the pen, or `"men"` |
 | `allow` | The only things that do anything: `select` (ids, or true), `move` (hexes, or `"any"`), `actions` (ids), `endTurn` |
 | `until` | What ends the step: one of the list below |
@@ -103,18 +103,29 @@ the board with its rings; the **lesson card** in the turn card's place (lesson a
 step, the sentence, the whistle's reason in red, BACK, AGAIN, THE COURSE); the PASSED
 card; the umpire's whistle, made in code.
 
-### The course (to be built, M48)
+### The practice ground
+
+A park, not France's bocage (the operator's, M48: the sketch read too like France).
+**Tatton Mere** fills the north and runs out south as **the Mere Brook**, a hex west of
+where the sketch had it, crossed by the dummy bridge on the drive. **Tatton Hall** and
+its kitchen garden are in the north-west; its drive runs south-east to the bridge and
+on east, and a lane runs south-west from the bridge to the gate, the exfil. The grass
+is open, with copses, one L of paddock hedge, the Knoll east of the mere and **Home
+Wood** in the south-east. The brook's name is set upright down its water.
+
+### The course (being built, M48)
 
 Fifteen lessons, the operator's eleven and four of mine (ROADMAP.md has the table).
-M47 has two, to prove the engine: **3, Action points**, and the first half of **5, Not
-being seen**.
+Built: **2, Parachutes**; **3, Action points**; **4, Ground**; and the first half of
+**5, Not being seen**. PASSED leads to the next lesson built, and a test holds that
+their numbers run on with none skipped. Until lesson 1 is built the course starts at 2.
 
 | # | Lesson | Qualifies | Needs from the engine beyond M47 |
 |---|---|---|---|
 | 1 | The drop, and reading the page | PARACHUTIST | A lesson that starts in the drop, with a fixed landing (no scatter): `start.drop` |
-| 2 | Parachutes | FIELDCRAFT | — (`packed`) |
+| 2 | Parachutes | FIELDCRAFT | Built |
 | 3 | Action points | MOVEMENT | Built |
-| 4 | Ground | MOVEMENT | — |
+| 4 | Ground | MOVEMENT | Built |
 | 5 | Not being seen, then being seen and breaking contact | FIELDCRAFT | First half built; the second uses `mayBeSeen` and a condition for contact broken |
 | 6 | Watching the garrison: routes, next turn, a stone | FIELDCRAFT | A condition for a stone thrown; hovering an enemy |
 | 7 | Fighting: the knife, suppress and kill, firing back | WEAPONS | — (`enemyDown`); a condition for an enemy suppressed |
@@ -132,8 +143,7 @@ suppressed, diversion called, man dressed) and `start.drop` and `start.canisters
 is a line or two in `lessons.js`, with its test. If a lesson needs more than that, the
 lesson is cut to fit, not the engine grown: the same rule as the trait hooks.
 
-Also M48's: the map finished (it is a sketch today: a wood, hedges, a brook, the dummy
-bridge, a track); the umpires' own counters (white armbands; a mission's `enemyChips`
+Also M48's: the umpires' own counters (white armbands; a mission's `enemyChips`
 folder, as the aqueduct's Italians, drawn in code until painted) and their own cries;
 the **clipboard** (today the course's list, ticked, stands in for it); START HERE on
 the contents page and the mission made `playable`; the **?** pages' diagrams drawn
@@ -142,8 +152,9 @@ from the same lessons.
 ### Open for the operator
 
 - **The setting's names**: Tatton Park, the Mere Brook, Home Wood. Mine.
-- **Every word of the two lessons**: the pen lines and the sentences. Mine, and the
-  pattern M48 will follow, so worth rewording before fifteen are written to it.
+- **The setting's new names**: Tatton Mere, Tatton Hall, the Knoll. Mine.
+- **The lessons' words** were sharpened in M48 to the operator's note (say the rule
+  plainly, with its number); the pattern the rest will follow.
 - **Lesson order.** The table follows the operator's list. Lesson 8 (charges) is the
   longest by far and may want splitting in two.
 - **Should play tips default to on once a player has passed the course, or stay off?**

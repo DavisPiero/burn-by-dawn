@@ -117,7 +117,7 @@ one hex off. Tests: 204 headless, 206 in tests.html.
 
 **M47** (10 Oct 2026): the training mission is specified in `MISSION-TRAINING.md`
 (SPEC §15) and its lesson engine is built (`src/lessons.js`), off in every other
-mission. A draft, `?mission=training`: a sketch of the practice ground and two lessons
+mission. A draft, `?mission=training`: the practice ground and, since M48's first session, lessons 2 to 5
 that prove the engine (Action points; Not being seen), each played through by a test.
 Tests: 210 headless, 212 in tests.html. **Next: M48**, the course, a few lessons a
 session; the first should be the operator's rewording of these two, since the other

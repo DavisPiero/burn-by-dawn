@@ -9,7 +9,7 @@
       "start": {
         "men": { "barrow": { "at": [-1, 7] } },
         "enemies": [
-          { "id": "umpire", "label": "Umpire", "type": "patrol", "facing": "W", "loop": false, "route": [[6, 6], [1, 6]] }
+          { "id": "umpire", "label": "Umpire", "type": "patrol", "facing": "W", "loop": false, "route": [[5, 6], [1, 6]] }
         ],
         "parachutes": [
           { "at": [-1, 7], "unit": "barrow" },
@@ -27,10 +27,10 @@
         {
           "say": "HOVER THE PATROL.",
           "tell": "A patrol finds any parachute it walks onto or past, and the alert goes up by 1. Hover the patrol on the drive: the dotted line is the beat it walks.",
-          "ring": [[6, 6]],
-          "at": [6, 6],
+          "ring": [[5, 6]],
+          "at": [5, 6],
           "allow": { "select": ["barrow"] },
-          "until": { "kind": "hovered", "hexes": [[6, 6]] }
+          "until": { "kind": "hovered", "hexes": [[5, 6]] }
         },
         {
           "say": "PRESS U TO PACK IT.",
@@ -114,7 +114,7 @@
         },
         {
           "say": "HOVER THE COPSE.",
-          "tell": "The box under the map describes whatever the mouse is on. Its GROUND line gives the cost and the cover: a wood is 2 AP a hex and heavy cover.",
+          "tell": "The box under the map describes whatever the mouse is on. Its top line is the ground: a wood costs 2 AP a hex (Move 2) and is heavy cover.",
           "ring": [[5, 4]],
           "at": [5, 4],
           "allow": { "select": ["vance"] },

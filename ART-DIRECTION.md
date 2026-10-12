@@ -19,7 +19,8 @@ board must read at a glance.
   carries, from the top: a fixed strip (the turn counter; End turn, which is the JUMP!
   button before the drop, and Undo; the selected man's actions: a full button for each
   he can take now, the rest as their keys alone, small and grey, in what is left of the
-  last row; a button that has just become usable pops once), the alert dial and the
+  last row, its rollover headed with its name and (UNAVAILABLE); a button that has just
+  become usable pops once), the alert dial and the
   RAF diversion, the mission panel, and the **roster rail: all six portraits, always
   visible**, six compact slots that fit at 1280x800 without scrolling, greying out as men
   are lost.
@@ -232,13 +233,20 @@ board must read at a glance.
 
 - **A card that asks** (signal the boat, out anyway) has its button on a line of its own
   above the way back (NOT YET — any other key or click), never beside it.
+- **A card's way on is a button** at the right of its foot: what it does in bold
+  (CARRY ON, BACK, LESSON 3) and how beside it, smaller (any key or click), filled in
+  army green with paper letters; on a card that asks it is plain, so the card's own
+  button stands out. **The one that starts a game is the biggest thing in the foot**:
+  START GAME on the orders before the drop, START LESSON 2 on a course's list, in the
+  stencil.
 
 - **The contents page comes first** (§10 Missions), as the annual's contents: the title
   card with PARACHUTE RAIDS BEHIND THE LINES, then each mission as a contents line, its
   title run to its page number with a dotted leader, its place in italic and a line about
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
-  askew; a click on it does nothing. Clicking a playable one, or any key, opens its
-  orders. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
+  askew; a click on it does nothing. **It lies on the bare table**, as the loading page
+  does: no mission's map is seen until one is picked, and then that mission's spread is
+  under its orders. Only clicking a playable one opens its orders; a key does nothing. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
 - **The orders are the first thing seen** after it, and they are short: **what tonight
   asks, never how to play.** The orders card opens under the title card (a painted
   picture of the drop with the title lettered in; drawn in code if the file is missing),
@@ -285,7 +293,7 @@ board must read at a glance.
   ask for makes the card shake its head, twice, a few pixels. The step's own line is
   on the board in the red pen, at the hex it is about, with the pen's throbbing ring on
   each hex it names. **PASSED** is a card in the same place, headed with the
-  qualification.
+  qualification: LESSON 3 - Action Points - PASSED., the last word in army green.
 - **Turn cards.** At the start of every turn (turn 1 after the drop has been shown) a card
   sits in the bottom right of the map, narrow, with nothing darkened: what happened at the
   turn boundary, most important first, **four lines at most, each with the board's own
@@ -389,8 +397,10 @@ board must read at a glance.
 - **The charges are set**: when a target is given the last charge it needs, the player's
   pen letters **CHARGES ARE SET. / GET CLEAR!** over it (CHARGE IS SET where it needs one),
   red with a paper outline, a little askew, over the counters and any speech bubble, kept
-  whole on the board. The next click or key anywhere puts it away. A target that wants
-  more than one says nothing until the last is set.
+  whole on the board. The next click or key anywhere puts it away, and after four
+  seconds it goes of itself; Space or Esc pressed at it does only that, so clearing it
+  never ends the turn. A target that wants more than one says nothing until the last is
+  set.
 - **A blast that goes off this turn throbs**: its red ground swells and fades, about
   once a second. With the tips on, each man standing in it has **GET CLEAR!** lettered
   under him and a short pen arrow toward the nearest clear hex he can still reach.
