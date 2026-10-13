@@ -872,7 +872,7 @@ export function renderPieces(layers, state, view) {
   if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
   if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
   // What the turn card's hint is about, ringed while the card is up (M46).
-  for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now);
+  for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now, hex.wide ? CUE.manRingRadius : CUE.pointRingRadius);
   if (view.ghost) drawGhost(layers, view.ghost, now);
   else if (layers.cueSince) layers.cueSince.ghostFor = null;
   if (view.getClear) drawGetClear(layers, view.getClear);
@@ -1099,14 +1099,14 @@ function drawManNote(layers, note) {
   layers.effects.appendChild(letters);
 }
 
-/** A throbbing pen ring round a hex's middle: where the charge goes (M43c), what a hint is about (M46). */
-function penRing(layers, p, now) {
+/** A throbbing pen ring round a hex's middle: where the charge goes (M43c), what a hint is about (M46). A lesson's ring on a man is wider, round his whole hex (M48b). */
+function penRing(layers, p, now, radius = CUE.pointRingRadius) {
   const g = el('g', { class: 'nd-point', 'pointer-events': 'none', opacity: CUE.pointRingOpacity });
   layers.cueSince ??= {};
   layers.cueSince.point ??= now;
   g.style.animationDelay = `${-Math.round(now - layers.cueSince.point)}ms`;
-  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
-  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
+  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: radius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
+  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: radius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
   layers.effects.appendChild(g);
 }
 

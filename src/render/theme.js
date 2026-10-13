@@ -1160,6 +1160,9 @@ export const CUE = {
   // the airfield every pen in reach was lettered at once).
   pointRange: 1,
   pointRingRadius: 34,
+  // A lesson's ring on a man (M48b, the operator's: the ring lay over the
+  // parachute on his hex, the thing the step was about): round the whole hex.
+  manRingRadius: 50,
   pointRingWidth: 5,
   pointRingOpacity: 0.85,
   pointPulseMs: 1100,

@@ -153,7 +153,7 @@
     }
     #seed a, #version { color: inherit; opacity: 0.6; }
     /* Sound on or off, under the seed and set the same way. */
-    #sound-toggle, #restart {
+    #sound-toggle, #tips-toggle, #restart {
       writing-mode: vertical-rl;
       transform: rotate(180deg);
       padding: 4px 0;
@@ -990,6 +990,10 @@
     #lesson .lesson-step { font-size: 12px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
     #lesson p { margin: 0 0 7px; }
     #lesson .lesson-whistle { font-weight: bold; color: var(--red); }
+    #lesson .lesson-on { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
+    #lesson .lesson-on-label { font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+    #lesson .lesson-on-say { font-family: var(--slab); font-weight: bold; font-size: 15px; color: var(--red); }
+    #lesson .lesson-on .btn { padding: 4px 14px; font-size: 14px; }
     #lesson .lesson-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     #lesson .lesson-ways { display: inline-flex; gap: 6px; }
     #lesson .btn { padding: 2px 8px; font-size: 12px; }
@@ -1475,6 +1479,7 @@
         <div id="version"></div>
         <div id="seed"></div>
         <button id="sound-toggle" type="button" title="Sound on or off [M]"></button>
+        <button id="tips-toggle" type="button" title="Play tips on or off: the red pen on the map says what to do next"></button>
         <button id="restart" type="button" title="A new game on a fresh seed, at the same level"></button>
       </div>
       <aside id="lesson" hidden></aside>

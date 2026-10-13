@@ -41,7 +41,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  capitalise, renderContentsBack, renderLesson, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderLesson, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -61,6 +61,7 @@ const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
+const tipsToggleButton = document.getElementById('tips-toggle');
 const restartButton = document.getElementById('restart');
 const contentsBackButton = document.getElementById('contents-back');
 const timerTinBox = document.getElementById('timer-tin');
@@ -424,7 +425,7 @@ function deriveView() {
   const step = lessonStep();
   if (step && !briefing) {
     const men = state.units.filter(onBoard);
-    view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
+    view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
     if (about) view.manNotes.push({ q: about.q, r: about.r, words: step.say });
   }
@@ -2204,10 +2205,23 @@ function openOrdersFromHelp() {
   render();
 }
 
-function closeBriefing() {
+/**
+ * A card that leads somewhere new goes on only by its green button (M48b,
+ * the operator's: a stray key or click started the next lesson while the
+ * last was still being read; the third note of its kind, so one rule for
+ * all of them): PASSED, a course's list, and the orders before the drop. A
+ * card that only says something still goes at any key or click.
+ */
+function wantsItsButton() {
+  if (briefing?.kind === 'passed') return true;
+  return briefing?.kind === 'orders' && (course ? !course.lesson : state.phase === 'drop');
+}
+
+function closeBriefing(byButton = false) {
   // The contents page is put away only by picking a mission (M48): with no
   // map behind it, a stray key no longer turns to one unasked.
   if (briefing?.kind === 'contents') return;
+  if (wantsItsButton() && !byButton) return;
   // The course's list is put away by taking a lesson: the next not yet
   // passed. A lesson passed leads on to the one after it, or back to the list.
   if (course && !course.lesson && briefing?.kind === 'orders') return startLesson(nextLesson().id);
@@ -2456,8 +2470,9 @@ function describeBriefing(which, view) {
         ...(left ? [] : ['That is every lesson of the course.']),
       ]],
       sections: [],
-      link: { label: 'THE COURSE', onClick: openCourse },
-      go: `${next ? `LESSON ${next.number}` : 'THE COURSE'} — any key or click`,
+      link: { label: 'COURSE MENU', onClick: openCourse },
+      go: next ? `LESSON ${next.number} ▶` : 'COURSE MENU',
+      onGo: () => closeBriefing(true),
     };
   }
   // A course's orders are its list of lessons (M47): any of them, at any time.
@@ -2477,8 +2492,9 @@ function describeBriefing(which, view) {
       },
       sections: [],
       toggles: [musicToggle()],
-      go: `START LESSON ${next.number} — any key, or click a lesson`,
+      go: `START LESSON ${next.number} — or click a lesson`,
       goBig: true,
+      onGo: () => closeBriefing(true),
     };
   }
   if (which.kind === 'orders' || which.kind === 'help') {
@@ -2617,7 +2633,7 @@ function describeBriefing(which, view) {
       toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
       // The one button that starts the game (M48, the operator's): named, and the biggest.
-      ...(before ? { go: 'START GAME — any key or click', goBig: true } : {}),
+      ...(before ? { go: 'START GAME', goBig: true, onGo: () => closeBriefing(true) } : {}),
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
@@ -2776,7 +2792,7 @@ function lessonView() {
   const { lesson, progress } = course;
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
-    tell: step.tell ?? '', whistle: course.whistle, canBack: progress.step > 0, next: step.until.kind === 'acknowledged',
+    tell: step.tell ?? '', say: step.say, whistle: course.whistle, canBack: progress.step > 0, next: step.until.kind === 'acknowledged',
   };
 }
 
@@ -2798,17 +2814,21 @@ function tipsToggle() {
     on: tipsOn,
     label: ' Play tips',
     help: titled('PLAY TIPS', 'The red pen on the map says what to do next: how to move, where a charge goes, when to break contact, get clear or get out. For a first game.'),
-    onChange: (on) => {
-      tipsOn = on;
-      // Carried in the address, so Play again and a reload keep it.
-      const query = new URLSearchParams(window.location.search);
-      if (on) query.set('tips', 'on');
-      else query.delete('tips');
-      const search = query.toString();
-      window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
-      renderBoard();
-    },
+    onChange: setTips,
   };
+}
+
+/** Play tips on or off: the box on the orders, or the words in the margin at any time (M48b, the operator's). */
+function setTips(on) {
+  tipsOn = on;
+  // Carried in the address, so Play again and a reload keep it.
+  const query = new URLSearchParams(window.location.search);
+  if (on) query.set('tips', 'on');
+  else query.delete('tips');
+  const search = query.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+  renderTipsToggle(tipsToggleButton, tipsOn);
+  render();
 }
 
 /** The card when the RAF diversion is called: what it did, and what is left. */
@@ -3314,6 +3334,11 @@ try {
     toggleSound();
   });
   renderSoundToggle(soundToggle, isMuted());
+  tipsToggleButton.addEventListener('click', () => {
+    tipsToggleButton.blur();
+    setTips(!tipsOn);
+  });
+  renderTipsToggle(tipsToggleButton, tipsOn);
   restartButton.addEventListener('click', handleRestartClick);
   renderRestart(restartButton, false);
   contentsBackButton.addEventListener('click', handleContentsBackClick);

@@ -26,7 +26,7 @@
         },
         {
           "say": "HOVER THE PATROL.",
-          "tell": "A patrol finds any parachute it walks onto or past, and the alert goes up by 1. Hover the patrol on the drive: the dotted line is the beat it walks.",
+          "tell": "A patrol finds any parachute it walks onto or past, and the alert goes up by 1. Hover the patrol on the road: the dotted line is the beat it walks.",
           "ring": [[5, 6]],
           "at": [5, 6],
           "allow": { "select": ["barrow"] },
@@ -39,7 +39,7 @@
           "until": { "kind": "packed" }
         },
         {
-          "say": "VANCE'S IS BY THE DRIVE. GO THERE.",
+          "say": "VANCE'S IS BY THE ROAD. GO THERE.",
           "tell": "Any man can pack any parachute. This one lies beside the patrol's beat, so it would be found. Move Barrow onto it.",
           "ring": [[1, 7]],
           "at": [1, 7],
@@ -129,8 +129,8 @@
           "until": { "kind": "hovered", "hexes": [[7, 4]] }
         },
         {
-          "say": "THE DRIVE IS QUICK. GO.",
-          "tell": "Grass and tracks are 1 AP a hex, and neither gives any cover. Move him onto the drive, by the bridge.",
+          "say": "THE ROAD IS QUICK. GO.",
+          "tell": "Grass and tracks are 1 AP a hex, and neither gives any cover. Move him onto the road, by the bridge.",
           "ring": [[6, 6]],
           "at": [6, 6],
           "allow": { "select": ["vance"], "move": [[6, 6]] },

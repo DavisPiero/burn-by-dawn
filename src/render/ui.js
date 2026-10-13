@@ -340,7 +340,7 @@ function titleBanner({ title, tagline }) {
 /**
  * Show the briefing card, or hide it when `briefing` is null. `briefing` is
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
- *   go?: its way on, "LABEL — how" (a button; `goBig` for the one that starts a game),
+ *   go?: its way on, "LABEL — how" (a button; `goBig` for the one that starts a game; `onGo` where only the button goes on),
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
  *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel? }], onChoose(id) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
@@ -448,6 +448,14 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
       ...(how ? [html('span', 'go-note', how)] : []),
     ]);
     go.type = 'button';
+    // A card that leads somewhere new goes on only by this button (M48b):
+    // `onGo`, and main.js lets no other key or click put it away.
+    if (briefing.onGo) {
+      go.addEventListener('click', (event) => {
+        event.stopPropagation();
+        briefing.onGo();
+      });
+    }
     foot.appendChild(go);
   }
   card.appendChild(foot);
@@ -517,7 +525,7 @@ function contentsList({ entries, onChoose }) {
 /**
  * The lesson card (M47, SPEC.md §15), in the turn card's place while a
  * lesson is on: which lesson and step, the step's one sentence, the umpire's
- * word if the last try was whistled, and the ways back. It takes clicks
+ * word if the last try was whistled, what goes on from here, and the ways back. It takes clicks
  * only on its buttons; the board round it is played on. `view` is null to
  * put it away. `on` is { next(), back(), again(), course() }.
  */
@@ -530,16 +538,18 @@ export function renderLesson(element, view, on) {
     b.addEventListener('click', act);
     return b;
   };
-  const back = button('◀ BACK', on.back);
-  back.disabled = !view.canBack;
+  // No step before the first: no button, where a dead one was (M48b, the operator's).
+  const ways = [...(view.canBack ? [button('◀ STEP BACK', on.back)] : []), button('START AGAIN', on.again), button('COURSE MENU', on.course)];
   element.replaceChildren(
     html('div', 'lesson-head', [html('span', 'lesson-title', `LESSON ${view.number} · ${view.title.toUpperCase()}`), html('span', 'lesson-step', `STEP ${view.step} OF ${view.steps}`)]),
     ...(view.whistle ? [html('p', 'lesson-whistle', `WHISTLE! ${view.whistle} Try that step again.`)] : []),
     html('p', 'lesson-tell', boldKeys(view.tell)),
-    html('div', 'lesson-foot', [
-      html('span', 'lesson-ways', [back, button('AGAIN', on.again), button('THE COURSE', on.course)]),
-      ...(view.next ? [button('NEXT ▶', on.next, 'btn lesson-next')] : []),
-    ]),
+    // What goes on from here (M48b, the operator's: there was no sense of
+    // continuing): the step's own pen line, or the green NEXT where it only shows.
+    html('div', 'lesson-on', view.next
+      ? [button('NEXT ▶', on.next, 'btn primary lesson-next')]
+      : [html('span', 'lesson-on-label', 'TO GO ON:'), html('span', 'lesson-on-say', boldKeys(view.say))]),
+    html('div', 'lesson-foot', [html('span', 'lesson-ways', ways)]),
   );
 }
 
@@ -1100,6 +1110,12 @@ export function renderContentsBack(button, armed) {
 export function renderSoundToggle(button, muted) {
   button.textContent = muted ? 'sound off' : 'sound on';
   button.setAttribute('aria-pressed', String(!muted));
+}
+
+/** Play tips on or off (SPEC.md §4), in the margin beside the sound: there at any time (M48b, the operator's). */
+export function renderTipsToggle(button, on) {
+  button.textContent = on ? 'play tips on' : 'play tips off';
+  button.setAttribute('aria-pressed', String(on));
 }
 
 /**
