@@ -1576,7 +1576,10 @@ function render() {
   });
   renderReadout(readout, state, map, view);
   renderMission(missionList, view.mission);
-  renderDiversion(diversionButton, view.mission.diversion);
+  // Nor the radio, in a lesson where it would do nothing (M48e: lesson 12 is the one that calls it).
+  renderDiversion(diversionButton, lessonStep() && !lessonLive({ kind: 'action', id: 'diversion' })
+    ? { ...view.mission.diversion, ok: false, reason: 'not part of this step' }
+    : view.mission.diversion);
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: mission.tagline }, restartMission, openContents,
     state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null);
   // Every man's name is set in bold on the card, as in the report.

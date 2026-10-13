@@ -729,9 +729,8 @@
       },
       "steps": [
         {
-          "say": "SIX MEN, SIX SKILLS. PRESS NEXT.",
-          "tell": "Every man has a skill of his own. It is printed on his row in the list, with what it does in numbers. This lesson uses two of them.",
-          "point": "roster",
+          "say": "EACH MAN HAS A SKILL. PRESS NEXT.",
+          "tell": "Every man has a skill of his own. It is printed on his row in the list on the right, with what it does in numbers. This lesson uses two of them.",
           "until": { "kind": "acknowledged" }
         },
         {
@@ -893,7 +892,7 @@
       "title": "A wounded man",
       "qualification": "FIRST AID",
       "start": {
-        "men": { "nunn": { "at": [3, 5], "hits": 1 }, "barrow": { "at": [2, 5] } },
+        "men": { "nunn": { "at": [3, 5], "hits": 1, "charges": 0 }, "barrow": { "at": [2, 5] } },
         "enemies": []
       },
       "steps": [
@@ -907,7 +906,7 @@
         },
         {
           "say": "PRESS A. CLICK NUNN.",
-          "tell": "Press ‘A’ for ‘Stabilise’, then click Nunn.",
+          "tell": "Press ‘A’ for ‘Aid’, then click Nunn.",
           "then": "The wound is dressed. It took all 4 of Barrow's AP.",
           "ring": [[3, 5]],
           "at": [3, 5],

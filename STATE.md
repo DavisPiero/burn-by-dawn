@@ -4,38 +4,31 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 13 Oct 2026, after the operator's notes on M48's third session (M48d, signed off).
+Last updated: 13 Oct 2026, after M48's fourth session (M48e, not yet signed off).
 
 ## Where we are
 
-- **Build M48d** on `main`, the only branch, signed off and pushed on 13 Oct 2026.
-  Tests: 218 headless, 220 in tests.html.
+- **Build M48e** on the branch `m48e-lessons-12-16`, waiting for the operator's
+  sign-off. `main` is M48d. Tests: 219 headless, 221 in tests.html.
 - **Three missions are playable:** the rail bridge (France), the airfield (Tunisia)
   and the aqueduct (Italy). The aqueduct is playable but not yet balanced.
 - **Phase 5, teaching the game, is in progress.** The training course is a draft
-  (`?mission=training`) with **lessons 1 to 11 of seventeen**: the drop and reading the
-  page, parachutes, action points, ground, seen and not seen, watching the garrison,
-  the knife, the gunner, firing back, charges (fetch and carry), charges (set and get
-  clear).
+  (`?mission=training`) with **lessons 1 to 16 of seventeen**. New this session:
+  12 The leader (orders and the radio), 13 The men (two skills used, four told),
+  14 Getting out, 15 The alert, 16 A wounded man.
 - **Every lesson step is "do it, see it, then NEXT".** While a card waits on NEXT,
   doing exactly what the next step asks for counts as NEXT. In a lesson only what
-  would do something shows as a button; End turn is greyed the same way.
-- **The course's list is in two columns**: at eleven lessons it ran off the foot of
-  the page, the green button with it.
-- **The documents were split** (the operator's): decisions before M40 are in
-  `DECISIONS-ARCHIVE.md`; SPEC §4, §6, §7 and §10 are `TURNS.md`, `DETECTION.md`,
-  `SABOTAGE.md` and `WINNING.md`; the milestones done are `MILESTONES.md`. SPEC.md is
-  468 lines.
-- **M48d, the operator's notes:** in lesson 11 Nunn steps onto the charge point; the
-  gear is a pixel right, centred in its margin.
+  would do something shows as a button; End turn and now the radio are greyed the
+  same way.
+- **The course's list fits at sixteen** in its two columns. Seventeen will not.
 
 ## Next
 
-1. **The rest of the course**, lessons 12 to 17: the leader, the men, getting out, the
-   alert, a wounded man, the passing-out exercise. The table is in MISSION-TRAINING.md.
-2. Also M48's: **the course's list as a two-page spread, with the end-of-course
-   clipboard** (the operator's yes, 13 Oct; to be planned before it is built), umpire
-   chips and cries, START HERE on the contents page and the course made playable, the **?** pages' diagrams (in code).
+1. **Lesson 17, the passing-out exercise, with the end-of-course clipboard and the
+   list as a two-page spread** (the operator's yes, 13 Oct). To be planned together
+   before any of it is built.
+2. Also M48's: umpire chips and cries, START HERE on the contents page and the
+   course made playable, the **?** pages' diagrams (in code).
 3. **The aqueduct's balance, a short session of its own:** make the knife dearer there
    (a kill that is heard), try hiding a body with it (ROADMAP.md, Parked), and mend
    Hard's North run. Bot runs from a frozen copy.
@@ -45,13 +38,17 @@ Rule of the phase: cut a lesson to fit the engine; do not grow the engine for on
 
 ## Open with the operator
 
-Answered on 13 Oct: the two-column look, lesson 11's card, the course's timers and the
-gear's size are good; the lesson words stand until the operator's rewording pass.
+Answered on 13 Oct: the gear's position is good; lesson 11's ten steps are fine.
 
-1. **The gear moved 1 px, not "a few"**: the paper margin is 26 px and the gear 24, so
-   a pixel centres it and two would touch the board. More needs a smaller gear. Enough?
-2. **Lesson 11 is ten steps** now that he walks onto the point, the longest lesson.
-   Claude's guess: fine, since each is one small act. Cut it if it drags in play.
+1. **Can the passing-out exercise be failed?** "No hand held" clashes with the whistle
+   putting the step back whenever a man is seen. Claude's guess: being seen is allowed
+   there, and only a man hit blows the whistle.
+2. **Lesson 5's umpire is half under its card** (he stands on the hex lessons 12 and
+   13 had to move their card for). Move lesson 5's card top left too?
+3. **Lesson 13 does two skills and tells four.** Claude's cut. Enough?
+4. **Lesson 15 tells the alert's decay and does not show it** (it takes 4 quiet
+   turns). Claude's cut. Enough?
+5. **Lesson 12 is orders and the radio in one**, four steps. Split it if it crowds.
 
 ## Owed
 
