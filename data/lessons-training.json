@@ -377,42 +377,70 @@
       ]
     },
     {
-      "id": "fighting",
+      "id": "the-knife",
       "number": 7,
-      "title": "Fighting",
+      "title": "The knife",
       "qualification": "WEAPONS",
       "start": {
-        "men": { "vance": { "at": [2, 8] }, "speers": { "at": [2, 5] }, "fitch": { "at": [12, 3] } },
+        "men": { "vance": { "at": [1, 8] } },
         "enemies": [
-          { "id": "umpire-a", "label": "Umpire", "type": "sentry", "at": [3, 8], "facing": "E" },
-          { "id": "umpire-b", "label": "Umpire", "type": "sentry", "at": [1, 4], "facing": "NW" },
-          { "id": "umpire-c", "label": "Umpire", "type": "sentry", "at": [14, 3], "facing": "W" }
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [3, 8], "facing": "E" }
         ]
       },
       "steps": [
         {
           "say": "CLICK VANCE.",
-          "tell": "Three ways to fight, one man each. First the knife, which any man can use. Click Vance, in the hedge.",
-          "then": "Vance is beside this ‘SENTRY’ umpire and behind him, and has not been seen. That is what a knife needs. The knife mark on the umpire's counter says Vance could use it now.",
-          "ring": [[2, 8]],
+          "tell": "The knife is silent, and any man can use it. Click Vance.",
+          "then": "A knife needs the man beside the enemy and behind him, and not seen. This ‘SENTRY’ umpire faces east, away from Vance.",
+          "ring": "men",
           "allow": { "select": ["vance"] },
           "until": { "kind": "selected", "unit": "vance" }
         },
         {
+          "say": "MOVE IN BEHIND HIM.",
+          "tell": "Move Vance into the hedge behind the umpire: click the ringed hex.",
+          "then": "Vance is beside the umpire and behind him, unseen. But the knife takes a man's whole turn: he must not have spent any AP, and the hedge cost him 2.",
+          "ring": [[2, 8]],
+          "at": [2, 8],
+          "allow": { "select": ["vance"], "move": [[2, 8]] },
+          "until": { "kind": "movedTo", "unit": "vance", "hexes": [[2, 8]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "So he waits. End the turn.",
+          "then": "A new turn, and Vance has spent nothing. The knife mark on the umpire's counter says Vance could use it now.",
+          "allow": { "select": ["vance"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
           "say": "PRESS N. CLICK THE UMPIRE.",
-          "tell": "The knife takes a man's whole turn: he must not have spent any AP. Press ‘N’, then click the umpire.",
+          "tell": "Press ‘N’, then click the umpire.",
           "then": "Silent: no noise and no alert. It leaves a body, and a body the garrison finds adds 1 to the alert.",
           "ring": [[3, 8]],
           "at": [3, 8],
+          "does": { "unit": "vance" },
           "allow": { "select": ["vance"], "actions": ["knife"], "target": [[3, 8]] },
-          "until": { "kind": "enemyDown", "enemy": "umpire-a" }
-        },
+          "until": { "kind": "enemyDown", "enemy": "umpire" }
+        }
+      ]
+    },
+    {
+      "id": "the-gunner",
+      "number": 8,
+      "title": "The gunner",
+      "qualification": "WEAPONS",
+      "start": {
+        "men": { "speers": { "at": [2, 5] } },
+        "enemies": [
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [1, 4], "facing": "NW" }
+        ]
+      },
+      "steps": [
         {
           "say": "CLICK SPEERS.",
-          "tell": "Second, the gun. Only a gunner can open fire on an enemy who has not seen him. Click Speers, to the north.",
+          "tell": "Only a gunner can open fire on an enemy who has not seen him. Click Speers.",
           "then": "Speers is a gunner. He can fire at an enemy within 2 hexes with a clear line to him: the umpire on the track, who has his back turned.",
-          "ring": [[2, 5]],
-          "at": [2, 5],
+          "ring": "men",
           "allow": { "select": ["speers"] },
           "until": { "kind": "selected", "unit": "speers" }
         },
@@ -422,48 +450,67 @@
           "then": "The umpire has his head down: he will see nobody and shoot nobody when this turn ends. It was gunfire: 2 alert (1 from Speers, whose skill is a Cool Head), and patrols within 5 hexes come to look. Speers has 1 AP left, and a kill costs 2.",
           "ring": [[1, 4]],
           "at": [1, 4],
+          "does": { "unit": "speers" },
           "allow": { "select": ["speers"], "actions": ["suppress"], "target": [[1, 4]] },
-          "until": { "kind": "suppressed", "enemy": "umpire-b" }
+          "until": { "kind": "suppressed", "enemy": "umpire" }
         },
         {
           "say": "PRESS SPACE: END THE TURN.",
-          "tell": "One gunner needs two turns to kill; two gunners can do it in one. End the turn. Fitch, out on the grass east of the brook, will be seen: he is the third part of the lesson.",
-          "then": "A new turn. The suppressed umpire saw nothing. East of the brook, Fitch has been seen and is in contact.",
-          "mayBeSeen": true,
+          "tell": "One gunner needs two turns to kill; two gunners can do it in one. End the turn.",
+          "then": "A new turn. The suppressed umpire saw nothing, and Speers has his 3 AP again.",
           "allow": { "select": ["speers"], "endTurn": true },
           "until": { "kind": "turnEnded" }
         },
         {
           "say": "PRESS K. CLICK THE UMPIRE.",
-          "tell": "An enemy who was suppressed last turn can be killed. With Speers selected, press ‘K’ for ‘Kill’, then click the umpire. It costs 2 AP.",
+          "tell": "An enemy who was suppressed last turn can be killed. Press ‘K’ for ‘Kill’, then click the umpire. It costs 2 AP.",
           "then": "One silenced shot: heard only 2 hexes away, 1 alert (none from Speers). It never misses, and it leaves a body.",
           "ring": [[1, 4]],
           "at": [1, 4],
           "does": { "how": "kill", "unit": "speers" },
-          "mayBeSeen": true,
           "allow": { "select": ["speers"], "actions": ["kill"], "target": [[1, 4]] },
-          "until": { "kind": "enemyDown", "enemy": "umpire-b" }
-        },
+          "until": { "kind": "enemyDown", "enemy": "umpire" }
+        }
+      ]
+    },
+    {
+      "id": "firing-back",
+      "number": 9,
+      "title": "Firing back",
+      "qualification": "WEAPONS",
+      "start": {
+        "men": { "fitch": { "at": [12, 3] } },
+        "enemies": [
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [14, 3], "facing": "W" }
+        ]
+      },
+      "steps": [
         {
           "say": "CLICK FITCH.",
-          "tell": "Third, firing back. Fitch isn't a gunner, so he cannot fire first. But a man who has been seen can fire back. Click Fitch, east of the brook.",
-          "then": "The umpire facing Fitch has him in his sights. If that umpire sees him again when this turn ends, Fitch is shot.",
-          "ring": [[12, 3]],
-          "at": [12, 3],
-          "mayBeSeen": true,
+          "tell": "A man who isn't a gunner cannot fire first. But a man who has been seen can fire back. Click Fitch.",
+          "then": "Fitch is on open grass in front of this ‘SENTRY’ umpire. When the turn ends he will be seen.",
+          "ring": "men",
           "allow": { "select": ["fitch"] },
           "until": { "kind": "selected", "unit": "fitch" }
         },
         {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "Let him be seen. End the turn.",
+          "then": "Fitch has been seen and is in contact: the umpire has him in his sights. If that umpire sees him again when this turn ends, Fitch is shot.",
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
           "say": "PRESS S. CLICK THE UMPIRE.",
           "tell": "For a man who isn't a gunner, ‘S’ is ‘Fire back’. Press it, then click the umpire who has seen him. It costs 2 AP.",
-          "then": "The umpire's head is down. It was gunfire, so 2 more alert. Fitch has 1 AP left to move with.",
+          "then": "The umpire's head is down. It was gunfire, so 2 alert. Fitch has 1 AP left to move with.",
           "ring": [[14, 3]],
           "at": [14, 3],
           "does": { "unit": "fitch" },
           "mayBeSeen": true,
           "allow": { "select": ["fitch"], "actions": ["suppress"], "target": [[14, 3]] },
-          "until": { "kind": "suppressed", "enemy": "umpire-c" }
+          "until": { "kind": "suppressed", "enemy": "umpire" }
         },
         {
           "say": "PRESS SPACE: END THE TURN.",
@@ -472,6 +519,140 @@
           "mayBeSeen": true,
           "allow": { "select": ["fitch"], "endTurn": true },
           "until": { "kind": "contactBroken", "unit": "fitch" }
+        }
+      ]
+    },
+    {
+      "id": "charges-fetch-and-carry",
+      "number": 10,
+      "title": "Charges: fetch and carry",
+      "qualification": "DEMOLITIONS",
+      "start": {
+        "men": { "barrow": { "at": [2, 3] }, "fitch": { "at": [4, 3], "charges": 0 } },
+        "canisters": [{ "at": [3, 3], "charges": 2 }]
+      },
+      "steps": [
+        {
+          "say": "CLICK BARROW.",
+          "tell": "On some missions the charges come down in canisters, and have to be fetched. Click Barrow.",
+          "then": "The canister on the grass beside Barrow holds 2 charges. Any man standing on it can take one.",
+          "ring": "men",
+          "allow": { "select": ["barrow"] },
+          "until": { "kind": "selected", "unit": "barrow" }
+        },
+        {
+          "say": "A CANISTER. GO THERE.",
+          "tell": "Move Barrow onto the canister: click the ringed hex.",
+          "then": "Barrow is standing on the canister, with 3 AP left of his 4.",
+          "ring": [[3, 3]],
+          "at": [3, 3],
+          "allow": { "select": ["barrow"], "move": [[3, 3]] },
+          "until": { "kind": "movedTo", "unit": "barrow", "hexes": [[3, 3]] }
+        },
+        {
+          "say": "PRESS P TO PICK UP.",
+          "tell": "Press ‘P’ to pick up a charge. It costs 1 AP.",
+          "then": "Barrow carries a charge. He is a scout and did not jump with one, so its weight costs him 1 AP in every turn he carries it: he has 1 AP left, not 2. A sapper carries one at full pace.",
+          "allow": { "select": ["barrow"], "actions": ["pickUp"] },
+          "until": { "kind": "carrying", "unit": "barrow" }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "Passing a charge costs 2 AP, and he has 1. End the turn.",
+          "then": "A new turn, and Barrow has 3 AP, not his 4: the weight of the charge.",
+          "allow": { "select": ["barrow"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "PRESS E TO PASS IT.",
+          "tell": "So give it to a sapper. Fitch is beside him: press ‘E’ to pass it. With more than one man beside him, he would then click the one to have it.",
+          "then": "Fitch has the charge. Passing cost Barrow 2 AP and Fitch nothing, and Barrow has his 4 AP again next turn. One charge is still in the canister: a patrol finds a canister as it does a parachute, until it is empty.",
+          "ring": [[4, 3]],
+          "at": [4, 3],
+          "does": { "from": "barrow" },
+          "allow": { "select": ["barrow"], "actions": ["pass"] },
+          "until": { "kind": "carrying", "unit": "fitch" }
+        }
+      ]
+    },
+    {
+      "id": "charges-set-and-get-clear",
+      "number": 11,
+      "title": "Charges: set and get clear",
+      "qualification": "DEMOLITIONS",
+      "card": "northwest",
+      "start": {
+        "men": { "nunn": { "at": [7, 5], "charges": 1 } },
+        "droppedCharges": [[6, 7]]
+      },
+      "steps": [
+        {
+          "say": "CLICK NUNN.",
+          "tell": "A target is destroyed by charges set on its charge points. Click Nunn.",
+          "then": "The two ringed hexes beside the Training Bridge are its charge points. The bridge wants 2 charges, one on each. Nunn stands on one point with a charge; a second charge lies at the other.",
+          "ring": [[7, 5], [6, 7]],
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "selected", "unit": "nunn" }
+        },
+        {
+          "say": "PRESS C. PICK 3. SET.",
+          "tell": "Press ‘C’. The tin of time pencils opens: each is a timer, counted in turns with this turn as the first. Pick the 3, then press SET. It costs 1 AP.",
+          "then": "The charge is set and burning. It goes off at the end of turn 3, and kills any man within 1 hex of it then.",
+          "allow": { "select": ["nunn"], "actions": ["charge"], "fuse": 3 },
+          "until": { "kind": "chargeSet" }
+        },
+        {
+          "say": "THE OTHER POINT. GO THERE.",
+          "tell": "Move Nunn to the other charge point: click the ringed hex.",
+          "then": "Nunn is on the second point, standing on the charge left there. The 2 hexes took his last 2 AP.",
+          "ring": [[6, 7]],
+          "at": [6, 7],
+          "allow": { "select": ["nunn"], "move": [[6, 7]] },
+          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[6, 7]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "End the turn.",
+          "then": "Turn 2. The first charge has one turn less to burn.",
+          "allow": { "select": ["nunn"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "PRESS P TO PICK UP.",
+          "tell": "Press ‘P’ to pick up the charge at his feet.",
+          "then": "Nunn carries it, with 2 AP left.",
+          "allow": { "select": ["nunn"], "actions": ["pickUp"] },
+          "until": { "kind": "carrying", "unit": "nunn" }
+        },
+        {
+          "say": "PRESS C. PICK 2. SET.",
+          "tell": "Set it to go off with the first, at the end of turn 3. That is 2 turns from now: press ‘C’, pick the 2, then SET.",
+          "then": "Both charges will go off together at the end of turn 3. Nunn is standing on one of them.",
+          "allow": { "select": ["nunn"], "actions": ["charge"], "fuse": 2 },
+          "until": { "kind": "chargeSet" }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "He has a turn in hand. End the turn.",
+          "then": "Turn 3: the charges go off when this turn ends, and Nunn is in the blast.",
+          "allow": { "select": ["nunn"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "GET CLEAR.",
+          "tell": "Get him out of it. Move Nunn to the ringed hex, 2 hexes from the charge.",
+          "then": "Nunn is clear: more than 1 hex from both charges.",
+          "ring": [[4, 7]],
+          "at": [4, 7],
+          "allow": { "select": ["nunn"], "move": [[4, 7]] },
+          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[4, 7]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "End the turn.",
+          "then": "The Training Bridge is down. An explosion is heard everywhere and adds 3 to the alert. Charges on one target that go off in the same turn are one explosion, which is why the two timers were matched.",
+          "allow": { "select": ["nunn"], "endTurn": true },
+          "until": { "kind": "destroyed", "objective": "dummy-bridge" }
         }
       ]
     }

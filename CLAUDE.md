@@ -1,13 +1,13 @@
 # CLAUDE.md — working agreement
 
 Read `SPEC.md` before doing anything. It is the source of truth, with the files that
-hold its §11, §13, §14 and §15 (below). If a request conflicts with any of them, say so before
+hold its §6, §7, §11, §13, §14 and §15 (below). If a request conflicts with any of them, say so before
 writing code.
 
 ## Files in this repo
 
 - `CLAUDE.md` — this file. Rules you must follow.
-- `SPEC.md` — the design and technical spec. Authoritative. Two of its sections are files
+- `SPEC.md` — the design and technical spec. Authoritative. Some of its sections are files
   of their own, as authoritative as it is, so that it stays short enough to read whole:
   - `ART-DIRECTION.md` — SPEC §11: how the game looks, reads, moves and sounds. **Read it
     before touching anything the player sees or hears** (`src/render/`, `index.html`, the
@@ -19,13 +19,19 @@ writing code.
     before working on the aqueduct.**
   - `MISSION-TRAINING.md` — SPEC §15: the training course and its lesson engine. **Read
     it before working on a lesson or on `src/lessons.js`.**
+  - `DETECTION.md` — SPEC §6: detection, the alert, noise, contact and enemy fire,
+    reinforcements. **Read it before working on `src/enemy.js` or `src/sight.js`.**
+  - `SABOTAGE.md` — SPEC §7: objectives, charges, fuses and time pencils, explosions,
+    payoffs. **Read it before working on `src/sabotage.js`.**
+- `MILESTONES.md` — the table of milestones done (SPEC §12). Add a row at each merge.
 - `ART-ASSETS.md` — the art asset manifest. **Read it at milestone M7**, and whenever you
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
 - `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.
   Keep its "what Claude is drawing in code" list true when sprites change.
 - `STATE.md` — one page: where the project stands, what is next, what is open with the
   operator. **Read it at the start of every session and rewrite it at the end.**
-- `DECISIONS.md` — append-only log. See below.
+- `DECISIONS.md` — append-only log. See below. Entries before M40 are in
+  `DECISIONS-ARCHIVE.md`, which is not read every session.
 - `ROADMAP.md` — what comes after the current milestone, and in what order. Read it when
   choosing or scoping the next milestone. SPEC.md still wins where they differ.
 - `docs/Historical_Raids.md` — the operator's notes on real raids, source material for

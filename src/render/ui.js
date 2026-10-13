@@ -342,7 +342,7 @@ function titleBanner({ title, tagline }) {
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
  *   go?: its way on, "LABEL — how" (a button; `goBig` for the one that starts a game; `onGo` where only the button goes on),
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
- *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel? }], onChoose(id) } }
+ *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel? }], onChoose(id), spread? } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
@@ -486,8 +486,10 @@ function fitBriefing(card) {
  * a line about it under. A playable one is a button; a coming one is printed
  * all the same but stamped NEXT YEAR'S ANNUAL, and a click on it does nothing.
  */
-function contentsList({ entries, onChoose }) {
-  const list = html('ol', 'contents');
+function contentsList({ entries, onChoose, spread = false }) {
+  const list = html('ol', spread ? 'contents spread' : 'contents');
+  // A course's list (M48c): two columns, read down the left and then the right.
+  if (spread) list.style.setProperty('--rows', String(Math.ceil(entries.length / 2)));
   for (const entry of entries) {
     const line = html('span', 'contents-line', [
       html('span', 'contents-title', entry.title),

@@ -23,7 +23,7 @@ import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery,
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
-import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
+import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, stepMet, stepStart, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -549,6 +549,11 @@ function deriveView() {
   if (!unit) return view;
 
   view.actions = pencilsOpen(unit) ? pencilActions(unit) : actionsFor(unit);
+  // In a lesson only what would do something is a button (M48c, the
+  // operator's); the rest are their keys, as what he cannot do is anywhere.
+  if (lessonStep() && !pencilsOpen(unit)) {
+    view.actions = view.actions.map((a) => (a.active || lessonLive({ kind: 'action', id: a.id }) ? a : { ...a, ok: false, suggest: null, reason: 'not part of this step' }));
+  }
   // The timers open (M30b): the charge's blast, chain and all, on the board,
   // and what to do in the readout.
   if (pencilsOpen(unit)) {
@@ -1324,6 +1329,8 @@ function listNames(names) {
 
 /** Set the charge with this pencil, or the one offered first. */
 function setCharge(unit, fuse) {
+  // A lesson's step may name the one pencil (M48c): the tin stays open on another.
+  if (lessonStep() && !lessonAllows({ kind: 'fuse', turns: fuse ?? offeredPencil(state, map, unit, rules)?.fuse })) return;
   pencilsFor = null;
   pencilLifted = null;
   const before = state.charges;
@@ -1556,6 +1563,8 @@ function render() {
   // Its last turns redden once they are here (M46).
   renderDawnStrip(dawnStrip, state, clock, cuesFor.out?.closing && !state.outcome ? CLOSING_TURNS : 0);
   renderEndTurnButton(endTurnButton, state, clock, baseMap.dropRuns.length);
+  // Nor does End turn look pressable in a lesson where it would do nothing (M48c).
+  if (lessonStep() && !lessonLive({ kind: state.phase === 'drop' ? 'jump' : 'endTurn' })) endTurnButton.disabled = true;
   renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
@@ -2528,6 +2537,8 @@ function describeBriefing(which, view) {
           blurb: course.passed.has(l.id) ? '✓ PASSED' : 'Not yet taken', playable: true, panel: null,
         })),
         onChoose: startLesson,
+        // Two columns (M48c): eleven lessons ran off the foot of the page, the green button with them.
+        spread: true,
       },
       sections: [],
       toggles: [musicToggle()],
@@ -2741,12 +2752,20 @@ function lessonStep() {
 
 /** May the player do this now? If not, the lesson card shakes its head and nothing happens. */
 function lessonAllows(input) {
-  // A step done and held does nothing more until NEXT.
-  if (!course.progress.met && allows(lessonStep(), input)) return true;
+  if (lessonLive(input)) {
+    // A step done and held: exactly what the next asks for is its NEXT (M48c).
+    if (course.progress.met) lessonGoOn();
+    return true;
+  }
   lessonCard.classList.remove('nudge');
   void lessonCard.getBoundingClientRect();
   lessonCard.classList.add('nudge');
   return false;
+}
+
+/** Would this do anything now (lessons.js `live`)? Asked for the buttons too, so none looks pressable that is not. */
+function lessonLive(input) {
+  return live(course.lesson, course.progress, input);
 }
 
 /** The first lesson not yet passed this session, or the first of all. */
@@ -2850,6 +2869,8 @@ function openCourse() {
 function placeLessonCard(pointed) {
   lessonCard.style.top = '';
   lessonCard.style.bottom = '';
+  // A lesson at the bridge keeps its card in the far corner (M48c).
+  lessonCard.classList.toggle('northwest', course?.lesson?.card === 'northwest');
   if (!pointed || lessonCard.hidden) return renderLessonArrow(lessonArrow, null, null);
   const target = LESSON_POINTS[pointed].getBoundingClientRect();
   const page = lessonCard.offsetParent.getBoundingClientRect();

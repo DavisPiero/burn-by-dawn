@@ -1,0 +1,44 @@
+# BURN BY DAWN — Milestones done (SPEC.md §12)
+
+The table of milestones finished, moved out of SPEC.md §12 at M48c so the spec stays short
+enough to read whole. The milestone under way is still in SPEC.md §12, Current; what comes
+after is in ROADMAP.md. Add a row here when a milestone is merged.
+
+Each is recorded in full in DECISIONS.md and the git history.
+
+| # | What it did |
+|---|---|
+| M0–M6 | The engine: hex grid, terrain, units, traits, enemies and alert, combat, sabotage, the drop |
+| M7–M8e | The art pass, killing, the first balance pass, supplied art, undo |
+| M9–M10 | Difficulty levels, the drop runs tagged, sound |
+| M11–M24 | Fourteen playtest reviews: swimming, passing a charge, the knife, narrower arcs, next turn shown, the garrison's turn shown, kills that score, painted art and music, the score re-weighted, the readout and log reworked |
+| M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
+| M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
+| M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
+| M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
+| M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M48 (third session) | Lesson 7 split in three, one man each (the knife, the gunner, firing back), and charges in two lessons, so the course has 1 to 11 of seventeen; in a lesson only what would do something is a button, and a step waiting on NEXT takes what the next step asks for as NEXT; the course's list in two columns; a lesson's canisters, the `carrying` condition, the one time pencil a step names, a card that can lie top left; the course's charges take the tin (2 to 4); DECISIONS before M40 archived, SPEC §6, §7 and this table moved to files of their own |
+| M48 (second session) | The operator's notes: a card that leads somewhere new goes on only by its green button or Enter; play tips on for everyone; a menu behind a gear in the margin (sound, music, play tips, restart, contents); every lesson step held until NEXT with what it did still shown; the lesson card goes to what it points at; a wider ring on a man; Tatton Wood, the Training Bridge, the road. Lesson 1 (the drop, and reading the page), the second half of 5, 6 (watching the garrison) and 7 (fighting, firing back played) |
+| M48 (first session) | The operator's notes: the contents page on the bare table, a picked mission loaded in place; the cards' way on a button, START GAME on the orders; (UNAVAILABLE) on an action that is closed; the charge note goes of itself and Space at it does not end the turn. The practice ground redrawn as a park, the brook a hex west; lessons 2 (parachutes) and 4 (ground), and 3 and 5 reworded |
+| M47 | The training mission specified (§15) and its lesson engine: a mission that names a lessons file is a course; each lesson its own situation and steps, only what a step lists doing anything; the umpire's whistle putting a step back; BACK, AGAIN and the course's list; an exercise never settled. A draft practice ground with two lessons, each played through by a test |
+| M46 | Doing (Phase 5): marks on the enemies a man could strike; the first move shown by a ghost; a blast this turn throbbing, GET CLEAR! and an arrow; GET OUT! and a green exfil once the job is done, a reddening dawn strip and a clock on a man too far away; the alert's flying pip; the action strip down to what he can do now; the turn card's hint ringed on the board. The operator's notes: the pen's coaching behind a Play tips box, off unless ticked; the drop chosen in blue; the charge points ringed only from one hex off, lettered once |
+| M45 | Seeing and being seen (Phase 5): the danger wash on the ground a man can reach, red where he would be spotted and green where a man in contact would break it; a sight line, pips that fill and a cover shield on a hovered move; a crosshair on a man about to be fired on, BREAK CONTACT! under him; Hide urged where it works; HOVER A HEX. CLICK TO GO. until the first move |
+| M44 | The text diet (Phase 5): the orders cut to five lines, what tonight asks and nothing of how to play; how to play a card of its own behind **?**, with the counter key; the turn card four marked lines and one short hint; every hint shortened |
+| M43c | The operator's notes and the first playtest fix: the canisters come down in the drop on blue canopies of their own and are on the ground, ringed, only as each lands; their rings clear of the charge dots; CLICK A MAN TO START over them; the charge points ringed and lettered while the selected man carries a charge near a target; the revised aqueduct title card. The plan for teaching the game by showing, and a training mission, in ROADMAP.md (Phase 5) |
+| M43b | The operator's notes on M43: the canisters' rings pop on one by one with their thumps and sit round their pictures; the Italian chips and the aqueduct's title card painted and in |
+| M43 | The aqueduct's words, sounds and art hand-off: a mission's own folder for its garrison's chips (the Italians), the six's lines for Italy, the canisters' thump and the boat's oars and surf made in code, slots for its own title card and winter portraits, a colder wash on its winter ground, and the paintings and recordings asked for |
+| M42c | A squad called for a body stands where the body was found; canister dots higher; the drawn roads beside the aqueduct lifted to its channel; the confirm cards' button above the way back |
+| M42b | The operator's notes on the aqueduct: a found enemy body calls a squad; cover on the plough; roads that are only drawn, off the bottom of the map and along the aqueduct; canisters ringed and named in blue at the start and their charges counted in dots; the target rings over the garrison's chips; labels moved |
+| M42 | The aqueduct balanced by the bot: eight pier feet, a mule track up the west bank, the West and Valley runs and three beats redrawn, the longest timer offered first and then the one that makes one bang, Hard's boat two turns, rating bands; the bot's `tidy` style and `ALERT=1` |
+| M41e | The airfield's west gap moved two rows north, level with the north pens: Hard's runs back inside the targets |
+| M41d | The aqueduct playable from the contents page, with its painted panel (the operator's); the airfield's West gap kept |
+| M41c | Signal the boat's button in red while a man could send it; the aqueduct's contents panel and Italian enemy chips asked for in ART-PROMPTS |
+| M41b | The operator's notes on the draft: posts that sweep, a reserve that can be killed and is replaced, the boat signalled in early behind a card that asks, the aqueduct two hexes east with its arch open, the shut beach in red, the boat rowed in, enemy cries, soot where charges went off, ALL CHARGES SET on a target; the airfield's West run opened and its names quiet in play |
+| M41 | The aqueduct as a draft (`?mission=aqueduct`): its map and eleven kinds of ground, the aqueduct and the road bridge, the canister, the closed beach and the boat drawn and worded, the bot taught to fetch and to wait |
+| M40 | The aqueduct's engine work, off in both missions: supply canisters (§9) and the way out on a timetable (§10) |
+| M39 | Mission 3, the aqueduct, specified (§14): southern Italy 1941, every charge in a canister, a boat on a timetable, a tidy win ending at Alert. The airfield's line on the contents page reworded |
+| M38–M38b | France's dawn at the end of turn 16 (15 for a turn), its top rating from 40; a charge a man did not jump with costs him 1 AP while he carries it |
+| M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
+| M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
+| M35 | The operator's notes: the goods train runs between turns, trimmed in blue and paper, and whistles as it comes on; the Rail Bridge's DESTROYED printed below it; the bomb store's rails clear of its name |
+| M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
