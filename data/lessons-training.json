@@ -670,6 +670,7 @@
       "number": 12,
       "title": "The leader",
       "qualification": "LEADERSHIP",
+      "card": "northwest",
       "start": {
         "men": { "holloway": { "at": [0, 8] }, "fitch": { "at": [3, 8] } },
         "alert": 1,
@@ -721,9 +722,9 @@
       "qualification": "THE STICK",
       "card": "northwest",
       "start": {
-        "men": { "fitch": { "at": [7, 5] }, "vance": { "at": [5, 8] } },
+        "men": { "fitch": { "at": [7, 5] }, "vance": { "at": [3, 8] } },
         "enemies": [
-          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [6, 4], "facing": "SW" }
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [7, 8], "facing": "W" }
         ]
       },
       "steps": [
@@ -750,28 +751,28 @@
         },
         {
           "say": "HOVER THE RING.",
-          "tell": "The ‘SENTRY’ umpire is looking south-west, over the grass. Move the mouse onto the ringed hex.",
-          "then": "Red. Fitch would be spotted on that grass.",
-          "ring": [[4, 7]],
-          "at": [4, 7],
+          "tell": "The ‘SENTRY’ umpire across the brook is looking west. Move the mouse onto the ringed hex in front of him.",
+          "then": "Red. Fitch would be spotted there, and so would any man but one.",
+          "ring": [[5, 8]],
+          "at": [5, 8],
           "allow": { "select": ["fitch"] },
-          "until": { "kind": "hovered", "hexes": [[4, 7]] }
+          "until": { "kind": "hovered", "hexes": [[5, 8]] }
         },
         {
           "say": "CLICK VANCE.",
-          "tell": "Now click Vance, on the grass to the south.",
-          "then": "For Vance the same hex is not red. A scout is 1 dot harder to see than other men, and Vance's skill, Cat's Eyes, takes off 1 more.",
+          "tell": "Now click Vance, on the grass to the west.",
+          "then": "For Vance the same hex is not red. His skill is Cat's Eyes: he is 1 dot harder to see than anyone else, harder even than Barrow, the other scout.",
           "allow": { "select": ["vance"] },
           "until": { "kind": "selected", "unit": "vance" }
         },
         {
           "say": "GO WHERE FITCH COULD NOT.",
           "tell": "Move Vance onto the ringed hex.",
-          "then": "Vance is on open grass in front of the umpire, with 2 AP left.",
-          "ring": [[4, 7]],
-          "at": [4, 7],
-          "allow": { "select": ["vance"], "move": [[4, 7]] },
-          "until": { "kind": "movedTo", "unit": "vance", "hexes": [[4, 7]] }
+          "then": "Vance is on open grass, 2 hexes in front of the umpire, with 2 AP left.",
+          "ring": [[5, 8]],
+          "at": [5, 8],
+          "allow": { "select": ["vance"], "move": [[5, 8]] },
+          "until": { "kind": "movedTo", "unit": "vance", "hexes": [[5, 8]] }
         },
         {
           "say": "PRESS SPACE: END THE TURN.",
@@ -788,7 +789,7 @@
       "title": "Getting out",
       "qualification": "EXFILTRATION",
       "start": {
-        "men": { "barrow": { "at": [3, 9] } },
+        "men": { "barrow": { "at": [2, 10] } },
         "enemies": []
       },
       "steps": [
@@ -823,10 +824,10 @@
       "title": "The alert",
       "qualification": "FIELDCRAFT",
       "start": {
-        "men": { "nunn": { "at": [0, 7] } },
+        "men": { "nunn": { "at": [-1, 7] } },
         "alert": 1,
         "enemies": [
-          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [5, 6], "facing": "W" }
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [4, 6], "facing": "W" }
         ]
       },
       "steps": [
@@ -846,31 +847,31 @@
         },
         {
           "say": "HOVER THE RING.",
-          "tell": "Move the mouse onto the ringed hex of road, 4 hexes in front of the umpire.",
+          "tell": "Move the mouse onto the ringed hex, 4 hexes in front of the umpire.",
           "then": "Not red. It is 1 hex further than he sees.",
-          "ring": [[1, 6]],
-          "at": [1, 6],
+          "ring": [[0, 6]],
+          "at": [0, 6],
           "allow": { "select": ["nunn"] },
-          "until": { "kind": "hovered", "hexes": [[1, 6]] }
+          "until": { "kind": "hovered", "hexes": [[0, 6]] }
         },
         {
           "say": "PRESS T. CLICK THE RING.",
           "tell": "Now raise the alert. A thrown stone adds 1. Press ‘T’, then click the ringed hex behind Nunn.",
           "then": "A red pip flew from the stone to the dial, which now reads Suspicious. A Suspicious garrison sees 1 hex further: the umpire's wedge has grown.",
-          "ring": [[-2, 8]],
-          "at": [-2, 8],
-          "does": { "at": [-2, 8] },
-          "allow": { "select": ["nunn"], "actions": ["stone"], "target": [[-2, 8]] },
+          "ring": [[-3, 8]],
+          "at": [-3, 8],
+          "does": { "at": [-3, 8] },
+          "allow": { "select": ["nunn"], "actions": ["stone"], "target": [[-3, 8]] },
           "until": { "kind": "stoneThrown" }
         },
         {
-          "say": "HOVER THE ROAD AGAIN.",
-          "tell": "Move the mouse onto the ringed hex of road again.",
+          "say": "HOVER IT AGAIN.",
+          "tell": "Move the mouse onto the same ringed hex again.",
           "then": "Red now. Nunn has not moved and nor has the umpire: only the dial.",
-          "ring": [[1, 6]],
-          "at": [1, 6],
+          "ring": [[0, 6]],
+          "at": [0, 6],
           "allow": { "select": ["nunn"] },
-          "until": { "kind": "hovered", "hexes": [[1, 6]] }
+          "until": { "kind": "hovered", "hexes": [[0, 6]] }
         },
         {
           "say": "WHAT RAISES IT. PRESS NEXT.",

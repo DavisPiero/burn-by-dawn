@@ -345,17 +345,19 @@ export default [
     assert(washAt(s, 'fitch', ring) === 'spotted' && washAt(s, 'vance', ring) === null, `red for Fitch, not for Vance: ${washAt(s, 'fitch', ring)}, ${washAt(s, 'vance', ring)}`);
     const there = walk(s, 'vance', ring);
     assert(of(there, 'vance').ap === 2 && endTurn(there, rules, map).units.every((u) => !u.inContact), 'Vance stands there with 2 AP left, and nobody is seen');
-    assert(of(endTurn(walk(s, 'fitch', ring), rules, map), 'fitch').inContact, 'and Fitch would have been');
+    // Standing there, not for the way he came: from Vance's own hex Barrow, the other scout, is seen there too.
+    const asVance = lessonStart(base, { ...men, start: { ...men.start, men: { barrow: men.start.men.vance } } }, map, rules);
+    assert(of(endTurn(walk(asVance, 'barrow', ring), rules, map), 'barrow').inContact, 'any man but Vance is seen on it, even the other scout');
     // Lesson 14: the lane to the gate is his turn's walk, and he is out.
     s = lessonStart(base, by('getting-out'), map, rules);
-    assert(of(walk(s, 'barrow', [0, 12]), 'barrow').out && !walk(s, 'barrow', [0, 12]).outcome, 'out by the gate, and an exercise is not settled by it');
+    assert(of(walk(s, 'barrow', [0, 12]), 'barrow').ap === 0 && of(walk(s, 'barrow', [0, 12]), 'barrow').out && !walk(s, 'barrow', [0, 12]).outcome, 'out by the gate, and an exercise is not settled by it');
     // Lesson 15: one stone makes Calm Suspicious, and the hex 4 off is then red; the umpire has not turned.
     const dial = by('the-alert');
     const road = dial.steps.find((x) => x.until.kind === 'hovered').until.hexes[0];
     s = lessonStart(base, dial, map, rules);
-    assert(stateOf(s) === 'calm' && washAt(s, 'nunn', road) === null, 'Calm, and the road 4 hexes off is not red');
+    assert(stateOf(s) === 'calm' && washAt(s, 'nunn', road) === null, 'Calm, and the grass 4 hexes off is not red');
     const thrown = throwStone(s, 'nunn', hex(dial.steps.find((x) => x.until.kind === 'stoneThrown').does.at), map, rules);
-    assert(stateOf(thrown) === 'suspicious' && washAt(thrown, 'nunn', road) === 'spotted' && thrown.enemies[0].facing === s.enemies[0].facing, 'Suspicious, the road red, the umpire out of earshot of the stone');
+    assert(stateOf(thrown) === 'suspicious' && washAt(thrown, 'nunn', road) === 'spotted' && thrown.enemies[0].facing === s.enemies[0].facing, 'Suspicious, that grass red, the umpire out of earshot of the stone');
     assert(rules.alert.quietTurnsToDecay === 4 && rules.explosionFloor === 'suspicious', 'and it drops as the last card says');
     // Lesson 16: 1 AP wounded; dressing him is Barrow's whole turn; his pool is back the turn after.
     s = lessonStart(base, by('a-wounded-man'), map, rules);
