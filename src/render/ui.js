@@ -342,7 +342,7 @@ function titleBanner({ title, tagline }) {
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
  *   go?: its way on, "LABEL — how" (a button; `goBig` for the one that starts a game; `onGo` where only the button goes on),
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
- *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel? }], onChoose(id), spread? } }
+ *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel?, passed? }], onChoose(id), record?: a course's clipboard } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
@@ -352,6 +352,8 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // The contents page lies on the bare table (M48, the operator's): no
   // mission's map is seen behind it until one is picked.
   backdrop.classList.toggle('on-table', Boolean(briefing?.onTable));
+  // A course's list is two pages wide (M48f).
+  backdrop.classList.toggle('two-pages', Boolean(briefing?.contents?.record));
   if (!briefing) return;
   card.replaceChildren();
   card.className = briefing.tone ? `tone-${briefing.tone}` : '';
@@ -486,17 +488,17 @@ function fitBriefing(card) {
  * a line about it under. A playable one is a button; a coming one is printed
  * all the same but stamped NEXT YEAR'S ANNUAL, and a click on it does nothing.
  */
-function contentsList({ entries, onChoose, spread = false }) {
-  const list = html('ol', spread ? 'contents spread' : 'contents');
-  // A course's list (M48c): two columns, read down the left and then the right.
-  if (spread) list.style.setProperty('--rows', String(Math.ceil(entries.length / 2)));
+function contentsList({ entries, onChoose, record = null }) {
+  const list = html('ol', record ? 'contents lessons' : 'contents');
   for (const entry of entries) {
+    // A course's lesson (M48f) is one line: its tick, its title, its number.
     const line = html('span', 'contents-line', [
+      ...(record ? [html('span', entry.passed ? 'contents-tick passed' : 'contents-tick', entry.passed ? '✓' : '')] : []),
       html('span', 'contents-title', entry.title),
       html('span', 'contents-leader'),
       html('span', 'contents-page', String(entry.page)),
     ]);
-    const text = [line, html('span', 'contents-place', entry.place), html('span', 'contents-blurb', entry.blurb)];
+    const text = record ? [line] : [line, html('span', 'contents-place', entry.place), html('span', 'contents-blurb', entry.blurb)];
     // Its panel beside it, if it has one (M31c, ART-ASSETS.md §7): a small
     // painting, as an annual's contents page has a picture for each story.
     const words = [html('span', 'contents-words', text)];
@@ -521,7 +523,28 @@ function contentsList({ entries, onChoose, spread = false }) {
     }
     list.appendChild(item);
   }
-  return list;
+  // A course's list is the left page of a spread, its clipboard the right (M48f).
+  return record ? html('div', 'course-pages', [list, clipboard(record)]) : list;
+}
+
+/**
+ * The course's clipboard (M48f, SPEC.md §15): the training record, each
+ * qualification ticked once every lesson that gives it is passed, with the
+ * count until then, and stamped PASSED OUT when the whole course is.
+ * `record` is { rows: [{ name, passed, of, done }], passedOut }.
+ */
+function clipboard({ rows, passedOut }) {
+  const sheet = html('div', 'clip-sheet', [
+    html('div', 'clip-head', 'TRAINING RECORD'),
+    html('div', 'clip-sub', 'No. 1 Parachute Training School'),
+    html('ul', 'clip-rows', rows.map((row) => html('li', row.done ? 'clip-row done' : 'clip-row', [
+      html('span', 'clip-box', row.done ? '✓' : ''),
+      html('span', 'clip-name', row.name),
+      html('span', 'clip-count', row.done ? 'QUALIFIED' : `${row.passed} of ${row.of}`),
+    ]))),
+    ...(passedOut ? [html('div', 'clip-stamp', 'PASSED OUT')] : []),
+  ]);
+  return html('div', 'clipboard', [html('div', 'clip-clip'), sheet]);
 }
 
 /**

@@ -23,7 +23,7 @@ import { fillActionPoints, onBoard } from './units.js';
 //   chargeSet     { objective? }      a charge more is burning (on that objective)
 //   enemyDown     { enemy? }          an enemy fewer (that enemy gone)
 //   destroyed     { objective }       that objective is destroyed
-//   manOut        { unit? }           a man (that man) is out at the exfil
+//   manOut        { unit?, count? }   a man (that man) is out at the exfil; so many men, with `count` (M48f)
 //   acknowledged  {}                  the player pressed on: a step that only shows
 // M48b's, each for a lesson that could not be told without it:
 //   runPicked     {}                  a drop run is chosen (a lesson that starts in the drop)
@@ -120,7 +120,9 @@ export function validateLessons(json, known, url = 'lessons') {
       // Do it, see it, then NEXT (M48b): what the card says once the step is
       // done, while what it did is still on the board. A step that only shows
       // something has its NEXT already.
-      if (step.until?.kind !== 'acknowledged' && (typeof step.then !== 'string' || !step.then)) throw new Error(`${where} needs a "then": what the card says once it is done`);
+      // A free step (M48f, the passing-out exercise) runs on into the next with no card between.
+      if (step.free !== undefined && step.free !== true) throw new Error(`${where}: "free" is true, or left out`);
+      if (step.until?.kind !== 'acknowledged' && !step.free && (typeof step.then !== 'string' || !step.then)) throw new Error(`${where} needs a "then": what the card says once it is done`);
       if (step.at !== undefined) onMap(step.at, `${where}.at`);
       if (step.point !== undefined && !POINT_KINDS.includes(step.point)) throw new Error(`${where}: "point" must be one of ${POINT_KINDS.join(', ')}`);
       for (const h of Array.isArray(step.ring) ? step.ring : []) onMap(h, `${where}.ring`);
@@ -128,6 +130,7 @@ export function validateLessons(json, known, url = 'lessons') {
       const until = step.until;
       if (!UNTIL_KINDS.includes(until?.kind)) throw new Error(`${where}: "until.kind" must be one of ${UNTIL_KINDS.join(', ')}`);
       if (until.unit !== undefined) man(until.unit, `${where}.until`);
+      if (until.count !== undefined && (!Number.isInteger(until.count) || until.count < 1)) throw new Error(`${where}: "until.count" is a whole number, 1 or more`);
       if (until.kind === 'selected' && until.unit === undefined) throw new Error(`${where}: "selected" needs a "unit"`);
       if (['movedTo', 'hovered'].includes(until.kind)) {
         if (!Array.isArray(until.hexes) || until.hexes.length === 0) throw new Error(`${where}: "${until.kind}" needs "hexes"`);
@@ -248,7 +251,7 @@ export function stepMet(step, from, now, { acknowledged = false } = {}) {
       ? now.enemies.length < from.enemies.length
       : from.enemies.some((e) => e.id === until.enemy) && !now.enemies.some((e) => e.id === until.enemy);
     case 'destroyed': return Boolean(now.objectives.find((o) => o.id === until.objective)?.destroyed);
-    case 'manOut': return men.some((u) => u.out);
+    case 'manOut': return men.filter((u) => u.out).length >= (until.count ?? 1);
     case 'acknowledged': return acknowledged;
     case 'runPicked': return now.phase === 'drop' && now.dropRunId !== null;
     case 'landed': return now.phase !== 'drop';
@@ -319,14 +322,59 @@ export function live(lesson, progress, input) {
  */
 export function caughtOut(step, from, now) {
   const before = new Map(from.units.map((u) => [u.id, u]));
+  // In a free step the umpire says what it would have cost on a real mission
+  // (M48f, the operator's: it cannot be failed, but it should teach no bad habits).
+  const blast = (unit) => (now.report ?? []).some((e) => (e.kind === 'blastKilled' || e.kind === 'blastWounded') && e.unitId === unit.id);
   for (const unit of now.units) {
     const was = before.get(unit.id);
     if (!was) continue;
+    if (step.free && ((unit.dead && !was.dead) || unit.hits > was.hits)) {
+      if (blast(unit)) return `${unit.shortName} WOULD BE ${unit.dead ? 'KILLED' : 'WOUNDED'} BY THE BLAST ON A REAL MISSION!`;
+      return unit.dead ? `${unit.shortName} WOULD BE DEAD ON A REAL MISSION!` : `${unit.shortName} WOULD BE SHOT HERE ON A REAL MISSION!`;
+    }
     if (unit.dead && !was.dead) return `${unit.shortName} would be dead.`;
     if (unit.hits > was.hits) return `${unit.shortName} was hit.`;
     if (!step.mayBeSeen && unit.inContact && !was.inContact) return `${unit.shortName} was seen.`;
   }
   return null;
+}
+
+/**
+ * What the umpire has to say of the last thing done in a free step, short of
+ * a whistle (M48f, the operator's): what would have gone wrong on a real
+ * mission. `was` is the state before it, `now` the state after. A list of
+ * { head, text }, empty where there is nothing to say.
+ */
+export function umpireSays(step, was, now) {
+  if (!step.free) return [];
+  const notes = [];
+  const before = new Map(was.units.map((u) => [u.id, u]));
+  for (const unit of now.units) {
+    if (unit.inContact && before.get(unit.id) && !before.get(unit.id).inContact) {
+      notes.push({ head: `${unit.shortName} HAS BEEN SEEN!`, text: 'On a real mission the alert rises, and he is shot if he is seen again when the next turn ends. Break contact: get him out of sight.' });
+    }
+  }
+  // What the garrison found is in the turn's report, which is new each turn.
+  if (now.report !== was.report && now.turn !== was.turn) {
+    const found = (kind) => now.report.filter((e) => e.kind === kind).length;
+    if (found('parachuteFound')) notes.push({ head: 'A PARACHUTE HAS BEEN FOUND!', text: 'On a real mission every parachute found raises the alert. Pack them away, or land where no patrol walks.' });
+    if (found('bodyFound')) notes.push({ head: 'A BODY HAS BEEN FOUND!', text: 'On a real mission a body found raises the alert.' });
+  }
+  return notes;
+}
+
+/**
+ * The course's record (M48f, the clipboard): each qualification in the order
+ * the course first gives it, with how many of its lessons are passed.
+ * `passed` is a Set of lesson ids. [{ name, passed, of, done }].
+ */
+export function qualifications(lessons, passed) {
+  const rows = new Map();
+  for (const lesson of lessons) {
+    const row = rows.get(lesson.qualification) ?? { name: lesson.qualification, passed: 0, of: 0 };
+    rows.set(lesson.qualification, { ...row, of: row.of + 1, passed: row.passed + (passed.has(lesson.id) ? 1 : 0) });
+  }
+  return [...rows.values()].map((row) => ({ ...row, done: row.passed === row.of }));
 }
 
 /**

@@ -5,7 +5,7 @@
 // lesson that cannot be passed fails a test, not a player.
 
 import { dangerWash } from '../src/sight.js';
-import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, live, stepMet, stepStart, validateLessons } from '../src/lessons.js';
+import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
 import { callDiversion, chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, passCharge, pickUpCharge, placeCharge, selectUnit, setHover, stabiliseUnit, suppressEnemy, throwStone } from '../src/state.js';
@@ -108,6 +108,37 @@ export default [
         // What a step's test does where its condition does not say: `does` in
         // the lessons file ({ unit, enemy, at }), read only here.
         const does = step.does ?? {};
+        if (step.free) {
+          // A free step (M48f): the playthrough its `does.script` gives, each thing allowed.
+          if (until.kind === 'landed') {
+            assert(allows(step, { kind: 'run', runId: lesson.start.drop.run }) && allows(step, { kind: 'jump' }), `${where}: the run and the jump are allowed`);
+            state = jump(chooseDropRun(state, map, lesson.start.drop.run), map, rules, lessonLandings(lesson));
+          }
+          for (const op of does.script) {
+            const before = state;
+            if (op.move) {
+              const [id, to] = op.move;
+              assert(allows(step, { kind: 'select', unitId: id }) && allows(step, { kind: 'move', to: hex(to) }), `${where}: ${id} may be picked and moved`);
+              const plan = planMove(map, state.units, state.units.find((u) => u.id === id), hex(to), rules, state.enemies);
+              assert(plan?.affordable, `${where}: ${id} can reach ${to}`);
+              state = moveUnit(state, id, plan, map);
+            } else if (op.charge) {
+              assert(allows(step, { kind: 'action', id: 'charge' }) && allows(step, { kind: 'fuse', turns: op.charge[1] }), `${where}: a charge may be set, with any pencil`);
+              state = placeCharge(state, op.charge[0], rules, op.charge[1]);
+            } else if (op.stone) {
+              assert(allows(step, { kind: 'action', id: 'stone' }) && allows(step, { kind: 'target', at: hex(op.stone[1]) }), `${where}: a stone may be thrown anywhere`);
+              state = throwStone(state, op.stone[0], hex(op.stone[1]), map, rules);
+            } else if (op.end) {
+              assert(allows(step, { kind: 'endTurn' }), `${where}: the turn may end`);
+              state = endTurn(state, rules, map);
+            }
+            assert(state !== before, `${where}: ${JSON.stringify(op)} did something`);
+            assert(caughtOut(step, from, state) === null, `${where}: ${JSON.stringify(op)} is not whistled: ${caughtOut(step, from, state)}`);
+          }
+          assert(stepMet(step, from, state), `${where} is met once its playthrough is done`);
+          progress = advance(progress, lesson, state);
+          continue;
+        }
         if (until.kind === 'runPicked') {
           assert(allows(step, { kind: 'run', runId: lesson.start.drop.run }) && !allows(step, { kind: 'jump' }), `${where}: the run may be picked, and nobody jumps yet`);
           state = chooseDropRun(state, map, lesson.start.drop.run);
@@ -221,7 +252,7 @@ export default [
     assert(on.step === 1 && !on.met, 'NEXT is the next step, not yet done');
     assert(back(on).step === 0 && !back(on).met, 'and Back from a step not yet done is the one before');
     for (const l of lessons) for (const [n, step] of l.steps.entries()) {
-      assert(step.until.kind === 'acknowledged' || step.then, `${l.id}, step ${n + 1} says what is to be seen once it is done`);
+      assert(step.until.kind === 'acknowledged' || step.free || step.then, `${l.id}, step ${n + 1} says what is to be seen once it is done`);
     }
     const copy = JSON.parse(JSON.stringify(json));
     delete copy.lessons[1].steps[0].then;
@@ -371,6 +402,46 @@ export default [
     s = stabiliseUnit(s, 'barrow', 'nunn');
     assert(of(s, 'barrow').ap === 0 && stepMet({ until: { kind: 'dressed', unit: 'nunn' } }, s, s) && !stepMet({ until: { kind: 'dressed', unit: 'barrow' } }, s, s), 'dressed, for all of Barrow\'s AP');
     assert(of(endTurn(s, rules, map), 'nunn').ap === 3 && of(endTurn(s, rules, map), 'nunn').hits === 1, 'his 3 AP back, and still one hit from death');
+  }],
+
+  ['the passing-out exercise: free steps run on, the umpire says what it would cost on a real mission, and the record counts', async () => {
+    const { lessons, base, map, rules, json, known } = await course();
+    const last = lessons[lessons.length - 1];
+    assert(last.number === 17 && last.steps.every((s) => s.free && s.mayBeSeen && !s.then), 'lesson 17 is free steps: no card between them, and being seen does not stop it');
+    assert(last.steps[last.steps.length - 1].until.count === Object.keys(last.start.drop.landings).length, 'it ends with every man out');
+    const broken = (change) => {
+      const copy = JSON.parse(JSON.stringify(json));
+      change(copy.lessons.find((l) => l.id === last.id));
+      return throws(() => validateLessons(copy, known));
+    };
+    assert(broken((l) => { l.steps[1].free = 'yes'; }) && broken((l) => { delete l.steps[1].free; }) && broken((l) => { l.steps[3].until.count = 0; }), 'a step with no `then` must be free, and a count is 1 or more');
+    // So many men out.
+    const outs = (n) => ({ units: base.units.map((u, i) => ({ ...u, out: i < n })) });
+    assert(!stepMet({ until: { kind: 'manOut', count: 6 } }, base, outs(5)) && stepMet({ until: { kind: 'manOut', count: 6 } }, base, outs(6)) && stepMet({ until: { kind: 'manOut' } }, base, outs(1)), 'all six, where it says six; one, where it says none');
+    // The umpire's words: seen is said and not whistled; shot is whistled, in a real mission's words.
+    const free = { free: true, mayBeSeen: true };
+    const five = lessons.find((l) => l.id === 'firing-back');
+    const start = lessonStart(base, five, map, rules);
+    const seen = endTurn(start, rules, map);
+    assert(caughtOut(free, start, seen) === null, 'seen is not a whistle in a free step');
+    const said = umpireSays(free, start, seen);
+    assert(said.length === 1 && /FITCH HAS BEEN SEEN!/.test(said[0].head) && /real mission/.test(said[0].text), `the umpire says he was seen: ${JSON.stringify(said)}`);
+    assert(umpireSays(free, seen, seen).length === 0 && umpireSays({}, start, seen).length === 0, 'once, and only in a free step');
+    const shot = endTurn(seen, rules, map);
+    assert(caughtOut(free, start, shot) === 'FITCH WOULD BE SHOT HERE ON A REAL MISSION!', `shot is whistled in a real mission's words: ${caughtOut(free, start, shot)}`);
+    assert(caughtOut({ mayBeSeen: true }, start, shot) === 'FITCH was hit.', 'and in the old words in any other lesson');
+    // A parachute found is said.
+    const two = lessons.find((l) => l.id === 'parachutes');
+    let p = lessonStart(base, two, map, rules);
+    let found = [];
+    for (let i = 0; i < 4 && !found.length; i++) { const next = endTurn(p, rules, map); found = umpireSays(free, p, next).filter((n) => /PARACHUTE/.test(n.head)); p = next; }
+    assert(found.length === 1, 'a parachute left by the beat is found, and the umpire says so');
+    // The clipboard: each qualification once, counted over its lessons.
+    const none = qualifications(lessons, new Set());
+    assert(none.length === 10 && none.every((r) => !r.done && r.passed === 0) && none.reduce((n, r) => n + r.of, 0) === lessons.length, `ten qualifications over seventeen lessons: ${none.map((r) => r.name)}`);
+    const some = qualifications(lessons, new Set(['parachutes', 'the-drop']));
+    assert(some.find((r) => r.name === 'PARACHUTIST').done && some.find((r) => r.name === 'FIELDCRAFT').passed === 1 && !some.find((r) => r.name === 'FIELDCRAFT').done, 'ticked only when every lesson that gives it is passed');
+    assert(qualifications(lessons, new Set(lessons.map((l) => l.id))).every((r) => r.done), 'and all of them once the course is');
   }],
 
   ['an aimed action lands only where a step says, if it says', async () => {
