@@ -496,6 +496,10 @@ passed. The operator's list, with what I would add:
 - **M48 — the training mission built**, with the **?** pages' diagrams drawn from the
   same lessons. Seventeen lessons is more than one session: expect M48 to be two or
   three (M48, M48b…), a few lessons each, each playable when merged.
+  **As built (13 Oct 2026):** five sessions, M48 to M48f. All seventeen lessons, the
+  course's list as a two-page spread and the clipboard are built; M48f awaits sign-off.
+  Left of M48: the umpires' own counters and cries, START HERE and the course made
+  playable, the **?** pages' diagrams.
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 

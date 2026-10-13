@@ -291,12 +291,22 @@ board must read at a glance.
   as near as it can without covering the card). WHO sits above NEXT TURN so their
   pointers do not cross, and points at the end of the enemy's name; BLUE AP's pointer
   ends in a blue dot beside the dot it means.
-- **A course's orders are its list of lessons** (§15), set as the contents page is:
-  each lesson's title run to its number with a dotted leader, what it qualifies in
-  italic, and ✓ PASSED or Not yet taken. No level, no HOW TO PLAY button; Music off at
-  its foot. **In two columns** (M48c: eleven ran off the foot of the page, the green
-  button with them), read down the left and then the right, each lesson two lines, its
-  title at 18 px.
+- **A course's orders are a two-page spread** (§15, M48f), wider than the orders (1060
+  against 820), under the same title card. **The left page is its list of lessons**,
+  set as the contents page is but a line each: a green tick once passed, the title run
+  to its number with a dotted leader, at 16 px. **The right page is the clipboard**: a
+  brown board with a metal clip at its head and a sheet of the page's paper on it,
+  headed TRAINING RECORD in the slab over *No. 1 Parachute Training School*, then a row
+  for each qualification: a box, ticked in green when it is earned, its name, and
+  QUALIFIED or how many of its lessons are passed. With the whole course passed,
+  **PASSED OUT** is stamped across the sheet in red rubber, askew, as the contents
+  page's stamp is. All of it is drawn in code. No level, no HOW TO PLAY button; Music
+  off at its foot beside the green button.
+- **The umpire's card** (M48f): in the passing-out exercise, what a thing done would
+  have cost on a real mission, on a card headed in red as a warning is: THE UMPIRE, or
+  WHISTLE! where it stops the exercise, and ON A REAL MISSION; each thing a line in
+  bold capitals (FITCH HAS BEEN SEEN!) and a sentence under it. That exercise's lesson
+  card is narrow, 372 px, and says only the job.
 - **The lesson card** lies in the turn card's place while a lesson is on, and no turn
   card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's
   sentences, then what goes on from here: **TO GO ON:** and the step's own line in the

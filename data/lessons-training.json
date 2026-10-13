@@ -1,5 +1,5 @@
 {
-  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`; or, in place of `men`, `drop` (M48b): { run, landings: { man: hex } }, a lesson that starts in the drop, each man down where it says with no scatter. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about), repeated on the card as TO GO ON; `tell`, the card's words before the step is done: what to do; `then` (M48b, the operator's: do it, see it, then NEXT), the card's words once it is done, while what it did is still on the board: what he is now looking at and the rule in its numbers, with a green NEXT; `ring`, hexes to ring, or \"men\"; `point`, a part of the page to ring (roster, alert, clock, readout, actions, radio); `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], target: [hexes], endTurn, run, jump }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson; `does`, read only by the test that plays the lesson. The words are placeholders for the operator to reword. Lesson 17, the passing-out exercise, is still to come.",
+  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`; or, in place of `men`, `drop` (M48b): { run, landings: { man: hex } }, a lesson that starts in the drop, each man down where it says with no scatter. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about), repeated on the card as TO GO ON; `tell`, the card's words before the step is done: what to do; `then` (M48b, the operator's: do it, see it, then NEXT), the card's words once it is done, while what it did is still on the board: what he is now looking at and the rule in its numbers, with a green NEXT; `ring`, hexes to ring, or \"men\"; `point`, a part of the page to ring (roster, alert, clock, readout, actions, radio); `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], target: [hexes], endTurn, run, jump }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson; `does`, read only by the test that plays the lesson. The words are placeholders for the operator to reword. `free` (M48f) is a step of the passing-out exercise: no `then`, it runs on into the next, and the umpire says what a thing done would have cost on a real mission; its `does.script` is the playthrough the test makes.",
   "lessons": [
     {
       "id": "the-drop",
@@ -948,6 +948,69 @@
           "then": "Nunn has his 3 AP again, and can carry a charge. The wound is dressed, not healed: one more hit still kills him, and a man who gets out wounded scores less.",
           "allow": { "select": ["barrow"], "endTurn": true },
           "until": { "kind": "turnEnded" }
+        }
+      ]
+    },
+    {
+      "id": "passing-out",
+      "number": 17,
+      "title": "Passing out",
+      "qualification": "PASSED OUT",
+      "start": {
+        "drop": {
+          "run": "practice",
+          "landings": { "holloway": [2, 3], "fitch": [3, 3], "vance": [4, 3], "barrow": [3, 4], "speers": [6, 4], "nunn": [5, 2] }
+        },
+        "enemies": [
+          { "id": "umpire-bridge", "label": "Bridge umpire", "type": "sentry", "at": [8, 6], "facing": "W" },
+          { "id": "umpire-lane", "label": "Lane umpire", "type": "patrol", "facing": "W", "loop": false, "route": [[12, 6], [9, 6]] }
+        ]
+      },
+      "steps": [
+        {
+          "say": "CHOOSE THE RUN, THEN JUMP.",
+          "tell": "A whole raid, with nobody to tell you what to click. A whistle sends you back to the last checkpoint. Choose the drop run and jump.",
+          "free": true,
+          "mayBeSeen": true,
+          "does": { "script": [] },
+          "allow": { "run": true, "jump": true },
+          "until": { "kind": "landed" }
+        },
+        {
+          "say": "BLOW THE TRAINING BRIDGE.",
+          "tell": "Blow the Training Bridge, then get all six men out by the gate.",
+          "free": true,
+          "mayBeSeen": true,
+          "does": { "script": [
+            { "move": ["fitch", [5, 5]] }, { "move": ["nunn", [6, 3]] }, { "move": ["holloway", [3, 5]] }, { "move": ["vance", [4, 7]] }, { "move": ["barrow", [2, 8]] }, { "move": ["speers", [4, 5]] }, { "end": true },
+            { "move": ["fitch", [7, 4]] }, { "move": ["nunn", [6, 4]] }, { "move": ["holloway", [4, 6]] }, { "move": ["vance", [1, 11]] }, { "move": ["barrow", [0, 11]] }, { "move": ["speers", [1, 9]] }, { "end": true },
+            { "move": ["nunn", [7, 5]] }, { "charge": ["nunn", 2] }
+          ] },
+          "allow": { "select": true, "move": "any", "actions": ["hide", "suppress", "knife", "kill", "stone", "stabilise", "pack", "pickUp", "pass", "charge", "swim", "diversion"], "endTurn": true },
+          "until": { "kind": "chargeSet" }
+        },
+        {
+          "say": "SET THE SECOND CHARGE. GET CLEAR.",
+          "tell": "CHECKPOINT. One charge is burning. Set the second and get every man clear.",
+          "free": true,
+          "mayBeSeen": true,
+          "does": { "script": [
+            { "stone": ["nunn", [9, 6]] }, { "move": ["fitch", [6, 7]] }, { "charge": ["fitch", 2] }, { "move": ["holloway", [3, 9]] }, { "move": ["vance", [0, 12]] }, { "move": ["barrow", [0, 12]] }, { "move": ["speers", [0, 12]] }, { "end": true },
+            { "move": ["holloway", [0, 12]] }, { "move": ["fitch", [3, 10]] }, { "move": ["nunn", [4, 8]] }, { "end": true }
+          ] },
+          "allow": { "select": true, "move": "any", "actions": ["hide", "suppress", "knife", "kill", "stone", "stabilise", "pack", "pickUp", "pass", "charge", "swim", "diversion"], "endTurn": true },
+          "until": { "kind": "destroyed", "objective": "dummy-bridge" }
+        },
+        {
+          "say": "GET ALL SIX OUT.",
+          "tell": "CHECKPOINT. The Training Bridge is down. Get all six men out by the gate.",
+          "free": true,
+          "mayBeSeen": true,
+          "does": { "script": [
+            { "move": ["fitch", [0, 12]] }, { "move": ["nunn", [1, 11]] }, { "end": true }, { "move": ["nunn", [0, 12]] }
+          ] },
+          "allow": { "select": true, "move": "any", "actions": ["hide", "suppress", "knife", "kill", "stone", "stabilise", "pack", "pickUp", "pass", "charge", "swim", "diversion"], "endTurn": true },
+          "until": { "kind": "manOut", "count": 6 }
         }
       ]
     }

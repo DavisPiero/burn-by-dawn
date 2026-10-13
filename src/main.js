@@ -23,7 +23,7 @@ import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery,
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
-import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, stepMet, stepStart, validateLessons } from './lessons.js';
+import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -218,6 +218,8 @@ let cardShown = null;
 // taken and where the player is in it (lessons.js), and the umpire's word if
 // the last try was whistled. Null in every other mission.
 let course = null;
+// The state the lesson was last checked at, so the umpire can say what the last thing done changed (M48f).
+let lessonSeen = null;
 // Every action a step may allow, for checking a lessons file.
 const ACTION_IDS = ['hide', 'suppress', 'knife', 'kill', 'stone', 'stabilise', 'signal', 'pack', 'pickUp', 'pass', 'charge', 'cut', 'swim', 'diversion'];
 
@@ -447,7 +449,8 @@ function deriveView() {
     view.hintRings = step.ring === 'men' ? (named.length ? named : men).map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
     // A step that points at the page says its line on the lesson card only.
-    if (about && (step.at || !step.point)) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
+    // Nor does a free step write on the board: nobody's hand is held (M48f).
+    if (about && (step.at || !step.point) && !step.free) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
   }
 
   const next = forecast();
@@ -2518,6 +2521,16 @@ function describeBriefing(which, view) {
       go: 'STAY — any other key or click',
     };
   }
+  // The umpire's word in a free step (M48f): what it would have cost on a real mission.
+  if (which.kind === 'umpire') {
+    return {
+      title: which.whistle ? 'WHISTLE!' : 'THE UMPIRE',
+      kicker: 'ON A REAL MISSION',
+      tone: 'warn',
+      paragraphs: which.notes.map((note) => [{ bold: note.head }, note.text]),
+      sections: [],
+    };
+  }
   if (which.kind === 'passed') {
     const lesson = course.lessons.find((l) => l.id === which.lessonId);
     const left = course.lessons.filter((l) => !course.passed.has(l.id)).length;
@@ -2545,14 +2558,14 @@ function describeBriefing(which, view) {
       title: mission.title.toUpperCase(),
       kicker: `THE COURSE · ${course.passed.size} OF ${course.lessons.length} PASSED`,
       paragraphs: [[mission.briefing, 'One thing at a time. Take any lesson, as often as you like: nobody is hurt, and nothing is at stake.']],
+      // A two-page spread (M48f, the operator's): the lessons down the left
+      // page, a line each, and the clipboard on the right, ticked as they are passed.
       contents: {
         entries: course.lessons.map((l) => ({
-          id: l.id, page: l.number, title: l.title, place: `Qualifies: ${l.qualification}`,
-          blurb: course.passed.has(l.id) ? '✓ PASSED' : 'Not yet taken', playable: true, panel: null,
+          id: l.id, page: l.number, title: l.title, passed: course.passed.has(l.id), playable: true, panel: null,
         })),
         onChoose: startLesson,
-        // Two columns (M48c): eleven lessons ran off the foot of the page, the green button with them.
-        spread: true,
+        record: { rows: qualifications(course.lessons, course.passed), passedOut: course.passed.size === course.lessons.length },
       },
       sections: [],
       toggles: [musicToggle()],
@@ -2811,6 +2824,7 @@ function layLessonState(next) {
   chargeSetNote = null;
   resetBoardMemory(layers);
   state = { ...next, hoverHex: state.hoverHex };
+  lessonSeen = state;
 }
 
 /**
@@ -2829,8 +2843,14 @@ function lessonCheck() {
     layLessonState(from);
     course = { ...course, whistle: why, ack: false };
     playCue('whistle');
+    // In a free step the umpire says it on a card of its own (M48f, the operator's).
+    if (step.free) briefing = { kind: 'umpire', whistle: true, notes: [{ head: why, text: 'The exercise goes back to its last checkpoint.' }] };
     return true;
   }
+  // Short of a whistle: what the last thing done would have cost on a real mission.
+  const notes = umpireSays(step, lessonSeen ?? state, state);
+  lessonSeen = state;
+  if (notes.length) briefing = { kind: 'umpire', whistle: false, notes };
   // Done and held: waiting for NEXT, with the board as the step left it.
   if (progress.met) return false;
   if (!stepMet(step, from, state, { acknowledged: course.ack })) return false;
@@ -2886,6 +2906,7 @@ function placeLessonCard(pointed) {
   lessonCard.style.bottom = '';
   // A lesson at the bridge keeps its card in the far corner (M48c).
   lessonCard.classList.toggle('northwest', course?.lesson?.card === 'northwest');
+  lessonCard.classList.toggle('free', Boolean(lessonStep()?.free));
   if (!pointed || lessonCard.hidden) return renderLessonArrow(lessonArrow, null, null);
   const target = LESSON_POINTS[pointed].getBoundingClientRect();
   const page = lessonCard.offsetParent.getBoundingClientRect();
@@ -2900,7 +2921,7 @@ function placeLessonCard(pointed) {
   const top = Math.min(Math.max(wanted, page.top + 8 * scale), page.bottom - card.height - 8 * scale);
   // A card kept in the far corner stays there and only points (M48e: moved
   // level with the radio's button, it came down over the men it spoke of).
-  if (course?.lesson?.card !== 'northwest') {
+  if (!course?.lesson?.card) {
     lessonCard.style.bottom = 'auto';
     lessonCard.style.top = `${(top - page.top) / scale}px`;
   }
@@ -2922,7 +2943,8 @@ function lessonView() {
   const { lesson, progress } = course;
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
-    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: course.whistle, met: Boolean(progress.met),
+    // A free step's card is its few words and no more (M48f): the umpire's own card has said the whistle.
+    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: step.free ? null : course.whistle, met: Boolean(progress.met), free: Boolean(step.free),
     canBack: progress.step > 0 || Boolean(progress.met), next: Boolean(progress.met) || step.until.kind === 'acknowledged',
   };
 }
