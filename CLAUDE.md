@@ -1,7 +1,7 @@
 # CLAUDE.md — working agreement
 
 Read `SPEC.md` before doing anything. It is the source of truth, with the files that
-hold its §6, §7, §11, §13, §14 and §15 (below). If a request conflicts with any of them, say so before
+hold its §4, §6, §7, §10, §11, §13, §14 and §15 (below). If a request conflicts with any of them, say so before
 writing code.
 
 ## Files in this repo
@@ -19,6 +19,10 @@ writing code.
     before working on the aqueduct.**
   - `MISSION-TRAINING.md` — SPEC §15: the training course and its lesson engine. **Read
     it before working on a lesson or on `src/lessons.js`.**
+  - `TURNS.md` — SPEC §4: the turn, every action and its cost, mouse and keyboard.
+    **Read it before changing an action, a cost or an input.**
+  - `WINNING.md` — SPEC §10: winning, losing, the score, missions as data, difficulty,
+    the balance baselines. **Read it before touching scoring, `missions.json` or balance.**
   - `DETECTION.md` — SPEC §6: detection, the alert, noise, contact and enemy fire,
     reinforcements. **Read it before working on `src/enemy.js` or `src/sight.js`.**
   - `SABOTAGE.md` — SPEC §7: objectives, charges, fuses and time pencils, explosions,

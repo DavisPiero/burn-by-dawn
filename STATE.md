@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 13 Oct 2026, at the end of M48's third session (signed off).
+Last updated: 13 Oct 2026, after the operator's notes on M48's third session (M48d, not yet signed off).
 
 ## Where we are
 
-- **Build M48c** on `main`, the only branch, signed off and pushed on 13 Oct 2026.
-  Tests: 218 headless, 220 in tests.html.
+- **Build M48d** on the branch `m48d-notes-and-spec`, waiting for sign-off; `main` is
+  M48c, signed off and pushed on 13 Oct 2026. Tests: 218 headless, 220 in tests.html.
 - **Three missions are playable:** the rail bridge (France), the airfield (Tunisia)
   and the aqueduct (Italy). The aqueduct is playable but not yet balanced.
 - **Phase 5, teaching the game, is in progress.** The training course is a draft
@@ -23,15 +23,19 @@ Last updated: 13 Oct 2026, at the end of M48's third session (signed off).
 - **The course's list is in two columns**: at eleven lessons it ran off the foot of
   the page, the green button with it.
 - **The documents were split** (the operator's): decisions before M40 are in
-  `DECISIONS-ARCHIVE.md`; SPEC §6 and §7 are `DETECTION.md` and `SABOTAGE.md`; the
-  milestones done are `MILESTONES.md`.
+  `DECISIONS-ARCHIVE.md`; SPEC §4, §6, §7 and §10 are `TURNS.md`, `DETECTION.md`,
+  `SABOTAGE.md` and `WINNING.md`; the milestones done are `MILESTONES.md`. SPEC.md is
+  468 lines.
+- **M48d, the operator's notes:** in lesson 11 Nunn steps onto the charge point; the
+  gear is a pixel right, centred in its margin.
 
 ## Next
 
 1. **The rest of the course**, lessons 12 to 17: the leader, the men, getting out, the
    alert, a wounded man, the passing-out exercise. The table is in MISSION-TRAINING.md.
-2. Also M48's: umpire chips and cries, the end-of-course clipboard, START HERE on the
-   contents page and the course made playable, the **?** pages' diagrams (in code).
+2. Also M48's: **the course's list as a two-page spread, with the end-of-course
+   clipboard** (the operator's yes, 13 Oct; to be planned before it is built), umpire
+   chips and cries, START HERE on the contents page and the course made playable, the **?** pages' diagrams (in code).
 3. **The aqueduct's balance, a short session of its own:** make the knife dearer there
    (a kill that is heard), try hiding a body with it (ROADMAP.md, Parked), and mend
    Hard's North run. Bot runs from a frozen copy.
@@ -41,20 +45,13 @@ Rule of the phase: cut a lesson to fit the engine; do not grow the engine for on
 
 ## Open with the operator
 
-Each of these stands as Claude guessed until answered.
+Answered on 13 Oct: the two-column look, lesson 11's card, the course's timers and the
+gear's size are good; the lesson words stand until the operator's rewording pass.
 
-1. **The course list as a two-page spread?** (the operator's question, 13 Oct). The two
-   columns hold eleven; seventeen will need them a little tighter, or a real spread
-   with the clipboard. Claude's recommendation: decide it with the clipboard.
-2. **The two-column list's look** (18 px titles, two lines a lesson) is Claude's.
-3. **Lesson 11's card lies top left**, to clear the bridge and the timer tin. Right?
-4. **The course's timers run 2 to 4 turns**, and lesson 11 keeps the bridge's two
-   charges with the second left lying at the far point. Both Claude's.
-5. **All the lesson words** (now eleven lessons) and the course's landing lines are
-   Claude's, for the operator's rewording pass.
-6. **The gear at 24 px** was still not checked by eye by the operator.
-7. **SPEC.md is 827 lines**, still over 500. Next to move out, if wanted: §4 (turn
-   structure and actions) and §10 (win, lose, score).
+1. **The gear moved 1 px, not "a few"**: the paper margin is 26 px and the gear 24, so
+   a pixel centres it and two would touch the board. More needs a smaller gear. Enough?
+2. **Lesson 11 is ten steps** now that he walks onto the point, the longest lesson.
+   Claude's guess: fine, since each is one small act. Cut it if it drags in play.
 
 ## Owed
 
