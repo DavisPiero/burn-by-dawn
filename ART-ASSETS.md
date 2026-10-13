@@ -265,6 +265,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `ui-alert-needle.svg` | 20 x 120 | separate, rotated in code |
 | `ui-dawn-strip.svg` | 600 x 60 | the 20-turn clock. Consider a burning fuse or a lightening sky bar. |
 | `ui-button.svg` | 160 x 48 | stretchable. *Currently redrawn by code, like the caption box.* |
+| `ui-gear.svg` | 24 x 24 | the menu's gear at the top of the margin (M48b): ink on paper, readable at 20 px. *Currently drawn by code.* |
 | `ui-gutter-note.svg` | 60 x 900 | the margin note in the middle of the margin: scissors, the dashed cut line and "CUT OUT AND PLAY", as outlines (BURN BY DAWN above it is type, M15) |
 | `logo-burn-by-dawn.svg` | 800 x 300 | *Not used since M9b: the results page is headed by the title card. The drawn sprite was taken out of theme.js in M25.* |
 | `title-card.jpg` | 4:1, **2400 x 600** px (no smaller than 1200 x 300) | **JPEG**, not SVG or PNG — see below. The painted picture across the top of the orders card, under the title, and smaller across the top of the results page. Drop into `/assets/title/`. |

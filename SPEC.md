@@ -314,8 +314,8 @@ to be casual while still being strategic.
   jolts.
 - **Only what he can do now is a button.** The actions the selected man cannot take
   shrink to their keys, each still with its rollover saying what it is and why not.
-- **Play tips** (a box on the orders and the contents page, beside Music off; **off**
-  unless ticked; `?tips=on` in the address). With them on, the player's pen coaches on
+- **Play tips** (a box on the orders and the contents page, beside Music off, and in
+  the menu behind the margin's gear at any time (§11); **on** unless turned off; `?tips=off` in the address). With them on, the player's pen coaches on
   the board: how to move, shown by a ghost of the man walking a short path, until the
   first move; where the charge goes (below); BREAK CONTACT!; GET CLEAR! with an arrow
   to the nearest clear hex; GET OUT! by the exfil. None of it changes a rule, and
@@ -1039,9 +1039,8 @@ comes after the current milestone is in `ROADMAP.md`.
 ### Current
 
 **M48, under way: the course built** (§15, `MISSION-TRAINING.md`), a few lessons a
-session. Its first session did the operator's notes on M47 and has lessons 2 to 5 of
-fifteen on a redrawn practice ground; the mission is still a draft
-(`?mission=training`). **Next: lesson 1 (the drop) and 6 onward.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+session. Two sessions in, it has lessons 1 to 7 of fifteen; the mission is still a
+draft (`?mission=training`). **Next: lesson 7 split in three (the knife, the gunner, firing back), then charges and on to the passing-out exercise.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -1063,6 +1062,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M48 (second session) | The operator's notes: a card that leads somewhere new goes on only by its green button or Enter; play tips on for everyone; a menu behind a gear in the margin (sound, music, play tips, restart, contents); every lesson step held until NEXT with what it did still shown; the lesson card goes to what it points at; a wider ring on a man; Tatton Wood, the Training Bridge, the road. Lesson 1 (the drop, and reading the page), the second half of 5, 6 (watching the garrison) and 7 (fighting, firing back played) |
 | M48 (first session) | The operator's notes: the contents page on the bare table, a picked mission loaded in place; the cards' way on a button, START GAME on the orders; (UNAVAILABLE) on an action that is closed; the charge note goes of itself and Space at it does not end the turn. The practice ground redrawn as a park, the brook a hex west; lessons 2 (parachutes) and 4 (ground), and 3 and 5 reworded |
 | M47 | The training mission specified (§15) and its lesson engine: a mission that names a lessons file is a course; each lesson its own situation and steps, only what a step lists doing anything; the umpire's whistle putting a step back; BACK, AGAIN and the course's list; an exercise never settled. A draft practice ground with two lessons, each played through by a test |
 | M46 | Doing (Phase 5): marks on the enemies a man could strike; the first move shown by a ghost; a blast this turn throbbing, GET CLEAR! and an arrow; GET OUT! and a green exfil once the job is done, a reddening dawn strip and a clock on a man too far away; the alert's flying pip; the action strip down to what he can do now; the turn card's hint ringed on the board. The operator's notes: the pen's coaching behind a Play tips box, off unless ticked; the drop chosen in blue; the charge points ringed only from one hex off, lettered once |
@@ -1105,7 +1105,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 **In `MISSION-TRAINING.md`**: a course of lessons at a parachute school in England, and
 the lesson engine that runs it. The engine is built and the mission is a draft
-(`?mission=training`) with lessons 2 to 5 of fifteen; M48 builds the rest.
+(`?mission=training`) with lessons 1 to 7 of fifteen; M48 builds the rest.
 
 ---
 

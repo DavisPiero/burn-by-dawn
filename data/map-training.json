@@ -1,5 +1,5 @@
 {
-  "_comment": "The practice ground (MISSION-TRAINING.md, SPEC.md §15; M47): the training mission's map, in the shape of data/map.json. Redrawn in M48 (the operator's: it read too like France): a park, not bocage. The Mere in the north runs out as the brook, a hall and its drive in the north-west, a lane down to the gate, copses and one paddock hedge on open grass, Home Wood in the south-east. Each lesson puts its own men and umpires on it (data/lessons-training.json), so the enemies here are only what stands on the board behind the course's list.",
+  "_comment": "The practice ground (MISSION-TRAINING.md, SPEC.md §15; M47): the training mission's map, in the shape of data/map.json. Redrawn in M48 (the operator's: it read too like France): a park, not bocage. The Mere in the north runs out as the brook, a hall and its drive in the north-west, a lane down to the gate, copses and one paddock hedge on open grass, Tatton Wood in the south-east. Each lesson puts its own men and umpires on it (data/lessons-training.json), so the enemies here are only what stands on the board behind the course's list.",
   "name": "The practice ground at Tatton Park",
   "width": 18,
   "height": 13,
@@ -102,7 +102,8 @@
   "objectives": [
     {
       "id": "dummy-bridge",
-      "label": "Dummy Bridge",
+      "label": "Training Bridge",
+      "nameNudge": [0, 0.4],
       "kind": "bridge",
       "primary": true,
       "hexes": [
@@ -137,6 +138,8 @@
       12
     ]
   ],
+  "_dropCueAt": "M48b, art only: the hex PICK A DROP DIRECTION centres on, on the open grass below the one run, whose name it lay over.",
+  "dropCueAt": [2.5, 5],
   "_places": "The brook's name is set down its water (M48, the operator's): upright, on the line midway between the centres of its even and odd rows, the one strip that is water all the way down.",
   "places": [
     {
@@ -171,7 +174,7 @@
       "angle": 90
     },
     {
-      "name": "Home Wood",
+      "name": "Tatton Wood",
       "kind": "wood",
       "at": [
         10,

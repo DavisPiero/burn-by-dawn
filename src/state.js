@@ -270,12 +270,14 @@ export function chooseDropRun(state, map, runId) {
  * Jump on the chosen run: scatter the stick with the seeded RNG, put everyone
  * on the ground, and start turn 1. `map` is the loaded map.
  */
-export function jump(state, map, rules) {
+export function jump(state, map, rules, fixed = null) {
   if (state.phase !== 'drop') return state;
   const run = runById(map, state.dropRunId);
   if (!run) return state;
   const rng = createRng(state.seed);
-  const landings = scatterStick(map, rules, run, state.units, state.enemies, rng);
+  // A lesson's drop lands each man where it says (`fixed`, lessons.js
+  // lessonLandings; SPEC.md §15): nothing is rolled for them.
+  const landings = fixed ?? scatterStick(map, rules, run, state.units, state.enemies, rng);
   const landed = landStick(state, landings, map, rules);
   let next = landed.state;
   // The canisters come down after the men, off the same generator, so a seed

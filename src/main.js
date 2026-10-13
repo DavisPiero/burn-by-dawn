@@ -3,7 +3,7 @@
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
 import {
-  alertIndex, busyFor, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
+  alertIndex, busyFor, createEnemies, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
 } from './enemy.js';
 import { canLandOn, canisterPoints, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
@@ -23,7 +23,7 @@ import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery,
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
-import { advance, allows, back, beginLesson, caughtOut, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
+import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -41,7 +41,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  capitalise, renderContentsBack, renderLesson, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderLesson, renderLessonArrow, renderRestart, renderResults, renderTimerTin, renderMusicToggle, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -61,6 +61,11 @@ const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
+const tipsToggleButton = document.getElementById('tips-toggle');
+const musicToggleButton = document.getElementById('music-toggle');
+const settingsOpenButton = document.getElementById('settings-open');
+const settingsCloseButton = document.getElementById('settings-close');
+const settingsPanel = document.getElementById('settings');
 const restartButton = document.getElementById('restart');
 const contentsBackButton = document.getElementById('contents-back');
 const timerTinBox = document.getElementById('timer-tin');
@@ -72,6 +77,15 @@ const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
 const lessonCard = document.getElementById('lesson');
+const lessonArrow = document.getElementById('lesson-arrow');
+// The parts of the page a lesson's step may point at (lessons.js POINT_KINDS).
+const LESSON_POINTS = {
+  roster: document.getElementById('roster'),
+  alert: document.getElementById('alert'),
+  clock: document.getElementById('clock'),
+  readout: document.getElementById('coord-readout'),
+  actions: document.getElementById('actions'),
+};
 
 // The night's last turns (M46): the dawn strip reddens through them, and a
 // man who can no longer reach the way out wears a clock. Display only.
@@ -151,9 +165,10 @@ let sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedO
 // the enemies he could strike and the first move's ghost.
 let cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
 // Play tips (M46, the operator's): the pen's coaching on the board, the rings
-// and words that say what to do next. Off unless the box on the orders is
-// ticked; carried in the address as `?tips=on`, as the music is.
-let tipsOn = new URLSearchParams(window.location.search).get('tips') === 'on';
+// and words that say what to do next. On for everyone (M48b, the operator's:
+// "on once the course is passed" could last only the visit, as nothing is
+// stored), until switched off; that is carried in the address as `?tips=off`.
+let tipsOn = new URLSearchParams(window.location.search).get('tips') !== 'off';
 // The title music turned off from the orders (M21, the operator's): music
 // only, for the session; M still turns every sound off. Carried in the
 // address as `?music=off` when the contents page loads another mission (M29b).
@@ -422,11 +437,13 @@ function deriveView() {
   if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
   // A lesson's step (M47): what it rings, and its line in the pen.
   const step = lessonStep();
-  if (step && !briefing) {
+  // Not while the stick is coming down: the step's line is for the ground.
+  if (step && !briefing && !course.progress.met && !dropShow) {
     const men = state.units.filter(onBoard);
-    view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
+    view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
-    if (about) view.manNotes.push({ q: about.q, r: about.r, words: step.say });
+    // A step that points at the page says its line on the lesson card only.
+    if (about && (step.at || !step.point)) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
   }
 
   const next = forecast();
@@ -683,6 +700,10 @@ function deriveDrop(view, hex) {
   if (briefing?.kind === 'orders' || briefing?.kind === 'help') return view;
   // What to do next, in big pen lettering among the runs' names (M21).
   view.dropCue = selected ? 'jump' : 'pick';
+  // In a lesson the board urges only what the step asks for now (M48b, the
+  // operator's: HIT SPACE TO JUMP stood over a step that had not got to it).
+  const step = lessonStep();
+  if (step && (course.progress.met || !allows(step, { kind: selected ? 'jump' : 'run' }))) view.dropCue = null;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
       id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, labelNudge: run.labelNudge ?? null, windAlong: run.windAlong ?? null,
@@ -1534,7 +1555,7 @@ function render() {
   renderTurnCounter(turnCounter, state, clock);
   // Its last turns redden once they are here (M46).
   renderDawnStrip(dawnStrip, state, clock, cuesFor.out?.closing && !state.outcome ? CLOSING_TURNS : 0);
-  renderEndTurnButton(endTurnButton, state, clock);
+  renderEndTurnButton(endTurnButton, state, clock, baseMap.dropRuns.length);
   renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
@@ -1554,7 +1575,14 @@ function render() {
   showCounterKey(briefing?.kind === 'help');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
+  // A step may point at a part of the page (M48b): ringed in the pen while it is the step.
+  // On the contents page there is no game to restart or to leave.
+  restartButton.disabled = briefing?.kind === 'contents';
+  contentsBackButton.disabled = briefing?.kind === 'contents';
+  const pointed = briefing ? null : lessonStep()?.point ?? null;
+  for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed);
   renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
+  placeLessonCard(pointed);
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
@@ -1707,6 +1735,9 @@ function handleHexClick(q, r) {
     const man = unitAt(state.units, q, r);
     if (!lessonAllows(man ? { kind: 'select', unitId: man.id } : { kind: 'move', to: { q, r } })) return;
   }
+  // An aimed action lands only where the step says, if it says (M48b); one of
+  // the stick clicked while aiming is a man picked, as anywhere.
+  if (lessonStep() && state.targeting && !unitAt(state.units, q, r) && !lessonAllows({ kind: 'target', at: { q, r } })) return;
   highlightHex = null;
   pencilsFor = null;
   if (state.targeting) {
@@ -1889,6 +1920,9 @@ function handleHexHover(q, r) {
 }
 
 function handleHexLeave() {
+  // A lesson's hover step done and held (M48b): what the mouse was on stays
+  // shown while the card is read, though the mouse has gone to its NEXT.
+  if (course?.progress?.met && lessonStep()?.until.kind === 'hovered') return;
   state = setHover(state, null);
   renderHover();
 }
@@ -2001,7 +2035,10 @@ function showCounterKey(on) {
   const man = state.units[index];
   // Beside him, so two blue dots, one of them spent: both kinds show.
   const bonus = rules.command.closeBonusActionPoints ?? rules.command.bonusActionPoints;
-  const enemy = state.enemies.find((e) => e.speed > 0) ?? state.enemies[0];
+  // A lesson may have no garrison on the board (M48b: ? threw an error in
+  // lesson 1): then one of the map's own, which is all the key needs of it.
+  const enemies = state.enemies.length ? state.enemies : createEnemies(baseMap);
+  const enemy = enemies.find((e) => e.speed > 0) ?? enemies[0];
   drawCounterKey(document.getElementById('counter-key-art'), {
     // A man with a charge and the leader's orders, one AP spent.
     man: { ...man, apMax: man.apBase + bonus, ap: man.apBase + bonus - 1, commandBonus: bonus, charges: 1, hidden: false, hits: 0 },
@@ -2146,6 +2183,7 @@ function handleRestartClick() {
     clearTimeout(restartArmed);
     restartArmed = null;
     renderRestart(restartButton, false);
+    openSettings(false);
     restartMission();
     return;
   }
@@ -2175,6 +2213,7 @@ function handleContentsBackClick() {
   contentsBackArmed = null;
   renderContentsBack(contentsBackButton, false);
   if (state.phase !== 'drop') restartMission();
+  openSettings(false);
   openContents();
 }
 
@@ -2204,10 +2243,24 @@ function openOrdersFromHelp() {
   render();
 }
 
-function closeBriefing() {
+/**
+ * A card that leads somewhere new goes on only by its green button (M48b,
+ * the operator's: a stray key or click started the next lesson while the
+ * last was still being read; the third note of its kind, so one rule for
+ * all of them): PASSED, a course's list, and the orders before the drop;
+ * Enter counts as the button. A card that only says something still goes at
+ * any key or click.
+ */
+function wantsItsButton() {
+  if (briefing?.kind === 'passed') return true;
+  return briefing?.kind === 'orders' && (course ? !course.lesson : state.phase === 'drop');
+}
+
+function closeBriefing(byButton = false) {
   // The contents page is put away only by picking a mission (M48): with no
   // map behind it, a stray key no longer turns to one unasked.
   if (briefing?.kind === 'contents') return;
+  if (wantsItsButton() && !byButton) return;
   // The course's list is put away by taking a lesson: the next not yet
   // passed. A lesson passed leads on to the one after it, or back to the list.
   if (course && !course.lesson && briefing?.kind === 'orders') return startLesson(nextLesson().id);
@@ -2456,8 +2509,9 @@ function describeBriefing(which, view) {
         ...(left ? [] : ['That is every lesson of the course.']),
       ]],
       sections: [],
-      link: { label: 'THE COURSE', onClick: openCourse },
-      go: `${next ? `LESSON ${next.number}` : 'THE COURSE'} — any key or click`,
+      ...(next ? { link: { label: 'COURSE MENU', onClick: openCourse } } : {}),
+      go: `${next ? `LESSON ${next.number} ▶` : 'COURSE MENU'} — click, or Enter`,
+      onGo: () => closeBriefing(true),
     };
   }
   // A course's orders are its list of lessons (M47): any of them, at any time.
@@ -2477,8 +2531,9 @@ function describeBriefing(which, view) {
       },
       sections: [],
       toggles: [musicToggle()],
-      go: `START LESSON ${next.number} — any key, or click a lesson`,
+      go: `START LESSON ${next.number} — Enter, or click a lesson`,
       goBig: true,
+      onGo: () => closeBriefing(true),
     };
   }
   if (which.kind === 'orders' || which.kind === 'help') {
@@ -2544,7 +2599,7 @@ function describeBriefing(which, view) {
         sections: [{
           heading: 'THE BASICS',
           lines: [
-            ...(before ? [`Pick the ${runList} run with 1–3. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
+            ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
             'Click a man (or press 1–6). Hover a hex to see what the move costs and risks; click to go. SPACE ends the turn.',
             'Red ground gets him spotted on the way; blue is safe. Spotted once is a warning: break contact before the turn ends, or he is fired on.',
             'The red dashed hexes are charge points: stand a man with a charge on one and press C.',
@@ -2617,7 +2672,7 @@ function describeBriefing(which, view) {
       toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
       // The one button that starts the game (M48, the operator's): named, and the biggest.
-      ...(before ? { go: 'START GAME — any key or click', goBig: true } : {}),
+      ...(before ? { go: 'START GAME — click, or Enter', goBig: true, onGo: () => closeBriefing(true) } : {}),
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
@@ -2686,7 +2741,8 @@ function lessonStep() {
 
 /** May the player do this now? If not, the lesson card shakes its head and nothing happens. */
 function lessonAllows(input) {
-  if (allows(lessonStep(), input)) return true;
+  // A step done and held does nothing more until NEXT.
+  if (!course.progress.met && allows(lessonStep(), input)) return true;
   lessonCard.classList.remove('nudge');
   void lessonCard.getBoundingClientRect();
   lessonCard.classList.add('nudge');
@@ -2731,7 +2787,8 @@ function layLessonState(next) {
  */
 function lessonCheck() {
   const step = lessonStep();
-  if (!step) return false;
+  // Not while the stick is still coming down: the next step waits for the ground.
+  if (!step || dropShow) return false;
   const { lesson, progress } = course;
   const from = stepStart(progress);
   const why = caughtOut(step, from, state);
@@ -2741,18 +2798,32 @@ function lessonCheck() {
     playCue('whistle');
     return true;
   }
+  // Done and held: waiting for NEXT, with the board as the step left it.
+  if (progress.met) return false;
   if (!stepMet(step, from, state, { acknowledged: course.ack })) return false;
+  // Do it, see it, then NEXT (M48b): the card now says what is to be seen.
+  if (step.then) {
+    course = { ...course, progress: hold(progress), whistle: null, ack: false };
+    return true;
+  }
+  lessonGoOn();
+  return true;
+}
+
+/** On from a step: the next, or PASSED after the last. */
+function lessonGoOn() {
+  const { lesson, progress } = course;
   course = { ...course, progress: advance(progress, lesson, state), whistle: null, ack: false };
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
   }
-  return true;
 }
 
-/** NEXT on the lesson card: for a step that only shows something. */
+/** NEXT on the lesson card: on from a step done, or past one that only shows something. */
 function lessonNext() {
-  course = { ...course, ack: true };
+  if (course.progress.met) lessonGoOn();
+  else course = { ...course, ack: true };
   render();
 }
 
@@ -2769,6 +2840,41 @@ function openCourse() {
   restartMission();
 }
 
+/**
+ * The lesson card goes to what its step points at (M48b, the operator's: the
+ * card was a long way from the part of the page it spoke of): level with a
+ * part on the right page, or just above one under the map, with the pen's
+ * arrow from the card to it. With nothing pointed at it lies where it always
+ * does. Layout only: it reads where things are on the page.
+ */
+function placeLessonCard(pointed) {
+  lessonCard.style.top = '';
+  lessonCard.style.bottom = '';
+  if (!pointed || lessonCard.hidden) return renderLessonArrow(lessonArrow, null, null);
+  const target = LESSON_POINTS[pointed].getBoundingClientRect();
+  const page = lessonCard.offsetParent.getBoundingClientRect();
+  let card = lessonCard.getBoundingClientRect();
+  const scale = card.width / lessonCard.offsetWidth || 1;
+  const beside = target.left >= card.right;
+  const gap = 34 * scale;
+  // Beside a part taller than the card (the roster), level with its top, so
+  // the card stays on the map and off the readout under it.
+  const level = target.height > card.height ? target.top : target.top + target.height / 2 - card.height / 2;
+  const wanted = beside ? level : target.top - gap - card.height;
+  const top = Math.min(Math.max(wanted, page.top + 8 * scale), page.bottom - card.height - 8 * scale);
+  lessonCard.style.bottom = 'auto';
+  lessonCard.style.top = `${(top - page.top) / scale}px`;
+  card = lessonCard.getBoundingClientRect();
+  const within = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  if (beside) {
+    const y = within(card.top + card.height / 2, target.top + 12 * scale, target.bottom - 12 * scale);
+    renderLessonArrow(lessonArrow, { x: card.right, y: card.top + card.height / 2 }, { x: target.left - 6 * scale, y });
+  } else {
+    const x = within(card.left + card.width / 2, target.left + 12 * scale, target.right - 12 * scale);
+    renderLessonArrow(lessonArrow, { x, y: card.bottom }, { x, y: target.top - 6 * scale });
+  }
+}
+
 /** What the lesson card says, or null where there is none to show. */
 function lessonView() {
   const step = lessonStep();
@@ -2776,8 +2882,15 @@ function lessonView() {
   const { lesson, progress } = course;
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
-    tell: step.tell ?? '', whistle: course.whistle, canBack: progress.step > 0, next: step.until.kind === 'acknowledged',
+    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: course.whistle, met: Boolean(progress.met),
+    canBack: progress.step > 0 || Boolean(progress.met), next: Boolean(progress.met) || step.until.kind === 'acknowledged',
   };
+}
+
+/** The menu behind the gear in the margin (M48b, the operator's): open or shut. */
+function openSettings(open) {
+  settingsPanel.hidden = !open;
+  settingsOpenButton.classList.toggle('open', open);
 }
 
 /** Music off (M21, the operator's), bottom left of the orders and the contents page. */
@@ -2787,28 +2900,33 @@ function musicToggle() {
     label: ' Music off',
     onChange: (on) => {
       musicOff = on;
+      renderMusicToggle(musicToggleButton, !musicOff);
       syncMusic();
     },
   };
 }
 
-/** Play tips (M46, the operator's), beside Music off: off until ticked. */
+/** Play tips (M46, the operator's), beside Music off: on until unticked (M48b). */
 function tipsToggle() {
   return {
     on: tipsOn,
     label: ' Play tips',
     help: titled('PLAY TIPS', 'The red pen on the map says what to do next: how to move, where a charge goes, when to break contact, get clear or get out. For a first game.'),
-    onChange: (on) => {
-      tipsOn = on;
-      // Carried in the address, so Play again and a reload keep it.
-      const query = new URLSearchParams(window.location.search);
-      if (on) query.set('tips', 'on');
-      else query.delete('tips');
-      const search = query.toString();
-      window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
-      renderBoard();
-    },
+    onChange: setTips,
   };
+}
+
+/** Play tips on or off: the box on the orders, or the words in the margin at any time (M48b, the operator's). */
+function setTips(on) {
+  tipsOn = on;
+  // Carried in the address, so Play again and a reload keep it.
+  const query = new URLSearchParams(window.location.search);
+  if (on) query.delete('tips');
+  else query.set('tips', 'off');
+  const search = query.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+  renderTipsToggle(tipsToggleButton, tipsOn);
+  render();
 }
 
 /** The card when the RAF diversion is called: what it did, and what is left. */
@@ -2917,10 +3035,12 @@ function chargeCue(unit) {
 function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
   if (!run) return;
+  if (lessonStep() && !lessonAllows({ kind: 'jump' })) return;
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
   undoStack = [];
-  state = jump(state, baseMap, rules);
+  // A lesson's drop lands its men where it says (SPEC.md §15).
+  state = jump(state, baseMap, rules, lessonLandings(course?.lesson));
   const landed = state.report.filter((e) => e.kind === 'landed');
   if (landed.length) {
     dropShow = {
@@ -2939,8 +3059,8 @@ function jumpNow() {
     // Each is on the ground, ringed, with its thump, as its canopy lands.
     startCanisterCue(dropShow.since, Object.fromEntries([...timeline.byCanister].map(([id, t]) => [id, t.landAt])));
     dropSound = playCue('drop');
-    briefingAfterDrop = briefingsOn;
-  } else if (state.phase !== 'drop' && briefingsOn) {
+    briefingAfterDrop = briefingsOn && !course?.lesson;
+  } else if (state.phase !== 'drop' && briefingsOn && !course?.lesson) {
     briefing = { kind: 'turn' };
   }
   render();
@@ -2988,6 +3108,7 @@ function endFlyShow() {
 
 // A run clicked a second time jumps (M12: players did not see that Space was next).
 function handleChooseRun(runId) {
+  if (lessonStep() && !lessonAllows({ kind: 'run', runId })) return;
   if (runId !== null && runId === state.dropRunId && !briefing) {
     hidePopup();
     jumpNow();
@@ -3002,6 +3123,8 @@ function handleChooseRun(runId) {
 function handleDropKey(event) {
   const key = event.key;
   const run = key >= '1' && key <= '9' ? baseMap.dropRuns[Number(key) - 1] : null;
+  // In a lesson only what the step asks for does anything (SPEC.md §15).
+  if (lessonStep() && (run || key === 'Escape') && !lessonAllows({ kind: 'run', runId: run?.id ?? null })) return;
   if (run) {
     state = chooseDropRun(state, baseMap, run.id);
   } else if (key === ' ') {
@@ -3037,6 +3160,12 @@ function handleKey(event) {
     if (loaded) openGame();
     return;
   }
+  // The menu open (M48b): Esc shuts it, and does nothing else.
+  if (!settingsPanel.hidden && event.key === 'Escape') {
+    event.preventDefault();
+    openSettings(false);
+    return;
+  }
   if ((event.key === 'm' || event.key === 'M') && !event.metaKey && !event.ctrlKey && !event.altKey) {
     toggleSound();
     return;
@@ -3054,6 +3183,9 @@ function handleKey(event) {
     event.preventDefault();
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     if (briefing.kind === 'signal' && event.key === 'Enter') return confirmSignal();
+    // Enter is a card's green button (M48b, the operator's): the one key that
+    // goes on from a card that otherwise wants its button clicked.
+    if (wantsItsButton() && event.key === 'Enter') return closeBriefing(true);
     // ? over a turn card swaps it for the orders (M17), as the button does.
     if (isHelpKey(event) && !['help', 'exfil', 'signal', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
@@ -3064,6 +3196,12 @@ function handleKey(event) {
   if (dropShow) {
     event.preventDefault();
     endDropShow();
+    return;
+  }
+  // Enter is the lesson card's green NEXT, as it is a card's green button (M48b).
+  if (event.key === 'Enter' && lessonView()?.next) {
+    event.preventDefault();
+    lessonNext();
     return;
   }
   if (flyShow) {
@@ -3314,6 +3452,29 @@ try {
     toggleSound();
   });
   renderSoundToggle(soundToggle, isMuted());
+  tipsToggleButton.addEventListener('click', () => {
+    tipsToggleButton.blur();
+    setTips(!tipsOn);
+  });
+  renderTipsToggle(tipsToggleButton, tipsOn);
+  musicToggleButton.addEventListener('click', () => {
+    musicToggleButton.blur();
+    musicOff = !musicOff;
+    renderMusicToggle(musicToggleButton, !musicOff);
+    // The orders' own Music off box is laid again to match.
+    render();
+  });
+  renderMusicToggle(musicToggleButton, !musicOff);
+  // The menu (M48b): the gear opens and shuts it; Esc, CLOSE or a click
+  // anywhere else shuts it.
+  settingsOpenButton.addEventListener('click', () => {
+    settingsOpenButton.blur();
+    openSettings(settingsPanel.hidden);
+  });
+  settingsCloseButton.addEventListener('click', () => openSettings(false));
+  window.addEventListener('pointerdown', (event) => {
+    if (!settingsPanel.hidden && !settingsPanel.contains(event.target) && !settingsOpenButton.contains(event.target)) openSettings(false);
+  }, true);
   restartButton.addEventListener('click', handleRestartClick);
   renderRestart(restartButton, false);
   contentsBackButton.addEventListener('click', handleContentsBackClick);

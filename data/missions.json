@@ -10,8 +10,8 @@
       "title": "The Practice Ground",
       "place": "Tatton Park, England",
       "page": 2,
-      "blurb": "Start here. The parachute school's course, a lesson at a time: umpires for a garrison, a dummy bridge, and nobody hurt.",
-      "tagline": "SIX MEN · ONE DUMMY BRIDGE · NOBODY HURT",
+      "blurb": "Start here. The parachute school's course, a lesson at a time: umpires for a garrison, a training bridge, and nobody hurt.",
+      "tagline": "SIX MEN · ONE TRAINING BRIDGE · NOBODY HURT",
       "map": "data/map-training.json",
       "roster": "data/roster.json",
       "_lessons": "MISSION-TRAINING.md (SPEC.md §15), M47: a mission that names a lessons file is a course. Its orders are the course's list, each lesson sets up its own men and umpires on the map, and the lesson engine (src/lessons.js) lets only what a step asks for do anything. A draft: two lessons that prove the engine; M48 builds the course.",
@@ -50,7 +50,15 @@
         "cleanBonus": "a quiet night",
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
-      "dialogue": {},
+      "_dialogue": "M48b, the operator's: the men's own landing lines for the practice ground, since France's spoke of France. Placeholder copy for the operator to reword.",
+      "dialogue": {
+        "holloway": { "onLand": "Feet together, lads. Just like the tower." },
+        "fitch": { "onLand": "Softer than the hangar floor, that." },
+        "vance": { "onLand": "Down. Didn't feel a thing." },
+        "barrow": { "onLand": "Not one tree. Where's the sport in that?" },
+        "speers": { "onLand": "Down in one piece. Is there tea?" },
+        "nunn": { "onLand": "Whoever packed this one, I owe him a pint." }
+      },
       "titleCard": "assets/title/title-card.jpg",
       "endSounds": {
         "success": "victory",

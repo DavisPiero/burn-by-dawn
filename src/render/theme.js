@@ -1160,6 +1160,10 @@ export const CUE = {
   // the airfield every pen in reach was lettered at once).
   pointRange: 1,
   pointRingRadius: 34,
+  // A lesson's ring on a man (M48b, the operator's: the ring lay over the
+  // parachute on his hex, the thing the step was about): round the whole hex.
+  manRingRadius: 62,
+  manRingNoteDrop: 28, // his pen note goes under the wider ring
   pointRingWidth: 5,
   pointRingOpacity: 0.85,
   pointPulseMs: 1100,
@@ -3315,6 +3319,15 @@ const SPRITES = {
       parts.push(svg('rect', { x: 1.5, y: 1.5, width: 597, height: 57, fill: 'none', class: 'stroke-ink', 'stroke-width': 3 }));
       return parts;
     },
+  },
+  // The menu's gear at the top of the margin (M48b, ART-ASSETS.md ui-gear):
+  // eight square teeth on a heavy ring.
+  'ui-gear': {
+    viewBox: '0 0 24 24',
+    draw: () => [
+      ...[0, 45, 90, 135, 180, 225, 270, 315].map((turn) => line('M12 1.2 V5', 4.2, 'stroke-ink', { transform: `rotate(${turn} 12 12)`, 'stroke-linecap': 'butt' })),
+      ring(12, 12, 5.6, 4.2),
+    ],
   },
   // The margin note down the outer edge of the left page, in the middle of
   // the margin (M15: back where it was before M14). The game's name above it

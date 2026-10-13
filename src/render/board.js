@@ -872,7 +872,7 @@ export function renderPieces(layers, state, view) {
   if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
   if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
   // What the turn card's hint is about, ringed while the card is up (M46).
-  for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now);
+  for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now, hex.wide ? CUE.manRingRadius : CUE.pointRingRadius);
   if (view.ghost) drawGhost(layers, view.ghost, now);
   else if (layers.cueSince) layers.cueSince.ghostFor = null;
   if (view.getClear) drawGetClear(layers, view.getClear);
@@ -1033,7 +1033,10 @@ function drawDropCue(layers, cue, names) {
   const at = layers.map.dropCueAt && axialToPixel(layers.map.dropCueAt[0], layers.map.dropCueAt[1], layers.map.hexSize);
   const x = at ? at.x : names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
   const y = at ? at.y : names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
-  const lines = cue === 'pick' ? ['PICK A DROP DIRECTION', 'click a run\'s name, or press 1-3'] : ['HIT SPACE TO JUMP', 'or click the run again'];
+  // Said for as many runs as the map has (M48b, the operator's: "press 1-3"
+  // and "pick" on the practice ground, which has one).
+  const pick = names.length === 1 ? ['CLICK THE DROP RUN', 'click its name, or press 1'] : ['PICK A DROP DIRECTION', `click a run's name, or press 1-${names.length}`];
+  const lines = cue === 'pick' ? pick : ['HIT SPACE TO JUMP', 'or click the run again'];
   const g = el('g', { 'pointer-events': 'none' });
   const { padX, padY, width, opacity } = CUE.runRing;
   for (const tab of names.filter((t) => cue === 'pick' || t.selected)) {
@@ -1093,20 +1096,22 @@ function drawManNote(layers, note) {
   const size = CUE.manNoteSize;
   const width = note.words.length * size * CUE.noteAdvance;
   const x = Math.min(Math.max(p.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
-  const under = p.y + CUE.manNoteDrop + size <= edge.bottom;
-  const letters = penLetters([note.words], x, under ? p.y + CUE.manNoteDrop : p.y - CUE.manNoteDrop + size * 0.4, [size]);
+  // Under a lesson's wide ring on a man (M48b), clear of it.
+  const drop = CUE.manNoteDrop + (note.low ? CUE.manRingNoteDrop : 0);
+  const under = p.y + drop + size <= edge.bottom;
+  const letters = penLetters([note.words], x, under ? p.y + drop : p.y - drop + size * 0.4, [size]);
   letters.setAttribute('pointer-events', 'none');
   layers.effects.appendChild(letters);
 }
 
-/** A throbbing pen ring round a hex's middle: where the charge goes (M43c), what a hint is about (M46). */
-function penRing(layers, p, now) {
+/** A throbbing pen ring round a hex's middle: where the charge goes (M43c), what a hint is about (M46). A lesson's ring on a man is wider, round his whole hex (M48b). */
+function penRing(layers, p, now, radius = CUE.pointRingRadius) {
   const g = el('g', { class: 'nd-point', 'pointer-events': 'none', opacity: CUE.pointRingOpacity });
   layers.cueSince ??= {};
   layers.cueSince.point ??= now;
   g.style.animationDelay = `${-Math.round(now - layers.cueSince.point)}ms`;
-  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
-  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: CUE.pointRingRadius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
+  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: radius, fill: 'none', stroke: CUE.halo, 'stroke-width': CUE.pointRingWidth + 4, opacity: 0.8 }));
+  g.appendChild(el('circle', { cx: p.x, cy: p.y, r: radius, fill: 'none', stroke: CUE.colour, 'stroke-width': CUE.pointRingWidth }));
   layers.effects.appendChild(g);
 }
 
