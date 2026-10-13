@@ -1,5 +1,5 @@
 {
-  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`; or, in place of `men`, `drop` (M48b): { run, landings: { man: hex } }, a lesson that starts in the drop, each man down where it says with no scatter. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about), repeated on the card as TO GO ON; `tell`, the card's words before the step is done: what to do; `then` (M48b, the operator's: do it, see it, then NEXT), the card's words once it is done, while what it did is still on the board: what he is now looking at and the rule in its numbers, with a green NEXT; `ring`, hexes to ring, or \"men\"; `point`, a part of the page to ring (roster, alert, clock, readout, actions); `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], target: [hexes], endTurn, run, jump }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson; `does`, read only by the test that plays the lesson. The words are placeholders for the operator to reword. Lessons 8 to 15 are still to come.",
+  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`; or, in place of `men`, `drop` (M48b): { run, landings: { man: hex } }, a lesson that starts in the drop, each man down where it says with no scatter. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about), repeated on the card as TO GO ON; `tell`, the card's words before the step is done: what to do; `then` (M48b, the operator's: do it, see it, then NEXT), the card's words once it is done, while what it did is still on the board: what he is now looking at and the rule in its numbers, with a green NEXT; `ring`, hexes to ring, or \"men\"; `point`, a part of the page to ring (roster, alert, clock, readout, actions); `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], target: [hexes], endTurn, run, jump }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson; `does`, read only by the test that plays the lesson. The words are placeholders for the operator to reword. Lesson 17, the passing-out exercise, is still to come.",
   "lessons": [
     {
       "id": "the-drop",
@@ -662,6 +662,264 @@
           "then": "The Training Bridge is down. An explosion is heard everywhere and adds 3 to the alert. Charges on one target that go off in the same turn are one explosion, which is why the two timers were matched.",
           "allow": { "select": ["nunn"], "endTurn": true },
           "until": { "kind": "destroyed", "objective": "dummy-bridge" }
+        }
+      ]
+    },
+    {
+      "id": "the-leader",
+      "number": 12,
+      "title": "The leader",
+      "qualification": "LEADERSHIP",
+      "start": {
+        "men": { "holloway": { "at": [0, 8] }, "fitch": { "at": [3, 8] } },
+        "alert": 1,
+        "enemies": [
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [5, 8], "facing": "W" }
+        ]
+      },
+      "steps": [
+        {
+          "say": "CLICK DUTCH.",
+          "tell": "Sgt. Holloway, ‘Dutch’, leads the stick, and his orders are worth AP. Click Dutch.",
+          "then": "The dashed blue line is how far his orders carry: 2 hexes. When a turn starts, a man inside it has 1 AP more, and a man beside Dutch 2 more. Fitch, on the grass, is 3 hexes off.",
+          "ring": "men",
+          "allow": { "select": ["holloway"] },
+          "until": { "kind": "selected", "unit": "holloway" }
+        },
+        {
+          "say": "THE HEDGE BESIDE FITCH. GO THERE.",
+          "tell": "Move Dutch into the hedge beside Fitch: click the ringed hex.",
+          "then": "Dutch is beside Fitch. Orders are given when a turn starts, so Fitch still has his 3 AP. And Fitch is in front of the ‘SENTRY’ umpire: when this turn ends he will be seen.",
+          "ring": [[2, 8]],
+          "at": [2, 8],
+          "allow": { "select": ["holloway"], "move": [[2, 8]] },
+          "until": { "kind": "movedTo", "unit": "holloway", "hexes": [[2, 8]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "End the turn.",
+          "then": "Fitch has 5 AP, not 3, and wears 2 blue chevrons: Dutch's orders. But the umpire has seen him: Fitch is in contact, and the alert is Suspicious.",
+          "mayBeSeen": true,
+          "allow": { "select": ["holloway"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "PRESS D: THE RADIO.",
+          "tell": "The leader carries the radio, and can call a diversion. In a mission it is an RAF raid on the town. Today it is the instructor's thunderflash. Press ‘D’. It costs no AP.",
+          "then": "The alert has dropped one state, to Calm. Every man is out of contact, and every umpire has gone back to his post or his beat. It can be called once in a mission, and only while the leader is alive.",
+          "mayBeSeen": true,
+          "does": { "call": true },
+          "allow": { "select": ["holloway"], "actions": ["diversion"] },
+          "until": { "kind": "contactBroken", "unit": "fitch" }
+        }
+      ]
+    },
+    {
+      "id": "the-men",
+      "number": 13,
+      "title": "The men",
+      "qualification": "THE STICK",
+      "card": "northwest",
+      "start": {
+        "men": { "fitch": { "at": [7, 5] }, "vance": { "at": [5, 8] } },
+        "enemies": [
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [6, 4], "facing": "SW" }
+        ]
+      },
+      "steps": [
+        {
+          "say": "SIX MEN, SIX SKILLS. PRESS NEXT.",
+          "tell": "Every man has a skill of his own. It is printed on his row in the list, with what it does in numbers. This lesson uses two of them.",
+          "point": "roster",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "CLICK FITCH.",
+          "tell": "Click Fitch, by the Training Bridge.",
+          "then": "Fitch is a sapper, standing on a charge point with a charge. His skill is Quick Work: setting a charge costs him no AP.",
+          "ring": "men",
+          "allow": { "select": ["fitch"] },
+          "until": { "kind": "selected", "unit": "fitch" }
+        },
+        {
+          "say": "PRESS C. PICK 4. SET.",
+          "tell": "Set his charge: press ‘C’, pick the 4, then SET.",
+          "then": "The charge is set, and Fitch still has all 3 of his AP. It costs any other man 1.",
+          "allow": { "select": ["fitch"], "actions": ["charge"], "fuse": 4 },
+          "until": { "kind": "chargeSet" }
+        },
+        {
+          "say": "HOVER THE RING.",
+          "tell": "The ‘SENTRY’ umpire is looking south-west, over the grass. Move the mouse onto the ringed hex.",
+          "then": "Red. Fitch would be spotted on that grass.",
+          "ring": [[4, 7]],
+          "at": [4, 7],
+          "allow": { "select": ["fitch"] },
+          "until": { "kind": "hovered", "hexes": [[4, 7]] }
+        },
+        {
+          "say": "CLICK VANCE.",
+          "tell": "Now click Vance, on the grass to the south.",
+          "then": "For Vance the same hex is not red. A scout is 1 dot harder to see than other men, and Vance's skill, Cat's Eyes, takes off 1 more.",
+          "allow": { "select": ["vance"] },
+          "until": { "kind": "selected", "unit": "vance" }
+        },
+        {
+          "say": "GO WHERE FITCH COULD NOT.",
+          "tell": "Move Vance onto the ringed hex.",
+          "then": "Vance is on open grass in front of the umpire, with 2 AP left.",
+          "ring": [[4, 7]],
+          "at": [4, 7],
+          "allow": { "select": ["vance"], "move": [[4, 7]] },
+          "until": { "kind": "movedTo", "unit": "vance", "hexes": [[4, 7]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "End the turn, and see whether the umpire spots him.",
+          "then": "The umpire looked, and did not see him. The other four: Dutch's charges go off a turn sooner (Steady Hands). Barrow loses no turn landing in a wood or a marsh (Treetops). Speers's gunfire adds 1 less to the alert (Cool Head). Nunn, a gunner, jumps with a charge (Ox).",
+          "allow": { "select": ["vance"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        }
+      ]
+    },
+    {
+      "id": "getting-out",
+      "number": 14,
+      "title": "Getting out",
+      "qualification": "EXFILTRATION",
+      "start": {
+        "men": { "barrow": { "at": [3, 9] } },
+        "enemies": []
+      },
+      "steps": [
+        {
+          "say": "CLICK BARROW.",
+          "tell": "A raid is not over until the men are out. Click Barrow.",
+          "then": "The way out is marked on every map. Here it is the gate, at the foot of the lane Barrow is standing on. A man who ends a move on it is out.",
+          "ring": "men",
+          "allow": { "select": ["barrow"] },
+          "until": { "kind": "selected", "unit": "barrow" }
+        },
+        {
+          "say": "DAWN. PRESS NEXT.",
+          "tell": "A mission ends at dawn, on its last turn. A man still on the map at dawn is left behind. Every man out adds to the score, and more if he was never hit.",
+          "point": "clock",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "THE WAY OUT. GO THERE.",
+          "tell": "Send Barrow out: click the ringed hex at the gate. The lane is 1 AP a hex.",
+          "then": "Barrow is out, and he cannot come back. If the last man goes out with the job not done, that is a withdrawal, and the game asks first whether you are sure. So: the job, then the gate, before dawn.",
+          "ring": [[0, 12]],
+          "at": [0, 12],
+          "allow": { "select": ["barrow"], "move": [[0, 12]] },
+          "until": { "kind": "manOut", "unit": "barrow" }
+        }
+      ]
+    },
+    {
+      "id": "the-alert",
+      "number": 15,
+      "title": "The alert",
+      "qualification": "FIELDCRAFT",
+      "start": {
+        "men": { "nunn": { "at": [0, 7] } },
+        "alert": 1,
+        "enemies": [
+          { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [5, 6], "facing": "W" }
+        ]
+      },
+      "steps": [
+        {
+          "say": "THE ALERT DIAL. PRESS NEXT.",
+          "tell": "The dial is the whole garrison's mood, counted in points. Calm is 0 and 1, Suspicious from 2, Alert from 4, Alarmed from 7. Today it stands at 1: Calm.",
+          "point": "alert",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "CLICK NUNN.",
+          "tell": "Click Nunn.",
+          "then": "The ‘SENTRY’ umpire on the road is looking this way. While the garrison is Calm he sees 3 hexes: the red wedge.",
+          "ring": "men",
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "selected", "unit": "nunn" }
+        },
+        {
+          "say": "HOVER THE RING.",
+          "tell": "Move the mouse onto the ringed hex of road, 4 hexes in front of the umpire.",
+          "then": "Not red. It is 1 hex further than he sees.",
+          "ring": [[1, 6]],
+          "at": [1, 6],
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "hovered", "hexes": [[1, 6]] }
+        },
+        {
+          "say": "PRESS T. CLICK THE RING.",
+          "tell": "Now raise the alert. A thrown stone adds 1. Press ‘T’, then click the ringed hex behind Nunn.",
+          "then": "A red pip flew from the stone to the dial, which now reads Suspicious. A Suspicious garrison sees 1 hex further: the umpire's wedge has grown.",
+          "ring": [[-2, 8]],
+          "at": [-2, 8],
+          "does": { "at": [-2, 8] },
+          "allow": { "select": ["nunn"], "actions": ["stone"], "target": [[-2, 8]] },
+          "until": { "kind": "stoneThrown" }
+        },
+        {
+          "say": "HOVER THE ROAD AGAIN.",
+          "tell": "Move the mouse onto the ringed hex of road again.",
+          "then": "Red now. Nunn has not moved and nor has the umpire: only the dial.",
+          "ring": [[1, 6]],
+          "at": [1, 6],
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "hovered", "hexes": [[1, 6]] }
+        },
+        {
+          "say": "WHAT RAISES IT. PRESS NEXT.",
+          "tell": "A man seen, a parachute or a body found, a stone: 1 each. Gunfire 2. An explosion 3. At Alert the garrison also looks harder and hears further. At Alarmed every patrol hunts the last place a man was seen.",
+          "point": "alert",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "WHAT LOWERS IT. PRESS NEXT.",
+          "tell": "Time. After 4 turns with nothing raised and nobody seen, it drops to the start of the state below. Once a charge has gone off it never drops below Suspicious.",
+          "point": "alert",
+          "until": { "kind": "acknowledged" }
+        }
+      ]
+    },
+    {
+      "id": "a-wounded-man",
+      "number": 16,
+      "title": "A wounded man",
+      "qualification": "FIRST AID",
+      "start": {
+        "men": { "nunn": { "at": [3, 5], "hits": 1 }, "barrow": { "at": [2, 5] } },
+        "enemies": []
+      },
+      "steps": [
+        {
+          "say": "CLICK BARROW.",
+          "tell": "Nunn has been hit. Click Barrow, beside him.",
+          "then": "A wounded man has 1 AP a turn and cannot carry a charge, and a second hit kills him. A man beside him can dress the wound. It takes that man's whole turn: he must not have spent any AP.",
+          "ring": "men",
+          "allow": { "select": ["barrow"] },
+          "until": { "kind": "selected", "unit": "barrow" }
+        },
+        {
+          "say": "PRESS A. CLICK NUNN.",
+          "tell": "Press ‘A’ for ‘Stabilise’, then click Nunn.",
+          "then": "The wound is dressed. It took all 4 of Barrow's AP.",
+          "ring": [[3, 5]],
+          "at": [3, 5],
+          "does": { "unit": "barrow" },
+          "allow": { "select": ["barrow"], "actions": ["stabilise"] },
+          "until": { "kind": "dressed", "unit": "nunn" }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "End the turn.",
+          "then": "Nunn has his 3 AP again, and can carry a charge. The wound is dressed, not healed: one more hit still kills him, and a man who gets out wounded scores less.",
+          "allow": { "select": ["barrow"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
         }
       ]
     }

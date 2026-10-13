@@ -33,7 +33,9 @@ import { fillActionPoints, onBoard } from './units.js';
 //   suppressed    { enemy? }          an enemy (that enemy) has its head down
 // M48c's, for charges fetched and passed:
 //   carrying      { unit?, count? }   a man (that man) carries so many charges (1)
-export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged', 'runPicked', 'landed', 'contactBroken', 'stoneThrown', 'suppressed', 'carrying'];
+// M48e's, for a wounded man:
+//   dressed       { unit? }           a man (that man) has had his wound dressed
+export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged', 'runPicked', 'landed', 'contactBroken', 'stoneThrown', 'suppressed', 'carrying', 'dressed'];
 
 // The parts of the page a step may point at (`point`), where what it shows is
 // not on the board (M48b: lesson 1 reads the page). main.js knows where each is.
@@ -256,6 +258,7 @@ export function stepMet(step, from, now, { acknowledged = false } = {}) {
     }
     case 'suppressed': return now.enemies.some((e) => e.suppressed && (until.enemy === undefined || e.id === until.enemy));
     case 'carrying': return men.some((u) => onBoard(u) && u.charges >= (until.count ?? 1));
+    case 'dressed': return men.some((u) => onBoard(u) && u.stabilised);
     default: return false;
   }
 }

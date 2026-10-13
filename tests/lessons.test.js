@@ -8,7 +8,7 @@ import { dangerWash } from '../src/sight.js';
 import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, live, stepMet, stepStart, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
-import { chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, passCharge, pickUpCharge, placeCharge, selectUnit, setHover, suppressEnemy, throwStone } from '../src/state.js';
+import { callDiversion, chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, passCharge, pickUpCharge, placeCharge, selectUnit, setHover, stabiliseUnit, suppressEnemy, throwStone } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { planMove, reachableFor } from '../src/units.js';
 
@@ -124,11 +124,16 @@ export default [
           progress = advance(progress, lesson, state);
           continue;
         } else if (until.kind === 'contactBroken') {
-          assert(man.inContact && allows(step, { kind: 'endTurn' }), `${where}: he is in contact, and the turn may end`);
-          state = endTurn(state, rules, map);
+          // By ending a turn out of sight, or (`does.call`) by the leader's radio.
+          assert(man.inContact && allows(step, does.call ? { kind: 'action', id: 'diversion' } : { kind: 'endTurn' }), `${where}: he is in contact, and ${does.call ? 'the diversion may be called' : 'the turn may end'}`);
+          state = does.call ? callDiversion(state, rules) : endTurn(state, rules, map);
+        } else if (until.kind === 'dressed') {
+          assert(allows(step, { kind: 'action', id: 'stabilise' }), `${where}: dressing a wound is allowed`);
+          state = stabiliseUnit(state, does.unit, until.unit);
         } else if (until.kind === 'stoneThrown') {
           assert(allows(step, { kind: 'action', id: 'stone' }), `${where}: a stone is allowed`);
-          state = throwStone(state, man.id, hex(does.at), map, rules);
+          // The mouse is where he clicked.
+          state = setHover(throwStone(state, man.id, hex(does.at), map, rules), hex(does.at));
         } else if (until.kind === 'suppressed') {
           assert(allows(step, { kind: 'action', id: 'suppress' }), `${where}: suppressing is allowed`);
           state = suppressEnemy(state, man.id, until.enemy, map, rules);
@@ -146,6 +151,12 @@ export default [
           assert(allows(step, { kind: 'move', to }), `${where}: the move is allowed`);
           const plan = planMove(map, state.units, man, to, rules, state.enemies);
           assert(plan?.affordable, `${where}: ${man.shortName} can reach ${until.hexes[0]} with ${man.ap} AP`);
+          state = moveUnit(state, man.id, plan, map);
+        } else if (until.kind === 'manOut') {
+          // He walks out by the exfil hex the step allows.
+          const to = hex(step.allow.move[0]);
+          const plan = planMove(map, state.units, man, to, rules, state.enemies);
+          assert(plan?.affordable, `${where}: ${man.shortName} can reach the way out at ${step.allow.move[0]} with ${man.ap} AP`);
           state = moveUnit(state, man.id, plan, map);
         } else if (until.kind === 'turnEnded') {
           assert(allows(step, { kind: 'endTurn' }), `${where}: ending the turn is allowed`);
@@ -307,6 +318,51 @@ export default [
       return throws(() => validateLessons(copy, known));
     };
     assert(broken((l) => { l.start.canisters[0].at = [99, 99]; }) && broken((l) => { l.start.canisters[0].charges = 0; }), 'a canister off the map, or empty, is refused');
+  }],
+
+  ['lessons 12 to 16: the orders and the radio, two skills, the way out, the dial, a wound dressed, each as its card says', async () => {
+    const { lessons, base, map, rules } = await course();
+    const by = (id) => lessons.find((l) => l.id === id);
+    const of = (s, id) => s.units.find((u) => u.id === id);
+    const walk = (s, id, to) => moveUnit(s, id, planMove(map, s.units, of(s, id), hex(to), rules, s.enemies), map);
+    const washAt = (s, id, [q, r]) => dangerWash(map, rules, s, of(s, id), reachableFor(map, s.units, of(s, id), rules, s.enemies)).get(hexKey(q, r));
+    const stateOf = (s) => rules.alert.states.filter((x) => x.from <= s.alert.points).pop().id;
+    // Lesson 12: 3 hexes off he has no orders; beside Dutch at the turn's start, 2 AP more. Seen, then the radio.
+    let s = lessonStart(base, by('the-leader'), map, rules);
+    assert(of(s, 'fitch').ap === 3 && of(s, 'holloway').ap === 3, 'three hexes apart: nobody has orders');
+    s = walk(s, 'holloway', [2, 8]);
+    assert(of(s, 'holloway').ap === 0 && of(s, 'fitch').ap === 3, 'orders are not given mid-turn');
+    s = endTurn(s, rules, map);
+    assert(of(s, 'fitch').ap === 5 && of(s, 'fitch').inContact && !of(s, 'holloway').inContact && stateOf(s) === 'suspicious', `Fitch has 5 AP and is seen, Dutch is not, the dial Suspicious: ${of(s, 'fitch').ap}, ${stateOf(s)}`);
+    const called = callDiversion(s, rules);
+    assert(!of(called, 'fitch').inContact && stateOf(called) === 'calm' && of(called, 'fitch').ap === 5, 'the radio: out of contact, Calm, and no AP spent');
+    assert(callDiversion(called, rules) === called, 'once only');
+    // Lesson 13: Quick Work sets a charge for nothing; the ringed hex is red for Fitch and not for Vance.
+    const men = by('the-men');
+    const ring = men.steps.find((x) => x.until.kind === 'hovered').until.hexes[0];
+    s = placeCharge(lessonStart(base, men, map, rules), 'fitch', rules, 4);
+    assert(s.charges.length === 1 && of(s, 'fitch').ap === 3, 'Fitch sets his charge and has all 3 AP');
+    assert(washAt(s, 'fitch', ring) === 'spotted' && washAt(s, 'vance', ring) === null, `red for Fitch, not for Vance: ${washAt(s, 'fitch', ring)}, ${washAt(s, 'vance', ring)}`);
+    const there = walk(s, 'vance', ring);
+    assert(of(there, 'vance').ap === 2 && endTurn(there, rules, map).units.every((u) => !u.inContact), 'Vance stands there with 2 AP left, and nobody is seen');
+    assert(of(endTurn(walk(s, 'fitch', ring), rules, map), 'fitch').inContact, 'and Fitch would have been');
+    // Lesson 14: the lane to the gate is his turn's walk, and he is out.
+    s = lessonStart(base, by('getting-out'), map, rules);
+    assert(of(walk(s, 'barrow', [0, 12]), 'barrow').out && !walk(s, 'barrow', [0, 12]).outcome, 'out by the gate, and an exercise is not settled by it');
+    // Lesson 15: one stone makes Calm Suspicious, and the hex 4 off is then red; the umpire has not turned.
+    const dial = by('the-alert');
+    const road = dial.steps.find((x) => x.until.kind === 'hovered').until.hexes[0];
+    s = lessonStart(base, dial, map, rules);
+    assert(stateOf(s) === 'calm' && washAt(s, 'nunn', road) === null, 'Calm, and the road 4 hexes off is not red');
+    const thrown = throwStone(s, 'nunn', hex(dial.steps.find((x) => x.until.kind === 'stoneThrown').does.at), map, rules);
+    assert(stateOf(thrown) === 'suspicious' && washAt(thrown, 'nunn', road) === 'spotted' && thrown.enemies[0].facing === s.enemies[0].facing, 'Suspicious, the road red, the umpire out of earshot of the stone');
+    assert(rules.alert.quietTurnsToDecay === 4 && rules.explosionFloor === 'suspicious', 'and it drops as the last card says');
+    // Lesson 16: 1 AP wounded; dressing him is Barrow's whole turn; his pool is back the turn after.
+    s = lessonStart(base, by('a-wounded-man'), map, rules);
+    assert(of(s, 'nunn').ap === 1 && of(s, 'barrow').ap === 4, 'a wounded man has 1 AP');
+    s = stabiliseUnit(s, 'barrow', 'nunn');
+    assert(of(s, 'barrow').ap === 0 && stepMet({ until: { kind: 'dressed', unit: 'nunn' } }, s, s) && !stepMet({ until: { kind: 'dressed', unit: 'barrow' } }, s, s), 'dressed, for all of Barrow\'s AP');
+    assert(of(endTurn(s, rules, map), 'nunn').ap === 3 && of(endTurn(s, rules, map), 'nunn').hits === 1, 'his 3 AP back, and still one hit from death');
   }],
 
   ['an aimed action lands only where a step says, if it says', async () => {
