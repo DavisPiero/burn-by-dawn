@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 13 Oct 2026, after M48's fourth session (M48e, not yet signed off).
+Last updated: 13 Oct 2026, after M48's fourth session (M48e, signed off).
 
 ## Where we are
 
-- **Build M48e** on the branch `m48e-lessons-12-16`, waiting for the operator's
-  sign-off. `main` is M48d. Tests: 219 headless, 221 in tests.html.
+- **Build M48e** on `main`, the only branch, signed off and pushed on 13 Oct 2026.
+  Tests: 219 headless, 221 in tests.html.
 - **Three missions are playable:** the rail bridge (France), the airfield (Tunisia)
   and the aqueduct (Italy). The aqueduct is playable but not yet balanced.
 - **Phase 5, teaching the game, is in progress.** The training course is a draft
