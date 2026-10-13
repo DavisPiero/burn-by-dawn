@@ -105,7 +105,10 @@ also had a drawn face of his own in code; the painted ones replaced them, so the
 A mission may have its own garrison's chips (M43): `enemyChips` in `data/missions.json`
 names a folder with the same file names, tried before `/assets/enemies/` type by type. The
 aqueduct's is `/assets/enemies/italian/` (ART-PROMPTS.md Priority 19), supplied at M43b;
-a type with no file there wears the usual, German, chip.
+a type with no file there wears the usual, German, chip. The practice ground's is
+`/assets/enemies/umpire/` (ART-PROMPTS.md Priority 24), empty until painted: because
+that mission also names a drawn kit (`enemyKit: "umpire"`), a type with no file there
+wears the kit's drawing (`counter-enemy-<type>-umpire` in `theme.js`), not the German chip.
 
 Counters are drawn in a 56px viewBox and printed at 64px inside an 80px hex (M7b, so the
 name strip reads at board scale); the hex edge stays visible underneath. **Do not draw a

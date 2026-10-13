@@ -8,7 +8,8 @@ and what is **to be built next**, each marked; it keeps no history (DECISIONS.md
 The words and names are placeholder copy for the operator to reword.
 
 **State: the lesson engine is built (M47) and so is the course, all seventeen lessons
-(M48). The mission is still a draft, played by `?mission=training`.**
+(M48). Since M48g it is playable from the contents page, first on it and flagged
+START HERE.**
 
 ---
 
@@ -16,12 +17,15 @@ The words and names are placeholder copy for the operator to reword.
 
 **A course, not a raid.** A playtester's idea, taken up by the operator (ROADMAP.md,
 Phase 5): a tutorial, one thing to do at a time, with the board holding the player's
-hand. It is first on the contents page, marked START HERE once it is playable.
+hand. It is first on the contents page, marked START HERE (a mission's `flag` in
+`missions.json`, in the red pen beside its title).
 
 **The practice ground, Tatton Park, England, 1941**: the park where No. 1 Parachute
 Training School dropped its pupils. The same six men and the same 18×13 board. The
 garrison is **umpires**: sentries and patrols by the rules of §6, who blow a whistle
-where the enemy would fire. The target is a **training bridge** over the brook.
+where the enemy would fire. They wear a service cap and a white armband (a mission's
+`enemyKit`, drawn in code until a painted chip is in its `enemyChips` folder) and cry
+out in English (YOU THERE!, WHAT'S THIS?). The target is a **training bridge** over the brook.
 
 Its pillar check. It adds nothing to do or to avoid: it is the game's own verbs, one at
 a time, with nothing at stake. Its test is ROADMAP's: a new player makes a first move
@@ -74,7 +78,7 @@ page. Its `turnLimit` is 99.
 | `does` | Read only by the test that plays the lesson: where it throws, or how it kills |
 | `until` | What ends the step: one of the list below |
 | `mayBeSeen` | True where being spotted is the lesson; then only a hit stops it |
-| `free` | True in the passing-out exercise's steps (M48f). It has no `then` and is never held: met, it runs straight on into the next, which is so a checkpoint. Its card is narrow and says only its `tell`; its `say` is not written on the board. The umpire says on a card of his own what a thing done would have cost on a real mission, and the whistle's words are a real mission's. Its `does.script` is the playthrough the test makes |
+| `free` | True in the passing-out exercise's steps (M48f). It has no `then` and is never held: met, it runs straight on into the next, which is so a checkpoint. Its card is narrow and says only its `tell`; its `say` is not written on the board. Its `ring` is where its charges go: a ringed hex with a charge set on it is no longer ringed. The umpire says on a card of his own what a thing done would have cost on a real mission, and the whistle's words are a real mission's. Its `does.script` is the playthrough the test makes |
 
 **What a step may wait for**, a short fixed list in the spirit of the win conditions:
 `selected` (a man), `movedTo` (hexes), `hovered` (hexes), `hidden`, `packed` (a
@@ -169,7 +173,7 @@ apart, and no lesson switching between men). The list runs 1 to 17 with no empty
 | 14 | Getting out: the gate, dawn, and one man walked out | EXFILTRATION | Built (`manOut`). An exercise is never settled, so withdrawing and its "are you sure" card are told, not met |
 | 15 | The alert: a hex 4 off a sentry is not red at Calm; one stone makes Suspicious, and it is; then what raises the dial and what lowers it | FIELDCRAFT | Built: `acknowledged` steps, `start.alert`. Decay is told, not shown: it takes 4 quiet turns |
 | 16 | A wounded man: Barrow dresses Nunn's wound, and Nunn has his pool back the turn after | FIRST AID | Built: `dressed` (`start.men.hits`) |
-| 17 | Passing out, the exercise: all six from the drop, the bridge umpire and the lane umpire, the Training Bridge blown and every man out by the gate. No hand held: a small card with the job and no rings. **It cannot be failed** (the operator's, 13 Oct): being seen is allowed, a man hit or caught in a blast blows the whistle, and the whistle goes back to the last of three checkpoints (landed, first charge set, bridge down). **The umpire says what a thing would have cost on a real mission** (the operator's), on a card of his own: a man seen, a parachute or a body found, and at the whistle FITCH WOULD BE SHOT HERE ON A REAL MISSION! | PASSED OUT | Built: `free` steps, and `count` on `manOut` |
+| 17 | Ready for Action (the operator's name for it, M48g), the passing-out exercise: all six from the drop, the bridge umpire and the lane umpire, the Training Bridge blown and every man out by the gate. No hand held: a small card with the job. Two things are said and shown all the same (the operator's, M48g: neither was clear): the bridge takes **two charges**, both charge points ringed until each has its charge; and **the bridge umpire watches both points**, so his head is turned with a stone, or he is silenced, first. **It cannot be failed** (the operator's, 13 Oct): being seen is allowed, a man hit or caught in a blast blows the whistle, and the whistle goes back to the last of three checkpoints (landed, first charge set, bridge down). **The umpire says what a thing would have cost on a real mission** (the operator's), on a card of his own: a man seen, a parachute or a body found, and at the whistle FITCH WOULD BE SHOT HERE ON A REAL MISSION! | PASSED OUT | Built: `free` steps, and `count` on `manOut` |
 
 M48 has added seven conditions (run picked, landed, contact broken, stone thrown,
 enemy suppressed, carrying, dressed), `count` on `manOut`, `start.drop`, `start.canisters`,
@@ -185,10 +189,7 @@ order the course gives them, each with how many of its lessons are passed (FIELD
 seventeen lessons are. It is the same page all through the course, filling in. Nothing
 is stored: it is what was passed this session.
 
-Still M48's: the umpires' own counters (white armbands; a mission's `enemyChips`
-folder, as the aqueduct's Italians, drawn in code until painted) and their own cries;
-START HERE on the contents page and the mission made `playable`; the **?** pages'
-diagrams drawn from the same lessons.
+Still M48's: the **?** pages' diagrams drawn from the same lessons (M48h).
 
 ### Open for the operator
 
