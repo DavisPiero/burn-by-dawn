@@ -315,8 +315,7 @@ to be casual while still being strategic.
 - **Only what he can do now is a button.** The actions the selected man cannot take
   shrink to their keys, each still with its rollover saying what it is and why not.
 - **Play tips** (a box on the orders and the contents page, beside Music off, and in
-  the left margin at any time; **off** unless turned on, or the course (§15) has been
-  passed this visit; `?tips=on` in the address). With them on, the player's pen coaches on
+  the left margin at any time; **on** unless turned off; `?tips=off` in the address). With them on, the player's pen coaches on
   the board: how to move, shown by a ghost of the man walking a short path, until the
   first move; where the charge goes (below); BREAK CONTACT!; GET CLEAR! with an arrow
   to the nearest clear hex; GET OUT! by the exfil. None of it changes a rule, and

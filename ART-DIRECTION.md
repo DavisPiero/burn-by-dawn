@@ -240,7 +240,7 @@ board must read at a glance.
   START GAME on the orders before the drop, START LESSON 2 on a course's list, in the
   stencil.
 - **A card that leads somewhere new goes on only by that button**: the orders before
-  the drop, a course's list, PASSED. No other key or click puts it away (the
+  the drop, a course's list, PASSED, or by Enter. No other key or click puts it away (the
   operator's, M48: the third time a stray key or click had moved the player on). A
   card that only says something (a turn card, how to play) still goes at any key or
   click, and says so beside its button.
@@ -266,7 +266,7 @@ board must read at a glance.
   are any; and one Bonus line naming everything that pays extra with its points (the
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
   words, `words.cleanBonus`). At its foot: **Music off** and beside it **Play tips**
-  (unticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON.
+  (ticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON.
   **Play tips are also in the left margin**, under the sound and set as it is ("play
   tips off"), to be turned on or off at any time. A card too tall for the window is set tighter a step at a time (less
   air, then 14 px, then 13) before anything is cut.
@@ -397,7 +397,7 @@ board must read at a glance.
   goes to it.
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
   its counter flashing. A kill is one dim shot.
-- **The pen's coaching is the play tips** (SPEC.md §4): off unless the box is ticked.
+- **The pen's coaching is the play tips** (SPEC.md §4): on unless switched off.
   Where the charge goes, the ghost, BREAK CONTACT!, GET CLEAR! and GET OUT! are tips;
   the marks, throbs and the pip below are not.
 - **Where the charge goes** (a tip): while the selected man carries a charge within one

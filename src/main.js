@@ -160,9 +160,10 @@ let sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedO
 // the enemies he could strike and the first move's ghost.
 let cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
 // Play tips (M46, the operator's): the pen's coaching on the board, the rings
-// and words that say what to do next. Off unless the box on the orders is
-// ticked; carried in the address as `?tips=on`, as the music is.
-let tipsOn = new URLSearchParams(window.location.search).get('tips') === 'on';
+// and words that say what to do next. On for everyone (M48b, the operator's:
+// "on once the course is passed" could last only the visit, as nothing is
+// stored), until switched off; that is carried in the address as `?tips=off`.
+let tipsOn = new URLSearchParams(window.location.search).get('tips') !== 'off';
 // The title music turned off from the orders (M21, the operator's): music
 // only, for the session; M still turns every sound off. Carried in the
 // address as `?music=off` when the contents page loads another mission (M29b).
@@ -2224,8 +2225,9 @@ function openOrdersFromHelp() {
  * A card that leads somewhere new goes on only by its green button (M48b,
  * the operator's: a stray key or click started the next lesson while the
  * last was still being read; the third note of its kind, so one rule for
- * all of them): PASSED, a course's list, and the orders before the drop. A
- * card that only says something still goes at any key or click.
+ * all of them): PASSED, a course's list, and the orders before the drop;
+ * Enter counts as the button. A card that only says something still goes at
+ * any key or click.
  */
 function wantsItsButton() {
   if (briefing?.kind === 'passed') return true;
@@ -2482,11 +2484,11 @@ function describeBriefing(which, view) {
       kicker: `QUALIFIED: ${lesson.qualification}`,
       paragraphs: [[
         { parts: [`LESSON ${lesson.number} - ${title} - `, { good: 'PASSED' }, '.'] },
-        ...(left ? [] : ['That is every lesson of the course.', 'Play tips are now on for the missions: the red pen on the map says what to do next. They are turned off in the left margin.']),
+        ...(left ? [] : ['That is every lesson of the course.']),
       ]],
       sections: [],
       ...(next ? { link: { label: 'COURSE MENU', onClick: openCourse } } : {}),
-      go: next ? `LESSON ${next.number} ▶` : 'COURSE MENU',
+      go: `${next ? `LESSON ${next.number} ▶` : 'COURSE MENU'} — click, or Enter`,
       onGo: () => closeBriefing(true),
     };
   }
@@ -2507,7 +2509,7 @@ function describeBriefing(which, view) {
       },
       sections: [],
       toggles: [musicToggle()],
-      go: `START LESSON ${next.number} — or click a lesson`,
+      go: `START LESSON ${next.number} — Enter, or click a lesson`,
       goBig: true,
       onGo: () => closeBriefing(true),
     };
@@ -2648,7 +2650,7 @@ function describeBriefing(which, view) {
       toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
       // The one button that starts the game (M48, the operator's): named, and the biggest.
-      ...(before ? { go: 'START GAME', goBig: true, onGo: () => closeBriefing(true) } : {}),
+      ...(before ? { go: 'START GAME — click, or Enter', goBig: true, onGo: () => closeBriefing(true) } : {}),
     };
   }
   if (which.kind === 'diversion') return describeDiversionCard(which.before);
@@ -2778,9 +2780,6 @@ function lessonCheck() {
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
-    // The course passed, the play tips come on for the missions (M48b, the
-    // operator's): for this visit only, as nothing is stored (CLAUDE.md rule 9).
-    if (course.lessons.every((l) => course.passed.has(l.id))) applyTips(true);
   }
   return true;
 }
@@ -2827,7 +2826,7 @@ function musicToggle() {
   };
 }
 
-/** Play tips (M46, the operator's), beside Music off: off until ticked. */
+/** Play tips (M46, the operator's), beside Music off: on until unticked (M48b). */
 function tipsToggle() {
   return {
     on: tipsOn,
@@ -2839,20 +2838,15 @@ function tipsToggle() {
 
 /** Play tips on or off: the box on the orders, or the words in the margin at any time (M48b, the operator's). */
 function setTips(on) {
-  applyTips(on);
-  render();
-}
-
-/** The same, without laying the page again: for the course's last PASSED, which is found out mid-render. */
-function applyTips(on) {
   tipsOn = on;
   // Carried in the address, so Play again and a reload keep it.
   const query = new URLSearchParams(window.location.search);
-  if (on) query.set('tips', 'on');
-  else query.delete('tips');
+  if (on) query.delete('tips');
+  else query.set('tips', 'off');
   const search = query.toString();
   window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
   renderTipsToggle(tipsToggleButton, tipsOn);
+  render();
 }
 
 /** The card when the RAF diversion is called: what it did, and what is left. */
@@ -3103,6 +3097,9 @@ function handleKey(event) {
     event.preventDefault();
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     if (briefing.kind === 'signal' && event.key === 'Enter') return confirmSignal();
+    // Enter is a card's green button (M48b, the operator's): the one key that
+    // goes on from a card that otherwise wants its button clicked.
+    if (wantsItsButton() && event.key === 'Enter') return closeBriefing(true);
     // ? over a turn card swaps it for the orders (M17), as the button does.
     if (isHelpKey(event) && !['help', 'exfil', 'signal', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');

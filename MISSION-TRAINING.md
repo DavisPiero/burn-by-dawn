@@ -83,15 +83,13 @@ M48's five: `runPicked` and `landed` (the drop), `contactBroken`, `stoneThrown`,
 **How it runs.**
 - The course's **orders are its list of lessons**: each with its number, what it
   qualifies, and PASSED once passed. **Only its green button** takes the first not yet
-  passed, and a click on a lesson takes that one: no stray key or click starts
+  passed (Enter is that button), and a click on a lesson takes that one: no stray key or click starts
   anything. There is no level to choose.
 - A lesson starts **in play**: its men where it puts them, pools full. The game's own
   first-game cues (CLICK A MAN TO START, the first-move ghost) stand aside. Lesson 1
   alone starts **in the drop**, and the drop's own cues are its teaching.
 - **PASSED stays until its green button is clicked** (the operator's: a stray click
   started the next lesson while the last was still being read).
-- **The course passed, the play tips come on** (SPEC.md §4) for the missions played
-  after it in the same visit; nothing is stored, so not beyond it.
 - **Looking is always allowed**: hovering, the routes, how to play. Selecting, moving,
   actions and ending the turn are allowed only as the step lists. Undo is off: a lesson
   goes back by its steps.
@@ -128,8 +126,8 @@ call the drive **the road** (the operator's: "the drive" confused).
 
 Fifteen lessons, the operator's eleven and four of mine (ROADMAP.md has the table).
 Built: **1 to 7**. PASSED leads to the next lesson built, and a test holds that their
-numbers run on with none skipped. Charges are two lessons (the operator's question,
-Claude's call until answered: one was by far the longest), and "reading the page" is
+numbers run on with none skipped. Charges are two lessons (the operator's: one was by
+far the longest), and "reading the page" is
 part of lesson 1, so the list runs 1 to 15 with no empty number.
 
 | # | Lesson | Qualifies | Needs from the engine beyond M47 |
@@ -170,6 +168,6 @@ from the same lessons.
 - **The lessons' words** are Claude's, to the operator's pattern (say the rule plainly,
   with its number); the operator will reword them in a pass of their own.
 - **Charges in two lessons** (8 and 9), and **the whistle only at the turn's end**:
-  both asked, neither answered; they stand as Claude's calls.
+  both the operator's (13 Oct).
 - **A hover step goes on the instant the mouse crosses the hex**, which can skip a
   card still being read. Left alone unless it is met in play.

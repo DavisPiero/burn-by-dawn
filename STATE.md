@@ -19,8 +19,8 @@ Last updated: 13 Oct 2026, after M48's second session.
   fighting. It heads the contents page stamped NEXT YEAR'S ANNUAL (the operator's: leave
   it first).
 - **This session's notes, done:** PASSED, the course list and START GAME go on only by
-  their green button; play tips can be switched in the left margin, and come on once
-  the course is passed (for that visit); the lesson card says what goes on; a wider ring
+  their green button or Enter; play tips are on for everyone and can be switched in
+  the left margin; the lesson card says what goes on; a wider ring
   on a man; Tatton Wood, TRAINING BRIDGE, "the road".
 
 ## Next
@@ -39,21 +39,16 @@ Rule of the phase: cut a lesson to fit the engine; do not grow the engine for on
 
 ## Open with the operator
 
-Each of these stands as Claude guessed until answered.
+Each of these stands as Claude guessed until answered. (Answered 13 Oct: charges are
+two lessons; the whistle stays at the turn's end; play tips are on for everyone; Enter
+counts as the green button.)
 
-1. **Charges are two lessons, 8 and 9**, and the course is still fifteen. Asked on
-   13 Oct and not answered. Keep the split?
-2. **The whistle blows only when the turn ends.** Asked and not answered; kept, since
-   that is when a man is spotted in the game. Acceptable for the lessons?
-3. **Tips on once the course is passed lasts only the visit**, as nothing is stored.
-   Good enough, or should tips be on for everyone by default now they can be switched
-   off in play?
-4. **Enter does not count as the green button.** Right?
-5. **TRAINING BRIDGE's name is 0.4 of a hex lower**, just over the deck. Low enough?
-6. **A hover step goes on the instant the mouse crosses the hex.** Left alone; say if
-   it skips a card you are reading.
-7. **Lesson 7 tells firing back and does not have the player do it.** Enough?
-8. **The contents blurb and tagline** now say "training bridge" too (a guess).
+1. **The operator's notes on M48b are planned, not built**, awaiting a go-ahead: every
+   step "do, see, then NEXT"; lesson 1's card beside what it points at; lesson 2
+   reordered; firing back made playable; the course's own drop lines; a settings menu
+   behind a gear in the margin. Hiding a body goes to the roadmap as a rule to try.
+2. **TRAINING BRIDGE's name is 0.4 of a hex lower**, just over the deck. Low enough?
+3. **The contents blurb and tagline** now say "training bridge" too (a guess).
 
 ## Owed
 
