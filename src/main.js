@@ -3,7 +3,7 @@
 // changes (CLAUDE.md rule 7), and the one place game rules and rendering meet.
 
 import {
-  alertIndex, busyFor, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
+  alertIndex, busyFor, createEnemies, decayTarget, detectionAt, fireRivals, fireTargetOf, hearingRadius, huntedContact, listeners, routePath, runDetection, runEnemyPhase, shotResultOf, testedHexes, visibleHexes, visionRadiusOf,
 } from './enemy.js';
 import { canLandOn, canisterPoints, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
@@ -437,7 +437,8 @@ function deriveView() {
   if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
   // A lesson's step (M47): what it rings, and its line in the pen.
   const step = lessonStep();
-  if (step && !briefing && !course.progress.met) {
+  // Not while the stick is coming down: the step's line is for the ground.
+  if (step && !briefing && !course.progress.met && !dropShow) {
     const men = state.units.filter(onBoard);
     view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
@@ -699,6 +700,10 @@ function deriveDrop(view, hex) {
   if (briefing?.kind === 'orders' || briefing?.kind === 'help') return view;
   // What to do next, in big pen lettering among the runs' names (M21).
   view.dropCue = selected ? 'jump' : 'pick';
+  // In a lesson the board urges only what the step asks for now (M48b, the
+  // operator's: HIT SPACE TO JUMP stood over a step that had not got to it).
+  const step = lessonStep();
+  if (step && (course.progress.met || !allows(step, { kind: selected ? 'jump' : 'run' }))) view.dropCue = null;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
       id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, labelNudge: run.labelNudge ?? null, windAlong: run.windAlong ?? null,
@@ -2030,7 +2035,10 @@ function showCounterKey(on) {
   const man = state.units[index];
   // Beside him, so two blue dots, one of them spent: both kinds show.
   const bonus = rules.command.closeBonusActionPoints ?? rules.command.bonusActionPoints;
-  const enemy = state.enemies.find((e) => e.speed > 0) ?? state.enemies[0];
+  // A lesson may have no garrison on the board (M48b: ? threw an error in
+  // lesson 1): then one of the map's own, which is all the key needs of it.
+  const enemies = state.enemies.length ? state.enemies : createEnemies(baseMap);
+  const enemy = enemies.find((e) => e.speed > 0) ?? enemies[0];
   drawCounterKey(document.getElementById('counter-key-art'), {
     // A man with a charge and the leader's orders, one AP spent.
     man: { ...man, apMax: man.apBase + bonus, ap: man.apBase + bonus - 1, commandBonus: bonus, charges: 1, hidden: false, hits: 0 },

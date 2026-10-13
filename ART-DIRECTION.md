@@ -33,7 +33,7 @@ board must read at a glance.
 - Paper cream ground with a supplied fibre texture, centre-fold crease and gutter shadow.
   The fibre is printed faintly on the right page's flat boxes, the captions and the map;
   the cards keep their full-strength paper.
-- The outer margin: at its top **the menu's gear** (`ui-gear`, 20 px, ink, with MENU
+- The outer margin: at its top **the menu's gear** (`ui-gear`, 24 px, ink, with MENU
   under it; red and turned a tooth under the mouse or while open); then BURN BY DAWN in
   the title stencil running up the page; "CUT OUT AND PLAY" with scissors and a dashed
   cut line in the middle; at the foot the build ("build M29", from `data/version.json`),
