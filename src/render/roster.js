@@ -103,7 +103,7 @@ function conditionLine(unit) {
 
 function conditions(unit) {
   const parts = [];
-  if (unit.hits > 0) parts.push(unit.stabilised ? 'DRESSED' : 'WOUNDED');
+  if (unit.hits > 0) parts.push(unit.stabilised ? 'WOUND DRESSED' : 'WOUNDED');
   if (unit.inContact) parts.push('IN CONTACT');
   if (unit.pinned) parts.push('PINNED');
   if (unit.hidden) parts.push('HIDDEN');

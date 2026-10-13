@@ -8,7 +8,7 @@ and what is **to be built next**, each marked; it keeps no history (DECISIONS.md
 The words and names are placeholder copy for the operator to reword.
 
 **State: the lesson engine is built (M47); M48 is building the course, and has lessons
-1 to 11 of seventeen. The mission is a draft, played by `?mission=training`.**
+1 to 16 of seventeen. The mission is a draft, played by `?mission=training`.**
 
 ---
 
@@ -66,10 +66,10 @@ page. Its `turnLimit` is 99.
 | Field | What it is |
 |---|---|
 | `say` | The pen's line on the board, **seven words at most**, at hex `at` or under the man it is about |
-| `tell` | The lesson card's words before the step is done, a sentence or two: what to do |
+| `tell` | The lesson card's words before the step is done, a sentence or two: what to do. A new line in `tell` or `then` is a new paragraph on the card |
 | `then` | The card's words once it is done, while what it did is still on the board: what he is now looking at, and the rule with its number (a hedge is 2 AP a hex). Every step has one but a step that only shows something |
-| `ring` | Hexes ringed in the pen, or `"men"` (a wider ring, round the man's whole hex) |
-| `point` | A part of the page ringed in the pen, where what the step shows is not on the board: `roster`, `alert`, `clock`, `readout`, `actions` |
+| `ring` | Hexes ringed in the pen, or `"men"` (a wider ring, round the man's whole hex: the man the step names, or every man where it names none) |
+| `point` | A part of the page ringed in the pen, where what the step shows is not on the board: `roster`, `alert`, `clock`, `readout`, `actions`, `radio` (the diversion's button). A card kept top left stays in its corner and only points |
 | `allow` | The only things that do anything: `select` (ids, or true), `move` (hexes, or `"any"`), `actions` (ids), `target` (the only hexes an aimed action may be clicked on; anywhere if left out), `fuse` (the only time pencil a charge may be set with; any if left out), `endTurn`, and in the drop `run` and `jump` |
 | `does` | Read only by the test that plays the lesson: where it throws, or how it kills |
 | `until` | What ends the step: one of the list below |
@@ -80,7 +80,8 @@ page. Its `turnLimit` is 99.
 parachute), `turnEnded`, `chargeSet`, `enemyDown`, `destroyed` (an objective), `manOut`,
 `acknowledged` (a step that only shows something: the card has a NEXT button), and
 M48's six: `runPicked` and `landed` (the drop), `contactBroken`, `stoneThrown`,
-`suppressed`, `carrying` (a man holds so many charges: picked up, or passed to him).
+`suppressed`, `carrying` (a man holds so many charges: picked up, or passed to him),
+and M48e's `dressed` (a man's wound has been dressed).
 
 **How it runs.**
 - The course's **orders are its list of lessons**: each with its number, what it
@@ -92,9 +93,13 @@ M48's six: `runPicked` and `landed` (the drop), `contactBroken`, `stoneThrown`,
   alone starts **in the drop**, and the drop's own cues are its teaching.
 - **PASSED stays until its green button is clicked** (the operator's: a stray click
   started the next lesson while the last was still being read).
-- **Looking is always allowed**: hovering, the routes, how to play. Selecting, moving,
+- **Looking is always allowed**: hovering, the routes, how to play. But no path is
+  drawn to a hex he may not go to now (the operator's, M48e), except the hexes a hover
+  step asks for; the box under the map still describes the hex, and says "not part of
+  this step" where it would have said "click to move". Selecting, moving,
   actions and ending the turn are allowed only as the step lists. Undo is off: a lesson
-  goes back by its steps.
+  goes back by its steps. The radio's button is greyed like End turn, lit only in
+  the step that calls it.
 - After anything changes: **a man seen, hit or killed** (unless `mayBeSeen`) blows the
   whistle and puts the step back as it began.
 - **Do it, see it, then NEXT** (the operator's, M48: what a card said of a thing was
@@ -139,7 +144,7 @@ call the drive **the road** (the operator's: "the drive" confused).
 ### The course (being built, M48)
 
 Seventeen lessons, the operator's eleven and four of mine (ROADMAP.md has the table),
-with fighting in three and charges in two. Built: **1 to 11**. PASSED leads to the next lesson built, and a test holds that their
+with fighting in three and charges in two. Built: **1 to 16**. PASSED leads to the next lesson built, and a test holds that their
 numbers run on with none skipped. Charges are two lessons (the operator's: one was by
 far the longest), and "reading the page" is
 part of lesson 1; fighting is three, one man each (the operator's: knives and guns
@@ -158,17 +163,16 @@ apart, and no lesson switching between men). The list runs 1 to 17 with no empty
 | 9 | Firing back: seen as the first turn ends, he fires back in the second (Fitch) | WEAPONS | Built |
 | 10 | Charges, fetch and carry: the canister, picking up and its weight, passing (Barrow to Fitch) | DEMOLITIONS | Built: `start.canisters`, `carrying`. A pass is 2 AP, so he ends a turn first, and sees his pool a point short |
 | 11 | Charges, set and get clear: he steps onto a charge point (the operator's: so the player learns what one looks like), the two timers matched (4, then 2 on turn 3), getting clear, the bang (Nunn) | DEMOLITIONS | Built: `allow.fuse`, the `card` top left. Its last step ends two turns. The course's charges take the tin throughout, 2 to 4 turns (`missions.json`); the second charge is left lying at the far point, since no man has room for two |
-| 12 | The leader: orders and the radio | LEADERSHIP | A condition for the diversion called |
-| 13 | The men: each man's own skill, by using it | THE STICK | — |
-| 14 | Getting out: exfil, dawn, how many | EXFILTRATION | — (`manOut`); the exercise rule means the "are you sure" card is shown, not met |
-| 15 | The alert: what raises it, what each state does, decay | FIELDCRAFT | `acknowledged` steps; `start.alert` |
-| 16 | A wounded man: stabilising | FIRST AID | A condition for a man dressed (`start.men.hits`) |
-| 17 | The passing-out exercise: the training bridge, no hand held | PASSED OUT | A lesson whose one step allows everything and ends on `destroyed` then `manOut` |
+| 12 | The leader: Dutch moves in beside Fitch, who has 5 AP when the turn ends; Fitch spends 4 of them walking into an umpire's view and is seen (the operator's: seen in the same turn, the marks on his counter hid the 5 AP); the radio puts him out of contact and the umpire turns back to his post | LEADERSHIP | Built: the radio is told by `contactBroken`, and its button is pointed at (`point: radio`). The game's own diversion card comes up over the lesson. The `card` top left: the sentry is under the usual corner |
+| 13 | The men: two skills by using them (Fitch sets a charge for 0 AP; Vance stands where any other man is seen), the other four told | THE STICK | Built. Cut to fit (the operator's yes): six by hand was by far the longest lesson, and Treetops only works in a drop |
+| 14 | Getting out: the gate, dawn, and one man walked out | EXFILTRATION | Built (`manOut`). An exercise is never settled, so withdrawing and its "are you sure" card are told, not met |
+| 15 | The alert: a hex 4 off a sentry is not red at Calm; one stone makes Suspicious, and it is; then what raises the dial and what lowers it | FIELDCRAFT | Built: `acknowledged` steps, `start.alert`. Decay is told, not shown: it takes 4 quiet turns |
+| 16 | A wounded man: Barrow dresses Nunn's wound, and Nunn has his pool back the turn after | FIRST AID | Built: `dressed` (`start.men.hits`) |
+| 17 | The passing-out exercise: the training bridge, no hand held. **It cannot be failed** (the operator's, 13 Oct): being seen is allowed, and only a man hit blows the whistle | PASSED OUT | A lesson whose one step allows everything and ends on `destroyed` then `manOut` |
 
-So far M48 has added six conditions (run picked, landed, contact broken, stone thrown,
-enemy suppressed, carrying), `start.drop`, `start.canisters`, `point`, `card`,
-`allow.target` and `allow.fuse`; still to come, perhaps two more (diversion called, man
-dressed). Each
+M48 has added seven conditions (run picked, landed, contact broken, stone thrown,
+enemy suppressed, carrying, dressed), `start.drop`, `start.canisters`, `point`, `card`,
+`allow.target` and `allow.fuse`. Each
 is a line or two in `lessons.js`, with its test. If a lesson needs more than that, the
 lesson is cut to fit, not the engine grown: the same rule as the trait hooks.
 
