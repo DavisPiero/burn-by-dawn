@@ -38,7 +38,17 @@ export default [
     const missions = validateMissions(await loadJson('data/missions.json'));
     const withLessons = missions.missions.filter((m) => m.lessons).map((m) => m.id);
     assert(withLessons.join() === 'training', `lessons are off everywhere else: ${withLessons}`);
-    assert(missionById(missions, 'training').status === 'draft', 'the training mission is a draft until the course is built (M48)');
+    const training = missionById(missions, 'training');
+    assert(training.status === 'playable' && training.flag === 'START HERE' && missions.missions[0].id === 'training', 'the course is playable, first on the contents page and flagged (M48g)');
+    assert(missions.missions.filter((m) => m.flag).length === 1, 'and no other mission is flagged');
+    // Its garrison is umpires: a drawn kit, a folder for the paintings, and English cries.
+    assert(training.enemyKit === 'umpire' && training.enemyChips === 'assets/enemies/umpire', 'umpires, drawn until painted');
+    const cries = [...training.words.cries.spotted, ...training.words.cries.found];
+    assert(cries.length >= 4 && !cries.some((c) => /ACHTUNG|HALT|ALARM|GOTT|WAS IST/.test(c)), `an umpire does not cry out in German: ${cries}`);
+    const json = await loadJson('data/missions.json');
+    for (const bad of [{ enemyKit: '' }, { flag: '' }, { flag: 3 }]) {
+      assert(throws(() => validateMissions({ ...json, missions: json.missions.map((m) => (m.id === 'training' ? { ...m, ...bad } : m)) })), `refused: ${JSON.stringify(bad)}`);
+    }
   }],
 
   ['a lessons file is checked against the map and the men, and says what is wrong', async () => {
@@ -409,6 +419,16 @@ export default [
     const last = lessons[lessons.length - 1];
     assert(last.number === 17 && last.steps.every((s) => s.free && s.mayBeSeen && !s.then), 'lesson 17 is free steps: no card between them, and being seen does not stop it');
     assert(last.steps[last.steps.length - 1].until.count === Object.keys(last.start.drop.landings).length, 'it ends with every man out');
+    // M48g, the operator's: its name, and what its card claims of the bridge and its umpire.
+    assert(last.title === 'Ready for Action' && last.qualification === 'PASSED OUT', 'named Ready for Action; the record still says PASSED OUT');
+    const bridge = map.objectives.find((o) => o.id === 'dummy-bridge');
+    const points = bridge.chargeHexes.map((h) => h.join()).sort().join(' ');
+    const setting = last.steps.filter((x) => ['chargeSet', 'destroyed'].includes(x.until.kind));
+    assert(rules.objectives[bridge.kind].chargesNeeded === 2 && setting.length === 2 && setting.every((x) => /TWO/.test(x.tell) && x.ring.map((h) => h.join()).sort().join(' ') === points), 'two charges, said on both cards, and both charge points ringed');
+    for (const at of bridge.chargeHexes) {
+      const stood = lessonStart(base, { ...last, start: { men: { fitch: { at } }, enemies: last.start.enemies } }, map, rules);
+      assert(endTurn(stood, rules, map).units.find((u) => u.id === 'fitch').inContact, `the bridge umpire watches the charge point at ${at}, as the card says`);
+    }
     const broken = (change) => {
       const copy = JSON.parse(JSON.stringify(json));
       change(copy.lessons.find((l) => l.id === last.id));

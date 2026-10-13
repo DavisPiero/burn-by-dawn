@@ -954,7 +954,7 @@
     {
       "id": "passing-out",
       "number": 17,
-      "title": "Passing out",
+      "title": "Ready for Action",
       "qualification": "PASSED OUT",
       "start": {
         "drop": {
@@ -978,7 +978,8 @@
         },
         {
           "say": "BLOW THE TRAINING BRIDGE.",
-          "tell": "Blow the Training Bridge, then get all six men out by the gate.",
+          "tell": "The Training Bridge takes TWO charges: one on each ringed charge point.\nThe bridge umpire watches both points. Turn his head with a stone, or silence him, before a man goes in.",
+          "ring": [[7, 5], [6, 7]],
           "free": true,
           "mayBeSeen": true,
           "does": { "script": [
@@ -991,7 +992,8 @@
         },
         {
           "say": "SET THE SECOND CHARGE. GET CLEAR.",
-          "tell": "CHECKPOINT. One charge is burning. Set the second and get every man clear.",
+          "tell": "CHECKPOINT. ONE OF TWO SET, and burning. Set the second on the other ringed point, and get every man clear.",
+          "ring": [[7, 5], [6, 7]],
           "free": true,
           "mayBeSeen": true,
           "does": { "script": [

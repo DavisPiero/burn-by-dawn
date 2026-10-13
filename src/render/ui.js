@@ -495,6 +495,8 @@ function contentsList({ entries, onChoose, record = null }) {
     const line = html('span', 'contents-line', [
       ...(record ? [html('span', entry.passed ? 'contents-tick passed' : 'contents-tick', entry.passed ? '✓' : '')] : []),
       html('span', 'contents-title', entry.title),
+      // Where a new player begins (M48g: the course), in the red pen.
+      ...(entry.flag ? [html('span', 'contents-flag', entry.flag)] : []),
       html('span', 'contents-leader'),
       html('span', 'contents-page', String(entry.page)),
     ]);

@@ -1015,6 +1015,8 @@
     #lesson.northwest { right: auto; left: 40px; bottom: auto; top: 26px; width: min(400px, 50%); }
     /* A free step's card is narrow (M48f): the exercise is played all over the west bank, and at its usual width it lay on the lane to the gate. */
     #lesson.free { width: min(372px, 47%); }
+    /* Its name on one line of the narrow card (M48g: READY FOR ACTION ran to two). */
+    #lesson.free .lesson-title { font-size: 14px; letter-spacing: 0; white-space: nowrap; }
     #lesson .lesson-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
     #lesson .lesson-title { font-family: var(--slab); font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
     #lesson .lesson-step { font-size: 12px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
@@ -1387,6 +1389,9 @@
     #briefing .contents-place { display: block; font-style: italic; font-weight: bold; }
     #briefing .contents-blurb { display: block; }
     #briefing .contents-entry.coming .contents-pick { opacity: 0.45; }
+    /* A mission's flag (M48g: START HERE on the course): the player's red pen
+       beside its title, a little askew, underlined by hand. */
+    #briefing .contents-flag { flex: none; align-self: center; padding: 0 4px 1px; font-family: var(--lettering); font-size: 19px; letter-spacing: 1px; color: var(--red); border-bottom: 3px solid var(--red); border-radius: 0 0 40% 60% / 0 0 6px 4px; transform: rotate(-4deg) translateY(-3px); white-space: nowrap; }
     /* A course's list (M48f, the operator's): a two-page spread. The lessons
        down the left page, a line each with its tick, and the clipboard on the
        right: the training record, ticked as the lessons are passed. */
@@ -1397,7 +1402,12 @@
     #briefing .contents.lessons .contents-pick { padding: 0 8px; border-width: 1px; line-height: 1.2; }
     #briefing .contents.lessons .contents-title,
     #briefing .contents.lessons .contents-page { font-size: 16px; letter-spacing: 1px; }
-    #briefing .contents.lessons .contents-leader { transform: translateY(-4px); border-bottom-width: 2px; }
+    #briefing .contents.lessons .contents-leader { transform: none; position: relative; top: -4px; border-bottom-width: 2px; }
+    /* The rows are a pixel or two apart, so nothing is printed outside one
+       (M48g, the operator's: the contents page's red shadow under a hovered
+       row left red lines on the rows below it). The red is a bar inside it. */
+    #briefing .contents.lessons button.contents-pick:hover,
+    #briefing .contents.lessons button.contents-pick:focus-visible { box-shadow: inset 4px 0 0 var(--red); }
     #briefing .contents-tick { flex: none; width: 18px; font-size: 17px; font-weight: bold; color: var(--green); }
     #briefing .clipboard { position: relative; align-self: start; margin: 10px 0 2px 24px; padding: 18px 12px 12px; background: color-mix(in srgb, var(--fire) 55%, var(--ink)); border: 3px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); }
     #briefing .clip-clip { position: absolute; left: 50%; top: -9px; width: 96px; height: 22px; transform: translateX(-50%); background: color-mix(in srgb, var(--paper) 45%, var(--ink)); border: 3px solid var(--ink); border-radius: 5px; z-index: 1; }

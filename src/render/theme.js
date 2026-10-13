@@ -242,11 +242,16 @@ export const ENEMY_CHIP_FILES = { dir: 'assets/enemies', box: { x: 11, y: 3, siz
 // A mission's own garrison (M43: the aqueduct's Italians, `enemyChips` in
 // data/missions.json) is a folder of the same file names, tried first type by
 // type, as a mission's portraits are, so its chips can come in one at a time.
-export function loadSuppliedEnemyChips(types, missionDir = null) {
+// A mission may instead name a drawn garrison of its own (M48g, `enemyKit`:
+// the practice ground's umpires): then a type the kit draws wears the kit's
+// drawing until the mission's folder has its painting, never the usual chip.
+export function loadSuppliedEnemyChips(types, missionDir = null, kit = null) {
   return Promise.all(types.map((type) => {
     const id = enemySymbolId(type);
-    const urls = [missionDir, ENEMY_CHIP_FILES.dir].filter(Boolean).map((dir) => `${dir}/${id}.png`);
+    const drawn = kit ? SPRITES[`${id}-${kit}`] : null;
+    const urls = [missionDir, drawn ? null : ENEMY_CHIP_FILES.dir].filter(Boolean).map((dir) => `${dir}/${id}.png`);
     return firstPicture(urls).then((url) => {
+      if (!url && drawn) document.getElementById(id)?.replaceChildren(...drawn.draw());
       if (!url) return;
       const { x, y, size } = ENEMY_CHIP_FILES.box;
       document.getElementById(id)?.replaceChildren(svg('image', { href: url, x, y, width: size, height: size }));
@@ -1386,6 +1391,27 @@ function helmetPath(x, y, scale) {
 function helmet(x, y, scale) {
   const d = helmetPath(x, y, scale);
   return [fill(d, 'paper'), fill(d, toneClass('ink', 20))];
+}
+
+// An umpire (M48g, SPEC.md §15: the practice ground's garrison): a service
+// cap, not a helmet, over battledress shoulders, and the white armband that
+// says umpire on his left arm. No rifle: he carries a whistle. Drawn in the
+// sentry's 56 box; `at` and `scale` set smaller ones side by side.
+function umpire(x = 0, y = 0, scale = 1) {
+  const coat = 'M9 37 C10 33 16 31 22 31 H34 C40 31 46 33 47 37 Z';
+  // A low, wide crown that overhangs its band, a badge, and a short peak.
+  const crown = 'M12.5 14.5 C12.5 9 19 7 28 7 C37 7 43.5 9 43.5 14.5 L40.5 17.6 H15.5 Z';
+  const peak = 'M17.5 20 H38.5 C40.5 21.4 41.6 22.6 42 24 C33 22.4 23 22.4 14 24 C14.4 22.6 15.5 21.4 17.5 20 Z';
+  const face = 'M20.5 23.4 C20.5 29.5 23.5 32.6 28 32.6 C32.5 32.6 35.5 29.5 35.5 23.4 C30.5 22.6 25.5 22.6 20.5 23.4 Z';
+  const band = 'M33.6 31 H34 C40 31 45 33 46.6 37 H36 Z';
+  return svg('g', { transform: `translate(${x} ${y}) scale(${scale})` }, [
+    fill(coat, 'paper'), fill(coat, toneClass('ink', 20)),
+    fill(band, 'paper'), line('M33.6 31 L36 37', 1.2),
+    fill(face, 'paper'),
+    fill(crown, 'paper'), fill(crown, toneClass('ink', 20)),
+    circle(28, 16.4, 2.1, 'paper'),
+    fill(peak, 'paper'),
+  ]);
 }
 
 // --- the alert dial -----------------------------------------------------------
@@ -2662,6 +2688,11 @@ const SPRITES = {
   },
   'counter-enemy-patrol': { viewBox: '0 0 56 56', draw: () => [...helmet(6, 11, 0.85), ...helmet(26, 19, 0.85)] },
   'counter-enemy-reserve': { viewBox: '0 0 56 56', draw: () => [...helmet(4, 8, 0.7), ...helmet(29, 8, 0.7), ...helmet(16, 22, 0.7)] },
+  // A mission's own drawn garrison (M48g, `enemyKit` in data/missions.json):
+  // the same types under the kit's name. The practice ground's umpires.
+  'counter-enemy-sentry-umpire': { viewBox: '0 0 56 56', draw: () => [umpire()] },
+  'counter-enemy-patrol-umpire': { viewBox: '0 0 56 56', draw: () => [umpire(-4, 0, 0.66), umpire(19, 11, 0.66)] },
+  'counter-enemy-reserve-umpire': { viewBox: '0 0 56 56', draw: () => [umpire(-2, 0, 0.56), umpire(26, 0, 0.56), umpire(12, 15, 0.56)] },
 
   // --- portraits (ART-ASSETS.md §2): the stand-in; each man's own is supplied ---
   'portrait-fallback-full': { viewBox: '0 0 240 300', draw: fallbackPortrait },

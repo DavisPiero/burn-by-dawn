@@ -447,6 +447,9 @@ function deriveView() {
     // operator's: CLICK FITCH stood under two rings, and one hid a wound).
     const named = men.filter((u) => u.id === step.until.unit);
     view.hintRings = step.ring === 'men' ? (named.length ? named : men).map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
+    // A free step's rings are where its charges go (M48g, the operator's: it
+    // was not clear both points wanted one): a point with its charge set is done.
+    if (step.free) view.hintRings = view.hintRings.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
     // A step that points at the page says its line on the lesson card only.
     // Nor does a free step write on the board: nobody's hand is held (M48f).
@@ -2407,7 +2410,7 @@ async function loadMission(id, seed) {
     loadSuppliedAircraft(),
     loadSuppliedVehicle(baseMap.diversionRun?.art),
     loadSuppliedBlast(),
-    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes), mission.enemyChips ?? null),
+    loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes), mission.enemyChips ?? null, mission.enemyKit ?? null),
   ];
 }
 
@@ -2476,7 +2479,7 @@ function describeBriefing(which, view) {
       kicker: 'IN THIS ANNUAL',
       paragraphs: ['Click a mission to play it. Each one stands alone: one night behind the lines, and out by dawn.'],
       contents: {
-        entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null })),
+        entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null, flag: m.flag ?? null })),
         onChoose: openMission,
       },
       sections: [],
