@@ -206,18 +206,24 @@ export default [
     assert(throws(() => validateLessons(copy, known)), 'a step with nothing to say once done is refused');
   }],
 
-  ['lesson 7: only the man who is to fire back is seen, and firing back keeps him from being shot', async () => {
+  ['the three ways to fight: the knife wants a turn unspent, and firing back keeps a man from being shot', async () => {
     const { lessons, base, map, rules } = await course();
-    const lesson = lessons.find((l) => l.id === 'fighting');
-    let s = lessonStart(base, lesson, map, rules);
-    s = knifeEnemy(s, 'vance', 'umpire-a', rules);
-    s = suppressEnemy(s, 'speers', 'umpire-b', map, rules);
-    s = endTurn(s, rules, map);
-    assert(s.units.filter((u) => u.inContact).map((u) => u.id).join() === 'fitch', `only Fitch is in contact: ${s.units.filter((u) => u.inContact).map((u) => u.id)}`);
-    s = killEnemy(s, 'speers', 'umpire-b', map, rules);
+    // Lesson 7: he cannot knife in the turn he moved in, and can in the next.
+    const knife = lessons.find((l) => l.id === 'the-knife');
+    let k = lessonStart(base, knife, map, rules);
+    const vance = k.units.find((u) => u.id === 'vance');
+    k = moveUnit(k, 'vance', planMove(map, k.units, vance, { q: 2, r: 8 }, rules, k.enemies), map);
+    assert(k.units.find((u) => u.id === 'vance').ap === vance.apMax - 2, 'the hedge cost him 2, as it says');
+    assert(knifeEnemy(k, 'vance', 'umpire', rules) === k, 'no knife in the turn he spent AP');
+    k = endTurn(k, rules, map);
+    assert(!k.units.find((u) => u.id === 'vance').inContact && knifeEnemy(k, 'vance', 'umpire', rules).enemies.length === 0, 'unseen, and the next turn he can');
+    // Lesson 9: seen as the first turn ends, shot at the second unless he fires back.
+    const lesson = lessons.find((l) => l.id === 'firing-back');
+    let s = endTurn(lessonStart(base, lesson, map, rules), rules, map);
+    assert(s.units.find((u) => u.id === 'fitch').inContact && s.units.find((u) => u.id === 'fitch').hits === 0, 'Fitch is seen, and not yet shot');
     const unanswered = endTurn(s, rules, map);
     assert(unanswered.units.find((u) => u.id === 'fitch').hits === 1, 'left alone, he is shot');
-    const fired = suppressEnemy(s, 'fitch', 'umpire-c', map, rules);
+    const fired = suppressEnemy(s, 'fitch', 'umpire', map, rules);
     assert(fired !== s && fired.units.find((u) => u.id === 'fitch').ap === 1 && fired.alert.points === s.alert.points + 2, 'firing back is 2 AP and 2 alert, as it says');
     const after = endTurn(fired, rules, map);
     const fitch = after.units.find((u) => u.id === 'fitch');
