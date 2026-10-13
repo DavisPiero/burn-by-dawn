@@ -41,14 +41,10 @@ Rule of the phase: cut a lesson to fit the engine; do not grow the engine for on
 Answered on 13 Oct: the gear's position is good; lesson 11's ten steps are fine; the
 passing-out exercise cannot be failed (seen is allowed, only a hit blows the whistle);
 lesson 13's two skills done and four told, lesson 15's decay told, and lesson 12 as
-one lesson all stand; lesson 5's card is top left.
+one lesson all stand; lesson 5's card is top left; lesson 12 is good at seven steps;
+a hover step's hexes keep their path lines.
 
-1. **Lesson 12 is seven steps now**, not four: Fitch gets his 5 AP unseen, then walks
-   into view to be seen for the radio. Claude's rework of the operator's note (the
-   marks of being seen hid his AP). Too long?
-2. **Path lines are kept on the hexes a hover step asks for** (lessons 4 and 5 speak
-   of the path there) and hidden on every other hex he may not go to. Claude's reading
-   of the note. Right?
+Nothing is open.
 
 ## Owed
 

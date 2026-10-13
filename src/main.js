@@ -612,7 +612,7 @@ function deriveView() {
   const barred = Boolean(lessonStep()) && !lessonLive({ kind: 'move', to: hex });
   view.planHidden = barred && !asked;
   // Nor does the readout offer a click that would do nothing there.
-  view.moveLabel = barred ? describePlan(plan, unit).replace('· click to move', '· not part of this step') : describePlan(plan, unit);
+  view.moveLabel = barred ? describePlan(plan, unit).replace('· click to move', '· no movement on this lesson step') : describePlan(plan, unit);
   if (plan) {
     // The detection phase tests every hex he enters, or the hex he stands on
     // if he stays put (enemy.js testedHexes), so that is what gets pips. A man

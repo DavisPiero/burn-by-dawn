@@ -95,8 +95,8 @@ and M48e's `dressed` (a man's wound has been dressed).
   started the next lesson while the last was still being read).
 - **Looking is always allowed**: hovering, the routes, how to play. But no path is
   drawn to a hex he may not go to now (the operator's, M48e), except the hexes a hover
-  step asks for; the box under the map still describes the hex, and says "not part of
-  this step" where it would have said "click to move". Selecting, moving,
+  step asks for; the box under the map still describes the hex, and says "no movement on
+  this lesson step" (the operator's words) where it would have said "click to move". Selecting, moving,
   actions and ending the turn are allowed only as the step lists. Undo is off: a lesson
   goes back by its steps. The radio's button is greyed like End turn, lit only in
   the step that calls it.
