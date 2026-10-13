@@ -564,8 +564,8 @@
           "until": { "kind": "turnEnded" }
         },
         {
-          "say": "PRESS E. CLICK FITCH.",
-          "tell": "So give it to a sapper. Fitch is beside him: press ‘E’, then click Fitch.",
+          "say": "PRESS E TO PASS IT.",
+          "tell": "So give it to a sapper. Fitch is beside him: press ‘E’ to pass it. With more than one man beside him, he would then click the one to have it.",
           "then": "Fitch has the charge. Passing cost Barrow 2 AP and Fitch nothing, and Barrow has his 4 AP again next turn. One charge is still in the canister: a patrol finds a canister as it does a parachute, until it is empty.",
           "ring": [[4, 3]],
           "at": [4, 3],
@@ -580,6 +580,7 @@
       "number": 11,
       "title": "Charges: set and get clear",
       "qualification": "DEMOLITIONS",
+      "card": "northwest",
       "start": {
         "men": { "nunn": { "at": [7, 5], "charges": 1 } },
         "droppedCharges": [[6, 7]]

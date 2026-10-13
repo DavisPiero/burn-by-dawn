@@ -1008,6 +1008,9 @@
       box-shadow: 5px 5px 0 var(--ink), 0 8px 30px rgba(0, 0, 0, 0.35);
     }
     #lesson[hidden] { display: none; }
+    /* A lesson that says so (M48c) has its card top left: the bridge and its
+       charge points lie under the usual corner, and the timer tin over it. */
+    #lesson.northwest { right: auto; left: 40px; bottom: auto; top: 26px; width: min(400px, 50%); }
     #lesson .lesson-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
     #lesson .lesson-title { font-family: var(--slab); font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
     #lesson .lesson-step { font-size: 12px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
@@ -1380,6 +1383,16 @@
     #briefing .contents-place { display: block; font-style: italic; font-weight: bold; }
     #briefing .contents-blurb { display: block; }
     #briefing .contents-entry.coming .contents-pick { opacity: 0.45; }
+    /* A course's list (M48c): its lessons in two columns, read down the left
+       and then the right, each two lines, so seventeen fit above the button. */
+    #briefing .contents.spread { display: grid; grid-auto-flow: column; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(var(--rows, 9), auto); column-gap: 28px; }
+    #briefing .contents.spread .contents-entry { margin: 0; }
+    #briefing .contents.spread .contents-pick { padding: 2px 8px 3px; }
+    #briefing .contents.spread .contents-title,
+    #briefing .contents.spread .contents-page { font-size: 18px; letter-spacing: 1px; }
+    #briefing .contents.spread .contents-place,
+    #briefing .contents.spread .contents-blurb { display: inline; font-size: 13px; }
+    #briefing .contents.spread .contents-place::after { content: ' · '; font-style: normal; }
     #briefing .contents-stamp {
       position: absolute;
       right: 70px;

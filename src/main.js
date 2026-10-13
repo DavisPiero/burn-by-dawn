@@ -2537,6 +2537,8 @@ function describeBriefing(which, view) {
           blurb: course.passed.has(l.id) ? '✓ PASSED' : 'Not yet taken', playable: true, panel: null,
         })),
         onChoose: startLesson,
+        // Two columns (M48c): eleven lessons ran off the foot of the page, the green button with them.
+        spread: true,
       },
       sections: [],
       toggles: [musicToggle()],
@@ -2867,6 +2869,8 @@ function openCourse() {
 function placeLessonCard(pointed) {
   lessonCard.style.top = '';
   lessonCard.style.bottom = '';
+  // A lesson at the bridge keeps its card in the far corner (M48c).
+  lessonCard.classList.toggle('northwest', course?.lesson?.card === 'northwest');
   if (!pointed || lessonCard.hidden) return renderLessonArrow(lessonArrow, null, null);
   const target = LESSON_POINTS[pointed].getBoundingClientRect();
   const page = lessonCard.offsetParent.getBoundingClientRect();

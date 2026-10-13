@@ -66,6 +66,9 @@ export function validateLessons(json, known, url = 'lessons') {
     for (const key of ['title', 'qualification']) {
       if (typeof lesson[key] !== 'string' || !lesson[key]) throw new Error(`${at} needs a "${key}"`);
     }
+    // Where its card lies (M48c): bottom right unless it says, and the training
+    // bridge and both its charge points are under that corner.
+    if (lesson.card !== undefined && lesson.card !== 'northwest') throw new Error(`${at}: "card" is "northwest", or left out`);
     // Its place in the course, as the list prints it.
     if (!Number.isInteger(lesson.number) || lesson.number < 1) throw new Error(`${at} needs its "number" in the course`);
     const start = lesson.start;
