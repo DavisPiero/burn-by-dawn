@@ -9,7 +9,7 @@ Last updated: 13 Oct 2026, at the end of M48's third session (not yet signed off
 ## Where we are
 
 - **Build M48c** on the branch `m48c-fighting-split-and-charges`, waiting for the
-  operator's sign-off. `main` is M48b. Tests: 219 headless, 221 in tests.html.
+  operator's sign-off. `main` is M48b. Tests: 218 headless, 220 in tests.html.
 - **Three missions are playable:** the rail bridge (France), the airfield (Tunisia)
   and the aqueduct (Italy). The aqueduct is playable but not yet balanced.
 - **Phase 5, teaching the game, is in progress.** The training course is a draft
