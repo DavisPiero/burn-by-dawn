@@ -712,8 +712,8 @@ export function renderPieces(layers, state, view) {
   if (view.targets) drawTargets(layers, view.targets);
   if (view.throwPreview) drawThrow(layers, view.throwPreview);
 
-  if (view.plan) drawPlan(layers, view.plan, view.risk);
-  if (view.plan && view.risk) drawRisk(layers, view.plan, view.risk, { enemies: state.enemies, cover: view.coverAt, now });
+  if (view.plan && !view.planHidden) drawPlan(layers, view.plan, view.risk);
+  if (view.plan && view.risk && !view.planHidden) drawRisk(layers, view.plan, view.risk, { enemies: state.enemies, cover: view.coverAt, now });
   else if (view.landing) drawRisk(layers, view.landing.plan, view.landing.risk);
 
   for (const hex of view.searchHexes) drawContact(layers, hex);

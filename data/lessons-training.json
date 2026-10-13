@@ -1,5 +1,5 @@
 {
-  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`; or, in place of `men`, `drop` (M48b): { run, landings: { man: hex } }, a lesson that starts in the drop, each man down where it says with no scatter. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about), repeated on the card as TO GO ON; `tell`, the card's words before the step is done: what to do; `then` (M48b, the operator's: do it, see it, then NEXT), the card's words once it is done, while what it did is still on the board: what he is now looking at and the rule in its numbers, with a green NEXT; `ring`, hexes to ring, or \"men\"; `point`, a part of the page to ring (roster, alert, clock, readout, actions); `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], target: [hexes], endTurn, run, jump }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson; `does`, read only by the test that plays the lesson. The words are placeholders for the operator to reword. Lesson 17, the passing-out exercise, is still to come.",
+  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`; or, in place of `men`, `drop` (M48b): { run, landings: { man: hex } }, a lesson that starts in the drop, each man down where it says with no scatter. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about), repeated on the card as TO GO ON; `tell`, the card's words before the step is done: what to do; `then` (M48b, the operator's: do it, see it, then NEXT), the card's words once it is done, while what it did is still on the board: what he is now looking at and the rule in its numbers, with a green NEXT; `ring`, hexes to ring, or \"men\"; `point`, a part of the page to ring (roster, alert, clock, readout, actions, radio); `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], target: [hexes], endTurn, run, jump }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson; `does`, read only by the test that plays the lesson. The words are placeholders for the operator to reword. Lesson 17, the passing-out exercise, is still to come.",
   "lessons": [
     {
       "id": "the-drop",
@@ -224,6 +224,7 @@
       "number": 5,
       "title": "Seen and not seen",
       "qualification": "FIELDCRAFT",
+      "card": "northwest",
       "start": {
         "men": { "fitch": { "at": [1, 8] } },
         "enemies": [
@@ -672,7 +673,7 @@
       "qualification": "LEADERSHIP",
       "card": "northwest",
       "start": {
-        "men": { "holloway": { "at": [0, 8] }, "fitch": { "at": [3, 8] } },
+        "men": { "holloway": { "at": [-2, 8] }, "fitch": { "at": [1, 8] } },
         "alert": 1,
         "enemies": [
           { "id": "umpire", "label": "Umpire", "type": "sentry", "at": [5, 8], "facing": "W" }
@@ -682,35 +683,61 @@
         {
           "say": "CLICK DUTCH.",
           "tell": "Sgt. Holloway, ‘Dutch’, leads the stick, and his orders are worth AP. Click Dutch.",
-          "then": "The dashed blue line is how far his orders carry: 2 hexes. When a turn starts, a man inside it has 1 AP more, and a man beside Dutch 2 more. Fitch, on the grass, is 3 hexes off.",
+          "then": "The dashed blue line is how far his orders carry: 2 hexes. When a turn starts, a man inside it has 1 AP more, and a man beside Dutch 2 more. Fitch is 3 hexes off.",
           "ring": "men",
           "allow": { "select": ["holloway"] },
           "until": { "kind": "selected", "unit": "holloway" }
         },
         {
-          "say": "THE HEDGE BESIDE FITCH. GO THERE.",
-          "tell": "Move Dutch into the hedge beside Fitch: click the ringed hex.",
-          "then": "Dutch is beside Fitch. Orders are given when a turn starts, so Fitch still has his 3 AP. And Fitch is in front of the ‘SENTRY’ umpire: when this turn ends he will be seen.",
-          "ring": [[2, 8]],
-          "at": [2, 8],
-          "allow": { "select": ["holloway"], "move": [[2, 8]] },
-          "until": { "kind": "movedTo", "unit": "holloway", "hexes": [[2, 8]] }
+          "say": "GO AND STAND BY FITCH.",
+          "tell": "Move Dutch beside Fitch: click the ringed hex.",
+          "then": "Dutch is beside Fitch. Orders are given when a turn starts, so Fitch still has his 3 AP.",
+          "ring": [[0, 8]],
+          "at": [0, 8],
+          "allow": { "select": ["holloway"], "move": [[0, 8]] },
+          "until": { "kind": "movedTo", "unit": "holloway", "hexes": [[0, 8]] }
         },
         {
           "say": "PRESS SPACE: END THE TURN.",
           "tell": "End the turn.",
-          "then": "Fitch has 5 AP, not 3, and wears 2 blue chevrons: Dutch's orders. But the umpire has seen him: Fitch is in contact, and the alert is Suspicious.",
-          "mayBeSeen": true,
+          "then": "Fitch has 5 AP, not 3: the dots on his counter. The 2 blue chevrons on it are Dutch's orders.",
           "allow": { "select": ["holloway"], "endTurn": true },
           "until": { "kind": "turnEnded" }
         },
         {
+          "say": "CLICK FITCH.",
+          "tell": "Now use them. Click Fitch.",
+          "then": "Fitch is selected, with 5 AP. The ‘SENTRY’ umpire beyond the hedge is looking this way.",
+          "ring": "men",
+          "allow": { "select": ["fitch"] },
+          "until": { "kind": "selected", "unit": "fitch" }
+        },
+        {
+          "say": "FOUR AP AWAY. GO THERE.",
+          "tell": "The ringed hex is 4 AP away: further than Fitch could go on his own 3. It is red, and he will be seen there. Today that is the lesson. Click it.",
+          "then": "Fitch is beside the umpire, in plain view, with 1 AP left.",
+          "ring": [[4, 7]],
+          "at": [4, 7],
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "move": [[4, 7]] },
+          "until": { "kind": "movedTo", "unit": "fitch", "hexes": [[4, 7]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "End the turn.",
+          "then": "The umpire has turned to face Fitch. Fitch is seen and in contact, and the alert is Suspicious. Seen again when this turn ends, he would be shot.",
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
           "say": "PRESS D: THE RADIO.",
-          "tell": "The leader carries the radio, and can call a diversion. In a mission it is an RAF raid on the town. Today it is the instructor's thunderflash. Press ‘D’. It costs no AP.",
-          "then": "The alert has dropped one state, to Calm. Every man is out of contact, and every umpire has gone back to his post or his beat. It can be called once in a mission, and only while the leader is alive.",
+          "tell": "The leader carries the radio, and can call a diversion. In a mission it is an RAF raid on the town. Today it is the instructor's thunderflash. Press ‘D’, or click its button beside the dial. It costs no AP.",
+          "then": "The umpire has turned away, back to his post. The alert has dropped one state, to Calm, and Fitch is out of contact. The radio can be used once in a mission, and only while the leader is alive.",
+          "point": "radio",
           "mayBeSeen": true,
           "does": { "call": true },
-          "allow": { "select": ["holloway"], "actions": ["diversion"] },
+          "allow": { "select": ["fitch"], "actions": ["diversion"] },
           "until": { "kind": "contactBroken", "unit": "fitch" }
         }
       ]
@@ -730,7 +757,8 @@
       "steps": [
         {
           "say": "EACH MAN HAS A SKILL. PRESS NEXT.",
-          "tell": "Every man has a skill of his own. It is printed on his row in the list on the right, with what it does in numbers. This lesson uses two of them.",
+          "tell": "Every man has a skill of his own. It is printed on his row in the list, with what it does in numbers. This lesson uses two of them.",
+          "point": "roster",
           "until": { "kind": "acknowledged" }
         },
         {
@@ -776,7 +804,7 @@
         {
           "say": "PRESS SPACE: END THE TURN.",
           "tell": "End the turn, and see whether the umpire spots him.",
-          "then": "The umpire looked, and did not see him. The other four: Dutch's charges go off a turn sooner (Steady Hands). Barrow loses no turn landing in a wood or a marsh (Treetops). Speers's gunfire adds 1 less to the alert (Cool Head). Nunn, a gunner, jumps with a charge (Ox).",
+          "then": "The umpire looked, and did not see him.\nThe other men's skills: Dutch's charges go off a turn sooner (Steady Hands). Barrow loses no turn landing in a wood or a marsh (Treetops). Speers's gunfire adds 1 less to the alert (Cool Head). Nunn, a gunner, jumps with a charge (Ox).",
           "allow": { "select": ["vance"], "endTurn": true },
           "until": { "kind": "turnEnded" }
         }

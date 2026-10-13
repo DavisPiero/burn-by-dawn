@@ -85,6 +85,7 @@ const LESSON_POINTS = {
   clock: document.getElementById('clock'),
   readout: document.getElementById('coord-readout'),
   actions: document.getElementById('actions'),
+  radio: document.getElementById('diversion'),
 };
 
 // The night's last turns (M46): the dawn strip reddens through them, and a
@@ -440,7 +441,10 @@ function deriveView() {
   // Not while the stick is coming down: the step's line is for the ground.
   if (step && !briefing && !course.progress.met && !dropShow) {
     const men = state.units.filter(onBoard);
-    view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
+    // "men" rings the man the step is about, where it names one (M48e, the
+    // operator's: CLICK FITCH stood under two rings, and one hid a wound).
+    const named = men.filter((u) => u.id === step.until.unit);
+    view.hintRings = step.ring === 'men' ? (named.length ? named : men).map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
     // A step that points at the page says its line on the lesson card only.
     if (about && (step.at || !step.point)) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
@@ -601,6 +605,11 @@ function deriveView() {
 
   const plan = planMove(map, state.units, unit, hex, rules, state.enemies);
   view.plan = plan;
+  // In a lesson no path is drawn to a hex he may not go to now (M48e, the
+  // operator's), but for the hexes a hover step asks for, whose cards speak
+  // of the path. The readout still says what the hex is.
+  const asked = lessonStep()?.until.kind === 'hovered' && lessonStep().until.hexes.some(([q, r]) => q === hex.q && r === hex.r);
+  view.planHidden = Boolean(lessonStep()) && !asked && !lessonLive({ kind: 'move', to: hex });
   view.moveLabel = describePlan(plan, unit);
   if (plan) {
     // The detection phase tests every hex he enters, or the hex he stands on
@@ -2867,7 +2876,8 @@ function openCourse() {
  * card was a long way from the part of the page it spoke of): level with a
  * part on the right page, or just above one under the map, with the pen's
  * arrow from the card to it. With nothing pointed at it lies where it always
- * does. Layout only: it reads where things are on the page.
+ * does, and a card kept top left never leaves its corner: it only points.
+ * Layout only: it reads where things are on the page.
  */
 function placeLessonCard(pointed) {
   lessonCard.style.top = '';
@@ -2886,8 +2896,12 @@ function placeLessonCard(pointed) {
   const level = target.height > card.height ? target.top : target.top + target.height / 2 - card.height / 2;
   const wanted = beside ? level : target.top - gap - card.height;
   const top = Math.min(Math.max(wanted, page.top + 8 * scale), page.bottom - card.height - 8 * scale);
-  lessonCard.style.bottom = 'auto';
-  lessonCard.style.top = `${(top - page.top) / scale}px`;
+  // A card kept in the far corner stays there and only points (M48e: moved
+  // level with the radio's button, it came down over the men it spoke of).
+  if (course?.lesson?.card !== 'northwest') {
+    lessonCard.style.bottom = 'auto';
+    lessonCard.style.top = `${(top - page.top) / scale}px`;
+  }
   card = lessonCard.getBoundingClientRect();
   const within = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
   if (beside) {
@@ -2968,7 +2982,7 @@ function describeDiversionCard(before) {
   ];
   if (searches) lines.push(`${searches} ${searches === 1 ? 'search is' : 'searches are'} called off.`);
   if (freed) lines.push(`${freed} ${freed === 1 ? 'man is' : 'men are'} out of contact.`);
-  lines.push('The clean-run bonus is gone.');
+  lines.push('The clean-run score bonus is gone.');
   return {
     title: mission.words.diversionName.toUpperCase(),
     kicker: mission.words.diversionKicker,

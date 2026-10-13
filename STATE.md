@@ -14,7 +14,7 @@ Last updated: 13 Oct 2026, after M48's fourth session (M48e, not yet signed off)
   and the aqueduct (Italy). The aqueduct is playable but not yet balanced.
 - **Phase 5, teaching the game, is in progress.** The training course is a draft
   (`?mission=training`) with **lessons 1 to 16 of seventeen**. New this session:
-  12 The leader (orders and the radio), 13 The men (two skills used, four told),
+  12 The leader (orders, then the radio), 13 The men (two skills used, four told),
   14 Getting out, 15 The alert, 16 A wounded man.
 - **Every lesson step is "do it, see it, then NEXT".** While a card waits on NEXT,
   doing exactly what the next step asks for counts as NEXT. In a lesson only what
@@ -38,17 +38,17 @@ Rule of the phase: cut a lesson to fit the engine; do not grow the engine for on
 
 ## Open with the operator
 
-Answered on 13 Oct: the gear's position is good; lesson 11's ten steps are fine.
+Answered on 13 Oct: the gear's position is good; lesson 11's ten steps are fine; the
+passing-out exercise cannot be failed (seen is allowed, only a hit blows the whistle);
+lesson 13's two skills done and four told, lesson 15's decay told, and lesson 12 as
+one lesson all stand; lesson 5's card is top left.
 
-1. **Can the passing-out exercise be failed?** "No hand held" clashes with the whistle
-   putting the step back whenever a man is seen. Claude's guess: being seen is allowed
-   there, and only a man hit blows the whistle.
-2. **Lesson 5's umpire is half under its card** (he stands on the hex lessons 12 and
-   13 had to move their card for). Move lesson 5's card top left too?
-3. **Lesson 13 does two skills and tells four.** Claude's cut. Enough?
-4. **Lesson 15 tells the alert's decay and does not show it** (it takes 4 quiet
-   turns). Claude's cut. Enough?
-5. **Lesson 12 is orders and the radio in one**, four steps. Split it if it crowds.
+1. **Lesson 12 is seven steps now**, not four: Fitch gets his 5 AP unseen, then walks
+   into view to be seen for the radio. Claude's rework of the operator's note (the
+   marks of being seen hid his AP). Too long?
+2. **Path lines are kept on the hexes a hover step asks for** (lessons 4 and 5 speak
+   of the path there) and hidden on every other hex he may not go to. Claude's reading
+   of the note. Right?
 
 ## Owed
 

@@ -38,8 +38,9 @@ import { fillActionPoints, onBoard } from './units.js';
 export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged', 'runPicked', 'landed', 'contactBroken', 'stoneThrown', 'suppressed', 'carrying', 'dressed'];
 
 // The parts of the page a step may point at (`point`), where what it shows is
-// not on the board (M48b: lesson 1 reads the page). main.js knows where each is.
-export const POINT_KINDS = ['roster', 'alert', 'clock', 'readout', 'actions'];
+// not on the board (M48b: lesson 1 reads the page; M48e: the radio's button).
+// main.js knows where each is.
+export const POINT_KINDS = ['roster', 'alert', 'clock', 'readout', 'actions', 'radio'];
 
 const isHex = (h) => Array.isArray(h) && h.length === 2 && h.every(Number.isInteger);
 const same = (a, b) => a.q === b.q && a.r === b.r;

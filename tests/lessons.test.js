@@ -330,12 +330,18 @@ export default [
     // Lesson 12: 3 hexes off he has no orders; beside Dutch at the turn's start, 2 AP more. Seen, then the radio.
     let s = lessonStart(base, by('the-leader'), map, rules);
     assert(of(s, 'fitch').ap === 3 && of(s, 'holloway').ap === 3, 'three hexes apart: nobody has orders');
-    s = walk(s, 'holloway', [2, 8]);
-    assert(of(s, 'holloway').ap === 0 && of(s, 'fitch').ap === 3, 'orders are not given mid-turn');
+    s = walk(s, 'holloway', [0, 8]);
+    assert(of(s, 'fitch').ap === 3, 'orders are not given mid-turn');
     s = endTurn(s, rules, map);
-    assert(of(s, 'fitch').ap === 5 && of(s, 'fitch').inContact && !of(s, 'holloway').inContact && stateOf(s) === 'suspicious', `Fitch has 5 AP and is seen, Dutch is not, the dial Suspicious: ${of(s, 'fitch').ap}, ${stateOf(s)}`);
+    assert(of(s, 'fitch').ap === 5 && s.units.every((u) => !u.inContact), `beside Dutch at the turn's start Fitch has 5 AP, and nobody is seen yet: ${of(s, 'fitch').ap}`);
+    const post = s.enemies[0].facing;
+    assert(washAt(s, 'fitch', [4, 7]) === 'spotted', 'the hex it calls red is red');
+    s = walk(s, 'fitch', [4, 7]);
+    assert(of(s, 'fitch').ap === 1, '4 AP away, as it says: more than his own 3');
+    s = endTurn(s, rules, map);
+    assert(of(s, 'fitch').inContact && of(s, 'fitch').hits === 0 && !of(s, 'holloway').inContact && stateOf(s) === 'suspicious' && s.enemies[0].facing !== post, 'Fitch is seen, the umpire has turned to him, the dial Suspicious');
     const called = callDiversion(s, rules);
-    assert(!of(called, 'fitch').inContact && stateOf(called) === 'calm' && of(called, 'fitch').ap === 5, 'the radio: out of contact, Calm, and no AP spent');
+    assert(!of(called, 'fitch').inContact && stateOf(called) === 'calm' && called.enemies[0].facing === post && of(called, 'fitch').ap === of(s, 'fitch').ap, 'the radio: out of contact, Calm, the umpire turned back to his post, and no AP spent');
     assert(callDiversion(called, rules) === called, 'once only');
     // Lesson 13: Quick Work sets a charge for nothing; the ringed hex is red for Fitch and not for Vance.
     const men = by('the-men');
