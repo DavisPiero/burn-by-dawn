@@ -1093,8 +1093,10 @@ function drawManNote(layers, note) {
   const size = CUE.manNoteSize;
   const width = note.words.length * size * CUE.noteAdvance;
   const x = Math.min(Math.max(p.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
-  const under = p.y + CUE.manNoteDrop + size <= edge.bottom;
-  const letters = penLetters([note.words], x, under ? p.y + CUE.manNoteDrop : p.y - CUE.manNoteDrop + size * 0.4, [size]);
+  // Under a lesson's wide ring on a man (M48b), clear of it.
+  const drop = CUE.manNoteDrop + (note.low ? CUE.manRingNoteDrop : 0);
+  const under = p.y + drop + size <= edge.bottom;
+  const letters = penLetters([note.words], x, under ? p.y + drop : p.y - drop + size * 0.4, [size]);
   letters.setAttribute('pointer-events', 'none');
   layers.effects.appendChild(letters);
 }

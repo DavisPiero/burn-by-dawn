@@ -23,7 +23,7 @@ import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery,
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
-import { advance, allows, back, beginLesson, caughtOut, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
+import { POINT_KINDS, advance, allows, back, beginLesson, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -73,6 +73,14 @@ const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
 const lessonCard = document.getElementById('lesson');
+// The parts of the page a lesson's step may point at (lessons.js POINT_KINDS).
+const LESSON_POINTS = {
+  roster: document.getElementById('roster'),
+  alert: document.getElementById('alert'),
+  clock: document.getElementById('clock'),
+  readout: document.getElementById('coord-readout'),
+  actions: document.getElementById('actions'),
+};
 
 // The night's last turns (M46): the dawn strip reddens through them, and a
 // man who can no longer reach the way out wears a clock. Display only.
@@ -427,7 +435,8 @@ function deriveView() {
     const men = state.units.filter(onBoard);
     view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
-    if (about) view.manNotes.push({ q: about.q, r: about.r, words: step.say });
+    // A step that points at the page says its line on the lesson card only.
+    if (about && (step.at || !step.point)) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
   }
 
   const next = forecast();
@@ -1555,6 +1564,9 @@ function render() {
   showCounterKey(briefing?.kind === 'help');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
+  // A step may point at a part of the page (M48b): ringed in the pen while it is the step.
+  const pointed = briefing ? null : lessonStep()?.point ?? null;
+  for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed);
   renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
@@ -1708,6 +1720,9 @@ function handleHexClick(q, r) {
     const man = unitAt(state.units, q, r);
     if (!lessonAllows(man ? { kind: 'select', unitId: man.id } : { kind: 'move', to: { q, r } })) return;
   }
+  // An aimed action lands only where the step says, if it says (M48b); one of
+  // the stick clicked while aiming is a man picked, as anywhere.
+  if (lessonStep() && state.targeting && !unitAt(state.units, q, r) && !lessonAllows({ kind: 'target', at: { q, r } })) return;
   highlightHex = null;
   pencilsFor = null;
   if (state.targeting) {
@@ -2467,7 +2482,7 @@ function describeBriefing(which, view) {
       kicker: `QUALIFIED: ${lesson.qualification}`,
       paragraphs: [[
         { parts: [`LESSON ${lesson.number} - ${title} - `, { good: 'PASSED' }, '.'] },
-        ...(left ? [] : ['That is every lesson of the course.']),
+        ...(left ? [] : ['That is every lesson of the course.', 'Play tips are now on for the missions: the red pen on the map says what to do next. They are turned off in the left margin.']),
       ]],
       sections: [],
       link: { label: 'COURSE MENU', onClick: openCourse },
@@ -2747,7 +2762,8 @@ function layLessonState(next) {
  */
 function lessonCheck() {
   const step = lessonStep();
-  if (!step) return false;
+  // Not while the stick is still coming down: the next step waits for the ground.
+  if (!step || dropShow) return false;
   const { lesson, progress } = course;
   const from = stepStart(progress);
   const why = caughtOut(step, from, state);
@@ -2762,6 +2778,9 @@ function lessonCheck() {
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
+    // The course passed, the play tips come on for the missions (M48b, the
+    // operator's): for this visit only, as nothing is stored (CLAUDE.md rule 9).
+    if (course.lessons.every((l) => course.passed.has(l.id))) applyTips(true);
   }
   return true;
 }
@@ -2820,6 +2839,12 @@ function tipsToggle() {
 
 /** Play tips on or off: the box on the orders, or the words in the margin at any time (M48b, the operator's). */
 function setTips(on) {
+  applyTips(on);
+  render();
+}
+
+/** The same, without laying the page again: for the course's last PASSED, which is found out mid-render. */
+function applyTips(on) {
   tipsOn = on;
   // Carried in the address, so Play again and a reload keep it.
   const query = new URLSearchParams(window.location.search);
@@ -2828,7 +2853,6 @@ function setTips(on) {
   const search = query.toString();
   window.history.replaceState(null, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
   renderTipsToggle(tipsToggleButton, tipsOn);
-  render();
 }
 
 /** The card when the RAF diversion is called: what it did, and what is left. */
@@ -2937,10 +2961,12 @@ function chargeCue(unit) {
 function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
   if (!run) return;
+  if (lessonStep() && !lessonAllows({ kind: 'jump' })) return;
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
   undoStack = [];
-  state = jump(state, baseMap, rules);
+  // A lesson's drop lands its men where it says (SPEC.md §15).
+  state = jump(state, baseMap, rules, lessonLandings(course?.lesson));
   const landed = state.report.filter((e) => e.kind === 'landed');
   if (landed.length) {
     dropShow = {
@@ -2959,8 +2985,8 @@ function jumpNow() {
     // Each is on the ground, ringed, with its thump, as its canopy lands.
     startCanisterCue(dropShow.since, Object.fromEntries([...timeline.byCanister].map(([id, t]) => [id, t.landAt])));
     dropSound = playCue('drop');
-    briefingAfterDrop = briefingsOn;
-  } else if (state.phase !== 'drop' && briefingsOn) {
+    briefingAfterDrop = briefingsOn && !course?.lesson;
+  } else if (state.phase !== 'drop' && briefingsOn && !course?.lesson) {
     briefing = { kind: 'turn' };
   }
   render();
@@ -3008,6 +3034,7 @@ function endFlyShow() {
 
 // A run clicked a second time jumps (M12: players did not see that Space was next).
 function handleChooseRun(runId) {
+  if (lessonStep() && !lessonAllows({ kind: 'run', runId })) return;
   if (runId !== null && runId === state.dropRunId && !briefing) {
     hidePopup();
     jumpNow();
@@ -3022,6 +3049,8 @@ function handleChooseRun(runId) {
 function handleDropKey(event) {
   const key = event.key;
   const run = key >= '1' && key <= '9' ? baseMap.dropRuns[Number(key) - 1] : null;
+  // In a lesson only what the step asks for does anything (SPEC.md §15).
+  if (lessonStep() && (run || key === 'Escape') && !lessonAllows({ kind: 'run', runId: run?.id ?? null })) return;
   if (run) {
     state = chooseDropRun(state, baseMap, run.id);
   } else if (key === ' ') {

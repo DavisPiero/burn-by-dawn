@@ -1,6 +1,59 @@
 {
-  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about); `tell`, the lesson card's words: what he is looking at, the rule in its numbers, what to do; `ring`, hexes to ring, or \"men\"; `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], endTurn }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson. M47 had lessons 3 and 5, to prove the engine; M48 adds 2 and 4 and rewords all four (the operator's: say the rule plainly, with its number). Lesson 1 and 6 to 15 are still to come.",
+  "_comment": "The training course's lessons (MISSION-TRAINING.md, SPEC.md §15; M47). Each lesson is its own small situation and a list of steps, and src/lessons.js lets only what a step lists do anything. `start`: `men` by roster id (`at`, and optionally `ap`, `charges`, `hits`, `hidden`; a man not named is not on the board), `enemies` in the map's own shape, `parachutes` ({ at, unit }), `turn`, `alert`. A step: `say`, the pen's line on the board (seven words at most) at hex `at` (or under the man it is about); `tell`, the lesson card's words: what he is looking at, the rule in its numbers, what to do; `ring`, hexes to ring, or \"men\"; `allow`: { select: [ids] or true, move: [hexes] or \"any\", actions: [ids], endTurn }; `until`: what ends the step, one of the kinds listed in src/lessons.js; `mayBeSeen` where being spotted is the lesson. `start.drop` (M48b) is a lesson that starts in the drop: { run, landings: { man: hex } }, each man down where it says with no scatter, in place of `men`. A step may `point` at a part of the page (roster, alert, clock, readout, actions) and may allow `run` and `jump`. M47 had lessons 3 and 5, to prove the engine; M48 added 2 and 4 and reworded all four (the operator's: say the rule plainly, with its number); M48b adds 1, the second half of 5, 6 and 7.",
   "lessons": [
+    {
+      "id": "the-drop",
+      "number": 1,
+      "title": "The drop",
+      "qualification": "PARACHUTIST",
+      "start": {
+        "drop": {
+          "run": "practice",
+          "landings": { "holloway": [2, 3], "fitch": [3, 3], "vance": [4, 3], "barrow": [3, 4], "speers": [6, 4], "nunn": [7, 3] }
+        },
+        "enemies": []
+      },
+      "steps": [
+        {
+          "say": "CLICK THE PRACTICE RUN.",
+          "tell": "Every mission starts in the aircraft. The line across the map is a drop run: the way the aircraft will fly. A mission has 3 runs to choose from; the practice ground has 1. Click its name, or press ‘1’.",
+          "allow": { "run": true },
+          "until": { "kind": "runPicked" }
+        },
+        {
+          "say": "PRESS SPACE TO JUMP.",
+          "tell": "The men jump one after another along the line. The marked ground is where they may come down: the wind, shown by the arrow, carries each man 1 or 2 hexes. Today every man lands where the instructor has put him.",
+          "allow": { "run": true, "jump": true },
+          "until": { "kind": "landed" }
+        },
+        {
+          "say": "THE SIX MEN. PRESS NEXT.",
+          "tell": "All six are down, each standing on his parachute. The list on the right is the six of them: a man's name, his job, and his action points as dots. A man is selected by clicking him there or on the map.",
+          "point": "roster",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "THE ALERT DIAL. PRESS NEXT.",
+          "tell": "The dial is how alarmed the garrison is: Calm, Suspicious, Alert, Alarmed. A man seen adds 1, a parachute found 1, gunfire 2, an explosion 3. The higher it goes, the further the enemy sees and the harder he looks.",
+          "point": "alert",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "THE TURN. PRESS NEXT.",
+          "tell": "This is the turn number, and the strip under it is the night running out. A mission ends at dawn, on its last turn. The practice ground has no dawn. ‘KEYBOARD’ lists every key, and ‘?’ is how to play.",
+          "point": "clock",
+          "until": { "kind": "acknowledged" }
+        },
+        {
+          "say": "HOVER DUTCH.",
+          "tell": "The box under the map describes whatever the mouse is on: a man, an enemy, the ground, a target. Hover Dutch, the leader, on the map.",
+          "point": "readout",
+          "ring": [[2, 3]],
+          "at": [2, 3],
+          "until": { "kind": "hovered", "hexes": [[2, 3]] }
+        }
+      ]
+    },
     {
       "id": "parachutes",
       "number": 2,
@@ -149,7 +202,7 @@
     {
       "id": "not-being-seen",
       "number": 5,
-      "title": "Not being seen",
+      "title": "Seen and not seen",
       "qualification": "FIELDCRAFT",
       "start": {
         "men": { "fitch": { "at": [1, 8] } },
@@ -186,6 +239,186 @@
           "tell": "Going to ground (‘H’ for ‘Hide’) makes him harder still to see, and ends his turn. He stays hidden until he next moves.",
           "allow": { "select": ["fitch"], "actions": ["hide"] },
           "until": { "kind": "hidden", "unit": "fitch" }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "The garrison looks when the turn ends, not before. Hidden in the hedge, Fitch will not be seen. End the turn.",
+          "allow": { "select": ["fitch"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "NOW GET IT WRONG. STEP OUT.",
+          "tell": "Now see what being seen does. Move Fitch out onto the red ground, 1 AP.",
+          "ring": [[3, 8]],
+          "at": [3, 8],
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "move": [[3, 8]] },
+          "until": { "kind": "movedTo", "unit": "fitch", "hexes": [[3, 8]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "Nothing has happened yet: a man is only seen when the turn ends. End the turn, and the umpire will see him.",
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "BREAK CONTACT. BACK TO THE HEDGE.",
+          "tell": "Fitch was seen: the alert went up by 1, and he is in contact, marked on his counter. The umpire has turned to face him. A man in contact who is seen again is shot. Green ground is where he would not be seen: go there.",
+          "ring": [[2, 8]],
+          "at": [2, 8],
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "move": [[2, 8]] },
+          "until": { "kind": "movedTo", "unit": "fitch", "hexes": [[2, 8]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "He had one turn to get out of sight, and he has. End the turn: the umpire looks, sees nobody, and contact is broken.",
+          "mayBeSeen": true,
+          "allow": { "select": ["fitch"], "endTurn": true },
+          "until": { "kind": "contactBroken", "unit": "fitch" }
+        }
+      ]
+    },
+    {
+      "id": "watching-the-garrison",
+      "number": 6,
+      "title": "Watching the garrison",
+      "qualification": "FIELDCRAFT",
+      "start": {
+        "men": { "nunn": { "at": [11, 5] } },
+        "enemies": [
+          { "id": "umpire-post", "label": "Umpire", "type": "sentry", "at": [12, 7], "facing": "W" },
+          { "id": "umpire-patrol", "label": "Umpire", "type": "patrol", "facing": "W", "loop": false, "route": [[5, 6], [1, 6]] }
+        ]
+      },
+      "steps": [
+        {
+          "say": "CLICK NUNN.",
+          "tell": "The garrison is never hidden, and it never does anything the map has not already shown. Two umpires here: a ‘PATROL’ on the road west of the brook, and a ‘SENTRY’ south of Nunn's hedge.",
+          "ring": "men",
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "selected", "unit": "nunn" }
+        },
+        {
+          "say": "HOVER THE PATROL.",
+          "tell": "A patrol walks a beat: the dotted line, there and back. The solid wedge is what it sees now, up to 3 hexes. The dashed wedge is the way it will face next turn. ‘R’ shows every beat at once.",
+          "ring": [[5, 6]],
+          "at": [5, 6],
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "hovered", "hexes": [[5, 6]] }
+        },
+        {
+          "say": "HOVER THE RING.",
+          "tell": "A sentry never leaves his post: he only turns. This one looks west, over the ringed hex, 2 hexes from him. The ground is red: Nunn would be seen there.",
+          "ring": [[10, 7]],
+          "at": [10, 7],
+          "allow": { "select": ["nunn"] },
+          "until": { "kind": "hovered", "hexes": [[10, 7]] }
+        },
+        {
+          "say": "PRESS T. CLICK THE RING.",
+          "tell": "A stone (‘T’ for ‘Throw’) costs 1 AP and can land up to 3 hexes away. Every sentry within 3 hexes of where it lands turns to look at once, and the alert goes up by 1. Throw it onto the road behind him.",
+          "ring": [[13, 6]],
+          "at": [13, 6],
+          "does": { "at": [13, 6] },
+          "allow": { "select": ["nunn"], "actions": ["stone"], "target": [[13, 6]] },
+          "until": { "kind": "stoneThrown" }
+        },
+        {
+          "say": "HE LOOKS AWAY. GO NOW.",
+          "tell": "The sentry has turned his back and the ground is no longer red. He looks that way until this turn ends. Nunn has 2 AP left: move him to the ring.",
+          "ring": [[10, 7]],
+          "at": [10, 7],
+          "allow": { "select": ["nunn"], "move": [[10, 7]] },
+          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[10, 7]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "The garrison looks now, and the sentry is still facing the stone: Nunn is not seen. After that he turns back to his post.",
+          "allow": { "select": ["nunn"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "HE HAS TURNED BACK. INTO THE WOOD.",
+          "tell": "A stone buys one turn. The sentry is looking west again and Nunn is in the open in front of him, but nobody is seen until the turn ends. A wood costs 2 AP and is heavy cover: go there.",
+          "ring": [[10, 8]],
+          "at": [10, 8],
+          "allow": { "select": ["nunn"], "move": [[10, 8]] },
+          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[10, 8]] }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "In the wood he is 2 of 3 dots, even this close. End the turn: the sentry looks, and does not see him.",
+          "allow": { "select": ["nunn"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        }
+      ]
+    },
+    {
+      "id": "fighting",
+      "number": 7,
+      "title": "Fighting",
+      "qualification": "WEAPONS",
+      "start": {
+        "men": { "vance": { "at": [2, 8] }, "speers": { "at": [2, 5] } },
+        "enemies": [
+          { "id": "umpire-a", "label": "Umpire", "type": "sentry", "at": [3, 8], "facing": "E" },
+          { "id": "umpire-b", "label": "Umpire", "type": "sentry", "at": [1, 4], "facing": "NW" }
+        ]
+      },
+      "steps": [
+        {
+          "say": "CLICK VANCE.",
+          "tell": "Any man can use a knife. He must start his turn beside the enemy and behind him, unseen. Vance is in the hedge behind this ‘SENTRY’ umpire, who is looking the other way.",
+          "ring": [[2, 8]],
+          "allow": { "select": ["vance"] },
+          "until": { "kind": "selected", "unit": "vance" }
+        },
+        {
+          "say": "PRESS N. CLICK THE UMPIRE.",
+          "tell": "The knife (‘N’) takes his whole turn: he must not have spent any AP. It is silent: no noise, no alert. It leaves a body, and a body found by the garrison is 1 alert.",
+          "ring": [[3, 8]],
+          "at": [3, 8],
+          "allow": { "select": ["vance"], "actions": ["knife"], "target": [[3, 8]] },
+          "until": { "kind": "enemyDown", "enemy": "umpire-a" }
+        },
+        {
+          "say": "CLICK SPEERS.",
+          "tell": "Only a gunner can open fire on an enemy who has not seen him. Speers is a gunner. He can fire at an enemy within 2 hexes with a clear line to him.",
+          "ring": [[2, 5]],
+          "at": [2, 5],
+          "allow": { "select": ["speers"] },
+          "until": { "kind": "selected", "unit": "speers" }
+        },
+        {
+          "say": "PRESS S. CLICK THE UMPIRE.",
+          "tell": "Suppress (‘S’) is 2 AP. The enemy keeps his head down: he sees nobody and shoots nobody when this turn ends. It is gunfire: 2 alert (1 from Speers, whose skill is a Cool Head), and patrols within 5 hexes come to look.",
+          "ring": [[1, 4]],
+          "at": [1, 4],
+          "allow": { "select": ["speers"], "actions": ["suppress"], "target": [[1, 4]] },
+          "until": { "kind": "suppressed", "enemy": "umpire-b" }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "Speers has 1 AP left, not enough for the kill, which is 2. One gunner needs two turns; two gunners can do it in one. End the turn.",
+          "allow": { "select": ["speers"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
+        },
+        {
+          "say": "PRESS K. CLICK THE UMPIRE.",
+          "tell": "An enemy who was suppressed last turn can be killed (‘K’), 2 AP: one silenced shot, 1 alert, heard 2 hexes away. It never misses. It leaves a body.",
+          "ring": [[1, 4]],
+          "at": [1, 4],
+          "does": { "how": "kill" },
+          "allow": { "select": ["speers"], "actions": ["kill"], "target": [[1, 4]] },
+          "until": { "kind": "enemyDown", "enemy": "umpire-b" }
+        },
+        {
+          "say": "FIRING BACK. PRESS NEXT.",
+          "tell": "A man who is no gunner can fire only once he has been seen. ‘S’ is then Fire back, 2 AP, at the enemy who has him in his sights: that enemy's head is down for a turn, and it is gunfire, 2 alert.",
+          "point": "actions",
+          "until": { "kind": "acknowledged" }
         }
       ]
     }

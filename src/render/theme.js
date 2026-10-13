@@ -1162,7 +1162,8 @@ export const CUE = {
   pointRingRadius: 34,
   // A lesson's ring on a man (M48b, the operator's: the ring lay over the
   // parachute on his hex, the thing the step was about): round the whole hex.
-  manRingRadius: 50,
+  manRingRadius: 62,
+  manRingNoteDrop: 28, // his pen note goes under the wider ring
   pointRingWidth: 5,
   pointRingOpacity: 0.85,
   pointPulseMs: 1100,

@@ -5,10 +5,10 @@
 // lesson that cannot be passed fails a test, not a player.
 
 import { dangerWash } from '../src/sight.js';
-import { advance, allows, back, beginLesson, caughtOut, lessonStart, stepMet, stepStart, validateLessons } from '../src/lessons.js';
+import { advance, allows, back, beginLesson, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
-import { createInitialState, endTurn, hideUnit, moveUnit, packParachute, selectUnit, setHover } from '../src/state.js';
+import { chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, selectUnit, setHover, suppressEnemy, throwStone } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { planMove, reachableFor } from '../src/units.js';
 
@@ -66,6 +66,12 @@ export default [
     const { lessons, base, map, rules } = await course();
     for (const lesson of lessons) {
       const s = lessonStart(base, lesson, map, rules);
+      // A lesson that starts in the drop (M48b): nobody down, its own men to jump.
+      if (lesson.start.drop) {
+        assert(s.phase === 'drop' && s.dropRunId === null && s.units.every((u) => !u.landed), `${lesson.id}: in the drop, nobody down`);
+        assert(s.units.map((u) => u.id).sort().join() === Object.keys(lesson.start.drop.landings).sort().join(), `${lesson.id}: the men it lands are the men who jump`);
+        continue;
+      }
       const on = s.units.filter((u) => u.landed).map((u) => u.id).sort().join();
       assert(on === Object.keys(lesson.start.men).sort().join(), `${lesson.id}: on the board ${on}`);
       for (const [id, m] of Object.entries(lesson.start.men)) {
@@ -98,8 +104,39 @@ export default [
         const from = stepStart(progress);
         assert(!stepMet(step, from, state), `${where} is not met before it is done`);
         const { until } = step;
-        const man = state.units.find((u) => u.id === (until.unit ?? state.selectedUnitId));
-        if (until.kind === 'selected') {
+        const man = state.units.find((u) => u.id === (until.unit ?? step.does?.unit ?? state.selectedUnitId));
+        // What a step's test does where its condition does not say: `does` in
+        // the lessons file ({ unit, enemy, at }), read only here.
+        const does = step.does ?? {};
+        if (until.kind === 'runPicked') {
+          assert(allows(step, { kind: 'run', runId: lesson.start.drop.run }) && !allows(step, { kind: 'jump' }), `${where}: the run may be picked, and nobody jumps yet`);
+          state = chooseDropRun(state, map, lesson.start.drop.run);
+        } else if (until.kind === 'landed') {
+          assert(allows(step, { kind: 'jump' }), `${where}: jumping is allowed`);
+          state = jump(state, map, rules, lessonLandings(lesson));
+          for (const [id, at] of Object.entries(lesson.start.drop.landings)) {
+            const u = state.units.find((x) => x.id === id);
+            assert(u.landed && u.q === at[0] && u.r === at[1] && u.hits === 0 && u.turnsLost === 0 && u.ap === u.apMax, `${where}: ${id} is down at ${at}, unhurt, with his whole pool`);
+          }
+          assert(state.parachutes.length === Object.keys(lesson.start.drop.landings).length, `${where}: each on his parachute`);
+        } else if (until.kind === 'acknowledged') {
+          assert(!stepMet(step, from, state) && stepMet(step, from, state, { acknowledged: true }), `${where}: NEXT is what ends it`);
+          progress = advance(progress, lesson, state);
+          continue;
+        } else if (until.kind === 'contactBroken') {
+          assert(man.inContact && allows(step, { kind: 'endTurn' }), `${where}: he is in contact, and the turn may end`);
+          state = endTurn(state, rules, map);
+        } else if (until.kind === 'stoneThrown') {
+          assert(allows(step, { kind: 'action', id: 'stone' }), `${where}: a stone is allowed`);
+          state = throwStone(state, man.id, hex(does.at), map, rules);
+        } else if (until.kind === 'suppressed') {
+          assert(allows(step, { kind: 'action', id: 'suppress' }), `${where}: suppressing is allowed`);
+          state = suppressEnemy(state, man.id, until.enemy, map, rules);
+        } else if (until.kind === 'enemyDown') {
+          const how = does.how ?? 'knife';
+          assert(allows(step, { kind: 'action', id: how }), `${where}: the ${how} is allowed`);
+          state = how === 'knife' ? knifeEnemy(state, man.id, until.enemy, rules) : killEnemy(state, man.id, until.enemy, map, rules);
+        } else if (until.kind === 'selected') {
           assert(allows(step, { kind: 'select', unitId: until.unit }), `${where}: selecting him is allowed`);
           state = selectUnit(state, until.unit);
         } else if (until.kind === 'hovered') {
@@ -128,6 +165,59 @@ export default [
       }
       assert(progress.done, `${lesson.id} is passed after its last step`);
     }
+  }],
+
+  ['a lesson may start in the drop, and lands each man where it says with nothing rolled', async () => {
+    const { lessons, base, map, rules, json, known } = await course();
+    const lesson = lessons.find((l) => l.start.drop);
+    assert(lesson?.number === 1, 'lesson 1 is the drop');
+    const start = lessonStart(base, lesson, map, rules);
+    const down = (seed) => jump(chooseDropRun({ ...start, seed }, map, lesson.start.drop.run), map, rules, lessonLandings(lesson)).units.map((u) => `${u.id}:${u.q},${u.r}`).join();
+    assert(down(1) === down(977), 'the same landing on any seed');
+    assert(lessonLandings(lessons.find((l) => !l.start.drop)) === null, 'no other lesson lands anyone');
+    assert(!allows(lesson.steps[0], { kind: 'jump' }) && allows(lesson.steps[1], { kind: 'jump' }), 'nobody jumps until the step that asks');
+    const broken = (change) => {
+      const copy = JSON.parse(JSON.stringify(json));
+      change(copy.lessons.find((l) => l.id === lesson.id));
+      return throws(() => validateLessons(copy, known));
+    };
+    assert(broken((l) => { l.start.drop.run = 'nowhere'; }), 'a run the map does not have');
+    assert(broken((l) => { l.start.men = { fitch: { at: [0, 0] } }; }), 'men placed as well as landed');
+    assert(broken((l) => { l.steps[2].point = 'ceiling'; }), 'a part of the page that is not in the list');
+    assert(broken((l) => { l.steps[0].until = { kind: 'enemyDown', enemy: 'nobody' }; }), 'an enemy the lesson does not have');
+  }],
+
+  ['an aimed action lands only where a step says, if it says', async () => {
+    const step = { allow: { actions: ['stone'], target: [[13, 6]] } };
+    assert(allows(step, { kind: 'target', at: { q: 13, r: 6 } }) && !allows(step, { kind: 'target', at: { q: 12, r: 6 } }), 'the hex it names');
+    assert(allows({ allow: { actions: ['stone'] } }, { kind: 'target', at: { q: 0, r: 0 } }), 'anywhere, where it names none');
+  }],
+
+  ['what the lessons say of the ground is so: the stone opens the red hex, and the hedge breaks contact', async () => {
+    const { lessons, base, map, rules } = await course();
+    const washAt = (state, id, [q, r]) => {
+      const man = state.units.find((u) => u.id === id);
+      return dangerWash(map, rules, state, man, reachableFor(map, state.units, man, rules, state.enemies)).get(hexKey(q, r));
+    };
+    // Lesson 6: the ringed hex is red until the stone lands behind the sentry.
+    const six = lessons.find((l) => l.id === 'watching-the-garrison');
+    const start = lessonStart(base, six, map, rules);
+    const stone = six.steps.find((s) => s.until.kind === 'stoneThrown');
+    const goal = six.steps.find((s) => s.until.kind === 'movedTo').until.hexes[0];
+    assert(washAt(start, 'nunn', goal) === 'spotted', `the hex it calls red is red: ${washAt(start, 'nunn', goal)}`);
+    const thrown = throwStone(start, 'nunn', hex(stone.does.at), map, rules);
+    assert(thrown.alert.points === start.alert.points + 1 && thrown.units.find((u) => u.id === 'nunn').ap === 2, 'a stone is 1 AP and 1 alert, as it says');
+    assert(washAt(thrown, 'nunn', goal) !== 'spotted', 'and is not once the sentry has turned to the stone');
+    const patrol = start.enemies.find((e) => e.id === 'umpire-patrol');
+    assert(Math.abs(patrol.q - stone.does.at[0]) > rules.noise.stone + 1, 'the patrol is out of earshot of it');
+    // Lesson 5: seen on the red ground, he is in contact and the hedge is green.
+    const five = lessons.find((l) => l.id === 'not-being-seen');
+    let s = lessonStart(base, five, map, rules);
+    s = moveUnit(s, 'fitch', planMove(map, s.units, s.units.find((u) => u.id === 'fitch'), { q: 3, r: 8 }, rules, s.enemies), map);
+    s = endTurn(s, rules, map);
+    const fitch = s.units.find((u) => u.id === 'fitch');
+    assert(fitch.inContact && fitch.hits === 0 && s.alert.points === 1, 'seen: in contact, unhurt, the alert up by 1');
+    assert(washAt(s, 'fitch', [2, 8]) === 'clear', `the hedge is green, where contact breaks: ${washAt(s, 'fitch', [2, 8])}`);
   }],
 
   ['the umpire whistles for a man seen, and the step is put back as it began', async () => {

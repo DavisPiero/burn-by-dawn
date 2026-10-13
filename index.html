@@ -993,10 +993,13 @@
     #lesson .lesson-on { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
     #lesson .lesson-on-label { font-size: 11px; font-weight: bold; letter-spacing: 1px; }
     #lesson .lesson-on-say { font-family: var(--slab); font-weight: bold; font-size: 15px; color: var(--red); }
-    #lesson .lesson-on .btn { padding: 4px 14px; font-size: 14px; }
+    #lesson .lesson-on .btn { padding: 4px 14px; font-size: 14px; color: var(--paper); background: var(--green); }
     #lesson .lesson-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     #lesson .lesson-ways { display: inline-flex; gap: 6px; }
     #lesson .btn { padding: 2px 8px; font-size: 12px; }
+    /* What a step points at on the page (M48b): ringed in the red pen, throbbing as the board's rings do. */
+    @keyframes lesson-point { 50% { outline-color: transparent; } }
+    .lesson-point { outline: 5px solid var(--red); outline-offset: 3px; animation: lesson-point 1.2s ease-in-out infinite; }
     /* A click the step does not ask for: the card shakes its head. */
     @keyframes lesson-nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
     #lesson.nudge { animation: lesson-nudge 180ms steps(4, end) 2; }

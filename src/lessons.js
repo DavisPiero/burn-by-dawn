@@ -6,6 +6,7 @@
 // its data, so going back a step, or taking a lesson again, is only a matter
 // of which state is put on the board (CLAUDE.md rule 7).
 
+import { runById } from './drop.js';
 import { createEnemies } from './enemy.js';
 import { DIRECTION_NAMES } from './hex.js';
 import { isInPlay } from './map.js';
@@ -24,7 +25,17 @@ import { fillActionPoints, onBoard } from './units.js';
 //   destroyed     { objective }       that objective is destroyed
 //   manOut        { unit? }           a man (that man) is out at the exfil
 //   acknowledged  {}                  the player pressed on: a step that only shows
-export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged'];
+// M48b's, each for a lesson that could not be told without it:
+//   runPicked     {}                  a drop run is chosen (a lesson that starts in the drop)
+//   landed        {}                  the stick has jumped and is on the ground
+//   contactBroken { unit? }           a man (that man) in contact at the step's start is out of it
+//   stoneThrown   {}                  a stone more has been thrown this turn
+//   suppressed    { enemy? }          an enemy (that enemy) has its head down
+export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged', 'runPicked', 'landed', 'contactBroken', 'stoneThrown', 'suppressed'];
+
+// The parts of the page a step may point at (`point`), where what it shows is
+// not on the board (M48b: lesson 1 reads the page). main.js knows where each is.
+export const POINT_KINDS = ['roster', 'alert', 'clock', 'readout', 'actions'];
 
 const isHex = (h) => Array.isArray(h) && h.length === 2 && h.every(Number.isInteger);
 const same = (a, b) => a.q === b.q && a.r === b.r;
@@ -57,7 +68,15 @@ export function validateLessons(json, known, url = 'lessons') {
     if (!Number.isInteger(lesson.number) || lesson.number < 1) throw new Error(`${at} needs its "number" in the course`);
     const start = lesson.start;
     if (typeof start !== 'object' || start === null) throw new Error(`${at} needs a "start"`);
-    const men = Object.entries(start.men ?? {});
+    // A lesson that starts in the drop (M48b): its run, and where each man
+    // comes down, with no scatter. Its men are the ones it lands.
+    const drop = start.drop;
+    if (drop !== undefined) {
+      if (!runById(map, drop.run)) throw new Error(`${at}.start.drop: no drop run "${drop.run}" on the map`);
+      if (start.men !== undefined) throw new Error(`${at}.start: a lesson that starts in the drop lands its men ("drop.landings"), it does not place them ("men")`);
+      if (Object.keys(drop.landings ?? {}).length === 0) throw new Error(`${at}.start.drop needs its "landings"`);
+    }
+    const men = Object.entries(drop ? Object.fromEntries(Object.entries(drop.landings).map(([id, h]) => [id, { at: h }])) : start.men ?? {});
     if (men.length === 0) throw new Error(`${at}.start needs at least one of the "men"`);
     const taken = new Set();
     for (const [id, m] of men) {
@@ -86,6 +105,7 @@ export function validateLessons(json, known, url = 'lessons') {
       if (step.say.split(/\s+/).length > 7) throw new Error(`${where}: "say" is a pen line, seven words at most: ${JSON.stringify(step.say)}`);
       if (step.tell !== undefined && typeof step.tell !== 'string') throw new Error(`${where}: "tell" must be words`);
       if (step.at !== undefined) onMap(step.at, `${where}.at`);
+      if (step.point !== undefined && !POINT_KINDS.includes(step.point)) throw new Error(`${where}: "point" must be one of ${POINT_KINDS.join(', ')}`);
       for (const h of Array.isArray(step.ring) ? step.ring : []) onMap(h, `${where}.ring`);
       if (step.ring !== undefined && !Array.isArray(step.ring) && step.ring !== 'men') throw new Error(`${where}: "ring" is a list of hexes, or "men"`);
       const until = step.until;
@@ -98,10 +118,15 @@ export function validateLessons(json, known, url = 'lessons') {
       }
       if (until.kind === 'destroyed' && !objectiveIds.includes(until.objective)) throw new Error(`${where}: no objective "${until.objective}"`);
       if (until.objective !== undefined && !objectiveIds.includes(until.objective)) throw new Error(`${where}: no objective "${until.objective}"`);
+      if (until.enemy !== undefined && !(start.enemies ?? []).some((e) => e.id === until.enemy)) throw new Error(`${where}: no enemy "${until.enemy}" in this lesson`);
+      if (['runPicked', 'landed'].includes(until.kind) && !drop) throw new Error(`${where}: "${until.kind}" is for a lesson that starts in the drop`);
       const allow = step.allow ?? {};
       for (const id of Array.isArray(allow.select) ? allow.select : []) man(id, `${where}.allow.select`);
       for (const h of Array.isArray(allow.move) ? allow.move : []) onMap(h, `${where}.allow.move`);
       if (allow.move !== undefined && !Array.isArray(allow.move) && allow.move !== 'any') throw new Error(`${where}: "allow.move" is a list of hexes, or "any"`);
+      // Where an aimed action may land (M48b): a stone thrown anywhere else
+      // would leave the next step with nothing to show.
+      for (const h of allow.target ?? []) onMap(h, `${where}.allow.target`);
       for (const id of allow.actions ?? []) {
         if (!actionIds.includes(id)) throw new Error(`${where}.allow.actions: no action "${id}"`);
       }
@@ -118,6 +143,18 @@ export function validateLessons(json, known, url = 'lessons') {
  */
 export function lessonStart(base, lesson, map, rules) {
   const { start } = lesson;
+  // In the drop (M48b): nobody is down yet, and only the men it lands will jump.
+  if (start.drop) {
+    return {
+      ...base,
+      phase: 'drop',
+      dropRunId: null,
+      units: base.units.filter((u) => start.drop.landings[u.id]),
+      enemies: createEnemies({ ...map, enemies: start.enemies ?? [] }),
+      alert: { ...base.alert, points: start.alert ?? 0, peak: start.alert ?? 0 },
+      report: [], speech: [], selectedUnitId: null, selectedHex: null, hoverHex: null, targeting: null,
+    };
+  }
   const placed = base.units.map((unit) => {
     const m = start.men[unit.id];
     if (!m) return { ...unit, landed: false };
@@ -154,6 +191,16 @@ export function lessonStart(base, lesson, map, rules) {
 }
 
 /**
+ * Where a lesson's drop lands its men (M48b): its fixed landings in the shape
+ * drop.js landStick takes, or null for a lesson that does not start in the
+ * drop. state.js `jump` uses them in place of the scatter.
+ */
+export function lessonLandings(lesson) {
+  const landings = lesson?.start.drop?.landings;
+  return landings ? Object.entries(landings).map(([unitId, [q, r]]) => ({ unitId, q, r })) : null;
+}
+
+/**
  * Has the step's condition been met? `from` is the state the step began
  * from, `now` the state as it stands; `acknowledged` is set when the player
  * pressed on.
@@ -178,6 +225,14 @@ export function stepMet(step, from, now, { acknowledged = false } = {}) {
     case 'destroyed': return Boolean(now.objectives.find((o) => o.id === until.objective)?.destroyed);
     case 'manOut': return men.some((u) => u.out);
     case 'acknowledged': return acknowledged;
+    case 'runPicked': return now.phase === 'drop' && now.dropRunId !== null;
+    case 'landed': return now.phase !== 'drop';
+    case 'contactBroken': return men.some((u) => onBoard(u) && !u.inContact && from.units.find((w) => w.id === u.id)?.inContact);
+    case 'stoneThrown': {
+      const stones = (s) => (s.noises ?? []).filter((n) => n.kind === 'stone').length;
+      return now.turn === from.turn && stones(now) > stones(from);
+    }
+    case 'suppressed': return now.enemies.some((e) => e.suppressed && (until.enemy === undefined || e.id === until.enemy));
     default: return false;
   }
 }
@@ -187,8 +242,11 @@ export function stepMet(step, from, now, { acknowledged = false } = {}) {
  * (MISSION-TRAINING.md: idiot proof). `input` is one of
  *   { kind: 'select', unitId }      picking a man
  *   { kind: 'move', to: { q, r } }  moving the selected man
- *   { kind: 'action', id }          an action's button or key (its target click goes with it)
+ *   { kind: 'action', id }          an action's button or key
+ *   { kind: 'target', at: { q, r } } where an aimed action is clicked: anywhere, unless the step lists `target` hexes
  *   { kind: 'endTurn' }
+ *   { kind: 'run', runId }          looking at a drop run (M48b)
+ *   { kind: 'jump' }                jumping on the run chosen
  * Looking is always allowed: hovering, the routes, how to play.
  */
 export function allows(step, input) {
@@ -197,7 +255,10 @@ export function allows(step, input) {
     case 'select': return allow.select === true || (Array.isArray(allow.select) && allow.select.includes(input.unitId));
     case 'move': return allow.move === 'any' || (Array.isArray(allow.move) && allow.move.some((h) => same(input.to, hexOf(h))));
     case 'action': return (allow.actions ?? []).includes(input.id);
+    case 'target': return allow.target === undefined || allow.target.some((h) => same(input.at, hexOf(h)));
     case 'endTurn': return allow.endTurn === true;
+    case 'run': return allow.run === true;
+    case 'jump': return allow.jump === true;
     default: return false;
   }
 }
