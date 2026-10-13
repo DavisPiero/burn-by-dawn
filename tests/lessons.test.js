@@ -5,7 +5,7 @@
 // lesson that cannot be passed fails a test, not a player.
 
 import { dangerWash } from '../src/sight.js';
-import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from '../src/lessons.js';
+import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, live, stepMet, stepStart, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
 import { chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, selectUnit, setHover, suppressEnemy, throwStone } from '../src/state.js';
@@ -228,6 +228,25 @@ export default [
     const after = endTurn(fired, rules, map);
     const fitch = after.units.find((u) => u.id === 'fitch');
     assert(fitch.hits === 0 && !fitch.inContact, 'and he is not shot, and out of contact');
+  }],
+
+  ['a step done and held: only what the next step asks for does anything, and it is NEXT', async () => {
+    const { lessons, base, map, rules } = await course();
+    const lesson = lessons.find((l) => l.id === 'the-knife');
+    const start = lessonStart(base, lesson, map, rules);
+    const begun = beginLesson(lesson, start);
+    const move = { kind: 'move', to: { q: 2, r: 8 } };
+    assert(live(lesson, begun, { kind: 'select', unitId: 'vance' }) && !live(lesson, begun, move), 'not yet done: what the step lists');
+    const held = hold(begun);
+    assert(live(lesson, held, move), 'done and held: the move the next step asks for');
+    assert(!live(lesson, held, { kind: 'select', unitId: 'vance' }), 'a click on the man already picked does not turn the card');
+    assert(!live(lesson, held, { kind: 'action', id: 'knife' }) && !live(lesson, held, { kind: 'endTurn' }), 'nor anything from a later step');
+    // Picking a man is NEXT where picking him is the next step.
+    const picks = { steps: [{ until: { kind: 'acknowledged' } }, { allow: { select: ['fitch'] }, until: { kind: 'selected', unit: 'fitch' } }] };
+    assert(live(picks, hold({ step: 0, starts: [start] }), { kind: 'select', unitId: 'fitch' }), 'picking him, where the next step is to pick him');
+    const last = hold(advance(advance(advance(begun, lesson, start), lesson, start), lesson, start));
+    assert(last.step === lesson.steps.length - 1 && !live(lesson, last, { kind: 'action', id: 'knife' }), 'the last step held leads only to PASSED');
+    assert(!live(lesson, advance(last, lesson, start), move), 'and a lesson passed does nothing');
   }],
 
   ['an aimed action lands only where a step says, if it says', async () => {

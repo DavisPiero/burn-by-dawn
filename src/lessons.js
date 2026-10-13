@@ -268,6 +268,22 @@ export function allows(step, input) {
 }
 
 /**
+ * Does this do anything now? What the step lists, until it is done. Once it
+ * is done and held, only exactly what the next step asks for, which is then
+ * NEXT and the thing itself (M48c, the operator's: a card waiting on NEXT
+ * with Knife still looking pressable confused). Picking a man is NEXT only
+ * where picking him is the next step: most steps allow the man already
+ * picked, and a click on him should not turn the card.
+ */
+export function live(lesson, progress, input) {
+  if (progress.done) return false;
+  if (!progress.met) return allows(lesson.steps[progress.step], input);
+  const next = lesson.steps[progress.step + 1];
+  if (!next || (input.kind === 'select' && next.until.kind !== 'selected')) return false;
+  return allows(next, input);
+}
+
+/**
  * Caught out: what went wrong for one of ours since the step began, in the
  * umpire's words, or null: a man seen, hit or killed. A step that is about
  * being seen says `mayBeSeen`, and only a hit or worse stops it. (Nothing
