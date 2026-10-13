@@ -1040,7 +1040,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 **M48, under way: the course built** (§15, `MISSION-TRAINING.md`), a few lessons a
 session. Two sessions in, it has lessons 1 to 7 of fifteen; the mission is still a
-draft (`?mission=training`). **Next: lessons 8 and 9 (charges) and on to 15.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+draft (`?mission=training`). **Next: lesson 7 split in three (the knife, the gunner, firing back), then charges and on to the passing-out exercise.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
