@@ -792,6 +792,8 @@ Not worth making yet. The map and layout will still change.
 
 These are part of M7b and are made as SVG in `src/render/theme.js`:
 
+- (Not a sprite: the training course's clipboard, M48f, is paper and type on its card, made in CSS as the cards and stamps are.)
+
 - The C-47 Dakota silhouette for the drop fly-by (until `aircraft-dakota.png` is
   supplied), and the opening, drifting and collapsing parachute canopies: the men's in
   green, a supply canister's in blue (M43c).

@@ -1013,6 +1013,8 @@
     /* A lesson that says so (M48c) has its card top left: the bridge and its
        charge points lie under the usual corner, and the timer tin over it. */
     #lesson.northwest { right: auto; left: 40px; bottom: auto; top: 26px; width: min(400px, 50%); }
+    /* A free step's card is narrow (M48f): the exercise is played all over the west bank, and at its usual width it lay on the lane to the gate. */
+    #lesson.free { width: min(372px, 47%); }
     #lesson .lesson-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
     #lesson .lesson-title { font-family: var(--slab); font-weight: bold; font-size: 16px; letter-spacing: 0.5px; }
     #lesson .lesson-step { font-size: 12px; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
@@ -1392,17 +1394,17 @@
     #briefing .course-pages { display: grid; grid-template-columns: 1fr 1fr; column-gap: 0; margin-top: 6px; }
     #briefing .course-pages .contents.lessons { margin: 0; padding-right: 20px; border-right: 2px solid color-mix(in srgb, var(--ink) 35%, transparent); }
     #briefing .contents.lessons .contents-entry { margin: 0; }
-    #briefing .contents.lessons .contents-pick { padding: 0 8px 1px; }
+    #briefing .contents.lessons .contents-pick { padding: 0 8px; border-width: 1px; line-height: 1.2; }
     #briefing .contents.lessons .contents-title,
-    #briefing .contents.lessons .contents-page { font-size: 17px; letter-spacing: 1px; }
+    #briefing .contents.lessons .contents-page { font-size: 16px; letter-spacing: 1px; }
     #briefing .contents.lessons .contents-leader { transform: translateY(-4px); border-bottom-width: 2px; }
     #briefing .contents-tick { flex: none; width: 18px; font-size: 17px; font-weight: bold; color: var(--green); }
-    #briefing .clipboard { position: relative; margin: 10px 0 2px 24px; padding: 20px 12px 12px; background: color-mix(in srgb, var(--fire) 55%, var(--ink)); border: 3px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); }
+    #briefing .clipboard { position: relative; align-self: start; margin: 10px 0 2px 24px; padding: 18px 12px 12px; background: color-mix(in srgb, var(--fire) 55%, var(--ink)); border: 3px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); }
     #briefing .clip-clip { position: absolute; left: 50%; top: -9px; width: 96px; height: 22px; transform: translateX(-50%); background: color-mix(in srgb, var(--paper) 45%, var(--ink)); border: 3px solid var(--ink); border-radius: 5px; z-index: 1; }
-    #briefing .clip-sheet { position: relative; padding: 14px 16px 10px; background: var(--paper); background-image: var(--paper-fibre); background-size: var(--paper-fibre-size); border: 2px solid var(--ink); }
+    #briefing .clip-sheet { position: relative; padding: 12px 16px 8px; background: var(--paper); background-image: var(--paper-fibre); background-size: var(--paper-fibre-size); border: 2px solid var(--ink); }
     #briefing .clip-head { font-family: var(--slab); font-size: 20px; font-weight: bold; letter-spacing: 2px; text-align: center; }
     #briefing .clip-sub { font-size: 12px; font-style: italic; text-align: center; padding-bottom: 5px; margin-bottom: 5px; border-bottom: 2px solid var(--ink); }
-    #briefing .clip-rows .clip-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; margin: 0; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 50%, transparent); }
+    #briefing .clip-rows .clip-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; margin: 0; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 50%, transparent); }
     #briefing .clip-rows .clip-row::before { content: none; }
     #briefing .clip-box { flex: none; box-sizing: border-box; width: 17px; height: 17px; border: 2px solid var(--ink); font-size: 15px; line-height: 13px; text-align: center; font-weight: bold; color: var(--green); }
     #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; }

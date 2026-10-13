@@ -2906,6 +2906,7 @@ function placeLessonCard(pointed) {
   lessonCard.style.bottom = '';
   // A lesson at the bridge keeps its card in the far corner (M48c).
   lessonCard.classList.toggle('northwest', course?.lesson?.card === 'northwest');
+  lessonCard.classList.toggle('free', Boolean(lessonStep()?.free));
   if (!pointed || lessonCard.hidden) return renderLessonArrow(lessonArrow, null, null);
   const target = LESSON_POINTS[pointed].getBoundingClientRect();
   const page = lessonCard.offsetParent.getBoundingClientRect();
@@ -2920,7 +2921,7 @@ function placeLessonCard(pointed) {
   const top = Math.min(Math.max(wanted, page.top + 8 * scale), page.bottom - card.height - 8 * scale);
   // A card kept in the far corner stays there and only points (M48e: moved
   // level with the radio's button, it came down over the men it spoke of).
-  if (course?.lesson?.card !== 'northwest') {
+  if (!course?.lesson?.card) {
     lessonCard.style.bottom = 'auto';
     lessonCard.style.top = `${(top - page.top) / scale}px`;
   }
@@ -2942,7 +2943,8 @@ function lessonView() {
   const { lesson, progress } = course;
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
-    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: course.whistle, met: Boolean(progress.met),
+    // A free step's card is its few words and no more (M48f): the umpire's own card has said the whistle.
+    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: step.free ? null : course.whistle, met: Boolean(progress.met), free: Boolean(step.free),
     canBack: progress.step > 0 || Boolean(progress.met), next: Boolean(progress.met) || step.until.kind === 'acknowledged',
   };
 }

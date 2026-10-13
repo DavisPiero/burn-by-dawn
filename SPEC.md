@@ -424,8 +424,8 @@ comes after the current milestone is in `ROADMAP.md`.
 ### Current
 
 **M48, under way: the course built** (§15, `MISSION-TRAINING.md`), a few lessons a
-session. Four sessions in, it has lessons 1 to 16 of seventeen; the mission is still a
-draft (`?mission=training`). **Next: the passing-out exercise, with the clipboard and the course's list as a two-page spread.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+session. Five sessions in, it has all seventeen lessons, the course's list as a two-page spread and the clipboard; the mission is still a
+draft (`?mission=training`). **Next: the umpires' own counters and cries, START HERE and the course made playable, the ? pages' diagrams.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -455,7 +455,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 **In `MISSION-TRAINING.md`**: a course of lessons at a parachute school in England, and
 the lesson engine that runs it. The engine is built and the mission is a draft
-(`?mission=training`) with lessons 1 to 16 of seventeen; M48 builds the last, the passing-out exercise.
+(`?mission=training`) with all seventeen lessons; M48's last work is making it playable from the contents page.
 
 ---
 

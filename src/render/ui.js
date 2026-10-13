@@ -572,9 +572,10 @@ export function renderLesson(element, view, on) {
     ...view.tell.split('\n').map((line) => html('p', 'lesson-tell', boldKeys(line))),
     // What goes on from here (M48b, the operator's: there was no sense of
     // continuing): the step's own pen line, or the green NEXT where it only shows.
-    html('div', 'lesson-on', view.next
+    // A free step (M48f) has no line of what to do next: its card has said the job.
+    ...(view.free ? [] : [html('div', 'lesson-on', view.next
       ? [...(view.met ? [html('span', 'lesson-done', '✓ DONE')] : []), button('NEXT ▶', on.next, 'btn primary lesson-next')]
-      : [html('span', 'lesson-on-label', 'TO GO ON:'), html('span', 'lesson-on-say', boldKeys(view.say))]),
+      : [html('span', 'lesson-on-label', 'TO GO ON:'), html('span', 'lesson-on-say', boldKeys(view.say))])]),
     html('div', 'lesson-foot', [html('span', 'lesson-ways', ways)]),
   );
 }

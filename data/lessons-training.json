@@ -954,13 +954,12 @@
     {
       "id": "passing-out",
       "number": 17,
-      "title": "The passing-out exercise",
+      "title": "Passing out",
       "qualification": "PASSED OUT",
-      "card": "northwest",
       "start": {
         "drop": {
           "run": "practice",
-          "landings": { "holloway": [2, 3], "fitch": [3, 3], "vance": [4, 3], "barrow": [3, 4], "speers": [6, 4], "nunn": [7, 3] }
+          "landings": { "holloway": [2, 3], "fitch": [3, 3], "vance": [4, 3], "barrow": [3, 4], "speers": [6, 4], "nunn": [5, 2] }
         },
         "enemies": [
           { "id": "umpire-bridge", "label": "Bridge umpire", "type": "sentry", "at": [8, 6], "facing": "W" },
@@ -970,7 +969,7 @@
       "steps": [
         {
           "say": "CHOOSE THE RUN, THEN JUMP.",
-          "tell": "The passing-out exercise: a whole raid, and nobody to tell you what to click. Blow the Training Bridge, then get all six men out by the gate. First, choose the drop run and jump.",
+          "tell": "A whole raid, with nobody to tell you what to click. A whistle sends you back to the last checkpoint. Choose the drop run and jump.",
           "free": true,
           "mayBeSeen": true,
           "does": { "script": [] },
@@ -979,12 +978,12 @@
         },
         {
           "say": "BLOW THE TRAINING BRIDGE.",
-          "tell": "All six are down. The Training Bridge wants 2 charges, one on each of its charge points, and 2 umpires are watching it. After that, all six men out by the gate.\nIf the umpire's whistle stops you, the exercise goes back to its last checkpoint. This is the first.",
+          "tell": "Blow the Training Bridge, then get all six men out by the gate.",
           "free": true,
           "mayBeSeen": true,
           "does": { "script": [
-            { "move": ["fitch", [5, 5]] }, { "move": ["nunn", [7, 4]] }, { "move": ["holloway", [3, 5]] }, { "move": ["vance", [4, 7]] }, { "move": ["barrow", [2, 8]] }, { "move": ["speers", [4, 5]] }, { "end": true },
-            { "move": ["holloway", [4, 6]] }, { "move": ["vance", [1, 11]] }, { "move": ["barrow", [0, 11]] }, { "move": ["speers", [1, 9]] }, { "end": true },
+            { "move": ["fitch", [5, 5]] }, { "move": ["nunn", [6, 3]] }, { "move": ["holloway", [3, 5]] }, { "move": ["vance", [4, 7]] }, { "move": ["barrow", [2, 8]] }, { "move": ["speers", [4, 5]] }, { "end": true },
+            { "move": ["fitch", [7, 4]] }, { "move": ["nunn", [6, 4]] }, { "move": ["holloway", [4, 6]] }, { "move": ["vance", [1, 11]] }, { "move": ["barrow", [0, 11]] }, { "move": ["speers", [1, 9]] }, { "end": true },
             { "move": ["nunn", [7, 5]] }, { "charge": ["nunn", 2] }
           ] },
           "allow": { "select": true, "move": "any", "actions": ["hide", "suppress", "knife", "kill", "stone", "stabilise", "pack", "pickUp", "pass", "charge", "swim", "diversion"], "endTurn": true },
@@ -992,7 +991,7 @@
         },
         {
           "say": "SET THE SECOND CHARGE. GET CLEAR.",
-          "tell": "CHECKPOINT. The first charge is set and burning. Set the second, and have every man more than 1 hex from both when they go off.",
+          "tell": "CHECKPOINT. One charge is burning. Set the second and get every man clear.",
           "free": true,
           "mayBeSeen": true,
           "does": { "script": [
@@ -1004,7 +1003,7 @@
         },
         {
           "say": "GET ALL SIX OUT.",
-          "tell": "CHECKPOINT. The Training Bridge is down. Now get all six men out by the gate.",
+          "tell": "CHECKPOINT. The Training Bridge is down. Get all six men out by the gate.",
           "free": true,
           "mayBeSeen": true,
           "does": { "script": [
