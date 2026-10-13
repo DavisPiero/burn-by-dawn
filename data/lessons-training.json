@@ -286,16 +286,16 @@
       "title": "Watching the garrison",
       "qualification": "FIELDCRAFT",
       "start": {
-        "men": { "nunn": { "at": [11, 5] } },
+        "men": { "nunn": { "at": [11, 4] } },
         "enemies": [
-          { "id": "umpire-post", "label": "Umpire", "type": "sentry", "at": [12, 7], "facing": "W" },
+          { "id": "umpire-post", "label": "Umpire", "type": "sentry", "at": [14, 3], "facing": "W" },
           { "id": "umpire-patrol", "label": "Umpire", "type": "patrol", "facing": "W", "loop": false, "route": [[5, 6], [1, 6]] }
         ]
       },
       "steps": [
         {
           "say": "CLICK NUNN.",
-          "tell": "The garrison is never hidden, and it never does anything the map has not already shown. Two umpires here: a ‘PATROL’ on the road west of the brook, and a ‘SENTRY’ south of Nunn's hedge.",
+          "tell": "The garrison is never hidden, and it does nothing the map has not shown first. Two umpires here: a ‘PATROL’ on the road west of the brook, and a ‘SENTRY’ just beyond Nunn's hedge.",
           "ring": "men",
           "allow": { "select": ["nunn"] },
           "until": { "kind": "selected", "unit": "nunn" }
@@ -310,46 +310,32 @@
         },
         {
           "say": "HOVER THE RING.",
-          "tell": "A sentry never leaves his post: he only turns. This one looks west, over the ringed hex, 2 hexes from him. The ground is red: Nunn would be seen there.",
-          "ring": [[10, 7]],
-          "at": [10, 7],
+          "tell": "A sentry never leaves his post: he only turns. This one looks west, over the grass north of the hedge. The ringed hex is red: Nunn would be seen there.",
+          "ring": [[12, 3]],
+          "at": [12, 3],
           "allow": { "select": ["nunn"] },
-          "until": { "kind": "hovered", "hexes": [[10, 7]] }
+          "until": { "kind": "hovered", "hexes": [[12, 3]] }
         },
         {
           "say": "PRESS T. CLICK THE RING.",
-          "tell": "A stone (‘T’ for ‘Throw’) costs 1 AP and can land up to 3 hexes away. Every sentry within 3 hexes of where it lands turns to look at once, and the alert goes up by 1. Throw it onto the road behind him.",
-          "ring": [[13, 6]],
-          "at": [13, 6],
-          "does": { "at": [13, 6] },
-          "allow": { "select": ["nunn"], "actions": ["stone"], "target": [[13, 6]] },
+          "tell": "A stone (‘T’ for ‘Throw’) costs 1 AP and lands up to 3 hexes away. Every sentry within 3 hexes of where it lands turns to look at once, and the alert goes up by 1. Throw it behind him.",
+          "ring": [[14, 4]],
+          "at": [14, 4],
+          "does": { "at": [14, 4] },
+          "allow": { "select": ["nunn"], "actions": ["stone"], "target": [[14, 4]] },
           "until": { "kind": "stoneThrown" }
         },
         {
           "say": "HE LOOKS AWAY. GO NOW.",
-          "tell": "The sentry has turned his back and the ground is no longer red. He looks that way until this turn ends. Nunn has 2 AP left: move him to the ring.",
-          "ring": [[10, 7]],
-          "at": [10, 7],
-          "allow": { "select": ["nunn"], "move": [[10, 7]] },
-          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[10, 7]] }
+          "tell": "The sentry has turned his back, and the grass is no longer red. He looks that way until this turn ends. Nunn has 2 AP left: move him to the ring.",
+          "ring": [[12, 3]],
+          "at": [12, 3],
+          "allow": { "select": ["nunn"], "move": [[12, 3]] },
+          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[12, 3]] }
         },
         {
           "say": "PRESS SPACE: END THE TURN.",
-          "tell": "The garrison looks now, and the sentry is still facing the stone: Nunn is not seen. After that he turns back to his post.",
-          "allow": { "select": ["nunn"], "endTurn": true },
-          "until": { "kind": "turnEnded" }
-        },
-        {
-          "say": "HE HAS TURNED BACK. INTO THE WOOD.",
-          "tell": "A stone buys one turn. The sentry is looking west again and Nunn is in the open in front of him, but nobody is seen until the turn ends. A wood costs 2 AP and is heavy cover: go there.",
-          "ring": [[10, 8]],
-          "at": [10, 8],
-          "allow": { "select": ["nunn"], "move": [[10, 8]] },
-          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[10, 8]] }
-        },
-        {
-          "say": "PRESS SPACE: END THE TURN.",
-          "tell": "In the wood he is 2 of 3 dots, even this close. End the turn: the sentry looks, and does not see him.",
+          "tell": "The garrison looks now, and the sentry is still facing the stone: Nunn is not seen. A stone buys one turn: after this the sentry turns back, and next turn Nunn must be gone from there or under cover.",
           "allow": { "select": ["nunn"], "endTurn": true },
           "until": { "kind": "turnEnded" }
         }
@@ -407,7 +393,7 @@
         },
         {
           "say": "PRESS K. CLICK THE UMPIRE.",
-          "tell": "An enemy who was suppressed last turn can be killed (‘K’), 2 AP: one silenced shot, 1 alert, heard 2 hexes away. It never misses. It leaves a body.",
+          "tell": "An enemy who was suppressed last turn can be killed (‘K’), 2 AP: one silenced shot, heard 2 hexes away, 1 alert (none from Speers). It never misses. It leaves a body.",
           "ring": [[1, 4]],
           "at": [1, 4],
           "does": { "how": "kill" },

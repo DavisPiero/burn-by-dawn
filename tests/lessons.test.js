@@ -210,6 +210,11 @@ export default [
     assert(washAt(thrown, 'nunn', goal) !== 'spotted', 'and is not once the sentry has turned to the stone');
     const patrol = start.enemies.find((e) => e.id === 'umpire-patrol');
     assert(Math.abs(patrol.q - stone.does.at[0]) > rules.noise.stone + 1, 'the patrol is out of earshot of it');
+    // He ends the turn there unseen, and the sentry goes back to his post.
+    const there = moveUnit(thrown, 'nunn', planMove(map, thrown.units, thrown.units.find((u) => u.id === 'nunn'), hex(goal), rules, thrown.enemies), map);
+    const after = endTurn(there, rules, map);
+    assert(!after.units.find((u) => u.id === 'nunn').inContact, 'unseen while the sentry looks at the stone');
+    assert(after.enemies.find((e) => e.id === 'umpire-post').facing === start.enemies.find((e) => e.id === 'umpire-post').facing, 'and the sentry is back to his post after it');
     // Lesson 5: seen on the red ground, he is in contact and the hedge is green.
     const five = lessons.find((l) => l.id === 'not-being-seen');
     let s = lessonStart(base, five, map, rules);

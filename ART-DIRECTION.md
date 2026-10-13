@@ -239,6 +239,11 @@ board must read at a glance.
   button stands out. **The one that starts a game is the biggest thing in the foot**:
   START GAME on the orders before the drop, START LESSON 2 on a course's list, in the
   stencil.
+- **A card that leads somewhere new goes on only by that button**: the orders before
+  the drop, a course's list, PASSED. No other key or click puts it away (the
+  operator's, M48: the third time a stray key or click had moved the player on). A
+  card that only says something (a turn card, how to play) still goes at any key or
+  click, and says so beside its button.
 
 - **The contents page comes first** (§10 Missions), as the annual's contents: the title
   card with PARACHUTE RAIDS BEHIND THE LINES, then each mission as a contents line, its
@@ -261,7 +266,9 @@ board must read at a glance.
   are any; and one Bonus line naming everything that pays extra with its points (the
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
   words, `words.cleanBonus`). At its foot: **Music off** and beside it **Play tips**
-  (unticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON. A card too tall for the window is set tighter a step at a time (less
+  (unticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON.
+  **Play tips are also in the left margin**, under the sound and set as it is ("play
+  tips off"), to be turned on or off at any time. A card too tall for the window is set tighter a step at a time (less
   air, then 14 px, then 13) before anything is cut.
 - **How to play is a card of its own**, at any time: a **?** button beside KEYBOARD, the
   `?` or `/` key, or the orders' button, over a turn card too. It has the orders' place
@@ -286,13 +293,18 @@ board must read at a glance.
   italic, and ✓ PASSED or Not yet taken. No level, no HOW TO PLAY button; Music off at
   its foot.
 - **The lesson card** lies in the turn card's place while a lesson is on, and no turn
-  card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's one
-  sentence, and at its foot ◀ BACK, AGAIN and THE COURSE (and NEXT ▶ where a step only
-  shows something). After a whistle, **WHISTLE! FITCH was seen. Try that step again.**
+  card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's
+  sentences, then what goes on from here: **TO GO ON:** and the step's own line in the
+  red slab (CLICK BARROW.), or a green **NEXT ▶** where a step only shows something.
+  At its foot, small: ◀ STEP BACK (not on the first step), START AGAIN and COURSE
+  MENU. After a whistle, **WHISTLE! FITCH was seen. Try that step again.**
   in red above the sentence. Only its buttons take clicks. A click the step does not
   ask for makes the card shake its head, twice, a few pixels. The step's own line is
   on the board in the red pen, at the hex it is about, with the pen's throbbing ring on
-  each hex it names. **PASSED** is a card in the same place, headed with the
+  each hex it names. A ring on a man is wider, round his whole hex, so it frames his
+  counter and the parachute beside it, with his line under the ring. A step about a
+  part of the page (the roster, the dial, the clock, the readout, the actions) rings
+  that part in the same red, throbbing, and its line is on the card only. **PASSED** is a card in the same place, headed with the
   qualification: LESSON 3 - Action Points - PASSED., the last word in army green.
 - **Turn cards.** At the start of every turn (turn 1 after the drop has been shown) a card
   sits in the bottom right of the map, narrow, with nothing darkened: what happened at the

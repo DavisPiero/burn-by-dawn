@@ -429,7 +429,7 @@ passed. The operator's list, with what I would add:
 | 5 | **Not being seen** | A sentry's view, the dots filling, cover, going to ground; then being spotted on purpose, and breaking contact |
 | 6 | **Watching the garrison** | Hover a patrol for its route and next turn's facing; time a crossing; a stone to turn a sentry's head |
 | 7 | **Fighting** | The knife from behind; a gunner's suppress, then kill; firing back when seen; what a body found costs |
-| 8 | **Charges** | A canister to find; pick up, carry (and its weight), pass; the charge points; a time pencil; get clear; the bang and the alert |
+| 8, 9 | **Charges** (two lessons since M48's second session: fetch, carry and pass; then points, timer and getting clear) | A canister to find; pick up, carry (and its weight), pass; the charge points; a time pencil; get clear; the bang and the alert |
 | 9 | **The leader** | His orders (the extra AP near him) and his radio: calling the diversion |
 | 10 | **The men** | Each man's own skill, shown by using it: Steady Hands, Quick Work, Cat's Eyes, Treetops, Cool Head, Ox |
 | 11 | **Getting out** | The exfil, dawn, how many must be out, and the card that asks before a withdrawal |

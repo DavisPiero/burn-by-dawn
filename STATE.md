@@ -4,80 +4,69 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 13 Oct 2026, after M48's first session and the process review.
+Last updated: 13 Oct 2026, after M48's second session.
 
 ## Where we are
 
-- **Build M48** on `main`, the only branch. Tests: 211 headless, 213 in tests.html.
-- **Pushed:** GitHub and the live game are at M48 (13 Oct 2026); the live page was
-  loaded and starts.
+- **Build M48b** on the branch `m48b-the-drop-and-notes`, **not yet signed off**: it is
+  not merged to `main` and not pushed. `main` and the live game are still M48.
+  Tests: 214 headless, 216 in tests.html.
 - **Three missions are playable:** the rail bridge (France), the airfield (Tunisia)
-  and the aqueduct (Italy). v1.0 was tagged on 29 Sep 2026 with France alone.
-  The aqueduct is playable but not yet balanced.
-- **Phase 5, teaching the game, is in progress.** Done: the text diet (M44), seeing and
-  being seen (M45), doing (M46), the training mission specified and its lesson engine
-  (M47).
-- **The training course is a draft** (`?mission=training`): the practice ground is
-  drawn and lessons 2 to 5 of fifteen are built. It heads the contents page stamped
-  NEXT YEAR'S ANNUAL.
+  and the aqueduct (Italy). The aqueduct is playable but not yet balanced.
+- **Phase 5, teaching the game, is in progress.** The training course is a draft
+  (`?mission=training`) with **lessons 1 to 7 of fifteen**: the drop and reading the
+  page, parachutes, action points, ground, seen and not seen, watching the garrison,
+  fighting. It heads the contents page stamped NEXT YEAR'S ANNUAL (the operator's: leave
+  it first).
+- **This session's notes, done:** PASSED, the course list and START GAME go on only by
+  their green button; play tips can be switched in the left margin, and come on once
+  the course is passed (for that visit); the lesson card says what goes on; a wider ring
+  on a man; Tatton Wood, TRAINING BRIDGE, "the road".
 
 ## Next
 
-1. **M48, continued: the rest of the course**, a few lessons a session, each playable
-   when merged. Lesson 1 (the drop) comes first; it needs a lesson that starts in the
-   drop. Then the second half of lesson 5, then 6 to 15. The table is in
-   MISSION-TRAINING.md.
-2. Also M48's: umpire chips and cries, the end-of-course clipboard, START HERE on the
-   contents page and the course made playable, the **?** pages' diagrams.
-3. **M49: playtest the course on people who have never seen the game.** Measure the
-   time to the first move and to the first charge set, and what they ask.
+1. **Sign off M48b**, or send notes on it.
+2. **The aqueduct's balance, a short session of its own** (the operator's answers 10
+   and 11): make the knife dearer there (a kill that is heard) and mend Hard's North
+   run. Bot runs from a frozen copy.
+3. **M48, continued:** lessons 8 and 9 (charges, needing `start.canisters`), then 10 to
+   15. The table is in MISSION-TRAINING.md.
+4. Also M48's: umpire chips and cries, the end-of-course clipboard, START HERE on the
+   contents page and the course made playable, the **?** pages' diagrams (in code).
+5. **M49: playtest the course on people who have never seen the game.**
 
 Rule of the phase: cut a lesson to fit the engine; do not grow the engine for one lesson.
 
 ## Open with the operator
 
-Each of these stands as Claude guessed until answered. Numbered so they can be answered
-by number in the next kickoff.
+Each of these stands as Claude guessed until answered.
 
-The course:
-1. **The course starts at LESSON 2** until lesson 1 is built. Not a bug. (No answer
-   needed.)
-2. **The training ground's place names** are Claude's: Tatton Park, the Mere Brook,
-   Home Wood, Tatton Mere, Tatton Hall, the Knoll. Keep or rename?
-3. **The draft course heads the live contents page**, stamped NEXT YEAR'S ANNUAL. Leave
-   it first, or move it last until it is finished?
-4. **Lesson 8 (charges) is by far the longest.** Split it in two?
-5. **The whistle blows only when the turn ends**, since that is when a man is spotted.
-   Acceptable for the lessons?
-6. **Painted lesson panels**, or diagrams drawn in code?
-
-Teaching in the main game:
-7. **Play tips are off by default**, which hides the charge-point rings from a new
-   player. Keep off, turn on, or on once the course is passed?
-8. **The danger wash is on at every level**, Hard included. Too plain on Hard?
-9. **The words in the pen and the aqueduct's copy** are Claude's placeholders. Reword,
-   or good enough?
-
-The aqueduct's balance (numbers in MISSION-AQUEDUCT.md, "Balance"):
-10. **Killing everyone is still the best plan** there, even with a squad sent for
-    every body. Make the knife dearer on this map (a kill that is heard, or two turns
-    to make it), add a seventh enemy, or leave it?
-11. **Hard's North run wins 15%** against a target of 25 to 45. Fix or accept?
-
-To try by hand:
-12. **Space at the GET CLEAR note** should now only clear it, not end the turn.
-    Reasoned from the code, not checked in the browser.
+1. **Charges are two lessons, 8 and 9**, and the course is still fifteen. Asked on
+   13 Oct and not answered. Keep the split?
+2. **The whistle blows only when the turn ends.** Asked and not answered; kept, since
+   that is when a man is spotted in the game. Acceptable for the lessons?
+3. **Tips on once the course is passed lasts only the visit**, as nothing is stored.
+   Good enough, or should tips be on for everyone by default now they can be switched
+   off in play?
+4. **Enter does not count as the green button.** Right?
+5. **TRAINING BRIDGE's name is 0.4 of a hex lower**, just over the deck. Low enough?
+6. **A hover step goes on the instant the mouse crosses the hex.** Left alone; say if
+   it skips a card you are reading.
+7. **Lesson 7 tells firing back and does not have the player do it.** Enough?
+8. **The contents blurb and tagline** now say "training bridge" too (a guess).
 
 ## Owed
 
 - **From the operator** (ART-PROMPTS.md): Priority 22, reference art for the
-  aqueduct's board, to make; Priority 23, the aqueduct's sounds, to find; Priority 21,
-  the six in winter kit, optional.
+  aqueduct's board; Priority 23, the aqueduct's sounds; Priority 21, the six in winter
+  kit, optional. The rewording pass on the lessons and the aqueduct's copy (theirs,
+  when they have time).
 - **Recordings not yet supplied**, made in code until they are: whistle, train,
   canister thump, oars, surf.
 
 ## Housekeeping due
 
-- DECISIONS.md (874 lines) and SPEC.md (1,115 lines) are past the size limits in the
-  global working agreement. Next session: propose archiving decisions by phase and
-  what else can leave SPEC.md.
+- DECISIONS.md (893 lines) and SPEC.md (1,119 lines) are past the size limits in the
+  global working agreement. Proposed, not done: move DECISIONS before M40 into
+  `DECISIONS-ARCHIVE.md`; move SPEC §12's Done table into `MILESTONES.md` and §6 and
+  §7 (detection, sabotage) into files of their own, as §11 and §13 to §15 are.

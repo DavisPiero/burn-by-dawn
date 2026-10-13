@@ -2485,7 +2485,7 @@ function describeBriefing(which, view) {
         ...(left ? [] : ['That is every lesson of the course.', 'Play tips are now on for the missions: the red pen on the map says what to do next. They are turned off in the left margin.']),
       ]],
       sections: [],
-      link: { label: 'COURSE MENU', onClick: openCourse },
+      ...(next ? { link: { label: 'COURSE MENU', onClick: openCourse } } : {}),
       go: next ? `LESSON ${next.number} ▶` : 'COURSE MENU',
       onGo: () => closeBriefing(true),
     };
