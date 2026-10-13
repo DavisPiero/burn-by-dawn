@@ -609,8 +609,10 @@ function deriveView() {
   // operator's), but for the hexes a hover step asks for, whose cards speak
   // of the path. The readout still says what the hex is.
   const asked = lessonStep()?.until.kind === 'hovered' && lessonStep().until.hexes.some(([q, r]) => q === hex.q && r === hex.r);
-  view.planHidden = Boolean(lessonStep()) && !asked && !lessonLive({ kind: 'move', to: hex });
-  view.moveLabel = describePlan(plan, unit);
+  const barred = Boolean(lessonStep()) && !lessonLive({ kind: 'move', to: hex });
+  view.planHidden = barred && !asked;
+  // Nor does the readout offer a click that would do nothing there.
+  view.moveLabel = barred ? describePlan(plan, unit).replace('· click to move', '· not part of this step') : describePlan(plan, unit);
   if (plan) {
     // The detection phase tests every hex he enters, or the hex he stands on
     // if he stays put (enemy.js testedHexes), so that is what gets pips. A man
