@@ -294,7 +294,9 @@ board must read at a glance.
 - **A course's orders are its list of lessons** (§15), set as the contents page is:
   each lesson's title run to its number with a dotted leader, what it qualifies in
   italic, and ✓ PASSED or Not yet taken. No level, no HOW TO PLAY button; Music off at
-  its foot.
+  its foot. **In two columns** (M48c: eleven ran off the foot of the page, the green
+  button with them), read down the left and then the right, each lesson two lines, its
+  title at 18 px.
 - **The lesson card** lies in the turn card's place while a lesson is on, and no turn
   card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's
   sentences, then what goes on from here: **TO GO ON:** and the step's own line in the
@@ -303,6 +305,11 @@ board must read at a glance.
   from the board, and what a hover showed stays shown though the mouse has left it
   (the operator's: do it, see it, then NEXT). A step that only shows something has the
   NEXT from the start. Enter is NEXT.
+  **In a lesson the action strip shows as buttons only what would do something now**
+  (the step's actions; while the card waits on NEXT, the next step's, which then count
+  as NEXT); everything else is its key in the small row, and End turn is greyed unless
+  it would do something. A lesson at the bridge has its card top left, 400 px wide, clear
+  of the charge points and of the timer tin.
   At its foot, small: ◀ STEP BACK (not on the first step), START AGAIN and COURSE
   MENU. After a whistle, **WHISTLE! FITCH was seen. Try that step again.**
   in red above the sentence. Only its buttons take clicks. A click the step does not

@@ -12,7 +12,9 @@ and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), 
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
-`DECISIONS.md`. What comes next is in `ROADMAP.md`.
+`DECISIONS.md` (before M40, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
+Detection and alert (§6) is in `DETECTION.md` and sabotage (§7) in `SABOTAGE.md`, as
+authoritative as this file; the milestones done are in `MILESTONES.md`.
 
 **Design spine — everything serves this:** *every successful sabotage makes the rest of
 the mission harder.* Charges have fuse timers, explosions raise the garrison alert,
@@ -472,274 +474,18 @@ the six feel like six people.
 
 ## 6. Detection and alert
 
-There is **no fog of war.** Enemies are always drawn. The hidden resource is alert.
-
-Each enemy has a vision radius (3) and a facing arc (110°). A trooper inside it, with line
-of sight, is tested:
-
-```
-detection = base(enemy, 3) - cover(none 0, light 1, heavy 2) - concealment(trooper)
-            + proximity (+2 beside it, +1 two hexes off) + the alert state's detectionBonus
-```
-
-He is spotted at the threshold, **3**. The hover readout shows the sum as dots: "2 of 3
-dots". The player must see risk before committing.
-
-**Garrison alert has four states**, shown as a dial on the right page:
-
-| State | From | Effect |
-|---|---|---|
-| **Calm** | 0 | Patrols walk fixed routes. |
-| **Suspicious** | 2 | Vision +1. Patrols pause every other turn and sweep 60°. |
-| **Alert** | 4 | Vision +1. **Detection +1**: light cover no longer hides a man in the open arc. Hearing +1. |
-| **Alarmed** | 7 | As Alert, and every patrol hunts the last known contact. The reserve squad enters and watches the exfil. |
-
-The alert is a **points total**; "From" is where each state begins, and points cap at
-Alarmed. One event is not a whole state: a single sighting leaves the garrison Calm, a
-second makes it Suspicious.
-
-Raised by: being spotted (+1, only when he was not already in contact), gunfire (+2), a
-silenced kill (+1), an explosion (+3, the fuel dump +4), a body found (+1), a parachute
-found (+1, §9), a thrown stone (+1), the telephone line cut (+1). Enemy fire raises
-nothing extra: the sighting that caused it already counted.
-
-**Decay:** after 4 quiet turns (no alert raised, nobody spotted) the points drop to the
-start of the state below; in Calm, to 0.
-
-**Explosion floor:** once any charge has exploded, the alert never decays below
-Suspicious again.
-
-What this does to a run: the bridge alone leaves the garrison Suspicious; the bridge plus
-a cut telephone line still does; the bridge plus the fuel dump is Alarmed.
-
-### Noise: the dial is global, the reaction is local
-
-Every **noise** happens at a hex and is **heard within a radius**: parachute or body found
-3, thrown stone 3, gunfire 5, silenced shot 2, explosion 7, plus the state's hearing bonus.
-**A sighting is not a noise**: the enemies that spot a man hold and face him, but nobody
-else comes unless something is heard. Hearing is distance only; walls do not stop sound.
-Patrols that hear it leave their route, walk to that hex, sweep, and go back to their
-route. Enemies out of earshot feel only the dial.
-
-**The turn the patrols set out** (`patrols.setOutTurn`; 1 in France: they walk from the
-start). Where a mission sets it later, nothing walks its route until that turn's enemy
-phase: every patrol stands where the map put it. Standing is not sleeping: it sees,
-turns to a man it spots and holds him, and goes to a noise as ever. The airfield's is 2
-(§13), so the stick has one turn on the ground, and a second player phase, before the
-patrols come round. An enemy's hover says it stands this turn, the turn card says so on
-turn 1, and next turn's facing is shown as ever.
-
-**A post may sweep** (`sweep` on a sentry in the map; none in France or on the
-airfield). It looks its first way through the player phase of every odd turn and its
-second through every even one, turning in the enemy phase, so the ground it covers is
-open every other turn and an approach can be timed. The dashed wedge shows the turn to
-come, as for any enemy. A noise or a man it has spotted turns it as it would any
-sentry, and it goes back to its sweep after.
-
-**Sentries cannot leave their post.** A sentry that hears a noise turns to face it in the
-enemy phase and holds that facing through the next player phase and detection check,
-then turns back to its facing in `map.json`. A thrown stone turns sentries in earshot
-**at once**, in the player phase, through that turn's detection check — so a stone opens
-the ground now, for the men who still have AP.
-
-**Next turn is shown:** every enemy that will face a new way after the coming enemy
-phase shows it as a hollow dashed wedge beside its solid one, and hovering an enemy
-outlines what it will see next turn from where it will stand. It is the same sum the turn
-will do, so it changes as the men move.
-
-The most recent noise hex, or the hex of a first sighting, is the **last known contact**
-that every patrol hunts at Alarmed. Seeing a man already in contact again does not move it.
-
-**A repeat is not a new contact.** An event on a hex that enemies are already heading to
-or searching updates that contact instead: nobody new sets off, the search is not
-restarted, and the turn report says it once.
-
-### Contact and enemy fire
-
-Being spotted is a warning, not a wound:
-
-1. **Detection check, turn N** — an enemy spots a trooper. The alert rises by 1. He is
-   **in contact** and wears the spotted marker. In the enemy phase every enemy that
-   spotted him **stays put and turns to face him**, so the player can see who has him.
-2. **Player phase, turn N+1** — he has one turn to break contact: get out of sight, hide,
-   get distance, return fire himself (§4), or have a gunner suppress (or someone kill)
-   whoever is watching.
-3. **Detection check, turn N+1** — if any enemy spots him again, **he is shot** (§5
-   Wounds). The alert does not rise again. A suppressed enemy does not fire. If nobody
-   spots him, contact ends.
-
-**An enemy fires at one man a turn:** of the men already in contact it spots, the one it
-has in its sights (the one it turned to face), else the nearest, else the first in the
-roster. The others it sees stay in contact and are not shot by it that turn. So a man who
-holds an enemy's eye can draw its fire while another slips past: hunter and hunted. It
-turns to face whoever it fired at.
-
-The hover readout marks every path hex where a man in contact would be shot, and whether
-it would hit or pin him there, so being fired on is never a surprise. Where he is seen
-but every enemy seeing him is firing at another man, it says NOT SHOT and at whom.
-
-### Exfil watched
-
-At Alarmed the reserve squad enters from the road edge (`reserve.entryHexes`), marches to
-a guard hex beside the exfil, and stands there as a sentry facing it. The player sees the
-exit narrowing and routes around it. It **cannot be killed** (`killable: false`): it is a
-squad, not one man, and at Alarmed a kill would cost nothing and reopen the exfil for
-free. It can be suppressed for a turn to slip past. Its counter reads RESERVES.
-
-**Where a mission makes it killable** (its enemies patch; the aqueduct, §14) it is
-knifed, shot or blown up like a patrol, and the garrison sends another for each one
-killed, up to `reserve.replacements` (0 in the files; the aqueduct's is 1): it comes in
-the next enemy phase the alert is at Alarmed, as the first did, and not at all once a
-target's payoff has stopped the reserve. So a kill buys turns, not a free way out.
-
-### Reinforcements
-
-Blowing a target makes the garrison call up **reinforcements**: its kind's
-`reinforcements` in `rules.json` (0 on Easy and Normal; on Hard the bridge 2 and the fuel
-dump 1). They come on in the **enemy phase after the bang**, at the road's south end beside
-the exfil (`reinforcements.entryHexes`), and march to **posts** on the ways into the exfil
-— each squad the next post in order — where they stand as sentries. They are **patrols**,
-so they can be suppressed and killed. The call goes by telephone: **none come once the
-telephone exchange is down**, which makes the exchange the first job on Hard. The target
-rings, the hovers and the mission panel say so, and the turn report says when they are
-called and when they come on.
-
-**A body found may call them too** (`bodyFound.reinforcements`; 0 in the files, 1 on
-the aqueduct, §14). Where a mission sets it, the garrison finding **one of its own
-dead** calls up that many squads, as a bang does: on down the road in the next enemy
-phase, and none once a target's payoff has stopped the reserve. **Each goes to stand
-where its body was found**, looking the way the dead man looked at rest, so ground
-that has been cleared is garrisoned again; no more than `bodyFound.limit` of them in a
-mission (the aqueduct's: 4). The bang's squads keep the posts by the exfil. One of our
-men found dead calls nobody. The knife's and the
-kill's rollovers and the turn card's knife hint say so, and the turn report says when
-a squad is called for a body. It is what a kill costs later, where the alert alone was
-not cost enough.
+**In `DETECTION.md`**, a file of its own and as authoritative as this one: no fog of war,
+the detection formula, the alert dial and what each state does, noise (the dial is global,
+the reaction local), contact and enemy fire, the exfil watched, and reinforcements.
 
 ---
 
 ## 7. Sabotage
 
-Three objectives, each on a different approach. Their numbers are per kind in
-`rules.json` `objectives`; their hexes and charge points are in `map.json`.
-
-| Objective | Needs | Blast / kills within | Alert | Pays |
-|---|---|---|---|---|
-| **Rail Bridge** (PRIMARY) | 2 charges | 1 / 1 | +3 | the win; becomes canal |
-| **Telephone Exchange** | 1 charge, or cut the line | 1 / 1 | +3 (cut +1) | no reserve, no reinforcements |
-| **Fuel Dump** | 1 charge | 2 / 1 | +4 | the two nearest patrols leave the board |
-
-1. **Rail Bridge** — the charges go on the **piers, placed from the west canal bank**
-   beside the bridge, not on the deck. The deck is in the bridge post's view every turn;
-   the west bank is walked by the bridge patrol only some turns, so the skill is timing,
-   not luck. The post stands on the east bank just north of the bridge: at rest it looks
-   over the north pier, and a stone thrown north of it from the west bank turns it off
-   both piers for a turn. **A destroyed bridge is gone**: its hexes become canal, and the
-   only way over is to swim.
-2. **Telephone Exchange**, in the village of Bellecour, over the canal — 1 charge, or a
-   scout cuts the line (§4): silent, no charge used, the same bonus.
-3. **Fuel Dump and tank laager** — on the fields below the ridge, near the patrol base.
-   The largest blast.
-
-Every objective lists its **charge hexes**: where a trooper stands to place a charge. An
-objective may list **more charge points than it needs charges** (the exchange has three
-and needs one): they are a choice of where to stand, not a count, and the orders, target
-rings and hovers must say so. Once an objective has every charge it needs, its empty
-charge points are no longer drawn. A kind may set **`chargePointMoveCost`**: what a man
-pays to step onto any of its charge points, whatever the ground. The fuel dump's are on
-the ridge (2) and cost 1, so a man beside it is not stalled with nothing left to set the
-charge. It is for the men only: the garrison walks the ridge at its own cost.
-
-A charge sets a **3-turn fuse** by default. The fuse burns down in every fuse phase,
-including the one at the end of the turn it was placed, and the charge goes off at 0: a
-charge placed on turn N goes off at the end of turn N+2. Charges can be placed and left.
-An objective is destroyed once as many of its charges have gone off as it needs, in the
-same turn or not.
-
-A trooper within a charge's **kill radius** at detonation dies, wounded or not. Inside the
-**blast radius** but past the kill radius (only the fuel dump has such a ring) he takes
-**one hit**, as from a shot. The hover path warns of both. **An enemy anywhere inside the
-blast radius dies**, unless its type cannot be killed; it leaves no body (the bang is what
-the garrison hears; a body found after it would count the same event twice), and it stops
-holding anyone in contact.
-
-**One objective, one explosion:** charges on the same objective that detonate in the same
-fuse phase are one explosion — the alert rises once and the noise is heard once. Timing
-the bridge's two fuses together is therefore worth a whole alert step.
-
-**Time pencils** (`charges.fuseChoice`; null in France, where a charge is set with the
-one fuse as above), called **timers** on screen. Where a mission gives a `{ min, max }`,
-the man setting a charge picks its fuse from that many turns, and his `onPlaceCharge`
-fuse hook applies to whichever he picks (Steady Hands: a turn off each).
-- **Two plain steps.** The button reads **Charge + timer**. **C** opens **the tin of time
-  pencils** on the map beside the man, in whichever of the eight places round him covers
-  least of his blast and his counter: an olive tin stencilled SWITCH, DELAY, No. 10 · TIME
-  PENCILS, a pencil for each length, banded in the real colours (black, red, white, green,
-  yellow, blue, shortest to longest) with the turn it goes off ("4 TURNS on turn 19").
-  Click a pencil or press its number to lift it; **SET**, **Enter** or **C** again sets
-  the charge with the one lifted; **Esc** or Back puts the tin away. Undo takes it back.
-- **Which is offered first:** the default (`fuseTurns`), or if that is too short, the
-  shortest longer one that lets every man get clear. **Where charges already burn on
-  his target**, the one that goes off the same turn as the last of them, if one of his
-  reaches it and lets every man get clear: one bang, by pressing Enter. The tin says so
-  in a line ("4 turns goes off with the charges already set: one bang.").
-- **Getting clear.** While the tin is open the board shows the charge's blast in red, the
-  chain's included. A timer that would catch a man who could not walk off that ground in
-  time (his AP left this turn, a full pool each turn after) reads **too short** in red and
-  names him. One that would go off after dawn is struck out and cannot be picked.
-- **Once set**, the stopwatch is divided into the charge's own length, its hover and its
-  target's say the turn it blows, and the blast to come stays on the board, faint with a
-  dashed edge, until its turn.
-
-**A blast that sets off its neighbours** (`setsOff` on an objective kind; false in France).
-When an objective of such a kind is destroyed, every intact objective with a hex inside
-its blast radius (measured from the charges that went off) goes up with it: destroyed,
-counted toward the win, scored as its own, its payoff paid, and its own blast felt round
-its own hexes, killing and wounding by its own radii. It is still **one explosion**: one
-alert rise and one noise, the setting-off objective's. A charge already set on a caught
-objective is spent. A caught objective whose kind sets off carries the chain on. Its
-target ring and hover name what it takes ("SETS OFF 2 JU 52S"); the path warnings include
-every blast in the chain; and a setter still standing counts toward what the stick can
-still do, so losing a bomb is not a withdrawal while the setter could make it up.
-
-**The goods train** (`train`; null unless a mission gives one: France's). **Scenery with
-a timetable.** A train runs the map's railway from its west end, four hexes a turn, five
-hexes long, and is **on the Rail Bridge in the garrison's turn 10**. It comes onto the
-board three turns before, so it is watched coming: on the west edge in turn 8, four
-hexes on in turn 9, three short of the bridge in turn 10, across it in turn 11, and off
-the east edge by turn 14. **The bridge down within a turn of it** (in the fuse phase of
-turn 9, 10 or 11) **wrecks it and pays 5** on the back page (§10): on 9 the engine runs
-into the gap, on 10 it goes down with the bridge, on 11 its tail does. With France's
-three-turn fuse that is a charge set on turn 7, 8 or 9 (Dutch's a turn later): about
-when a stick that has come straight from the drop reaches the bridge, so it is a train
-to be in time for, not one to wait for, and the five or six turns left before dawn are
-for a bonus target and the walk out.
-- It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
-  the line as it passes. Its one rule is the score.
-- The bridge down earlier, with the train already on the board, stops it at the west
-  bank; down before it set out, none comes; down after it has gone by, it runs on.
-- Where it is follows from the turn and the turn the bridge went down, so nothing about
-  it is kept in state, and its hover, the bridge's (a TRAIN row), the orders, the mission
-  panel ("Goods train +5 · turn 10") and the turn card say when it is due. The turn card
-  says so first on the turns a charge set now would catch it. The turn report says when
-  it comes on, crosses, stops or is wrecked.
-- By the bot (`TRAIN=1`: charges held, hidden on the charge points, until they would
-  catch it): on Normal a stick that tries for it catches it in 91 to 95 games in 100,
-  waiting under a turn at the bridge, and wins 94 / 95 / 97 against 87 / 86 / 94 for
-  setting the charges on arriving, which catches it by chance in 15 to 29. On Hard it is
-  a stretch: the stick is at the bridge a turn later, catches it in 36 to 54 games in
-  100, and wins 37 / 39 / 53 against 39 / 41 / 42.
-
-The spine in practice: blow the fuel dump first and the bridge approach becomes a hunt.
-Blow the bridge last and you may not have turns left to reach exfil.
-
-**Only the primary is needed to win (§10).** The secondaries are bonus targets, worth
-score and costing alert, and each **pays back in play** (a `payoff` per kind, never a code
-branch for one objective): the exchange stops the garrison calling up its reserve squad
-(if it is already out, it stays) and its reinforcements; the fuel dump sends the two nearest
-patrols off the board to fight the fire, on top of any the blast kills. The target rings,
-the hovers and the mission panel say what each pays before the player commits, and the
-turn report says when it happens.
+**In `SABOTAGE.md`**, a file of its own and as authoritative as this one: the objectives and
+their charge points, charges and fuses, the time pencils, explosions and the alert they
+raise, blasts that set off their neighbours, cutting the line, and what each target pays
+back once it is destroyed.
 
 ---
 
@@ -1039,8 +785,8 @@ comes after the current milestone is in `ROADMAP.md`.
 ### Current
 
 **M48, under way: the course built** (§15, `MISSION-TRAINING.md`), a few lessons a
-session. Two sessions in, it has lessons 1 to 7 of fifteen; the mission is still a
-draft (`?mission=training`). **Next: lesson 7 split in three (the knife, the gunner, firing back), then charges and on to the passing-out exercise.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
+session. Three sessions in, it has lessons 1 to 11 of seventeen; the mission is still a
+draft (`?mission=training`). **Next: the leader, the men, getting out, the alert, a wounded man, and the passing-out exercise.** Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
 placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
@@ -1049,43 +795,8 @@ is well under its target. v1.0 is tagged.
 
 ### Done
 
-Each is recorded in full in DECISIONS.md and the git history.
-
-| # | What it did |
-|---|---|
-| M0–M6 | The engine: hex grid, terrain, units, traits, enemies and alert, combat, sabotage, the drop |
-| M7–M8e | The art pass, killing, the first balance pass, supplied art, undo |
-| M9–M10 | Difficulty levels, the drop runs tagged, sound |
-| M11–M24 | Fourteen playtest reviews: swimming, passing a charge, the knife, narrower arcs, next turn shown, the garrison's turn shown, kills that score, painted art and music, the score re-weighted, the readout and log reworked |
-| M25–M26d | Housekeeping; active play (prompts, lines, the hunter bot); the knife a whole turn, the Wood patrol; the v1.0 gate |
-| M27–M27b | Missions architecture: `data/missions.json`, win conditions as data, the contents page. Tagged v1.0 |
-| M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
-| M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
-| M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
-| M48 (second session) | The operator's notes: a card that leads somewhere new goes on only by its green button or Enter; play tips on for everyone; a menu behind a gear in the margin (sound, music, play tips, restart, contents); every lesson step held until NEXT with what it did still shown; the lesson card goes to what it points at; a wider ring on a man; Tatton Wood, the Training Bridge, the road. Lesson 1 (the drop, and reading the page), the second half of 5, 6 (watching the garrison) and 7 (fighting, firing back played) |
-| M48 (first session) | The operator's notes: the contents page on the bare table, a picked mission loaded in place; the cards' way on a button, START GAME on the orders; (UNAVAILABLE) on an action that is closed; the charge note goes of itself and Space at it does not end the turn. The practice ground redrawn as a park, the brook a hex west; lessons 2 (parachutes) and 4 (ground), and 3 and 5 reworded |
-| M47 | The training mission specified (§15) and its lesson engine: a mission that names a lessons file is a course; each lesson its own situation and steps, only what a step lists doing anything; the umpire's whistle putting a step back; BACK, AGAIN and the course's list; an exercise never settled. A draft practice ground with two lessons, each played through by a test |
-| M46 | Doing (Phase 5): marks on the enemies a man could strike; the first move shown by a ghost; a blast this turn throbbing, GET CLEAR! and an arrow; GET OUT! and a green exfil once the job is done, a reddening dawn strip and a clock on a man too far away; the alert's flying pip; the action strip down to what he can do now; the turn card's hint ringed on the board. The operator's notes: the pen's coaching behind a Play tips box, off unless ticked; the drop chosen in blue; the charge points ringed only from one hex off, lettered once |
-| M45 | Seeing and being seen (Phase 5): the danger wash on the ground a man can reach, red where he would be spotted and green where a man in contact would break it; a sight line, pips that fill and a cover shield on a hovered move; a crosshair on a man about to be fired on, BREAK CONTACT! under him; Hide urged where it works; HOVER A HEX. CLICK TO GO. until the first move |
-| M44 | The text diet (Phase 5): the orders cut to five lines, what tonight asks and nothing of how to play; how to play a card of its own behind **?**, with the counter key; the turn card four marked lines and one short hint; every hint shortened |
-| M43c | The operator's notes and the first playtest fix: the canisters come down in the drop on blue canopies of their own and are on the ground, ringed, only as each lands; their rings clear of the charge dots; CLICK A MAN TO START over them; the charge points ringed and lettered while the selected man carries a charge near a target; the revised aqueduct title card. The plan for teaching the game by showing, and a training mission, in ROADMAP.md (Phase 5) |
-| M43b | The operator's notes on M43: the canisters' rings pop on one by one with their thumps and sit round their pictures; the Italian chips and the aqueduct's title card painted and in |
-| M43 | The aqueduct's words, sounds and art hand-off: a mission's own folder for its garrison's chips (the Italians), the six's lines for Italy, the canisters' thump and the boat's oars and surf made in code, slots for its own title card and winter portraits, a colder wash on its winter ground, and the paintings and recordings asked for |
-| M42c | A squad called for a body stands where the body was found; canister dots higher; the drawn roads beside the aqueduct lifted to its channel; the confirm cards' button above the way back |
-| M42b | The operator's notes on the aqueduct: a found enemy body calls a squad; cover on the plough; roads that are only drawn, off the bottom of the map and along the aqueduct; canisters ringed and named in blue at the start and their charges counted in dots; the target rings over the garrison's chips; labels moved |
-| M42 | The aqueduct balanced by the bot: eight pier feet, a mule track up the west bank, the West and Valley runs and three beats redrawn, the longest timer offered first and then the one that makes one bang, Hard's boat two turns, rating bands; the bot's `tidy` style and `ALERT=1` |
-| M41e | The airfield's west gap moved two rows north, level with the north pens: Hard's runs back inside the targets |
-| M41d | The aqueduct playable from the contents page, with its painted panel (the operator's); the airfield's West gap kept |
-| M41c | Signal the boat's button in red while a man could send it; the aqueduct's contents panel and Italian enemy chips asked for in ART-PROMPTS |
-| M41b | The operator's notes on the draft: posts that sweep, a reserve that can be killed and is replaced, the boat signalled in early behind a card that asks, the aqueduct two hexes east with its arch open, the shut beach in red, the boat rowed in, enemy cries, soot where charges went off, ALL CHARGES SET on a target; the airfield's West run opened and its names quiet in play |
-| M41 | The aqueduct as a draft (`?mission=aqueduct`): its map and eleven kinds of ground, the aqueduct and the road bridge, the canister, the closed beach and the boat drawn and worded, the bot taught to fetch and to wait |
-| M40 | The aqueduct's engine work, off in both missions: supply canisters (§9) and the way out on a timetable (§10) |
-| M39 | Mission 3, the aqueduct, specified (§14): southern Italy 1941, every charge in a canister, a boat on a timetable, a tidy win ending at Alert. The airfield's line on the contents page reworded |
-| M38–M38b | France's dawn at the end of turn 16 (15 for a turn), its top rating from 40; a charge a man did not jump with costs him 1 AP while he carries it |
-| M37 | The goods train on turn 10; any man can carry one charge he picks up or is handed; CHARGES ARE SET. GET CLEAR! over a target with its last charge |
-| M36 | Return fire, for a man who has been seen; the airfield's patrols set out on turn 2 |
-| M35 | The operator's notes: the goods train runs between turns, trimmed in blue and paper, and whistles as it comes on; the Rail Bridge's DESTROYED printed below it; the bomb store's rails clear of its name |
-| M32–M32c | The review before Phase 4: the airfield's own clean run and diversion prompt, the rating on the back page, this spec trimmed, §11 and §13 moved to files of their own, the clean run named on the orders |
+The table of milestones finished is in `MILESTONES.md`. Each is recorded in full in
+`DECISIONS.md` (before M40, `DECISIONS-ARCHIVE.md`) and the git history.
 
 ---
 
@@ -1105,7 +816,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 
 **In `MISSION-TRAINING.md`**: a course of lessons at a parachute school in England, and
 the lesson engine that runs it. The engine is built and the mission is a draft
-(`?mission=training`) with lessons 1 to 7 of fifteen; M48 builds the rest.
+(`?mission=training`) with lessons 1 to 11 of seventeen; M48 builds the rest.
 
 ---
 

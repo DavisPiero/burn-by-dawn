@@ -428,11 +428,11 @@ passed. The operator's list, with what I would add:
 | 4 | **Ground** | Field, hedge, wood, marsh, water: what each costs to cross and how much it hides |
 | 5 | **Not being seen** | A sentry's view, the dots filling, cover, going to ground; then being spotted on purpose, and breaking contact |
 | 6 | **Watching the garrison** | Hover a patrol for its route and next turn's facing; time a crossing; a stone to turn a sentry's head |
-| 7 | **Fighting** | The knife from behind; a gunner's suppress, then kill; firing back when seen; what a body found costs |
-| 8, 9 | **Charges** (two lessons since M48's second session: fetch, carry and pass; then points, timer and getting clear) | A canister to find; pick up, carry (and its weight), pass; the charge points; a time pencil; get clear; the bang and the alert |
-| 9 | **The leader** | His orders (the extra AP near him) and his radio: calling the diversion |
-| 10 | **The men** | Each man's own skill, shown by using it: Steady Hands, Quick Work, Cat's Eyes, Treetops, Cool Head, Ox |
-| 11 | **Getting out** | The exfil, dawn, how many must be out, and the card that asks before a withdrawal |
+| 7, 8, 9 | **Fighting** (three lessons since M48's third session, one man each: the knife; the gunner; firing back) | The knife from behind; a gunner's suppress, then kill; firing back when seen; what a body found costs |
+| 10, 11 | **Charges** (two lessons: fetch, carry and pass; then points, timers and getting clear) | A canister to find; pick up, carry (and its weight), pass; the charge points; a time pencil; get clear; the bang and the alert |
+| 12 | **The leader** | His orders (the extra AP near him) and his radio: calling the diversion |
+| 13 | **The men** | Each man's own skill, shown by using it: Steady Hands, Quick Work, Cat's Eyes, Treetops, Cool Head, Ox |
+| 14 | **Getting out** | The exfil, dawn, how many must be out, and the card that asks before a withdrawal |
 | + | **The alert** (mine) | Its own short lesson: what raises it, what each state does, that it decays. It is the spine and nothing above teaches it whole |
 | + | **A wounded man** (mine) | Wounds, and stabilising: rare in play and never found unaided (M26) |
 | + | **Reading the page** (mine) | Folded into lesson 1: the readout, the log, the roster, undo, **?** |
@@ -494,7 +494,7 @@ passed. The operator's list, with what I would add:
 - **M47 — the training mission specified. Done** (`MISSION-TRAINING.md`) and its lesson
   engine built, off in every other mission.
 - **M48 — the training mission built**, with the **?** pages' diagrams drawn from the
-  same lessons. Fifteen lessons is more than one session: expect M48 to be two or
+  same lessons. Seventeen lessons is more than one session: expect M48 to be two or
   three (M48, M48b…), a few lessons each, each playable when merged.
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
