@@ -547,10 +547,35 @@ export function renderLesson(element, view, on) {
     // What goes on from here (M48b, the operator's: there was no sense of
     // continuing): the step's own pen line, or the green NEXT where it only shows.
     html('div', 'lesson-on', view.next
-      ? [button('NEXT ▶', on.next, 'btn primary lesson-next')]
+      ? [...(view.met ? [html('span', 'lesson-done', '✓ DONE')] : []), button('NEXT ▶', on.next, 'btn primary lesson-next')]
       : [html('span', 'lesson-on-label', 'TO GO ON:'), html('span', 'lesson-on-say', boldKeys(view.say))]),
     html('div', 'lesson-foot', [html('span', 'lesson-ways', ways)]),
   );
+}
+
+/**
+ * The pen's arrow from the lesson card to the part of the page a step points
+ * at (M48b, the operator's: the card was a long way from what it spoke of).
+ * `svg` covers the window; `from` and `to` are window points, or null for none.
+ */
+export function renderLessonArrow(svg, from, to) {
+  svg.replaceChildren();
+  svg.hidden = !from;
+  if (!from) return;
+  // The svg's own box may be zoomed with the spread: draw in its own units.
+  const box = svg.getBoundingClientRect();
+  const w = svg.clientWidth || box.width;
+  const h = svg.clientHeight || box.height;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const at = (p) => ({ x: (p.x - box.left) * (w / box.width), y: (p.y - box.top) * (h / box.height) });
+  const a = at(from);
+  const b = at(to);
+  const angle = Math.atan2(b.y - a.y, b.x - a.x);
+  const head = 16;
+  const wing = (turn) => `${b.x - head * Math.cos(angle + turn)},${b.y - head * Math.sin(angle + turn)}`;
+  for (const [stroke, width] of [['var(--paper)', 9], ['var(--red)', 5]]) {
+    svg.appendChild(svgEl('path', { d: `M${a.x},${a.y} L${b.x},${b.y} M${wing(0.5)} L${b.x},${b.y} L${wing(-0.5)}`, fill: 'none', stroke, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  }
 }
 
 /**
@@ -913,12 +938,12 @@ export function renderDawnStrip(svg, state, rules, closing = 0) {
   }
 }
 
-export function renderEndTurnButton(button, state, rules) {
+export function renderEndTurnButton(button, state, rules, runs = 3) {
   if (state.phase === 'drop') {
     button.disabled = state.dropRunId === null;
     // Once a run is picked, the jump is the one thing to do: in red (M21).
     button.classList.toggle('jump', state.dropRunId !== null);
-    setText(button, state.dropRunId === null ? 'PICK A DROP RUN (1–3)' : 'JUMP!  [SPACE]');
+    setText(button, state.dropRunId !== null ? 'JUMP!  [SPACE]' : runs === 1 ? 'CLICK THE DROP RUN (1)' : `PICK A DROP RUN (1–${runs})`);
     return;
   }
   button.classList.remove('jump');
@@ -1470,7 +1495,7 @@ export function renderReadout(element, state, map, view) {
   }
   if (!hex) {
     if (state.phase === 'drop') {
-      setText(element, view?.dropLabel ?? 'Pick a drop run with 1–3 or its button. Hover the board to see what landing there would mean.');
+      setText(element, view?.dropLabel ?? 'Pick a drop run with its number or its button. Hover the board to see what landing there would mean.');
       return;
     }
     setText(element, state.selectedUnitId

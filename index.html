@@ -991,12 +991,16 @@
     #lesson p { margin: 0 0 7px; }
     #lesson .lesson-whistle { font-weight: bold; color: var(--red); }
     #lesson .lesson-on { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
+    #lesson .lesson-done { font-size: 12px; font-weight: bold; letter-spacing: 1px; color: var(--green); }
     #lesson .lesson-on-label { font-size: 11px; font-weight: bold; letter-spacing: 1px; }
     #lesson .lesson-on-say { font-family: var(--slab); font-weight: bold; font-size: 15px; color: var(--red); }
     #lesson .lesson-on .btn { padding: 4px 14px; font-size: 14px; color: var(--paper); background: var(--green); }
     #lesson .lesson-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     #lesson .lesson-ways { display: inline-flex; gap: 6px; }
     #lesson .btn { padding: 2px 8px; font-size: 12px; }
+    /* The pen's arrow from the lesson card to what it points at (M48b): over the whole window, taking no clicks. */
+    #lesson-arrow { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 6; pointer-events: none; }
+    #lesson-arrow[hidden] { display: none; }
     /* What a step points at on the page (M48b): ringed in the red pen, throbbing as the board's rings do. */
     @keyframes lesson-point { 50% { outline-color: transparent; } }
     .lesson-point { outline: 5px solid var(--red); outline-offset: 3px; animation: lesson-point 1.2s ease-in-out infinite; }
@@ -1486,6 +1490,7 @@
         <button id="restart" type="button" title="A new game on a fresh seed, at the same level"></button>
       </div>
       <aside id="lesson" hidden></aside>
+      <svg id="lesson-arrow" hidden></svg>
       <div id="briefing-backdrop" hidden><section id="briefing" role="dialog" aria-modal="true"></section><aside id="counter-key" hidden><div class="key-head">HOW TO READ A COUNTER</div><svg id="counter-key-art" viewBox="-4 0 344 776" preserveAspectRatio="xMidYMin meet"></svg></aside></div>
       <div id="left-content">
         <svg id="board"></svg>

@@ -23,7 +23,7 @@ import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery,
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
-import { POINT_KINDS, advance, allows, back, beginLesson, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
+import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -41,7 +41,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  capitalise, renderContentsBack, renderLesson, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderLesson, renderLessonArrow, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -73,6 +73,7 @@ const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
 const lessonCard = document.getElementById('lesson');
+const lessonArrow = document.getElementById('lesson-arrow');
 // The parts of the page a lesson's step may point at (lessons.js POINT_KINDS).
 const LESSON_POINTS = {
   roster: document.getElementById('roster'),
@@ -432,7 +433,7 @@ function deriveView() {
   if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
   // A lesson's step (M47): what it rings, and its line in the pen.
   const step = lessonStep();
-  if (step && !briefing) {
+  if (step && !briefing && !course.progress.met) {
     const men = state.units.filter(onBoard);
     view.hintRings = step.ring === 'men' ? men.map((u) => ({ q: u.q, r: u.r, wide: true })) : (step.ring ?? []).map(([q, r]) => ({ q, r }));
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
@@ -1545,7 +1546,7 @@ function render() {
   renderTurnCounter(turnCounter, state, clock);
   // Its last turns redden once they are here (M46).
   renderDawnStrip(dawnStrip, state, clock, cuesFor.out?.closing && !state.outcome ? CLOSING_TURNS : 0);
-  renderEndTurnButton(endTurnButton, state, clock);
+  renderEndTurnButton(endTurnButton, state, clock, baseMap.dropRuns.length);
   renderUndoButton(undoButton, state, undoStack.length > 0);
   renderRoster(rosterList, state, map, view, { onSelect: handleRosterClick, onHover: hoverRosterUnit });
   if (view.dropRuns) renderDropRuns(actionBar, view.dropRuns, handleChooseRun);
@@ -1569,6 +1570,7 @@ function render() {
   const pointed = briefing ? null : lessonStep()?.point ?? null;
   for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed);
   renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
+  placeLessonCard(pointed);
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
@@ -1906,6 +1908,9 @@ function handleHexHover(q, r) {
 }
 
 function handleHexLeave() {
+  // A lesson's hover step done and held (M48b): what the mouse was on stays
+  // shown while the card is read, though the mouse has gone to its NEXT.
+  if (course?.progress?.met && lessonStep()?.until.kind === 'hovered') return;
   state = setHover(state, null);
   renderHover();
 }
@@ -2577,7 +2582,7 @@ function describeBriefing(which, view) {
         sections: [{
           heading: 'THE BASICS',
           lines: [
-            ...(before ? [`Pick the ${runList} run with 1–3. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
+            ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
             'Click a man (or press 1–6). Hover a hex to see what the move costs and risks; click to go. SPACE ends the turn.',
             'Red ground gets him spotted on the way; blue is safe. Spotted once is a warning: break contact before the turn ends, or he is fired on.',
             'The red dashed hexes are charge points: stand a man with a charge on one and press C.',
@@ -2719,7 +2724,8 @@ function lessonStep() {
 
 /** May the player do this now? If not, the lesson card shakes its head and nothing happens. */
 function lessonAllows(input) {
-  if (allows(lessonStep(), input)) return true;
+  // A step done and held does nothing more until NEXT.
+  if (!course.progress.met && allows(lessonStep(), input)) return true;
   lessonCard.classList.remove('nudge');
   void lessonCard.getBoundingClientRect();
   lessonCard.classList.add('nudge');
@@ -2775,18 +2781,32 @@ function lessonCheck() {
     playCue('whistle');
     return true;
   }
+  // Done and held: waiting for NEXT, with the board as the step left it.
+  if (progress.met) return false;
   if (!stepMet(step, from, state, { acknowledged: course.ack })) return false;
+  // Do it, see it, then NEXT (M48b): the card now says what is to be seen.
+  if (step.then) {
+    course = { ...course, progress: hold(progress), whistle: null, ack: false };
+    return true;
+  }
+  lessonGoOn();
+  return true;
+}
+
+/** On from a step: the next, or PASSED after the last. */
+function lessonGoOn() {
+  const { lesson, progress } = course;
   course = { ...course, progress: advance(progress, lesson, state), whistle: null, ack: false };
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
   }
-  return true;
 }
 
-/** NEXT on the lesson card: for a step that only shows something. */
+/** NEXT on the lesson card: on from a step done, or past one that only shows something. */
 function lessonNext() {
-  course = { ...course, ack: true };
+  if (course.progress.met) lessonGoOn();
+  else course = { ...course, ack: true };
   render();
 }
 
@@ -2803,6 +2823,38 @@ function openCourse() {
   restartMission();
 }
 
+/**
+ * The lesson card goes to what its step points at (M48b, the operator's: the
+ * card was a long way from the part of the page it spoke of): level with a
+ * part on the right page, or just above one under the map, with the pen's
+ * arrow from the card to it. With nothing pointed at it lies where it always
+ * does. Layout only: it reads where things are on the page.
+ */
+function placeLessonCard(pointed) {
+  lessonCard.style.top = '';
+  lessonCard.style.bottom = '';
+  if (!pointed || lessonCard.hidden) return renderLessonArrow(lessonArrow, null, null);
+  const target = LESSON_POINTS[pointed].getBoundingClientRect();
+  const page = lessonCard.offsetParent.getBoundingClientRect();
+  let card = lessonCard.getBoundingClientRect();
+  const scale = card.width / lessonCard.offsetWidth || 1;
+  const beside = target.left >= card.right;
+  const gap = 34 * scale;
+  const wanted = beside ? target.top + target.height / 2 - card.height / 2 : target.top - gap - card.height;
+  const top = Math.min(Math.max(wanted, page.top + 8 * scale), page.bottom - card.height - 8 * scale);
+  lessonCard.style.bottom = 'auto';
+  lessonCard.style.top = `${(top - page.top) / scale}px`;
+  card = lessonCard.getBoundingClientRect();
+  const within = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  if (beside) {
+    const y = within(card.top + card.height / 2, target.top + 12 * scale, target.bottom - 12 * scale);
+    renderLessonArrow(lessonArrow, { x: card.right, y: card.top + card.height / 2 }, { x: target.left - 6 * scale, y });
+  } else {
+    const x = within(card.left + card.width / 2, target.left + 12 * scale, target.right - 12 * scale);
+    renderLessonArrow(lessonArrow, { x, y: card.bottom }, { x, y: target.top - 6 * scale });
+  }
+}
+
 /** What the lesson card says, or null where there is none to show. */
 function lessonView() {
   const step = lessonStep();
@@ -2810,7 +2862,8 @@ function lessonView() {
   const { lesson, progress } = course;
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
-    tell: step.tell ?? '', say: step.say, whistle: course.whistle, canBack: progress.step > 0, next: step.until.kind === 'acknowledged',
+    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: course.whistle, met: Boolean(progress.met),
+    canBack: progress.step > 0 || Boolean(progress.met), next: Boolean(progress.met) || step.until.kind === 'acknowledged',
   };
 }
 
@@ -3110,6 +3163,12 @@ function handleKey(event) {
   if (dropShow) {
     event.preventDefault();
     endDropShow();
+    return;
+  }
+  // Enter is the lesson card's green NEXT, as it is a card's green button (M48b).
+  if (event.key === 'Enter' && lessonView()?.next) {
+    event.preventDefault();
+    lessonNext();
     return;
   }
   if (flyShow) {

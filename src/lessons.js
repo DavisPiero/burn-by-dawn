@@ -104,6 +104,10 @@ export function validateLessons(json, known, url = 'lessons') {
       // The pen says a few words (ROADMAP.md Phase 5); the sentence is `tell`'s.
       if (step.say.split(/\s+/).length > 7) throw new Error(`${where}: "say" is a pen line, seven words at most: ${JSON.stringify(step.say)}`);
       if (step.tell !== undefined && typeof step.tell !== 'string') throw new Error(`${where}: "tell" must be words`);
+      // Do it, see it, then NEXT (M48b): what the card says once the step is
+      // done, while what it did is still on the board. A step that only shows
+      // something has its NEXT already.
+      if (step.until?.kind !== 'acknowledged' && (typeof step.then !== 'string' || !step.then)) throw new Error(`${where} needs a "then": what the card says once it is done`);
       if (step.at !== undefined) onMap(step.at, `${where}.at`);
       if (step.point !== undefined && !POINT_KINDS.includes(step.point)) throw new Error(`${where}: "point" must be one of ${POINT_KINDS.join(', ')}`);
       for (const h of Array.isArray(step.ring) ? step.ring : []) onMap(h, `${where}.ring`);
@@ -291,17 +295,29 @@ export function beginLesson(lesson, startState) {
   return { lessonId: lesson.id, step: 0, starts: [startState] };
 }
 
+/**
+ * The step has been done (M48b, the operator's: what a card said of a thing
+ * was gone the moment the thing was done): it is held, `met`, with the board
+ * as it stands and the card saying what is now to be seen, until NEXT.
+ */
+export function hold(progress) {
+  return { ...progress, met: true };
+}
+
 /** On to the next step, which begins from the state as it stands. Past the last, `done`. */
 export function advance(progress, lesson, now) {
   const step = progress.step + 1;
-  if (step >= lesson.steps.length) return { ...progress, step, done: true };
-  return { ...progress, step, starts: [...progress.starts.slice(0, step), now] };
+  if (step >= lesson.steps.length) return { ...progress, step, met: false, done: true };
+  return { ...progress, step, met: false, starts: [...progress.starts.slice(0, step), now] };
 }
 
-/** Back a step: to the step before, as it began. At the first step, to its own start. */
+/**
+ * Back a step: to the step before, as it began. At the first step, to its own
+ * start. From a step done and held, to that step as it began, to do again.
+ */
 export function back(progress) {
-  const step = Math.max(0, progress.step - 1);
-  return { ...progress, step, starts: progress.starts.slice(0, step + 1), done: false };
+  const step = progress.met ? progress.step : Math.max(0, progress.step - 1);
+  return { ...progress, step, starts: progress.starts.slice(0, step + 1), met: false, done: false };
 }
 
 /** The state the current step began from: what Back, and the umpire's whistle, put on the board. */

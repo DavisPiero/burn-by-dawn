@@ -1033,7 +1033,10 @@ function drawDropCue(layers, cue, names) {
   const at = layers.map.dropCueAt && axialToPixel(layers.map.dropCueAt[0], layers.map.dropCueAt[1], layers.map.hexSize);
   const x = at ? at.x : names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
   const y = at ? at.y : names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
-  const lines = cue === 'pick' ? ['PICK A DROP DIRECTION', 'click a run\'s name, or press 1-3'] : ['HIT SPACE TO JUMP', 'or click the run again'];
+  // Said for as many runs as the map has (M48b, the operator's: "press 1-3"
+  // and "pick" on the practice ground, which has one).
+  const pick = names.length === 1 ? ['CLICK THE DROP RUN', 'click its name, or press 1'] : ['PICK A DROP DIRECTION', `click a run's name, or press 1-${names.length}`];
+  const lines = cue === 'pick' ? pick : ['HIT SPACE TO JUMP', 'or click the run again'];
   const g = el('g', { 'pointer-events': 'none' });
   const { padX, padY, width, opacity } = CUE.runRing;
   for (const tab of names.filter((t) => cue === 'pick' || t.selected)) {
