@@ -582,65 +582,74 @@
       "qualification": "DEMOLITIONS",
       "card": "northwest",
       "start": {
-        "men": { "nunn": { "at": [7, 5], "charges": 1 } },
+        "men": { "nunn": { "at": [6, 5], "charges": 1 } },
         "droppedCharges": [[6, 7]]
       },
       "steps": [
         {
           "say": "CLICK NUNN.",
           "tell": "A target is destroyed by charges set on its charge points. Click Nunn.",
-          "then": "The two ringed hexes beside the Training Bridge are its charge points. The bridge wants 2 charges, one on each. Nunn stands on one point with a charge; a second charge lies at the other.",
-          "ring": [[7, 5], [6, 7]],
+          "then": "The two hexes outlined in dashed red beside the Training Bridge are its charge points. The bridge wants 2 charges, one on each. Nunn carries one; a second charge lies at the far point.",
+          "ring": "men",
           "allow": { "select": ["nunn"] },
           "until": { "kind": "selected", "unit": "nunn" }
         },
         {
-          "say": "PRESS C. PICK 3. SET.",
-          "tell": "Press ‘C’. The tin of time pencils opens: each is a timer, counted in turns with this turn as the first. Pick the 3, then press SET. It costs 1 AP.",
-          "then": "The charge is set and burning. It goes off at the end of turn 3, and kills any man within 1 hex of it then.",
-          "allow": { "select": ["nunn"], "actions": ["charge"], "fuse": 3 },
+          "say": "A CHARGE POINT. GO THERE.",
+          "tell": "A charge is set from a charge point. Move Nunn onto the nearer one: click the ringed hex.",
+          "then": "Nunn is on a charge point, with 2 AP left. Now he can set it: the ‘Charge’ button is lit.",
+          "ring": [[7, 5]],
+          "at": [7, 5],
+          "allow": { "select": ["nunn"], "move": [[7, 5]] },
+          "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[7, 5]] }
+        },
+        {
+          "say": "PRESS C. PICK 4. SET.",
+          "tell": "Press ‘C’. The tin of time pencils opens: each is a timer, counted in turns with this turn as the first. Pick the 4, then press SET. It costs 1 AP.",
+          "then": "The charge is set and burning. It goes off at the end of turn 4, and kills any man within 1 hex of it then.",
+          "allow": { "select": ["nunn"], "actions": ["charge"], "fuse": 4 },
           "until": { "kind": "chargeSet" }
+        },
+        {
+          "say": "PRESS SPACE: END THE TURN.",
+          "tell": "The other point is 2 hexes off, and he has 1 AP. End the turn.",
+          "then": "Turn 2. The first charge has one turn less to burn.",
+          "allow": { "select": ["nunn"], "endTurn": true },
+          "until": { "kind": "turnEnded" }
         },
         {
           "say": "THE OTHER POINT. GO THERE.",
           "tell": "Move Nunn to the other charge point: click the ringed hex.",
-          "then": "Nunn is on the second point, standing on the charge left there. The 2 hexes took his last 2 AP.",
+          "then": "Nunn is on the second point, standing on the charge left there, with 1 AP.",
           "ring": [[6, 7]],
           "at": [6, 7],
           "allow": { "select": ["nunn"], "move": [[6, 7]] },
           "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[6, 7]] }
         },
         {
-          "say": "PRESS SPACE: END THE TURN.",
-          "tell": "End the turn.",
-          "then": "Turn 2. The first charge has one turn less to burn.",
-          "allow": { "select": ["nunn"], "endTurn": true },
-          "until": { "kind": "turnEnded" }
-        },
-        {
           "say": "PRESS P TO PICK UP.",
-          "tell": "Press ‘P’ to pick up the charge at his feet.",
-          "then": "Nunn carries it, with 2 AP left.",
+          "tell": "Press ‘P’ to pick up the charge at his feet: his last AP.",
+          "then": "Nunn carries it. He will set it next turn.",
           "allow": { "select": ["nunn"], "actions": ["pickUp"] },
           "until": { "kind": "carrying", "unit": "nunn" }
         },
         {
-          "say": "PRESS C. PICK 2. SET.",
-          "tell": "Set it to go off with the first, at the end of turn 3. That is 2 turns from now: press ‘C’, pick the 2, then SET.",
-          "then": "Both charges will go off together at the end of turn 3. Nunn is standing on one of them.",
-          "allow": { "select": ["nunn"], "actions": ["charge"], "fuse": 2 },
-          "until": { "kind": "chargeSet" }
-        },
-        {
           "say": "PRESS SPACE: END THE TURN.",
-          "tell": "He has a turn in hand. End the turn.",
-          "then": "Turn 3: the charges go off when this turn ends, and Nunn is in the blast.",
+          "tell": "End the turn.",
+          "then": "Turn 3. The first charge goes off at the end of turn 4.",
           "allow": { "select": ["nunn"], "endTurn": true },
           "until": { "kind": "turnEnded" }
         },
         {
+          "say": "PRESS C. PICK 2. SET.",
+          "tell": "Set this one to go off with the first, at the end of turn 4. That is 2 turns from now: press ‘C’, pick the 2, then SET.",
+          "then": "Both charges will go off together at the end of turn 4. Nunn is standing on one of them, with 2 AP left.",
+          "allow": { "select": ["nunn"], "actions": ["charge"], "fuse": 2 },
+          "until": { "kind": "chargeSet" }
+        },
+        {
           "say": "GET CLEAR.",
-          "tell": "Get him out of it. Move Nunn to the ringed hex, 2 hexes from the charge.",
+          "tell": "Get him out of the blast. Move Nunn to the ringed hex, 2 hexes from the charge.",
           "then": "Nunn is clear: more than 1 hex from both charges.",
           "ring": [[4, 7]],
           "at": [4, 7],
@@ -648,8 +657,8 @@
           "until": { "kind": "movedTo", "unit": "nunn", "hexes": [[4, 7]] }
         },
         {
-          "say": "PRESS SPACE: END THE TURN.",
-          "tell": "End the turn.",
+          "say": "END THE TURN, TWICE.",
+          "tell": "Now wait for it. Press Space to end turn 3, and again to end turn 4.",
           "then": "The Training Bridge is down. An explosion is heard everywhere and adds 3 to the alert. Charges on one target that go off in the same turn are one explosion, which is why the two timers were matched.",
           "allow": { "select": ["nunn"], "endTurn": true },
           "until": { "kind": "destroyed", "objective": "dummy-bridge" }

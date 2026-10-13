@@ -157,7 +157,7 @@ apart, and no lesson switching between men). The list runs 1 to 17 with no empty
 | 8 | The gunner: suppress, end the turn, kill (Speers) | WEAPONS | Built: `suppressed` |
 | 9 | Firing back: seen as the first turn ends, he fires back in the second (Fitch) | WEAPONS | Built |
 | 10 | Charges, fetch and carry: the canister, picking up and its weight, passing (Barrow to Fitch) | DEMOLITIONS | Built: `start.canisters`, `carrying`. A pass is 2 AP, so he ends a turn first, and sees his pool a point short |
-| 11 | Charges, set and get clear: the two charge points, the timers matched, getting clear, the bang (Nunn) | DEMOLITIONS | Built: `allow.fuse`, the `card` top left. The course's charges take the tin throughout, 2 to 4 turns (`missions.json`); the second charge is left lying at the far point, since no man has room for two |
+| 11 | Charges, set and get clear: he steps onto a charge point (the operator's: so the player learns what one looks like), the two timers matched (4, then 2 on turn 3), getting clear, the bang (Nunn) | DEMOLITIONS | Built: `allow.fuse`, the `card` top left. Its last step ends two turns. The course's charges take the tin throughout, 2 to 4 turns (`missions.json`); the second charge is left lying at the far point, since no man has room for two |
 | 12 | The leader: orders and the radio | LEADERSHIP | A condition for the diversion called |
 | 13 | The men: each man's own skill, by using it | THE STICK | — |
 | 14 | Getting out: exfil, dawn, how many | EXFILTRATION | — (`manOut`); the exercise rule means the "are you sure" card is shown, not met |
@@ -174,7 +174,7 @@ lesson is cut to fit, not the engine grown: the same rule as the trait hooks.
 
 Also M48's: the umpires' own counters (white armbands; a mission's `enemyChips`
 folder, as the aqueduct's Italians, drawn in code until painted) and their own cries;
-the **clipboard** (today the course's list, ticked, in two columns, stands in for it); START HERE on
+the **clipboard** and the course's list as **a two-page spread** (the operator's, 13 Oct: yes; today the list, ticked, in two columns, stands in for both); START HERE on
 the contents page and the mission made `playable`; the **?** pages' diagrams drawn
 from the same lessons.
 

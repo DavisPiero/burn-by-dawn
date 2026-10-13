@@ -162,7 +162,8 @@ export default [
           state = placeCharge(state, man.id, rules, step.allow.fuse);
         } else if (until.kind === 'destroyed') {
           assert(allows(step, { kind: 'endTurn' }), `${where}: ending the turn is allowed`);
-          state = endTurn(state, rules, map);
+          // As many turns as its timers want, and no more than the longest pencil.
+          for (let i = 0; i < 4 && !stepMet(step, from, state); i++) state = endTurn(state, rules, map);
         } else if (until.kind === 'hidden') {
           assert(allows(step, { kind: 'action', id: 'hide' }), `${where}: hiding is allowed`);
           state = hideUnit(state, man.id, rules);
@@ -278,22 +279,26 @@ export default [
     const fitch = s.units.find((u) => u.id === 'fitch');
     assert(fitch.charges === 1 && fitch.ap === fitch.apMax && fitch.apMax === 3 && s.units.find((u) => u.id === 'barrow').ap === 1, 'passed: 2 AP from the giver, nothing from the taker, no weight on a sapper');
     assert(endTurn(s, rules, map).units.find((u) => u.id === 'barrow').ap === 4, 'and Barrow has his 4 AP again');
-    // Lesson 11: the pencil a step names is the only one; both go off at the end of turn 3, as one explosion.
+    // Lesson 11: he walks onto the point; the pencil a step names is the only one; both go off at the end of turn 4, as one explosion.
     const eleven = lessons.find((l) => l.id === 'charges-set-and-get-clear');
     const first = eleven.steps.find((x) => x.until.kind === 'chargeSet');
-    assert(allows(first, { kind: 'fuse', turns: 3 }) && !allows(first, { kind: 'fuse', turns: 2 }) && allows({}, { kind: 'fuse', turns: 9 }), 'the pencil it names, or any where it names none');
+    assert(allows(first, { kind: 'fuse', turns: 4 }) && !allows(first, { kind: 'fuse', turns: 2 }) && allows({}, { kind: 'fuse', turns: 9 }), 'the pencil it names, or any where it names none');
     let b = lessonStart(base, eleven, map, rules);
-    b = placeCharge(b, 'nunn', rules, 3);
-    assert(b.units.find((u) => u.id === 'nunn').ap === 2, 'a charge set is 1 AP');
-    b = moveUnit(b, 'nunn', planMove(map, b.units, b.units.find((u) => u.id === 'nunn'), { q: 6, r: 7 }, rules, b.enemies), map);
-    assert(b.units.find((u) => u.id === 'nunn').ap === 0, 'and the other point is his last 2');
-    b = placeCharge(pickUpCharge(endTurn(b, rules, map), 'nunn', rules), 'nunn', rules, 2);
-    assert(b.charges.length === 2 && b.turn === 2, 'two charges burning in turn 2');
+    const walk = (to) => moveUnit(b, 'nunn', planMove(map, b.units, b.units.find((u) => u.id === 'nunn'), to, rules, b.enemies), map);
+    const nunn = () => b.units.find((u) => u.id === 'nunn');
+    assert(placeCharge(b, 'nunn', rules, 4) === b, 'no charge is set off a charge point');
+    b = walk({ q: 7, r: 5 });
+    b = placeCharge(b, 'nunn', rules, 4);
+    assert(b.charges.length === 1 && nunn().ap === 1, 'onto the point and a charge set: 1 AP left, as it says');
+    b = endTurn(b, rules, map);
+    b = pickUpCharge(walk({ q: 6, r: 7 }), 'nunn', rules);
+    assert(nunn().ap === 0 && nunn().charges === 1, 'the other point and the pick-up are his whole turn');
+    b = placeCharge(endTurn(b, rules, map), 'nunn', rules, 2);
+    assert(b.charges.length === 2 && b.turn === 3 && nunn().ap === 2, 'two charges burning in turn 3, and 2 AP to get clear with');
     const stayed = endTurn(endTurn(b, rules, map), rules, map);
     assert(/NUNN would be dead/.test(caughtOut({}, b, stayed) ?? ''), 'a man who stays on his charge is whistled');
-    b = endTurn(b, rules, map);
-    assert(b.turn === 3 && !b.objectives[0].destroyed, 'not before turn 3 ends');
-    b = moveUnit(b, 'nunn', planMove(map, b.units, b.units.find((u) => u.id === 'nunn'), { q: 4, r: 7 }, rules, b.enemies), map);
+    b = endTurn(walk({ q: 4, r: 7 }), rules, map);
+    assert(b.turn === 4 && !b.objectives[0].destroyed, 'not before turn 4 ends');
     const bang = endTurn(b, rules, map);
     assert(bang.objectives[0].destroyed && bang.alert.points === b.alert.points + 3 && bang.units.find((u) => u.id === 'nunn').hits === 0, `the bridge is down, 3 alert, Nunn unhurt: alert ${bang.alert.points}`);
     const broken = (change) => {

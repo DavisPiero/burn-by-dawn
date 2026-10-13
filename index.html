@@ -168,7 +168,9 @@
       border: 0;
       cursor: pointer;
     }
-    #settings-open svg { width: 24px; height: 24px; display: block; }
+    /* A pixel right (M48d, the operator's): the paper's margin is 26 px, from 8 to
+       the board at 34, and the gear lay hard against its left edge. */
+    #settings-open svg { width: 24px; height: 24px; display: block; position: relative; left: 1px; }
     #settings-open .label {
       writing-mode: vertical-rl;
       transform: rotate(180deg);
