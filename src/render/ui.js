@@ -560,7 +560,8 @@ export function renderLesson(element, view, on) {
  */
 export function renderLessonArrow(svg, from, to) {
   svg.replaceChildren();
-  svg.hidden = !from;
+  // An svg has no `hidden` property of its own: the attribute is what hides it.
+  svg.toggleAttribute('hidden', !from);
   if (!from) return;
   // The svg's own box may be zoomed with the spread: draw in its own units.
   const box = svg.getBoundingClientRect();
@@ -1125,22 +1126,31 @@ export function renderRestart(button, armed) {
   button.classList.toggle('armed', armed);
 }
 
-/** The way back to the contents (M31d), top of the margin: an arrow and its word, asked twice in play. */
+/** A switch in the menu (M48b): its name, and ON or OFF at the right. */
+function renderSwitch(button, name, on) {
+  button.replaceChildren(html('span', null, name), html('span', 'state', on ? 'ON' : 'OFF'));
+  button.setAttribute('aria-pressed', String(on));
+}
+
+/** The title music on or off, in the menu (M48b); it plays only before the jump. */
+export function renderMusicToggle(button, on) {
+  renderSwitch(button, 'MUSIC', on);
+}
+
+/** The way back to the contents (M31d), in the menu since M48b: asked twice in play. */
 export function renderContentsBack(button, armed) {
-  button.replaceChildren(html('span', 'arrow', '←'), html('span', 'label', armed ? 'CLICK AGAIN: CONTENTS' : 'CONTENTS'));
+  button.textContent = armed ? 'CLICK AGAIN: CONTENTS' : '← BACK TO CONTENTS';
   button.classList.toggle('armed', armed);
 }
 
-/** Sound on or off, in the margin under the seed. */
+/** Sound on or off, in the menu (M48b; it was in the margin under the seed). */
 export function renderSoundToggle(button, muted) {
-  button.textContent = muted ? 'sound off' : 'sound on';
-  button.setAttribute('aria-pressed', String(!muted));
+  renderSwitch(button, 'SOUND [M]', !muted);
 }
 
-/** Play tips on or off (SPEC.md §4), in the margin beside the sound: there at any time (M48b, the operator's). */
+/** Play tips on or off (SPEC.md §4), in the menu: there at any time (M48b, the operator's). */
 export function renderTipsToggle(button, on) {
-  button.textContent = on ? 'play tips on' : 'play tips off';
-  button.setAttribute('aria-pressed', String(on));
+  renderSwitch(button, 'PLAY TIPS', on);
 }
 
 /**

@@ -543,6 +543,13 @@ operator says otherwise.)
   per mission in missions.json, so that a new team later is new data and portraits, not
   new code.
 
+- **Hiding a body** (the operator's, 13 Oct 2026): a rule to try. A man beside or on a
+  body spends a lot of AP, or two turns, to drag it under cover, where the garrison
+  does not find it. It gives a kill a second decision (stay and hide it, or go). Try it
+  **with** the aqueduct's dearer knife, not after: on its own it makes killing cheaper,
+  which is the opposite of what that map needs. As data: a cost and a turn count in
+  `rules.json`, off (null) everywhere until tried.
+
 - (The training drop in England is now Phase 5's last part, above.)
 - A service record (medals per mission) or unlocks. This needs saved progress, which
   CLAUDE.md rule 9 forbids. Missions stay standalone for now (the operator's call).

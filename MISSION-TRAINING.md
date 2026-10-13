@@ -65,7 +65,8 @@ page. Its `turnLimit` is 99.
 | Field | What it is |
 |---|---|
 | `say` | The pen's line on the board, **seven words at most**, at hex `at` or under the man it is about |
-| `tell` | The lesson card's words, two or three short sentences: what he is looking at, the rule with its number (a hedge is 2 AP a hex), and what to do |
+| `tell` | The lesson card's words before the step is done, a sentence or two: what to do |
+| `then` | The card's words once it is done, while what it did is still on the board: what he is now looking at, and the rule with its number (a hedge is 2 AP a hex). Every step has one but a step that only shows something |
 | `ring` | Hexes ringed in the pen, or `"men"` (a wider ring, round the man's whole hex) |
 | `point` | A part of the page ringed in the pen, where what the step shows is not on the board: `roster`, `alert`, `clock`, `readout`, `actions` |
 | `allow` | The only things that do anything: `select` (ids, or true), `move` (hexes, or `"any"`), `actions` (ids), `target` (the only hexes an aimed action may be clicked on; anywhere if left out), `endTurn`, and in the drop `run` and `jump` |
@@ -94,9 +95,14 @@ M48's five: `runPicked` and `landed` (the drop), `contactBroken`, `stoneThrown`,
   actions and ending the turn are allowed only as the step lists. Undo is off: a lesson
   goes back by its steps.
 - After anything changes: **a man seen, hit or killed** (unless `mayBeSeen`) blows the
-  whistle and puts the step back as it began; a step whose condition is met leads to
-  the next, which begins from the board as it stands; the last leads to **PASSED**.
-- **STEP BACK** is the step before, as it began (not offered on the first step).
+  whistle and puts the step back as it began.
+- **Do it, see it, then NEXT** (the operator's, M48: what a card said of a thing was
+  gone the moment the thing was done). A step whose condition is met is **held**: the
+  board stays as it is, nothing more does anything, the card says its `then`, and only
+  NEXT (or Enter) leads to the next step, which begins from the board as it stands;
+  the last leads to **PASSED**. What a hover step showed stays shown while it is held.
+- **STEP BACK** is the step before, as it began (not offered on the first step); from
+  a step done and held it is that step again.
   **START AGAIN** is the lesson from its start. **COURSE MENU** is the list. All three come from one thing: every step's starting
   state is kept, and a lesson's start is rebuilt from its data.
 - **Nothing is stored** (CLAUDE.md rule 9): the list ticks what was passed this
@@ -138,7 +144,7 @@ part of lesson 1, so the list runs 1 to 15 with no empty number.
 | 4 | Ground | MOVEMENT | Built |
 | 5 | Seen and not seen: not being seen, then being seen and breaking contact | FIELDCRAFT | Built: `mayBeSeen`, `contactBroken` |
 | 6 | Watching the garrison: a beat, next turn, a stone | FIELDCRAFT | Built: `stoneThrown`, `allow.target` (a stone thrown anywhere else left the next step nothing to show) |
-| 7 | Fighting: the knife, suppress and kill; firing back told, not done | WEAPONS | Built: `suppressed`. Firing back needs a man already seen and fired on; it is a NEXT step that points at the actions |
+| 7 | Fighting: the knife; suppress and kill; firing back, each with its own man | WEAPONS | Built: `suppressed`. A third man stands in a third umpire's view from the start, is seen as the first turn ends, and fires back in the second |
 | 8 | Charges: the canister, carrying and its weight, passing | DEMOLITIONS | `start.canisters` |
 | 9 | Charges: the charge points, the timer, getting clear, the bang | DEMOLITIONS | A mission rule for the time pencil in this lesson only is not possible (rules are per mission), so the course's charges take the tin throughout |
 | 10 | The leader: orders and the radio | LEADERSHIP | A condition for the diversion called |
@@ -169,5 +175,7 @@ from the same lessons.
   with its number); the operator will reword them in a pass of their own.
 - **Charges in two lessons** (8 and 9), and **the whistle only at the turn's end**:
   both the operator's (13 Oct).
-- **A hover step goes on the instant the mouse crosses the hex**, which can skip a
-  card still being read. Left alone unless it is met in play.
+- **The practice ground has one drop run**, so lesson 1's "pick" is a click on the only
+  one; the board says CLICK THE DROP RUN there, and the card that missions have three.
+- **The men's landing lines for the course** (`dialogue` in `missions.json`) are
+  Claude's placeholders.

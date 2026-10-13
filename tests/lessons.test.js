@@ -5,7 +5,7 @@
 // lesson that cannot be passed fails a test, not a player.
 
 import { dangerWash } from '../src/sight.js';
-import { advance, allows, back, beginLesson, caughtOut, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from '../src/lessons.js';
+import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, stepMet, stepStart, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
 import { chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, selectUnit, setHover, suppressEnemy, throwStone } from '../src/state.js';
@@ -185,6 +185,43 @@ export default [
     assert(broken((l) => { l.start.men = { fitch: { at: [0, 0] } }; }), 'men placed as well as landed');
     assert(broken((l) => { l.steps[2].point = 'ceiling'; }), 'a part of the page that is not in the list');
     assert(broken((l) => { l.steps[0].until = { kind: 'enemyDown', enemy: 'nobody' }; }), 'an enemy the lesson does not have');
+  }],
+
+  ['a step done is held until NEXT, and Back from it is the same step again', async () => {
+    const { lessons, base, map, rules, json, known } = await course();
+    const lesson = lessons.find((l) => l.id === 'action-points');
+    const start = lessonStart(base, lesson, map, rules);
+    const begun = beginLesson(lesson, start);
+    const held = hold(begun);
+    assert(held.met && held.step === 0 && stepStart(held) === start, 'held on the step it was, with its start kept');
+    assert(back(held).step === 0 && !back(held).met, 'Back from a step done is that step, to do again');
+    const on = advance(held, lesson, selectUnit(start, 'holloway'));
+    assert(on.step === 1 && !on.met, 'NEXT is the next step, not yet done');
+    assert(back(on).step === 0 && !back(on).met, 'and Back from a step not yet done is the one before');
+    for (const l of lessons) for (const [n, step] of l.steps.entries()) {
+      assert(step.until.kind === 'acknowledged' || step.then, `${l.id}, step ${n + 1} says what is to be seen once it is done`);
+    }
+    const copy = JSON.parse(JSON.stringify(json));
+    delete copy.lessons[1].steps[0].then;
+    assert(throws(() => validateLessons(copy, known)), 'a step with nothing to say once done is refused');
+  }],
+
+  ['lesson 7: only the man who is to fire back is seen, and firing back keeps him from being shot', async () => {
+    const { lessons, base, map, rules } = await course();
+    const lesson = lessons.find((l) => l.id === 'fighting');
+    let s = lessonStart(base, lesson, map, rules);
+    s = knifeEnemy(s, 'vance', 'umpire-a', rules);
+    s = suppressEnemy(s, 'speers', 'umpire-b', map, rules);
+    s = endTurn(s, rules, map);
+    assert(s.units.filter((u) => u.inContact).map((u) => u.id).join() === 'fitch', `only Fitch is in contact: ${s.units.filter((u) => u.inContact).map((u) => u.id)}`);
+    s = killEnemy(s, 'speers', 'umpire-b', map, rules);
+    const unanswered = endTurn(s, rules, map);
+    assert(unanswered.units.find((u) => u.id === 'fitch').hits === 1, 'left alone, he is shot');
+    const fired = suppressEnemy(s, 'fitch', 'umpire-c', map, rules);
+    assert(fired !== s && fired.units.find((u) => u.id === 'fitch').ap === 1 && fired.alert.points === s.alert.points + 2, 'firing back is 2 AP and 2 alert, as it says');
+    const after = endTurn(fired, rules, map);
+    const fitch = after.units.find((u) => u.id === 'fitch');
+    assert(fitch.hits === 0 && !fitch.inContact, 'and he is not shot, and out of contact');
   }],
 
   ['an aimed action lands only where a step says, if it says', async () => {

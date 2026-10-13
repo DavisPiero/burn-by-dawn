@@ -33,15 +33,19 @@ board must read at a glance.
 - Paper cream ground with a supplied fibre texture, centre-fold crease and gutter shadow.
   The fibre is printed faintly on the right page's flat boxes, the captions and the map;
   the cards keep their full-strength paper.
-- The outer margin: at its top a small **← CONTENTS**, back to the
-  contents page to pick another mission: at once before the jump; once the stick has
-  jumped a first click arms it (CLICK AGAIN: CONTENTS, in red, for a few seconds) and a
-  second gives up the game on the board for a fresh one; then BURN BY DAWN in the title
-  stencil running up the page;
-  "CUT OUT AND PLAY" with scissors and a dashed cut line in the middle; at the foot the
-  build ("build M29", from `data/version.json`), the level and seed, the sound on/off word,
-  and a bold RESTART (a first click arms it, a second starts a new game on a fresh seed at
-  the same level, without a reload).
+- The outer margin: at its top **the menu's gear** (`ui-gear`, 20 px, ink, with MENU
+  under it; red and turned a tooth under the mouse or while open); then BURN BY DAWN in
+  the title stencil running up the page; "CUT OUT AND PLAY" with scissors and a dashed
+  cut line in the middle; at the foot the build ("build M29", from `data/version.json`),
+  the level and seed.
+- **The menu** (the operator's, M48: the margin had gathered a row of loose switches)
+  is a small card beside the gear, over the map and over any other card, the contents
+  page among them: SOUND [M], MUSIC and PLAY TIPS, each a button with ON or OFF at its
+  right (ON in green); then RESTART (a first click arms it, in red, CLICK AGAIN TO
+  RESTART; a second starts a new game on a fresh seed at the same level, without a
+  reload) and ← BACK TO CONTENTS (at once before the jump; armed the same way once the
+  stick has jumped); then CLOSE. Esc, CLOSE, the gear or a click anywhere else shuts
+  it. On the contents page RESTART and BACK TO CONTENTS are greyed.
 
 ### Colour, print and type
 
@@ -267,8 +271,7 @@ board must read at a glance.
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
   words, `words.cleanBonus`). At its foot: **Music off** and beside it **Play tips**
   (ticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON.
-  **Play tips are also in the left margin**, under the sound and set as it is ("play
-  tips off"), to be turned on or off at any time. A card too tall for the window is set tighter a step at a time (less
+  **Play tips are also in the menu** (above), to be turned on or off at any time. A card too tall for the window is set tighter a step at a time (less
   air, then 14 px, then 13) before anything is cut.
 - **How to play is a card of its own**, at any time: a **?** button beside KEYBOARD, the
   `?` or `/` key, or the orders' button, over a turn card too. It has the orders' place
@@ -295,7 +298,11 @@ board must read at a glance.
 - **The lesson card** lies in the turn card's place while a lesson is on, and no turn
   card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's
   sentences, then what goes on from here: **TO GO ON:** and the step's own line in the
-  red slab (CLICK BARROW.), or a green **NEXT ▶** where a step only shows something.
+  red slab (CLICK BARROW.). **Once the step is done the card stays** and says what is
+  now to be seen, with ✓ DONE and a green **NEXT ▶**; the pen's line and rings are gone
+  from the board, and what a hover showed stays shown though the mouse has left it
+  (the operator's: do it, see it, then NEXT). A step that only shows something has the
+  NEXT from the start. Enter is NEXT.
   At its foot, small: ◀ STEP BACK (not on the first step), START AGAIN and COURSE
   MENU. After a whistle, **WHISTLE! FITCH was seen. Try that step again.**
   in red above the sentence. Only its buttons take clicks. A click the step does not
@@ -304,7 +311,9 @@ board must read at a glance.
   each hex it names. A ring on a man is wider, round his whole hex, so it frames his
   counter and the parachute beside it, with his line under the ring. A step about a
   part of the page (the roster, the dial, the clock, the readout, the actions) rings
-  that part in the same red, throbbing, and its line is on the card only. **PASSED** is a card in the same place, headed with the
+  that part in the same red, throbbing, and its line is on the card only; **the card
+  goes to it**, level with a part on the right page or just above one under the map,
+  with a red pen arrow from the card to the part. **PASSED** is a card in the same place, headed with the
   qualification: LESSON 3 - Action Points - PASSED., the last word in army green.
 - **Turn cards.** At the start of every turn (turn 1 after the drop has been shown) a card
   sits in the bottom right of the map, narrow, with nothing darkened: what happened at the

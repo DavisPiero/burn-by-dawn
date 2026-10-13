@@ -3320,6 +3320,15 @@ const SPRITES = {
       return parts;
     },
   },
+  // The menu's gear at the top of the margin (M48b, ART-ASSETS.md ui-gear):
+  // eight square teeth on a heavy ring.
+  'ui-gear': {
+    viewBox: '0 0 24 24',
+    draw: () => [
+      ...[0, 45, 90, 135, 180, 225, 270, 315].map((turn) => line('M12 1.2 V5', 4.2, 'stroke-ink', { transform: `rotate(${turn} 12 12)`, 'stroke-linecap': 'butt' })),
+      ring(12, 12, 5.6, 4.2),
+    ],
+  },
   // The margin note down the outer edge of the left page, in the middle of
   // the margin (M15: back where it was before M14). The game's name above it
   // is type in index.html (#margin-title), not part of this drawing.

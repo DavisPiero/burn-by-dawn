@@ -41,7 +41,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  capitalise, renderContentsBack, renderLesson, renderLessonArrow, renderRestart, renderResults, renderTimerTin, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderLesson, renderLessonArrow, renderRestart, renderResults, renderTimerTin, renderMusicToggle, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -62,6 +62,10 @@ const resultsBox = document.getElementById('results');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
 const tipsToggleButton = document.getElementById('tips-toggle');
+const musicToggleButton = document.getElementById('music-toggle');
+const settingsOpenButton = document.getElementById('settings-open');
+const settingsCloseButton = document.getElementById('settings-close');
+const settingsPanel = document.getElementById('settings');
 const restartButton = document.getElementById('restart');
 const contentsBackButton = document.getElementById('contents-back');
 const timerTinBox = document.getElementById('timer-tin');
@@ -1567,6 +1571,9 @@ function render() {
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
   briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
   // A step may point at a part of the page (M48b): ringed in the pen while it is the step.
+  // On the contents page there is no game to restart or to leave.
+  restartButton.disabled = briefing?.kind === 'contents';
+  contentsBackButton.disabled = briefing?.kind === 'contents';
   const pointed = briefing ? null : lessonStep()?.point ?? null;
   for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed);
   renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
@@ -2168,6 +2175,7 @@ function handleRestartClick() {
     clearTimeout(restartArmed);
     restartArmed = null;
     renderRestart(restartButton, false);
+    openSettings(false);
     restartMission();
     return;
   }
@@ -2197,6 +2205,7 @@ function handleContentsBackClick() {
   contentsBackArmed = null;
   renderContentsBack(contentsBackButton, false);
   if (state.phase !== 'drop') restartMission();
+  openSettings(false);
   openContents();
 }
 
@@ -2840,7 +2849,10 @@ function placeLessonCard(pointed) {
   const scale = card.width / lessonCard.offsetWidth || 1;
   const beside = target.left >= card.right;
   const gap = 34 * scale;
-  const wanted = beside ? target.top + target.height / 2 - card.height / 2 : target.top - gap - card.height;
+  // Beside a part taller than the card (the roster), level with its top, so
+  // the card stays on the map and off the readout under it.
+  const level = target.height > card.height ? target.top : target.top + target.height / 2 - card.height / 2;
+  const wanted = beside ? level : target.top - gap - card.height;
   const top = Math.min(Math.max(wanted, page.top + 8 * scale), page.bottom - card.height - 8 * scale);
   lessonCard.style.bottom = 'auto';
   lessonCard.style.top = `${(top - page.top) / scale}px`;
@@ -2867,6 +2879,12 @@ function lessonView() {
   };
 }
 
+/** The menu behind the gear in the margin (M48b, the operator's): open or shut. */
+function openSettings(open) {
+  settingsPanel.hidden = !open;
+  settingsOpenButton.classList.toggle('open', open);
+}
+
 /** Music off (M21, the operator's), bottom left of the orders and the contents page. */
 function musicToggle() {
   return {
@@ -2874,6 +2892,7 @@ function musicToggle() {
     label: ' Music off',
     onChange: (on) => {
       musicOff = on;
+      renderMusicToggle(musicToggleButton, !musicOff);
       syncMusic();
     },
   };
@@ -3131,6 +3150,12 @@ function handleKey(event) {
   if (!opened) {
     event.preventDefault();
     if (loaded) openGame();
+    return;
+  }
+  // The menu open (M48b): Esc shuts it, and does nothing else.
+  if (!settingsPanel.hidden && event.key === 'Escape') {
+    event.preventDefault();
+    openSettings(false);
     return;
   }
   if ((event.key === 'm' || event.key === 'M') && !event.metaKey && !event.ctrlKey && !event.altKey) {
@@ -3424,6 +3449,24 @@ try {
     setTips(!tipsOn);
   });
   renderTipsToggle(tipsToggleButton, tipsOn);
+  musicToggleButton.addEventListener('click', () => {
+    musicToggleButton.blur();
+    musicOff = !musicOff;
+    renderMusicToggle(musicToggleButton, !musicOff);
+    // The orders' own Music off box is laid again to match.
+    render();
+  });
+  renderMusicToggle(musicToggleButton, !musicOff);
+  // The menu (M48b): the gear opens and shuts it; Esc, CLOSE or a click
+  // anywhere else shuts it.
+  settingsOpenButton.addEventListener('click', () => {
+    settingsOpenButton.blur();
+    openSettings(settingsPanel.hidden);
+  });
+  settingsCloseButton.addEventListener('click', () => openSettings(false));
+  window.addEventListener('pointerdown', (event) => {
+    if (!settingsPanel.hidden && !settingsPanel.contains(event.target) && !settingsOpenButton.contains(event.target)) openSettings(false);
+  }, true);
   restartButton.addEventListener('click', handleRestartClick);
   renderRestart(restartButton, false);
   contentsBackButton.addEventListener('click', handleContentsBackClick);
