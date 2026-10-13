@@ -8,7 +8,7 @@ import { dangerWash } from '../src/sight.js';
 import { advance, allows, back, beginLesson, caughtOut, hold, lessonLandings, lessonStart, live, stepMet, stepStart, validateLessons } from '../src/lessons.js';
 import { hexKey, loadJson, loadMap } from '../src/map.js';
 import { missionById, missionEnemyTypes, missionRoster, missionRules, validateMissions } from '../src/missions.js';
-import { chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, selectUnit, setHover, suppressEnemy, throwStone } from '../src/state.js';
+import { chooseDropRun, createInitialState, endTurn, hideUnit, jump, killEnemy, knifeEnemy, moveUnit, packParachute, passCharge, pickUpCharge, placeCharge, selectUnit, setHover, suppressEnemy, throwStone } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { planMove, reachableFor } from '../src/units.js';
 
@@ -153,6 +153,16 @@ export default [
         } else if (until.kind === 'packed') {
           assert(allows(step, { kind: 'action', id: 'pack' }), `${where}: packing is allowed`);
           state = packParachute(state, man.id, rules);
+        } else if (until.kind === 'carrying') {
+          // Handed it by the man `does.from` names, or picked up from his own hex.
+          assert(allows(step, { kind: 'action', id: does.from ? 'pass' : 'pickUp' }), `${where}: ${does.from ? 'passing' : 'picking up'} is allowed`);
+          state = does.from ? passCharge(state, does.from, until.unit, rules) : pickUpCharge(state, man.id, rules);
+        } else if (until.kind === 'chargeSet') {
+          assert(allows(step, { kind: 'action', id: 'charge' }) && allows(step, { kind: 'fuse', turns: step.allow.fuse }), `${where}: setting a charge is allowed, with its pencil`);
+          state = placeCharge(state, man.id, rules, step.allow.fuse);
+        } else if (until.kind === 'destroyed') {
+          assert(allows(step, { kind: 'endTurn' }), `${where}: ending the turn is allowed`);
+          state = endTurn(state, rules, map);
         } else if (until.kind === 'hidden') {
           assert(allows(step, { kind: 'action', id: 'hide' }), `${where}: hiding is allowed`);
           state = hideUnit(state, man.id, rules);
@@ -247,6 +257,51 @@ export default [
     const last = hold(advance(advance(advance(begun, lesson, start), lesson, start), lesson, start));
     assert(last.step === lesson.steps.length - 1 && !live(lesson, last, { kind: 'action', id: 'knife' }), 'the last step held leads only to PASSED');
     assert(!live(lesson, advance(last, lesson, start), move), 'and a lesson passed does nothing');
+  }],
+
+  ['charges: a canister is a pile of charges, its weight is as the lesson says, and the two timers make one bang', async () => {
+    const { lessons, base, map, rules, json, known } = await course();
+    // Lesson 10: the canister, the weight on a man who did not jump with one, the pass.
+    const ten = lessons.find((l) => l.id === 'charges-fetch-and-carry');
+    let s = lessonStart(base, ten, map, rules);
+    assert(s.canisters.length === 1 && s.droppedCharges.filter((c) => c.q === 3 && c.r === 3).length === 2, 'one canister, of two charges');
+    assert(s.units.find((u) => u.id === 'fitch').charges === 0, 'the sapper starts with none, as it says of him');
+    s = moveUnit(s, 'barrow', planMove(map, s.units, s.units.find((u) => u.id === 'barrow'), { q: 3, r: 3 }, rules, s.enemies), map);
+    s = pickUpCharge(s, 'barrow', rules);
+    const barrow = s.units.find((u) => u.id === 'barrow');
+    assert(barrow.charges === 1 && barrow.ap === 1 && barrow.apMax === 3, `picked up: 1 AP left, and a pool a point short: ${barrow.ap} of ${barrow.apMax}`);
+    assert(s.canisters.length === 1 && s.droppedCharges.length === 1, 'the canister is still there with one in it');
+    assert(passCharge(s, 'barrow', 'fitch', rules) === s, 'a pass is 2 AP, and he has 1');
+    s = endTurn(s, rules, map);
+    assert(s.units.find((u) => u.id === 'barrow').ap === 3, 'the next turn he has 3, not 4');
+    s = passCharge(s, 'barrow', 'fitch', rules);
+    const fitch = s.units.find((u) => u.id === 'fitch');
+    assert(fitch.charges === 1 && fitch.ap === fitch.apMax && fitch.apMax === 3 && s.units.find((u) => u.id === 'barrow').ap === 1, 'passed: 2 AP from the giver, nothing from the taker, no weight on a sapper');
+    assert(endTurn(s, rules, map).units.find((u) => u.id === 'barrow').ap === 4, 'and Barrow has his 4 AP again');
+    // Lesson 11: the pencil a step names is the only one; both go off at the end of turn 3, as one explosion.
+    const eleven = lessons.find((l) => l.id === 'charges-set-and-get-clear');
+    const first = eleven.steps.find((x) => x.until.kind === 'chargeSet');
+    assert(allows(first, { kind: 'fuse', turns: 3 }) && !allows(first, { kind: 'fuse', turns: 2 }) && allows({}, { kind: 'fuse', turns: 9 }), 'the pencil it names, or any where it names none');
+    let b = lessonStart(base, eleven, map, rules);
+    b = placeCharge(b, 'nunn', rules, 3);
+    assert(b.units.find((u) => u.id === 'nunn').ap === 2, 'a charge set is 1 AP');
+    b = moveUnit(b, 'nunn', planMove(map, b.units, b.units.find((u) => u.id === 'nunn'), { q: 6, r: 7 }, rules, b.enemies), map);
+    assert(b.units.find((u) => u.id === 'nunn').ap === 0, 'and the other point is his last 2');
+    b = placeCharge(pickUpCharge(endTurn(b, rules, map), 'nunn', rules), 'nunn', rules, 2);
+    assert(b.charges.length === 2 && b.turn === 2, 'two charges burning in turn 2');
+    const stayed = endTurn(endTurn(b, rules, map), rules, map);
+    assert(/NUNN would be dead/.test(caughtOut({}, b, stayed) ?? ''), 'a man who stays on his charge is whistled');
+    b = endTurn(b, rules, map);
+    assert(b.turn === 3 && !b.objectives[0].destroyed, 'not before turn 3 ends');
+    b = moveUnit(b, 'nunn', planMove(map, b.units, b.units.find((u) => u.id === 'nunn'), { q: 4, r: 7 }, rules, b.enemies), map);
+    const bang = endTurn(b, rules, map);
+    assert(bang.objectives[0].destroyed && bang.alert.points === b.alert.points + 3 && bang.units.find((u) => u.id === 'nunn').hits === 0, `the bridge is down, 3 alert, Nunn unhurt: alert ${bang.alert.points}`);
+    const broken = (change) => {
+      const copy = JSON.parse(JSON.stringify(json));
+      change(copy.lessons.find((l) => l.id === ten.id));
+      return throws(() => validateLessons(copy, known));
+    };
+    assert(broken((l) => { l.start.canisters[0].at = [99, 99]; }) && broken((l) => { l.start.canisters[0].charges = 0; }), 'a canister off the map, or empty, is refused');
   }],
 
   ['an aimed action lands only where a step says, if it says', async () => {

@@ -1329,6 +1329,8 @@ function listNames(names) {
 
 /** Set the charge with this pencil, or the one offered first. */
 function setCharge(unit, fuse) {
+  // A lesson's step may name the one pencil (M48c): the tin stays open on another.
+  if (lessonStep() && !lessonAllows({ kind: 'fuse', turns: fuse ?? offeredPencil(state, map, unit, rules)?.fuse })) return;
   pencilsFor = null;
   pencilLifted = null;
   const before = state.charges;

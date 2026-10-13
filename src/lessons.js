@@ -31,7 +31,9 @@ import { fillActionPoints, onBoard } from './units.js';
 //   contactBroken { unit? }           a man (that man) in contact at the step's start is out of it
 //   stoneThrown   {}                  a stone more has been thrown this turn
 //   suppressed    { enemy? }          an enemy (that enemy) has its head down
-export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged', 'runPicked', 'landed', 'contactBroken', 'stoneThrown', 'suppressed'];
+// M48c's, for charges fetched and passed:
+//   carrying      { unit?, count? }   a man (that man) carries so many charges (1)
+export const UNTIL_KINDS = ['selected', 'movedTo', 'hovered', 'hidden', 'packed', 'turnEnded', 'chargeSet', 'enemyDown', 'destroyed', 'manOut', 'acknowledged', 'runPicked', 'landed', 'contactBroken', 'stoneThrown', 'suppressed', 'carrying'];
 
 // The parts of the page a step may point at (`point`), where what it shows is
 // not on the board (M48b: lesson 1 reads the page). main.js knows where each is.
@@ -97,6 +99,11 @@ export function validateLessons(json, known, url = 'lessons') {
       taken.add(String(first));
     }
     for (const [n, p] of (start.parachutes ?? []).entries()) onMap(p.at, `${at}.start.parachutes[${n}].at`);
+    // Its canisters (M48c): where each lies, and the charges in it.
+    for (const [n, c] of (start.canisters ?? []).entries()) {
+      onMap(c.at, `${at}.start.canisters[${n}].at`);
+      if (!Number.isInteger(c.charges) || c.charges < 1) throw new Error(`${at}.start.canisters[${n}] needs its "charges", 1 or more`);
+    }
     if (!Array.isArray(lesson.steps) || lesson.steps.length === 0) throw new Error(`${at} needs "steps"`);
     for (const [n, step] of lesson.steps.entries()) {
       const where = `${at}.steps[${n}]`;
@@ -131,6 +138,9 @@ export function validateLessons(json, known, url = 'lessons') {
       // Where an aimed action may land (M48b): a stone thrown anywhere else
       // would leave the next step with nothing to show.
       for (const h of allow.target ?? []) onMap(h, `${where}.allow.target`);
+      // The one time pencil a charge may be set with (M48c): another would
+      // leave the steps after it describing a bang that comes some other turn.
+      if (allow.fuse !== undefined && (!Number.isInteger(allow.fuse) || allow.fuse < 1)) throw new Error(`${where}.allow.fuse is a time pencil's turns`);
       for (const id of allow.actions ?? []) {
         if (!actionIds.includes(id)) throw new Error(`${where}.allow.actions: no action "${id}"`);
       }
@@ -184,7 +194,12 @@ export function lessonStart(base, lesson, map, rules) {
     enemies: createEnemies({ ...map, enemies: start.enemies ?? [] }),
     alert: { ...base.alert, points: start.alert ?? 0, peak: start.alert ?? 0 },
     parachutes: (start.parachutes ?? []).map((p) => ({ unitId: p.unit ?? null, name: nameOf(p.unit), q: p.at[0], r: p.at[1] })),
-    droppedCharges: (start.droppedCharges ?? []).map(hexOf),
+    // A canister is a pile of charges (SPEC.md §9), as drop.js lands one.
+    canisters: (start.canisters ?? []).map((c, i) => ({ id: `canister-${i + 1}`, q: c.at[0], r: c.at[1], found: false })),
+    droppedCharges: [
+      ...(start.droppedCharges ?? []).map(hexOf),
+      ...(start.canisters ?? []).flatMap((c) => Array.from({ length: c.charges }, () => hexOf(c.at))),
+    ],
     report: [],
     speech: [],
     selectedUnitId: null,
@@ -237,6 +252,7 @@ export function stepMet(step, from, now, { acknowledged = false } = {}) {
       return now.turn === from.turn && stones(now) > stones(from);
     }
     case 'suppressed': return now.enemies.some((e) => e.suppressed && (until.enemy === undefined || e.id === until.enemy));
+    case 'carrying': return men.some((u) => onBoard(u) && u.charges >= (until.count ?? 1));
     default: return false;
   }
 }
@@ -248,6 +264,7 @@ export function stepMet(step, from, now, { acknowledged = false } = {}) {
  *   { kind: 'move', to: { q, r } }  moving the selected man
  *   { kind: 'action', id }          an action's button or key
  *   { kind: 'target', at: { q, r } } where an aimed action is clicked: anywhere, unless the step lists `target` hexes
+ *   { kind: 'fuse', turns }         the time pencil a charge is set with: any, unless the step names one
  *   { kind: 'endTurn' }
  *   { kind: 'run', runId }          looking at a drop run (M48b)
  *   { kind: 'jump' }                jumping on the run chosen
@@ -260,6 +277,7 @@ export function allows(step, input) {
     case 'move': return allow.move === 'any' || (Array.isArray(allow.move) && allow.move.some((h) => same(input.to, hexOf(h))));
     case 'action': return (allow.actions ?? []).includes(input.id);
     case 'target': return allow.target === undefined || allow.target.some((h) => same(input.at, hexOf(h)));
+    case 'fuse': return allow.fuse === undefined || allow.fuse === input.turns;
     case 'endTurn': return allow.endTurn === true;
     case 'run': return allow.run === true;
     case 'jump': return allow.jump === true;
@@ -280,6 +298,8 @@ export function live(lesson, progress, input) {
   if (!progress.met) return allows(lesson.steps[progress.step], input);
   const next = lesson.steps[progress.step + 1];
   if (!next || (input.kind === 'select' && next.until.kind !== 'selected')) return false;
+  // Where an action lands, and its pencil, belong to an action already begun.
+  if (input.kind === 'target' || input.kind === 'fuse') return false;
   return allows(next, input);
 }
 

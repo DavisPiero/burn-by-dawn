@@ -16,9 +16,10 @@
       "roster": "data/roster.json",
       "_lessons": "MISSION-TRAINING.md (SPEC.md §15), M47: a mission that names a lessons file is a course. Its orders are the course's list, each lesson sets up its own men and umpires on the map, and the lesson engine (src/lessons.js) lets only what a step asks for do anything. A draft: two lessons that prove the engine; M48 builds the course.",
       "lessons": "data/lessons-training.json",
-      "_rules": "An exercise (data/rules.json `mission.exercise`) is never settled: nobody withdraws and there is no back page. And it has no dawn: the night is long enough that no lesson meets it.",
+      "_rules": "An exercise (data/rules.json `mission.exercise`) is never settled: nobody withdraws and there is no back page. And it has no dawn: the night is long enough that no lesson meets it. M48c: its charges take the time pencils, as the airfield's and the aqueduct's do, 2 to 4 turns (short, so no lesson ends many turns waiting for a bang).",
       "rules": {
         "turnLimit": 99,
+        "charges": { "fuseChoice": { "min": 2, "max": 4 } },
         "mission": {
           "exercise": true
         }
