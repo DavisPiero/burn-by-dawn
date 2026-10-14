@@ -507,11 +507,12 @@ passed. The operator's list, with what I would add:
   Signed off 14 Oct: **M48 done.** **M48j (15 Oct, signed off):** the operator's notes:
   their sounds (a Thompson kill, dogs, the line cut, a stamp), music by screen, their
   painted clipboard, START HERE on the dots, the goods train's turn on the orders.
-- **Next, before M49: a layout tool** (the operator's ask, 14 Oct): `?layout` in the
-  address outlines the things that keep being nudged by hand (START HERE, the drop
-  cue, the clipboard, the PRIMARY TARGET note); the operator drags them, and a Copy
-  button gives their places for `data/layout.json`, which the game reads. Moving those
-  positions out of code into data is most of the work. Plan it first.
+- **M48k, the layout tool** (the operator's ask, 14 Oct; built 15 Oct): `?layout` in the
+  address outlines START HERE, the clipboard, each mission's drop cue and its rings'
+  notes; the operator drags them, and COPY gives the whole of `data/layout.json` to
+  paste over the file. With it, a bugle for a lesson passed and the clipboard's record
+  fitted to its paper in any browser.
+- **Next: the aqueduct's balance**, a short session of its own (bot runs from a frozen copy).
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 

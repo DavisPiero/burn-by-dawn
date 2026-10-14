@@ -259,7 +259,11 @@ board must read at a glance.
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. **A mission may be flagged** (`flag`): the
   course's line is stamped START HERE in the same red rubber, fainter, over a line
-  still printed full (the operator's, M48h: the pen's lettering did not suit). **It lies on the bare table**, as the loading page
+  still printed full (the operator's, M48h: the pen's lettering did not suit).
+  **Where the operator places things by hand** is `data/layout.json` (M48k): START HERE,
+  the clipboard, each mission's drop cue and its rings' notes. `?layout` in the address
+  outlines them, dashed in leader blue, to be dragged; a panel's COPY gives the whole
+  file to paste over it. **It lies on the bare table**, as the loading page
   does: no mission's map is seen until one is picked, and then that mission's spread is
   under its orders. Only clicking a playable one opens its orders; a key does nothing. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
 - **The orders are the first thing seen** after it, and they are short: **what tonight
@@ -315,7 +319,8 @@ board must read at a glance.
   wide as a real one is (about 3 to 4, the operator's, M48h): a
   brown board with a metal clip at its head and a sheet of the page's paper on it,
   headed TRAINING RECORD in the slab over *No. 1 Parachute Training School*, then a row
-  for each qualification: a box, ticked in green when it is earned, its name, and
+  for each qualification (the record zoomed down until it fits the paper, in any
+  browser's typewriter face, M48k): a box, ticked in green when it is earned, its name, and
   QUALIFIED or how many of its lessons are passed. With the whole course passed,
   **PASSED OUT** is stamped across the sheet in red rubber, askew, as the contents
   page's stamp is. All of it is drawn in code. No level, no HOW TO PLAY button; Music
@@ -381,8 +386,8 @@ board must read at a glance.
   the board, with the notes on top. Picking a run clears them. Where the win is
   any few of many (the airfield), each target's ring is tight and takes in its charge
   points too, so target and point read as one; where every target takes one charge, only
-  the win's note says so, and a bonus target's note names it (BOWSER: BONUS +2). A map may move a note into clear ground (`noteNudge` on an
-  objective, `exfilNoteNudge` on the map for the exfil's; art only). A ring may carry
+  the win's note says so, and a bonus target's note names it (BOWSER: BONUS +2). A note may be moved into clear ground (`notes` in
+  `data/layout.json`, by objective id or `exfil`; art only). A ring may carry
   one thing in bigger letters under its note: the exfil's, where there is a boat (NO WAY
   OUT BEFORE THE BOAT: TURN 15).
 - **Ghost Dakotas**: until a run is picked, a faint grey Dakota flies each drop line again
@@ -391,8 +396,8 @@ board must read at a glance.
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
   the player's pen, **in the blue of our kit** (the canisters' blue: in red it read as one
-  with the targets' rings), with a blue pen ring round each run's tab, among the runs' tabs (or centred on the map's `dropCueAt` hex where
-  that is busy: the airfield's is on the strip), still, on the map at 1280x800. Every
+  with the targets' rings), with a blue pen ring round each run's tab, among the runs' tabs (or centred on the mission's `dropCue` hex in
+  `data/layout.json`: every mission has one, the airfield's on the strip), still, on the map at 1280x800. Every
   pen note is kept whole on the map: CLICK A MAN TO START is moved in from an edge the
   men landed beside. Once one is
   picked it reads **HIT SPACE TO JUMP**, "or click the run again", in the same blue with

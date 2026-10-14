@@ -77,6 +77,7 @@ tests.html        every test suite, in the browser
   hints.js        the turn card's hints (§11)
   sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
   cues.js         what the board points at: who he could strike, get clear, the way out (§4)
+  layout.js       data/layout.json: where the things placed by hand sit, and the layout tool's moves
   lessons.js      the lesson engine: a course's lessons, steps and what each allows (§15)
   difficulty.js   the difficulty patches (§10)
   missions.js     the missions and their win conditions (§10)
@@ -89,6 +90,7 @@ tests.html        every test suite, in the browser
     ui.js         the right page, readout, log, cards, fitting the spread
     theme.js      colour tokens, halftone, the sprite registry, supplied art
     sound.js      cues, supplied recordings, made fallbacks, title music
+    layout-tool.js  ?layout: drag what is placed by hand, copy data/layout.json
 /data
   missions.json   the missions: files, patches, win condition, words, title card (§10)
   map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
@@ -103,6 +105,7 @@ tests.html        every test suite, in the browser
   rules.json      everything else: costs, detection, alert, noise, combat, scoring
   difficulty.json the levels, as patches over rules.json and enemies.json
   version.json    the build shown in the margin
+  layout.json     where the operator placed things by hand (art only, M48k)
 /assets           supplied art, fonts and sound (ART-ASSETS.md); code draws what is missing
 /tests            headless suites (node tools/run-tests.mjs)
 /tools            balance-bot.mjs, run-tests.mjs, make-chips.js (developer only)
@@ -423,8 +426,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M48, under way: the course built** (§15, `MISSION-TRAINING.md`), a few lessons a
-session. Six sessions in, it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
+**M48k, under way: the layout tool** (`?layout`, `data/layout.json`; §11). Before it,
+**M48, the course** (§15, `MISSION-TRAINING.md`), done: it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
 playable from the contents page, flagged START HERE. The ? pages' diagrams are built (M48i, §11). Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
