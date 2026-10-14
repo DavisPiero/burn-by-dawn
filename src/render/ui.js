@@ -135,6 +135,9 @@ export function renderKeys(button) {
 // has spare below a width-limited board goes to the captions. These numbers
 // are index.html's paddings and gaps, which must agree with them.
 
+// The clipboard's record is zoomed down by `step` until it fits its paper, to no less than `least` (M48k).
+const RECORD_FIT = { step: 0.03, least: 0.7 };
+
 export const SPREAD = {
   minWidth: 1280,
   minHeight: 760,
@@ -463,6 +466,9 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   card.appendChild(foot);
   fitBriefing(card);
+  // The clipboard's record fitted to its paper, now it is on the page (M48k).
+  const record = card.querySelector('.clip-sheet');
+  if (record) fitRecord(record, record.querySelector('.clip-body'));
 }
 
 /**
@@ -565,7 +571,7 @@ function contentsList({ entries, onChoose, record = null }) {
  * `record` is { rows: [{ name, passed, of, done }], passedOut }.
  */
 function clipboard({ rows, passedOut }) {
-  const sheet = html('div', 'clip-sheet', [
+  const body = html('div', 'clip-body', [
     html('div', 'clip-head', 'TRAINING RECORD'),
     html('div', 'clip-sub', 'No. 1 Parachute Training School'),
     html('ul', 'clip-rows', rows.map((row) => html('li', row.done ? 'clip-row done' : 'clip-row', [
@@ -573,9 +579,29 @@ function clipboard({ rows, passedOut }) {
       html('span', 'clip-name', row.name),
       html('span', 'clip-count', row.done ? 'QUALIFIED' : `${row.passed} of ${row.of}`),
     ]))),
-    ...(passedOut ? [html('div', 'clip-stamp', 'PASSED OUT')] : []),
   ]);
+  const sheet = html('div', 'clip-sheet', [body, ...(passedOut ? [html('div', 'clip-stamp', 'PASSED OUT')] : [])]);
+  // Set small enough to fit its paper in whatever browser (M48k, the operator's:
+  // their typewriter face ran the record off the foot of the painted clipboard).
+  // Fitted once on the page (renderBriefing), and again when the fonts are in.
+  document.fonts?.ready.then(() => fitRecord(sheet, body));
   return html('div', 'clipboard', [html('div', 'clip-clip'), sheet]);
+}
+
+/** The record zoomed down, a step at a time, until it is all on the paper. */
+function fitRecord(sheet, body) {
+  if (!sheet.isConnected || !sheet.offsetHeight) return;
+  // Measured as drawn, so a spread zoomed to fit a small window measures the same.
+  const foot = () => {
+    const box = sheet.getBoundingClientRect();
+    return box.bottom - parseFloat(getComputedStyle(sheet).paddingBottom) * (box.height / sheet.offsetHeight);
+  };
+  let zoom = 1;
+  body.style.zoom = '';
+  while (zoom > RECORD_FIT.least && body.getBoundingClientRect().bottom > foot() + 0.5) {
+    zoom = Math.max(RECORD_FIT.least, zoom - RECORD_FIT.step);
+    body.style.zoom = String(zoom);
+  }
 }
 
 /**

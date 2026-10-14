@@ -1453,8 +1453,8 @@
     #briefing .clip-rows .clip-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; margin: 0; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 50%, transparent); }
     #briefing .clip-rows .clip-row::before { content: none; }
     #briefing .clip-box { flex: none; box-sizing: border-box; width: 17px; height: 17px; border: 2px solid var(--ink); font-size: 15px; line-height: 13px; text-align: center; font-weight: bold; color: var(--green); }
-    #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; }
-    #briefing .clip-count { font-size: 13px; opacity: 0.75; }
+    #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
+    #briefing .clip-count { font-size: 13px; opacity: 0.75; white-space: nowrap; }
     #briefing .clip-row.done .clip-count { color: var(--green); font-weight: bold; opacity: 1; }
     /* The operator's painted clipboard (M48j), when it is there: its shape,
        and the record set on its paper (theme.js CLIPBOARD_FILE). Its paper is

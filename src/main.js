@@ -2927,8 +2927,8 @@ function lessonGoOn() {
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
-    // PASSED stamped on the card (M48j, the operator's).
-    playCue('stamp');
+    // A bugle for PASSED (M48k, the operator's: the stamp is the clipboard's).
+    playCue('lessonPassed');
   }
 }
 
