@@ -777,6 +777,43 @@ submarine's klaxon? a Whitley going home?) and Claude will wire the two cues.
 
 ---
 
+## Priority 24 — umpire counters for the practice ground — optional, **to make**
+
+**Why** (M48g): the course's garrison is umpires, not Germans. Code now draws them (a
+peaked cap, a white armband); paintings would sit better beside the six's portraits.
+
+| | |
+|---|---|
+| Files | `assets/enemies/umpire/counter-enemy-sentry.png`, `counter-enemy-patrol.png` (the course uses no reserve squad) |
+| Size | **1:1, 128 × 128 px**, PNG, 8-bit sRGB, **transparent background** |
+| Shown at | About **20 px**, inside the black clipped-corner counter |
+| Tell them apart | Sentry: **one** man. Patrol: **two** heads side by side |
+| What makes it an umpire at 20 px | A British **peaked service cap** (no helmet), khaki battledress, and a broad **white armband** on the upper arm. A whistle on a lanyard if it reads. No weapon |
+| Code does | **Wired in M48g**: drop a file into `assets/enemies/umpire/` and reload; a type with no file keeps the drawn umpire |
+
+### Prompt (add the style block)
+
+> Counter icon for a board game, head and shoulders of a WW2 British Army instructor of
+> 1941 acting as an exercise umpire, peaked service cap, khaki battledress, a broad
+> plain white armband on his upper arm, a whistle on a lanyard, stern but not hostile,
+> simple bold shapes that read at thumbnail size, isolated on a plain transparent
+> background, no text, no insignia, no symbols.
+
+---
+
+## Priority 25 — the practice ground's contents panel and title card — optional, **to make**
+
+**Why** (M48g): the course is first on the contents page and is the only line there
+with no small painting beside it; and its orders open under France's title card.
+
+| | |
+|---|---|
+| Panel | `assets/title/contents-training.jpg`, the same size and crop as the other three (Priority 14): parachutists coming down over an English park by day, a hall and a lake behind |
+| Title card | `assets/title/title-card-training.jpg`, as Priority 13 and 20, 4:1 |
+| Code does | Tell Claude when either is in: each is one line in `data/missions.json` (`panel`, `titleCard`) |
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
@@ -792,7 +829,9 @@ Not worth making yet. The map and layout will still change.
 
 These are part of M7b and are made as SVG in `src/render/theme.js`:
 
-- (Not a sprite: the training course's clipboard, M48f, is paper and type on its card, made in CSS as the cards and stamps are.)
+- (Not a sprite: the training course's clipboard, M48f, is paper and type on its card, made in CSS as the cards and stamps are. Kept in code for now, the operator's, 14 Oct; to be improved later.)
+- The practice ground's umpires (M48g): `counter-enemy-sentry-umpire`, `-patrol-umpire`
+  and `-reserve-umpire`, a peaked cap and a white armband, until Priority 24 is painted.
 
 - The C-47 Dakota silhouette for the drop fly-by (until `aircraft-dakota.png` is
   supplied), and the opening, drifting and collapsing parachute canopies: the men's in

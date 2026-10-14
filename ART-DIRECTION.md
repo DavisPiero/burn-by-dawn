@@ -141,7 +141,10 @@ board must read at a glance.
   turn left, red with a burst on its last turn.
 - **An enemy** counter prints its type on its strip (`counterLabel`; the reserve squad's
   reads RESERVES). A mission may have its own garrison's painted chips (`enemyChips`,
-  a folder tried before the usual one, type by type): the aqueduct's are Italian. A suppressed enemy is printed faint with a red SUPPRESSED band. The turn
+  a folder tried before the usual one, type by type): the aqueduct's are Italian. Or a
+  garrison drawn in a kit of its own (`enemyKit`) until it is painted: **the practice
+  ground's umpires**, head and shoulders in a peaked service cap with a white armband
+  on the left arm and no rifle, one for a sentry, two for a patrol. A suppressed enemy is printed faint with a red SUPPRESSED band. The turn
   after a suppression, when it sees and fires again but can still be killed, it wears a
   red crosshair.
 - A hovered enemy, or a hovered one of our men, wears a dashed red ring a little off its
@@ -172,7 +175,8 @@ board must read at a glance.
   card is laid.
 - **An enemy that raises the alarm says so** (a mission's `words.cries`): a small
   paper bubble over its chip beside the "!", lettered in red, ACHTUNG! or HALT! for a
-  man seen, MEIN GOTT! for something found (Italian on the aqueduct). It stays with the
+  man seen, MEIN GOTT! for something found (Italian on the aqueduct; an umpire's are
+  English: YOU THERE!, WHAT'S THIS?). It stays with the
   "!" through the player's turn.
 - **Where a charge went off** a black scorch is left on its hex for the rest of the
   night, under any wreck.
@@ -253,7 +257,9 @@ board must read at a glance.
   card with PARACHUTE RAIDS BEHIND THE LINES, then each mission as a contents line, its
   title run to its page number with a dotted leader, its place in italic and a line about
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
-  askew; a click on it does nothing. **It lies on the bare table**, as the loading page
+  askew; a click on it does nothing. **A mission may be flagged** (`flag`): the
+  course's title has START HERE beside it in the red pen's lettering, underlined by
+  hand and a little askew. **It lies on the bare table**, as the loading page
   does: no mission's map is seen until one is picked, and then that mission's spread is
   under its orders. Only clicking a playable one opens its orders; a key does nothing. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
 - **The orders are the first thing seen** after it, and they are short: **what tonight
@@ -294,7 +300,9 @@ board must read at a glance.
 - **A course's orders are a two-page spread** (§15, M48f), wider than the orders (1060
   against 820), under the same title card. **The left page is its list of lessons**,
   set as the contents page is but a line each: a green tick once passed, the title run
-  to its number with a dotted leader, at 16 px. **The right page is the clipboard**: a
+  to its number with a dotted leader, at 16 px; a row under the mouse is outlined in
+  ink with a red bar down its left, inside the row (the rows are too close for the
+  contents page's red shadow). **The right page is the clipboard**: a
   brown board with a metal clip at its head and a sheet of the page's paper on it,
   headed TRAINING RECORD in the slab over *No. 1 Parachute Training School*, then a row
   for each qualification: a box, ticked in green when it is earned, its name, and
@@ -306,7 +314,8 @@ board must read at a glance.
   have cost on a real mission, on a card headed in red as a warning is: THE UMPIRE, or
   WHISTLE! where it stops the exercise, and ON A REAL MISSION; each thing a line in
   bold capitals (FITCH HAS BEEN SEEN!) and a sentence under it. That exercise's lesson
-  card is narrow, 372 px, and says only the job.
+  card is narrow, 372 px, and says only the job, its heading set at 14 px to stay on
+  one line; both charge points wear the pen's ring until each has its charge.
 - **The lesson card** lies in the turn card's place while a lesson is on, and no turn
   card is laid: LESSON 3 · ACTION POINTS and STEP 2 OF 4 over a rule, the step's
   sentences, then what goes on from here: **TO GO ON:** and the step's own line in the

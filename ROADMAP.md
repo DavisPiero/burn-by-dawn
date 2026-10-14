@@ -498,8 +498,9 @@ passed. The operator's list, with what I would add:
   three (M48, M48b…), a few lessons each, each playable when merged.
   **As built (13 Oct 2026):** five sessions, M48 to M48f. All seventeen lessons, the
   course's list as a two-page spread and the clipboard are built; M48f awaits sign-off.
-  Left of M48: the umpires' own counters and cries, START HERE and the course made
-  playable, the **?** pages' diagrams.
+  **M48g (14 Oct 2026):** M48f signed off. The umpires have counters and cries of
+  their own, the course is **playable** and flagged START HERE, and lesson 17 is
+  Ready for Action. Left of M48: the **?** pages' diagrams (M48h).
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 
@@ -546,6 +547,24 @@ operator says otherwise.)
   mission stands alone with no saved progress. Phase 2 should still name the roster file
   per mission in missions.json, so that a new team later is new data and portraits, not
   new code.
+
+- **Tips as in-world briefings** (the operator's, 14 Oct 2026): deliver the play tips
+  in the 80s comic-annual manner rather than as bare pen notes: a radio message, a
+  sergeant's field orders, a caption box in a comic panel. Short, in character, now
+  and then wry. **The named men give the tips that touch their own traits** (Fitch on
+  setting a charge quickly, Vance on not being seen). Needs a design pass first: which
+  tips, where each sits so it never covers the board, and whose voice says what. It
+  shares its look with the comic panels above, so plan the two together.
+
+- **An "Advice" button** (the operator's, 14 Oct 2026): small, for a player who is
+  stuck: it suggests one sensible move. `src/hints.js` already works out the turn
+  card's one hint from the state, and the balance bot already chooses moves; the
+  button would ask one of them on demand and ring what it names on the board. To
+  settle first: whether it names a man and a hex or only the thing to worry about,
+  and whether asking costs anything (the score, a count on the back page).
+
+- **A better clipboard** (the operator's, 14 Oct 2026): the training record is drawn
+  in code for now and is good enough; improve it later, in code or as a painting.
 
 - **Hiding a body** (the operator's, 13 Oct 2026): a rule to try. A man beside or on a
   body spends a lot of AP, or two turns, to drag it under cover, where the garrison

@@ -447,7 +447,8 @@ export default [
 
   ['the back page rates a mission accomplished against the mission\'s score bands (M32)', async () => {
     const { json, mission } = await loadAirfield();
-    for (const m of json.missions.filter((x) => x.status === 'playable')) {
+    // A course (M48g: playable now) has no back page, so nothing to rate.
+    for (const m of json.missions.filter((x) => x.status === 'playable' && !x.lessons)) {
       assert(m.ratings?.length >= 2 && m.ratings[0].from === 0, `${m.id} has its bands, from 0`);
     }
     const bands = mission.ratings;

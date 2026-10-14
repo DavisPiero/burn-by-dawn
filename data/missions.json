@@ -6,15 +6,17 @@
   "missions": [
     {
       "id": "training",
-      "status": "draft",
+      "status": "playable",
+      "_flag": "M48g: a word or two printed by its line on the contents page, in the red pen. The course is where a new player starts.",
+      "flag": "START HERE",
       "title": "The Practice Ground",
       "place": "Tatton Park, England",
       "page": 2,
-      "blurb": "Start here. The parachute school's course, a lesson at a time: umpires for a garrison, a training bridge, and nobody hurt.",
+      "blurb": "The parachute school's course, a lesson at a time: umpires for a garrison, a training bridge, and nobody hurt.",
       "tagline": "SIX MEN · ONE TRAINING BRIDGE · NOBODY HURT",
       "map": "data/map-training.json",
       "roster": "data/roster.json",
-      "_lessons": "MISSION-TRAINING.md (SPEC.md §15), M47: a mission that names a lessons file is a course. Its orders are the course's list, each lesson sets up its own men and umpires on the map, and the lesson engine (src/lessons.js) lets only what a step asks for do anything. A draft: two lessons that prove the engine; M48 builds the course.",
+      "_lessons": "MISSION-TRAINING.md (SPEC.md §15), M47: a mission that names a lessons file is a course. Its orders are the course's list, each lesson sets up its own men and umpires on the map, and the lesson engine (src/lessons.js) lets only what a step asks for do anything. Playable since M48g, with all seventeen lessons.",
       "lessons": "data/lessons-training.json",
       "_rules": "An exercise (data/rules.json `mission.exercise`) is never settled: nobody withdraws and there is no back page. And it has no dawn: the night is long enough that no lesson meets it. M48c: its charges take the time pencils, as the airfield's and the aqueduct's do, 2 to 4 turns (short, so no lesson ends many turns waiting for a bang).",
       "rules": {
@@ -25,6 +27,9 @@
         }
       },
       "enemies": {},
+      "_pictures": "M48g. Its garrison is umpires: `enemyKit` names the drawn kit (src/render/theme.js: a service cap and a white armband), worn until a painted chip is in the `enemyChips` folder (ART-PROMPTS.md Priority 24), type by type.",
+      "enemyKit": "umpire",
+      "enemyChips": "assets/enemies/umpire",
       "win": {
         "condition": "destroyPrimary"
       },
@@ -38,14 +43,14 @@
         "diversionLog": "a thunderflash goes off behind the umpires",
         "cries": {
           "spotted": [
-            "ACHTUNG!",
-            "HALT!",
-            "ALARM!"
+            "YOU THERE!",
+            "SEEN YOU!",
+            "I SAY! YOU!"
           ],
           "found": [
-            "MEIN GOTT!",
-            "WAS IST DAS?",
-            "ALARM!"
+            "WHAT'S THIS?",
+            "HULLO! WHOSE IS THIS?",
+            "SOMEBODY'S BEEN HERE!"
           ]
         },
         "cleanBonus": "a quiet night",
