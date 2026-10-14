@@ -21,7 +21,7 @@
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import {
-  BLAST, BOAT, CANISTER, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -93,12 +93,38 @@ export function createBoard(svg, map, handlers) {
   const layerList = [terrain, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech];
   for (const layer of layerList) svg.appendChild(layer);
 
+  const hexNodes = new Map();
+  printTerrain(terrain, defs, map, corners, edge, (hex, q, r) => {
+    hex.style.cursor = 'pointer';
+    hex.addEventListener('click', () => handlers.onHexClick(q, r));
+    hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
+    hexNodes.set(hexKey(q, r), hex);
+  });
+
+  svg.addEventListener('mouseleave', () => handlers.onHexLeave());
+
+  return {
+    svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
+    // Drawing memory: where each counter was last drawn, and recent blasts.
+    motion: new Map(),
+    deaths: new Map(), // unit id -> { since, q, r }: a man seen alive, then dead (M21)
+    blasts: { bangs: null, list: [] },
+  };
+}
+
+/**
+ * The printed board: every hex's terrain, the area terrain over it, the grid,
+ * the dead wash past the border, the hedges, roads and railway, the places'
+ * names and the border, into `terrain`. `onHex(node, q, r)` is given each
+ * in-play hex's node, for the board's mouse (each lasts the whole game: a
+ * rollover about what stands on a hex anchors to it, as the counters are
+ * redrawn every frame). The ? pages' scenes print their tiny boards with it
+ * too (M48i), with their own `clipPrefix` so their ids are not the board's.
+ */
+function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefix = 'area-clip') {
   // An objective's own art stands in for the terrain motif on its footprint:
   // the exchange's farmhouse hexes would otherwise print a cottage under it.
   const underArt = new Set((map.objectives ?? []).flatMap((o) => o.hexes.map((h) => (Array.isArray(h) ? hexKey(h[0], h[1]) : hexKey(h.q, h.r)))));
-  // Each in-play hex's node, which lasts the whole game: a rollover about what
-  // stands on a hex anchors to it, as the counters are redrawn every frame.
-  const hexNodes = new Map();
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
     const terrainId = terrainIdAt(map, q, r);
@@ -130,10 +156,7 @@ export function createBoard(svg, map, handlers) {
       terrain.appendChild(hex);
       return;
     }
-    hex.style.cursor = 'pointer';
-    hex.addEventListener('click', () => handlers.onHexClick(q, r));
-    hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
-    hexNodes.set(hexKey(q, r), hex);
+    onHex?.(hex, q, r);
     terrain.appendChild(hex);
   });
 
@@ -141,13 +164,13 @@ export function createBoard(svg, map, handlers) {
   // terrain, the grid rule, the dead wash over the half-hexes past the border,
   // then roads and the railway.
   const areas = el('g', { 'pointer-events': 'none' });
-  drawAreas(areas, defs, map, corners);
+  drawAreas(areas, defs, map, corners, clipPrefix);
   terrain.appendChild(areas);
   const grid = el('g', { 'pointer-events': 'none' });
-  const washBlur = el('filter', { id: 'dead-wash-blur', x: '-5%', y: '-5%', width: '110%', height: '110%' });
+  const washBlur = el('filter', { id: `${clipPrefix}-dead-wash-blur`, x: '-5%', y: '-5%', width: '110%', height: '110%' });
   washBlur.appendChild(el('feGaussianBlur', { stdDeviation: GRID.deadWashBlur }));
   defs.appendChild(washBlur);
-  const wash = el('g', { fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity, filter: 'url(#dead-wash-blur)' });
+  const wash = el('g', { fill: GRID.deadWash, 'fill-opacity': 1 - GRID.outOfPlayOpacity, filter: `url(#${clipPrefix}-dead-wash-blur)` });
   forEachCell(map, (q, r) => {
     const points = cornersToPoints(axialToPixel(q, r, map.hexSize), corners);
     grid.appendChild(el('polygon', {
@@ -172,16 +195,6 @@ export function createBoard(svg, map, handlers) {
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
     fill: 'none', stroke: GRID.border, 'stroke-width': GRID.borderWidth, 'pointer-events': 'none',
   }));
-
-  svg.addEventListener('mouseleave', () => handlers.onHexLeave());
-
-  return {
-    svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
-    // Drawing memory: where each counter was last drawn, and recent blasts.
-    motion: new Map(),
-    deaths: new Map(), // unit id -> { since, q, r }: a man seen alive, then dead (M21)
-    blasts: { bangs: null, list: [] },
-  };
 }
 
 /** Forget what was last drawn where, for a new game on the same board (M12 restart). */
@@ -204,7 +217,7 @@ export function resetBoardMemory(layers) {
  * (see AREA in theme.js) filled with the terrain's colour, with the terrain's
  * motif scattered over it hex by hex.
  */
-function drawAreas(layer, defs, map, corners) {
+function drawAreas(layer, defs, map, corners, clipPrefix = 'area-clip') {
   const edges = edgeCorners(corners, map.hexSize);
   const seen = new Set();
   let clips = 0;
@@ -249,7 +262,7 @@ function drawAreas(layer, defs, map, corners) {
     // Over a fill or a tint (M29b: the wadi's is a tint).
     if (area.tone) layer.appendChild(el('path', { d, class: toneClass(...area.tone), 'fill-rule': 'evenodd' }));
     if (area.rim) {
-      const clipId = `area-clip-${clips++}`;
+      const clipId = `${clipPrefix}-${clips++}`;
       const clip = el('clipPath', { id: clipId });
       clip.appendChild(el('path', { d, 'fill-rule': 'evenodd' }));
       defs.appendChild(clip);
@@ -3263,4 +3276,128 @@ export function drawCounterKey(svg, examples, numbers) {
   row(656 + air, markerAt('marker-open-kill', 656 + air), ['OPEN TO A KILL [K]', 'The turn after: it sees again']);
   row(692 + air, markerAt('marker-no-kill', 692 + air), ['CANNOT BE KILLED', 'The reserve squad']);
   row(728 + air, markerAt('marker-spotted', 728 + air), ['RAISED THE ALARM', 'It saw or found something']);
+}
+
+// --- the ? pages' scenes (M48i) ------------------------------------------------
+
+/**
+ * One frame of a ? page's scene (src/help.js), on its tiny board, drawn by the
+ * board's own code: the terrain, the move range and its danger wash, the move
+ * line with its count, the counters, charge points, fuses, blasts and the
+ * exfil, so a diagram can never drift from the board it explains. `cast`
+ * gives tonight's real counters: `man(role)` a unit and its roster number,
+ * `enemy(type)` an enemy. It is framed by its own printed border, as the board is.
+ */
+export function drawHelpScene(svg, map, frame, cast) {
+  svg.replaceChildren();
+  // The board's own edges, but for a quarter hex more at the top and foot:
+  // a scene is three or four rows, and its first and last are used.
+  const edge = boardEdges(map);
+  const box = { ...edge, top: edge.top - map.hexSize / 4, bottom: edge.bottom + map.hexSize / 4 };
+  svg.setAttribute('viewBox', `${box.left} ${box.top} ${box.right - box.left} ${box.bottom - box.top}`);
+  const corners = hexCorners(map.hexSize);
+  const defs = el('defs');
+  svg.appendChild(defs);
+  const g = () => svg.appendChild(el('g', { 'pointer-events': 'none' }));
+  const clip = el('clipPath', { id: 'help-scene-edge' });
+  clip.appendChild(el('rect', { x: box.left, y: box.top, width: box.right - box.left, height: box.bottom - box.top }));
+  defs.appendChild(clip);
+  const terrain = g();
+  terrain.setAttribute('clip-path', 'url(#help-scene-edge)');
+  const layers = {
+    map, corners, sites: g(), reachable: g(), path: g(), highlight: g(), counters: g(), tokens: g(), effects: g(),
+  };
+  printTerrain(terrain, defs, map, corners, box, null, 'help-clip');
+  const areaOf = (hexes) => new Map(hexes.map((h) => [hexKey(h.q, h.r), h]));
+
+  // The way out, and the target with its charge points, as drawSites prints them.
+  if (frame.exfil.length) {
+    drawAreaEdge(layers, layers.sites, areaOf(frame.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
+    const at = labelPoint(map, frame.exfil);
+    layers.sites.appendChild(casedText('EXFIL', at.x, at.top - map.hexSize * 0.6, EXFIL.label));
+  }
+  if (frame.blast) {
+    fillArea(layers, areaOf(frame.blast), BLAST.opacity);
+    drawAreaEdge(layers, layers.sites, areaOf(frame.blast), [[BLAST.casing, BLAST.casingWidth], [BLAST.stroke, BLAST.width]]);
+  }
+  const objective = frame.objective;
+  if (objective) {
+    drawAreaEdge(layers, layers.sites, areaOf(objective.hexes), [[OBJECTIVE.casing, OBJECTIVE.casingWidth], [OBJECTIVE.stroke, OBJECTIVE.width]]);
+    const at = labelPoint(map, objective.hexes);
+    // Over the move range's outline, which would otherwise cross it in so small a board.
+    layers.effects.appendChild(casedText(objective.label, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, OBJECTIVE.primaryLabel));
+    if (objective.destroyed) {
+      layers.highlight.appendChild(el('use', {
+        href: '#stamp-destroyed', x: at.x - OBJECTIVE.stampWidth / 2, y: at.y - OBJECTIVE.stampHeight / 2,
+        width: OBJECTIVE.stampWidth, height: OBJECTIVE.stampHeight, transform: `rotate(${OBJECTIVE.stampRotate} ${at.x} ${at.y})`,
+      }));
+    }
+    for (const h of objective.destroyed ? [] : objective.points) {
+      const p = axialToPixel(h.q, h.r, map.hexSize);
+      const size = OBJECTIVE.pointIconSize;
+      const charged = frame.charges.some((c) => c.q === h.q && c.r === h.r);
+      if (!charged) {
+        const inset = corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
+        const point = el('g', { opacity: OBJECTIVE.pointOpacity });
+        point.appendChild(el('polygon', { points: inset, fill: 'none', stroke: OBJECTIVE.casing, 'stroke-width': OBJECTIVE.pointCasingWidth, 'stroke-linejoin': 'round' }));
+        point.appendChild(el('polygon', { points: inset, fill: 'none', stroke: OBJECTIVE.pointStroke, 'stroke-width': OBJECTIVE.pointWidth, 'stroke-dasharray': OBJECTIVE.pointDash, 'stroke-linejoin': 'round' }));
+        point.appendChild(el('use', { href: '#marker-charge-point', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size }));
+        layers.sites.appendChild(point);
+      }
+    }
+  }
+  for (const charge of frame.charges) {
+    const p = axialToPixel(charge.q, charge.r, map.hexSize);
+    const size = OBJECTIVE.pointIconSize;
+    const watch = MARKER.fuseSize;
+    layers.tokens.appendChild(el('use', { href: '#marker-charge', x: p.x - size / 2, y: p.y - size / 2, width: size, height: size }));
+    layers.tokens.appendChild(el('use', { href: `#${fuseMarkerId(charge.fuse, charge.length)}`, x: p.x + size * 0.3, y: p.y - watch * 0.95, width: watch, height: watch }));
+  }
+
+  // The selected man's move range, blue, and red where he would be seen.
+  if (frame.wash?.length) {
+    const reach = new Map(frame.wash.map(({ key }) => {
+      const [q, r] = key.split(',').map(Number);
+      return [key, { q, r, cost: 1 }];
+    }));
+    drawReachable(layers, reach, new Map(frame.wash.map(({ key, seen }) => [key, seen ? 'spotted' : null])));
+    const man = frame.men.find((m) => m.id === frame.selected);
+    if (man) reach.set(hexKey(man.q, man.r), { q: man.q, r: man.r, cost: 0 });
+    drawAreaEdge(layers, layers.reachable, reach, [[PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth]]);
+    drawAreaEdge(layers, layers.reachable, reach, [[PATH.reachableEdge, PATH.reachableEdgeWidth]]);
+  }
+  if (frame.path && frame.path.hexes.length > 1) {
+    const { hexes, costs, seen } = frame.path;
+    drawPlan(layers, { path: hexes, costs, affordableUpTo: hexes.length - 1, steps: hexes.length - 1, minimumStep: false }, seen.map((spotted) => ({ spotted })));
+  }
+
+  for (const body of frame.bodies) drawOnGround(layers, 'marker-body-enemy', body, -1, MARKER.bodySize, MARKER.bodyOffset);
+  for (const e of frame.enemies) {
+    const counter = drawEnemy({ ...cast.enemy(e.type), q: e.q, r: e.r, facing: e.facing, suppressed: e.suppressed }, map, false, false);
+    if (e.openToKill) counter.appendChild(marker('marker-open-kill', 38, -12));
+    layers.counters.appendChild(counter);
+  }
+  for (const m of frame.men) {
+    const { unit, number } = cast.man(m.role);
+    const counter = drawCounter({ ...unit, q: m.q, r: m.r, ap: m.ap, apMax: m.apMax, commandBonus: 0, charges: m.charges, hidden: false }, number, map, m.id === frame.selected);
+    if (m.spotted) counter.appendChild(marker('marker-spotted', 38, -12));
+    layers.counters.appendChild(counter);
+  }
+
+  // The key pressed, or what happened, in the pen beside him; the mouse; and
+  // the turn, or SPACE as it ends, in the corner.
+  for (const note of frame.notes) {
+    const p = axialToPixel(note.q, note.r, map.hexSize);
+    layers.effects.appendChild(penLetters([note.text], p.x - map.hexSize * HELP.noteAside, p.y + HELP.noteSize * 0.35, [HELP.noteSize]));
+  }
+  if (frame.cursor) {
+    const p = axialToPixel(frame.cursor.q, frame.cursor.r, map.hexSize);
+    layers.effects.appendChild(el('use', { href: '#help-cursor', x: p.x + HELP.cursorAt.x, y: p.y + HELP.cursorAt.y, width: HELP.cursorSize, height: HELP.cursorSize }));
+  }
+  const corner = frame.corner ?? (frame.turns ? `TURN ${frame.turn}` : frame.exfil.length ? `${frame.out} OUT` : null);
+  if (corner) {
+    const note = penLetters([corner], box.left + HELP.cornerInset, box.top + HELP.cornerInset + HELP.cornerSize * 0.7, [HELP.cornerSize]);
+    note.setAttribute('text-anchor', 'start');
+    layers.effects.appendChild(note);
+  }
 }

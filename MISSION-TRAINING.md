@@ -189,7 +189,8 @@ order the course gives them, each with how many of its lessons are passed (FIELD
 seventeen lessons are. It is the same page all through the course, filling in. Nothing
 is stored: it is what was passed this session.
 
-Still M48's: the **?** pages' diagrams drawn from the same lessons (M48h).
+The **?** pages' diagrams (M48i, ART-DIRECTION.md Cards): five small scenes, MOVING, BEING
+SEEN, CHARGES, FIGHTING and GETTING OUT, the course's first things in a loop, in `data/help.json`.
 
 ### Open for the operator
 

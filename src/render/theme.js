@@ -1135,6 +1135,18 @@ export const DROP_GHOST = {
 // Where to start (M21, from playtesting): big pen lettering among the drop
 // runs' names — PICK A DROP RUN!, then SPACE TO JUMP! — and, once the stick
 // is down, a pen ring round each man who can act until one is selected.
+// The ? pages' scenes (M48i, src/help.js): the pen's key letters beside a
+// man, the turn in the corner, and the mouse, its tip a little off the hex's
+// middle so the counter under it still shows. In board units.
+export const HELP = {
+  noteSize: 30,
+  noteAside: 1.05, // left of the man's counter, in hex radii: above it the letter sat on a target's name, and the men in the scenes go east
+  cornerSize: 24,
+  cornerInset: 14,
+  cursorSize: 30,
+  cursorAt: { x: 16, y: 14 },
+};
+
 export const CUE = {
   colour: PALETTE.red,
   halo: PALETTE.paper,
@@ -3173,6 +3185,15 @@ const SPRITES = {
       line('M13 10 C13 5 17 6 18 3', 1.8),
       circle(21.5, 21.5, 6, 'red'), ring(21.5, 21.5, 6, 1.4),
       line('M21.5 18.5 V24.5 M18.5 21.5 H24.5', 1.8, 'stroke-paper'),
+    ],
+  },
+  // The mouse in the ? pages' scenes (M48i): where a player would hover or
+  // click, a plain arrow in paper and ink. Its tip is at the symbol's (3, 2).
+  'help-cursor': {
+    viewBox: '0 0 24 24',
+    draw: () => [
+      svg('path', { d: 'M3 2 L3 19 L7.5 15 L10.5 21.5 L13.5 20 L10.5 13.8 L16.5 13.8 Z', class: 'paper' }),
+      svg('path', { d: 'M3 2 L3 19 L7.5 15 L10.5 21.5 L13.5 20 L10.5 13.8 L16.5 13.8 Z', fill: 'none', class: 'stroke-ink', 'stroke-width': 1.6, 'stroke-linejoin': 'round' }),
     ],
   },
   // A telegraph pole on each of the exchange's charge points (M12): where the

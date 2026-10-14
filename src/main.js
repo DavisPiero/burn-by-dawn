@@ -25,13 +25,15 @@ import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
+import { helpFrames, helpLines, sceneMap } from './help.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
+import { createUnits } from './units.js';
 import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
@@ -121,6 +123,10 @@ let version = null;
 let level = null;
 let roster = null;
 let traits = null;
+// How to play's pages (M48i, data/help.json), and the one open, kept while the game is.
+let help = null;
+let helpPage = 0;
+let helpPlay = null;
 // Interface only, never game state: the hex a hovered report line points at,
 // and the last derived view, for rollovers built when they are shown.
 let highlightHex = null;
@@ -1603,6 +1609,7 @@ function render() {
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
   showCounterKey(briefing?.kind === 'help');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
+  playHelpScene();
   briefingBackdrop.classList.toggle('click-through', CARDS_CLICKED_THROUGH.has(briefing?.kind));
   // A step may point at a part of the page (M48b): ringed in the pen while it is the step.
   // On the contents page there is no game to restart or to leave.
@@ -2265,6 +2272,57 @@ function openHelp() {
   render();
 }
 
+/** To another of how to play's pages (M48i), round from the last to the first. */
+function turnHelpPage(i) {
+  helpPage = (i + help.pages.length) % help.pages.length;
+  render();
+}
+
+/**
+ * The open page's scene, played over and over (M48i): its frames worked out
+ * once for the page and tonight's men and rules, then drawn one after another
+ * into the card's SVG, which each render makes anew, so the frame showing is
+ * drawn again into the new one. Stopped when the card goes.
+ */
+function playHelpScene() {
+  const art = briefingCard.querySelector('.help-scene');
+  if (!art) {
+    clearTimeout(helpPlay?.timer);
+    helpPlay = null;
+    return;
+  }
+  const key = `${mission.id}:${level.id}:${helpPage}`;
+  if (helpPlay?.key !== key) {
+    clearTimeout(helpPlay?.timer);
+    const page = help.pages[helpPage];
+    const sceneBoard = sceneMap(help, page, baseMap.terrain, mission.id);
+    // Tonight's own counters: the roster's first man of the role, by his
+    // number in it, and the garrison's first of the type.
+    const men = createUnits(roster, traits, rules);
+    const enemies = createEnemies(baseMap);
+    const cast = {
+      man: (role) => {
+        const index = Math.max(0, men.findIndex((u) => u.role === role && !u.leader), men.findIndex((u) => u.role === role));
+        return { unit: men[index], number: index + 1 };
+      },
+      enemy: (type) => enemies.find((e) => e.type === type) ?? enemies.find((e) => (type === 'patrol') === (e.speed > 0)) ?? enemies[0],
+    };
+    helpPlay = {
+      key, map: sceneBoard, cast, i: 0, timer: null,
+      frames: helpFrames(help, page, { terrain: baseMap.terrain, rules, apOf: (role) => rules.roles[role].actionPoints, missionId: mission.id }),
+    };
+    const tick = () => {
+      helpPlay.i = (helpPlay.i + 1) % helpPlay.frames.length;
+      const now = briefingCard.querySelector('.help-scene');
+      if (!now) return playHelpScene();
+      drawHelpScene(now, helpPlay.map, helpPlay.frames[helpPlay.i], helpPlay.cast);
+      helpPlay.timer = setTimeout(tick, helpPlay.frames[helpPlay.i].ms);
+    };
+    helpPlay.timer = setTimeout(tick, helpPlay.frames[0].ms);
+  }
+  drawHelpScene(art, helpPlay.map, helpPlay.frames[helpPlay.i], helpPlay.cast);
+}
+
 /** From how to play to the orders (M44): the same card under both, so putting either away lays it back down. */
 function openOrdersFromHelp() {
   const under = briefing?.under?.kind === 'orders' ? briefing.under.under ?? null : briefing?.under ?? null;
@@ -2632,37 +2690,30 @@ function describeBriefing(which, view) {
     // of its own behind ?, with the counter key. The mission's own rules (its
     // boat, canisters, timers, train) are said here in full; the orders name them.
     if (which.kind === 'help') {
+      // A page a tab (M48i): a scene and its few lines, or TONIGHT, what this mission asks.
+      const page = help.pages[helpPage];
+      const tonight = [
+        ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
+        // The operator's words (M31d): "charge target", and "Stukas- 1ea".
+        `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P]. A canister is found like a parachute until it is empty` : `The squad carries ${carried}`}.`
+          + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
+        ...(timerLine ? [timerLine] : []),
+        ...setterLines,
+        ...(rules.exfil.call ? [`A man on the beach can signal the boat in early [B]: it lands ${rules.exfil.call.leadTurns} turns later and still stays only ${rules.exfil.openFor}, so signal when the stick is ready to go.`] : []),
+        ...(rules.train ? [`The ${rules.train.label.toUpperCase()} ${trainDue().replace(/ \(charges.*\)$/, '').replace(trainObjective(state, rules).label, trainObjective(state, rules).label.toUpperCase())}.`] : []),
+        `Every bang alerts the garrison, so plan the order${rules.charges.fuseChoice ? ' and timer duration' : ''} of the charges you set. It’s good to be slow and stealthy, but be sure to finish before dawn!`,
+        // The clean run in the mission's own words (M32c, the operator's).
+        ...(mission.words.cleanOrders ? [mission.words.cleanOrders] : []),
+      ];
       return {
         wide: true,
         title: 'HOW TO PLAY',
         kicker: mission.title.toUpperCase(),
         paragraphs: [],
-        sections: [{
-          heading: 'THE BASICS',
-          lines: [
-            ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
-            'Click a man (or press 1–6). Hover a hex to see what the move costs and risks; click to go. SPACE ends the turn.',
-            'Red ground gets him spotted on the way; blue is safe. Spotted once is a warning: break contact before the turn ends, or he is fired on.',
-            'The red dashed hexes are charge points: stand a man with a charge on one and press C.',
-            'Hover anything to ask what it is. KEYBOARD lists every key. Play tips, on the orders, has the pen say what to do next.',
-          ],
-        }, {
-          heading: 'TONIGHT',
-          lines: [
-            // The operator's words (M31d): "charge target", and "Stukas- 1ea".
-            `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P]. A canister is found like a parachute until it is empty` : `The squad carries ${carried}`}.`
-              + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
-            ...(timerLine ? [timerLine] : []),
-            ...setterLines,
-            ...(rules.exfil.call ? [`A man on the beach can signal the boat in early [B]: it lands ${rules.exfil.call.leadTurns} turns later and still stays only ${rules.exfil.openFor}, so signal when the stick is ready to go.`] : []),
-            ...(rules.train ? [`The ${rules.train.label.toUpperCase()} ${trainDue().replace(/ \(charges.*\)$/, '').replace(trainObjective(state, rules).label, trainObjective(state, rules).label.toUpperCase())}.`] : []),
-            `Every bang alerts the garrison, so plan the order${rules.charges.fuseChoice ? ' and timer duration' : ''} of the charges you set. It’s good to be slow and stealthy, but be sure to finish before dawn!`,
-            // The clean run in the mission's own words (M32c, the operator's).
-            ...(mission.words.cleanOrders ? [mission.words.cleanOrders] : []),
-          ],
-        }],
+        sections: [],
+        pages: { tabs: help.pages.map((p) => p.tab), page: helpPage, onTab: turnHelpPage, lines: page.scene ? helpLines(page, rules) : tonight, scene: Boolean(page.scene) },
         link: { label: 'THE ORDERS', onClick: openOrdersFromHelp },
-        go: 'BACK — any key or click',
+        go: 'BACK — ← → turn the pages; any other key or click',
       };
     }
     // The orders in five lines (M44, from playtesting: there was too much to
@@ -3251,6 +3302,8 @@ function handleKey(event) {
     // Enter is a card's green button (M48b, the operator's): the one key that
     // goes on from a card that otherwise wants its button clicked.
     if (wantsItsButton() && event.key === 'Enter') return closeBriefing(true);
+    // The arrows turn how to play's pages (M48i), and do nothing else.
+    if (briefing.kind === 'help' && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) return turnHelpPage(helpPage + (event.key === 'ArrowRight' ? 1 : -1));
     // ? over a turn card swaps it for the orders (M17), as the button does.
     if (isHelpKey(event) && !['help', 'exfil', 'signal', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
@@ -3474,6 +3527,7 @@ try {
   // files and patches are loaded here, before the level's go over them.
   missions = validateMissions(await loadJson('data/missions.json'));
   traits = validateTraits(await loadJson('data/traits.json'));
+  help = await loadJson('data/help.json');
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
 

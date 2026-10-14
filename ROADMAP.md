@@ -502,8 +502,9 @@ passed. The operator's list, with what I would add:
   their own, the course is **playable** and flagged START HERE, and lesson 17 is
   Ready for Action. **M48h:** the operator's notes (START HERE as a faded stamp, the
   clipboard's shape, the drop cue moved), their six recordings in, and their painted
-  umpire chips. Left of M48: the **?** pages' diagrams (M48i), planned, waiting for
-  the operator's go-ahead.
+  umpire chips. **M48i:** M48h signed off; the **?** pages' diagrams built: six tabs,
+  a small looping scene on each of the first five, drawn by the board's own code.
+  Waiting for the operator's sign-off, which ends M48.
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 

@@ -859,6 +859,7 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   supplied), and the opening, drifting and collapsing parachute canopies: the men's in
   green, a supply canister's in blue (M43c).
 - The soft drop shadow under counters.
+- The mouse arrow in the ? pages' scenes (M48i, `help-cursor`): plain paper and ink.
 - The cover shields on a hovered move (M45): empty, half green, all green.
 - The strike marks on an enemy's chip (M46: knife, crosshair, crosshair struck through,
   each in the pen's red disc) and the red clock on a man too far from the exfil.

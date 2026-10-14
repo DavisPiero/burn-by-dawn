@@ -1285,6 +1285,40 @@
     /* Wider, so the picture is cropped lower rather than grown taller. */
     #briefing-backdrop.orders #briefing .title-banner { aspect-ratio: 5.8 / 1; }
     /* The level, first thing under the head: what it sets is in the text below. */
+    /* How to play's pages (M48i): a row of tabs on a rule, as an index's,
+       the open one printed solid; under it the page's scene, a small board
+       in its printed border, and its few lines. Every page is as tall as the tallest, so
+       the card does not jump as the pages are turned. */
+    #briefing .help-tabs {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      margin: 0 0 12px;
+      border-bottom: 2px solid var(--ink);
+    }
+    #briefing .help-tab {
+      padding: 4px 11px 3px;
+      font-family: var(--slab);
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      color: var(--ink);
+      background: none;
+      border: 2px solid var(--ink);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+    }
+    #briefing .help-tab:hover:not(.on) { box-shadow: inset 0 -3px 0 var(--red); }
+    #briefing .help-tab.on { color: var(--paper); background: var(--ink); }
+    #briefing .help-page { display: flex; flex-direction: column; min-height: 372px; }
+    #briefing .help-scene {
+      align-self: center;
+      width: auto;
+      max-width: 100%;
+      height: 236px;
+      margin: 0 0 12px;
+    }
     #briefing .brief-top { margin: 0 0 7px; padding-bottom: 5px; border-bottom: 2px solid var(--ink); }
     #briefing .brief-choice {
       display: flex;

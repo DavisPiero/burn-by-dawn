@@ -1,0 +1,140 @@
+{
+  "_comment": "How to play's pages (M48i, SPEC.md §11 Cards; src/help.js): a tab each, at most three lines, and a small board that plays one thing over and over with the game's own counters. TONIGHT has no scene: its lines are tonight's mission's, written by main.js. A line may quote a rule by its path in rules.json, {charges.fuseTurns}, and one given as { text, if } or { text, unless } is said only where that rule is set, or not. A scene's rows are read as a map's (data/map.json), in its `legend`, with a mission's own `ground` put over it so a scene is printed in tonight's country (the desert's sand and dunes cost as the fields and woods do); a hex is [column, row], and an even row's first and an odd row's last hex are half off the edge and not shown. `sight` is what the garrison sees: the danger wash's red. The steps, in order: men, enemies (who stands where, by role and by type: tonight's own counters are put on them), select (a man, or null), hover (his way, hex by hex, from beside him), walk (along it, a hex a frame), key ({ text, by }: a key pressed, in the pen beside him), charge (set by that man), suppress and kill ({ by, enemy }), note ({ at, text }), face ({ enemy, facing }), endTurn (true, or untilBlast to turn until the last charge goes off), clearBlast; and ms, how long the step's picture stays. A walk's AP and a charge's fuse are the rules' own; a test holds every walk to ground a man can cross.",
+  "hexSize": 46,
+  "walkMs": 340,
+  "holdMs": 1100,
+  "spaceMs": 750,
+  "legend": { "F": "field", "T": "track", "W": "wood", "B": "farmhouse" },
+  "ground": { "airfield": { "F": "sand", "W": "dunes", "B": "camp" }, "aqueduct": { "F": "plough" } },
+  "pages": [
+    {
+      "id": "moving",
+      "tab": "MOVING",
+      "lines": [
+        "Click a man, or press 1–6: the blue is how far he can go this turn. Hover a hex: the line is his way there, each step the AP spent by then.",
+        "Click to go. Cover is slow going: 2 AP a hex. SPACE ends the turn: the garrison moves, and every man's AP comes back.",
+        "Hover anything on the board to ask what it is. KEYBOARD lists every key."
+      ],
+      "scene": {
+        "rows": ["FFFWWFFF", "FFFWWFFF", "FTTTTTTF"],
+        "turns": true,
+        "steps": [
+          { "men": [{ "id": "a", "role": "sapper", "at": [2, 1] }], "ms": 900 },
+          { "select": "a", "ms": 1300 },
+          { "hover": [[3, 2], [4, 2], [5, 2]], "ms": 1700 },
+          { "walk": true },
+          { "ms": 1000 },
+          { "endTurn": true, "ms": 1600 }
+        ]
+      }
+    },
+    {
+      "id": "seen",
+      "tab": "BEING SEEN",
+      "lines": [
+        "Hover before he moves: red ground gets him seen on the way; blue is safe. Cover blocks sight: woods, hedges, dunes, walls and buildings.",
+        "Seen is a warning (the red !). Next turn, get him out of sight, or he is fired on at the end of it.",
+        "Hide [H] makes a man harder to see, and ends his turn."
+      ],
+      "scene": {
+        "rows": ["FFFFFFFF", "FFFFFFFF", "FFWWWFFF", "FFWWWFFF"],
+        "turns": true,
+        "sight": [[3, 1], [4, 1], [5, 1], [4, 0], [5, 0], [6, 0], [5, 2]],
+        "steps": [
+          { "men": [{ "id": "a", "role": "sapper", "at": [1, 1] }], "enemies": [{ "id": "s", "type": "sentry", "at": [6, 1], "facing": "W" }], "ms": 900 },
+          { "select": "a", "ms": 900 },
+          { "hover": [[2, 1], [3, 1], [4, 1]], "ms": 1700 },
+          { "walk": true },
+          { "ms": 1200 },
+          { "endTurn": true, "ms": 1300 },
+          { "select": "a", "ms": 900 },
+          { "hover": [[4, 2]], "ms": 1500 },
+          { "walk": true },
+          { "ms": 900 },
+          { "endTurn": true, "ms": 1800 }
+        ]
+      }
+    },
+    {
+      "id": "charges",
+      "tab": "CHARGES",
+      "lines": [
+        "The red dashed hexes are charge points. Stand a man with a charge (an orange dot) on one and press C.",
+        { "text": "The fuse burns {charges.fuseTurns} turns, counted down on the watch beside it. Get him clear before it goes.", "unless": "charges.fuseChoice" },
+        { "text": "Every charge takes a timer: after C, pick a time pencil from the tin. Get him clear before it goes.", "if": "charges.fuseChoice" },
+        "Every bang stirs the garrison."
+      ],
+      "scene": {
+        "rows": ["FFFFFFFF", "FFFFFBFF", "FFFFFFFF"],
+        "turns": true,
+        "objective": { "label": "TARGET", "hexes": [[5, 1]], "points": [[4, 1]], "blast": [[5, 1], [4, 1], [6, 1], [5, 0], [6, 0], [5, 2], [6, 2]] },
+        "steps": [
+          { "men": [{ "id": "a", "role": "sapper", "at": [2, 1], "charges": 1 }], "ms": 900 },
+          { "select": "a", "ms": 800 },
+          { "hover": [[3, 1], [4, 1]], "ms": 1400 },
+          { "walk": true },
+          { "key": { "text": "C" }, "ms": 900 },
+          { "charge": "a", "ms": 1400 },
+          { "endTurn": true, "ms": 900 },
+          { "select": "a", "ms": 700 },
+          { "hover": [[3, 1], [2, 1], [1, 1]], "ms": 1300 },
+          { "walk": true },
+          { "endTurn": "untilBlast", "ms": 1800 },
+          { "clearBlast": true, "ms": 1400 }
+        ]
+      }
+    },
+    {
+      "id": "fighting",
+      "tab": "FIGHTING",
+      "lines": [
+        "A gunner can Suppress [S] an enemy he can see: its head goes down, and it will not see, fire or move until its next go. Loud: the alert goes up.",
+        "Then, that turn or the next, a gunner can Kill [K] it with one silenced shot: quieter, but it leaves a body.",
+        "Anyone can Knife [N] an enemy beside him that is looking the other way: silent, but it takes his whole turn."
+      ],
+      "scene": {
+        "rows": ["FFFFFFFF", "FFFFFFFF", "FFFFFFFF"],
+        "turns": true,
+        "steps": [
+          { "men": [{ "id": "g", "role": "gunner", "at": [2, 1] }], "enemies": [{ "id": "p", "type": "patrol", "at": [4, 1], "facing": "W" }], "ms": 900 },
+          { "select": "g", "ms": 800 },
+          { "key": { "text": "S" }, "ms": 900 },
+          { "suppress": { "by": "g", "enemy": "p" }, "ms": 1500 },
+          { "endTurn": true, "ms": 1500 },
+          { "select": "g", "ms": 700 },
+          { "key": { "text": "K" }, "ms": 900 },
+          { "kill": { "by": "g", "enemy": "p" }, "ms": 2000 }
+        ]
+      }
+    },
+    {
+      "id": "out",
+      "tab": "GETTING OUT",
+      "lines": [
+        "When the job is done, walk the men onto the EXFIL. A man who reaches it is out, off the board.",
+        "Get at least {mission.minimumOut} out before dawn, or the mission fails however much is burning."
+      ],
+      "scene": {
+        "rows": ["FFFFFFFF", "FFFFFFFF", "FFFFFFFF", "FFFFFFFF"],
+        "exfil": [[6, 1], [7, 2], [6, 3]],
+        "steps": [
+          { "men": [{ "id": "a", "role": "sapper", "at": [3, 1] }, { "id": "b", "role": "scout", "at": [4, 2] }, { "id": "c", "role": "gunner", "at": [3, 3] }], "ms": 900 },
+          { "select": "a", "ms": 500 },
+          { "hover": [[4, 1], [5, 1], [6, 1]], "ms": 900 },
+          { "walk": true },
+          { "select": "b", "ms": 500 },
+          { "hover": [[5, 2], [6, 2], [7, 2]], "ms": 900 },
+          { "walk": true },
+          { "select": "c", "ms": 500 },
+          { "hover": [[4, 3], [5, 3], [6, 3]], "ms": 900 },
+          { "walk": true },
+          { "ms": 1800 }
+        ]
+      }
+    },
+    {
+      "id": "tonight",
+      "tab": "TONIGHT"
+    }
+  ]
+}
