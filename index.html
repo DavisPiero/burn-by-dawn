@@ -1389,9 +1389,9 @@
     #briefing .contents-place { display: block; font-style: italic; font-weight: bold; }
     #briefing .contents-blurb { display: block; }
     #briefing .contents-entry.coming .contents-pick { opacity: 0.45; }
-    /* A mission's flag (M48g: START HERE on the course): the player's red pen
-       beside its title, a little askew, underlined by hand. */
-    #briefing .contents-flag { flex: none; align-self: center; padding: 0 4px 1px; font-family: var(--lettering); font-size: 19px; letter-spacing: 1px; color: var(--red); border-bottom: 3px solid var(--red); border-radius: 0 0 40% 60% / 0 0 6px 4px; transform: rotate(-4deg) translateY(-3px); white-space: nowrap; }
+    /* A mission's flag (M48h, the operator's): START HERE on the course, in
+       the same red rubber as NEXT YEAR'S ANNUAL, faded, over a line still printed full. */
+    #briefing .contents-stamp.flag { opacity: 0.55; transform: translateY(-50%) rotate(-5deg); }
     /* A course's list (M48f, the operator's): a two-page spread. The lessons
        down the left page, a line each with its tick, and the clipboard on the
        right: the training record, ticked as the lessons are passed. */
@@ -1409,18 +1409,19 @@
     #briefing .contents.lessons button.contents-pick:hover,
     #briefing .contents.lessons button.contents-pick:focus-visible { box-shadow: inset 4px 0 0 var(--red); }
     #briefing .contents-tick { flex: none; width: 18px; font-size: 17px; font-weight: bold; color: var(--green); }
-    #briefing .clipboard { position: relative; align-self: start; margin: 10px 0 2px 24px; padding: 18px 12px 12px; background: color-mix(in srgb, var(--fire) 55%, var(--ink)); border: 3px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); }
+    /* As a real clipboard is, taller than wide (M48h, the operator's: it was too wide). */
+    #briefing .clipboard { position: relative; align-self: start; justify-self: center; width: 268px; margin: 10px 0 2px 20px; padding: 18px 12px 12px; background: color-mix(in srgb, var(--fire) 55%, var(--ink)); border: 3px solid var(--ink); border-radius: 6px; box-shadow: 4px 4px 0 var(--ink); }
     #briefing .clip-clip { position: absolute; left: 50%; top: -9px; width: 96px; height: 22px; transform: translateX(-50%); background: color-mix(in srgb, var(--paper) 45%, var(--ink)); border: 3px solid var(--ink); border-radius: 5px; z-index: 1; }
     #briefing .clip-sheet { position: relative; padding: 12px 16px 8px; background: var(--paper); background-image: var(--paper-fibre); background-size: var(--paper-fibre-size); border: 2px solid var(--ink); }
     #briefing .clip-head { font-family: var(--slab); font-size: 20px; font-weight: bold; letter-spacing: 2px; text-align: center; }
     #briefing .clip-sub { font-size: 12px; font-style: italic; text-align: center; padding-bottom: 5px; margin-bottom: 5px; border-bottom: 2px solid var(--ink); }
-    #briefing .clip-rows .clip-row { display: flex; align-items: center; gap: 8px; padding: 1px 0; margin: 0; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 50%, transparent); }
+    #briefing .clip-rows .clip-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; margin: 0; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 50%, transparent); }
     #briefing .clip-rows .clip-row::before { content: none; }
     #briefing .clip-box { flex: none; box-sizing: border-box; width: 17px; height: 17px; border: 2px solid var(--ink); font-size: 15px; line-height: 13px; text-align: center; font-weight: bold; color: var(--green); }
     #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; }
     #briefing .clip-count { font-size: 13px; opacity: 0.75; }
     #briefing .clip-row.done .clip-count { color: var(--green); font-weight: bold; opacity: 1; }
-    #briefing .clip-stamp { position: absolute; left: 50%; top: 52%; padding: 4px 16px 1px; font-family: var(--slab); font-size: 40px; font-weight: bold; letter-spacing: 3px; white-space: nowrap; color: var(--red); border: 5px solid var(--red); border-radius: 6px; transform: translate(-50%, -50%) rotate(-12deg); opacity: 0.82; pointer-events: none; }
+    #briefing .clip-stamp { position: absolute; left: 50%; top: 52%; padding: 4px 12px 1px; font-family: var(--slab); font-size: 31px; font-weight: bold; letter-spacing: 3px; white-space: nowrap; color: var(--red); border: 5px solid var(--red); border-radius: 6px; transform: translate(-50%, -50%) rotate(-12deg); opacity: 0.82; pointer-events: none; }
     #briefing .contents-stamp {
       position: absolute;
       right: 70px;

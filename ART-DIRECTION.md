@@ -258,8 +258,8 @@ board must read at a glance.
   title run to its page number with a dotted leader, its place in italic and a line about
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. **A mission may be flagged** (`flag`): the
-  course's title has START HERE beside it in the red pen's lettering, underlined by
-  hand and a little askew. **It lies on the bare table**, as the loading page
+  course's line is stamped START HERE in the same red rubber, fainter, over a line
+  still printed full (the operator's, M48h: the pen's lettering did not suit). **It lies on the bare table**, as the loading page
   does: no mission's map is seen until one is picked, and then that mission's spread is
   under its orders. Only clicking a playable one opens its orders; a key does nothing. `?mission=` skips it. The back page's CONTENTS starts a new game on it.
 - **The orders are the first thing seen** after it, and they are short: **what tonight
@@ -302,7 +302,8 @@ board must read at a glance.
   set as the contents page is but a line each: a green tick once passed, the title run
   to its number with a dotted leader, at 16 px; a row under the mouse is outlined in
   ink with a red bar down its left, inside the row (the rows are too close for the
-  contents page's red shadow). **The right page is the clipboard**: a
+  contents page's red shadow). **The right page is the clipboard**, taller than it is
+  wide as a real one is (about 3 to 4, the operator's, M48h): a
   brown board with a metal clip at its head and a sheet of the page's paper on it,
   headed TRAINING RECORD in the slab over *No. 1 Parachute Training School*, then a row
   for each qualification: a box, ticked in green when it is earned, its name, and
@@ -500,14 +501,14 @@ church's bells, upward to the top bell, for a mission accomplished, and tolls a 
 bell with a siren far off for one withdrawn or failed. A mission names its own back-page
 and diversion sounds: the airfield's jeep raid is an engine going by and bursts of fire,
 its success a bugle call, the rest its own air-raid
-siren close by (made in code until recordings are supplied). France's goods train
-whistles as it comes onto the board, one long blast and a short one, far off, with its
-chuffing dying away after: made in code until a recording is supplied. **The
-aqueduct's three** are made in code too until recordings are found: its canisters
+siren close by. France's goods train is heard as it comes onto the board, passing
+some way off (the operator's recording since M48h). **The aqueduct's three** are the
+operator's recordings since M48h: its canisters
 thump down in the drop, one thump each as its canopy lands and its blue ring pops on; the boat's oars are heard far off
 the turn it is sighted or answers the signal; and the turn it lands, its last strokes
 with a wave breaking on the shingle under them. Its back page is France's bells. **The umpire's whistle** in a
-lesson (§15) is made in code: one short blast of a pea whistle.
+lesson (§15) is one short blast of a referee's whistle, and **the knife** is a short
+blow (both the operator's recordings, M48h; the knife was a pencil before).
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
 choice, fading at the jump and never between turns. A new game brings it back from the

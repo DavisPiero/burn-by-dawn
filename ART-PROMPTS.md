@@ -577,8 +577,8 @@ the painted look, a reference for Claude to redraw from, into `assets/reference/
 |---|---|
 | `Train_Reference_01` | seen from straight above, running left to right: a French or German wartime goods locomotive (a tank engine or a small tender engine) and two or three covered wagons, any size |
 
-Since M35 it **whistles as it comes onto the board**, a whistle made in code. A
-recording would replace it: `train.m4a` dropped into `assets/audio/` is played instead,
+Since M35 it **whistles as it comes onto the board**. **Supplied at M48h** (the operator's recording of a steam train passing, cut to the pass); before that a whistle made in code. A
+recording replaces it: `train.m4a` dropped into `assets/audio/` is played instead,
 with no code change. The wreck has no sound of its own yet. Both would be found as
 Priority 11's were (freesound.org CC0 or Pixabay); Claude can find, cut and level them
 and wire the wreck in if asked:
@@ -757,7 +757,9 @@ Claude redraws the code's first drawings (M41) from them. Into `assets/reference
 
 ---
 
-## Priority 23 — the aqueduct's sounds (find, don't generate) — **to find**
+## Priority 23 — the aqueduct's sounds ✅ done (2026-10-14)
+
+Supplied by the operator and in since M48h (cut and levelled by Claude, `assets/audio/README.md`).
 
 Made in code since M43, and they sound like it. As Priorities 11 and 16:
 freesound.org (CC0) or Pixabay, into `assets/audio/` by these names; each replaces its
@@ -777,10 +779,16 @@ submarine's klaxon? a Whitley going home?) and Claude will wire the two cues.
 
 ---
 
-## Priority 24 — umpire counters for the practice ground — optional, **to make**
+## Priority 24 — umpire counters for the practice ground ✅ done (2026-10-14)
+
+Painted by the operator and in at M48h: the sentry and the patrol. The drawn umpires stay as the fallback.
 
 **Why** (M48g): the course's garrison is umpires, not Germans. Code now draws them (a
 peaked cap, a white armband); paintings would sit better beside the six's portraits.
+Paint them as Priority 7's and 19's were, the same painter, light and scale of head, so
+the three sets could come from one box. At 20 px the **cap** is what tells an umpire
+from a German: make its peak and flat crown the clearest shape in the chip, and the
+**white armband** the brightest thing in it.
 
 | | |
 |---|---|
@@ -791,13 +799,27 @@ peaked cap, a white armband); paintings would sit better beside the six's portra
 | What makes it an umpire at 20 px | A British **peaked service cap** (no helmet), khaki battledress, and a broad **white armband** on the upper arm. A whistle on a lanyard if it reads. No weapon |
 | Code does | **Wired in M48g**: drop a file into `assets/enemies/umpire/` and reload; a type with no file keeps the drawn umpire |
 
-### Prompt (add the style block)
+### Prompt — the sentry, `counter-enemy-sentry.png` (add the style block)
 
-> Counter icon for a board game, head and shoulders of a WW2 British Army instructor of
-> 1941 acting as an exercise umpire, peaked service cap, khaki battledress, a broad
-> plain white armband on his upper arm, a whistle on a lanyard, stern but not hostile,
-> simple bold shapes that read at thumbnail size, isolated on a plain transparent
-> background, no text, no insignia, no symbols.
+> Counter icon for a board game, head and shoulders of a 1941 British Army sergeant
+> instructor acting as an exercise umpire, seen from the front and a little to one
+> side, a khaki peaked service cap with a flat crown and a stiff shiny peak pulled low,
+> a clipped moustache, stern but not hostile, khaki battledress blouse, a broad plain
+> white armband round his left upper arm, a whistle on a lanyard at his chest, no
+> rifle, simple bold shapes that read at thumbnail size, isolated on a plain
+> transparent background, no text, no insignia, no symbols.
+
+### Prompt — the patrol, `counter-enemy-patrol.png` (add the style block)
+
+> Counter icon for a board game, two 1941 British Army exercise umpires walking
+> together, heads and shoulders close and overlapping, the nearer one a little lower
+> and larger, both in khaki peaked service caps with flat crowns and shiny peaks,
+> khaki battledress, each with a broad plain white armband on the upper arm, one
+> holding a clipboard, no rifles, simple bold shapes that read at thumbnail size,
+> isolated on a plain transparent background, no text, no insignia, no symbols.
+
+The course has no reserve squad, so no third chip is needed. **No regimental badges or
+lettering on the armbands**: a cap badge is a dot at 20 px, and plain white reads best.
 
 ---
 

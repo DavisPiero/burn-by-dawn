@@ -495,8 +495,6 @@ function contentsList({ entries, onChoose, record = null }) {
     const line = html('span', 'contents-line', [
       ...(record ? [html('span', entry.passed ? 'contents-tick passed' : 'contents-tick', entry.passed ? '✓' : '')] : []),
       html('span', 'contents-title', entry.title),
-      // Where a new player begins (M48g: the course), in the red pen.
-      ...(entry.flag ? [html('span', 'contents-flag', entry.flag)] : []),
       html('span', 'contents-leader'),
       html('span', 'contents-page', String(entry.page)),
     ]);
@@ -519,6 +517,9 @@ function contentsList({ entries, onChoose, record = null }) {
         onChoose(entry.id);
       });
       item.appendChild(button);
+      // Where a new player begins (the course): stamped as NEXT YEAR'S ANNUAL
+      // is, fainter (M48h, the operator's: the pen's START HERE did not suit).
+      if (entry.flag) item.appendChild(html('span', 'contents-stamp flag', entry.flag));
     } else {
       item.append(html('div', 'contents-pick', words), html('span', 'contents-stamp', 'NEXT YEAR’S ANNUAL'));
       item.addEventListener('click', (event) => event.stopPropagation());

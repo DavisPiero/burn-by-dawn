@@ -17,8 +17,8 @@ START HERE.**
 
 **A course, not a raid.** A playtester's idea, taken up by the operator (ROADMAP.md,
 Phase 5): a tutorial, one thing to do at a time, with the board holding the player's
-hand. It is first on the contents page, marked START HERE (a mission's `flag` in
-`missions.json`, in the red pen beside its title).
+hand. It is first on the contents page, stamped START HERE (a mission's `flag` in
+`missions.json`, in faded red rubber as NEXT YEAR'S ANNUAL is).
 
 **The practice ground, Tatton Park, England, 1941**: the park where No. 1 Parachute
 Training School dropped its pupils. The same six men and the same 18×13 board. The
@@ -133,7 +133,7 @@ and M48e's `dressed` (a man's wound has been dressed).
 **How it looks** (ART-DIRECTION.md has the detail): the step's `say` in the red pen on
 the board with its rings; the **lesson card** in the turn card's place (lesson and
 step, the sentence, the whistle's reason in red, TO GO ON: and the step's line, STEP
-BACK, START AGAIN, COURSE MENU); the PASSED card; the umpire's whistle, made in code.
+BACK, START AGAIN, COURSE MENU); the PASSED card; the umpire's whistle (a recording since M48h).
 
 ### The practice ground
 
