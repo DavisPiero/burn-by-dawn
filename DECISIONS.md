@@ -175,3 +175,10 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-14 | m48i | The mouse in the scenes is a new sprite, `help-cursor` (ART-ASSETS.md §6), drawn in code. The pen's key letter goes to the man's left: to his right and above him it covered the target's name, and every scene's men go east
 2026-10-14 | m48i | THE BASICS' lines are gone: their content is the scenes' lines (click a man, hover, click, SPACE, charge points, hover anything, KEYBOARD). The play tips line went with them: it is on the orders
 2026-10-14 | m48i | M48i signed off by the operator and merged: M48 done. The operator's answers: the six M48h recordings are good; PASSED OUT stays the qualification and the stamp
+2026-10-15 | m48j | Music by screen (the operator's): the contents page's strings, each mission's track named in missions.json `music`, the title music for the course. A track is fetched the first time it is wanted, not at load (France's is 1.7 MB); each track resumes where it faded, kept per track. Music still plays only over the orders and the drop
+2026-10-15 | m48j | The kill is a Thompson single shot (the operator's); played at gain 0.2, so it is no louder than the suppressing burst, as the kill is the quieter shot in the rules
+2026-10-15 | m48j | New cues: `lineCut` (cutting the line, so the airfield's Signals Tent too; a guess) and `stamp` (each lesson's PASSED card, and PASSED OUT on the clipboard when the last lesson is passed; the per-lesson one a guess), each with a made fallback
+2026-10-15 | m48j | The orders' Bonus line says when the goods train comes: GOODS TRAIN on turn 10 +5 (the operator's)
+2026-10-15 | m48j | The painted clipboard (Priority 26) is shown at 320 wide, not 268: its paper is a smaller share of it than the drawn sheet was, and the record would not fit; the record's rows and the stamp are set tighter on it. The drawn one stays as the fallback
+2026-10-15 | m48j | START HERE moved onto the dotted leader (the operator's), by hand; it is the first thing the coming layout tool will let the operator place
+2026-10-15 | m48j | M48j signed off by the operator and merged

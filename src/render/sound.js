@@ -148,6 +148,30 @@ const SYNTHS = {
     tone.stop(at + 0.16);
   },
 
+  // A telephone line cut (M48j): a crack, then the wire's buzz dying away.
+  'line-cut': (ctx, out, at, v) => {
+    noiseThrough(ctx, out, at, 0.08, [filter(ctx, 'highpass', 2400, 0.7), envelope(ctx, at, 0.8, 0.07, 0.002)], v * 0.13);
+    const hum = ctx.createOscillator();
+    hum.type = 'sawtooth';
+    hum.frequency.setValueAtTime(100, at);
+    const buzz = envelope(ctx, at + 0.02, 0.18, 1.2, 0.01);
+    hum.connect(filter(ctx, 'bandpass', 900, 2)).connect(buzz).connect(out);
+    hum.start(at);
+    hum.stop(at + 1.3);
+  },
+
+  // A rubber stamp on the training record (M48j): one dull thump on a desk.
+  stamp: (ctx, out, at, v) => {
+    noiseThrough(ctx, out, at, 0.12, [filter(ctx, 'lowpass', 700, 0.8), envelope(ctx, at, 0.8, 0.1, 0.002)], v * 0.19);
+    const knock = ctx.createOscillator();
+    knock.frequency.setValueAtTime(120, at);
+    knock.frequency.exponentialRampToValueAtTime(55, at + 0.1);
+    const body = envelope(ctx, at, 0.7, 0.12, 0.002);
+    knock.connect(body).connect(out);
+    knock.start(at);
+    knock.stop(at + 0.14);
+  },
+
   // A page or card handled: bright noise in a handful of uneven swells.
   'paper-rustle': (ctx, out, at, v) => {
     const rng = createRng(NOISE_SEED + v);
@@ -676,7 +700,13 @@ const CUES = {
   // The back page (M12): bells for a mission accomplished, a toll for the rest,
   // just after the page has turned.
   suppress: [['gunfire', 0.45, 0]],
-  kill: [['silenced-shot', 0.5, 0]],
+  // The kill (M48j, the operator's): one shot from a Thompson, held a little
+  // under the gunner's burst, as the kill is the quieter of the two.
+  kill: [['silenced-shot', 0.2, 0]],
+  // A line cut (M48j): the exchange's or the signals tent's.
+  lineCut: [['line-cut', 0.4, 0]],
+  // A lesson passed, and the course passed out (M48j): the stamp coming down.
+  stamp: [['stamp', 0.5, 0]],
   // The knife (M48h, the operator's recording): a blow, not a pencil.
   knife: [['stab', 0.55, 0]],
   victory: [['church-bells', 0.9, 0.35]],
@@ -777,21 +807,35 @@ export function setMuted(on) {
 // it is, so it should be cut to loop cleanly. `beat` is the made music's tempo
 // (88 a minute) and `phrase` one pass of it, four bars.
 export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16, lookahead: 2.5, fadeIn: 2, fadeOut: 1.6 };
+// Music of its own for a screen (M48j, the operator's): the contents page's,
+// and a mission's (data/missions.json `music`). Files only, fetched the first
+// time each is wanted, not at load (a mission's is over a megabyte); with no
+// file the made title music plays. `music-title` is the title music above.
+export const MUSIC_TRACKS = ['music-title', 'music-contents', 'music-france', 'music-desert', 'music-aqueduct'];
 
 let music = null;
-// Where the music got to when it last faded (M19): the pass of the made music
-// to lay next, or the seconds into a supplied file. Between turns it carries
-// on from there, so the same opening bars are not heard every turn.
-let resumeAt = { pass: 0, seconds: 0 };
+// Where each track got to when it last faded (M19): the pass of the made music
+// to lay next, or the seconds into a supplied file. Brought back, it carries
+// on from there, so the same opening bars are not heard every time.
+const resumeAt = new Map();
+
+/** A track's file, fetched once when it is first wanted (M48j): a promise of the decoded file, or of null. */
+function trackFile(id) {
+  if (!arriving.has(id)) arriving.set(id, fetchSound(id));
+  return arriving.get(id);
+}
 
 /**
- * Start the title music, if it is not playing already: from the top, or with
+ * Start a track (`music-title` when none is named), if it is not playing
+ * already; another track playing fades out first. From the top, or with
  * `resume` from where it last faded. Silent while muted or before the first
  * key or click.
  */
-export function startMusic({ resume = false } = {}) {
-  if (music || muted || !unlocked) return;
-  if (!resume) resumeAt = { pass: 0, seconds: 0 };
+export function startMusic({ resume = false, track = 'music-title' } = {}) {
+  if (music?.track === track || muted || !unlocked) return;
+  if (music) stopMusic();
+  if (!resume) resumeAt.delete(track);
+  const from = resumeAt.get(track) ?? { pass: 0, seconds: 0 };
   const ctx = audio();
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
@@ -799,14 +843,14 @@ export function startMusic({ resume = false } = {}) {
   out.gain.setValueAtTime(0.0001, ctx.currentTime);
   out.gain.exponentialRampToValueAtTime(1, ctx.currentTime + MUSIC.fadeIn);
   out.connect(ctx.destination);
-  const playing = { out, timer: null, source: null, pass: resumeAt.pass, startedAt: ctx.currentTime, offset: resumeAt.seconds, begun: false };
+  const playing = { track, out, timer: null, source: null, pass: from.pass, startedAt: ctx.currentTime, offset: from.seconds, begun: false };
   music = playing;
-  const [[id]] = CUES[MUSIC.cue];
-  const buffer = supplied.get(id);
-  if (buffer || !arriving.has(id)) begin(ctx, playing, buffer);
+  const buffer = supplied.get(track);
+  const coming = track === 'music-title' ? arriving.get(track) : trackFile(track);
+  if (buffer || !coming) begin(ctx, playing, buffer);
   // The file is still on its way (M23): nothing until it is here, then it, or
   // the made music if it never comes; not both.
-  else arriving.get(id).then((file) => music === playing && begin(ctx, playing, file));
+  else coming.then((file) => music === playing && begin(ctx, playing, file));
 }
 
 function begin(ctx, playing, buffer) {
@@ -842,12 +886,12 @@ function begin(ctx, playing, buffer) {
 /** Fade the title music out: the orders are put away, a turn begins, or the sound is off. */
 export function stopMusic() {
   if (!music) return;
-  const { out, timer, source, pass, startedAt, offset, begun } = music;
+  const { track, out, timer, source, pass, startedAt, offset, begun } = music;
   music = null;
   clearInterval(timer);
   const now = context.currentTime;
   // The passes already laid play out under the fade; the next time starts after them.
-  resumeAt = { pass, seconds: offset + (begun ? now - startedAt : 0) };
+  resumeAt.set(track, { pass, seconds: offset + (begun ? now - startedAt : 0) });
   out.gain.cancelScheduledValues(now);
   out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), now);
   out.gain.setTargetAtTime(0, now, MUSIC.fadeOut / 4);
@@ -863,28 +907,29 @@ export function isMusicPlaying() {
 
 /** Supplied files (ART-ASSETS.md §9) replace the placeholders; the first type found wins. */
 export function loadSuppliedSounds() {
-  for (const id of SOUND_IDS) {
-    arriving.set(id, (async () => {
-      for (const type of SOUND_FILES.types) {
-        let bytes;
-        try {
-          const response = await fetch(`${SOUND_FILES.dir}/${id}.${type}`);
-          if (!response.ok) continue;
-          bytes = await response.arrayBuffer();
-        } catch {
-          continue; // Not there: try the next type, then keep the placeholder.
-        }
-        // Decoded once there is an audio context, after the first key or click.
-        const ctx = await contextReady;
-        try {
-          const buffer = await ctx.decodeAudioData(bytes);
-          supplied.set(id, buffer);
-          return buffer;
-        } catch {
-          return null; // Not a sound this browser can play: keep the placeholder.
-        }
-      }
-      return null;
-    })());
+  for (const id of SOUND_IDS) arriving.set(id, fetchSound(id));
+}
+
+/** One sound's file, decoded once there is an audio context, or null if there is none or it will not play. */
+async function fetchSound(id) {
+  for (const type of SOUND_FILES.types) {
+    let bytes;
+    try {
+      const response = await fetch(`${SOUND_FILES.dir}/${id}.${type}`);
+      if (!response.ok) continue;
+      bytes = await response.arrayBuffer();
+    } catch {
+      continue; // Not there: try the next type, then keep the placeholder.
+    }
+    // Decoded once there is an audio context, after the first key or click.
+    const ctx = await contextReady;
+    try {
+      const buffer = await ctx.decodeAudioData(bytes);
+      supplied.set(id, buffer);
+      return buffer;
+    } catch {
+      return null; // Not a sound this browser can play: keep the placeholder.
+    }
   }
+  return null;
 }

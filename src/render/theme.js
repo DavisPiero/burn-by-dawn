@@ -170,6 +170,22 @@ export function applyDocumentTheme(root = document.documentElement) {
 // pixel size for retina. A missing file is fine: the drawn tile stays.
 export const PAPER_FILE = { url: 'assets/paper/paper-fibre.png', tile: 1024 };
 
+// The course's clipboard, painted (M48j, ART-ASSETS.md §7): where its blank
+// paper lies, in the picture's pixels, so the record is set on it.
+export const CLIPBOARD_FILE = { url: 'assets/course/clipboard.png', width: 536, height: 714, paper: { left: 58, top: 78, right: 483, bottom: 662 } };
+
+/** The painted clipboard in place of the drawn one, if it is there: its picture and its paper's margins, to index.html. */
+export function loadSuppliedClipboard(root = document.documentElement) {
+  return picture(CLIPBOARD_FILE.url).then((ok) => {
+    if (!ok) return;
+    const { width, height, paper } = CLIPBOARD_FILE;
+    root.style.setProperty('--clipboard-art', `url("${CLIPBOARD_FILE.url}")`);
+    // Padding in percent is of the width, top and bottom too.
+    root.style.setProperty('--clipboard-pad', [paper.top, width - paper.right, height - paper.bottom, paper.left].map((v) => `${(v / width) * 100}%`).join(' '));
+    root.classList.add('clipboard-painted');
+  });
+}
+
 export function loadSuppliedPaper(root = document.documentElement) {
   return picture(PAPER_FILE.url).then((ok) => {
     if (!ok) return;

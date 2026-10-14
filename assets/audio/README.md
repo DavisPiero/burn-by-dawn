@@ -32,6 +32,14 @@ and encoded as AAC with macOS `afconvert`. None needs a credit line.
 | `oars.m4a` | the operator's (SRC_Select/Oars.mp3) | the operator's | 3.0 s from 0.45 s, the first strokes; faded 0.4 s out |
 | `surf.m4a` | the operator's "Ocean Ambience With Seagulls And Heavy Surf Close" (SRC_Select/Surf.mp3) | the operator's | 3.6 s from 31.0 s, one wave; faded 0.4 s in, 0.9 s out |
 | `stab.m4a` | the operator's (SRC_Select/Stab.wav) | the operator's | 0.36 s from 0.04 s (M48h, the knife: a new cue) |
+| `silenced-shot.m4a` | the operator's "SI-6025_15 Gun Machine Gun Thompson Sub Machine Gun Single Shot" (Src/) | the operator's | 0.84 s from 0.36 s, the first single shot; faded 0.25 s out; loudest 0.4 s at RMS 0.095 (held by its peak) and played at gain 0.2, under the gunfire (M48j) |
+| `dog-distant.m4a` | the operator's `dogs.mp3` (SRC_Select/) | the operator's | 0.75 s from 3.38 s, two barks; levelled to the old file's RMS 0.031 (M48j: the old one sounded like bells) |
+| `line-cut.m4a` | the operator's "electric-long-15" (Src/) | the operator's | 1.6 s from 1.9 s, the crack and the buzz after; faded 0.45 s out; RMS 0.15 (M48j, a new cue) |
+| `stamp.m4a` | the operator's "SoundsCrate-Fight-Impact-12" (Src/) | the operator's | whole, 0.5 s; held by its peak (M48j, a new cue) |
+| `music-contents.m4a` | the operator's "soundscrate-optimistic-long-strings-2" (Src/) | the operator's | 18.5 s of 24.7, its silent tail cut so it loops; raised ×12 to the title music's loudest 0.4 s (RMS 0.145); stereo AAC 80 kbps (M48j) |
+| `music-france.m4a` | the operator's "soundscrate-beneath-the-surface" (Src/) | the operator's | 161.4 s, trailing silence cut, levelled as above (M48j) |
+| `music-desert.m4a` | the operator's "SoundsCrate-Rangers" (Src/) | the operator's | 114.7 s, as above (M48j) |
+| `music-aqueduct.m4a` | the operator's "SoundsCrate-Darkest_Path" (Src/) | the operator's | 110.6 s, as above (M48j) |
 
 **M48h, the operator's own files.** The six above came from the operator's folders
 `Src/` (a library) and `SRC_Select/` (the six asked for), which are kept out of git

@@ -37,7 +37,7 @@ import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCo
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -1713,7 +1713,8 @@ function toggleSound() {
  */
 function syncMusic() {
   if (!opened || state.phase !== 'drop' || state.outcome || isMuted() || musicOff) stopMusic();
-  else startMusic({ resume: briefing?.opening !== true });
+  // The contents page has its own, and each mission its own (M48j, the operator's); the title music where none is named.
+  else startMusic({ resume: briefing?.opening !== true, track: briefing?.kind === 'contents' ? 'music-contents' : mission.music ?? 'music-title' });
 }
 
 /** The sounds of a turn's report: a crump for any bang, a dog when the garrison stirs. */
@@ -1915,7 +1916,8 @@ function handleAction(id) {
       break;
     case 'cut': {
       const before = state;
-      commit(cutLine(state, unit.id, rules));
+      // The wire's crack and buzz (M48j), not the pencil.
+      commit(cutLine(state, unit.id, rules), 'lineCut');
       const cut = state.objectives.find((o) => o.cut && !before.objectives.find((b) => b.id === o.id)?.cut);
       if (cut) showStrike({ kind: 'cut', objectiveId: cut.id }, POWER_CUT.ms);
       break;
@@ -2723,7 +2725,8 @@ function describeBriefing(which, view) {
     const boat = rules.exfil.opensTurn;
     const extras = [
       ...bonusTargets.map((o) => `${o.label.toUpperCase()} +${kindOf(o, rules).score}`),
-      ...(rules.train ? [`${rules.train.label.toUpperCase()} +${rules.train.score}`] : []),
+      // When it comes, too (M48j, the operator's): it is worth planning for.
+      ...(rules.train ? [`${rules.train.label.toUpperCase()} on turn ${rules.train.turn} +${rules.train.score}`] : []),
       ...(salvo ? [`${salvo.count} in one bang +${salvo.points}`] : []),
       ...(rules.scoring.clean ? [`${mission.words.cleanBonus ?? 'a quiet night'} +${rules.scoring.clean}`] : []),
     ];
@@ -2924,6 +2927,8 @@ function lessonGoOn() {
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
+    // PASSED stamped on the card (M48j, the operator's).
+    playCue('stamp');
   }
 }
 
@@ -2943,8 +2948,11 @@ function lessonBack() {
 
 /** The course's list, from a lesson or from PASSED: the lesson on the board is given up. */
 function openCourse() {
+  // Back from the last lesson with every one passed: PASSED OUT comes down on the clipboard (M48j).
+  const passedOut = course.lesson && course.passed.size === course.lessons.length;
   course = { ...course, lesson: null, progress: null, whistle: null };
   restartMission();
+  if (passedOut) playCue('stamp');
 }
 
 /**
@@ -3521,6 +3529,7 @@ window.dispatchEvent(new Event('night-drop-started'));
 try {
   applyDocumentTheme();
   const paperLoaded = loadSuppliedPaper();
+  loadSuppliedClipboard();
   const fontsLoaded = loadSuppliedFonts().then(() => document.documentElement.classList.add('fonts-ready'));
   loadingProgress([paperLoaded, fontsLoaded]);
   // The mission (M27): `?mission=` picks one, as `?seed=` picks a seed; its
