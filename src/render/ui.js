@@ -379,6 +379,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
     card.appendChild(html('p', null, lines.flatMap((line, i) => (i ? [html('br'), ...line] : line))));
   }
   if (briefing.contents) card.appendChild(contentsList(briefing.contents));
+  if (briefing.pages) card.appendChild(helpPages(briefing.pages));
   for (const section of briefing.sections) {
     if (!section.lines.length) continue;
     card.appendChild(html('h3', null, section.heading));
@@ -462,6 +463,33 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   card.appendChild(foot);
   fitBriefing(card);
+}
+
+/**
+ * How to play's pages (M48i): a row of tabs, the page's scene (an empty SVG
+ * main.js draws and plays, render/board.js drawHelpScene), and its few lines,
+ * the keys in them bold as on the buttons. A tab's click turns to it and does
+ * not put the card away, as any other click on the card does.
+ */
+function helpPages({ tabs, page, onTab, lines, scene }) {
+  const row = html('div', 'help-tabs', tabs.map((label, i) => {
+    const tab = html('button', i === page ? 'help-tab on' : 'help-tab', label);
+    tab.type = 'button';
+    tab.addEventListener('click', (event) => {
+      event.stopPropagation();
+      onTab(i);
+    });
+    return tab;
+  }));
+  const body = html('div', scene ? 'help-page' : 'help-page words');
+  if (scene) {
+    const art = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    art.setAttribute('class', 'help-scene');
+    art.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    body.appendChild(art);
+  }
+  body.appendChild(html('ul', 'help-lines', lines.map((line) => html('li', null, boldKeys(line)))));
+  return html('div', 'help-pages', [row, body]);
 }
 
 /**

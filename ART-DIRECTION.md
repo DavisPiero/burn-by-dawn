@@ -281,15 +281,24 @@ board must read at a glance.
   air, then 14 px, then 13) before anything is cut.
 - **How to play is a card of its own**, at any time: a **?** button beside KEYBOARD, the
   `?` or `/` key, or the orders' button, over a turn card too. It has the orders' place
-  and width, headed HOW TO PLAY with the mission's name: THE BASICS (the run and the
-  jump before the drop; click, hover, click, Space; the charge points; hover anything),
-  and TONIGHT (the charges each target needs and what the stick carries, the timers,
-  what sets off its neighbours, signalling the boat, the goods train, the order of the
-  bangs, the clean run in the mission's own sentence). A **THE ORDERS** button at its
+  and width, headed HOW TO PLAY with the mission's name; its last page, TONIGHT, is
+  the run and the jump before the drop, the charges each target needs and what the
+  stick carries, the timers, what sets off its neighbours, signalling the boat, the
+  goods train, the order of the bangs, and the clean run in the mission's own sentence. A **THE ORDERS** button at its
   foot opens the orders, where in play the level is shown but fixed. Any key or click
   puts either away, laying back down whatever card was under it. It is the reference a
-  player asks for; nothing in it is pushed at him. (Phase 5 replaces its lines with
-  small moving diagrams.)
+  player asks for; nothing in it is pushed at him. **Since M48i it is six pages, a tab
+  each** on a rule under its head, the open one printed solid: MOVING, BEING SEEN,
+  CHARGES, FIGHTING, GETTING OUT and TONIGHT. Each of the first five is a small board
+  in its printed border (`data/help.json`, drawn by the board's own code, so its
+  counters, wash, move line, charge points, fuse watches, blasts and exfil are the
+  board's), playing one thing over and over a frame at a time: the pen letters the key
+  pressed above the man, a plain arrow is the mouse, and the turn (or SPACE as it ends)
+  is lettered in the corner. It is printed in tonight's country (the desert's sand and
+  dunes) with tonight's men. Under it at most three lines. TONIGHT is the mission's
+  own lines as before. ← and → turn the pages, round from the last to the first; a tab's
+  click turns to it; any other key or click puts the card away. Every page is as tall
+  as the tallest, so the card does not jump.
 - **The counter key** lies beside how to play over the crease, never beside the orders,
   drawn with the board's own counters: one of our men with every mark labelled, the
   leader and the marks a man can wear, and an enemy with its facing, next turn's facing,
