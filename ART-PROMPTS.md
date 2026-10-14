@@ -834,6 +834,12 @@ with no small painting beside it; and its orders open under France's title card.
 | Title card | `assets/title/title-card-training.jpg`, as Priority 13 and 20, 4:1 |
 | Code does | Tell Claude when either is in: each is one line in `data/missions.json` (`panel`, `titleCard`) |
 
+## Priority 26 — the course's clipboard ✅ done (2026-10-14)
+
+`assets/course/clipboard.png`, 536 × 714, supplied by the operator and in since M48j
+(ART-ASSETS.md §7): a wooden clipboard from straight above, a steel clip in the top
+12%, blank cream paper. Code sets the training record and the PASSED OUT stamp on its paper.
+
 ---
 
 ## Later — once level design has settled
@@ -851,7 +857,7 @@ Not worth making yet. The map and layout will still change.
 
 These are part of M7b and are made as SVG in `src/render/theme.js`:
 
-- (Not a sprite: the training course's clipboard, M48f, is paper and type on its card, made in CSS as the cards and stamps are. Kept in code for now, the operator's, 14 Oct; to be improved later.)
+- (Not a sprite: the training course's clipboard, M48f, is drawn in CSS only when the operator's painted one, Priority 26, is missing.)
 - The practice ground's umpires (M48g): `counter-enemy-sentry-umpire`, `-patrol-umpire`
   and `-reserve-umpire`, a peaked cap and a white armband, until Priority 24 is painted.
 

@@ -370,8 +370,10 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `pencil-scratch.mp3` | any action but a move: hide, a charge, a stone, suppress… | ~0.3 s |
 | `counter-snap.mp3` | a move is undone (a move itself too until M22; silent since M24, the operator's, after M23's slide per hex did not suit) | ~0.1 s |
 | `gunfire.mp3` | a gunner suppresses: a short burst of four shots (M13) | ~0.5 s |
-| `silenced-shot.mp3` | a gunner's kill: one muffled shot from a silenced Sten and the bolt's click (M13) | ~0.2 s |
-| `dog-distant.mp3` | the alert rises | ~0.6 s, two barks, far off |
+| `silenced-shot.mp3` | a gunner's kill (M13). Since M48j, the operator's: one Thompson single shot, played under the suppressing burst | ~0.8 s |
+| `dog-distant.mp3` | the alert rises. Since M48j two barks from the operator's `dogs.mp3` (the first file sounded like bells) | ~0.75 s, two barks |
+| `line-cut.mp3` | a scout cuts the line (M48j): the Telephone Exchange's or the Signals Tent's. A crack and the wire's buzz dying away | ~1.6 s |
+| `stamp.mp3` | a rubber stamp coming down (M48j): PASSED on each lesson's card, and PASSED OUT on the clipboard | ~0.5 s |
 | `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
 | `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |
 | `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12), rising to the top bell (M15) | ~4–7 s |
@@ -387,6 +389,12 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `whistle.mp3` | a man caught out in a lesson (M47, SPEC §15): the umpire's whistle, one short blast. Supplied (M48h) | ~0.3 s |
 | `stab.mp3` | the knife (M48h): a short close blow. Supplied (M48h); before it the knife played the pencil | ~0.4 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
+
+**Music by screen** (M48j, the operator's): `music-contents` over the contents page, and each
+mission's own over its orders and the drop (`music` in `data/missions.json`): `music-france`,
+`music-desert`, `music-aqueduct`; the course keeps `music-title`. Stereo AAC at 80 kbps,
+levelled to the title music, trailing silence cut so each loops promptly; fetched the first
+time each is wanted, not at load. Without a file the made title music plays.
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.
 
