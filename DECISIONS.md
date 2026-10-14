@@ -181,3 +181,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-15 | m48j | The orders' Bonus line says when the goods train comes: GOODS TRAIN on turn 10 +5 (the operator's)
 2026-10-15 | m48j | The painted clipboard (Priority 26) is shown at 320 wide, not 268: its paper is a smaller share of it than the drawn sheet was, and the record would not fit; the record's rows and the stamp are set tighter on it. The drawn one stays as the fallback
 2026-10-15 | m48j | START HERE moved onto the dotted leader (the operator's), by hand; it is the first thing the coming layout tool will let the operator place
+2026-10-15 | m48j | M48j signed off by the operator and merged
