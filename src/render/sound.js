@@ -135,6 +135,19 @@ const SYNTHS = {
     tone.stop(at + 0.08);
   },
 
+  // The knife (M48h): a dull blow and a short wet tear, close. Made in code
+  // until assets/audio/stab.m4a is in (supplied with it).
+  stab: (ctx, out, at, v) => {
+    noiseThrough(ctx, out, at, 0.22, [filter(ctx, 'lowpass', 900 + v * 60, 0.8), envelope(ctx, at, 0.7, 0.18, 0.004)], v * 0.17);
+    const tone = ctx.createOscillator();
+    tone.frequency.setValueAtTime(160, at);
+    tone.frequency.exponentialRampToValueAtTime(60, at + 0.12);
+    const body = envelope(ctx, at, 0.6, 0.14, 0.003);
+    tone.connect(body).connect(out);
+    tone.start(at);
+    tone.stop(at + 0.16);
+  },
+
   // A page or card handled: bright noise in a handful of uneven swells.
   'paper-rustle': (ctx, out, at, v) => {
     const rng = createRng(NOISE_SEED + v);
@@ -664,6 +677,8 @@ const CUES = {
   // just after the page has turned.
   suppress: [['gunfire', 0.45, 0]],
   kill: [['silenced-shot', 0.5, 0]],
+  // The knife (M48h, the operator's recording): a blow, not a pencil.
+  knife: [['stab', 0.55, 0]],
   victory: [['church-bells', 0.9, 0.35]],
   defeat: [['bell-toll', 0.55, 0.35]],
   // The airfield's (M31; data/missions.json names a mission's cues): its

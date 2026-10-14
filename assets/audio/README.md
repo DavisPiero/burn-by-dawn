@@ -26,6 +26,20 @@ and encoded as AAC with macOS `afconvert`. None needs a credit line.
 | `bugle.m4a` | "Tada Military 3", floraphonic, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-tada-military-3-183975/) | Pixabay Content License | whole, 4.3 s, a drum roll and trumpet fanfare, faded out over its last 0.5 s (M31c, the airfield's win; named for the made bugle it replaces) |
 | `siren.m4a` | "Sound Effect - WW2 UK Air Raid Siren", ScottishPerson, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-sound-effect-ww2-uk-air-raid-siren-164346/) | Pixabay Content License | 6 s from 23.5 s, faded 0.8 s in, 1.6 s out (M31c, the airfield's withdrawn or failed) |
 | `music-title.m4a` | "War Epic", PaulYudin, [Pixabay music](https://pixabay.com/music/main-title-war-epic-182501/) | Pixabay Content License | whole, 1:33, faded out over its last 2 s |
+| `whistle.m4a` | the operator's "40 Whistles Multiple Short" (assets/audio/SRC_Select/Whistle.aiff) | the operator's | 0.30 s from 0.62 s, the second blast (M48h, the umpire's) |
+| `train.m4a` | the operator's "Steam Train Passing" (SRC_Select/Train.mp3) | the operator's | 4.0 s from 21.0 s, the pass and its high whistle-like note; faded 0.6 s in, 1.0 s out |
+| `canister-thump.m4a` | the operator's (SRC_Select/Cannister_Thump.wav) | the operator's | 0.39 s from the hit at 0.235 s, faded over its last 0.08 s |
+| `oars.m4a` | the operator's (SRC_Select/Oars.mp3) | the operator's | 3.0 s from 0.45 s, the first strokes; faded 0.4 s out |
+| `surf.m4a` | the operator's "Ocean Ambience With Seagulls And Heavy Surf Close" (SRC_Select/Surf.mp3) | the operator's | 3.6 s from 31.0 s, one wave; faded 0.4 s in, 0.9 s out |
+| `stab.m4a` | the operator's (SRC_Select/Stab.wav) | the operator's | 0.36 s from 0.04 s (M48h, the knife: a new cue) |
+
+**M48h, the operator's own files.** The six above came from the operator's folders
+`Src/` (a library) and `SRC_Select/` (the six asked for), which are kept out of git
+(`.gitignore`: 156 MB of WAVs). Each was made mono at 44.1 kHz, cut, faded, and levelled
+so its loudest 0.4 s sits at an RMS of 0.2 (whistle, thump), 0.15 (train, surf) or
+0.12 (oars, stab, which are held lower by their peaks), with peaks under 0.97, then
+encoded at 64 kbps AAC with `afconvert`. The licences are as the operator's library
+gives them.
 
 **Licences.** CC0 is public domain. The Pixabay Content License allows use in a game with
 no credit, but not passing the files on "as-is"; these are cut, faded and levelled, and

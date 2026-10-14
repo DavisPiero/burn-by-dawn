@@ -1834,7 +1834,7 @@ function handleTargetClick(q, r) {
     const kind = state.targeting;
     const gun = kind === 'suppress' || kind === 'kill';
     const target = gun ? state.enemies.find((e) => e.q === q && e.r === r) : null;
-    commit(setTargeting(next, null), gun ? kind : 'action');
+    commit(setTargeting(next, null), gun || kind === 'knife' ? kind : 'action');
     if (target) showShot(kind, mover, target);
     if (kind === 'knife') showStrike({ kind: 'knife', at: { q, r } }, KNIFE_SPLAT.ms);
   }

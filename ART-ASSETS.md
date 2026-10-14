@@ -352,7 +352,7 @@ placeholder on the next reload, with no code change. A missing file is fine.
 **M4A (AAC) or MP3**, mono, 44.1 kHz, under 200 KB each, trimmed tight (no silence before
 the sound — it is played the moment its event happens). `.m4a` is tried first, then `.mp3`
 (M21c: the supplied set is AAC, which macOS's `afconvert` can write and MP3 it cannot).
-**Since M21c every sound below is supplied but the train's** (the airfield's jeep, bugle and siren since M31c), cut and levelled from free libraries; where
+**Every sound below is supplied** (M21c; the airfield's jeep, bugle and siren since M31c; the train, the aqueduct's three, the whistle and the knife since M48h, the operator's recordings), cut and levelled from free libraries; where
 each came from, its licence and how it was cut are in `assets/audio/README.md`. The table's
 names say `.mp3`; the same name in `.m4a` does as well.
 
@@ -372,10 +372,12 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `jeep.mp3` | the airfield's jeep raid (M31): a jeep going by fast, engine revving, wheels on stones; the cue lays four bursts of `gunfire` over it | ~3 s |
 | `bugle.mp3` | the airfield's back page, mission accomplished (M31b): bright and triumphant, not a Last Post; supplied (M31c) as a drum roll and trumpet fanfare | ~2–4 s |
 | `siren.mp3` | the airfield's back page, withdrawn or failed (M31): an air-raid siren close by, winding up, wailing and winding down | ~5–6 s |
-| `train.mp3` | France's goods train coming onto the board (M35): a steam whistle far off, one long blast and a short one, then the engine chuffing away. **Not supplied: made in code** (ART-PROMPTS.md Priority 18) | ~3 s |
-| `canister-thump.mp3` | the aqueduct's supply canisters coming down (M43), as the last canopy lands: a steel drum hitting hard ground, a dull thud and a clank, once for each canister as its ring pops on (M43b). **Not supplied: made in code** (ART-PROMPTS.md Priority 23) | ~0.3 s |
-| `oars.mp3` | the aqueduct's boat (M43): quiet as it is sighted or answers the signal, nearer as it lands. Three strokes of a pulling boat, rowlocks creaking, blades dipping. **Not supplied: made in code** | ~3 s |
-| `surf.mp3` | under the oars as the boat lands (M43): one small wave breaking on shingle and dragging back. **Not supplied: made in code** | ~2.5 s |
+| `train.mp3` | France's goods train coming onto the board (M35): a steam whistle far off, one long blast and a short one, then the engine chuffing away. Supplied (M48h): a steam train passing some way off | ~4 s |
+| `canister-thump.mp3` | the aqueduct's supply canisters coming down (M43), as the last canopy lands: a steel drum hitting hard ground, a dull thud and a clank, once for each canister as its ring pops on (M43b). Supplied (M48h) | ~0.4 s |
+| `oars.mp3` | the aqueduct's boat (M43): quiet as it is sighted or answers the signal, nearer as it lands. Three strokes of a pulling boat, rowlocks creaking, blades dipping. Supplied (M48h) | ~3 s |
+| `surf.mp3` | under the oars as the boat lands (M43): one small wave breaking on shingle and dragging back. Supplied (M48h) | ~3.6 s |
+| `whistle.mp3` | a man caught out in a lesson (M47, SPEC §15): the umpire's whistle, one short blast. Supplied (M48h) | ~0.3 s |
+| `stab.mp3` | the knife (M48h): a short close blow. Supplied (M48h); before it the knife played the pencil | ~0.4 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 
 How loud each plays is set in `sound.js` (CUES), so a file need not be levelled to the others.
