@@ -20,6 +20,7 @@
 
 import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, hexLine } from '../hex.js';
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
+import { pixelsToAxial } from '../layout.js';
 import {
   BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
@@ -882,7 +883,7 @@ export function renderPieces(layers, state, view) {
   drawBlasts(layers, state, now);
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
   drawTargetRings(layers, view.targetRings, now);
-  if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames);
+  if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames, view.dropCueAt);
   if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
   // What the turn card's hint is about, ringed while the card is up (M46).
   for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now, hex.wide ? CUE.manRingRadius : CUE.pointRingRadius);
@@ -951,7 +952,7 @@ function drawTargetRings(layers, rings, now) {
     // The note, on the side of the ring toward the middle of the board. It may
     // be several lines; the last sits just above the ring.
     const east = ring.beside || c.x < midX;
-    // `noteNudge` (M29b, art only) moves the note by [x, y] hex radii into clear ground.
+    // `noteNudge` (data/layout.json, M48k; each map's since M29b) moves the note by [x, y] hex radii into clear ground.
     const [nx, ny] = (ring.noteNudge ?? [0, 0]).map((v) => v * map.hexSize);
     const x = (ring.beside ? c.x + rx + 12 : east ? c.x + rx * 0.75 : c.x - rx * 0.75) + nx;
     // A ring with no note (M28: all but the first of many targets) is the pen mark alone.
@@ -981,6 +982,7 @@ function drawTargetRings(layers, rings, now) {
       span.textContent = words;
       note.appendChild(span);
     });
+    if (ring.layoutKey) note.dataset.layout = ring.layoutKey;
     layers.effects.appendChild(note);
     playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
   });
@@ -1040,12 +1042,12 @@ function throbbing(layers, key, now) {
  * kit, with a blue ring round each run to choose from, or round the one
  * chosen (M46, the operator's: in red it read as one with the targets' rings).
  */
-function drawDropCue(layers, cue, names) {
-  // A map may say where it starts (M29b, art only: `dropCueAt`, a hex), where
-  // the middle of its runs' names is busy, as the airfield's is.
-  const at = layers.map.dropCueAt && axialToPixel(layers.map.dropCueAt[0], layers.map.dropCueAt[1], layers.map.hexSize);
-  const x = at ? at.x : names.reduce((sum, p) => sum + p.x, 0) / names.length + CUE.nudge.x;
-  const y = at ? at.y : names.reduce((sum, p) => sum + p.y, 0) / names.length + CUE.nudge.y;
+function drawDropCue(layers, cue, names, place = null) {
+  // Where it centres is a hex in data/layout.json (M48k; each map's `dropCueAt`
+  // since M29b), or with none the middle of the runs' names.
+  const at = place?.at && axialToPixel(place.at[0], place.at[1], layers.map.hexSize);
+  const x = at ? at.x : names.reduce((sum, p) => sum + p.x, 0) / names.length;
+  const y = at ? at.y : names.reduce((sum, p) => sum + p.y, 0) / names.length;
   // Said for as many runs as the map has (M48b, the operator's: "press 1-3"
   // and "pick" on the practice ground, which has one).
   const pick = names.length === 1 ? ['CLICK THE DROP RUN', 'click its name, or press 1'] : ['PICK A DROP DIRECTION', `click a run's name, or press 1-${names.length}`];
@@ -1057,7 +1059,13 @@ function drawDropCue(layers, cue, names) {
     g.appendChild(el('path', { d, fill: 'none', stroke: CUE.halo, 'stroke-width': width + 4, 'stroke-linecap': 'round', opacity: 0.7 }));
     g.appendChild(el('path', { d, fill: 'none', stroke: CUE.kit, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity }));
   }
-  g.appendChild(penLetters(lines, x, y, [CUE.size, CUE.subSize], CUE.kit));
+  const letters = penLetters(lines, x, y, [CUE.size, CUE.subSize], CUE.kit);
+  // The lettering is what the layout tool drags (M48k), from where it stands now.
+  if (place?.layoutKey) {
+    letters.dataset.layout = place.layoutKey;
+    letters.dataset.layoutAt = JSON.stringify(place.at ?? pixelsToAxial([x, y], layers.map.hexSize).map((v) => Math.round(v * 100) / 100));
+  }
+  g.appendChild(letters);
   layers.effects.appendChild(g);
 }
 

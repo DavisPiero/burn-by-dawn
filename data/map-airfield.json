@@ -471,7 +471,6 @@
           8
         ]
       ],
-      "noteNudge": [2.6, 5],
       "stampNudge": [0, -0.45]
     },
     {
@@ -480,7 +479,6 @@
       "kind": "bombStore",
       "hexes": [[10, 5]],
       "chargeHexes": [[10, 4]],
-      "noteNudge": [0, -3.2],
       "nameWrap": true,
       "pointNudge": { "10,4": [-0.4, -0.12] },
       "stampNudge": [0, -0.45]
@@ -504,11 +502,10 @@
           15,
           4
         ]
-      ],
-      "noteNudge": [2.9, 0.3]
+      ]
     }
   ],
-  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilNoteNudge` (M29c, art only) moves the exfil ring's note by [x, y] hex radii: inside the ring here, the operator's. `exfilArtNudge` (M31d, art only) moves the exfil's picture the same way: the trucks lifted, as the bottom one was cut off by the board's edge (the operator's). `dropCueAt` (M29b, art only) is the hex PICK A DROP DIRECTION centres on: the strip.",
+  "_exfil": "SPEC.md §10, §13. The rendezvous with the trucks, at the wadi's mouth in the south-west corner. `exfilArt` (art only) picks its picture: the trucks, where France has the barn. `exfilArtNudge` (M31d, art only) moves the exfil's picture the same way: the trucks lifted, as the bottom one was cut off by the board's edge (the operator's). Where the exfil ring's note and PICK A DROP DIRECTION sit is in data/layout.json (M48k).",
   "exfil": [
     [
       -5,
@@ -536,8 +533,6 @@
   "_namesInPlay": "M41b, art only (the operator's: the board was all words in play). false: the targets' names are printed before the jump and under the mouse; once the stick is down the aircraft keep their stars and nothing else is named.",
   "namesInPlay": false,
   "exfilArt": "trucks",
-  "dropCueAt": [7.2, 5.5],
-  "exfilNoteNudge": [-4.25, 0],
   "exfilArtNudge": [0, -0.45],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword. Kind `wadi` (M31d) prints the name solid over the wadi's stones, one hex up the wadi from its mouth (the operator's).",
   "places": [
