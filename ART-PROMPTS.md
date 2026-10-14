@@ -779,7 +779,9 @@ submarine's klaxon? a Whitley going home?) and Claude will wire the two cues.
 
 ---
 
-## Priority 24 — umpire counters for the practice ground — optional, **to make**
+## Priority 24 — umpire counters for the practice ground ✅ done (2026-10-14)
+
+Painted by the operator and in at M48h: the sentry and the patrol. The drawn umpires stay as the fallback.
 
 **Why** (M48g): the course's garrison is umpires, not Germans. Code now draws them (a
 peaked cap, a white armband); paintings would sit better beside the six's portraits.

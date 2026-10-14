@@ -106,7 +106,7 @@ A mission may have its own garrison's chips (M43): `enemyChips` in `data/mission
 names a folder with the same file names, tried before `/assets/enemies/` type by type. The
 aqueduct's is `/assets/enemies/italian/` (ART-PROMPTS.md Priority 19), supplied at M43b;
 a type with no file there wears the usual, German, chip. The practice ground's is
-`/assets/enemies/umpire/` (ART-PROMPTS.md Priority 24), empty until painted: because
+`/assets/enemies/umpire/` (ART-PROMPTS.md Priority 24), painted by the operator at M48h (sentry and patrol): because
 that mission also names a drawn kit (`enemyKit: "umpire"`), a type with no file there
 wears the kit's drawing (`counter-enemy-<type>-umpire` in `theme.js`), not the German chip.
 

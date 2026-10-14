@@ -15,13 +15,13 @@ Last updated: 14 Oct 2026, M48's seventh session (M48h, not yet signed off).
 - **M48h:** the operator's six recordings are in (the umpire's whistle, the train, the
   canister thump, the oars, the surf, and a new knife sound); START HERE is a faded
   stamp; the clipboard is a clipboard's shape; the drop cue no longer covers the
-  practice ground's PRIMARY TARGET note; the umpire chips' prompts are in ART-PROMPTS
-  Priority 24.
+  practice ground's PRIMARY TARGET note; the operator's painted umpire chips are in.
 
 ## Next
 
 1. **M48i, the last of M48: the ? pages' diagrams** (in code). Plan given to the
-   operator on 14 Oct; waiting for the go-ahead.
+   operator on 14 Oct (tabs, a looping diagram each, scenes in `data/help.json`, no
+   practise-a-lesson button); waiting for the go-ahead, and for M48h's sign-off.
 2. **The aqueduct's balance**, a short session of its own. Bot runs from a frozen copy.
 3. **M49: playtest the course on people who have never seen the game.**
 
@@ -34,14 +34,13 @@ Rule of the phase: cut a lesson to fit the engine; do not grow the engine for on
    whistle); the surf is one wave of a busy recording, and may carry a gull.
 2. **The rest of `assets/audio/Src/`** is not wired in (gunfire, aircraft, music,
    impacts, cloth drops, a rubber stamp). Say which should go where.
-3. **The umpire's drawn look** stands until painted (Priority 24).
-4. **PASSED OUT** stays the qualification and the stamp (Claude's guess).
+3. **PASSED OUT** stays the qualification and the stamp (Claude's guess).
 
 ## Owed
 
 - **From the operator** (ART-PROMPTS.md): Priority 22, reference art for the
   aqueduct's board; Priority 23, the aqueduct's sounds; optional: Priority 21 (winter
-  kit), 24 (umpire chips), 25 (the course's contents panel and title card). The
+  kit), 25 (the course's contents panel and title card). The
   rewording pass on the lessons and the aqueduct's copy.
 - **Parked in ROADMAP.md** (the operator's, 14 Oct): tips as in-world briefings, an
   Advice button, a better clipboard.
