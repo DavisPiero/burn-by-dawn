@@ -303,6 +303,13 @@ id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:
 beside each mission's line on the contents page, shown about 180 x 120 (ART-PROMPTS.md
 Priority 14).
 
+**The course's clipboard** (M48j, ART-PROMPTS.md Priority 26): `assets/course/clipboard.png`,
+**536 x 714** (3:4, upright), PNG on transparency: a wooden clipboard from straight above,
+its steel clip in the top 12%, a sheet of blank cream paper on it. Shown at 268 x 357 on
+the right page of the course's list; code sets TRAINING RECORD, the rows and the PASSED
+OUT stamp on its paper, which lies at about 58 to 483 across and 78 to 662 down
+(`CLIPBOARD_FILE.paper` in `src/render/theme.js`). Without it, code draws its own.
+
 Since M25 the file the game loads is a **1600 x 400** copy at quality 90 (about 200 KB),
 made from the painted 2400 x 600, which is kept beside it as `title-card_full.jpg` and
 not loaded: the full size was 750 KB, and 1600 across is still sharp on a retina screen

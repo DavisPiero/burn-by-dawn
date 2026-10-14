@@ -104,6 +104,7 @@ export function validateMissions(json, url = 'data/missions.json') {
     if (typeof m.endSounds?.success !== 'string' || typeof m.endSounds?.otherwise !== 'string') {
       throw new Error(`${where} "endSounds" needs "success" and "otherwise" cues`);
     }
+    if (m.music !== undefined && (typeof m.music !== 'string' || !m.music)) throw new Error(`${where} "music" must name a music track`);
     validateWin(m.win, `${where}.win`);
     if (m.ratings !== undefined) {
       if (!Array.isArray(m.ratings) || m.ratings.length === 0) throw new Error(`${where} "ratings" must be a non-empty list`);

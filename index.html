@@ -1425,7 +1425,8 @@
     #briefing .contents-entry.coming .contents-pick { opacity: 0.45; }
     /* A mission's flag (M48h, the operator's): START HERE on the course, in
        the same red rubber as NEXT YEAR'S ANNUAL, faded, over a line still printed full. */
-    #briefing .contents-stamp.flag { opacity: 0.55; transform: translateY(-50%) rotate(-5deg); }
+    /* Over the dotted leader, clear of the words (M48j, the operator's: it lay on the blurb). */
+    #briefing .contents-stamp.flag { top: 25px; right: 185px; opacity: 0.55; transform: translateY(-50%) rotate(-5deg); }
     /* A course's list (M48f, the operator's): a two-page spread. The lessons
        down the left page, a line each with its tick, and the clipboard on the
        right: the training record, ticked as the lessons are passed. */
@@ -1455,6 +1456,15 @@
     #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; }
     #briefing .clip-count { font-size: 13px; opacity: 0.75; }
     #briefing .clip-row.done .clip-count { color: var(--green); font-weight: bold; opacity: 1; }
+    /* The operator's painted clipboard (M48j), when it is there: its shape,
+       and the record set on its paper (theme.js CLIPBOARD_FILE). Its paper is
+       less of it than the drawn sheet was, so it is drawn bigger. */
+    .clipboard-painted #briefing .clipboard { width: 320px; margin-top: 0; aspect-ratio: 536 / 714; box-sizing: border-box; padding: var(--clipboard-pad); background: var(--clipboard-art) center / 100% 100% no-repeat; border: none; border-radius: 0; box-shadow: none; filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.35)); }
+    .clipboard-painted #briefing .clip-clip { display: none; }
+    .clipboard-painted #briefing .clip-head { font-size: 17px; }
+    .clipboard-painted #briefing .clip-sub { font-size: 11px; padding-bottom: 3px; margin-bottom: 2px; }
+    .clipboard-painted #briefing .clip-rows .clip-row { padding: 2px 0; }
+    .clipboard-painted #briefing .clip-sheet { height: 100%; box-sizing: border-box; padding: 10px 12px 6px; background: none; border: none; }
     #briefing .clip-stamp { position: absolute; left: 50%; top: 52%; padding: 4px 12px 1px; font-family: var(--slab); font-size: 31px; font-weight: bold; letter-spacing: 3px; white-space: nowrap; color: var(--red); border: 5px solid var(--red); border-radius: 6px; transform: translate(-50%, -50%) rotate(-12deg); opacity: 0.82; pointer-events: none; }
     #briefing .contents-stamp {
       position: absolute;

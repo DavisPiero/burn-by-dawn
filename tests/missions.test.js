@@ -10,6 +10,7 @@ import { runFusePhase } from '../src/sabotage.js';
 import { loadJson, loadMap } from '../src/map.js';
 import { createInitialState, settleMission } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
+import { MUSIC_TRACKS, SOUND_FILES } from '../src/render/sound.js';
 import { landedState } from './fixtures.js';
 
 function assert(condition, message) {
@@ -182,5 +183,15 @@ export default [
     const job = lines.find((l) => l.label.startsWith('The job done'));
     equal(job?.points, 10, 'the job pays scoring.win');
     equal(lines.find((l) => l.label.startsWith('Fuel Dump'))?.points, rules.objectives.fuelDump.score, 'and the target its own score');
+  }],
+  ['a mission\'s music is a track sound.js knows, and its file is there (M48j)', async () => {
+    const json = validateMissions(await loadJson('data/missions.json'));
+    const named = [...json.missions.map((m) => m.music).filter(Boolean), 'music-contents'];
+    assert(named.length >= 4, 'the missions name no music');
+    for (const track of named) {
+      assert(MUSIC_TRACKS.includes(track), `${track} is not in MUSIC_TRACKS`);
+      const response = await fetch(`${SOUND_FILES.dir}/${track}.m4a`);
+      assert(response.ok, `${track}.m4a is missing`);
+    }
   }],
 ];
