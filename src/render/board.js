@@ -3324,7 +3324,8 @@ export function drawHelpScene(svg, map, frame, cast) {
   if (objective) {
     drawAreaEdge(layers, layers.sites, areaOf(objective.hexes), [[OBJECTIVE.casing, OBJECTIVE.casingWidth], [OBJECTIVE.stroke, OBJECTIVE.width]]);
     const at = labelPoint(map, objective.hexes);
-    layers.sites.appendChild(casedText(objective.label, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, OBJECTIVE.primaryLabel));
+    // Over the move range's outline, which would otherwise cross it in so small a board.
+    layers.effects.appendChild(casedText(objective.label, at.x, at.top - map.hexSize * OBJECTIVE.labelLift, OBJECTIVE.primaryLabel));
     if (objective.destroyed) {
       layers.highlight.appendChild(el('use', {
         href: '#stamp-destroyed', x: at.x - OBJECTIVE.stampWidth / 2, y: at.y - OBJECTIVE.stampHeight / 2,
@@ -3387,7 +3388,7 @@ export function drawHelpScene(svg, map, frame, cast) {
   // the turn, or SPACE as it ends, in the corner.
   for (const note of frame.notes) {
     const p = axialToPixel(note.q, note.r, map.hexSize);
-    layers.effects.appendChild(penLetters([note.text], p.x, p.y - map.hexSize * HELP.noteLift, [HELP.noteSize]));
+    layers.effects.appendChild(penLetters([note.text], p.x - map.hexSize * HELP.noteAside, p.y + HELP.noteSize * 0.35, [HELP.noteSize]));
   }
   if (frame.cursor) {
     const p = axialToPixel(frame.cursor.q, frame.cursor.r, map.hexSize);

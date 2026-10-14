@@ -1140,7 +1140,7 @@ export const DROP_GHOST = {
 // middle so the counter under it still shows. In board units.
 export const HELP = {
   noteSize: 30,
-  noteLift: 0.8, // above the man's counter, in hex radii
+  noteAside: 1.05, // left of the man's counter, in hex radii: above it the letter sat on a target's name, and the men in the scenes go east
   cornerSize: 24,
   cornerInset: 14,
   cursorSize: 30,
