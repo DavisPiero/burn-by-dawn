@@ -174,3 +174,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-14 | m48i | ← → turn the pages (round from last to first) and a tab's click turns to one; any other key or click still puts the card away. The page open is kept while the game is. The arrows hint is on the BACK button's note
 2026-10-14 | m48i | The mouse in the scenes is a new sprite, `help-cursor` (ART-ASSETS.md §6), drawn in code. The pen's key letter goes to the man's left: to his right and above him it covered the target's name, and every scene's men go east
 2026-10-14 | m48i | THE BASICS' lines are gone: their content is the scenes' lines (click a man, hover, click, SPACE, charge points, hover anything, KEYBOARD). The play tips line went with them: it is on the orders
+2026-10-14 | m48i | M48i signed off by the operator and merged: M48 done. The operator's answers: the six M48h recordings are good; PASSED OUT stays the qualification and the stamp
