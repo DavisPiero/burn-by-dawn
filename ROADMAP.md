@@ -504,7 +504,14 @@ passed. The operator's list, with what I would add:
   clipboard's shape, the drop cue moved), their six recordings in, and their painted
   umpire chips. **M48i:** M48h signed off; the **?** pages' diagrams built: six tabs,
   a small looping scene on each of the first five, drawn by the board's own code.
-  Waiting for the operator's sign-off, which ends M48.
+  Signed off 14 Oct: **M48 done.** **M48j (15 Oct, signed off):** the operator's notes:
+  their sounds (a Thompson kill, dogs, the line cut, a stamp), music by screen, their
+  painted clipboard, START HERE on the dots, the goods train's turn on the orders.
+- **Next, before M49: a layout tool** (the operator's ask, 14 Oct): `?layout` in the
+  address outlines the things that keep being nudged by hand (START HERE, the drop
+  cue, the clipboard, the PRIMARY TARGET note); the operator drags them, and a Copy
+  button gives their places for `data/layout.json`, which the game reads. Moving those
+  positions out of code into data is most of the work. Plan it first.
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 
