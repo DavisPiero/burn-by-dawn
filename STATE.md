@@ -9,7 +9,7 @@ Last updated: 15 Oct 2026, after M48l.
 ## Where we are
 
 - **Build M48l is on branch `m48l-aqueduct-balance`**, not yet signed off or merged.
-  `main` is M48k, pushed. Tests: 235 headless (`node tools/run-tests.mjs`), 237 in
+  `main` is M48k, pushed. Tests: 235 headless (`node tools/run-tests.mjs`), 238 in
   tests.html.
 - **M48l, the aqueduct's balance:** no change to how any mission plays (every bot batch
   byte for byte as before). A knife that is heard is in the engine as two numbers
