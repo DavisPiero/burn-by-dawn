@@ -45,8 +45,8 @@ Last updated: 15 Oct 2026, after M49b was built.
 
 ## Owed
 
-- **From the operator** (ART-PROMPTS.md): Priority 25, now with a title card prompt;
-  Priority 22, reference art for the aqueduct's board; optional: 21 (winter kit), 25
-  (the course's contents panel and title card). The rewording pass on the lessons, the
-  aqueduct's copy, and the ? pages.
+- **From the operator** (ART-PROMPTS.md): Priority 22, reference art for the aqueduct's
+  board; optional: 21 (winter kit), 25 (the course's contents panel, and its title card,
+  which now has a prompt). The rewording pass on the lessons, the aqueduct's copy, and
+  the ? pages.
 - **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.
