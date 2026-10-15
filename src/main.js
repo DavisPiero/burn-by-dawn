@@ -27,6 +27,8 @@ import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lesso
 import { boatAt } from './boat.js';
 import { contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
 import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
+import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
+import { startPlaytestPanel } from './render/playtest-panel.js';
 import { helpFrames, helpLines, sceneMap } from './help.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -124,6 +126,10 @@ let mission = null;
 let layout = null;
 // The build shown in the margin (data/version.json, M15).
 let version = null;
+// The playtest record (M49): with `?playtest` in the address, the moments a new player passes, timed. Null without it.
+let playtest = playtestFromQuery(window.location.search) ? newRecord(Date.now()) : null;
+// The man selected when the record last looked, so a new selection is noted once.
+let playSelected = null;
 let level = null;
 let roster = null;
 let traits = null;
@@ -1383,6 +1389,7 @@ function setCharge(unit, fuse) {
   const before = state.charges;
   commit(placeCharge(state, unit.id, rules, fuse ?? offeredPencil(state, map, unit, rules)?.fuse));
   const set = state.charges.find((c) => !before.includes(c));
+  if (set) notePlay('charge');
   if (set && !state.outcome) chargeSetNote = describeChargeNote(set);
   // It goes of itself after a moment (M48), if nothing has put it away.
   clearTimeout(chargeNoteTimer);
@@ -1595,6 +1602,8 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
 
 function render() {
   lessonCheck();
+  if (playtest && state.phase !== 'drop' && state.selectedUnitId && state.selectedUnitId !== playSelected) notePlay('select');
+  playSelected = state.selectedUnitId;
   syncMusic();
   map = effectiveMap(baseMap, state.objectives, rules, state);
   const view = deriveView();
@@ -1627,7 +1636,7 @@ function render() {
   renderDiversion(diversionButton, lessonStep() && !lessonLive({ kind: 'action', id: 'diversion' })
     ? { ...view.mission.diversion, ok: false, reason: 'not part of this step' }
     : view.mission.diversion);
-  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: mission.tagline }, restartMission, openContents,
+  renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: mission.tagline }, () => { notePlay('restart', mission.id); restartMission(); }, openContents,
     state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null);
   // Every man's name is set in bold on the card, as in the report.
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
@@ -1647,6 +1656,7 @@ function render() {
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
   if (shown && shown !== cardShown) playCue('card');
+  if (shown === 'results' && cardShown !== 'results') notePlay('end', `${mission.id}, ${state.outcome.kind}${state.outcome.score ? `, ${state.outcome.score.total}` : ''}`);
   if (shown === 'results' && cardShown !== 'results') playCue(state.outcome.kind === 'success' ? mission.endSounds.success : mission.endSounds.otherwise);
   cardShown = shown;
 }
@@ -1719,6 +1729,7 @@ function commit(next, cue = 'action') {
 function commitMove(unitId, plan) {
   commit(moveUnit(state, unitId, plan, baseMap), null);
   firstMoveMade = true;
+  notePlay('move');
 }
 
 /** Sound on or off (M, or the word in the margin). Not remembered: the game stores nothing (CLAUDE.md rule 9). */
@@ -1777,6 +1788,7 @@ function undoLast() {
   if (course?.lesson) return;
   if (undoStack.length === 0 || state.outcome || briefing || dropShow || flyShow || bangTimer) return;
   const previous = undoStack.pop();
+  notePlay('undo');
   pencilsFor = null;
   playCue('move');
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
@@ -2246,6 +2258,7 @@ function handleRestartClick() {
     restartArmed = null;
     renderRestart(restartButton, false);
     openSettings(false);
+    notePlay('restart', mission.id);
     restartMission();
     return;
   }
@@ -2294,6 +2307,7 @@ function openHelp() {
   if (flyShow) endFlyShow();
   if (bangTimer) endBangHold();
   hidePopup();
+  notePlay('help');
   briefing = { kind: 'help', under: briefing };
   render();
 }
@@ -2393,6 +2407,7 @@ function closeBriefing(byButton = false) {
  */
 function openContents() {
   if (state.outcome) restartMission();
+  notePlay('contents');
   briefing = { kind: 'contents', opening: true };
   render();
 }
@@ -2423,6 +2438,7 @@ async function openMission(id) {
     query.delete('seed');
     window.history.replaceState(null, '', `${window.location.pathname}?${query}`);
   }
+  notePlay('mission', id);
   briefing = { kind: 'orders', opening: true };
   render();
 }
@@ -2535,6 +2551,7 @@ function startMission(nextLevel, seed) {
 /** A level picked on the orders: start again at it, keeping the seed and the run chosen. */
 function handleChooseLevel(id) {
   if (state.phase !== 'drop' || id === level.id) return;
+  notePlay('level', id);
   const runId = state.dropRunId;
   startMission(levelById(difficulty, id), state.seed);
   if (runId) state = chooseDropRun(state, baseMap, runId);
@@ -2852,6 +2869,18 @@ function firstMoveGhost(unit, reachable, wash) {
   };
 }
 
+// --- the playtest record (M49) ---------------------------------------------------
+
+/** A moment for the playtest record (`?playtest`); without it, nothing. */
+function notePlay(what, detail = null) {
+  if (playtest) playtest = note(playtest, what, detail, Date.now());
+}
+
+/** The lesson and step being taken, as the record names them. */
+function stepName() {
+  return `${course.lesson.title}, step ${course.progress.step + 1}`;
+}
+
 // --- the course (M47, SPEC.md §15) -----------------------------------------------
 
 /** The step being taken, or null: no course, no lesson on, or the lesson just passed. */
@@ -2867,6 +2896,7 @@ function lessonAllows(input) {
     if (course.progress.met) lessonGoOn();
     return true;
   }
+  notePlay('shake', stepName());
   lessonCard.classList.remove('nudge');
   void lessonCard.getBoundingClientRect();
   lessonCard.classList.add('nudge');
@@ -2890,6 +2920,7 @@ function startLesson(id) {
   layLessonState(lessonStart(base, lesson, baseMap, rules));
   course = { ...course, lesson, progress: beginLesson(lesson, state), whistle: null, ack: false };
   briefing = null;
+  notePlay('lesson', lesson.title);
   // The game's own first-game cues stand aside: the lesson has its own.
   menPicked = true;
   firstMoveMade = true;
@@ -2908,6 +2939,8 @@ function layLessonState(next) {
   resetBoardMemory(layers);
   state = { ...next, hoverHex: state.hoverHex };
   lessonSeen = state;
+  // A step laid with a man selected is not the player selecting him.
+  playSelected = state.selectedUnitId;
 }
 
 /**
@@ -2923,6 +2956,7 @@ function lessonCheck() {
   const from = stepStart(progress);
   const why = caughtOut(step, from, state);
   if (why) {
+    notePlay('whistle', `${stepName()}: ${why}`);
     layLessonState(from);
     course = { ...course, whistle: why, ack: false };
     playCue('whistle');
@@ -2949,9 +2983,11 @@ function lessonCheck() {
 /** On from a step: the next, or PASSED after the last. */
 function lessonGoOn() {
   const { lesson, progress } = course;
+  notePlay('step', stepName());
   course = { ...course, progress: advance(progress, lesson, state), whistle: null, ack: false };
   if (course.progress.done) {
     course.passed.add(lesson.id);
+    notePlay('passed', lesson.title);
     briefing = { kind: 'passed', lessonId: lesson.id };
     // A bugle for PASSED (M48k, the operator's: the stamp is the clipboard's).
     playCue('lessonPassed');
@@ -3069,6 +3105,7 @@ function tipsToggle() {
 /** Play tips on or off: the box on the orders, or the words in the margin at any time (M48b, the operator's). */
 function setTips(on) {
   tipsOn = on;
+  notePlay('tips', on ? 'on' : 'off');
   // Carried in the address, so Play again and a reload keep it.
   const query = new URLSearchParams(window.location.search);
   if (on) query.delete('tips');
@@ -3186,6 +3223,7 @@ function jumpNow() {
   const run = runById(baseMap, state.dropRunId);
   if (!run) return;
   if (lessonStep() && !lessonAllows({ kind: 'jump' })) return;
+  notePlay('jump', run.id);
   const jumps = jumpPoints(run, state.units.length);
   const order = state.units.map((u) => u.id);
   undoStack = [];
@@ -3650,6 +3688,8 @@ try {
   // (M48), then the orders (SPEC.md §11), with the title music over both. A mission named
   // in the address goes straight to its orders.
   briefing = { kind: missionFromQuery(window.location.search, missions) ? 'orders' : 'contents', opening: true };
+  if (briefing.kind === 'contents') notePlay('contents');
+  else notePlay('mission', mission.id);
   briefingBackdrop.addEventListener('click', () => closeBriefing());
   briefingBackdrop.parentElement.addEventListener('click', clickThroughCard, true);
   loadingProgress(pictures);
@@ -3661,6 +3701,8 @@ try {
     const loaded = layout;
     startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize });
   }
+  // The playtest record (M49): COPY RECORD in the corner gives it as plain lines.
+  if (playtest) startPlaytestPanel(() => recordText(playtest, { build: version, now: Date.now() }));
   // Then for the pictures, but never for long: a slow file is not worth a
   // page that will not open. Whatever is late fills in as it arrives.
   await Promise.race([Promise.all(pictures), new Promise((resolve) => setTimeout(resolve, LOADING.maxWaitMs))]);
