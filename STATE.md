@@ -8,32 +8,29 @@ Last updated: 15 Oct 2026, after M48k.
 
 ## Where we are
 
-- **Branch `m48k-layout-tool` is built and checked, not signed off.** `main` is still
-  M48j. Tests: 234 headless (`node tools/run-tests.mjs`), 236 in tests.html.
-- **M48k, the layout tool:** add `?layout` to the address (for example
-  `localhost:8000/?layout`). START HERE, the clipboard, each mission's drop cue and its
-  rings' notes are outlined in dashed blue; drag them. The panel bottom right counts
-  what moved; COPY puts the whole of `data/layout.json` on the clipboard: open that
-  file, select all, paste, save. PUT BACK undoes this visit's moves.
-- All those places now live in `data/layout.json` only (moved out of the map files and
-  theme.js, nothing moved on screen).
-- **Also in M48k:** a bugle call, not the stamp, when a lesson is passed; the clipboard's
-  record shrinks until it fits the paper in whatever browser shows it.
+- **`main` is build M48k**, signed off, merged and pushed. No branch open.
+  Tests: 234 headless (`node tools/run-tests.mjs`), 236 in tests.html.
+- **M48k, the layout tool:** `?layout` at the end of the address outlines START HERE,
+  the clipboard, each mission's drop cue and its rings' notes in dashed blue; drag them.
+  The panel bottom right counts what moved; COPY puts the whole of `data/layout.json` on
+  the clipboard (open the file, select all, paste, save); PUT BACK undoes this visit's
+  moves. Those places live in `data/layout.json` only.
+- **Also in M48k:** a bugle call when a lesson is passed (the stamp is PASSED OUT's
+  only); the clipboard's record shrinks to fit its paper in any browser.
 - Four missions playable; the aqueduct is not yet balanced.
 
 ## Next
 
-1. **The operator plays M48k**, tries the tool, and signs it off (or not).
-2. **The aqueduct's balance**, a short session of its own. Bot runs from a frozen copy.
-3. **M49: playtest the course on people who have never seen the game.**
+1. **The aqueduct's balance**, a short session of its own. Bot runs from a frozen copy
+   (`git archive`), never from the working tree.
+2. **M49: playtest the course on people who have never seen the game.**
 
 ## Open with the operator
 
-1. **Is the bugle right for a lesson passed?** A guess at "celebratory" from the sounds
-   already in. Another recording would be a one-line swap.
-2. **Does the clipboard now fit in your browser?** It was checked here with a much bigger
-   font forced on it, not in your browser.
-3. **Guesses still standing:** the ? pages' lines are Claude's (good for now, you said).
+1. **Guesses still standing:** the ? pages' lines are Claude's (good for now, the
+   operator's word); the bugle for a lesson passed (the operator said all is working).
+2. **DECISIONS.md is at 194 lines.** Next session it passes 200, and M40 to M43 go to
+   DECISIONS-ARCHIVE.md, as the working agreement says.
 
 ## Owed
 
