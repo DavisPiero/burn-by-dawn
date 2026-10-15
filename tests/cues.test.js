@@ -2,7 +2,7 @@
 // get clear of a blast, the way out, and where the alert's points came from.
 // Each must agree with the check the action or the turn will make.
 
-import { alertOrigins, canSwimNow, getClear, opportunities, wayOut } from '../src/cues.js';
+import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from '../src/cues.js';
 import { facingToward } from '../src/hex.js';
 import { loadJson, loadMap } from '../src/map.js';
 import { blastEffect, blastHexesThisTurn, checkSwim, kindOf } from '../src/sabotage.js';
@@ -72,6 +72,10 @@ export default [
     assert(canSwimNow(map, rules, found.s, found.at), 'the mark is on where the swim is');
     const spent = { ...found.at, ap: found.at.apMax - 1 };
     assert(!canSwimNow(map, rules, found.s, spent), 'not once he has spent AP: a swim is a full turn');
+    assert(canSwimHere(map, rules, found.s, spent), 'but the bank still says he could, with his turn unspent (the faint mark)');
+    assert(!canSwimHere(map, rules, found.s, { ...found.at, hits: 1 }), 'never for a wounded man');
+    const inland = state.units.find((u) => !checkSwim(map, state, { ...u, ap: u.apMax }, null, rules).ok);
+    if (inland) assert(!canSwimHere(map, rules, state, inland), `${inland.shortName}: nothing away from the water`);
     assert(!canSwimNow(map, rules, { ...found.s, outcome: { kind: 'failed' } }, found.at), 'nothing once the mission is over');
     for (const unit of state.units) {
       assert(canSwimNow(map, rules, state, unit) === checkSwim(map, state, unit, null, rules).ok, `${unit.shortName}: the mark and the swim agree`);

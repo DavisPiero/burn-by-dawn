@@ -39,6 +39,15 @@ export function canSwimNow(map, rules, state, unit) {
 }
 
 /**
+ * Whether he could swim from where he stands with a turn unspent (M49b, the
+ * operator's: a man at the water who had spent AP showed nothing): the swim's
+ * own check, as if his pool were full.
+ */
+export function canSwimHere(map, rules, state, unit) {
+  return canSwimNow(map, rules, state, unit && { ...unit, ap: unit.apMax });
+}
+
+/**
  * The men standing in a blast that goes off at the end of this turn: what it
  * would do to each ('killed' or 'wounded', sabotage.js blastEffect), and the
  * nearest hex clear of every such blast that he can still reach this turn

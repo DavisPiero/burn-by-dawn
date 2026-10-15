@@ -753,6 +753,7 @@ export const MARKER = {
   // over the faint counter.
   hiddenAt: { x: 38, y: 33 },
   swimAt: { x: -6, y: 33 }, // the wave on a man who could swim now (M49b)
+  swimFaint: 0.45, // ... and faint where he could with his turn unspent
   groundSize: 26,
   canisterSize: 34, // a supply canister (M41), bigger than the charges in it
   fuseSize: 34, // the stopwatch on a burning charge (M15)

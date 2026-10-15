@@ -1311,7 +1311,8 @@ export function renderActions(element, actions, onAction, owner = null) {
   // in a row under them (M46: thirteen buttons, most of them greyed, hid the
   // two or three that mattered). Not the timers, whose strip is its own.
   const compact = !actions.some((a) => a.heading);
-  const open = (a) => a.ok || a.active;
+  // `shown`: greyed, but a full button all the same (M49b: Swim at the water's edge).
+  const open = (a) => a.ok || a.active || a.shown;
   const full = compact ? actions.filter(open) : actions;
   const keys = compact ? actions.filter((a) => !open(a)) : [];
   // Three rows at most (index.html): a man with more than nine actions open

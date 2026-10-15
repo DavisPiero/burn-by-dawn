@@ -22,7 +22,7 @@ import {
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
-import { alertOrigins, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
+import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
@@ -614,11 +614,14 @@ function deriveView() {
   // The enemies he could strike now, marked on their chips (M46), and the
   // first move's ghost.
   if (!sameStamp(cuesFor.unitStamp, stamp) || cuesFor.unitId !== unit.id) {
-    cuesFor = { ...cuesFor, unitStamp: stamp, unitId: unit.id, strikes: opportunities(map, rules, state, unit), swim: canSwimNow(map, rules, state, unit), ghost: firstMoveGhost(unit, view.reachable, sightFor.wash) };
+    cuesFor = { ...cuesFor, unitStamp: stamp, unitId: unit.id, strikes: opportunities(map, rules, state, unit), swim: canSwimNow(map, rules, state, unit) ? 'now' : canSwimHere(map, rules, state, unit) ? 'later' : null, ghost: firstMoveGhost(unit, view.reachable, sightFor.wash) };
   }
   view.strikes = cuesFor.strikes;
-  // A wave on him where he could swim now (M49b), unless the lesson would not let him.
-  view.swimId = cuesFor.swim && (!lessonStep() || lessonAllows({ kind: 'action', id: 'swim' })) ? unit.id : null;
+  // A wave on him where he could swim now (M49b), unless the lesson would not
+  // let him; faint where he could with his turn unspent.
+  const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
+  view.swimId = cuesFor.swim && swimAllowed ? unit.id : null;
+  view.swimFaint = cuesFor.swim === 'later';
   // A few words under him, with the tips on: how to move, until the first
   // move of the game; then, for a man about to be fired on, what to do about
   // it. GET CLEAR! comes before either.
@@ -1180,7 +1183,8 @@ function actionsFor(unit) {
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
-    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
+    // Shown greyed where he could swim with his turn unspent (M49b, the operator's).
+    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, shown: canSwimHere(map, rules, state, unit) && (!lessonStep() || lessonAllows({ kind: 'action', id: 'swim' })), ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
 }
 
@@ -1203,6 +1207,8 @@ function signalFor(unit) {
 // has the full cost and what else it does.
 function apLabel(action) {
   const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
+  // Greyed for want of a whole turn (M49b): said so.
+  if (wholeTurn && action.shown && !action.ok) return 'full turn';
   return wholeTurn ? 'all AP' : `${action.apCost} AP`;
 }
 
@@ -3182,6 +3188,7 @@ function describeMarker(id, unit) {
   }
   if (id === 'marker-swim') {
     const water = map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water';
+    if (currentView?.swimFaint) return ['CAN SWIM NEXT TURN', `${name} is at the ${water}'s edge, but a swim takes a full turn and he has spent AP. Start a turn here with all his AP and he can swim it [W].`];
     return ['CAN SWIM', `${name} is at the ${water}'s edge and can swim it [W]: a full turn, to the far bank.`];
   }
   if (id === 'marker-late') {
