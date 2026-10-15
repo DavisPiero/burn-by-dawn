@@ -55,3 +55,4 @@ live in the game. For anything to go into the repo untouched, prefer CC0 from Fr
 
 The "WW2 UK Bomb Blast" first picked for the explosion was a long air-raid rumble with no
 sharp start, cut off dead at its end, so the listed backup was used instead.
+| `fanfare.m4a` | the operator's "Fanfare_01" (Src/) | the operator's | 13.2 s from 0.33 s, its first half to where the sound dies away before the second; faded 0.3 s out; loudest 0.4 s levelled to the bells' RMS 0.104 (gain 1.09, peak 0.89) (M49b: the back page's mission accomplished, in place of `church-bells`) |

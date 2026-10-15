@@ -377,7 +377,8 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `stamp.mp3` | a rubber stamp coming down (M48j): PASSED on each lesson's card, and PASSED OUT on the clipboard | ~0.5 s |
 | `crump.mp3` | three quiet ones for the RAF diversion, bombs miles off | ~1.2 s |
 | `explosion.mp3` | a turn with an explosion: a demolition charge close by, crack, boom and falling debris (M11) | ~2 s |
-| `church-bells.mp3` | the back page, mission accomplished: the village church ringing at dawn, heard across the fields (M12), rising to the top bell (M15) | ~4–7 s |
+| `fanfare.mp3` | the back page, mission accomplished (M49b), France's and the aqueduct's: a brass fanfare, triumphant. Supplied: the operator's, its first half | ~13 s |
+| `church-bells.mp3` | no longer played (M49b: replaced by `fanfare` on the back page); the village church ringing at dawn (M12), kept for now | ~4–7 s |
 | `aircraft.mp3` | the Dakota going over: the drop, and under the RAF diversion's flyover (M15); cut short if the drop is skipped | ~3.5 s |
 | `bell-toll.mp3` | the back page, withdrawn or failed: one low bell tolling slowly, a siren far off (M12) | ~5–6 s |
 | `jeep.mp3` | the airfield's jeep raid (M31): a jeep going by fast, engine revving, wheels on stones; the cue lays four bursts of `gunfire` over it | ~3 s |

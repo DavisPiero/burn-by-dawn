@@ -510,8 +510,8 @@ move itself is silent), a card's rustle when a card or the back page opens, a do
 way off when the alert rises, three far-off crumps for the RAF diversion, a gunfire burst
 and a muffled cough for a silenced shot. The Dakota drones over the drop and the RAF
 flyover, cut short if the drop is skipped. The one exception to the table: a turn with a
-bang plays a real explosion, close, loud, low and slow. The back page rings the village
-church's bells, upward to the top bell, for a mission accomplished, and tolls a single
+bang plays a real explosion, close, loud, low and slow. The back page plays a fanfare (the operator's
+recording, its first half, since M49b: the bells read as a funeral) for a mission accomplished, and tolls a single
 bell with a siren far off for one withdrawn or failed. A mission names its own back-page
 and diversion sounds: the airfield's jeep raid is an engine going by and bursts of fire,
 its success a bugle call, the rest its own air-raid
@@ -520,7 +520,7 @@ some way off (the operator's recording since M48h). **The aqueduct's three** are
 operator's recordings since M48h: its canisters
 thump down in the drop, one thump each as its canopy lands and its blue ring pops on; the boat's oars are heard far off
 the turn it is sighted or answers the signal; and the turn it lands, its last strokes
-with a wave breaking on the shingle under them. Its back page is France's bells. **The umpire's whistle** in a
+with a wave breaking on the shingle under them. Its back page is France's fanfare. **The umpire's whistle** in a
 lesson (§15) is one short blast of a referee's whistle, and **the knife** is a short
 blow (both the operator's recordings, M48h; the knife was a pencil before).
 
