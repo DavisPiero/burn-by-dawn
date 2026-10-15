@@ -327,20 +327,25 @@ whoever it finds itself behind, so the squads are what the North run lost: they 
 in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 87;
 tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
 
-**Known and left for the operator:**
-- **The hunter check still fails, with a squad for every body found that takes the
-  dead man's place.** Normal: hunter 95 / 99 / 88 against careful 91 / 93 / 87; Hard:
-  73 / 59 / 63 against 72 / 43 / 50. Four or five squads come in a hunter's game and it
-  wins as often, scoring a point less on the North run: a squad standing where a
-  sentry stood is knifed as the sentry was. The limit makes no difference (3, 4 and 6
-  measured the same). What the bot cannot say is how it plays: a cleared piece of
-  ground is no longer clear two turns later. If killing is still the best plan in the
-  operator's hands, the levers left are the knife's own price here (a kill that is
-  heard, or a second turn to make it) and a seventh enemy, not more squads.
-- **Hard's North run is well under** (15). Cover on the plough (olives at three hexes,
-  a terrace at one) did not move it, with the rule or without: what loses it is the
-  squads coming in through its landing ground and a garrison Alarmed before the job in
-  two games in three.
+**Known and left, the operator's calls (M48l):**
+- **The hunter check passes as read for this map.** Killing everything is not the best
+  play: every man hunting, sappers too (`HUNTERS=all`), wins 3 / 3 / 12 on Normal. What
+  beats careful play (hunter 95 / 99 / 88 against careful 91 / 93 / 87; Hard 73 / 59 /
+  63 against 72 / 43 / 50) is the scouts and gunners clearing the way while the sappers
+  do the job, and here they have no job of their own. That is hunter and hunted. A
+  squad for every body found, standing where it fell, did not change it (M42c), and
+  nor did **a knife that is heard** (M48l): measured from a cry heard 2 hexes off to
+  one as loud as a gunshot, it cost the player who knifes now and then and not the
+  hunter, so it is off here (the numbers are in the engine, `alert.knife` and
+  `noise.knife`, null). A seventh enemy is untried.
+- **Hard's North run is well under** (15). Its games are Alarmed before the job in
+  88% (West 49%): the squads called for bodies, and the reserve, come down the road
+  through its landing ground and find parachutes and canisters on their way. Moving
+  the flight line west, changing its wind, fewer or no body squads on Hard, four
+  charges on Hard and a three-turn boat on Hard were all measured and none mends it
+  without breaking another run (DECISIONS.md, M48l). Cover on the plough did not move
+  it either (M42b). Mending it wants that corner of the map redrawn, with the
+  operator.
 - **The Valley run's tidy bot wins least** (70) though its naive bot is level with the
   others: men who land in the torrent's bed lose turn 1 and the tidy bot waits for them.
 

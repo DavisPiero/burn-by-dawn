@@ -200,7 +200,7 @@ export function pointedHints(state, rules, { diversionOk = false, diversionName 
     if (man.inContact || man.ap < rules.actions.knife.apCost) continue;
     const back = state.enemies.find((e) => e.killable && hexDistance(e, man) === 1 && !inArc(e, e.facing, man, e.arcDegrees));
     if (back) {
-      hints.push(`${man.shortName} is behind the ${back.label.toLowerCase()}, unseen: knife it [N]${rules.actions.knife.fullTurn ? ' before he moves' : ''}. ${rules.bodyFound.reinforcements > 0 ? 'A body found brings a squad' : 'It leaves a body'}.`, [back]);
+      hints.push(`${man.shortName} is behind the ${back.label.toLowerCase()}, unseen: knife it [N]${rules.actions.knife.fullTurn ? ' before he moves' : ''}${rules.noise.knife === null ? '' : ', but he will be heard'}. ${rules.bodyFound.reinforcements > 0 ? 'A body found brings a squad' : 'It leaves a body'}.`, [back]);
       break;
     }
   }

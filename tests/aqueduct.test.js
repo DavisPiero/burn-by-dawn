@@ -219,6 +219,29 @@ export default [
     equal((await loadMap()).enemyTypes.reserve.killable, false, 'France: cannot be killed');
   }],
 
+  ['a knife can be made heard (M48l): alert.knife and a cry at his hex, heard noise.knife off; every mission keeps it silent', async () => {
+    const aqueduct = await loadAqueduct();
+    const { map, traits, roster } = aqueduct;
+    // Off on the aqueduct too since M48l's measuring (DECISIONS.md): tried here with the numbers it was tried at.
+    const rules = { ...aqueduct.rules, alert: { ...aqueduct.rules.alert, knife: 1 }, noise: { ...aqueduct.rules.noise, knife: 2 } };
+    const start = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 1), map, 'west'), map, rules);
+    const target = start.enemies.find((e) => e.killable && e.speed > 0);
+    const back = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]][(target.facing + 3) % 6];
+    const knifer = start.units[0];
+    const behind = { ...start, units: start.units.map((u) => (u.id === knifer.id ? { ...u, q: target.q + back[0], r: target.r + back[1], ap: 3, apMax: 3 } : u)) };
+    const knifed = knifeEnemy(behind, knifer.id, target.id, rules);
+    assert(!knifed.enemies.some((e) => e.id === target.id), 'it is dead');
+    equal(knifed.alert.points, behind.alert.points + rules.alert.knife, 'the alert goes up by alert.knife');
+    const cry = knifed.noises.at(-1);
+    equal(`${cry.kind} ${cry.q},${cry.r}`, `knife ${target.q + back[0]},${target.r + back[1]}`, 'a cry where he stands');
+    // Every mission's knife is silent, as it has been since M12b.
+    const json = validateMissions(await loadJson('data/missions.json'));
+    for (const id of ['france', 'airfield', 'aqueduct']) {
+      const other = missionRules(missionById(json, id), await loadJson('data/rules.json'));
+      equal(`${other.noise.knife} ${other.alert.knife}`, 'null 0', `${id}: no noise, no alert`);
+    }
+  }],
+
   ['the first turn card says where the charges are; with the job done and the beach shut it says when the boat comes', async () => {
     const { map, rules, traits, roster } = await loadAqueduct();
     const landed = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 4), map, 'north'), map, rules);
