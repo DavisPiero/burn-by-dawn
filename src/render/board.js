@@ -188,7 +188,7 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
   drawFences(lines, map);
   drawRoads(lines, map, edge, railway);
   drawRoadArt(lines, map);
-  drawRailway(lines, map, edge);
+  drawRailway(lines, map, edge, railway);
   drawPlaces(lines, map);
   terrain.appendChild(lines);
 
@@ -326,14 +326,47 @@ function areaOutline(segments) {
 // through its hexes, never a motif stamped per hex, so a road running down the
 // board's offset rows waves gently instead of zigzagging.
 
-/** Every hex the railway's line passes through, keyed by hexKey. */
+/**
+ * Every hex the railway's line passes through, keyed by hexKey, each with
+ * `at`, where the line runs through it (railTrack).
+ */
 function railwayHexes(map) {
   const hexes = new Map();
   const points = (map.railway ?? []).map(([q, r]) => ({ q, r }));
   for (let i = 1; i < points.length; i++) {
-    for (const h of hexLine(points[i - 1], points[i])) hexes.set(hexKey(h.q, h.r), h);
+    for (const h of hexLine(points[i - 1], points[i])) if (!hexes.has(hexKey(h.q, h.r))) hexes.set(hexKey(h.q, h.r), h);
   }
+  const line = [...hexes.values()];
+  const track = railTrack(map, line);
+  line.forEach((h, i) => { h.at = track[i]; });
   return hexes;
+}
+
+/**
+ * Where the railway runs through each hex of its `line`: the hexes' centres,
+ * each averaged with its neighbours' by RAIL.bend (M49c, the operator's). On
+ * a straight run that is the centre itself; where the line steps down a row
+ * the step is spread over a few hexes, as one gentle slope eased in and out,
+ * and never rises past the rows it joins. The train's cars stand on these.
+ */
+export function railTrack(map, line) {
+  const centres = line.map((h) => axialToPixel(h.q, h.r, map.hexSize));
+  if (centres.length < 2) return centres;
+  const n = centres.length;
+  // Past either end the line carries straight on, so its ends stay straight.
+  const centre = (i) => {
+    if (i >= 0 && i < n) return centres[i];
+    const [a, b, k] = i < 0 ? [centres[1], centres[0], -i] : [centres[n - 2], centres[n - 1], i - n + 1];
+    return { x: b.x + (b.x - a.x) * k, y: b.y + (b.y - a.y) * k };
+  };
+  const weights = RAIL.bend;
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  const half = (weights.length - 1) / 2;
+  return centres.map((_, i) => {
+    let x = 0, y = 0;
+    weights.forEach((w, k) => { const c = centre(i + k - half); x += c.x * w; y += c.y * w; });
+    return { x: x / total, y: y / total };
+  });
 }
 
 /** The point halfway from a hex's centre to its neighbour's: the middle of their shared edge. */
@@ -394,7 +427,7 @@ function drawRoads(layer, map, edge, railway) {
     if (arrival) d += `M${f(mids[1])} L${f(arrival)} `;
     if (crossing !== null) {
       const n = NEIGHBOR_DIRS[crossing];
-      d += `M${f(edgeMiddle(map, q, r, crossing))} L${f(axialToPixel(q + n.q, r + n.r, map.hexSize))} `;
+      d += `M${f(edgeMiddle(map, q, r, crossing))} L${f(railway.get(hexKey(q + n.q, r + n.r)).at)} `;
     }
   });
   if (!d) return;
@@ -640,38 +673,26 @@ function drawHedges(layer, map) {
 }
 
 /**
- * The railway: through the centres of the hexes its waypoints' line runs over,
+ * The railway: through where it runs in each of its hexes (railTrack),
  * carried on past the first and last to the board's edge, as a bed, two rails
- * and the sleepers across them. A smooth curve (M49b, the operator's: France's
- * line steps down a row past the fuel dump), straight where the hexes are in a
- * row; through every hex's centre, so the train's wagons, a hex each, stay on it.
+ * and the sleepers across them. Straight lines between those points, each
+ * corner rounded off from the middle of the one before to the middle of the
+ * one after, so the line never swings out past them (M49c, the operator's:
+ * France's line was a switchback over the hedge where it steps down a row).
  */
-function drawRailway(layer, map, edge) {
-  const points = [...railwayHexes(map).values()].map(({ q, r }) => axialToPixel(q, r, map.hexSize));
+function drawRailway(layer, map, edge, railway) {
+  const points = [...railway.values()].map((h) => h.at);
   if (points.length < 2) return;
   const reach = (edge.right - edge.left) + (edge.bottom - edge.top);
   const extend = (from, to) => {
     const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
     return { x: to.x + ((to.x - from.x) / len) * reach, y: to.y + ((to.y - from.y) / len) * reach };
   };
-  const line = [extend(points[1], points[0]), ...points, extend(points.at(-2), points.at(-1))];
-  const near = (from, to) => {
-    // The hex beyond an end, a hex's step on: the curve's way in and out there.
-    const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-    const step = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
-    return { x: to.x + ((to.x - from.x) / len) * step, y: to.y + ((to.y - from.y) / len) * step };
-  };
-  const guide = [near(points[1], points[0]), ...points, near(points.at(-2), points.at(-1))];
-  const f = (v) => v.toFixed(2);
-  let d = `M${f(line[0].x)},${f(line[0].y)} L${f(points[0].x)},${f(points[0].y)}`;
-  // Catmull-Rom between each pair of centres, as cubic Béziers.
-  for (let i = 1; i < guide.length - 2; i++) {
-    const [p0, p1, p2, p3] = [guide[i - 1], guide[i], guide[i + 1], guide[i + 2]];
-    const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
-    const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
-    d += ` C${f(c1.x)},${f(c1.y)} ${f(c2.x)},${f(c2.y)} ${f(p2.x)},${f(p2.y)}`;
-  }
-  d += ` L${f(line.at(-1).x)},${f(line.at(-1).y)}`;
+  const f = (v) => `${v.x.toFixed(2)},${v.y.toFixed(2)}`;
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  let d = `M${f(extend(points[1], points[0]))} L${f(points[0])} L${f(mid(points[0], points[1]))}`;
+  for (let i = 1; i < points.length - 1; i++) d += ` Q${f(points[i])} ${f(mid(points[i], points[i + 1]))}`;
+  d += ` L${f(points.at(-1))} L${f(extend(points.at(-2), points.at(-1)))}`;
   const rail = (attrs) => el('path', { d, fill: 'none', 'stroke-linecap': 'butt', 'stroke-linejoin': 'round', ...attrs });
   layer.appendChild(rail({ stroke: RAIL.bed, 'stroke-width': RAIL.bedWidth, 'stroke-opacity': RAIL.bedOpacity }));
   layer.appendChild(rail({ stroke: RAIL.rail, 'stroke-width': RAIL.railWidth }));
@@ -2029,12 +2050,12 @@ function drawBoat(layers, boat, now) {
  * and goes to.
  */
 export function railPoint(map, line, j) {
-  const px = (h) => axialToPixel(h.q, h.r, map.hexSize);
+  const track = railTrack(map, line);
   const k = Math.max(0, Math.min(line.length - 1, j));
-  const a = px(line[Math.max(0, k - 1)]), b = px(line[Math.min(line.length - 1, k + 1)]);
+  const a = track[Math.max(0, k - 1)], b = track[Math.min(line.length - 1, k + 1)];
   const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
   const along = { x: (b.x - a.x) / d, y: (b.y - a.y) / d };
-  const at = px(line[k]);
+  const at = track[k];
   const step = map.hexSize * Math.sqrt(3) * (j - k);
   return { x: at.x + along.x * step, y: at.y + along.y * step, along, on: j === k };
 }

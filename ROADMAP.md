@@ -1,8 +1,8 @@
 # Burn by Dawn — Roadmap
 
 For the operator's reference. Written 28 Sep 2026 at build M24. SPEC.md stays the source
-of truth for how the game works (with ART-DIRECTION.md, its §11, and MISSION-AIRFIELD.md,
-its §13); this file says what comes next and in what order.
+of truth for how the game works (with its §11 in ART-DIRECTION.md, ART-CARDS.md and
+ART-PLAY.md, and its §13 in MISSION-AIRFIELD.md); this file says what comes next and in what order.
 Update it when a phase finishes or the plan changes.
 
 ---
