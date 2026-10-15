@@ -4,11 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 15 Oct 2026, M49 built, awaiting sign-off.
+Last updated: 15 Oct 2026, after M49.
 
 ## Where we are
 
-- **Branch `m49-playtest` is build M49**, not yet signed off; `main` is still M48l.
+- **`main` is build M49**, signed off, merged and pushed. No branch open.
   Tests: 241 headless (`node tools/run-tests.mjs`), 244 in tests.html.
 - **M49, the playtest kit:** `?playtest` in the address times what a new player does,
   from the moment the title screen is clicked: the first man selected, first move, first
@@ -21,12 +21,11 @@ Last updated: 15 Oct 2026, M49 built, awaiting sign-off.
 
 ## Next
 
-1. **Sign off M49**, merge and push, so `?playtest` works on the live site.
-2. **The operator runs the playtests** (`docs/PLAYTEST.md`): 3 to 5 new people, one at
+1. **The operator runs the playtests** (`docs/PLAYTEST.md`): 3 to 5 new people, one at
    a time, at https://davispiero.github.io/burn-by-dawn/?playtest
-3. **M49b**: bring back each player's record, questions and notes (`/notes`); fix what
+2. **M49b**: bring back each player's record, questions and notes (`/notes`); fix what
    they tripped on.
-4. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North run.
+3. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North run.
 
 ## Open with the operator
 

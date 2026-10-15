@@ -17,6 +17,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M49 | The playtest kit: `?playtest` times a new player's first selection, move and charge, each lesson, every wrong click and whistle by step, and COPY RECORD gives it as text; `docs/PLAYTEST.md` rewritten for the course |
 | M48l | The aqueduct's balance, again: a knife that can be heard, as data, measured and left off; the pillar check read for that map; Hard's North run left under, its cause traced |
 | M48k | The layout tool: `?layout` outlines START HERE, the clipboard, each mission's drop cue and its rings' notes to be dragged, and COPY gives `data/layout.json`, now their one home; a bugle for a lesson passed; the clipboard's record fitted to its paper in any browser |
 | M48j | The operator's sounds: a Thompson kill, two dogs, the line cut, a stamp on PASSED and PASSED OUT; music by screen (contents strings, each mission its own, the course the title music); the painted clipboard; START HERE on the dots; the goods train's turn on the orders |

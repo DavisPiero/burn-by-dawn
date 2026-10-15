@@ -167,3 +167,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-15 | m49 | A lesson card shaking its head is counted as a wrong click, by lesson and step, with the umpire's whistles beside it: the record's best answer to "where did they trip". Only the first selection, move and charge of each mission or lesson go on the timeline, though every one is noted
 2026-10-15 | m49 | The record's tab sits in the empty strip above the board: at the bottom left, as first drawn, it covered the seed in the margin, which the old sheet asked the operator to copy
 2026-10-15 | m49 | docs/PLAYTEST.md rewritten: the M26 sheet's v1.0 gate is long past and it did not know the course, the ? pages or the play tips. The new sheet says nothing to the player about START HERE (whether they find it is part of the test), asks for every question word for word, and leaves the Chrome check to Claude
+2026-10-15 | m49 | M49 signed off by the operator and merged
