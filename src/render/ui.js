@@ -368,7 +368,20 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // head goes under it in ink on the paper (M15, the operator's).
   const top = Boolean(briefing.choice?.top);
   if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
-  card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
+  const head = html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]);
+  // A corner ✕ (M49b, the operator's: how to play wanted an obvious way shut).
+  if (briefing.onClose) {
+    const close = html('button', 'brief-close', '✕');
+    close.type = 'button';
+    close.title = 'Close';
+    close.setAttribute('aria-label', 'Close');
+    close.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.onClose();
+    });
+    head.appendChild(close);
+  }
+  card.appendChild(head);
   // A paragraph may be several lines, each on its own line (M13); a line given
   // as { bold } is set in bold whole (M31d: the job on the orders), and one
   // given as { parts } is its words in order, a { good } among them in green

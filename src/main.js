@@ -2412,6 +2412,12 @@ function openContents() {
   render();
 }
 
+/** The course's list to the contents, as the gear's CONTENTS does; nothing is at stake. */
+function contentsFromCourse() {
+  if (state.phase !== 'drop') restartMission();
+  openContents();
+}
+
 /**
  * A mission picked on the contents page. The one loaded opens its orders; any
  * other is its own files, loaded in place (M48, the operator's: the page
@@ -2675,6 +2681,9 @@ function describeBriefing(which, view) {
       },
       sections: [],
       toggles: [musicToggle()],
+      // Back to the missions (M49b, the operator's: a player done with lessons
+      // had to go into a lesson and the gear to find a proper game).
+      link: { label: '◀ CONTENTS', onClick: contentsFromCourse },
       go: `START LESSON ${next.number} — Enter, or click a lesson`,
       goBig: true,
       onGo: () => closeBriefing(true),
@@ -2759,6 +2768,7 @@ function describeBriefing(which, view) {
         pages: { tabs: help.pages.map((p) => p.tab), page: helpPage, onTab: turnHelpPage, lines: page.scene ? helpLines(page, rules) : tonight, scene: Boolean(page.scene) },
         link: { label: 'THE ORDERS', onClick: openOrdersFromHelp },
         go: 'BACK — ← → turn the pages; any other key or click',
+        onClose: () => closeBriefing(),
       };
     }
     // The orders in five lines (M44, from playtesting: there was too much to

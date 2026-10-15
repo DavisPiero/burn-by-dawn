@@ -1162,6 +1162,18 @@
       color: var(--paper);
       background: linear-gradient(to bottom, rgba(26, 26, 24, 0), rgba(26, 26, 24, 0.7));
     }
+    /* The corner ✕ (M49b), at the end of the head's black bar. */
+    #briefing .brief-close {
+      margin-left: 14px;
+      padding: 0 2px;
+      border: none;
+      background: none;
+      color: inherit;
+      font: bold 18px/1 var(--slab);
+      cursor: pointer;
+      align-self: center;
+    }
+    #briefing .brief-close:hover { color: var(--red); }
     #briefing .brief-head {
       display: flex;
       justify-content: space-between;
@@ -1244,7 +1256,7 @@
     /* The exfil's are-you-sure (M14): headed in danger red. */
     #briefing.tone-warn .brief-head { background: var(--red); }
     #briefing .brief-title { font-size: 22px; }
-    #briefing .brief-kicker { font-size: 13px; opacity: 0.8; }
+    #briefing .brief-kicker { font-size: 13px; opacity: 0.8; margin-left: auto; }
     #briefing h3 {
       margin: 10px 0 4px;
       font-family: var(--slab);
