@@ -520,7 +520,8 @@ export function checkSwim(map, state, unit, target, rules) {
  * needs. A trooper within the kind's killRadius of a charge that goes off
  * dies, wounded or not, leaving a body; one further off but inside its blast
  * radius takes a hit (M20). An enemy of a killable type anywhere in the blast
- * dies, with no body, since the explosion itself is what the garrison hears.
+ * dies, leaving a body already found (M49b), since the explosion itself is
+ * what the garrison hears.
  * An enemy that cannot be killed (the reserve, enemies.json) is not harmed.
  *
  * A kind that `setsOff` (M30, the airfield's bowser): when one is destroyed,
@@ -632,7 +633,14 @@ function feelBlast(state, at, kind, label, rules) {
   }
   const caught = next.enemies.filter((e) => e.killable && inBlast(blasts, e));
   if (caught.length > 0) {
-    next = { ...next, enemies: next.enemies.filter((e) => !caught.includes(e)) };
+    // Each leaves a body where he fell (M49b, the operator's: they vanished),
+    // already counted as found: the bang is what the garrison heard, so it
+    // raises nothing more, calls no squad, and scores nothing.
+    next = {
+      ...next,
+      enemies: next.enemies.filter((e) => !caught.includes(e)),
+      bodies: [...next.bodies, ...caught.map((e) => ({ enemyId: e.id, name: `the ${e.label.toLowerCase()}`, q: e.q, r: e.r, found: true, blast: true }))],
+    };
     for (const e of caught) next = reserveLost(next, e, rules);
     for (const e of caught) events.push({ kind: 'enemyBlastKilled', enemyId: e.id, enemyLabel: e.label, label, q: e.q, r: e.r });
   }

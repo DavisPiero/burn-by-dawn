@@ -600,7 +600,7 @@ function play(seed, runId) {
     kind: o?.kind ?? 'stuck', reason: o?.reason, turn: o?.turn, score: o?.score.total ?? 0, bridgeTurn,
     peak: state.alert.peak, clean: o ? o.score.lines.some((l) => l.points === rules.scoring.clean && / diversion$/.test(l.label)) : false, salvo: o ? o.score.lines.some((l) => / up in one bang$/.test(l.label)) : false, train: o ? o.score.lines.some((l) => / wrecked with it$/.test(l.label)) : false, dead: state.units.filter((u) => u.dead).length,
     out: state.units.filter((u) => u.out).length,
-    kills: state.bodies.filter((b) => b.enemyId).length,
+    kills: state.bodies.filter((b) => b.enemyId && !b.blast).length,
     secondaries: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).length,
     destroyedIds: state.objectives.filter((x) => !MI.isWinTarget(state, rules, x) && x.destroyed).map((x) => x.id),
     ...ev,

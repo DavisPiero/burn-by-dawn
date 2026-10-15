@@ -49,9 +49,11 @@ same turn or not.
 A trooper within a charge's **kill radius** at detonation dies, wounded or not. Inside the
 **blast radius** but past the kill radius (only the fuel dump has such a ring) he takes
 **one hit**, as from a shot. The hover path warns of both. **An enemy anywhere inside the
-blast radius dies**, unless its type cannot be killed; it leaves no body (the bang is what
-the garrison hears; a body found after it would count the same event twice), and it stops
-holding anyone in contact.
+blast radius dies**, unless its type cannot be killed; it leaves a body where it fell
+(M49b, the operator's: they vanished), **already counted as found**: the bang is what the
+garrison hears, so a body found after it would count the same event twice. It raises
+nothing, calls no squad and scores nothing, and the dead man stops holding anyone in
+contact.
 
 **One objective, one explosion:** charges on the same objective that detonate in the same
 fuse phase are one explosion — the alert rises once and the noise is heard once. Timing
