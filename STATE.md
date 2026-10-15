@@ -4,16 +4,15 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 15 Oct 2026, after M49b's third notes were built.
+Last updated: 15 Oct 2026, M49b signed off and merged.
 
 ## Where we are
 
-- **Branch `m49b-playtest-fixes` is build M49b**, built and checked, **not signed off**.
-  `main` is M49. Tests: 242 headless (`node tools/run-tests.mjs`), 245 in tests.html.
+- **`main` is build M49b**, signed off, merged and pushed on 15 Oct 2026. Tests: 242 headless (`node tools/run-tests.mjs`), 245 in tests.html.
 - **M49b, the first playtest's notes:**
   - How to play has a ✕ in its corner.
   - The course's list has ◀ CONTENTS, back to the missions.
-  - A selected man who could swim now wears a wave mark, bottom left of his counter.
+  - A man who could swim now wears a wave mark, bottom left of his counter.
   - A mission accomplished plays the first half of the operator's fanfare (France, the
     aqueduct), not the bells. The airfield keeps its bugle.
   - A lesson step done takes nothing away: its ring stays, its pen line is ticked, the
@@ -34,9 +33,8 @@ Last updated: 15 Oct 2026, after M49b's third notes were built.
 
 ## Next
 
-1. **The operator plays M49b and signs it off** (merge, push).
-2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
-3. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North run.
+1. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
+2. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North run.
 
 ## Open with the operator
 
@@ -58,6 +56,6 @@ Last updated: 15 Oct 2026, after M49b's third notes were built.
   board; optional: 21 (winter kit), 25 (the course's contents panel, and its title card,
   which now has a prompt). The rewording pass on the lessons, the aqueduct's copy, and
   the ? pages.
-- **Size:** DECISIONS.md 190 lines (limit 200): at sign-off, move M44 to M48 into the
-  archive. ART-DIRECTION.md 539 lines, past 500: propose a split.
+- **Size:** ART-DIRECTION.md 539 lines, past 500: propose a split. (DECISIONS.md M44 to
+  M48l moved to the archive at M49b's sign-off.)
 - **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.
