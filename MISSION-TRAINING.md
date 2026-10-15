@@ -134,7 +134,7 @@ and M48e's `dressed` (a man's wound has been dressed).
   step asks: a lesson that cannot be passed fails the suite, not a player. The test
   also holds what a lesson claims about the board (the hex it calls red is red).
 
-**How it looks** (ART-DIRECTION.md has the detail): the step's `say` in the red pen on
+**How it looks** (ART-CARDS.md and ART-PLAY.md have the detail): the step's `say` in the red pen on
 the board with its rings; the **lesson card** in the turn card's place (lesson and
 step, the sentence, the whistle's reason in red, TO GO ON: and the step's line, STEP
 BACK, START AGAIN, COURSE MENU); the PASSED card; the umpire's whistle (a recording since M48h).
@@ -193,7 +193,7 @@ order the course gives them, each with how many of its lessons are passed (FIELD
 seventeen lessons are. It is the same page all through the course, filling in. Nothing
 is stored: it is what was passed this session.
 
-The **?** pages' diagrams (M48i, ART-DIRECTION.md Cards): five small scenes, MOVING, BEING
+The **?** pages' diagrams (M48i, ART-CARDS.md): five small scenes, MOVING, BEING
 SEEN, CHARGES, FIGHTING and GETTING OUT, the course's first things in a loop, in `data/help.json`.
 
 ### Open for the operator

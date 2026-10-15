@@ -9,9 +9,12 @@ writing code.
 - `CLAUDE.md` — this file. Rules you must follow.
 - `SPEC.md` — the design and technical spec. Authoritative. Some of its sections are files
   of their own, as authoritative as it is, so that it stays short enough to read whole:
-  - `ART-DIRECTION.md` — SPEC §11: how the game looks, reads, moves and sounds. **Read it
-    before touching anything the player sees or hears** (`src/render/`, `index.html`, the
-    words on screen).
+  - `ART-DIRECTION.md` — SPEC §11: how the game looks: the spread, colour and type, the
+    board, counters and markers. **Read it before touching anything the player sees or
+    hears** (`src/render/`, `index.html`, the words on screen). Its two other parts, read
+    the one that covers what you touch: `ART-CARDS.md` (every card: contents, orders, how
+    to play, lessons, turn cards, the back page) and `ART-PLAY.md` (before the drop, the
+    hover readout and the turn log, motion and feedback, sound).
   - `MISSION-AIRFIELD.md` — SPEC §13: mission 2. **Read it before working on the
     airfield**, and as the pattern when specifying a new mission. Each later mission gets
     a `MISSION-<NAME>.md` like it, written before the mission is built.

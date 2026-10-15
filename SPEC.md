@@ -6,7 +6,7 @@ branch history and some internal ids (`night-drop-ready`) keep that name.
 A turn-based, hex tactical game. Six named British paratroopers land behind enemy lines
 and sabotage German infrastructure before dawn. It is an engine plus missions: §1–§11
 describe the engine through mission 1, the rail bridge in occupied France. How it looks
-and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), is in
+and sounds (§11) is in `ART-DIRECTION.md`, `ART-CARDS.md` and `ART-PLAY.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
 `MISSION-AQUEDUCT.md`), is playable too, picked from the contents page.
 
@@ -408,10 +408,11 @@ bot is measured against.
 
 ## 11. Art direction
 
-**In `ART-DIRECTION.md`**, a file of its own and as authoritative as this one: the spread,
-colour, print and type, the board, counters and markers, the hover readout and the turn
-log, the cards, the opening before the drop, motion and feedback, and sound. Read it
-before touching anything the player sees or hears.
+**In three files of its own**, as authoritative as this one: `ART-DIRECTION.md`, the
+spread, colour, print and type, the board, counters and markers; `ART-CARDS.md`, the
+cards; `ART-PLAY.md`, the opening before the drop, the hover readout and the turn log,
+motion and feedback, and sound. Read ART-DIRECTION.md, and the other one that covers
+it, before touching anything the player sees or hears.
 
 The one rule of it that binds the code's shape: all art is referenced by sprite id through
 `theme.js`, rendered as SVG `<symbol>` / `<use>`, with no inline path data in game logic.
