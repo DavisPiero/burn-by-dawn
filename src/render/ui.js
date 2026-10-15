@@ -412,6 +412,16 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // The turn cards' box, or a card's own (M21: music off, on the orders); a
   // card may have several side by side (M46: play tips beside the music).
   const toggles = briefing.toggles ?? (briefing.toggle ? [briefing.toggle] : []);
+  // Back to the contents (M49b, the operator's): first in the foot, before any box.
+  const back = briefing.back ? (() => {
+    const button = html('button', 'btn brief-link brief-back', boldKeys(briefing.back.label));
+    button.type = 'button';
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.back.onClick();
+    });
+    return button;
+  })() : null;
   if (toggles.length) {
     const boxes = toggles.map((toggle) => {
       const box = html('input');
@@ -424,7 +434,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
       if (toggle.help) attachPopup(label, toggle.help);
       return label;
     });
-    foot.appendChild(boxes.length === 1 ? boxes[0] : html('span', 'brief-toggles', boxes));
+    foot.appendChild(boxes.length === 1 && !back ? boxes[0] : html('span', 'brief-toggles', [...(back ? [back] : []), ...boxes]));
   } else if (briefing.link) {
     foot.appendChild(html('span'));
   } else if (briefing.choice && !briefing.choice.top) {

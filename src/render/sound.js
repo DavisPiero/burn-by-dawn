@@ -820,6 +820,10 @@ export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16,
 // time each is wanted, not at load (a mission's is over a megabyte); with no
 // file the made title music plays. `music-title` is the title music above.
 export const MUSIC_TRACKS = ['music-title', 'music-contents', 'music-france', 'music-desert', 'music-aqueduct'];
+// Each track's level against the title music's cue (M49b, the operator's: a
+// mission's music was a little loud): every mission's, the course's title
+// music among them, a quarter down; the contents page's strings as they were.
+export const MUSIC_LEVELS = { 'music-title': 0.75, 'music-france': 0.75, 'music-desert': 0.75, 'music-aqueduct': 0.75 };
 
 let music = null;
 // Where each track got to when it last faded (M19): the pass of the made music
@@ -867,7 +871,7 @@ function begin(ctx, playing, buffer) {
   playing.startedAt = ctx.currentTime;
   if (buffer) {
     const level = ctx.createGain();
-    level.gain.value = CUES[MUSIC.cue][0][1];
+    level.gain.value = CUES[MUSIC.cue][0][1] * (MUSIC_LEVELS[playing.track] ?? 1);
     level.connect(out);
     playing.source = ctx.createBufferSource();
     playing.source.buffer = buffer;

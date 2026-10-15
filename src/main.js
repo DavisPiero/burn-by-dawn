@@ -2425,7 +2425,7 @@ function openContents() {
   render();
 }
 
-/** The course's list to the contents, as the gear's CONTENTS does; nothing is at stake. */
+/** A course's list or a mission's orders before the drop, to the contents, as the gear's CONTENTS does; nothing is at stake. */
 function contentsFromCourse() {
   if (state.phase !== 'drop') restartMission();
   openContents();
@@ -2696,7 +2696,7 @@ function describeBriefing(which, view) {
       toggles: [musicToggle()],
       // Back to the missions (M49b, the operator's: a player done with lessons
       // had to go into a lesson and the gear to find a proper game).
-      link: { label: '◀ CONTENTS', onClick: contentsFromCourse },
+      back: { label: '◀ CONTENTS', onClick: contentsFromCourse },
       go: `START LESSON ${next.number} — Enter, or click a lesson`,
       goBig: true,
       onGo: () => closeBriefing(true),
@@ -2831,6 +2831,9 @@ function describeBriefing(which, view) {
       // Play tips beside it (M46, the operator's), in play too: they can be
       // turned on or off at any time.
       toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
+      // Before the drop, the way back to the missions (M49b, the operator's); in
+      // play it is the gear's, which asks twice.
+      ...(before ? { back: { label: '◀ CONTENTS', onClick: contentsFromCourse } } : {}),
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
       // The one button that starts the game (M48, the operator's): named, and the biggest.
       ...(before ? { go: 'START GAME — click, or Enter', goBig: true, onGo: () => closeBriefing(true) } : {}),
