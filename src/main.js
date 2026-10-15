@@ -3580,6 +3580,12 @@ function openGame() {
   if (opened) return;
   opened = true;
   document.documentElement.classList.add('opened');
+  // The playtest record's clock starts here, when the player clicks past the title, not at the page's loading.
+  if (playtest) {
+    playtest = newRecord(Date.now());
+    if (briefing?.kind === 'contents') notePlay('contents');
+    else notePlay('mission', mission.id);
+  }
   loadingPage.setAttribute('aria-hidden', 'true');
   render();
 }
@@ -3688,8 +3694,6 @@ try {
   // (M48), then the orders (SPEC.md §11), with the title music over both. A mission named
   // in the address goes straight to its orders.
   briefing = { kind: missionFromQuery(window.location.search, missions) ? 'orders' : 'contents', opening: true };
-  if (briefing.kind === 'contents') notePlay('contents');
-  else notePlay('mission', mission.id);
   briefingBackdrop.addEventListener('click', () => closeBriefing());
   briefingBackdrop.parentElement.addEventListener('click', clickThroughCard, true);
   loadingProgress(pictures);

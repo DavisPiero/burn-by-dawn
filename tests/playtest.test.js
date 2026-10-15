@@ -32,11 +32,11 @@ export default [
     assert(threw, 'unknown moment throws');
   }],
 
-  ['the firsts are timed from the page opening; the timeline keeps only the first move of each scene', () => {
+  ['the firsts are timed from clicking the title; the timeline keeps only the first move of each scene', () => {
     const text = recordText(played([
       [0, 'contents'], [12, 'mission', 'france'], [30, 'select'], [41, 'move'], [50, 'move'], [400, 'charge'], [401, 'charge'],
     ]), { build: 'M49', now: 1000 + 500000 });
-    assert(text.includes('Build M49 · 8:20 since the page opened'), 'header');
+    assert(text.includes('Build M49 · 8:20 since the title was clicked'), 'header');
     assert(/first move\s+0:41/.test(text), 'first move');
     assert(/first charge set\s+6:40/.test(text), 'first charge');
     assert(/first lesson PASSED\s+not yet/.test(text), 'no lesson');

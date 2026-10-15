@@ -78,6 +78,7 @@ tests.html        every test suite, in the browser
   sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
   cues.js         what the board points at: who he could strike, get clear, the way out (§4)
   layout.js       data/layout.json: where the things placed by hand sit, and the layout tool's moves
+  playtest.js     ?playtest: the moments a new player passes, timed, as plain lines (M49)
   lessons.js      the lesson engine: a course's lessons, steps and what each allows (§15)
   difficulty.js   the difficulty patches (§10)
   missions.js     the missions and their win conditions (§10)
@@ -91,6 +92,7 @@ tests.html        every test suite, in the browser
     theme.js      colour tokens, halftone, the sprite registry, supplied art
     sound.js      cues, supplied recordings, made fallbacks, title music
     layout-tool.js  ?layout: drag what is placed by hand, copy data/layout.json
+    playtest-panel.js  ?playtest: the record's tab and COPY RECORD
 /data
   missions.json   the missions: files, patches, win condition, words, title card (§10)
   map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
@@ -426,9 +428,13 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M48l, done: the aqueduct's balance, again.** A knife that is heard was built,
+**M49, the playtest kit, built; the playtests themselves are the operator's.** With
+`?playtest` in the address the game times what a new player does (the first move, the
+first charge set, each lesson, every wrong click and whistle by step) and COPY RECORD
+gives it as plain lines; `docs/PLAYTEST.md` is the sheet. What they trip on is fixed in
+M49b, from the operator's notes. Before it, **M48l**: a knife that is heard was built,
 measured and left off; Hard's North run is left under its target, both the operator's
-calls (`MISSION-AQUEDUCT.md`, Balance). Next is M49, the playtest. Before it, M48k, the
+calls (`MISSION-AQUEDUCT.md`, Balance). Before that, M48k, the
 layout tool (`?layout`, `data/layout.json`; §11), and **M48, the course** (§15, `MISSION-TRAINING.md`), done: it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
 playable from the contents page, flagged START HERE. The ? pages' diagrams are built (M48i, §11). Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and

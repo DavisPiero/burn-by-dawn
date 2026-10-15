@@ -30,6 +30,7 @@ export function startPlaytestPanel(text) {
       box.value = record;
       box.readOnly = true;
       said.replaceChildren(box);
+      box.focus();
       box.select();
       // Copied by hand, it goes again when the operator clicks back into the game.
       box.addEventListener('blur', () => said.replaceChildren());

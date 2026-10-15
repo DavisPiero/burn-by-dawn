@@ -1,6 +1,6 @@
 /**
  * The playtest record (M49): with `?playtest` in the address, the moments a
- * new player passes are noted with the time since the page opened, and COPY
+ * new player passes are noted with the time since the title was clicked, and COPY
  * RECORD gives them as plain lines for the operator to bring back. It answers
  * ROADMAP's M49 measures: time to the first move, to the first charge set,
  * and where in the course a player trips (wrong clicks and whistles by step).
@@ -63,9 +63,9 @@ export function clock(ms) {
 export function recordText(record, { build, now }) {
   const { events } = record;
   const first = (what) => events.find((e) => e.what === what);
-  const lines = [`BURN BY DAWN — PLAYTEST RECORD`, `Build ${build} · ${clock(now - record.since)} since the page opened`, ''];
+  const lines = [`BURN BY DAWN — PLAYTEST RECORD`, `Build ${build} · ${clock(now - record.since)} since the title was clicked`, ''];
 
-  lines.push('FIRSTS (from the page opening)');
+  lines.push('FIRSTS (from clicking the title)');
   for (const what of ['select', 'move', 'charge', 'passed']) {
     const e = first(what);
     lines.push(`  ${pad(what === 'passed' ? 'first lesson PASSED' : SAID[what], 22)}${e ? clock(e.at) : 'not yet'}`);
