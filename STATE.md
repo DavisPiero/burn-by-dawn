@@ -4,11 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 16 Oct 2026, M49c on its branch, not yet signed off.
+Last updated: 16 Oct 2026, M49c signed off and merged.
 
 ## Where we are
 
-- **`main` is build M49b**, signed off, merged and pushed on 15 Oct 2026. Tests: 242 headless (`node tools/run-tests.mjs`), 245 in tests.html.
+- **`main` is build M49c**, signed off, merged and pushed on 16 Oct 2026. Tests: 242 headless (`node tools/run-tests.mjs`), 245 in tests.html.
 - **M49b, the first playtest's notes:**
   - How to play has a ✕ in its corner.
   - The course's list has ◀ CONTENTS, back to the missions.
@@ -30,7 +30,7 @@ Last updated: 16 Oct 2026, M49c on its branch, not yet signed off.
     music a quarter down, the drop's Dakota 35% down, the fanfare a fifth down.
 - The bot is unchanged, byte for byte, on all eight batches run, and on France again
   after the railway moved (DECISIONS.md).
-- **M49c, on branch `m49c-railway-bend`, not merged:** France's railway steps down as one
+- **M49c:** France's railway steps down as one
   gentle slope over five hexes, eased in and out, no overshoot; the train's cars follow
   it. ART-DIRECTION.md split in three: ART-DIRECTION.md (the look), ART-CARDS.md (the
   cards), ART-PLAY.md (before the drop, readout and log, motion, sound).
@@ -51,9 +51,7 @@ Last updated: 16 Oct 2026, M49c on its branch, not yet signed off.
    stops; a blast's body drawn like a gunner's kill.
 3. **Guesses (third notes):** "click, or
    Enter" under START GAME (and START LESSON); the targets' rings 1.2 s after the runs'.
-4. **M49c:** look at the railway's new slope (five hexes; `RAIL.bend` in theme.js makes
-   it longer or shorter); is the three-way split of the art direction right?
-5. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
+4. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
    passed; the knife's cry worded "a cry"; the record's tab at the top centre.
 
 ## Owed
