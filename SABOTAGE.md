@@ -106,8 +106,10 @@ to be in time for, not one to wait for, and the five or six turns left before da
 for a bonus target and the walk out.
 - It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
   the line as it passes. Its one rule is the score.
-- The bridge down earlier, with the train already on the board, stops it at the west
-  bank; down before it set out, none comes; down after it has gone by, it runs on.
+- The bridge down earlier stops it at the west bank, a hex short of the gap: on the
+  board already, or setting out later on its own timetable (M49b, the operator's: none
+  came at all, which was a pity); down after it has gone by, it runs on. Either way it
+  pays nothing.
 - Where it is follows from the turn and the turn the bridge went down, so nothing about
   it is kept in state, and its hover, the bridge's (a TRAIN row), the orders, the mission
   panel ("Goods train +5 · turn 10") and the turn card say when it is due. The turn card

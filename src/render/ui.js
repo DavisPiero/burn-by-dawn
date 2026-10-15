@@ -826,6 +826,7 @@ export function describeEvent(event, place) {
     // The goods train (M34): scenery, said as it comes, crosses, stops or is wrecked.
     case 'train': return {
       comes: `The ${event.label.toLowerCase()} comes on from the west: on the ${event.target} in the garrison's turn ${event.crossesOn}.`,
+      comesShort: `The ${event.label.toLowerCase()} comes on from the west, but the ${event.target} is gone: it will stop short.`,
       crosses: `The ${event.label.toLowerCase()} is on the ${event.target}.`,
       halts: `The ${event.label.toLowerCase()} stops short: the ${event.target} is gone.`,
       wrecked: `The ${event.label.toLowerCase()} goes down with the ${event.target}!`,

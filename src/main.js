@@ -1072,7 +1072,7 @@ function trainDue() {
 function trainRows(train) {
   const doing = {
     running: train.head >= train.objective.hexes.length && state.turn > rules.train.turn ? 'crossing' : `on its way: ${trainDue()}`,
-    halted: `stopped: the ${train.objective.label} went before it got near`,
+    halted: train.head >= train.stopAt ? `stopped short: the ${train.objective.label} went before it got near` : `slowing: the ${train.objective.label} is gone, and it will stop short of it`,
     wrecked: `wrecked with the ${train.objective.label}: +${rules.train.score}`,
   }[train.status];
   return [
@@ -1764,7 +1764,7 @@ function cueReport(report) {
   if (report.some((e) => e.kind === 'explosion')) playCue('explosion');
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
   // The goods train's whistle as it comes onto the board (M35).
-  if (report.some((e) => e.kind === 'train' && e.what === 'comes')) playCue('train');
+  if (report.some((e) => e.kind === 'train' && (e.what === 'comes' || e.what === 'comesShort'))) playCue('train');
   // The aqueduct's boat (M43): its oars far off as it is sighted or answers
   // the signal, the surf under them as it lands.
   if (report.some((e) => e.kind === 'boat' && e.what === 'in')) playCue('boatIn');

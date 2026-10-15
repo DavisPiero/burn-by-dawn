@@ -61,7 +61,7 @@ export default [
     equal(trainAt(at(state, 14), rules, map), null, 'gone from the board by turn 14');
   }],
 
-  ['the bridge down within a turn of it wrecks it and pays 5; earlier it stops short or never comes; later it has gone by', async () => {
+  ['the bridge down within a turn of it wrecks it and pays 5; earlier it stops short, even if it had not set out; later it has gone by', async () => {
     const { rules, state, map } = await load('france');
     for (const [down, caught] of [[2, false], [8, false], [9, true], [10, true], [11, true], [12, false]]) {
       equal(trainCaught(at(state, 20, down), rules), caught, `down on turn ${down}`);
@@ -76,8 +76,8 @@ export default [
     equal(heads(state, rules, map, [12, 13], 11), 'w16 w16', 'its tail');
     // Down on 8, with the train already on the map: it stops at the west bank.
     equal(heads(state, rules, map, [9, 10, 11, 13], 8), 'h4 h8 h10 h10', 'stops short');
-    // Down on 9, before it set out: no train.
-    equal(heads(state, rules, map, [8, 10, 12], 2), '- - -', 'the line is cut: none comes');
+    // Down on 2, before it set out: it comes all the same, and stops short (M49b).
+    equal(heads(state, rules, map, [7, 8, 9, 10, 13], 2), '- h0 h4 h8 h10', 'down before it set out: it comes, and stops short');
   }],
 
   ['the turn report says it comes, crosses, stops or is wrecked; the turn card says when to set the charges', async () => {
@@ -88,7 +88,11 @@ export default [
     equal(what(10), 'crosses', 'on the bridge in turn 10');
     equal(what(10, null, 10), 'wrecked', 'down under it');
     equal(what(10, 9), 'wrecked', 'into the gap');
-    equal(what(8, null, 8), 'halts', 'stops when the bridge goes early');
+    equal(what(8, null, 8), '', 'nothing yet when the bridge goes early: it is still coming');
+    equal(what(10, 8), 'halts', 'it stops at the gap');
+    equal(what(11, 8), '', 'and says so once');
+    equal(what(7, 2), 'comesShort', 'down before it set out: it comes on, to stop short');
+    equal(what(10, 2), 'halts', 'and stops at the gap');
     equal(trainEvents(at(state, 5), at(state, 6), { ...rules, train: null }, map).length, 0, 'no train, no lines');
 
     const early = hintsFor({ ...at(state, 5), parachutes: [] }, rules, {}, 10);
