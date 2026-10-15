@@ -219,8 +219,11 @@ export default [
     equal((await loadMap()).enemyTypes.reserve.killable, false, 'France: cannot be killed');
   }],
 
-  ['the knife is heard here (M48l): alert +1 and a cry at his hex, heard 2 hexes off; France and the airfield keep it silent', async () => {
-    const { map, rules, traits, roster } = await loadAqueduct();
+  ['a knife can be made heard (M48l): alert.knife and a cry at his hex, heard noise.knife off; every mission keeps it silent', async () => {
+    const aqueduct = await loadAqueduct();
+    const { map, traits, roster } = aqueduct;
+    // Off on the aqueduct too since M48l's measuring (DECISIONS.md): tried here with the numbers it was tried at.
+    const rules = { ...aqueduct.rules, alert: { ...aqueduct.rules.alert, knife: 1 }, noise: { ...aqueduct.rules.noise, knife: 2 } };
     const start = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 1), map, 'west'), map, rules);
     const target = start.enemies.find((e) => e.killable && e.speed > 0);
     const back = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]][(target.facing + 3) % 6];
@@ -229,13 +232,11 @@ export default [
     const knifed = knifeEnemy(behind, knifer.id, target.id, rules);
     assert(!knifed.enemies.some((e) => e.id === target.id), 'it is dead');
     equal(knifed.alert.points, behind.alert.points + rules.alert.knife, 'the alert goes up by alert.knife');
-    equal(rules.alert.knife, 1, 'which is 1 here');
     const cry = knifed.noises.at(-1);
     equal(`${cry.kind} ${cry.q},${cry.r}`, `knife ${target.q + back[0]},${target.r + back[1]}`, 'a cry where he stands');
-    equal(rules.noise.knife, 2, 'heard 2 hexes off');
-    // The other missions' knife is as it was: silent.
+    // Every mission's knife is silent, as it has been since M12b.
     const json = validateMissions(await loadJson('data/missions.json'));
-    for (const id of ['france', 'airfield']) {
+    for (const id of ['france', 'airfield', 'aqueduct']) {
       const other = missionRules(missionById(json, id), await loadJson('data/rules.json'));
       equal(`${other.noise.knife} ${other.alert.knife}`, 'null 0', `${id}: no noise, no alert`);
     }
