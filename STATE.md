@@ -4,7 +4,7 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 15 Oct 2026, after M49b was built.
+Last updated: 15 Oct 2026, after M49b's third notes were built.
 
 ## Where we are
 
@@ -24,7 +24,13 @@ Last updated: 15 Oct 2026, after M49b was built.
   - Second notes: faint swim marks on every man at the water, and a greyed Swim button
     for the selected one who has spent AP; ◀ CONTENTS on every mission's orders; mission
     music a quarter quieter; the signals tent redrawn from the reference.
-- The bot is unchanged, byte for byte, on all eight batches run (DECISIONS.md).
+  - Third notes: France's railway comes in a row higher and curves down past the fuel
+    dump, off its charge point; the drop runs' blue rings draw on first, the targets'
+    red ones a second later; the orders' buttons on one row again ("click, or Enter"
+    under START GAME); the full swim mark on every man who can swim now; the contents
+    music a quarter down, the drop's Dakota 35% down, the fanfare a fifth down.
+- The bot is unchanged, byte for byte, on all eight batches run, and on France again
+  after the railway moved (DECISIONS.md).
 
 ## Next
 
@@ -36,11 +42,14 @@ Last updated: 15 Oct 2026, after M49b was built.
 
 1. **Listen to the fanfare.** It was cut and levelled by measurement, not by ear. If the
    game seems not to have changed, reload with Cmd+Shift+R: the browser can keep old files.
-2. **Guesses (M49b):** the course's title music turned down with the missions' (the
-   contents page's strings not); the reference's guards left off the tent; the ✕ only on how to play; the swim mark's look and corner; a done
-   step's old words kept faint at 12 px; the train's "stops short" said when it stops,
-   not at the bang; a blast's body drawn like a gunner's kill.
-3. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
+2. **Guesses (M49b)**, taken as confirmed by "the new updates are good" unless the
+   operator says otherwise: the course's title music turned down with the missions';
+   the guards left off the tent; the ✕ only on how to play; the swim mark's look and
+   corner; a done step's old words faint at 12 px; "stops short" said when the train
+   stops; a blast's body drawn like a gunner's kill.
+3. **Guesses (third notes):** the railway's curve and where it steps down; "click, or
+   Enter" under START GAME (and START LESSON); the targets' rings 1.2 s after the runs'.
+4. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
    passed; the knife's cry worded "a cry"; the record's tab at the top centre.
 
 ## Owed
@@ -49,4 +58,6 @@ Last updated: 15 Oct 2026, after M49b was built.
   board; optional: 21 (winter kit), 25 (the course's contents panel, and its title card,
   which now has a prompt). The rewording pass on the lessons, the aqueduct's copy, and
   the ? pages.
+- **Size:** DECISIONS.md 190 lines (limit 200): at sign-off, move M44 to M48 into the
+  archive. ART-DIRECTION.md 539 lines, past 500: propose a split.
 - **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.
