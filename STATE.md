@@ -4,32 +4,36 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 15 Oct 2026, after M48l.
+Last updated: 15 Oct 2026, after M49.
 
 ## Where we are
 
-- **`main` is build M48l**, signed off, merged and pushed. No branch open. Tests: 235 headless (`node tools/run-tests.mjs`), 238 in
-  tests.html.
-- **M48l, the aqueduct's balance:** no change to how any mission plays (every bot batch
-  byte for byte as before). A knife that is heard is in the engine as two numbers
-  (`alert.knife`, `noise.knife`), measured on the aqueduct and left off: it cost the
-  casual knife, not the hunter. The aqueduct's pillar check is read as passed (every man
-  hunting loses; the spare men hunting is the pillar). Hard's North run stays at 15,
-  its cause traced to the road through its landing ground.
-- DECISIONS.md's M40 to M43 entries moved to DECISIONS-ARCHIVE.md (162 lines left).
-- Four missions playable; the aqueduct balanced as far as numbers go.
+- **`main` is build M49**, signed off, merged and pushed. No branch open.
+  Tests: 241 headless (`node tools/run-tests.mjs`), 244 in tests.html.
+- **M49, the playtest kit:** `?playtest` in the address times what a new player does,
+  from the moment the title screen is clicked: the first man selected, first move, first
+  charge set, each lesson started and passed, every wrong click and umpire's whistle by
+  lesson and step, ? opened, tips, undo, starting again, how a mission ended. A slim
+  dashed tab above the board holds COPY RECORD, which gives it as plain text. Nothing is
+  stored; a reload starts afresh. `docs/PLAYTEST.md` is rewritten as the sheet for it.
+- Without `?playtest` the game is unchanged.
+- Four missions playable; the course playable and flagged START HERE.
 
 ## Next
 
-1. **M49: playtest the course on people who have never seen the game.**
-2. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North
-   run (where the canisters land, the road beside the landing ground).
+1. **The operator runs the playtests** (`docs/PLAYTEST.md`): 3 to 5 new people, one at
+   a time, at https://davispiero.github.io/burn-by-dawn/?playtest
+2. **M49b**: bring back each player's record, questions and notes (`/notes`); fix what
+   they tripped on.
+3. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North run.
 
 ## Open with the operator
 
-1. **Guesses still standing:** the ? pages' lines are Claude's (good for now, the
-   operator's word); the bugle for a lesson passed; the knife's cry worded "a cry" and
-   CRY, though nothing shows it while it is off.
+1. **Guesses still standing:** the ? pages' lines are Claude's; the bugle for a lesson
+   passed; the knife's cry worded "a cry" and CRY (nothing shows it while it is off).
+2. **New guesses (M49):** the record's tab sits at the top centre, above the board; its
+   clock starts at the title click; the sheet says nothing to the player about START
+   HERE; Claude checked Chrome only, and Safari and Firefox are on the sheet for you.
 
 ## Owed
 

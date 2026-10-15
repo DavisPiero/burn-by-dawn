@@ -516,7 +516,10 @@ passed. The operator's list, with what I would add:
   made killing no dearer for the hunter and cost everyone else, so it is off. Killing
   everything (every man hunting) loses there; the spare men hunting is accepted as the
   pillar. Hard's North run stays under: nothing short of redrawing that corner mends it.
-- **Next: M49.** Later, with the operator: redraw the aqueduct's north-east corner for
+- **M49, the playtest kit** (15 Oct): `?playtest` times a new player's firsts, lessons,
+  wrong clicks and whistles, and COPY RECORD gives them as text; `docs/PLAYTEST.md`
+  rewritten for the course. The playtests are the operator's; **M49b** fixes what they trip on.
+- **Next: the playtests, then M49b.** Later, with the operator: redraw the aqueduct's north-east corner for
   Hard's North run (where the canisters land, the road beside the landing ground).
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
