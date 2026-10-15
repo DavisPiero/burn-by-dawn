@@ -426,7 +426,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M48l, under way: the aqueduct's balance, again.** A knife that is heard was built,
+**M48l, done: the aqueduct's balance, again.** A knife that is heard was built,
 measured and left off; Hard's North run is left under its target, both the operator's
 calls (`MISSION-AQUEDUCT.md`, Balance). Next is M49, the playtest. Before it, M48k, the
 layout tool (`?layout`, `data/layout.json`; §11), and **M48, the course** (§15, `MISSION-TRAINING.md`), done: it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
