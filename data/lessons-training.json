@@ -185,7 +185,7 @@
           "say": "HOVER THE WOOD.",
           "tell": "Move the mouse onto the ringed hex of wood.",
           "then": "The box under the map names the ground at the right of its top line. A wood is Move 2, which is 2 AP a hex, and heavy cover. The number on each hex of the path is the AP spent by the time he gets there.",
-          "ring": [[5, 4]],
+          "show": "readout", "ring": [[5, 4]],
           "at": [5, 4],
           "allow": { "select": ["vance"] },
           "until": { "kind": "hovered", "hexes": [[5, 4]] }
@@ -194,7 +194,7 @@
           "say": "HOVER THE MARSH.",
           "tell": "Now move the mouse onto the ringed hex of marsh.",
           "then": "Marsh is Move 3 and only light cover: slow to cross, and not much to hide in.",
-          "ring": [[7, 4]],
+          "show": "readout", "ring": [[7, 4]],
           "at": [7, 4],
           "allow": { "select": ["vance"] },
           "until": { "kind": "hovered", "hexes": [[7, 4]] }
@@ -244,7 +244,7 @@
           "say": "HOVER THE RED GROUND.",
           "tell": "Move the mouse onto the ringed hex.",
           "then": "The box under the map says why it is red. The dots are how well he would be seen there: at 3 he is spotted. Open grass takes nothing off.",
-          "ring": [[3, 8]],
+          "show": "readout", "ring": [[3, 8]],
           "at": [3, 8],
           "allow": { "select": ["fitch"] },
           "until": { "kind": "hovered", "hexes": [[3, 8]] }

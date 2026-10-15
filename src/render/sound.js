@@ -1,8 +1,8 @@
 // Sound (ART-ASSETS.md §9, SPEC.md §11). The sounds of the table: a counter
 // snapped down, a pencil, a turned card, a dog a long way off — and, since
 // M11, one from the battlefield: a charge going off is a real explosion, the
-// payoff of the whole plan. Since M12 the back page has its own: the village
-// church's bells for a mission accomplished, a tolling bell and a far siren
+// payoff of the whole plan. Since M12 the back page has its own: a fanfare
+// (the village church's bells until M49b) for a mission accomplished, a tolling bell and a far siren
 // for the rest. The RAF's bombs, miles off, stay muffled crumps. Presentation only, like the rest of render/: it
 // is told what happened and never looks at a rule.
 //
@@ -399,6 +399,9 @@ const SYNTHS = {
       vibrato.stop(t + length + 0.15);
     }
   },
+  // The fanfare for a mission accomplished (M49b) is a supplied recording;
+  // made, it is the bugle call, the nearest the made sounds come to one.
+  fanfare: (ctx, destination, at) => SYNTHS.bugle(ctx, destination, at),
 
   // The airfield's back page, withdrawn or failed (M31): the landing ground's
   // air-raid siren, close, winding up and down as dawn comes.
@@ -696,7 +699,8 @@ const CUES = {
   // The Dakota over the garrison, and bombers over the town, miles off: three small crumps.
   diversion: [['aircraft', 0.45, 0], ['crump', 0.25, 0.9], ['crump', 0.18, 1.3], ['crump', 0.22, 1.85]],
   // The drop (M15): the Dakota going over as the stick jumps.
-  drop: [['aircraft', 0.6, 0]],
+  // 35% down (M49b, the operator's).
+  drop: [['aircraft', 0.39, 0]],
   // The back page (M12): bells for a mission accomplished, a toll for the rest,
   // just after the page has turned.
   suppress: [['gunfire', 0.45, 0]],
@@ -712,7 +716,10 @@ const CUES = {
   lessonPassed: [['bugle', 0.5, 0.1]],
   // The knife (M48h, the operator's recording): a blow, not a pencil.
   knife: [['stab', 0.55, 0]],
-  victory: [['church-bells', 0.9, 0.35]],
+  // A mission accomplished (M49b, the operator's: a playtester heard the bells
+  // as a funeral): the first half of the operator's fanfare, France's and the aqueduct's.
+  // A fifth down from its first cut (M49b, the operator's).
+  victory: [['fanfare', 0.72, 0.35]],
   defeat: [['bell-toll', 0.55, 0.35]],
   // The airfield's (M31; data/missions.json names a mission's cues): its
   // diversion, jeeps going by outside the wire with their guns going; and its
@@ -815,6 +822,10 @@ export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16,
 // time each is wanted, not at load (a mission's is over a megabyte); with no
 // file the made title music plays. `music-title` is the title music above.
 export const MUSIC_TRACKS = ['music-title', 'music-contents', 'music-france', 'music-desert', 'music-aqueduct'];
+// Each track's level against the title music's cue (M49b, the operator's: a
+// mission's music was a little loud): every mission's, the course's title
+// music among them, a quarter down, and the contents page's strings too (the operator's, third notes).
+export const MUSIC_LEVELS = { 'music-title': 0.75, 'music-contents': 0.75, 'music-france': 0.75, 'music-desert': 0.75, 'music-aqueduct': 0.75 };
 
 let music = null;
 // Where each track got to when it last faded (M19): the pass of the made music
@@ -862,7 +873,7 @@ function begin(ctx, playing, buffer) {
   playing.startedAt = ctx.currentTime;
   if (buffer) {
     const level = ctx.createGain();
-    level.gain.value = CUES[MUSIC.cue][0][1];
+    level.gain.value = CUES[MUSIC.cue][0][1] * (MUSIC_LEVELS[playing.track] ?? 1);
     level.connect(out);
     playing.source = ctx.createBufferSource();
     playing.source.buffer = buffer;

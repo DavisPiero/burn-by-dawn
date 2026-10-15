@@ -368,7 +368,20 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // head goes under it in ink on the paper (M15, the operator's).
   const top = Boolean(briefing.choice?.top);
   if (top) card.appendChild(html('div', 'brief-top bar', briefChoice(briefing.choice)));
-  card.appendChild(html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]));
+  const head = html('div', top ? 'brief-head plain' : 'brief-head', [html('span', 'brief-title', briefing.title), html('span', 'brief-kicker', briefing.kicker)]);
+  // A corner ✕ (M49b, the operator's: how to play wanted an obvious way shut).
+  if (briefing.onClose) {
+    const close = html('button', 'brief-close', '✕');
+    close.type = 'button';
+    close.title = 'Close';
+    close.setAttribute('aria-label', 'Close');
+    close.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.onClose();
+    });
+    head.appendChild(close);
+  }
+  card.appendChild(head);
   // A paragraph may be several lines, each on its own line (M13); a line given
   // as { bold } is set in bold whole (M31d: the job on the orders), and one
   // given as { parts } is its words in order, a { good } among them in green
@@ -399,6 +412,16 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   // The turn cards' box, or a card's own (M21: music off, on the orders); a
   // card may have several side by side (M46: play tips beside the music).
   const toggles = briefing.toggles ?? (briefing.toggle ? [briefing.toggle] : []);
+  // Back to the contents (M49b, the operator's): first in the foot, before any box.
+  const back = briefing.back ? (() => {
+    const button = html('button', 'btn brief-link brief-back', boldKeys(briefing.back.label));
+    button.type = 'button';
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      briefing.back.onClick();
+    });
+    return button;
+  })() : null;
   if (toggles.length) {
     const boxes = toggles.map((toggle) => {
       const box = html('input');
@@ -411,7 +434,7 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
       if (toggle.help) attachPopup(label, toggle.help);
       return label;
     });
-    foot.appendChild(boxes.length === 1 ? boxes[0] : html('span', 'brief-toggles', boxes));
+    foot.appendChild(boxes.length === 1 && !back ? boxes[0] : html('span', 'brief-toggles', [...(back ? [back] : []), ...boxes]));
   } else if (briefing.link) {
     foot.appendChild(html('span'));
   } else if (briefing.choice && !briefing.choice.top) {
@@ -634,7 +657,9 @@ export function renderLesson(element, view, on) {
     html('div', 'lesson-head', [html('span', 'lesson-title', `LESSON ${view.number} · ${view.title.toUpperCase()}`), html('span', 'lesson-step', `STEP ${view.step} OF ${view.steps}`)]),
     ...(view.whistle ? [html('p', 'lesson-whistle', `WHISTLE! ${view.whistle} Try that step again.`)] : []),
     // A new line in a card's words is a new paragraph (M48e).
-    ...view.tell.split('\n').map((line) => html('p', 'lesson-tell', boldKeys(line))),
+    ...view.tell.split('\n').map((line) => html('p', view.done == null ? 'lesson-tell' : 'lesson-tell was', boldKeys(line))),
+    // Once done, what is now to be seen, under what was asked (M49b).
+    ...(view.done ? view.done.split('\n').map((line) => html('p', 'lesson-tell then', boldKeys(line))) : []),
     // What goes on from here (M48b, the operator's: there was no sense of
     // continuing): the step's own pen line, or the green NEXT where it only shows.
     // A free step (M48f) has no line of what to do next: its card has said the job.
@@ -811,6 +836,7 @@ export function describeEvent(event, place) {
     // The goods train (M34): scenery, said as it comes, crosses, stops or is wrecked.
     case 'train': return {
       comes: `The ${event.label.toLowerCase()} comes on from the west: on the ${event.target} in the garrison's turn ${event.crossesOn}.`,
+      comesShort: `The ${event.label.toLowerCase()} comes on from the west, but the ${event.target} is gone: it will stop short.`,
       crosses: `The ${event.label.toLowerCase()} is on the ${event.target}.`,
       halts: `The ${event.label.toLowerCase()} stops short: the ${event.target} is gone.`,
       wrecked: `The ${event.label.toLowerCase()} goes down with the ${event.target}!`,
@@ -1295,7 +1321,8 @@ export function renderActions(element, actions, onAction, owner = null) {
   // in a row under them (M46: thirteen buttons, most of them greyed, hid the
   // two or three that mattered). Not the timers, whose strip is its own.
   const compact = !actions.some((a) => a.heading);
-  const open = (a) => a.ok || a.active;
+  // `shown`: greyed, but a full button all the same (M49b: Swim at the water's edge).
+  const open = (a) => a.ok || a.active || a.shown;
   const full = compact ? actions.filter(open) : actions;
   const keys = compact ? actions.filter((a) => !open(a)) : [];
   // Three rows at most (index.html): a man with more than nine actions open

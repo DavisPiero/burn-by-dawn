@@ -53,11 +53,10 @@ export function trainCaught(state, rules) {
 /**
  * The train as it stands once the enemy phase of turn `after` is over (the
  * board during turn after + 1's player phase), or null if it is not on the
- * map: not yet come, gone by, or never coming because the line was cut before
- * it set out.
+ * map: not yet come, or gone by.
  *
  *   status 'running'   on its way, or crossing
- *          'halted'    the bridge went before it was close: it stops short
+ *          'halted'    the bridge went before it was close: it stops short, at `stopAt`
  *          'wrecked'   the bridge went under it, or just ahead of it, or under its tail
  *
  * `cars` are the hexes it covers, engine first; `head` the engine's index on
@@ -83,8 +82,8 @@ export function trainAt(state, rules, map, after = state.turn - 1) {
       // Still short of the gap this turn: it has not got there yet.
       if (down < turn && headAt(after) < first) status = 'running';
     } else if (down < turn) {
-      // The line cut before it set out: no train tonight.
-      if (headAt(down) < 0) return null;
+      // Down early: it runs up to the gap and stops short, even if it set out
+      // after (M49b, the operator's: none came at all, which was no fun).
       status = 'halted';
       head = Math.min(headAt(after), first - 1);
     }
@@ -95,7 +94,7 @@ export function trainAt(state, rules, map, after = state.turn - 1) {
     if (i >= 0 && i < line.length) cars.push({ ...line[i], index: i });
   }
   if (cars.length === 0) return null;
-  return { status, head, cars, label: rules.train.label, crossesOn: turn, objective };
+  return { status, head, cars, label: rules.train.label, crossesOn: turn, objective, stopAt: first - 1 };
 }
 
 /**
@@ -110,9 +109,11 @@ export function trainEvents(before, after, rules, map) {
   const events = [];
   const at = now?.cars[0] ?? was?.cars[0];
   const event = (what) => events.push({ kind: 'train', what, label: rules.train.label, target: (now ?? was).objective.label, crossesOn: rules.train.turn, q: at.q, r: at.r });
-  if (!was && now) event('comes');
+  // Coming on with its bridge already gone, it is said to be coming up to stop short.
+  if (!was && now) event(now.status === 'halted' ? 'comesShort' : 'comes');
   if (now?.status === 'wrecked' && was?.status !== 'wrecked') event('wrecked');
-  else if (now?.status === 'halted' && was?.status !== 'halted') event('halts');
+  // Said when it comes to rest at the gap (M49b), not when the bridge goes.
+  else if (now?.status === 'halted' && now.head === now.stopAt && (was?.head ?? -Infinity) < now.stopAt) event('halts');
   else if (now?.status === 'running' && before.turn === rules.train.turn) event('crosses');
   return events;
 }

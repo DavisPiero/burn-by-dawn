@@ -1,5 +1,5 @@
 // What the board points at (SPEC.md §4, §11; M46): the enemies the selected
-// man could strike now, the men standing in a blast that goes off this turn
+// man could strike now, whether he could swim from where he stands (M49b), the men standing in a blast that goes off this turn
 // and the nearest ground clear of it, whether it is time to get out and who
 // can no longer reach the way out, and where the alert's points came from.
 // Pure functions: they read state and rules and decide nothing (CLAUDE.md
@@ -8,7 +8,7 @@
 
 import { hexKey, findPath, reachableWithin } from './map.js';
 import { winMet } from './missions.js';
-import { blastEffect, blastHexesThisTurn, exfilOpen, lastTurn } from './sabotage.js';
+import { blastEffect, blastHexesThisTurn, checkSwim, exfilOpen, lastTurn } from './sabotage.js';
 import { checkKill, checkKnife, checkSuppress, moveCostFor, onBoard, reachableFor, returnsFire } from './units.js';
 
 /**
@@ -27,6 +27,24 @@ export function opportunities(map, rules, state, unit) {
     else if (fires && checkSuppress(map, unit, enemy, rules).ok) marks.set(enemy.id, 'fire');
   }
   return marks;
+}
+
+/**
+ * Whether this man could swim right now (M49b, the operator's: nothing on the
+ * board said a man at the water's edge could cross it): the swim's own check.
+ */
+export function canSwimNow(map, rules, state, unit) {
+  if (!unit || !onBoard(unit) || state.outcome || state.phase === 'drop' || !rules.actions.swim) return false;
+  return checkSwim(map, state, unit, null, rules).ok;
+}
+
+/**
+ * Whether he could swim from where he stands with a turn unspent (M49b, the
+ * operator's: a man at the water who had spent AP showed nothing): the swim's
+ * own check, as if his pool were full.
+ */
+export function canSwimHere(map, rules, state, unit) {
+  return canSwimNow(map, rules, state, unit && { ...unit, ap: unit.apMax });
 }
 
 /**

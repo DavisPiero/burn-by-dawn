@@ -40,6 +40,7 @@ and encoded as AAC with macOS `afconvert`. None needs a credit line.
 | `music-france.m4a` | the operator's "soundscrate-beneath-the-surface" (Src/) | the operator's | 161.4 s, trailing silence cut, levelled as above (M48j) |
 | `music-desert.m4a` | the operator's "SoundsCrate-Rangers" (Src/) | the operator's | 114.7 s, as above (M48j) |
 | `music-aqueduct.m4a` | the operator's "SoundsCrate-Darkest_Path" (Src/) | the operator's | 110.6 s, as above (M48j) |
+| `fanfare.m4a` | the operator's "Fanfare_01" (Src/) | the operator's | 13.2 s from 0.33 s, its first half to where the sound dies away before the second; faded 0.3 s out; loudest 0.4 s levelled to the bells' RMS 0.104 (gain 1.09, peak 0.89) (M49b: the back page's mission accomplished, in place of `church-bells`) |
 
 **M48h, the operator's own files.** The six above came from the operator's folders
 `Src/` (a library) and `SRC_Select/` (the six asked for), which are kept out of git

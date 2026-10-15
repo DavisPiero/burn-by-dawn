@@ -152,7 +152,7 @@ export default [
     equal(second.state.alert.points, 2 * rules.objectives.bridge.alert, 'alert raised twice');
   }],
 
-  ['a blast kills a man within its kill radius and wounds one further out; a killable enemy anywhere in it dies, leaving no body; the reserve is spared', async () => {
+  ['a blast kills a man within its kill radius and wounds one further out; a killable enemy anywhere in it dies, leaving a body already found that scores nothing; the reserve is spared', async () => {
     const { rules, state } = await loadAll();
     const dump = state.objectives.find((o) => o.kind === 'fuelDump');
     const hex = dump.chargeHexes[0];
@@ -181,7 +181,10 @@ export default [
     assert(!hurt.dead && hurt.hits === 1 && hurt.charges === 0, 'at the edge of the blast: wounded, his charge dropped');
     equal(result.events.filter((e) => e.kind === 'blastWounded').length, 1, 'one man wounded by the blast');
     assert(unitIn(result.state, woundedEdge.id).dead, 'a man already wounded dies at the edge');
-    equal(result.state.bodies.length, 2, 'two bodies: the troopers\', none for the enemy');
+    equal(result.state.bodies.length, 3, 'three bodies: the troopers\' and the patrol\'s (M49b)');
+    const patrol = result.state.bodies.find((b) => b.enemyId === 'near');
+    assert(patrol && patrol.found && patrol.blast && patrol.q === hex.q + radius && patrol.r === hex.r, `the patrol's body where it fell, already found: ${JSON.stringify(patrol)}`);
+    assert(!scoreOf({ ...result.state, units: [] }, rules).lines.some((l) => /killed|found/.test(l.label)), 'a blast\'s kill scores nothing, and its body is never \'found\'');
     equal(result.state.enemies.map((e) => e.id).sort().join(), 'far,reserve', 'the patrol at the blast\'s edge dies; the reserve and the sentry outside live');
     equal(result.events.filter((e) => e.kind === 'enemyBlastKilled').length, 1, 'reported once');
     assert(objectiveIn(result.state, dump.id).destroyed, 'dump destroyed');

@@ -94,7 +94,8 @@ board must read at a glance.
   per hex at most.
 - The half-hexes past the border are washed lighter, with a soft edge.
 - **Roads and the railway are continuous lines** through their hexes' centres. The
-  railway runs east–west across the board and over the rail bridge, with a level crossing
+  railway runs east–west across the board and over the rail bridge, a smooth curve where
+  it steps down a row (France's, past the fuel dump, clear of its charge points), with a level crossing
   where a road meets it: art only, no rule. So is the village **church** with its spire,
   drawn with the exchange: the landmark Vance's landing line refers to.
 - **The goods train** (§7) is drawn in the art, under every counter: a car to a hex along
@@ -396,7 +397,8 @@ board must read at a glance.
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
   the player's pen, **in the blue of our kit** (the canisters' blue: in red it read as one
-  with the targets' rings), with a blue pen ring round each run's tab, among the runs' tabs (or centred on the mission's `dropCue` hex in
+  with the targets' rings), with a blue pen ring round each run's tab, drawn on in turn before the targets' red rings
+  are (a second later), among the runs' tabs (or centred on the mission's `dropCue` hex in
   `data/layout.json`: every mission has one, the airfield's on the strip), still, on the map at 1280x800. Every
   pen note is kept whole on the map: CLICK A MAN TO START is moved in from an edge the
   men landed beside. Once one is
@@ -510,8 +512,8 @@ move itself is silent), a card's rustle when a card or the back page opens, a do
 way off when the alert rises, three far-off crumps for the RAF diversion, a gunfire burst
 and a muffled cough for a silenced shot. The Dakota drones over the drop and the RAF
 flyover, cut short if the drop is skipped. The one exception to the table: a turn with a
-bang plays a real explosion, close, loud, low and slow. The back page rings the village
-church's bells, upward to the top bell, for a mission accomplished, and tolls a single
+bang plays a real explosion, close, loud, low and slow. The back page plays a fanfare (the operator's
+recording, its first half, since M49b: the bells read as a funeral) for a mission accomplished, and tolls a single
 bell with a siren far off for one withdrawn or failed. A mission names its own back-page
 and diversion sounds: the airfield's jeep raid is an engine going by and bursts of fire,
 its success a bugle call, the rest its own air-raid
@@ -520,7 +522,7 @@ some way off (the operator's recording since M48h). **The aqueduct's three** are
 operator's recordings since M48h: its canisters
 thump down in the drop, one thump each as its canopy lands and its blue ring pops on; the boat's oars are heard far off
 the turn it is sighted or answers the signal; and the turn it lands, its last strokes
-with a wave breaking on the shingle under them. Its back page is France's bells. **The umpire's whistle** in a
+with a wave breaking on the shingle under them. Its back page is France's fanfare. **The umpire's whistle** in a
 lesson (§15) is one short blast of a referee's whistle, and **the knife** is a short
 blow (both the operator's recordings, M48h; the knife was a pencil before).
 

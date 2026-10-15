@@ -752,6 +752,8 @@ export const MARKER = {
   // of the name strip (M21, the operator's), and printed at full strength
   // over the faint counter.
   hiddenAt: { x: 38, y: 33 },
+  swimAt: { x: -6, y: 33 }, // the wave on a man who could swim now (M49b)
+  swimFaint: 0.45, // ... and faint where he could with his turn unspent
   groundSize: 26,
   canisterSize: 34, // a supply canister (M41), bigger than the charges in it
   fuseSize: 34, // the stopwatch on a burning charge (M15)
@@ -918,7 +920,7 @@ const OBJECTIVE_ART = {
   // leave its upper left (M35, the operator's: from the top they ran under the
   // S of STORE).
   bombStore: { intact: 'objective-bomb-store', destroyed: 'objective-bomb-store-destroyed', hose: { x: 21, y: 25, style: 'rails' } },
-  signals: { intact: 'objective-signals-tent', destroyed: 'objective-signals-tent-destroyed', cut: 'objective-signals-tent-cut', wires: { x: 60, y: 12 } },
+  signals: { intact: 'objective-signals-tent', destroyed: 'objective-signals-tent-destroyed', cut: 'objective-signals-tent-cut', wires: { x: 63, y: 11 } },
   bridge: { intact: 'objective-rail-bridge', destroyed: 'objective-bridge-destroyed' },
   exchange: { intact: 'objective-exchange', destroyed: 'objective-exchange-destroyed', cut: 'objective-exchange-cut', wires: { x: 100, y: 42.4 } },
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
@@ -1206,7 +1208,9 @@ export const CUE = {
   // Choosing the drop is lettered and ringed in the blue of our kit (M46, the
   // operator's: in red it read as part of the targets' rings).
   kit: PALETTE.leader,
-  runRing: { padX: 16, padY: 13, width: 4, opacity: 0.85 },
+  // Drawn on in turn as the drop is first shown, before the targets' rings
+  // (M49b, the operator's), which wait `gapMs` after the last.
+  runRing: { padX: 16, padY: 13, width: 4, opacity: 0.85, drawMs: 650, staggerMs: 180, gapMs: 200 },
   // What the selected man could do to an enemy now (M46): a mark on its chip.
   strikeSize: 24,
   strikeAt: { x: -11, y: -13 }, // its top left corner; under the no-kill mark where a chip wears that
@@ -2217,29 +2221,66 @@ function ju52(burnt) {
   ];
 }
 
-// The signals tent: a marquee with its wireless mast; the field telephones'
-// wires run from the mast's crossarm (60, 12) to a pole on each charge point.
+// The signals tent (M49b, redrawn after the operator's SignalsTest_Reference_01,
+// mirrored so the mast stands east, toward the charge points): a ridge tent
+// seen from above at three-quarters, its long roof to the south-east and its
+// end wall with the door to the south-west, guy ropes pegged out, a sandbag
+// arc to the west, the field radio on its trestle by the door and the
+// generator at the mast's foot. The field telephones' wires run from the
+// mast's crossarm (63, 11) to a pole on each charge point. Cut, its lit door
+// is dark; blown, the canvas lies in a burning heap with the mast down.
 function signalsTent(state) {
-  const tent = 'M12 70 L20 46 H52 L60 70 Z';
-  const roof = 'M20 46 L26 34 H46 L52 46 Z';
-  const parts = [
-    svg('ellipse', { cx: 40, cy: 72, rx: 30, ry: 5, class: 'ink', opacity: 0.25 }),
-  ];
+  const parts = [svg('ellipse', { cx: 38, cy: 64, rx: 34, ry: 9, class: 'ink', opacity: 0.22 })];
+  // Sandbags to the west, a low arc of them.
+  const bags = [];
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI * (0.62 + i * 0.075);
+    const x = 30 + Math.cos(a) * 27, y = 44 + Math.sin(a) * 25 * -1;
+    bags.push(svg('g', { transform: `rotate(${(-a * 180 / Math.PI + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})` }, [
+      svg('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: 3.3, ry: 2.1, class: 'paper' }),
+      svg('ellipse', { cx: x.toFixed(1), cy: y.toFixed(1), rx: 3.3, ry: 2.1, fill: 'none', class: 'stroke-ink', 'stroke-width': 0.8 }),
+    ]));
+  }
   if (state === 'destroyed') {
     return [
-      ...parts,
-      ...inked('M10 72 L22 58 L40 64 L56 56 L64 72 Z', 'ink', 1.4),
-      line('M60 70 L78 40', 2.2), ...flame(34, 68, 0.8), ...smoke(46, 40, 1.1),
+      ...parts, ...bags.slice(0, 5),
+      ...inked('M12 52 Q16 38 30 36 Q44 30 56 40 Q62 50 52 62 Q38 70 22 64 Q12 60 12 52 Z', 'ochre', 1.4),
+      fill('M12 52 Q16 38 30 36 Q44 30 56 40 Q62 50 52 62 Q38 70 22 64 Q12 60 12 52 Z', toneClass('ink', 35)),
+      line('M24 40 L40 58 M34 36 L50 54', 0.9, 'stroke-ink', { opacity: 0.6 }),
+      line('M63 62 L80 34', 2.2), line('M74 41 L84 46', 1.6),
+      ...flame(36, 58, 0.75), ...smoke(46, 30, 1.1),
     ];
   }
+  const RB = [42.6, 21.4], RF = [23.2, 44], FL = [10.2, 44], BL = [30, 21.9], FR = [35.8, 60.4], BR = [57, 32.9];
+  const drop = 7;
+  const P = ([x, y], dy = 0) => `${x} ${y + dy}`;
+  const lit = state !== 'cut';
+  // The door in the end wall, from FL to FR, two thirds along it.
+  const along = (t, dy = 0) => [FL[0] + (FR[0] - FL[0]) * t, FL[1] + (FR[1] - FL[1]) * t + dy];
+  const [d0, d1] = [along(0.56), along(0.78)];
+  const door = `M${P(d0, drop)} L${P(d0, -1.5)} L${P(d1, -1.5)} L${P(d1, drop)} Z`;
   return [
-    ...parts,
-    ...inked(tent, 'paper', 1.6), fill('M36 46 H52 L60 70 H40 Z', 'ochre', { 'fill-opacity': 0.5 }),
-    ...inked(roof, 'paper', 1.6), fill(roof, toneClass('ink', 20)),
-    fill('M30 70 V56 H38 V70 Z', state === 'cut' ? 'ink' : 'fire', { 'fill-opacity': state === 'cut' ? 1 : 0.8 }),
-    line('M30 70 V56 H38 V70', 1),
-    line('M60 70 V10', 2.2), line('M54 14 H66', 1.8),
-    line('M60 12 L74 70 M60 12 L46 34', 0.8, 'stroke-ink', { opacity: 0.6 }),
+    ...parts, ...bags,
+    // The door's light on the sand.
+    ...(lit ? [fill(`M${P(d0, drop)} L${P(d1, drop)} L${d1[0] + 9} ${d1[1] + drop + 11} L${d0[0] - 3} ${d0[1] + drop + 13} Z`, 'fire', { 'fill-opacity': 0.45 })] : []),
+    // Guy ropes and their pegs.
+    line(`M${P(BL)} L22 14 M${P(RB)} L50 13 M${P(BR)} L68 36 M${P(FR)} L44 72 M${P(FL)} L3 48`, 0.7, 'stroke-ink', { opacity: 0.7 }),
+    ...[[22, 14], [50, 13], [68, 36], [44, 72], [3, 48]].map(([x, y]) => circle(x, y, 0.9, 'ink')),
+    // The long side wall under the roof's east eave, and the end wall with the door.
+    ...inked(`M${P(FR)} L${P(BR)} L${P(BR, drop)} L${P(FR, drop)} Z`, 'ochre', 1.2), fill(`M${P(FR)} L${P(BR)} L${P(BR, drop)} L${P(FR, drop)} Z`, toneClass('ink', 35)),
+    ...inked(`M${P(FL, drop)} L${P(FL)} L${P(RF)} L${P(FR)} L${P(FR, drop)} Z`, 'ochre', 1.2), fill(`M${P(FL, drop)} L${P(FL)} L${P(RF)} L${P(FR)} L${P(FR, drop)} Z`, toneClass('ink', 20)),
+    fill(door, lit ? 'fire' : 'ink'), line(door, 0.9),
+    // The roof: the narrow west slope, shaded, and the broad east one, with its seams.
+    ...inked(`M${P(BL)} L${P(RB)} L${P(RF)} L${P(FL)} Z`, 'ochre', 1.3), fill(`M${P(BL)} L${P(RB)} L${P(RF)} L${P(FL)} Z`, toneClass('ink', 20)),
+    ...inked(`M${P(RB)} L${P(BR)} L${P(FR)} L${P(RF)} Z`, 'ochre', 1.4),
+    line('M37.8 27 L52 38.6 M32.9 32.7 L46.5 46.6 M28 38.4 L41 53.5', 0.6, 'stroke-ink', { opacity: 0.5 }),
+    // The radio on its trestle by the door, and the generator at the mast's foot.
+    ...inked('M44 64 L52 60 L54 62 L46 66 Z', 'paper', 0.9), line('M45 66 L45 70 M53 62 L53 66', 0.9),
+    ...inked('M47 61.4 L50.6 59.6 L51.6 61 L48 62.8 Z', 'ink', 0.6),
+    ...inked('M56 60 L62 57 L65 59 L59 62 Z', 'green', 0.9), fill('M59 62 L65 59 L65 62 L59 65 Z', toneClass('green', 50)), line('M59 62 L65 59 L65 62 L59 65 Z', 0.9),
+    // The mast and its crossarm, the wires' end.
+    line('M63 62 V5', 2.4), line('M55 13 L71 9', 1.8),
+    line('M63 6 L52 30 M63 6 L74 34', 0.6, 'stroke-ink', { opacity: 0.55 }),
   ];
 }
 
@@ -3103,6 +3144,17 @@ const SPRITES = {
       circle(14, 14, 12, 'paper'),
       line('M6 12 Q14 20 22 12', 2.6),
       line('M9 16 L7.5 19.5 M14 17.5 L14 21.5 M19 16 L20.5 19.5', 2),
+      ring(14, 14, 12),
+    ],
+  },
+  // A man who could swim from where he stands (M49b), on his counter while he
+  // is selected: two waves in paper on the canal's blue, the knife mark's shape.
+  'marker-swim': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'blue'),
+      line('M5.5 11.5 Q8.3 8.5 11 11.5 T16.5 11.5 T22.5 11.5', 2.4, 'stroke-paper'),
+      line('M5.5 17.5 Q8.3 14.5 11 17.5 T16.5 17.5 T22.5 17.5', 2.4, 'stroke-paper'),
       ring(14, 14, 12),
     ],
   },

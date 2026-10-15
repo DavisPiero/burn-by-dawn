@@ -74,6 +74,7 @@ page. Its `turnLimit` is 99.
 | `then` | The card's words once it is done, while what it did is still on the board: what he is now looking at, and the rule with its number (a hedge is 2 AP a hex). Every step has one but a step that only shows something |
 | `ring` | Hexes ringed in the pen, or `"men"` (a wider ring, round the man's whole hex: the man the step names, or every man where it names none) |
 | `point` | A part of the page ringed in the pen, where what the step shows is not on the board: `roster`, `alert`, `clock`, `readout`, `actions`, `radio` (the diversion's button). A card kept top left stays in its corner and only points |
+| `show` | A part of the page lit in the pen once the step is done (M49b), from the same list as `point`, the card staying where it is: the box under the map, for a hover step whose `then` speaks of it |
 | `allow` | The only things that do anything: `select` (ids, or true), `move` (hexes, or `"any"`), `actions` (ids), `target` (the only hexes an aimed action may be clicked on; anywhere if left out), `fuse` (the only time pencil a charge may be set with; any if left out), `endTurn`, and in the drop `run` and `jump` |
 | `does` | Read only by the test that plays the lesson: where it throws, or how it kills |
 | `until` | What ends the step: one of the list below |
@@ -112,6 +113,9 @@ and M48e's `dressed` (a man's wound has been dressed).
   board stays as it is, nothing more does anything, the card says its `then`, and only
   NEXT (or Enter) leads to the next step, which begins from the board as it stands;
   the last leads to **PASSED**. What a hover step showed stays shown while it is held.
+  **A step done adds and takes nothing away** (the operator's, M49b): its ring stays,
+  its pen line stays ticked (✓), the card keeps what it asked, faint, with its `then`
+  under it, and what the step names in `show` is lit in the pen.
 - **While a step is held, doing exactly what the next step asks for is NEXT, and does
   it** (the operator's, M48c: a card waiting on NEXT with Knife still looking pressable
   confused). Picking a man counts only where picking him is the next step, and a hover

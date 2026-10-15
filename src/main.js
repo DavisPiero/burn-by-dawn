@@ -22,7 +22,7 @@ import {
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
-import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
+import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
 import { contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
@@ -447,7 +447,20 @@ function deriveView() {
   view.firedOn = sightFor.firedOn;
   // A blast this turn and the way out (M46): the ground throbs whatever the
   // tips; the pen's words and arrows are tips.
-  if (!sameStamp(cuesFor.stamp, stamp)) cuesFor = { ...cuesFor, stamp, clear: getClear(map, rules, state), out: wayOut(map, rules, state, CLOSING_TURNS) };
+  if (!sameStamp(cuesFor.stamp, stamp)) {
+    cuesFor = {
+      ...cuesFor, stamp, clear: getClear(map, rules, state), out: wayOut(map, rules, state, CLOSING_TURNS),
+      // Every man at the water's edge who could swim it with his turn unspent (M49b).
+      banks: new Set(state.units.filter((u) => canSwimHere(map, rules, state, u)).map((u) => u.id)),
+      // And those who could swim it now (third notes): theirs is full, selected or not.
+      swimNow: new Set(state.units.filter((u) => canSwimNow(map, rules, state, u)).map((u) => u.id)),
+    };
+  }
+  // A wave on each of them (M49b, the operator's), unless the lesson would not
+  // let him swim: full on every man who can swim now, faint on one who has
+  // spent part of his turn.
+  const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
+  view.swimMarks = new Map(swimAllowed ? [...cuesFor.banks].map((id) => [id, cuesFor.swimNow.has(id) ? 'now' : 'faint']) : []);
   view.blastPulse = !state.outcome && view.blastArea.size > 0;
   view.getClear = tipsOn ? cuesFor.clear : null;
   view.goOut = cuesFor.out.go ? { words: tipsOn ? 'GET OUT!' : null } : null;
@@ -458,7 +471,10 @@ function deriveView() {
   // A lesson's step (M47): what it rings, and its line in the pen.
   const step = lessonStep();
   // Not while the stick is coming down: the step's line is for the ground.
-  if (step && !briefing && !course.progress.met && !dropShow) {
+  // Still there once the step is done (M49b, the operator's fourth note of a
+  // thing gone from under them: the ring, the line and the card's words went
+  // at the hover). A step done adds to what is shown, and takes nothing away.
+  if (step && !briefing && !dropShow) {
     const men = state.units.filter(onBoard);
     // "men" rings the man the step is about, where it names one (M48e, the
     // operator's: CLICK FITCH stood under two rings, and one hid a wound).
@@ -470,7 +486,7 @@ function deriveView() {
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
     // A step that points at the page says its line on the lesson card only.
     // Nor does a free step write on the board: nobody's hand is held (M48f).
-    if (about && (step.at || !step.point) && !step.free) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
+    if (about && (step.at || !step.point) && !step.free) view.manNotes.push({ q: about.q, r: about.r, words: course.progress.met ? `✓ ${step.say}` : step.say, low: step.ring === 'men' && !step.at });
   }
 
   const next = forecast();
@@ -1067,7 +1083,7 @@ function trainDue() {
 function trainRows(train) {
   const doing = {
     running: train.head >= train.objective.hexes.length && state.turn > rules.train.turn ? 'crossing' : `on its way: ${trainDue()}`,
-    halted: `stopped: the ${train.objective.label} went before it got near`,
+    halted: train.head >= train.stopAt ? `stopped short: the ${train.objective.label} went before it got near` : `slowing: the ${train.objective.label} is gone, and it will stop short of it`,
     wrecked: `wrecked with the ${train.objective.label}: +${rules.train.score}`,
   }[train.status];
   return [
@@ -1175,7 +1191,8 @@ function actionsFor(unit) {
     passChargeAction(unit),
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
-    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
+    // Shown greyed where he could swim with his turn unspent (M49b, the operator's).
+    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, shown: canSwimHere(map, rules, state, unit) && (!lessonStep() || lessonAllows({ kind: 'action', id: 'swim' })), ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
 }
 
@@ -1198,6 +1215,8 @@ function signalFor(unit) {
 // has the full cost and what else it does.
 function apLabel(action) {
   const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
+  // Greyed for want of a whole turn (M49b): said so.
+  if (wholeTurn && action.shown && !action.ok) return 'full turn';
   return wholeTurn ? 'all AP' : `${action.apCost} AP`;
 }
 
@@ -1649,7 +1668,9 @@ function render() {
   restartButton.disabled = briefing?.kind === 'contents';
   contentsBackButton.disabled = briefing?.kind === 'contents';
   const pointed = briefing ? null : lessonStep()?.point ?? null;
-  for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed);
+  // What a step done shows lights up too (M49b), but the card stays put.
+  const lit = !briefing && course?.progress?.met ? lessonStep()?.show ?? null : null;
+  for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed || kind === lit);
   renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
   placeLessonCard(pointed);
   dropStalePopup();
@@ -1757,7 +1778,7 @@ function cueReport(report) {
   if (report.some((e) => e.kind === 'explosion')) playCue('explosion');
   if (report.some((e) => e.kind === 'alertRise')) playCue('alertRise');
   // The goods train's whistle as it comes onto the board (M35).
-  if (report.some((e) => e.kind === 'train' && e.what === 'comes')) playCue('train');
+  if (report.some((e) => e.kind === 'train' && (e.what === 'comes' || e.what === 'comesShort'))) playCue('train');
   // The aqueduct's boat (M43): its oars far off as it is sighted or answers
   // the signal, the surf under them as it lands.
   if (report.some((e) => e.kind === 'boat' && e.what === 'in')) playCue('boatIn');
@@ -2412,6 +2433,12 @@ function openContents() {
   render();
 }
 
+/** A course's list or a mission's orders before the drop, to the contents, as the gear's CONTENTS does; nothing is at stake. */
+function contentsFromCourse() {
+  if (state.phase !== 'drop') restartMission();
+  openContents();
+}
+
 /**
  * A mission picked on the contents page. The one loaded opens its orders; any
  * other is its own files, loaded in place (M48, the operator's: the page
@@ -2675,6 +2702,9 @@ function describeBriefing(which, view) {
       },
       sections: [],
       toggles: [musicToggle()],
+      // Back to the missions (M49b, the operator's: a player done with lessons
+      // had to go into a lesson and the gear to find a proper game).
+      back: { label: '◀ CONTENTS', onClick: contentsFromCourse },
       go: `START LESSON ${next.number} — Enter, or click a lesson`,
       goBig: true,
       onGo: () => closeBriefing(true),
@@ -2759,6 +2789,7 @@ function describeBriefing(which, view) {
         pages: { tabs: help.pages.map((p) => p.tab), page: helpPage, onTab: turnHelpPage, lines: page.scene ? helpLines(page, rules) : tonight, scene: Boolean(page.scene) },
         link: { label: 'THE ORDERS', onClick: openOrdersFromHelp },
         go: 'BACK — ← → turn the pages; any other key or click',
+        onClose: () => closeBriefing(),
       };
     }
     // The orders in five lines (M44, from playtesting: there was too much to
@@ -2808,6 +2839,9 @@ function describeBriefing(which, view) {
       // Play tips beside it (M46, the operator's), in play too: they can be
       // turned on or off at any time.
       toggles: before ? [musicToggle(), tipsToggle()] : [tipsToggle()],
+      // Before the drop, the way back to the missions (M49b, the operator's); in
+      // play it is the gear's, which asks twice.
+      ...(before ? { back: { label: '◀ CONTENTS', onClick: contentsFromCourse } } : {}),
       link: { label: 'HOW TO PLAY [?]', onClick: openHelp },
       // The one button that starts the game (M48, the operator's): named, and the biggest.
       ...(before ? { go: 'START GAME — click, or Enter', goBig: true, onGo: () => closeBriefing(true) } : {}),
@@ -3068,7 +3102,8 @@ function lessonView() {
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
     // A free step's card is its few words and no more (M48f): the umpire's own card has said the whistle.
-    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: step.free ? null : course.whistle, met: Boolean(progress.met), free: Boolean(step.free),
+    // Done, the card keeps what it asked, faint, and adds what is now to be seen (M49b).
+    tell: step.tell ?? '', done: progress.met ? step.then ?? '' : null, say: step.say, whistle: step.free ? null : course.whistle, met: Boolean(progress.met), free: Boolean(step.free),
     canBack: progress.step > 0 || Boolean(progress.met), next: Boolean(progress.met) || step.until.kind === 'acknowledged',
   };
 }
@@ -3161,6 +3196,11 @@ function describeMarker(id, unit) {
   }
   if (id === 'marker-hidden') {
     return ['HIDDEN', `${name} has gone to ground: +${rules.actions.hide.concealment} concealment on this hex until he next spends AP. Leave him be and he stays down.`];
+  }
+  if (id === 'marker-swim') {
+    const water = map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water';
+    if (!canSwimNow(map, rules, state, unit)) return ['CAN SWIM NEXT TURN', `${name} is at the ${water}'s edge, but a swim takes a full turn and he has spent AP. Start a turn here with all his AP and he can swim it [W].`];
+    return ['CAN SWIM', `${name} is at the ${water}'s edge and can swim it [W]: a full turn, to the far bank.`];
   }
   if (id === 'marker-late') {
     const left = lastTurn(state, rules) - state.turn;

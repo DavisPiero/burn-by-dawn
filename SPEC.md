@@ -12,7 +12,7 @@ and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), 
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
-`DECISIONS.md` (before M44, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
+`DECISIONS.md` (before M49, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
 Turns and actions (§4) are in `TURNS.md`, detection and alert (§6) in `DETECTION.md`,
 sabotage (§7) in `SABOTAGE.md` and winning and scoring (§10) in `WINNING.md`, each as
 authoritative as this file; the milestones done are in `MILESTONES.md`.
@@ -428,7 +428,12 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M49, the playtest kit, built; the playtests themselves are the operator's.** With
+**M49b, the first playtest's notes, built, awaiting sign-off:** a ✕ on how to play,
+◀ CONTENTS on the course's list, a wave on the selected man who could swim now, the
+operator's fanfare for a mission accomplished, a lesson step done that adds and takes
+nothing away, the goods train coming on time to a bridge blown early and stopping short,
+and a blast's dead left as bodies already found. Before it, **M49, the playtest kit,
+built; the playtests themselves are the operator's.** With
 `?playtest` in the address the game times what a new player does (the first move, the
 first charge set, each lesson, every wrong click and whistle by step) and COPY RECORD
 gives it as plain lines; `docs/PLAYTEST.md` is the sheet. What they trip on is fixed in
@@ -445,7 +450,7 @@ of the map redrawn together (`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
 ### Done
 
 The table of milestones finished is in `MILESTONES.md`. Each is recorded in full in
-`DECISIONS.md` (before M44, `DECISIONS-ARCHIVE.md`) and the git history.
+`DECISIONS.md` (before M49, `DECISIONS-ARCHIVE.md`) and the git history.
 
 ---
 

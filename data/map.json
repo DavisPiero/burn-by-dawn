@@ -56,8 +56,8 @@
   "_exfil": "SPEC.md §10. A trooper who ends a move on one of these is out. The south end of the canal towpath, also reachable from the hedgerow lanes, away from all three drop runs.",
   "exfil": [[3, 12], [4, 12], [5, 12]],
 
-  "_railway": "SPEC.md \u00a711. Art only, like the church: no rule, no terrain, no cost. Waypoints the line is drawn through, straight between them, carried on past the first and last to the board's edge. It runs over the rail bridge, which is why the bridge is there. A track hex under it is drawn as the railway, with a level crossing where a road meets it.",
-  "railway": [[-3, 6], [14, 6]],
+  "_railway": "SPEC.md \u00a711. Art only, like the church: no rule, no terrain, no cost. Waypoints the line is drawn through, straight between them, carried on past the first and last to the board's edge. It runs over the rail bridge, which is why the bridge is there. It comes in a row above the fuel dump and steps down past it (M49b, the operator's: on the dump's row it ran through a charge point, as if the bang would take the track), the same twelve hexes to the bridge, so the train keeps its time. A track hex under it is drawn as the railway, with a level crossing where a road meets it.",
+  "railway": [[-2, 5], [2, 5], [2, 6], [14, 6]],
 
   "_places": "SPEC.md \u00a711. Names printed on the map, art only like the railway: no rule. `at` is the hex the name is centred on; `kind` picks how it is set (village in capitals, water in paper italic on the water, anything else in italic); `angle` turns it, in degrees, to lie along what it names; `dy` nudges it down and `dx` right, in hex radii. The turn report names a place a man is on or near by these, as it does the objectives.",
   "places": [

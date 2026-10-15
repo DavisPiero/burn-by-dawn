@@ -64,6 +64,8 @@ export default [
     assert(broken((l) => { l.steps[0].allow = { actions: ['fly'] }; }), 'an action that does not exist');
     assert(broken((l) => { l.steps[0].say = 'THIS PEN LINE HAS FAR TOO MANY WORDS IN IT'; }), 'a pen line longer than seven words');
     assert(broken((l) => { l.steps = []; }), 'a lesson with no steps');
+    assert(broken((l) => { l.steps[0].show = 'nowhere'; }), 'a part of the page to light up that is not one');
+    assert(!broken((l) => { l.steps[0].show = 'readout'; }), 'the box under the map lit up once a step is done');
   }],
 
   ['the lessons built so far run on from one another, in order', async () => {

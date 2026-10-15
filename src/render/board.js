@@ -640,11 +640,14 @@ function drawHedges(layer, map) {
 }
 
 /**
- * The railway: straight through its waypoints' centres, carried on past the
- * first and last to the board's edge, as a bed, two rails and the sleepers across them.
+ * The railway: through the centres of the hexes its waypoints' line runs over,
+ * carried on past the first and last to the board's edge, as a bed, two rails
+ * and the sleepers across them. A smooth curve (M49b, the operator's: France's
+ * line steps down a row past the fuel dump), straight where the hexes are in a
+ * row; through every hex's centre, so the train's wagons, a hex each, stay on it.
  */
 function drawRailway(layer, map, edge) {
-  const points = (map.railway ?? []).map(([q, r]) => axialToPixel(q, r, map.hexSize));
+  const points = [...railwayHexes(map).values()].map(({ q, r }) => axialToPixel(q, r, map.hexSize));
   if (points.length < 2) return;
   const reach = (edge.right - edge.left) + (edge.bottom - edge.top);
   const extend = (from, to) => {
@@ -652,10 +655,28 @@ function drawRailway(layer, map, edge) {
     return { x: to.x + ((to.x - from.x) / len) * reach, y: to.y + ((to.y - from.y) / len) * reach };
   };
   const line = [extend(points[1], points[0]), ...points, extend(points.at(-2), points.at(-1))];
-  layer.appendChild(polyline(line, { stroke: RAIL.bed, 'stroke-width': RAIL.bedWidth, 'stroke-opacity': RAIL.bedOpacity, 'stroke-linecap': 'butt' }));
-  layer.appendChild(polyline(line, { stroke: RAIL.rail, 'stroke-width': RAIL.railWidth, 'stroke-linecap': 'butt' }));
-  layer.appendChild(polyline(line, { stroke: RAIL.gauge, 'stroke-width': RAIL.gaugeWidth, 'stroke-linecap': 'butt' }));
-  layer.appendChild(polyline(line, { stroke: RAIL.sleeper, 'stroke-width': RAIL.sleeperWidth, 'stroke-dasharray': RAIL.sleeperDash, 'stroke-linecap': 'butt' }));
+  const near = (from, to) => {
+    // The hex beyond an end, a hex's step on: the curve's way in and out there.
+    const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    const step = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    return { x: to.x + ((to.x - from.x) / len) * step, y: to.y + ((to.y - from.y) / len) * step };
+  };
+  const guide = [near(points[1], points[0]), ...points, near(points.at(-2), points.at(-1))];
+  const f = (v) => v.toFixed(2);
+  let d = `M${f(line[0].x)},${f(line[0].y)} L${f(points[0].x)},${f(points[0].y)}`;
+  // Catmull-Rom between each pair of centres, as cubic Béziers.
+  for (let i = 1; i < guide.length - 2; i++) {
+    const [p0, p1, p2, p3] = [guide[i - 1], guide[i], guide[i + 1], guide[i + 2]];
+    const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
+    const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+    d += ` C${f(c1.x)},${f(c1.y)} ${f(c2.x)},${f(c2.y)} ${f(p2.x)},${f(p2.y)}`;
+  }
+  d += ` L${f(line.at(-1).x)},${f(line.at(-1).y)}`;
+  const rail = (attrs) => el('path', { d, fill: 'none', 'stroke-linecap': 'butt', 'stroke-linejoin': 'round', ...attrs });
+  layer.appendChild(rail({ stroke: RAIL.bed, 'stroke-width': RAIL.bedWidth, 'stroke-opacity': RAIL.bedOpacity }));
+  layer.appendChild(rail({ stroke: RAIL.rail, 'stroke-width': RAIL.railWidth }));
+  layer.appendChild(rail({ stroke: RAIL.gauge, 'stroke-width': RAIL.gaugeWidth }));
+  layer.appendChild(rail({ stroke: RAIL.sleeper, 'stroke-width': RAIL.sleeperWidth, 'stroke-dasharray': RAIL.sleeperDash }));
 }
 
 /** Water gets a bank on every edge that faces dry land on the board. */
@@ -863,6 +884,14 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', MARKER.hiddenAt.x, MARKER.hiddenAt.y, unit));
+    // Faint on any man who could swim from here with his turn unspent, full
+    // on the selected man who can swim now (M49b).
+    const swim = view.swimMarks?.get(unit.id);
+    if (swim) {
+      const wave = hoverMarker(layers, 'marker-swim', MARKER.swimAt.x, MARKER.swimAt.y, unit);
+      if (swim === 'faint') wave.setAttribute('opacity', MARKER.swimFaint);
+      counter.appendChild(wave);
+    }
     // Too far from the way out to make it before the night ends (M46).
     if (view.late?.has(unit.id)) counter.appendChild(hoverMarker(layers, 'marker-late', CUE.lateAt.x, CUE.lateAt.y, unit, CUE.lateSize));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).
@@ -882,8 +911,11 @@ export function renderPieces(layers, state, view) {
 
   drawBlasts(layers, state, now);
   if (view.garrisonShow) drawHeard(layers, view.garrisonShow, now);
-  drawTargetRings(layers, view.targetRings, now);
-  if (view.dropCue && runNames.length) drawDropCue(layers, view.dropCue, runNames, view.dropCueAt);
+  // The runs' rings draw on first and the targets' after them (M49b, the operator's).
+  const runRings = view.dropCue && runNames.length ? runNames.length : 0;
+  drawTargetRings(layers, view.targetRings, now, runRings ? (runRings - 1) * CUE.runRing.staggerMs + CUE.runRing.drawMs + CUE.runRing.gapMs : 0);
+  if (runRings) drawDropCue(layers, view.dropCue, runNames, view.dropCueAt, now);
+  else layers.runRingsSince = null;
   if (view.chargeCue) drawChargeCue(layers, view.chargeCue, now);
   // What the turn card's hint is about, ringed while the card is up (M46).
   for (const hex of view.hintRings ?? []) penRing(layers, axialToPixel(hex.q, hex.r, map.hexSize), now, hex.wide ? CUE.manRingRadius : CUE.pointRingRadius);
@@ -914,7 +946,7 @@ export function renderPieces(layers, state, view) {
  * they go, the drawing memory goes with them, so they draw on again if the
  * player goes back to no run.
  */
-function drawTargetRings(layers, rings, now) {
+function drawTargetRings(layers, rings, now, waitMs = 0) {
   if (!rings) {
     layers.ringsSince = null;
     return;
@@ -946,7 +978,7 @@ function drawTargetRings(layers, rings, now) {
       const path = el('path', { d, fill: 'none', stroke: colour, 'stroke-width': RINGS.width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': 1, opacity: RINGS.opacity });
       pen.appendChild(path);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {
-        delay: (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
+        delay: waitMs + (i + loop * 0.5) * RINGS.staggerMs, duration: RINGS.drawMs,
       }, elapsed);
     }
     // The note, on the side of the ring toward the middle of the board. It may
@@ -984,7 +1016,7 @@ function drawTargetRings(layers, rings, now) {
     });
     if (ring.layoutKey) note.dataset.layout = ring.layoutKey;
     layers.effects.appendChild(note);
-    playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
+    playFrom(note, [{ opacity: 0 }, { opacity: 1 }], { delay: waitMs + i * RINGS.staggerMs + RINGS.drawMs, duration: 120 }, elapsed);
   });
 }
 
@@ -1042,7 +1074,7 @@ function throbbing(layers, key, now) {
  * kit, with a blue ring round each run to choose from, or round the one
  * chosen (M46, the operator's: in red it read as one with the targets' rings).
  */
-function drawDropCue(layers, cue, names, place = null) {
+function drawDropCue(layers, cue, names, place = null, now = 0) {
   // Where it centres is a hex in data/layout.json (M48k; each map's `dropCueAt`
   // since M29b), or with none the middle of the runs' names.
   const at = place?.at && axialToPixel(place.at[0], place.at[1], layers.map.hexSize);
@@ -1053,12 +1085,23 @@ function drawDropCue(layers, cue, names, place = null) {
   const pick = names.length === 1 ? ['CLICK THE DROP RUN', 'click its name, or press 1'] : ['PICK A DROP DIRECTION', `click a run's name, or press 1-${names.length}`];
   const lines = cue === 'pick' ? pick : ['HIT SPACE TO JUMP', 'or click the run again'];
   const g = el('g', { 'pointer-events': 'none' });
-  const { padX, padY, width, opacity } = CUE.runRing;
-  for (const tab of names.filter((t) => cue === 'pick' || t.selected)) {
+  const { padX, padY, width, opacity, drawMs, staggerMs } = CUE.runRing;
+  // Each ring is drawn on once, in turn, as the targets' are (M49b, the
+  // operator's); a redraw part-way carries on, and the one chosen stays drawn.
+  layers.runRingsSince ??= now;
+  const elapsed = now - layers.runRingsSince;
+  names.forEach((tab, i) => {
+    if (cue !== 'pick' && !tab.selected) return;
     const d = penLoop(tab, tab.w / 2 + padX, tab.h / 2 + padY);
-    g.appendChild(el('path', { d, fill: 'none', stroke: CUE.halo, 'stroke-width': width + 4, 'stroke-linecap': 'round', opacity: 0.7 }));
-    g.appendChild(el('path', { d, fill: 'none', stroke: CUE.kit, 'stroke-width': width, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity }));
-  }
+    const pen = { d, fill: 'none', 'stroke-linecap': 'round', pathLength: 1, 'stroke-dasharray': 1 };
+    for (const path of [
+      el('path', { ...pen, stroke: CUE.halo, 'stroke-width': width + 4, opacity: 0.7 }),
+      el('path', { ...pen, stroke: CUE.kit, 'stroke-width': width, 'stroke-linejoin': 'round', opacity }),
+    ]) {
+      g.appendChild(path);
+      playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { delay: i * staggerMs, duration: drawMs }, elapsed);
+    }
+  });
   const letters = penLetters(lines, x, y, [CUE.size, CUE.subSize], CUE.kit);
   // The lettering is what the layout tool drags (M48k), from where it stands now.
   if (place?.layoutKey) {

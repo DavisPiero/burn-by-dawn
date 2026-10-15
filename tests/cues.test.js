@@ -2,10 +2,10 @@
 // get clear of a blast, the way out, and where the alert's points came from.
 // Each must agree with the check the action or the turn will make.
 
-import { alertOrigins, getClear, opportunities, wayOut } from '../src/cues.js';
+import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from '../src/cues.js';
 import { facingToward } from '../src/hex.js';
 import { loadJson, loadMap } from '../src/map.js';
-import { blastEffect, blastHexesThisTurn, kindOf } from '../src/sabotage.js';
+import { blastEffect, blastHexesThisTurn, checkSwim, kindOf } from '../src/sabotage.js';
 import { validateTraits } from '../src/traits.js';
 import { checkKill, checkKnife, checkSuppress } from '../src/units.js';
 import { landedState } from './fixtures.js';
@@ -55,6 +55,31 @@ export default [
     const gunner = state.units.find((u) => rules.roles[u.role].kill);
     const marks = opportunities(map, rules, { ...state, enemies: [enemy(gunner.q - 2, gunner.r, 0, { suppressed: true })] }, gunner);
     assert([...marks.values()].every((m) => m === 'kill') || marks.size === 0, `a gunner's kill on a suppressed enemy he can see: ${[...marks.values()]}`);
+  }],
+
+  ['the swim mark agrees with the swim, and is there for a man at the canal with his turn unspent', async () => {
+    const { map, rules, state } = await loadAll();
+    const man = state.units.find((u) => u.hits === 0);
+    let found = null;
+    for (let q = -10; q < 30 && !found; q++) {
+      for (let r = -2; r < 16 && !found; r++) {
+        const at = { ...man, q, r, ap: man.apMax };
+        const s = { ...state, units: state.units.map((u) => (u.id === man.id ? at : u)) };
+        if (checkSwim(map, s, at, null, rules).ok) found = { s, at };
+      }
+    }
+    assert(found, 'some bank on France\'s map can be swum from');
+    assert(canSwimNow(map, rules, found.s, found.at), 'the mark is on where the swim is');
+    const spent = { ...found.at, ap: found.at.apMax - 1 };
+    assert(!canSwimNow(map, rules, found.s, spent), 'not once he has spent AP: a swim is a full turn');
+    assert(canSwimHere(map, rules, found.s, spent), 'but the bank still says he could, with his turn unspent (the faint mark)');
+    assert(!canSwimHere(map, rules, found.s, { ...found.at, hits: 1 }), 'never for a wounded man');
+    const inland = state.units.find((u) => !checkSwim(map, state, { ...u, ap: u.apMax }, null, rules).ok);
+    if (inland) assert(!canSwimHere(map, rules, state, inland), `${inland.shortName}: nothing away from the water`);
+    assert(!canSwimNow(map, rules, { ...found.s, outcome: { kind: 'failed' } }, found.at), 'nothing once the mission is over');
+    for (const unit of state.units) {
+      assert(canSwimNow(map, rules, state, unit) === checkSwim(map, state, unit, null, rules).ok, `${unit.shortName}: the mark and the swim agree`);
+    }
   }],
 
   ['a man in a blast that goes off this turn is told, with the nearest clear hex he can reach', async () => {

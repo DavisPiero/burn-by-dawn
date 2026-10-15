@@ -161,8 +161,8 @@ export function scoreOf(state, rules) {
   if (hurt > 0) lines.push({ label: `${men(hurt)} out wounded`, points: hurt * s.perTrooperOutWounded });
   const unseen = out.filter((u) => !u.everSpotted).length;
   if (unseen > 0) lines.push({ label: `${unseen} of them never seen`, points: unseen * s.perTrooperUnseen });
-  // M16: kills by knife or gunner are the enemy bodies; a blast leaves none.
-  const kills = state.bodies.filter((b) => b.enemyId);
+  // M16: kills by knife or gunner are the enemy bodies; a blast's (M49b) score nothing.
+  const kills = state.bodies.filter((b) => b.enemyId && !b.blast);
   if (kills.length > 0) lines.push({ label: `${kills.length} ${kills.length === 1 ? 'enemy' : 'enemies'} killed`, points: kills.length * s.perKill });
   const found = kills.filter((b) => b.found).length;
   if (found > 0) lines.push({ label: `${found} ${found === 1 ? 'body' : 'bodies'} found`, points: found * s.perKillFound });

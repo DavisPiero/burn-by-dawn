@@ -49,9 +49,11 @@ same turn or not.
 A trooper within a charge's **kill radius** at detonation dies, wounded or not. Inside the
 **blast radius** but past the kill radius (only the fuel dump has such a ring) he takes
 **one hit**, as from a shot. The hover path warns of both. **An enemy anywhere inside the
-blast radius dies**, unless its type cannot be killed; it leaves no body (the bang is what
-the garrison hears; a body found after it would count the same event twice), and it stops
-holding anyone in contact.
+blast radius dies**, unless its type cannot be killed; it leaves a body where it fell
+(M49b, the operator's: they vanished), **already counted as found**: the bang is what the
+garrison hears, so a body found after it would count the same event twice. It raises
+nothing, calls no squad and scores nothing, and the dead man stops holding anyone in
+contact.
 
 **One objective, one explosion:** charges on the same objective that detonate in the same
 fuse phase are one explosion — the alert rises once and the noise is heard once. Timing
@@ -106,8 +108,10 @@ to be in time for, not one to wait for, and the five or six turns left before da
 for a bonus target and the walk out.
 - It **sees nobody, raises nothing, makes no noise and blocks no hex**; a man may stand on
   the line as it passes. Its one rule is the score.
-- The bridge down earlier, with the train already on the board, stops it at the west
-  bank; down before it set out, none comes; down after it has gone by, it runs on.
+- The bridge down earlier stops it at the west bank, a hex short of the gap: on the
+  board already, or setting out later on its own timetable (M49b, the operator's: none
+  came at all, which was a pity); down after it has gone by, it runs on. Either way it
+  pays nothing.
 - Where it is follows from the turn and the turn the bridge went down, so nothing about
   it is kept in state, and its hover, the bridge's (a TRAIN row), the orders, the mission
   panel ("Goods train +5 · turn 10") and the turn card say when it is due. The turn card
