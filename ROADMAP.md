@@ -512,7 +512,12 @@ passed. The operator's list, with what I would add:
   notes; the operator drags them, and COPY gives the whole of `data/layout.json` to
   paste over the file. With it, a bugle for a lesson passed and the clipboard's record
   fitted to its paper in any browser.
-- **Next: the aqueduct's balance**, a short session of its own (bot runs from a frozen copy).
+- **M48l, the aqueduct's balance** (15 Oct): a knife that is heard, built and measured,
+  made killing no dearer for the hunter and cost everyone else, so it is off. Killing
+  everything (every man hunting) loses there; the spare men hunting is accepted as the
+  pillar. Hard's North run stays under: nothing short of redrawing that corner mends it.
+- **Next: M49.** Later, with the operator: redraw the aqueduct's north-east corner for
+  Hard's North run (where the canisters land, the road beside the landing ground).
 - **M49 — playtest it on people who have never seen the game**, and fix what they
   trip on. Measure: time to the first move, to the first charge set, and what they ask.
 

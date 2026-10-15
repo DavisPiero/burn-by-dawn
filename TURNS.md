@@ -64,7 +64,9 @@ gives the full cost and, when it cannot be used, why not.
   unseen, when his next turn starts: the risk is the enemy phase in between. It is silent
   — **no alert, no noise** — but it leaves a **body**, found like any other. The turn
   card hints at it when a man starts his turn behind an enemy. (`knife.fullTurn` false
-  makes it 2 AP that ends his turn instead.)
+  makes it 2 AP that ends his turn instead. `noise.knife`, null in every mission, would
+  make it heard: a cry at his hex, heard that far off, raising `alert.knife`; tried on
+  the aqueduct and left off, `MISSION-AQUEDUCT.md`.)
 - An enemy type marked `killable: false` in `enemies.json` (the reserve squad, §6 Exfil
   watched) can be suppressed but never killed or knifed. It is never outlined as a target,
   and its hover and the Kill and Knife buttons say so.

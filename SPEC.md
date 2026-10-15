@@ -12,7 +12,7 @@ and sounds (§11) is in `ART-DIRECTION.md`, and mission 2, the airfield (§13), 
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
-`DECISIONS.md` (before M40, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
+`DECISIONS.md` (before M44, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
 Turns and actions (§4) are in `TURNS.md`, detection and alert (§6) in `DETECTION.md`,
 sabotage (§7) in `SABOTAGE.md` and winning and scoring (§10) in `WINNING.md`, each as
 authoritative as this file; the milestones done are in `MILESTONES.md`.
@@ -426,19 +426,20 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M48k, under way: the layout tool** (`?layout`, `data/layout.json`; §11). Before it,
-**M48, the course** (§15, `MISSION-TRAINING.md`), done: it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
+**M48l, under way: the aqueduct's balance, again.** A knife that is heard was built,
+measured and left off; Hard's North run is left under its target, both the operator's
+calls (`MISSION-AQUEDUCT.md`, Balance). Next is M49, the playtest. Before it, M48k, the
+layout tool (`?layout`, `data/layout.json`; §11), and **M48, the course** (§15, `MISSION-TRAINING.md`), done: it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
 playable from the contents page, flagged START HERE. The ? pages' diagrams are built (M48i, §11). Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
 ends Phase 4 as it was planned. What is open is the operator's: the paintings and
 recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
-placeholder copy, and the two things the bot could not settle (`MISSION-AQUEDUCT.md`,
-Balance): kill-everything is still not below careful play there, and Hard's North run
-is well under its target. v1.0 is tagged.
+placeholder copy, and Hard's North run, well under its target, which wants that corner
+of the map redrawn together (`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
 
 ### Done
 
 The table of milestones finished is in `MILESTONES.md`. Each is recorded in full in
-`DECISIONS.md` (before M40, `DECISIONS-ARCHIVE.md`) and the git history.
+`DECISIONS.md` (before M44, `DECISIONS-ARCHIVE.md`) and the git history.
 
 ---
 
