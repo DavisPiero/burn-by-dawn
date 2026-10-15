@@ -1453,8 +1453,8 @@
     #briefing .clip-rows .clip-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; margin: 0; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 50%, transparent); }
     #briefing .clip-rows .clip-row::before { content: none; }
     #briefing .clip-box { flex: none; box-sizing: border-box; width: 17px; height: 17px; border: 2px solid var(--ink); font-size: 15px; line-height: 13px; text-align: center; font-weight: bold; color: var(--green); }
-    #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; }
-    #briefing .clip-count { font-size: 13px; opacity: 0.75; }
+    #briefing .clip-name { flex: 1; font-weight: bold; letter-spacing: 1px; white-space: nowrap; }
+    #briefing .clip-count { font-size: 13px; opacity: 0.75; white-space: nowrap; }
     #briefing .clip-row.done .clip-count { color: var(--green); font-weight: bold; opacity: 1; }
     /* The operator's painted clipboard (M48j), when it is there: its shape,
        and the record set on its paper (theme.js CLIPBOARD_FILE). Its paper is
@@ -1466,6 +1466,17 @@
     .clipboard-painted #briefing .clip-rows .clip-row { padding: 2px 0; }
     .clipboard-painted #briefing .clip-stamp { font-size: 25px; border-width: 4px; padding: 3px 9px 0; }
     .clipboard-painted #briefing .clip-sheet { height: 100%; box-sizing: border-box; padding: 10px 12px 6px; background: none; border: none; }
+    /* The layout tool (M48k, ?layout): what the operator places is dashed and
+       dragged; the board's SVG gets a drawn box (layout-tool.js), the page's an outline. */
+    .layout-mode [data-layout] { pointer-events: all !important; cursor: move; }
+    .layout-mode #briefing [data-layout] { outline: 2px dashed var(--leader); outline-offset: 3px; }
+    .layout-mode [data-layout].layout-dragging { opacity: 0.75; }
+    .layout-outline { fill: none; stroke: var(--leader); stroke-width: 2; stroke-dasharray: 7 5; pointer-events: none; }
+    #layout-panel { position: fixed; right: 12px; bottom: 12px; z-index: 1000; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 460px; padding: 8px 10px; background: var(--paper); border: 2px dashed var(--leader); box-shadow: 3px 3px 0 var(--ink); font-size: 13px; color: var(--ink); }
+    #layout-panel .layout-head { flex-basis: 100%; font-weight: bold; letter-spacing: 1px; }
+    #layout-panel .layout-said { flex-basis: 100%; }
+    #layout-panel .layout-said:empty { display: none; }
+    #layout-panel textarea { width: 100%; height: 140px; font-size: 11px; }
     #briefing .clip-stamp { position: absolute; left: 50%; top: 52%; padding: 4px 12px 1px; font-family: var(--slab); font-size: 31px; font-weight: bold; letter-spacing: 3px; white-space: nowrap; color: var(--red); border: 5px solid var(--red); border-radius: 6px; transform: translate(-50%, -50%) rotate(-12deg); opacity: 0.82; pointer-events: none; }
     #briefing .contents-stamp {
       position: absolute;

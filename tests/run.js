@@ -11,6 +11,7 @@ import dropTests from './drop.test.js';
 import enemyTests from './enemy.test.js';
 import helpTests from './help.test.js';
 import hintTests from './hints.test.js';
+import layoutTests from './layout.test.js';
 import lessonTests from './lessons.test.js';
 import missionTests from './missions.test.js';
 import sabotageTests from './sabotage.test.js';
@@ -20,7 +21,7 @@ import speechTests from './speech.test.js';
 import trainTests from './train.test.js';
 import traitTests from './traits.test.js';
 
-const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests], ['difficulty', difficultyTests], ['missions', missionTests], ['airfield', airfieldTests], ['train', trainTests], ['canisters', canisterTests], ['aqueduct', aqueductTests], ['sight', sightTests], ['cues', cueTests], ['lessons', lessonTests], ['help', helpTests], ['sound', soundTests]];
+const suites = [['traits', traitTests], ['enemies', enemyTests], ['combat', combatTests], ['sabotage', sabotageTests], ['drop', dropTests], ['speech', speechTests], ['hints', hintTests], ['difficulty', difficultyTests], ['missions', missionTests], ['airfield', airfieldTests], ['train', trainTests], ['canisters', canisterTests], ['aqueduct', aqueductTests], ['sight', sightTests], ['cues', cueTests], ['lessons', lessonTests], ['help', helpTests], ['layout', layoutTests], ['sound', soundTests]];
 
 const list = document.getElementById('results');
 const summary = document.getElementById('summary');

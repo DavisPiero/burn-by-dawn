@@ -25,6 +25,8 @@ import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
+import { contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
+import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
 import { helpFrames, helpLines, sceneMap } from './help.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -118,6 +120,8 @@ let difficulty = null;
 // words, title card and sounds. `missions` is the whole contents page.
 let missions = null;
 let mission = null;
+// Where the things the operator places by hand sit (M48k, data/layout.json); `?layout` lets them drag them.
+let layout = null;
 // The build shown in the margin (data/version.json, M15).
 let version = null;
 let level = null;
@@ -418,6 +422,7 @@ function deriveView() {
     targetRings: null,
     timerTin: null, // M31d: the tin of time pencils, while its timers are open
     dropCue: null,
+    dropCueAt: null, // where the drop cue centres and its key for the layout tool (M48k)
     selectCue: false,
   };
 
@@ -728,6 +733,7 @@ function deriveDrop(view, hex) {
   if (briefing?.kind === 'orders' || briefing?.kind === 'help') return view;
   // What to do next, in big pen lettering among the runs' names (M21).
   view.dropCue = selected ? 'jump' : 'pick';
+  view.dropCueAt = { at: dropCueAt(layout, mission.id), layoutKey: `mission:${mission.id}:dropCue` };
   // In a lesson the board urges only what the step asks for now (M48b, the
   // operator's: HIT SPACE TO JUMP stood over a step that had not got to it).
   const step = lessonStep();
@@ -753,7 +759,7 @@ function deriveDrop(view, hex) {
         // each target's charge points with it, so the two read as one thing.
         hexes: single ? o.hexes : [...o.hexes, ...o.chargeHexes], tight: !single,
         primary: single && targets.includes(o), colour: 'red',
-        noteNudge: baseMap.objectives.find((m) => m.id === o.id)?.noteNudge ?? null,
+        noteNudge: noteNudge(layout, mission.id, o.id), layoutKey: `mission:${mission.id}:${o.id}`,
         // The charges it takes, so three dashed points never read as three charges.
         // The primary's in two lines (M26d, the operator's): what it is, and how.
         // Where there are many targets (M29c, the operator's: a note moved
@@ -767,8 +773,8 @@ function deriveDrop(view, hex) {
               : null,
       })),
       // Beside the exfil on its right, so it plainly means the exfil (M13).
-      // `exfilNoteNudge` (M29c, art only) moves it, as an objective's `noteNudge` does.
-      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: baseMap.exfilNoteNudge ?? null, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'],
+      // data/layout.json (M48k) may move it, as it does an objective's.
+      { hexes: view.exfil, primary: false, colour: 'green', beside: true, noteNudge: noteNudge(layout, mission.id, 'exfil'), layoutKey: `mission:${mission.id}:exfil`, note: [`GET AT LEAST ${rules.mission.minimumOut} MEN`, 'OUT THROUGH HERE'],
         // In bigger letters (M41b, the operator's: the shut beach was a surprise).
         bigNote: rules.exfil.opensTurn ? [`NO WAY OUT BEFORE THE BOAT: TURN ${rules.exfil.opensTurn}`, ...(rules.exfil.call ? ['OR SIGNAL IT IN FROM THE BEACH'] : [])] : null },
     ];
@@ -2540,6 +2546,7 @@ function describeBriefing(which, view) {
       paragraphs: ['Click a mission to play it. Each one stands alone: one night behind the lines, and out by dawn.'],
       contents: {
         entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null, flag: m.flag ?? null })),
+        flagAt: contentsOffset(layout, 'flag'),
         onChoose: openMission,
       },
       sections: [],
@@ -2628,6 +2635,7 @@ function describeBriefing(which, view) {
           id: l.id, page: l.number, title: l.title, passed: course.passed.has(l.id), playable: true, panel: null,
         })),
         onChoose: startLesson,
+        clipboardAt: contentsOffset(layout, 'clipboard'),
         record: { rows: qualifications(course.lessons, course.passed), passedOut: course.passed.size === course.lessons.length },
       },
       sections: [],
@@ -2927,8 +2935,8 @@ function lessonGoOn() {
   if (course.progress.done) {
     course.passed.add(lesson.id);
     briefing = { kind: 'passed', lessonId: lesson.id };
-    // PASSED stamped on the card (M48j, the operator's).
-    playCue('stamp');
+    // A bugle for PASSED (M48k, the operator's: the stamp is the clipboard's).
+    playCue('lessonPassed');
   }
 }
 
@@ -3537,6 +3545,7 @@ try {
   missions = validateMissions(await loadJson('data/missions.json'));
   traits = validateTraits(await loadJson('data/traits.json'));
   help = await loadJson('data/help.json');
+  layout = validateLayout(await loadJson('data/layout.json'), { missions: missions.missions.map((m) => m.id) });
   ({ version } = await loadJson('data/version.json'));
   renderVersion(document.getElementById('version'), version);
 
@@ -3629,6 +3638,11 @@ try {
   // Speech bubbles are measured in the face they are set in: wait for it.
   await fontsLoaded;
   render();
+  // The layout tool (M48k): `?layout` lets the operator drag what they place by hand.
+  if (layoutFromQuery(window.location.search)) {
+    const loaded = layout;
+    startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize });
+  }
   // Then for the pictures, but never for long: a slow file is not worth a
   // page that will not open. Whatever is late fills in as it arrives.
   await Promise.race([Promise.all(pictures), new Promise((resolve) => setTimeout(resolve, LOADING.maxWaitMs))]);

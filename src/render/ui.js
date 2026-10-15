@@ -135,6 +135,9 @@ export function renderKeys(button) {
 // has spare below a width-limited board goes to the captions. These numbers
 // are index.html's paddings and gaps, which must agree with them.
 
+// The clipboard's record is zoomed down by `step` until it fits its paper, to no less than `least` (M48k).
+const RECORD_FIT = { step: 0.03, least: 0.7 };
+
 export const SPREAD = {
   minWidth: 1280,
   minHeight: 760,
@@ -342,7 +345,8 @@ function titleBanner({ title, tagline }) {
  * { banner?: { title, tagline }, title, kicker, tone?, names?, paragraphs? (each a string, or lines), sections: [{ heading, lines, more?, hints? }],
  *   go?: its way on, "LABEL — how" (a button; `goBig` for the one that starts a game; `onGo` where only the button goes on),
  *   toggle?: { on }, choice?: { heading, options: [{ id, label, summary, selected }], onChoose(id) },
- *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel?, passed? }], onChoose(id), record?: a course's clipboard } }
+ *   contents?: { entries: [{ id, page, title, place, blurb, playable, panel?, passed? }], onChoose(id), record?: a course's clipboard,
+ *     flagAt?, clipboardAt?: [x, y] pixels from where the page sets them (data/layout.json, M48k) } }
  * — worded in main.js. `onToggle(on)` is the turn-update box.
  */
 export function renderBriefing(backdrop, card, briefing, onToggle) {
@@ -463,6 +467,9 @@ export function renderBriefing(backdrop, card, briefing, onToggle) {
   }
   card.appendChild(foot);
   fitBriefing(card);
+  // The clipboard's record fitted to its paper, now it is on the page (M48k).
+  const record = card.querySelector('.clip-sheet');
+  if (record) fitRecord(record, record.querySelector('.clip-body'));
 }
 
 /**
@@ -516,7 +523,7 @@ function fitBriefing(card) {
  * a line about it under. A playable one is a button; a coming one is printed
  * all the same but stamped NEXT YEAR'S ANNUAL, and a click on it does nothing.
  */
-function contentsList({ entries, onChoose, record = null }) {
+function contentsList({ entries, onChoose, record = null, flagAt = [0, 0], clipboardAt = [0, 0] }) {
   const list = html('ol', record ? 'contents lessons' : 'contents');
   for (const entry of entries) {
     // A course's lesson (M48f) is one line: its tick, its title, its number.
@@ -547,7 +554,7 @@ function contentsList({ entries, onChoose, record = null }) {
       item.appendChild(button);
       // Where a new player begins (the course): stamped as NEXT YEAR'S ANNUAL
       // is, fainter (M48h, the operator's: the pen's START HERE did not suit).
-      if (entry.flag) item.appendChild(html('span', 'contents-stamp flag', entry.flag));
+      if (entry.flag) item.appendChild(placed(html('span', 'contents-stamp flag', entry.flag), 'contents:flag', flagAt));
     } else {
       item.append(html('div', 'contents-pick', words), html('span', 'contents-stamp', 'NEXT YEAR’S ANNUAL'));
       item.addEventListener('click', (event) => event.stopPropagation());
@@ -555,7 +562,14 @@ function contentsList({ entries, onChoose, record = null }) {
     list.appendChild(item);
   }
   // A course's list is the left page of a spread, its clipboard the right (M48f).
-  return record ? html('div', 'course-pages', [list, clipboard(record)]) : list;
+  return record ? html('div', 'course-pages', [list, placed(clipboard(record), 'contents:clipboard', clipboardAt)]) : list;
+}
+
+/** A thing the operator places (M48k): moved by its offset, and marked for the layout tool. */
+function placed(element, key, [x, y]) {
+  element.dataset.layout = key;
+  if (x || y) element.style.translate = `${x}px ${y}px`;
+  return element;
 }
 
 /**
@@ -565,7 +579,7 @@ function contentsList({ entries, onChoose, record = null }) {
  * `record` is { rows: [{ name, passed, of, done }], passedOut }.
  */
 function clipboard({ rows, passedOut }) {
-  const sheet = html('div', 'clip-sheet', [
+  const body = html('div', 'clip-body', [
     html('div', 'clip-head', 'TRAINING RECORD'),
     html('div', 'clip-sub', 'No. 1 Parachute Training School'),
     html('ul', 'clip-rows', rows.map((row) => html('li', row.done ? 'clip-row done' : 'clip-row', [
@@ -573,9 +587,29 @@ function clipboard({ rows, passedOut }) {
       html('span', 'clip-name', row.name),
       html('span', 'clip-count', row.done ? 'QUALIFIED' : `${row.passed} of ${row.of}`),
     ]))),
-    ...(passedOut ? [html('div', 'clip-stamp', 'PASSED OUT')] : []),
   ]);
+  const sheet = html('div', 'clip-sheet', [body, ...(passedOut ? [html('div', 'clip-stamp', 'PASSED OUT')] : [])]);
+  // Set small enough to fit its paper in whatever browser (M48k, the operator's:
+  // their typewriter face ran the record off the foot of the painted clipboard).
+  // Fitted once on the page (renderBriefing), and again when the fonts are in.
+  document.fonts?.ready.then(() => fitRecord(sheet, body));
   return html('div', 'clipboard', [html('div', 'clip-clip'), sheet]);
+}
+
+/** The record zoomed down, a step at a time, until it is all on the paper. */
+function fitRecord(sheet, body) {
+  if (!sheet.isConnected || !sheet.offsetHeight) return;
+  // Measured as drawn, so a spread zoomed to fit a small window measures the same.
+  const foot = () => {
+    const box = sheet.getBoundingClientRect();
+    return box.bottom - parseFloat(getComputedStyle(sheet).paddingBottom) * (box.height / sheet.offsetHeight);
+  };
+  let zoom = 1;
+  body.style.zoom = '';
+  while (zoom > RECORD_FIT.least && body.getBoundingClientRect().bottom > foot() + 0.5) {
+    zoom = Math.max(RECORD_FIT.least, zoom - RECORD_FIT.step);
+    body.style.zoom = String(zoom);
+  }
 }
 
 /**

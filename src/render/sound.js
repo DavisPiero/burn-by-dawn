@@ -705,8 +705,11 @@ const CUES = {
   kill: [['silenced-shot', 0.2, 0]],
   // A line cut (M48j): the exchange's or the signals tent's.
   lineCut: [['line-cut', 0.4, 0]],
-  // A lesson passed, and the course passed out (M48j): the stamp coming down.
+  // The course passed out (M48j): the stamp coming down on the clipboard.
   stamp: [['stamp', 0.5, 0]],
+  // A lesson passed, on the board (M48k, the operator's: the stamp was odd with
+  // no clipboard in sight): the desert's bugle call, quieter.
+  lessonPassed: [['bugle', 0.5, 0.1]],
   // The knife (M48h, the operator's recording): a blow, not a pencil.
   knife: [['stab', 0.55, 0]],
   victory: [['church-bells', 0.9, 0.35]],
