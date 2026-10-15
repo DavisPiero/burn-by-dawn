@@ -90,7 +90,8 @@
       "lines": [
         "A gunner can Suppress [S] an enemy he can see: its head goes down, and it will not see, fire or move until its next go. Loud: the alert goes up.",
         "Then, that turn or the next, a gunner can Kill [K] it with one silenced shot: quieter, but it leaves a body.",
-        "Anyone can Knife [N] an enemy beside him that is looking the other way: silent, but it takes his whole turn."
+        { "text": "Anyone can Knife [N] an enemy beside him that is looking the other way: silent, but it takes his whole turn.", "unless": "noise.knife" },
+        { "text": "Anyone can Knife [N] an enemy beside him that is looking the other way. It takes his whole turn, and here it is heard {noise.knife} hexes off.", "if": "noise.knife" }
       ],
       "scene": {
         "rows": ["FFFFFFFF", "FFFFFFFF", "FFFFFFFF"],

@@ -932,7 +932,7 @@ const HID_WORDS = {
   before: ', on his way to where he hid — hiding covers only the hex he stops on',
 };
 
-const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', explosion: 'the explosion' };
+const NOISE_WORDS = { spotted: 'a sighting', found: 'a shout over something found', stone: 'a noise', gunfire: 'gunfire', silenced: 'a muffled shot', knife: 'a cry', explosion: 'the explosion' };
 
 function listOf(labels) {
   if (!labels || labels.length === 0) return 'someone';

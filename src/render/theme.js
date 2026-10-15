@@ -697,7 +697,7 @@ export const NOISE = {
   text: PALETTE.ink,
   // What each kind of noise is called under its ring (M15: a bang's ring
   // looked like a stone's left behind).
-  words: { explosion: 'BANG', stone: 'STONE', gunfire: 'SHOTS', silenced: 'SHOT', found: 'FOUND' },
+  words: { explosion: 'BANG', stone: 'STONE', gunfire: 'SHOTS', silenced: 'SHOT', knife: 'CRY', found: 'FOUND' },
   // Noises with no ring (M17, the operator's: a ring stood on the blown
   // bridge like a target until the garrison heard it). A bang's place is
   // already marked by the blast, the smoke and the DESTROYED stamp; hovering

@@ -219,6 +219,28 @@ export default [
     equal((await loadMap()).enemyTypes.reserve.killable, false, 'France: cannot be killed');
   }],
 
+  ['the knife is heard here (M48l): alert +1 and a cry at his hex, heard 2 hexes off; France and the airfield keep it silent', async () => {
+    const { map, rules, traits, roster } = await loadAqueduct();
+    const start = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 1), map, 'west'), map, rules);
+    const target = start.enemies.find((e) => e.killable && e.speed > 0);
+    const back = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]][(target.facing + 3) % 6];
+    const knifer = start.units[0];
+    const behind = { ...start, units: start.units.map((u) => (u.id === knifer.id ? { ...u, q: target.q + back[0], r: target.r + back[1], ap: 3, apMax: 3 } : u)) };
+    const knifed = knifeEnemy(behind, knifer.id, target.id, rules);
+    assert(!knifed.enemies.some((e) => e.id === target.id), 'it is dead');
+    equal(knifed.alert.points, behind.alert.points + rules.alert.knife, 'the alert goes up by alert.knife');
+    equal(rules.alert.knife, 1, 'which is 1 here');
+    const cry = knifed.noises.at(-1);
+    equal(`${cry.kind} ${cry.q},${cry.r}`, `knife ${target.q + back[0]},${target.r + back[1]}`, 'a cry where he stands');
+    equal(rules.noise.knife, 2, 'heard 2 hexes off');
+    // The other missions' knife is as it was: silent.
+    const json = validateMissions(await loadJson('data/missions.json'));
+    for (const id of ['france', 'airfield']) {
+      const other = missionRules(missionById(json, id), await loadJson('data/rules.json'));
+      equal(`${other.noise.knife} ${other.alert.knife}`, 'null 0', `${id}: no noise, no alert`);
+    }
+  }],
+
   ['the first turn card says where the charges are; with the job done and the beach shut it says when the boat comes', async () => {
     const { map, rules, traits, roster } = await loadAqueduct();
     const landed = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 4), map, 'north'), map, rules);

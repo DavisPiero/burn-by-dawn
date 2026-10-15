@@ -172,11 +172,14 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   requireCount(rules.alert.bodyFound, '"alert.bodyFound"', rulesUrl);
   requireCount(rules.alert.parachuteFound, '"alert.parachuteFound"', rulesUrl);
   requireCount(rules.alert.lineCut, '"alert.lineCut"', rulesUrl);
+  requireCount(rules.alert.knife, '"alert.knife"', rulesUrl);
 
   // Noise, contact and wounds, SPEC.md §5 and §6.
   for (const kind of ['found', 'stone', 'gunfire', 'silenced']) {
     requireCount(rules.noise?.[kind], `"noise.${kind}"`, rulesUrl);
   }
+  // M48l: null is the silent knife; a number is how far off it is heard.
+  if (rules.noise.knife !== null) requireCount(rules.noise.knife, '"noise.knife" (or null)', rulesUrl);
   if (!Number.isInteger(rules.combat?.hitsToKill) || rules.combat.hitsToKill < 1) {
     throw new Error(`${rulesUrl}: "combat.hitsToKill" must be a positive integer`);
   }
@@ -479,8 +482,10 @@ function restFacing(enemy) {
 
 /**
  * The knife (SPEC.md §4, M12b): an enemy beside him that cannot see him is
- * killed without a sound — no alert, no noise — and it ends his turn. Like a
- * gunner's kill it leaves a body, which the garrison finds the same way.
+ * killed, and it ends his turn. Like a gunner's kill it leaves a body, which
+ * the garrison finds the same way. Silent where `noise.knife` is null (no
+ * alert, no noise); where a mission gives it a radius (M48l, the aqueduct) it
+ * is heard from his hex that far off and raises `alert.knife`, as a shot is.
  */
 export function knifeEnemy(state, unitId, enemyId, rules) {
   const unit = unitById(state.units, unitId);
@@ -489,12 +494,13 @@ export function knifeEnemy(state, unitId, enemyId, rules) {
   if (!check.ok) return state;
   // `knifed` is for the board only (M16): a stain is drawn under the body.
   const spent = reserveLost(spend(state, unitId, unit.ap), enemy, rules);
-  return {
+  const knifed = {
     ...spent,
     speech: say(spent.speech, unitId, unit.dialogue?.onKill ?? null),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, knifed: true, facing: restFacing(enemy) }],
   };
+  return rules.noise.knife === null ? knifed : makeNoise(knifed, 'knife', unit, rules.alert.knife, rules).state;
 }
 
 /** Throw a stone: a noise on that hex for the next enemy phase. */

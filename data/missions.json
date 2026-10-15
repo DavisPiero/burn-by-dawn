@@ -204,6 +204,8 @@
       "_rules": "MISSION-AQUEDUCT.md (SPEC.md §14). Balanced at M42 (DECISIONS.md): the default timer is the longest, 6 (it was 4: a first charge on a short timer left the others no time to be set to the same turn, and one bang is the alert budget); the boat in on 15 and gone with 17 stands, measured; on Hard it stays two turns. Its two rules: `canisters` (the men jump with none; three canisters of two) and `exfil.opensTurn` (the boat is in on 15, gone at dawn, 18). A sapper has room for two charges, so the sappers and Nunn carry five at full pace. Time pencils as on the airfield. The patrols set out on turn 2. The aqueduct calls one squad down the road when it goes; the road bridge down stops the reserve and the squads (the exchange's payoff in France).",
       "rules": {
         "turnLimit": 17,
+        "alert": { "knife": 1 },
+        "noise": { "knife": 2 },
         "roles": { "sapper": { "charges": 2 } },
         "charges": { "fuseTurns": 6, "fuseChoice": { "min": 2, "max": 6 } },
         "canisters": { "count": 3, "charges": 2, "scatterWeights": [0, 4, 4, 2, 1] },

@@ -527,7 +527,7 @@ function deriveView() {
   // for a leftover stone): what it was and who comes for it.
   const noise = hex && state.noises.findLast((n) => n.q === hex.q && n.r === hex.r);
   if (noise) {
-    const what = { explosion: 'a bang', stone: 'a thrown stone', gunfire: 'gunfire', silenced: 'a silenced shot', found: 'something found here' }[noise.kind] ?? 'a noise';
+    const what = { explosion: 'a bang', stone: 'a thrown stone', gunfire: 'gunfire', silenced: 'a silenced shot', knife: 'a cry', found: 'something found here' }[noise.kind] ?? 'a noise';
     const radius = hearingRadius(noise.kind, state.alert.points, rules);
     view.noiseLabel = `HEARD — ${what}: in the enemy phase, patrols within ${radius} hexes come here to look, and sentries in earshot turn to face it`;
   }
@@ -819,7 +819,7 @@ function alertSources() {
   const bangs = [...new Set(Object.values(rules.objectives).map((k) => k.alert))].sort((x, y) => x - y);
   return [
     `seen +${a.spotted}`, `stone +${a.stone}`, `parachute${rules.canisters ? ', canister' : ''} or body found +${a.parachuteFound}`,
-    `silenced shot +${a.silenced}`, `gunfire +${a.gunfire}`, `a bang +${bangs.join(' or +')}`,
+    `silenced shot +${a.silenced}`, ...(knifeHeard() ? [`a knife +${a.knife}`] : []), `gunfire +${a.gunfire}`, `a bang +${bangs.join(' or +')}`,
   ];
 }
 
@@ -1154,8 +1154,8 @@ function actionsFor(unit) {
       : { id: 'suppress', key: 'S', label: 'Suppress', help: `Fire on an enemy he can see. It keeps its head down — it will not see, fire or move until its next go — so the others can slip past, or a gunner can kill it. Loud: alert +${fireAlert}, and the patrols in earshot come.`, ...withCost(suppress.reason === 'pick an enemy' ? { ...suppress, reason: 'no enemy in range and sight' } : suppress, ap) },
     {
       id: 'knife', key: 'N', label: 'Knife', ...withCost(knife.reason === 'pick an enemy beside him' ? { ...knife, reason: 'no enemy beside him' } : knife, rules.actions.knife.fullTurn ? () => 'full turn' : ap),
-      help: 'From behind, without a sound: an enemy beside him that is looking the other way. No alert and no noise, '
-        + `but it leaves a body, and ${knifeTurnWords()}. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
+      help: `${knifeNoiseWords('help')}`
+        + `It leaves a body, and ${knifeTurnWords()}. Not while he is spotted. The reserve squad cannot be killed. ${killScoreWords()} Press N, then click the enemy`,
     },
     { id: 'kill', key: 'K', label: 'Kill', help: `Finish an enemy suppressed this turn or last with one silenced shot: quieter than suppressing, but it leaves a body. The reserve squad cannot be killed. ${killScoreWords()}`, ...withCost(kill.reason === 'pick an enemy' ? { ...kill, reason: 'no suppressed enemy in range and sight' } : kill, ap) },
     {
@@ -1193,6 +1193,24 @@ function signalFor(unit) {
 function apLabel(action) {
   const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
   return wholeTurn ? 'all AP' : `${action.apCost} AP`;
+}
+
+// Whether the knife is heard tonight (M48l): null where it is silent (France,
+// the airfield), else { alert, radius } at the alert as it stands.
+function knifeHeard() {
+  if (rules.noise.knife === null) return null;
+  return { alert: rules.alert.knife, radius: hearingRadius('knife', state.alert.points, rules) };
+}
+
+// The knife's noise in words, for its button ('help') and its rollover.
+function knifeNoiseWords(where) {
+  const heard = knifeHeard();
+  if (where === 'help') {
+    return heard
+      ? `From behind: an enemy beside him that is looking the other way. Not silent here: he cries out, alert +${heard.alert}, heard ${heard.radius} hexes off, and the patrols in earshot come. `
+      : 'From behind, without a sound: an enemy beside him that is looking the other way. No alert and no noise. ';
+  }
+  return heard ? `He cries out: alert +${heard.alert}, heard ${heard.radius} hexes off.` : 'Silent: no alert, no noise.';
 }
 
 // What the knife takes of his turn (m26b): all of it, from a standing start,
@@ -1505,7 +1523,7 @@ function deriveTargeting(view, unit, hex, hoverEnemy) {
       const check = checkKnife(unit, hoverEnemy, rules);
       view.aim = { q: hoverEnemy.q, r: hoverEnemy.r, ok: check.ok };
       view.targetLabel = check.ok
-        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${rules.actions.knife.fullTurn ? 'all' : `${check.cost} AP and the rest`} of ${unit.shortName}'s turn. Silent: no alert, no noise. Leaves a body${bodyFoundWords()}. Click to strike.`
+        ? `Knife the ${hoverEnemy.label.toLowerCase()} — ${rules.actions.knife.fullTurn ? 'all' : `${check.cost} AP and the rest`} of ${unit.shortName}'s turn. ${knifeNoiseWords('hover')} Leaves a body${bodyFoundWords()}. Click to strike.`
         : `Knife: ${check.reason}.`;
     } else {
       view.targetLabel = `Knife: click an enemy beside ${unit.shortName} that is looking the other way. Esc to cancel.`;
