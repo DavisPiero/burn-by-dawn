@@ -840,6 +840,27 @@ with no small painting beside it; and its orders open under France's title card.
 (ART-ASSETS.md §7): a wooden clipboard from straight above, a steel clip in the top
 12%, blank cream paper. Code sets the training record and the PASSED OUT stamp on its paper.
 
+## Priority 27 — the signals tent (reference, for Claude to redraw) — **to make**
+
+**Why** (M49b, the operator's): the airfield's signals tent is drawn in code
+(`objective-signals-tent`, ART-ASSETS.md §5) and is the weakest of its targets beside the
+painted-from-reference Stukas, Ju 52s and trucks. A reference lets Claude redraw it, as
+`Stuka_` and `Ju52_Reference_01` were for the aircraft. It is not dropped in: it needs
+its cut and destroyed states and the wires to its mast drawn to match.
+
+| File | Spec |
+|---|---|
+| `assets/reference/SignalsTent_Reference_01` | seen from straight above or a steep three-quarter view, about square, any size; the same desert tan and dark green as the aircraft |
+| Code does | Tell Claude when it is in: the tent is redrawn in theme.js (`signalsTent`), with its cut and blown states and the mast's crossarm where the wires end |
+
+### Prompt (add the style block)
+
+> A Luftwaffe signals tent at a North African desert airfield, 1942, seen from directly
+> overhead: a large tan canvas marquee with guy ropes and pegs, a tall wireless mast
+> beside it with a crossarm, field-telephone wires running in on short poles, a low
+> sandbag wall along one side, a lit doorway, a field radio set on a trestle table,
+> bare sand around it.
+
 ---
 
 ## Later — once level design has settled

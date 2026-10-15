@@ -4,41 +4,44 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 15 Oct 2026, after M49.
+Last updated: 15 Oct 2026, after M49b was built.
 
 ## Where we are
 
-- **`main` is build M49**, signed off, merged and pushed. No branch open.
-  Tests: 241 headless (`node tools/run-tests.mjs`), 244 in tests.html.
-- **M49, the playtest kit:** `?playtest` in the address times what a new player does,
-  from the moment the title screen is clicked: the first man selected, first move, first
-  charge set, each lesson started and passed, every wrong click and umpire's whistle by
-  lesson and step, ? opened, tips, undo, starting again, how a mission ended. A slim
-  dashed tab above the board holds COPY RECORD, which gives it as plain text. Nothing is
-  stored; a reload starts afresh. `docs/PLAYTEST.md` is rewritten as the sheet for it.
-- Without `?playtest` the game is unchanged.
-- Four missions playable; the course playable and flagged START HERE.
+- **Branch `m49b-playtest-fixes` is build M49b**, built and checked, **not signed off**.
+  `main` is M49. Tests: 242 headless (`node tools/run-tests.mjs`), 245 in tests.html.
+- **M49b, the first playtest's notes:**
+  - How to play has a ✕ in its corner.
+  - The course's list has ◀ CONTENTS, back to the missions.
+  - A selected man who could swim now wears a wave mark, bottom left of his counter.
+  - A mission accomplished plays the first half of the operator's fanfare (France, the
+    aqueduct), not the bells. The airfield keeps its bugle.
+  - A lesson step done takes nothing away: its ring stays, its pen line is ticked, the
+    card keeps what it asked (faint) with what is now to be seen under it, and three hover
+    steps light the box under the map.
+  - France's goods train comes on time to a bridge blown early, and stops short of it.
+  - Enemies killed by a blast leave bodies, already counted as found: no alert, no score.
+- The bot is unchanged, byte for byte, on all eight batches run (DECISIONS.md).
 
 ## Next
 
-1. **The operator runs the playtests** (`docs/PLAYTEST.md`): 3 to 5 new people, one at
-   a time, at https://davispiero.github.io/burn-by-dawn/?playtest
-2. **M49b**: bring back each player's record, questions and notes (`/notes`); fix what
-   they tripped on.
+1. **The operator plays M49b and signs it off** (merge, push).
+2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
 3. Later, with the operator: redraw the aqueduct's north-east corner for Hard's North run.
 
 ## Open with the operator
 
-1. **Guesses still standing:** the ? pages' lines are Claude's; the bugle for a lesson
-   passed; the knife's cry worded "a cry" and CRY (nothing shows it while it is off).
-2. **New guesses (M49):** the record's tab sits at the top centre, above the board; its
-   clock starts at the title click; the sheet says nothing to the player about START
-   HERE; Claude checked Chrome only, and Safari and Firefox are on the sheet for you.
+1. **Listen to the fanfare.** It was cut and levelled by measurement, not by ear.
+2. **Guesses (M49b):** the ✕ only on how to play; the swim mark's look and corner; a done
+   step's old words kept faint at 12 px; the train's "stops short" said when it stops,
+   not at the bang; a blast's body drawn like a gunner's kill.
+3. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
+   passed; the knife's cry worded "a cry"; the record's tab at the top centre.
 
 ## Owed
 
-- **From the operator** (ART-PROMPTS.md): Priority 22, reference art for the
-  aqueduct's board; optional: 21 (winter kit), 25 (the course's contents panel and
-  title card). The rewording pass on the lessons, the aqueduct's copy, and the ? pages.
-- **Parked in ROADMAP.md** (the operator's, 14 Oct): tips as in-world briefings, an
-  Advice button, a better clipboard (now painted), hiding a body.
+- **From the operator** (ART-PROMPTS.md): Priority 27, the signals tent reference (new);
+  Priority 22, reference art for the aqueduct's board; optional: 21 (winter kit), 25
+  (the course's contents panel and title card). The rewording pass on the lessons, the
+  aqueduct's copy, and the ? pages.
+- **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.

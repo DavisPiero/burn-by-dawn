@@ -428,7 +428,12 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M49, the playtest kit, built; the playtests themselves are the operator's.** With
+**M49b, the first playtest's notes, built, awaiting sign-off:** a ✕ on how to play,
+◀ CONTENTS on the course's list, a wave on the selected man who could swim now, the
+operator's fanfare for a mission accomplished, a lesson step done that adds and takes
+nothing away, the goods train coming on time to a bridge blown early and stopping short,
+and a blast's dead left as bodies already found. Before it, **M49, the playtest kit,
+built; the playtests themselves are the operator's.** With
 `?playtest` in the address the game times what a new player does (the first move, the
 first charge set, each lesson, every wrong click and whistle by step) and COPY RECORD
 gives it as plain lines; `docs/PLAYTEST.md` is the sheet. What they trip on is fixed in
