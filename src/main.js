@@ -447,7 +447,17 @@ function deriveView() {
   view.firedOn = sightFor.firedOn;
   // A blast this turn and the way out (M46): the ground throbs whatever the
   // tips; the pen's words and arrows are tips.
-  if (!sameStamp(cuesFor.stamp, stamp)) cuesFor = { ...cuesFor, stamp, clear: getClear(map, rules, state), out: wayOut(map, rules, state, CLOSING_TURNS) };
+  if (!sameStamp(cuesFor.stamp, stamp)) {
+    cuesFor = {
+      ...cuesFor, stamp, clear: getClear(map, rules, state), out: wayOut(map, rules, state, CLOSING_TURNS),
+      // Every man at the water's edge who could swim it with his turn unspent (M49b).
+      banks: new Set(state.units.filter((u) => canSwimHere(map, rules, state, u)).map((u) => u.id)),
+    };
+  }
+  // A faint wave on each of them (M49b, the operator's), unless the lesson
+  // would not let him swim; the selected man's is full where he can swim now.
+  const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
+  view.swimMarks = new Map(swimAllowed ? [...cuesFor.banks].map((id) => [id, 'faint']) : []);
   view.blastPulse = !state.outcome && view.blastArea.size > 0;
   view.getClear = tipsOn ? cuesFor.clear : null;
   view.goOut = cuesFor.out.go ? { words: tipsOn ? 'GET OUT!' : null } : null;
@@ -617,11 +627,8 @@ function deriveView() {
     cuesFor = { ...cuesFor, unitStamp: stamp, unitId: unit.id, strikes: opportunities(map, rules, state, unit), swim: canSwimNow(map, rules, state, unit) ? 'now' : canSwimHere(map, rules, state, unit) ? 'later' : null, ghost: firstMoveGhost(unit, view.reachable, sightFor.wash) };
   }
   view.strikes = cuesFor.strikes;
-  // A wave on him where he could swim now (M49b), unless the lesson would not
-  // let him; faint where he could with his turn unspent.
-  const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
-  view.swimId = cuesFor.swim && swimAllowed ? unit.id : null;
-  view.swimFaint = cuesFor.swim === 'later';
+  // The selected man's wave full where he could swim now (M49b).
+  if (cuesFor.swim === 'now' && view.swimMarks.has(unit.id)) view.swimMarks.set(unit.id, 'now');
   // A few words under him, with the tips on: how to move, until the first
   // move of the game; then, for a man about to be fired on, what to do about
   // it. GET CLEAR! comes before either.
@@ -3191,7 +3198,7 @@ function describeMarker(id, unit) {
   }
   if (id === 'marker-swim') {
     const water = map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water';
-    if (currentView?.swimFaint) return ['CAN SWIM NEXT TURN', `${name} is at the ${water}'s edge, but a swim takes a full turn and he has spent AP. Start a turn here with all his AP and he can swim it [W].`];
+    if (!canSwimNow(map, rules, state, unit)) return ['CAN SWIM NEXT TURN', `${name} is at the ${water}'s edge, but a swim takes a full turn and he has spent AP. Start a turn here with all his AP and he can swim it [W].`];
     return ['CAN SWIM', `${name} is at the ${water}'s edge and can swim it [W]: a full turn, to the far bank.`];
   }
   if (id === 'marker-late') {

@@ -863,11 +863,12 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', MARKER.hiddenAt.x, MARKER.hiddenAt.y, unit));
-    // He could swim from here (M49b), bottom left, while he is selected.
-    // Faint where he could swim with his turn unspent (M49b).
-    if (unit.id === view.swimId) {
+    // Faint on any man who could swim from here with his turn unspent, full
+    // on the selected man who can swim now (M49b).
+    const swim = view.swimMarks?.get(unit.id);
+    if (swim) {
       const wave = hoverMarker(layers, 'marker-swim', MARKER.swimAt.x, MARKER.swimAt.y, unit);
-      if (view.swimFaint) wave.setAttribute('opacity', MARKER.swimFaint);
+      if (swim === 'faint') wave.setAttribute('opacity', MARKER.swimFaint);
       counter.appendChild(wave);
     }
     // Too far from the way out to make it before the night ends (M46).

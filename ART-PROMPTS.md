@@ -834,13 +834,36 @@ with no small painting beside it; and its orders open under France's title card.
 | Title card | `assets/title/title-card-training.jpg`, as Priority 13 and 20, 4:1 |
 | Code does | Tell Claude when either is in: each is one line in `data/missions.json` (`panel`, `titleCard`) |
 
+The title card, sized and laid out **exactly as Priority 20** (4:1, 2400 × 600, the middle
+60% open for the title, the action toward the edges, the ground along the bottom fifth).
+Say whether BURN BY DAWN is painted in.
+
+### Title card prompt (add the style block)
+
+> Wide panoramic daytime scene, summer 1941, Tatton Park in Cheshire: British parachute
+> trainees in pale smocks and padded jump helmets coming down under round white
+> canopies over open parkland, an Armstrong Whitworth Whitley flying away low on the
+> left, and on the right a grey barrage balloon tethered on its cable with a small
+> square jumping cage slung under it. Along the bottom edge a wide lawn with a few
+> great oaks, a stone country hall and a long lake in the distance, and two or three
+> instructors watching from beside a lorry with a windsock. A pale washed-blue English
+> sky with high cloud. The centre of the picture is open sky; the canopies, the aircraft
+> and the balloon are grouped toward the left and right edges. Soft greens and cream,
+> the canopies bright against the sky.
+
+The balloon and the Whitley are both true to No. 1 Parachute Training School, which
+dropped its pupils over Tatton from each.
+
 ## Priority 26 — the course's clipboard ✅ done (2026-10-14)
 
 `assets/course/clipboard.png`, 536 × 714, supplied by the operator and in since M48j
 (ART-ASSETS.md §7): a wooden clipboard from straight above, a steel clip in the top
 12%, blank cream paper. Code sets the training record and the PASSED OUT stamp on its paper.
 
-## Priority 27 — the signals tent (reference, for Claude to redraw) — **to make**
+## Priority 27 — the signals tent (reference, for Claude to redraw) ✅ done (2026-10-15)
+
+In as `assets/reference/SignalsTest_Reference_01.jpeg`; the tent was redrawn after it in M49b,
+mirrored so its mast stands east, toward the charge points.
 
 **Why** (M49b, the operator's): the airfield's signals tent is drawn in code
 (`objective-signals-tent`, ART-ASSETS.md §5) and is the weakest of its targets beside the
