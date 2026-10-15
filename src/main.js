@@ -458,7 +458,10 @@ function deriveView() {
   // A lesson's step (M47): what it rings, and its line in the pen.
   const step = lessonStep();
   // Not while the stick is coming down: the step's line is for the ground.
-  if (step && !briefing && !course.progress.met && !dropShow) {
+  // Still there once the step is done (M49b, the operator's fourth note of a
+  // thing gone from under them: the ring, the line and the card's words went
+  // at the hover). A step done adds to what is shown, and takes nothing away.
+  if (step && !briefing && !dropShow) {
     const men = state.units.filter(onBoard);
     // "men" rings the man the step is about, where it names one (M48e, the
     // operator's: CLICK FITCH stood under two rings, and one hid a wound).
@@ -470,7 +473,7 @@ function deriveView() {
     const about = step.at ? { q: step.at[0], r: step.at[1] } : men.find((u) => u.id === (step.until.unit ?? state.selectedUnitId)) ?? men[0];
     // A step that points at the page says its line on the lesson card only.
     // Nor does a free step write on the board: nobody's hand is held (M48f).
-    if (about && (step.at || !step.point) && !step.free) view.manNotes.push({ q: about.q, r: about.r, words: step.say, low: step.ring === 'men' && !step.at });
+    if (about && (step.at || !step.point) && !step.free) view.manNotes.push({ q: about.q, r: about.r, words: course.progress.met ? `✓ ${step.say}` : step.say, low: step.ring === 'men' && !step.at });
   }
 
   const next = forecast();
@@ -1651,7 +1654,9 @@ function render() {
   restartButton.disabled = briefing?.kind === 'contents';
   contentsBackButton.disabled = briefing?.kind === 'contents';
   const pointed = briefing ? null : lessonStep()?.point ?? null;
-  for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed);
+  // What a step done shows lights up too (M49b), but the card stays put.
+  const lit = !briefing && course?.progress?.met ? lessonStep()?.show ?? null : null;
+  for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed || kind === lit);
   renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
   placeLessonCard(pointed);
   dropStalePopup();
@@ -3080,7 +3085,8 @@ function lessonView() {
   return {
     number: lesson.number, title: lesson.title, step: progress.step + 1, steps: lesson.steps.length,
     // A free step's card is its few words and no more (M48f): the umpire's own card has said the whistle.
-    tell: (progress.met ? step.then : step.tell) ?? '', say: step.say, whistle: step.free ? null : course.whistle, met: Boolean(progress.met), free: Boolean(step.free),
+    // Done, the card keeps what it asked, faint, and adds what is now to be seen (M49b).
+    tell: step.tell ?? '', done: progress.met ? step.then ?? '' : null, say: step.say, whistle: step.free ? null : course.whistle, met: Boolean(progress.met), free: Boolean(step.free),
     canBack: progress.step > 0 || Boolean(progress.met), next: Boolean(progress.met) || step.until.kind === 'acknowledged',
   };
 }

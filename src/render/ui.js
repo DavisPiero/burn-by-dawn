@@ -647,7 +647,9 @@ export function renderLesson(element, view, on) {
     html('div', 'lesson-head', [html('span', 'lesson-title', `LESSON ${view.number} · ${view.title.toUpperCase()}`), html('span', 'lesson-step', `STEP ${view.step} OF ${view.steps}`)]),
     ...(view.whistle ? [html('p', 'lesson-whistle', `WHISTLE! ${view.whistle} Try that step again.`)] : []),
     // A new line in a card's words is a new paragraph (M48e).
-    ...view.tell.split('\n').map((line) => html('p', 'lesson-tell', boldKeys(line))),
+    ...view.tell.split('\n').map((line) => html('p', view.done == null ? 'lesson-tell' : 'lesson-tell was', boldKeys(line))),
+    // Once done, what is now to be seen, under what was asked (M49b).
+    ...(view.done ? view.done.split('\n').map((line) => html('p', 'lesson-tell then', boldKeys(line))) : []),
     // What goes on from here (M48b, the operator's: there was no sense of
     // continuing): the step's own pen line, or the green NEXT where it only shows.
     // A free step (M48f) has no line of what to do next: its card has said the job.

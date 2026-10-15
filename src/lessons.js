@@ -125,6 +125,8 @@ export function validateLessons(json, known, url = 'lessons') {
       if (step.until?.kind !== 'acknowledged' && !step.free && (typeof step.then !== 'string' || !step.then)) throw new Error(`${where} needs a "then": what the card says once it is done`);
       if (step.at !== undefined) onMap(step.at, `${where}.at`);
       if (step.point !== undefined && !POINT_KINDS.includes(step.point)) throw new Error(`${where}: "point" must be one of ${POINT_KINDS.join(', ')}`);
+      // What the step lights up once it is done (M49b), the card staying where it is.
+      if (step.show !== undefined && !POINT_KINDS.includes(step.show)) throw new Error(`${where}: "show" must be one of ${POINT_KINDS.join(', ')}`);
       for (const h of Array.isArray(step.ring) ? step.ring : []) onMap(h, `${where}.ring`);
       if (step.ring !== undefined && !Array.isArray(step.ring) && step.ring !== 'men') throw new Error(`${where}: "ring" is a list of hexes, or "men"`);
       const until = step.until;
