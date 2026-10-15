@@ -452,12 +452,15 @@ function deriveView() {
       ...cuesFor, stamp, clear: getClear(map, rules, state), out: wayOut(map, rules, state, CLOSING_TURNS),
       // Every man at the water's edge who could swim it with his turn unspent (M49b).
       banks: new Set(state.units.filter((u) => canSwimHere(map, rules, state, u)).map((u) => u.id)),
+      // And those who could swim it now (third notes): theirs is full, selected or not.
+      swimNow: new Set(state.units.filter((u) => canSwimNow(map, rules, state, u)).map((u) => u.id)),
     };
   }
-  // A faint wave on each of them (M49b, the operator's), unless the lesson
-  // would not let him swim; the selected man's is full where he can swim now.
+  // A wave on each of them (M49b, the operator's), unless the lesson would not
+  // let him swim: full on every man who can swim now, faint on one who has
+  // spent part of his turn.
   const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
-  view.swimMarks = new Map(swimAllowed ? [...cuesFor.banks].map((id) => [id, 'faint']) : []);
+  view.swimMarks = new Map(swimAllowed ? [...cuesFor.banks].map((id) => [id, cuesFor.swimNow.has(id) ? 'now' : 'faint']) : []);
   view.blastPulse = !state.outcome && view.blastArea.size > 0;
   view.getClear = tipsOn ? cuesFor.clear : null;
   view.goOut = cuesFor.out.go ? { words: tipsOn ? 'GET OUT!' : null } : null;
@@ -624,11 +627,9 @@ function deriveView() {
   // The enemies he could strike now, marked on their chips (M46), and the
   // first move's ghost.
   if (!sameStamp(cuesFor.unitStamp, stamp) || cuesFor.unitId !== unit.id) {
-    cuesFor = { ...cuesFor, unitStamp: stamp, unitId: unit.id, strikes: opportunities(map, rules, state, unit), swim: canSwimNow(map, rules, state, unit) ? 'now' : canSwimHere(map, rules, state, unit) ? 'later' : null, ghost: firstMoveGhost(unit, view.reachable, sightFor.wash) };
+    cuesFor = { ...cuesFor, unitStamp: stamp, unitId: unit.id, strikes: opportunities(map, rules, state, unit), ghost: firstMoveGhost(unit, view.reachable, sightFor.wash) };
   }
   view.strikes = cuesFor.strikes;
-  // The selected man's wave full where he could swim now (M49b).
-  if (cuesFor.swim === 'now' && view.swimMarks.has(unit.id)) view.swimMarks.set(unit.id, 'now');
   // A few words under him, with the tips on: how to move, until the first
   // move of the game; then, for a man about to be fired on, what to do about
   // it. GET CLEAR! comes before either.

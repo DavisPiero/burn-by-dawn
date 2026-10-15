@@ -55,7 +55,7 @@ export default [
     // The board in the player phase of each turn: after the enemy phase of the turn before.
     equal(heads(state, rules, map, [7, 8, 9, 10, 11, 12, 13], null), '- r0 r4 r8 r12 r16 r20'.replace(/\s+/g, ' '), 'four hexes a turn');
     const coming = trainAt(at(state, 8), rules, map);
-    equal(`${coming.cars[0].q},${coming.cars[0].r}`, '-3,6', 'first seen on the west edge');
+    equal(`${coming.cars[0].q},${coming.cars[0].r}`, '-2,5', 'first seen on the west edge, a row above the fuel dump (M49b)');
     equal(trainAt(at(state, 11), rules, map).cars.length, 5, 'five cars long');
     assert(trainAt(at(state, 12), rules, map).cars.some((c) => c.index === 12), 'its tail still on the bridge a turn after');
     equal(trainAt(at(state, 14), rules, map), null, 'gone from the board by turn 14');
@@ -127,7 +127,8 @@ export default [
       equal(car.path.length, rules.train.speed + 1, 'a step a hex');
       const end = railPoint(map, line, car.index);
       assert(Math.abs(car.path.at(-1).x - end.x) < 1e-6, 'ends on its hex');
-      assert(car.path.every((p, i) => i === 0 || Math.abs(p.x - car.path[i - 1].x - step) < 1e-6), 'evenly, eastward');
+      // A hex a step, eastward, down a row once past the fuel dump (M49b).
+      assert(car.path.every((p, i) => i === 0 || (Math.abs(Math.hypot(p.x - car.path[i - 1].x, p.y - car.path[i - 1].y) - step) < 1e-6 && p.x > car.path[i - 1].x)), 'evenly, eastward');
     }
 
     // Going: on turn 13 its last two wagons are still on the board, the rest gone off the edge.

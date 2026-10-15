@@ -1400,6 +1400,10 @@
     /* The one that starts a game: the biggest thing in the card's foot. */
     #briefing .brief-go.big { padding: 7px 18px; box-shadow: 3px 3px 0 var(--ink); }
     #briefing .brief-go.big .go-label { font-family: var(--slab); font-size: 20px; letter-spacing: 2px; }
+    /* How, under what (M49b third notes, the operator's): narrower, so ◀ CONTENTS,
+       the boxes and HOW TO PLAY sit on its row again. */
+    #briefing .brief-go.big { flex-direction: column; align-items: center; gap: 0; padding: 4px 18px; }
+    #briefing .brief-go.big .go-note { font-size: 11px; line-height: 1.1; }
     #briefing .brief-good { color: var(--green); }
     /* The contents page (M27): the annual's contents, one line a mission,
        its title run to its page number with a dotted leader. A mission not

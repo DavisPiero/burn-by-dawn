@@ -699,7 +699,8 @@ const CUES = {
   // The Dakota over the garrison, and bombers over the town, miles off: three small crumps.
   diversion: [['aircraft', 0.45, 0], ['crump', 0.25, 0.9], ['crump', 0.18, 1.3], ['crump', 0.22, 1.85]],
   // The drop (M15): the Dakota going over as the stick jumps.
-  drop: [['aircraft', 0.6, 0]],
+  // 35% down (M49b, the operator's).
+  drop: [['aircraft', 0.39, 0]],
   // The back page (M12): bells for a mission accomplished, a toll for the rest,
   // just after the page has turned.
   suppress: [['gunfire', 0.45, 0]],
@@ -717,7 +718,8 @@ const CUES = {
   knife: [['stab', 0.55, 0]],
   // A mission accomplished (M49b, the operator's: a playtester heard the bells
   // as a funeral): the first half of the operator's fanfare, France's and the aqueduct's.
-  victory: [['fanfare', 0.9, 0.35]],
+  // A fifth down from its first cut (M49b, the operator's).
+  victory: [['fanfare', 0.72, 0.35]],
   defeat: [['bell-toll', 0.55, 0.35]],
   // The airfield's (M31; data/missions.json names a mission's cues): its
   // diversion, jeeps going by outside the wire with their guns going; and its
@@ -822,8 +824,8 @@ export const MUSIC = { cue: 'titleMusic', beat: 60 / 88, phrase: (60 / 88) * 16,
 export const MUSIC_TRACKS = ['music-title', 'music-contents', 'music-france', 'music-desert', 'music-aqueduct'];
 // Each track's level against the title music's cue (M49b, the operator's: a
 // mission's music was a little loud): every mission's, the course's title
-// music among them, a quarter down; the contents page's strings as they were.
-export const MUSIC_LEVELS = { 'music-title': 0.75, 'music-france': 0.75, 'music-desert': 0.75, 'music-aqueduct': 0.75 };
+// music among them, a quarter down, and the contents page's strings too (the operator's, third notes).
+export const MUSIC_LEVELS = { 'music-title': 0.75, 'music-contents': 0.75, 'music-france': 0.75, 'music-desert': 0.75, 'music-aqueduct': 0.75 };
 
 let music = null;
 // Where each track got to when it last faded (M19): the pass of the made music

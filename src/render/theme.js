@@ -1208,7 +1208,9 @@ export const CUE = {
   // Choosing the drop is lettered and ringed in the blue of our kit (M46, the
   // operator's: in red it read as part of the targets' rings).
   kit: PALETTE.leader,
-  runRing: { padX: 16, padY: 13, width: 4, opacity: 0.85 },
+  // Drawn on in turn as the drop is first shown, before the targets' rings
+  // (M49b, the operator's), which wait `gapMs` after the last.
+  runRing: { padX: 16, padY: 13, width: 4, opacity: 0.85, drawMs: 650, staggerMs: 180, gapMs: 200 },
   // What the selected man could do to an enemy now (M46): a mark on its chip.
   strikeSize: 24,
   strikeAt: { x: -11, y: -13 }, // its top left corner; under the no-kill mark where a chip wears that
