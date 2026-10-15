@@ -127,8 +127,10 @@ export default [
       equal(car.path.length, rules.train.speed + 1, 'a step a hex');
       const end = railPoint(map, line, car.index);
       assert(Math.abs(car.path.at(-1).x - end.x) < 1e-6, 'ends on its hex');
-      // A hex a step, eastward, down a row once past the fuel dump (M49b).
-      assert(car.path.every((p, i) => i === 0 || (Math.abs(Math.hypot(p.x - car.path[i - 1].x, p.y - car.path[i - 1].y) - step) < 1e-6 && p.x > car.path[i - 1].x)), 'evenly, eastward');
+      // A hex a step, eastward, down a row once past the fuel dump (M49b):
+      // near enough evenly, as the line eases down over a few hexes (M49c).
+      assert(car.path.every((p, i) => i === 0 || (Math.abs(Math.hypot(p.x - car.path[i - 1].x, p.y - car.path[i - 1].y) - step) < 0.15 * step && p.x > car.path[i - 1].x)), 'evenly, eastward');
+      assert(car.path.every((p, i) => i === 0 || p.y >= car.path[i - 1].y - 1e-6), 'never climbing');
     }
 
     // Going: on turn 13 its last two wagons are still on the board, the rest gone off the edge.

@@ -433,6 +433,10 @@ export const RAIL = {
   railWidth: 6.5,
   gauge: PALETTE.paper,
   gaugeWidth: 3.5,
+  // Where the line steps down a row, each hex's place on it is its centre
+  // averaged with its neighbours', weighted so (board.js railTrack): the
+  // longer the list, the longer and gentler the slope.
+  bend: [1, 2, 3, 2, 1],
 };
 
 // Place names printed on the map (SPEC.md §11), set as a map-maker sets them:
