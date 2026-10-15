@@ -863,6 +863,8 @@ export function renderPieces(layers, state, view) {
     if (unit.inContact) counter.appendChild(hoverMarker(layers, 'marker-spotted', 38, -12, unit));
     if (unit.hits > 0 && !unit.stabilised) counter.appendChild(hoverMarker(layers, 'marker-wounded', -6, -12, unit));
     if (unit.hidden) counter.appendChild(hoverMarker(layers, 'marker-hidden', MARKER.hiddenAt.x, MARKER.hiddenAt.y, unit));
+    // He could swim from here (M49b), bottom left, while he is selected.
+    if (unit.id === view.swimId) counter.appendChild(hoverMarker(layers, 'marker-swim', MARKER.swimAt.x, MARKER.swimAt.y, unit));
     // Too far from the way out to make it before the night ends (M46).
     if (view.late?.has(unit.id)) counter.appendChild(hoverMarker(layers, 'marker-late', CUE.lateAt.x, CUE.lateAt.y, unit, CUE.lateSize));
     // The orders on the right, beside the AP they add to, clear of the rank flash (M12).

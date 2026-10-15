@@ -234,6 +234,7 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `marker-strike-knife.svg`, `marker-strike-fire.svg`, `marker-strike-kill.svg` | 28 x 28 (M46, on an enemy the selected man could strike now: a red disc with a paper knife, crosshair, or crosshair struck through. *Drawn by code.*) |
 | `marker-late.svg` | 28 x 28 (M46, on a man who cannot reach the exfil before the night ends: a red clock on paper. *Drawn by code.*) |
 | `marker-hidden.svg` | 28 x 28 (a trooper gone to ground, SPEC.md §4 Hide; paper with an ink eye since M21, printed at full strength over the faint counter) |
+| `marker-swim.svg` | 28 x 28 (M49b: on the selected man when he could swim now, SPEC.md §4 Swim; two paper waves on cold blue, ringed in ink, bottom left of his counter. *Drawn by code.*) |
 | `marker-orders.svg` | 28 x 28 (a man with the leader's orders this turn, +1 AP, SPEC.md §5 Command: one chevron in leader blue `#2F7BBF`, the one place besides the leader himself that colour is used; on the right of the counter since M12) |
 | `marker-orders-2.svg` | 28 x 28 (the same, +2 AP, beside the leader: two chevrons, M12b) |
 | `marker-body.svg` | 28 x 28, drawn at 39 since M15 (a fallen trooper left on the ground, SPEC.md §5 — reads as a loss, not as an objective; M31d: the mound is `.counter-body`, our counters' colour, orange on the airfield) |

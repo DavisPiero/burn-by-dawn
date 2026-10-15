@@ -752,6 +752,7 @@ export const MARKER = {
   // of the name strip (M21, the operator's), and printed at full strength
   // over the faint counter.
   hiddenAt: { x: 38, y: 33 },
+  swimAt: { x: -6, y: 33 }, // the wave on a man who could swim now (M49b)
   groundSize: 26,
   canisterSize: 34, // a supply canister (M41), bigger than the charges in it
   fuseSize: 34, // the stopwatch on a burning charge (M15)
@@ -3103,6 +3104,17 @@ const SPRITES = {
       circle(14, 14, 12, 'paper'),
       line('M6 12 Q14 20 22 12', 2.6),
       line('M9 16 L7.5 19.5 M14 17.5 L14 21.5 M19 16 L20.5 19.5', 2),
+      ring(14, 14, 12),
+    ],
+  },
+  // A man who could swim from where he stands (M49b), on his counter while he
+  // is selected: two waves in paper on the canal's blue, the knife mark's shape.
+  'marker-swim': {
+    viewBox: '0 0 28 28',
+    draw: () => [
+      circle(14, 14, 12, 'blue'),
+      line('M5.5 11.5 Q8.3 8.5 11 11.5 T16.5 11.5 T22.5 11.5', 2.4, 'stroke-paper'),
+      line('M5.5 17.5 Q8.3 14.5 11 17.5 T16.5 17.5 T22.5 17.5', 2.4, 'stroke-paper'),
       ring(14, 14, 12),
     ],
   },
