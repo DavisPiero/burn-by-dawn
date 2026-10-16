@@ -296,7 +296,7 @@ function plannedPencil(state, unit, map, assign, open, fallback) {
   const turnsOver = (cost) => Math.ceil(cost / 3);
   // A man with a second charge has the walk to the next point nobody is making for.
   const taken = new Set([...assign.values()].filter((g) => !g.pickUp).map((g) => M.hexKey(g.q, g.r)));
-  const spare = o.chargeHexes.filter((h) => !taken.has(M.hexKey(h.q, h.r)) && !state.charges.some((c) => c.q === h.q && c.r === h.r));
+  const spare = o.chargeHexes.filter((h) => !taken.has(M.hexKey(h.q, h.r)) && !state.charges.some((c) => c.q === h.q && c.r === h.r) && !SB.isSpentPoint(o, h));
   const onward = (from) => (spare.length ? Math.max(1, turnsOver(Math.min(...spare.map((h) => distanceField(map, [h]).get(M.hexKey(from.q, from.r)) ?? 99)))) : 99);
   let latest = unit.charges > 1 ? onward(unit) : 0;
   let coming = unit.charges;
@@ -391,7 +391,7 @@ function assignCharges(state, map) {
   const objectives = state.objectives.filter((o) => !o.destroyed && (job.includes(o) || (OPTS.secondaries && !MI.isWinTarget(state, rules, o))));
   for (const o of objectives) {
     const need = rules.objectives[o.kind].chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length;
-    let free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
+    let free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r) && !SB.isSpentPoint(o, h));
     // A job target with more points than it wants charges (M42, the aqueduct's
     // six for four): the points the shortest walk from the men who will set them.
     if (SENSE && job.includes(o) && need > 0 && free.length > need) free = nearestPoints(state, map, o, free);

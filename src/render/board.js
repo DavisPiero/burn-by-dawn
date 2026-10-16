@@ -2256,8 +2256,9 @@ function drawSites(layers, state, view) {
     // Every charge it needs is set: nowhere left to put one.
     if (view.chargedObjectiveIds.has(objective.id)) continue;
     for (const h of objective.chargeHexes) {
-      // A charge set here is drawn in the point's place, below (M26d).
-      if (state.charges.some((c) => c.q === h.q && c.r === h.r)) continue;
+      // A charge set here is drawn in the point's place, below (M26d); one
+      // gone off is spent, its scorch left to say so (M49d).
+      if (state.charges.some((c) => c.q === h.q && c.r === h.r) || (objective.spent ?? []).some((s) => s.q === h.q && s.r === h.r)) continue;
       const p = axialToPixel(h.q, h.r, map.hexSize);
       const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
       // A target with a lead to its point (the bowser, the bomb store) is

@@ -16,7 +16,7 @@ import {
   exfilWouldFail, setTargeting, settleMission, signalBoat, silenceUnits, stabiliseUnit, suppressEnemy, swimAcross, throwStone, toggleRoutes,
 } from './state.js';
 import {
-  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, boatLands, checkSignalBoat, effectiveMap, inBlast, exfilOpen, isExfil, kindOf, lastTurn,
+  blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, boatLands, checkSignalBoat, effectiveMap, inBlast, exfilOpen, isExfil, isSpentPoint, kindOf, lastTurn,
   objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencilWithTheOthers, pencils,
 } from './sabotage.js';
 import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
@@ -3240,7 +3240,7 @@ function chargeCue(unit) {
   for (const o of state.objectives) {
     if (o.destroyed || chargesWanted(o) === 0) continue;
     if (![...o.hexes, ...o.chargeHexes].some((h) => hexDistance(unit, h) <= CUE.pointRange)) continue;
-    const hexes = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
+    const hexes = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r) && !isSpentPoint(o, h));
     if (!hexes.length) continue;
     const here = hexes.some((h) => h.q === unit.q && h.r === unit.r);
     cue.push({

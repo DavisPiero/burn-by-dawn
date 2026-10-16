@@ -135,6 +135,7 @@ export function createObjectives(map) {
     hexes: o.hexes.map(([q, r]) => ({ q, r })),
     chargeHexes: o.chargeHexes.map(([q, r]) => ({ q, r })),
     detonated: 0, // charges that have gone off on it
+    spent: [], // charge points that have gone off: nothing more is set there (M49d)
     destroyed: false,
     cut: false, // destroyed by a scout cutting the line, not by a charge
   }));
@@ -149,6 +150,14 @@ const onHex = (hex) => (h) => h.q === hex.q && h.r === hex.r;
 /** The objective this hex is a charge hex of, or null. */
 export function objectiveForChargeHex(objectives, hex) {
   return objectives.find((o) => o.chargeHexes.some(onHex(hex))) ?? null;
+}
+
+/**
+ * A charge point that has gone off (M49d, the operator's: two points blown
+ * twice made four): spent, so nothing more is set on it.
+ */
+export function isSpentPoint(objective, hex) {
+  return (objective.spent ?? []).some(onHex(hex));
 }
 
 /** The objective whose footprint or charge hexes include this hex, for hover. */
@@ -412,6 +421,7 @@ export function checkPlaceCharge(state, unit, rules, fuse = undefined) {
   if (!objective) return out('not on a charge hex');
   if (objective.destroyed) return out(`${objective.label} is already destroyed`, objective);
   if (state.charges.some(onHex(unit))) return out('a charge is already set here', objective);
+  if (isSpentPoint(objective, unit)) return out('this point has gone off already — set it on another', objective);
   const set = state.charges.filter((c) => c.objectiveId === objective.id).length;
   if (objective.detonated + set >= kindOf(objective, rules).chargesNeeded) return out(`${objective.label} has all the charges it needs`, objective);
   if (!picked) return out(fuse === undefined ? 'every pencil would go off after dawn' : `no ${fuse}-turn pencil`, objective);
@@ -553,7 +563,7 @@ export function runFusePhase(state, rules) {
       // explosion asks only about the night before it (scoring.js).
       alert: next.explosions === 0 ? { ...next.alert, peakBeforeBang: next.alert.peak ?? 0 } : next.alert,
       explosions: next.explosions + 1,
-      objectives: next.objectives.map((o) => (o.id === objective.id ? { ...o, detonated, destroyed } : o)),
+      objectives: next.objectives.map((o) => (o.id === objective.id ? { ...o, detonated, destroyed, spent: [...(o.spent ?? []), ...charges.map((c) => ({ q: c.q, r: c.r }))] } : o)),
     };
     // Every charge that went off, and its blast radius, so the board can
     // show each bang where it happened, as big as it was (M11).

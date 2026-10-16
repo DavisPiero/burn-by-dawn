@@ -133,6 +133,19 @@ export default [
     assert(s.report.some((e) => e.kind === 'explosion'), 'reported');
   }],
 
+  ['a charge point that has gone off is spent: nothing more is set on it (M49d)', async () => {
+    const { map, rules, state } = await loadAll();
+    const fitch = byTrait(state, 'quick-work');
+    const [a] = primaryOf(state).chargeHexes;
+    let s = placeCharge(scenario(state, { [fitch.id]: a }), fitch.id, rules);
+    s = scenario(s, {});
+    for (let turn = 0; turn < rules.charges.fuseTurns; turn++) s = endTurn(s, rules, map);
+    equal(primaryOf(s).detonated, 1, 'one gone off');
+    const back = scenario(s, { [fitch.id]: a });
+    const armed = { ...back, units: back.units.map((u) => (u.id === fitch.id ? { ...u, charges: 1 } : u)) };
+    equal(checkPlaceCharge(armed, unitIn(armed, fitch.id), rules).reason, 'this point has gone off already — set it on another', 'spent');
+  }],
+
   ['two bridge charges going off together are one explosion; a turn apart they are two', async () => {
     const { rules, state } = await loadAll();
     const [a, b] = primaryOf(state).chargeHexes;
