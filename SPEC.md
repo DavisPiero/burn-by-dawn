@@ -429,7 +429,13 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M49e, the aqueduct rebalanced, done:** most of the fall after
+**M50, the aqueduct redrawn and Hard's careful play rewarded, built:** its board
+pictures redrawn from the operator's six references (the aqueduct whole and blown in
+two tiers of arches, the road bridge from above, the boat, the canister, terraces and
+olive groves); on Hard the careful player now wins as often as the hunter, by two more
+bot faults mended, the boat coming in under the shore rocks as well as on the beach,
+and Hard's aqueduct taking five charges again (the operator's pick of the options,
+`MISSION-AQUEDUCT.md`, Balance). Before it, **M49e, the aqueduct rebalanced, done:** most of the fall after
 M49d's spent charge points was the bot's (a spare man stood on a fresh point and the
 carrier waited beside him all night), mended by `PICK=1`; Hard's aqueduct takes four
 charges, not five (the operator's pick of the options). Every level inside its target.
