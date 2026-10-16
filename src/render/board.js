@@ -759,6 +759,8 @@ export function renderPieces(layers, state, view) {
   if (view.reachable) drawReachable(layers, view.reachable, view.dangerWash);
   const outlines = [
     view.reachable && { area: view.reachable, casing: [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth], line: [PATH.reachableEdge, PATH.reachableEdgeWidth], extra: {} },
+    // The far bank he could swim to this turn (M49d), in the range's blue, dotted.
+    view.swimArea?.size && { area: view.swimArea, casing: [PATH.reachableEdgeCasing, PATH.swimEdgeCasingWidth], line: [PATH.reachableEdge, PATH.swimEdgeWidth], extra: { 'stroke-dasharray': PATH.swimDash, 'stroke-linecap': 'round' } },
     view.commandArea && { area: view.commandArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.dash } },
     // The inner band, where his orders are strongest (M12), in a finer dash.
     view.commandCloseArea && { area: view.commandCloseArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.closeDash } },

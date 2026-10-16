@@ -596,6 +596,10 @@ export const PATH = {
   reachableEdgeCasingWidth: 12,
   reachableEdge: PALETTE.blue,
   reachableEdgeWidth: 6,
+  // The far bank a man could swim to this turn (M49d): the range's line, dotted.
+  swimEdgeCasingWidth: 10,
+  swimEdgeWidth: 4.5,
+  swimDash: '0.1 9',
   // The move line is cold blue, cased in paper so it reads over the blue of
   // the move range, and turns red from the first hex where he would be
   // spotted: red on the path means trouble, and only then (M11).

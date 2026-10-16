@@ -360,6 +360,7 @@ function deriveView() {
       sources: alertSources(),
     },
     reachable: null,
+    swimArea: null,
     commandArea: null,
     commandCloseArea: null,
     commandLabel: null,
@@ -620,6 +621,12 @@ function deriveView() {
   if (state.targeting) return deriveTargeting(view, unit, hex, enemyUnderMouse);
 
   view.reachable = reachableFor(map, state.units, unit, rules, state.enemies);
+  // Where he could swim to this turn, dotted beyond his move range (M49d, the
+  // operator's: the range stopped at the water's edge), unless the lesson would
+  // not let him swim.
+  const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
+  view.swimArea = swimAllowed && canSwimNow(map, rules, state, unit)
+    ? new Map(swimTargets(map, state, unit, rules).map((h) => [hexKey(h.q, h.r), h])) : null;
   // What going to each of those hexes would do (M45): red where he would be
   // spotted, green where a man in contact would break it.
   if (!sameStamp(sightFor.stamp, stamp) || sightFor.unitId !== unit.id) sightFor = { ...sightFor, stamp, unitId: unit.id, wash: dangerWash(map, rules, state, unit, view.reachable) };
