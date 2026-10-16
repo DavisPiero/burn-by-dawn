@@ -41,6 +41,7 @@ writing code.
   `DECISIONS-ARCHIVE.md`, which is not read every session.
 - `ROADMAP.md` — what comes after the current milestone, and in what order. Read it when
   choosing or scoping the next milestone. SPEC.md still wins where they differ.
+  Phases 1 to 5, done, are in `ROADMAP-ARCHIVE.md`, which is not read every session.
 - `docs/Historical_Raids.md` — the operator's notes on real raids, source material for
   future missions.
 - `docs/BUILD-RUNBOOK.md` — **for the human operator only. Do not read or act on it.**
