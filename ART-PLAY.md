@@ -65,7 +65,8 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   where he can go unseen, **danger red** where he would be spotted going there (a
   little stronger than the blue, and well over the faint red of the garrison's view),
   and for a man in contact **army green** where he would break it. Flat tint, no
-  halftone, under the range's one outline.
+  halftone, under the range's one outline. Where he could swim this turn, the far bank
+  he would come out on is outlined beyond it in the same blue, dotted (M49d).
 - **Who sees him.** On a hovered move, a thin line runs from the enemy that sees him
   most to the hex the pen note is on: solid red if he is spotted there, dotted ink if
   only seen. That hex's pips fill one at a time, about an eighth of a second each. The
@@ -121,7 +122,7 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   hover says who is coming. Below Alarmed a last known contact is not marked, as nobody
   goes to it.
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
-  its counter flashing. A kill is one dim shot.
+  its counter flashing. A kill is the same burst, a little louder (M49d).
 - **The pen's coaching is the play tips** (SPEC.md §4): on unless switched off.
   Where the charge goes, the ghost, BREAK CONTACT!, GET CLEAR! and GET OUT! are tips;
   the marks, throbs and the pip below are not.
@@ -177,8 +178,9 @@ The sounds of the table, not the battlefield (ART-ASSETS.md §9), every one a su
 recording in `assets/audio/` (the made-in-code version is the fallback if a file is
 missing): a pencil for every action, a counter snapped down when a move is undone (a
 move itself is silent), a card's rustle when a card or the back page opens, a dog a long
-way off when the alert rises, three far-off crumps for the RAF diversion, a gunfire burst
-and a muffled cough for a silenced shot. The Dakota drones over the drop and the RAF
+way off when the alert rises, three far-off crumps for the RAF diversion, and a gunfire
+burst for suppressing and, a little louder, for a kill (M49d, the operator's: the one
+shot was not satisfying). The Dakota drones over the drop and the RAF
 flyover, cut short if the drop is skipped. The one exception to the table: a turn with a
 bang plays a real explosion, close, loud, low and slow. The back page plays a fanfare (the operator's
 recording, its first half, since M49b: the bells read as a funeral) for a mission accomplished, and tolls a single

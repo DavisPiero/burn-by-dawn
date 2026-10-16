@@ -371,7 +371,7 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `pencil-scratch.mp3` | any action but a move: hide, a charge, a stone, suppress… | ~0.3 s |
 | `counter-snap.mp3` | a move is undone (a move itself too until M22; silent since M24, the operator's, after M23's slide per hex did not suit) | ~0.1 s |
 | `gunfire.mp3` | a gunner suppresses: a short burst of four shots (M13) | ~0.5 s |
-| `silenced-shot.mp3` | a gunner's kill (M13). Since M48j, the operator's: one Thompson single shot, played under the suppressing burst | ~0.8 s |
+| `silenced-shot.mp3` | a gunner's kill (M13). Since M48j, the operator's: one Thompson single shot, played under the suppressing burst. Unplayed since M49d: the kill is the gunner's burst again | ~0.8 s |
 | `dog-distant.mp3` | the alert rises. Since M48j two barks from the operator's `dogs.mp3` (the first file sounded like bells) | ~0.75 s, two barks |
 | `line-cut.mp3` | a scout cuts the line (M48j): the Telephone Exchange's or the Signals Tent's. A crack and the wire's buzz dying away | ~1.6 s |
 | `stamp.mp3` | a rubber stamp coming down (M48j): PASSED on each lesson's card, and PASSED OUT on the clipboard | ~0.5 s |

@@ -184,7 +184,7 @@ board must read at a glance.
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all
-  game.
+  game, on the ground: under the counters and the targets' words (M49d).
 - A man killed floats straight up about a hex and fades over his body before the turn's
   card is laid.
 - **An enemy that raises the alarm says so** (a mission's `words.cries`): a small
