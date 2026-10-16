@@ -8,7 +8,7 @@ Last updated: 16 Oct 2026, M49e signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M49d**, signed off, merged and pushed: spent charge points, parachutes under
+- **M49d** (before it), signed off: spent charge points, parachutes under
   the targets' words, the dotted swim outline, the kill's burst, the aqueduct's beach to
   wait on and Board boat on B, its map a hex east with woods in the south-west corner.
 - **`main` is now M49e**, signed off, merged and pushed; no branch open:
