@@ -212,8 +212,26 @@ export function checkSignalBoat(state, unit, rules, map) {
   if (exfilOpen(state, rules)) return result(cost, 'the boat is in');
   if ((state.boatCalledTurn ?? null) !== null) return result(cost, `the boat has the signal: in on turn ${boatLands(state, rules)}`);
   if (state.turn + call.leadTurns >= rules.exfil.opensTurn) return result(cost, `the boat is already on its way: in on turn ${rules.exfil.opensTurn}`);
-  if (!map.exfil.some(([q, r]) => hexDistance(unit, { q, r }) === 1)) return result(cost, 'he must be beside the water at the exfil');
+  if (!map.exfil.some(([q, r]) => hexDistance(unit, { q, r }) <= 1)) return result(cost, 'he must be at the water by the exfil');
   return { ...result(cost, null), lands: state.turn + call.leadTurns, leaves: state.turn + call.leadTurns + (rules.exfil.openFor ?? 1) - 1 };
+}
+
+/**
+ * Board the boat (SPEC.md §10, M49d, the operator's): a man waiting on an exfil
+ * hex goes out once the boat is in, for no AP. Where the way out is open all
+ * night, ending a move there is enough, and there is nothing to board.
+ */
+export function checkBoardBoat(state, unit, rules, map) {
+  if (boatLands(state, rules) === null) return result(0, 'no boat to board');
+  if (!unit || !onBoard(unit)) return result(0, 'not on the board');
+  if (!isExfil(map, unit)) return result(0, 'he must be on the beach at the exfil');
+  if (!exfilOpen(state, rules)) return result(0, `the boat is in on turn ${boatLands(state, rules)}: wait here for it`);
+  return result(0, null);
+}
+
+/** The men waiting on the exfil for a boat that is in, who have only to board it (M49d). */
+export function waitingToBoard(state, rules, map) {
+  return state.units.filter((u) => checkBoardBoat(state, u, rules, map).ok);
 }
 
 // --- the map as the demolitions have left it -----------------------------------
@@ -230,15 +248,13 @@ const effectiveMaps = new WeakMap();
  * list always gives back the same map object, so callers can compare by
  * identity.
  *
- * `state` (M40, M41b): where the mission's exfil waits for a boat that has not
- * landed (exfilOpen), the map carries `closed`, the exfil's hexes, which
- * nobody may enter (map.js enterCost). Left out, the exfil is taken as open.
- * Only its `turn` and `boatCalledTurn` are read.
+ * The exfil's hexes are ground like any other before the boat is in (M49d, the
+ * operator's): men may wait there, and go out once it lands (moveUnit,
+ * checkBoardBoat). `state` is no longer read.
  */
 export function effectiveMap(map, objectives, rules, state = null) {
-  const shut = state !== null && !exfilOpen(state, rules);
   const cached = effectiveMaps.get(objectives);
-  if (cached && cached.base === map && cached.shut === shut) return cached.map;
+  if (cached && cached.base === map) return cached.map;
   let rows = map.rows;
   for (const o of objectives) {
     const terrain = kindOf(o, rules).destroyedTerrain;
@@ -257,9 +273,8 @@ export function effectiveMap(map, objectives, rules, state = null) {
     const cost = kindOf(o, rules).chargePointMoveCost;
     if (cost != null) for (const h of o.chargeHexes) moveCosts.set(hexKey(h.q, h.r), cost);
   }
-  const closed = shut ? new Set(map.exfil.map(([q, r]) => hexKey(q, r))) : null;
-  const damaged = rows === map.rows && moveCosts.size === 0 && !closed ? map : { ...map, rows, moveCosts, ...(closed ? { closed } : {}) };
-  effectiveMaps.set(objectives, { base: map, shut, map: damaged });
+  const damaged = rows === map.rows && moveCosts.size === 0 ? map : { ...map, rows, moveCosts };
+  effectiveMaps.set(objectives, { base: map, map: damaged });
   return damaged;
 }
 

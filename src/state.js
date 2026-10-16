@@ -20,7 +20,7 @@ import {
 import { landCanisters, landStick, runById, scatterCanisters, scatterStick, validateDrop } from './drop.js';
 import { createRng } from './rng.js';
 import {
-  applyPayoff, checkCutLine, checkPlaceCharge, checkSignalBoat, checkSwim, createObjectives, effectiveMap, isExfil, lastTurn, runFusePhase, validateSabotage,
+  applyPayoff, checkCutLine, checkPlaceCharge, checkBoardBoat, checkSignalBoat, checkSwim, createObjectives, effectiveMap, exfilOpen, isExfil, lastTurn, runFusePhase, validateSabotage,
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
 import { boatEvents } from './boat.js';
@@ -359,11 +359,13 @@ export function setHover(state, hex) {
  *
  * A man who ends his move on an exfil hex is out (SPEC.md §10): off the board
  * at once, safe, and never tested on the way — he is gone before the
- * detection phase. `map` may be omitted where exfil does not matter.
+ * detection phase. `map` may be omitted where exfil does not matter. Where the
+ * way out waits for a boat (`rules` given, M49d), a man who ends his move there
+ * before it is in only waits: he boards it when it comes (boardBoat).
  */
-export function moveUnit(state, unitId, plan, map = null) {
+export function moveUnit(state, unitId, plan, map = null, rules = null) {
   const destination = plan.path[plan.path.length - 1];
-  if (map && isExfil(map, destination)) {
+  if (map && isExfil(map, destination) && (!rules || exfilOpen(state, rules))) {
     // Charges do not leave with him (M13b): he sets them down on the hex he
     // stepped off from, where another man can pick them up — on the exfil
     // itself nobody could stand to take one without going out too.
@@ -549,6 +551,22 @@ export function signalBoat(state, unitId, rules, map) {
   const check = checkSignalBoat(state, unit, rules, map);
   if (!check.ok) return state;
   return { ...spend(state, unitId, check.cost), boatCalledTurn: state.turn };
+}
+
+/**
+ * Board the boat (M49d): a man waiting on the exfil goes out, as if he had
+ * just stepped there. The caller asks first where it would end the mission
+ * short (exfilWouldFail with boardPlan).
+ */
+export function boardBoat(state, unitId, rules, map) {
+  const unit = unitById(state.units, unitId);
+  if (!checkBoardBoat(state, unit, rules, map).ok) return state;
+  return moveUnit(state, unitId, boardPlan(unit), map, rules);
+}
+
+/** Boarding as a move of no steps onto the hex he stands on, for exfilWouldFail. */
+export function boardPlan(unit) {
+  return { path: [{ q: unit.q, r: unit.r }], steps: 0, cost: 0, affordable: true };
 }
 
 /** Pick up one dropped charge from his own hex. */
@@ -757,8 +775,8 @@ export function settleMission(state, rules, map, { dawn = false } = {}) {
  * charges still burning, which may yet finish the job, are counted.
  */
 export function exfilWouldFail(state, unitId, plan, rules, map) {
-  if (!isExfil(map, plan.path[plan.path.length - 1])) return null;
-  const { outcome } = settleMission(moveUnit(state, unitId, plan, map), rules, map);
+  if (!isExfil(map, plan.path[plan.path.length - 1]) || !exfilOpen(state, rules)) return null;
+  const { outcome } = settleMission(moveUnit(state, unitId, plan, map, rules), rules, map);
   return outcome && outcome.kind !== 'success' ? outcome : null;
 }
 

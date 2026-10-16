@@ -960,11 +960,9 @@ export const EXFIL = {
   label: PALETTE.green,
   art: 'objective-rally-point',
   // Shut, while its boat is not in (M41b, the operator's): danger red, dashed,
-  // its label in red, and a wash of the sea over its hexes.
+  // its label in red (the sea's wash over it gone at M49d: men may wait there).
   shutStroke: PALETTE.red,
   shutDash: '9 8',
-  shutWash: PALETTE.blue,
-  shutWashOpacity: 0.28,
 };
 
 // The goods train (M34): a car to a hex along the railway, engine first. A

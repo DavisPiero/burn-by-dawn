@@ -157,7 +157,7 @@ export default [
     const beside = { q: eq, r: er - 1 };
     const place = (state, hex) => ({ ...state, units: state.units.map((u) => (u.id === man.id ? { ...u, ...hex, ap: u.apMax } : u)) });
     const inland = { ...landed, turn: 6 };
-    equal(checkSignalBoat(inland, inland.units[0], rules, map).reason, 'he must be beside the water at the exfil', 'not from up the valley');
+    equal(checkSignalBoat(inland, inland.units[0], rules, map).reason, 'he must be at the water by the exfil', 'not from up the valley');
     const onBeach = place(inland, beside);
     const check = checkSignalBoat(onBeach, onBeach.units[0], rules, map);
     assert(check.ok, 'from beside the exfil he can');

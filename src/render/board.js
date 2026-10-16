@@ -2163,14 +2163,10 @@ function drawSites(layers, state, view) {
   const { map } = layers;
   const areaOf = (hexes) => new Map(hexes.map((h) => [hexKey(h.q, h.r), h]));
 
-  // Shut until its boat is in (M41b, the operator's): the sea washed over its
-  // hexes and its outline and label in danger red, dashed; open, green as ever.
+  // Shut until its boat is in (M41b, the operator's): its outline and label in
+  // danger red, dashed; open, green as ever. No wash over it since M49d: it is
+  // beach a man may wait on.
   if (view.exfilShut) {
-    for (const h of view.exfil) {
-      layers.sites.appendChild(el('polygon', {
-        points: cornersToPoints(axialToPixel(h.q, h.r, map.hexSize), layers.corners), fill: EXFIL.shutWash, 'fill-opacity': EXFIL.shutWashOpacity, 'pointer-events': 'none',
-      }));
-    }
     drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth]]);
     drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.shutStroke, EXFIL.width]], { 'stroke-dasharray': EXFIL.shutDash });
   } else {

@@ -433,6 +433,8 @@ function assignCharges(state, map) {
 }
 
 function actFor(state, unit, map) {
+  // Waiting on the beach with the boat in (M49d): he boards it.
+  if (SB.checkBoardBoat(state, unit, rules, map0).ok) return S.settleMission(S.boardBoat(state, unit.id, rules, map0), rules, map0);
   const assign = assignCharges(state, map);
   // At his goal: place or cut.
   const goal = assign.get(unit.id);
@@ -502,7 +504,8 @@ function actFor(state, unit, map) {
       const r = risk(map, state, unit, path, hide || (c === here && unit.hidden));
       let d = dist.get(M.hexKey(c.q, c.r)) ?? 999;
       if (goals[0]?.standby) d = Math.max(0, d - 4); // near enough: wait in cover
-      const exfil = SB.isExfil(map, c) && !assign.has(unit.id) && !hunting;
+      // Out by ending his move there, once the boat is in (M49d: before it, only waiting).
+      const exfil = SB.isExfil(map, c) && SB.exfilOpen(state, rules) && !assign.has(unit.id) && !hunting;
       let score = d * 10;
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
       const left = SB.lastTurn(state, rules) - state.turn;
@@ -524,7 +527,7 @@ function actFor(state, unit, map) {
   if (!best) return U.onBoard(unit) ? S.holdUnit(state, unit.id) : null;
   if (FIRE === 'cornered' && best.shot) { const fired = returnFire(state, unit, map); if (fired) return fired; }
   let next = state;
-  if (best.plan) next = S.moveUnit(next, unit.id, best.plan, map0);
+  if (best.plan) next = S.moveUnit(next, unit.id, best.plan, map0, rules);
   const moved = U.unitById(next.units, unit.id);
   if (best.hide && U.onBoard(moved)) next = S.hideUnit(next, unit.id, rules);
   else if (!best.plan) next = S.holdUnit(next, unit.id);

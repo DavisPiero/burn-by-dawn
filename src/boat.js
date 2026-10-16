@@ -8,7 +8,7 @@
 // Pure functions. Where the boat is follows from the turn and from when it was
 // signalled, if it was (state.boatCalledTurn, M41b).
 
-import { boatLands, lastTurn } from './sabotage.js';
+import { boatLands, isExfil, lastTurn } from './sabotage.js';
 
 // The turns before it lands that the boat is seen coming where nobody can call
 // it; where it can be called, the call's own lead (rules.exfil.call.leadTurns).
@@ -41,7 +41,8 @@ export function boatEvents(before, after, rules, map) {
   if (lands === null || after.turn === before.turn) return [];
   const [q, r] = map.exfil[Math.floor(map.exfil.length / 2)];
   const event = (what) => [{ kind: 'boat', what, opens: lands, leaves: lastTurn(after, rules), q, r }];
-  if (after.turn === lands) return event('in');
+  // How many are waiting on the beach to board it (M49d).
+  if (after.turn === lands) return [{ ...event('in')[0], waiting: after.units.filter((u) => !u.out && !u.dead && isExfil(map, u)).length }];
   if (before.boatCalledTurn === before.turn) return event('called');
   if (after.turn === lands - turnsOut(rules) && map.boatRun) return event('sighted');
   return [];
