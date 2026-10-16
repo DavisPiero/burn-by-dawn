@@ -1200,7 +1200,7 @@ function actionsFor(unit) {
     },
     { id: 'stabilise', key: 'A', label: 'Stabilise', short: 'Aid', help: 'Dress the wound of a man beside him: it takes his whole turn, and the wounded man gets his full AP back. He is still one hit from death', suggest: aidFor(unit, 'stabilise'), ...withCost(stabilise, () => 'full turn') },
     { id: 'signal', key: 'B', label: 'Signal boat', tight: 'Signal', help: rules.exfil.call ? `Signal the boat in early from beside the water: it lands ${rules.exfil.call.leadTurns} turns from now and stays only ${rules.exfil.openFor}. It asks first` : '', suggest: signalFor(unit), ...withCost(checkSignalBoat(state, unit, rules, baseMap), ap) },
-    { id: 'board', key: 'B', label: 'Board boat', tight: 'Board', help: 'A man on the beach at the exfil gets into the boat: he is out. No AP. It asks first if that would end the mission short', suggest: boardFor(unit), ...withCost(checkBoardBoat(state, unit, rules, baseMap), () => '0 AP') },
+    { id: 'board', key: 'B', label: 'Board boat', short: 'Board', tight: 'Board', help: 'A man on the beach at the exfil gets into the boat: he is out. No AP. It asks first if that would end the mission short', suggest: boardFor(unit), ...withCost(checkBoardBoat(state, unit, rules, baseMap), () => '0 AP') },
     { id: 'pack', key: 'U', label: 'Pack chute', tight: 'Pack', help: 'Pack up the parachute on this hex, his or anyone\'s, so no patrol finds it', ...withCost(checkPackParachute(state.parachutes, unit, rules), ap) },
     { id: 'pickUp', key: 'P', label: 'Pick up charge', lines: ['Pick up', 'charge'], help: `Take a dropped charge from this hex.${weightFor(unit)}`, ...withCost(checkPickUpCharge(state.droppedCharges, unit, rules), ap) },
     passChargeAction(unit),
@@ -2075,11 +2075,6 @@ function handleEndTurn() {
   if (flyShow) return endFlyShow();
   if (bangTimer) return endBangHold();
   if (state.phase === 'drop') return jumpNow();
-  // The boat's last turn with men still on the beach (M49d): asked first.
-  if (boatGoesWithout().length) {
-    briefing = { kind: 'boatGoes' };
-    return render();
-  }
   endTurnNow();
 }
 
@@ -2091,12 +2086,18 @@ function boatGoesWithout() {
 
 function confirmBoatGoes() {
   briefing = null;
-  endTurnNow();
+  endTurnNow(true);
   render();
 }
 
-function endTurnNow() {
+function endTurnNow(boatAsked = false) {
   if (lessonStep() && !lessonAllows({ kind: 'endTurn' })) return;
+  // The boat's last turn with men still on the beach (M49d): asked first,
+  // from the button or Space.
+  if (!boatAsked && boatGoesWithout().length) {
+    briefing = { kind: 'boatGoes' };
+    return render();
+  }
   undoStack = [];
   pencilsFor = null;
   const before = new Map(state.units.map((u) => [u.id, u.dead]));
