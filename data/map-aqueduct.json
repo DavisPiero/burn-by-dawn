@@ -11,8 +11,8 @@
       "label": "West run",
       "tag": "quiet",
       "description": "The hillside below the aqueduct: olives, terraces and the ridge, with nobody near and the mule track up to the piers. The slowest ground on the map, and the longest walk to the boat.",
-      "from": [3, 6],
-      "to": [-2, 6],
+      "from": [5, 6],
+      "to": [0, 6],
       "jumpAt": 0,
       "spacing": 1,
       "wind": "SW"
@@ -22,8 +22,8 @@
       "label": "North run",
       "tag": "steady",
       "description": "The plough beside the farm: soft landings and the canisters in plain sight, a short walk to the piers. A patrol walks the fields: empty the canisters and pack your chutes.",
-      "from": [7, 1],
-      "to": [15, 1],
+      "from": [9, 1],
+      "to": [17, 1],
       "jumpAt": 1,
       "spacing": 1,
       "wind": "SE"
@@ -33,8 +33,8 @@
       "label": "Valley run",
       "tag": "fast",
       "description": "Astride the torrent above the road bridge: down closest to the bridge and the way to the boat. Some of you will come down in the torrent's bed, and the bridge post is close.",
-      "from": [10, 4],
-      "to": [1, 8],
+      "from": [12, 4],
+      "to": [3, 8],
       "jumpAt": 3,
       "spacing": 1,
       "wind": "W"
@@ -46,7 +46,7 @@
       "id": "post-aqueduct",
       "label": "Aqueduct guard",
       "type": "sentry",
-      "at": [7, 4],
+      "at": [9, 4],
       "facing": "W",
       "sweep": "SE"
     },
@@ -54,7 +54,7 @@
       "id": "post-bridge",
       "label": "Bridge post",
       "type": "sentry",
-      "at": [7, 7],
+      "at": [9, 7],
       "facing": "SW",
       "sweep": "NE"
     },
@@ -62,7 +62,7 @@
       "id": "post-coast",
       "label": "Coast watcher",
       "type": "sentry",
-      "at": [1, 11],
+      "at": [3, 11],
       "facing": "E",
       "sweep": "NE"
     },
@@ -73,8 +73,8 @@
       "facing": "E",
       "loop": false,
       "route": [
-        [1, 1],
-        [7, 1]
+        [3, 1],
+        [9, 1]
       ]
     },
     {
@@ -84,10 +84,10 @@
       "facing": "NE",
       "loop": false,
       "route": [
-        [3, 10],
-        [5, 8],
-        [8, 6],
-        [10, 5]
+        [5, 10],
+        [7, 8],
+        [10, 6],
+        [12, 5]
       ]
     },
     {
@@ -97,8 +97,8 @@
       "facing": "W",
       "loop": false,
       "route": [
-        [3, 5],
-        [-1, 5]
+        [5, 5],
+        [1, 5]
       ]
     }
   ],
@@ -109,11 +109,11 @@
     "type": "reserve",
     "facing": "SW",
     "entryHexes": [
-      [15, 0],
-      [14, 1],
-      [13, 2]
+      [17, 0],
+      [16, 1],
+      [15, 2]
     ],
-    "guardHex": [3, 10],
+    "guardHex": [5, 10],
     "guardFacing": "SE"
   },
   "_reinforcements": "SPEC.md §6, §14. By lorry down the same road when the aqueduct goes up (one squad on Normal, two on Hard, none on Easy; none once the road bridge is down), to posts on the ways onto the beach: the torrent's mouth first, the quiet way down.",
@@ -123,21 +123,21 @@
     "type": "patrol",
     "facing": "SW",
     "entryHexes": [
-      [15, 0],
-      [14, 1],
-      [13, 2]
+      [17, 0],
+      [16, 1],
+      [15, 2]
     ],
     "posts": [
       {
-        "guardHex": [4, 10],
+        "guardHex": [6, 10],
         "guardFacing": "SE"
       },
       {
-        "guardHex": [2, 9],
+        "guardHex": [4, 9],
         "guardFacing": "SE"
       },
       {
-        "guardHex": [-1, 10],
+        "guardHex": [1, 10],
         "guardFacing": "E"
       }
     ]
@@ -150,22 +150,22 @@
       "kind": "aqueduct",
       "primary": true,
       "hexes": [
-        [2, 3],
-        [3, 3],
         [4, 3],
         [5, 3],
         [6, 3],
-        [7, 3]
+        [7, 3],
+        [8, 3],
+        [9, 3]
       ],
       "chargeHexes": [
-        [3, 2],
-        [4, 2],
+        [5, 2],
         [6, 2],
-        [7, 2],
-        [2, 4],
-        [3, 4],
+        [8, 2],
+        [9, 2],
+        [4, 4],
         [5, 4],
-        [6, 4]
+        [7, 4],
+        [8, 4]
       ]
     },
     {
@@ -174,58 +174,58 @@
       "kind": "roadBridge",
       "primary": false,
       "hexes": [
-        [5, 8]
+        [7, 8]
       ],
       "chargeHexes": [
-        [4, 8],
-        [5, 9]
+        [6, 8],
+        [7, 9]
       ]
     }
   ],
   "_exfil": "SPEC.md §10, §14. The beach: three hexes at the water's edge, shut until the boat is in (data/missions.json rules exfil.opensTurn). `exfilArt` picks its picture, the boat. `boatRun` (M41, art only) is the line the boat comes in along, from out at sea to the beach: it is seen on it for the two turns before the beach opens.",
   "exfil": [
-    [1, 12],
-    [2, 12],
-    [3, 12]
+    [3, 12],
+    [4, 12],
+    [5, 12]
   ],
   "exfilArt": "boat",
   "boatRun": {
-    "from": [11, 11],
-    "to": [3, 12]
+    "from": [12, 11],
+    "to": [5, 12]
   },
   "_roadArt": "SPEC.md §11, M42b (the operator's). Art only: roads that are drawn and are no terrain, each a line through hexes' centres, on or off the board. The road to the beach runs on past the exfil and off the bottom of the map, where it came to a dead end; and the way along the top of the aqueduct runs off the map to the west, and to the east one hex on and then away to the north-east over the plough, where it stopped at each end. The hexes under them are what they were, at the same cost. A line may be { through, nudge }: the two beside the aqueduct are lifted a fifth of a hex radius (9 px) to meet the channel in its picture (M42c).",
   "roadArt": [
-    [[1, 12], [0, 13], [-1, 14]],
-    { "through": [[2, 3], [1, 3], [0, 3], [-1, 3], [-2, 3], [-3, 3]], "nudge": [0, -0.2] },
-    { "through": [[7, 3], [8, 3], [9, 2], [10, 1], [11, 0], [12, -1], [13, -2]], "nudge": [0, -0.2] }
+    [[3, 12], [2, 13], [1, 14]],
+    { "through": [[4, 3], [3, 3], [2, 3], [1, 3], [0, 3], [-1, 3]], "nudge": [0, -0.2] },
+    { "through": [[9, 3], [10, 3], [11, 2], [12, 1], [13, 0], [14, -1], [15, -2]], "nudge": [0, -0.2] }
   ],
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword.",
   "places": [
     {
       "name": "Torrente Tragino",
       "kind": "wadi",
-      "at": [4, 6],
+      "at": [6, 6],
       "angle": 62,
       "dy": -0.1
     },
     {
       "name": "Masseria Lauro",
       "kind": "farm",
-      "at": [9, 3],
+      "at": [11, 3],
       "dy": -0.85,
       "dx": 0.5
     },
     {
       "name": "Marina",
       "kind": "village",
-      "at": [0, 10],
+      "at": [2, 10],
       "dy": 2.2,
       "dx": -1.2
     },
     {
       "name": "Monte Carruozzo",
       "kind": "high",
-      "at": [-2, 6],
+      "at": [0, 6],
       "dy": 0.2,
       "dx": 0.4
     }
@@ -249,18 +249,18 @@
     "X": "bridge"
   },
   "rows": [
-    "GGHHHHVHPPPPPPHTWW",
-    "GHHHHHVHPOPYOPTHWW",
-    "GHHHNNVNNPPOPPTHHH",
-    "HHHQQQVQQHBYHTHYGG",
-    "HHHHNNVNNHBOYTHOHG",
-    "HRRHOTVHOOYTTHOYGG",
-    "GRRYHOTVYYTTHHHHHG",
-    "GGROYHTVHTHYHGGHGG",
-    "GOYOHHHTVXHOYHGZZG",
-    "HOOGGYYTTVHOOYZZZZ",
-    "HYYOOBBHTHVHKZZZZZ",
-    "HHOOOBBTSSVZZZZZZZ",
-    "HHHHHKKSSSZZZZZZZZ"
+    "GGGGHHHHVHPPPPPPHT",
+    "GGGHHHHHVHPOPYOPTH",
+    "GGGHHHNNVNNPPOPPTH",
+    "HHHHHQQQVQQHBYHTHY",
+    "HHHHHHNNVNNHBOYTHO",
+    "HHHRRHOTVHOOYTTHOY",
+    "GGGRRYHOTVYYTTHHHH",
+    "GGGGROYHTVHTHYHGGH",
+    "GGGOYOHHHTVXHOYHGZ",
+    "HHHOOGGYYTTVHOOYZZ",
+    "HHHYYOOBBHTHVHKZZZ",
+    "HHHHOOOBBTSSVZZZZZ",
+    "HHHHHHHKKSSSZZZZZZ"
   ]
 }

@@ -25,7 +25,7 @@
       }
     },
     "aqueduct": {
-      "dropCue": [11.8, 2.5],
+      "dropCue": [13.8, 2.5],
       "notes": {
         "aqueduct": [-6.8, 2.2],
         "road-bridge": [6.2, 3],
