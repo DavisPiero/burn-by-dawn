@@ -26,10 +26,12 @@ Last updated: 16 Oct 2026, M49d built on branch `m49d-notes`, awaiting sign-off.
 
 ## Next
 
-1. **The aqueduct's balance, with the operator** (see Open, 1).
-2. **Redraw the aqueduct's board pictures** from the Priority 22 references (aqueduct,
+1. **M49e, the aqueduct rebalanced** (the operator's call, 16 Oct): once M49d is signed
+   off, Claude brings options, each measured by the bot against the §10 targets, and the
+   operator picks. The aqueduct stays as it is until then.
+2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
+3. **Redraw the aqueduct's board pictures** from the Priority 22 references (aqueduct,
    road bridge, boat, canister, terraces, olive grove): a milestone of its own.
-3. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
 
 ## Open with the operator
 
@@ -37,7 +39,8 @@ Last updated: 16 Oct 2026, M49d built on branch `m49d-notes`, awaiting sign-off.
    points since M42. Naive bot now, west / north / valley: Easy 89 / 80 / 66, Normal 66 /
    50 / 70, Hard 24 / 10 / 23, all under target (was 95 / 93 / 93, 79 / 74 / 76, 31 / 15 /
    35). A player who plans one bang hardly notices (tidy bot 85 / 85 / 84). Whether, and how,
-   to win it back is the operator's call. France moved a little (Normal 91 / 84 / 94).
+   to win it back is decided in M49e, from options with bot numbers. France moved a little
+   (Normal 91 / 84 / 94).
 2. **Listen to the kill's burst** (levelled by reading, not by ear). Reload with
    Cmd+Shift+R if nothing seems changed.
 3. **Guesses (M49d):** the swim outline only while he can swim now; signal the boat from on
