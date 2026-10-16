@@ -429,7 +429,12 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M49b, the first playtest's notes, built, awaiting sign-off:** a ✕ on how to play,
+**M49d, the operator's notes after M49c, built, awaiting sign-off:** a charge point that
+has gone off is spent; parachutes under the targets' words; the far bank a man could
+swim to dotted on hover; the kill the gunner's burst again; on the aqueduct, men may
+wait on the beach before the boat and board it with B once it is in, told so by the
+pen, the report, the turn card and a card on its last turn; the aqueduct's map a hex
+east. Before it, **M49b, the first playtest's notes, done:** a ✕ on how to play,
 ◀ CONTENTS on the course's list, a wave on the selected man who could swim now, the
 operator's fanfare for a mission accomplished, a lesson step done that adds and takes
 nothing away, the goods train coming on time to a bridge blown early and stopping short,
