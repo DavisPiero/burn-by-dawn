@@ -48,8 +48,8 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['one primary that takes four charges of eight points (three on Easy, four on Hard since M49e), six charges in three canisters, nobody carrying one', async () => {
-    for (const [level, charges, squads] of [['easy', 3, 0], ['normal', 4, 1], ['hard', 4, 2]]) {
+  ['one primary that takes four charges of eight points (three on Easy, five on Hard: four at M49e, five again since M50), six charges in three canisters, nobody carrying one', async () => {
+    for (const [level, charges, squads] of [['easy', 3, 0], ['normal', 4, 1], ['hard', 5, 2]]) {
       const { map, rules, traits, roster } = await loadAqueduct(level);
       const state = createInitialState(roster, traits, rules, map, 1);
       const { targets } = winTargets(state, rules);
@@ -145,7 +145,9 @@ export default [
     equal(boatEvents(at(14), at(15), rules, map)[0]?.what, 'in', 'in as turn 15 begins');
     equal(boatEvents(at(13), at(14), rules, map).length, 0, 'nothing said in between');
     // Nothing but sea lies between the boat's line and the beach it lands on.
-    assert(map.exfil.every(([q, r]) => terrainIdAt(map, q, r) === 'shingle'), 'the exfil is beach');
+    // The beach, and since M50 the shore rocks at its west end, where a man lies up for the boat.
+    assert(map.exfil.every(([q, r]) => ['shingle', 'rocks'].includes(terrainIdAt(map, q, r))), 'the exfil is beach and shore rocks');
+    assert(map.exfil.some(([q, r]) => terrainIdAt(map, q, r) === 'rocks'), 'a man can wait for the boat in heavy cover on it');
     assert(map.exfil.some(([q, r]) => terrainIdAt(map, q + 1, r) === 'sea'), 'with the sea beside it');
   }],
 
