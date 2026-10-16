@@ -4,12 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 16 Oct 2026, M50 built on branch `m50-aqueduct-art-hard`, not yet signed off.
+Last updated: 16 Oct 2026, M50 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M49e**, signed off and pushed.
-- **M50 is on its branch**, waiting for your sign-off:
+- **`main` is M50**, signed off, merged and pushed; no branch open:
   - **The aqueduct's pictures redrawn** from your six references: the aqueduct whole and
     blown (two tiers of arches, the torrent's bay a real hole so the ravine shows
     through), the road bridge from above, the boat, the canister, terraces and olives.
@@ -22,13 +21,12 @@ Last updated: 16 Oct 2026, M50 built on branch `m50-aqueduct-art-hard`, not yet 
 
 ## Next
 
-1. Your look at M50, then sign-off (merge, push, delete the branch).
-2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
-3. The aqueduct's north-east corner redrawn with you, for Hard's North run.
+1. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
+2. The aqueduct's north-east corner redrawn with you, for Hard's North run.
 
 ## Open with the operator
 
-1. **Look at the redrawn pictures** in the game, and say what to change. My guesses,
+1. **The redrawn pictures:** say what to change if anything. My guesses,
    unconfirmed: the boat's lamp kept green (red means danger here); no ochre road or
    red rocks on the road bridge (colour rules); the aqueduct's arches flatter than your
    reference, to keep the picture inside its own row of hexes.
