@@ -131,7 +131,9 @@ Swim is not offered, and no telephone, so Cut the line is not.
 
 `data/map-aqueduct.json`, redrawn at M42 for the balance, and all of it moved a hex east
 at M49d (the operator's: the east side was hardly used): a column of hillside and crag
-added on the west, the sea's last column gone from the east. What it holds:
+added on the west, the sea's last column gone from the east; and three hexes of wood in
+its south-west corner, below Marina (the operator's, to make that corner worth a look).
+What it holds:
 
 - **The aqueduct** across the north of the board, carried over the **ravine** on its
   piers, two hexes east of where it was first drawn so its west end can be walked
