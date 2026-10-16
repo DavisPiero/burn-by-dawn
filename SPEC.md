@@ -429,7 +429,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M50, the aqueduct redrawn and Hard's careful play rewarded, built:** its board
+**M50, the aqueduct redrawn and Hard's careful play rewarded, done:** its board
 pictures redrawn from the operator's six references (the aqueduct whole and blown in
 two tiers of arches, the road bridge from above, the boat, the canister, terraces and
 olive groves); on Hard the careful player now wins as often as the hunter, by two more
