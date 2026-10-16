@@ -79,6 +79,9 @@ export function createBoard(svg, map, handlers) {
   const overlay = (clipped) => el('g', { 'pointer-events': 'none', ...(clipped ? { 'clip-path': 'url(#board-edge)' } : {}) });
   const art = overlay(true);
   const vision = overlay(true);
+  // Parachutes lie on the ground, under the targets' words and the counters
+  // (M49d, the operator's: they sat on ALL CHARGES SET · GET CLEAR).
+  const chutes = overlay(true);
   const sites = overlay(true);
   const reachable = overlay(true);
   const routes = overlay(false);
@@ -91,7 +94,7 @@ export function createBoard(svg, map, handlers) {
   const risk = overlay(false);
   const effects = overlay(false);
   const speech = overlay(false);
-  const layerList = [terrain, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech];
+  const layerList = [terrain, art, vision, chutes, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech];
   for (const layer of layerList) svg.appendChild(layer);
 
   const hexNodes = new Map();
@@ -105,7 +108,7 @@ export function createBoard(svg, map, handlers) {
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
   return {
-    svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
+    svg, map, corners, handlers, hexNodes, art, vision, chutes, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
     deaths: new Map(), // unit id -> { since, q, r }: a man seen alive, then dead (M21)
@@ -733,7 +736,7 @@ function text(content, attrs) {
  */
 export function renderPieces(layers, state, view) {
   const { corners, map } = layers;
-  for (const layer of [layers.art, layers.vision, layers.sites, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.tokens, layers.risk, layers.effects, layers.speech]) {
+  for (const layer of [layers.art, layers.vision, layers.chutes, layers.sites, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.tokens, layers.risk, layers.effects, layers.speech]) {
     layer.replaceChildren();
   }
   const now = performance.now();
@@ -2512,8 +2515,9 @@ function drawCanisterDots(layers, canister, count) {
   return nodes;
 }
 
-// A parachute (SPEC.md §9) sits on the left edge of its hex, over the counters:
-// the man standing on his own chute is exactly when the player needs to see it.
+// A parachute (SPEC.md §9) sits toward a corner of its hex, on the ground under
+// the counters and the targets' words (M49d); the corner keeps most of it clear
+// of a man standing on it.
 function drawParachute(layers, chute) {
   const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
   const size = MARKER.size;
@@ -2527,7 +2531,7 @@ function drawParachute(layers, chute) {
   const marker = el('use', {
     href: '#marker-parachute', x: p.x + Math.cos(angle) * reach - size / 2, y: p.y + Math.sin(angle) * reach - size / 2, width: size, height: size,
   });
-  layers.tokens.appendChild(marker);
+  layers.chutes.appendChild(marker);
   return marker;
 }
 
