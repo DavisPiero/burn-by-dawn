@@ -429,8 +429,11 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M49e, the aqueduct rebalanced, next:** M49d's spent charge points put it under every
-naive target; options measured by the bot, the operator to pick. Before it, **M49d, the
+**M49e, the aqueduct rebalanced, built, awaiting sign-off:** most of the fall after
+M49d's spent charge points was the bot's (a spare man stood on a fresh point and the
+carrier waited beside him all night), mended by `PICK=1`; Hard's aqueduct takes four
+charges, not five (the operator's pick of the options). Every level inside its target.
+Before it, **M49d, the
 operator's notes after M49c, done:** a charge point that
 has gone off is spent; parachutes under the targets' words; the far bank a man could
 swim to dotted on hover; the kill the gunner's burst again; on the aqueduct, men may

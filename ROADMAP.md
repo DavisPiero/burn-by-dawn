@@ -20,9 +20,7 @@ success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
 
-1. **M49e, the aqueduct rebalanced.** M49d's fix (a spent charge point cannot be blown
-   again) put it under every naive target (DECISIONS.md, M49d). Claude brings options,
-   each measured by the bot, and the operator picks one. Then:
+1. **M49e, the aqueduct rebalanced** (built, awaiting sign-off). Then:
 2. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`), and a milestone of fixes for what they trip on, as M49b was.
 3. **Redraw the aqueduct's board pictures** from the operator's Priority 22 references, and

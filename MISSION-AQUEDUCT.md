@@ -311,32 +311,38 @@ operator to reword.
 
 ### Balance
 
-Targets are §10's. The aqueduct's reference is `MISSION=aqueduct KNIFE=1 SENSE=1 node
-tools/balance-bot.mjs 300 naive` (SENSE: SPEC.md §10). The bot fetches from the
+Targets are §10's. The aqueduct's reference is `MISSION=aqueduct KNIFE=1 SENSE=1 PICK=1
+node tools/balance-bot.mjs 300 naive` (SENSE: SPEC.md §10; PICK since M49e: a man setting
+a charge picks a point no enemy watches and nobody stands on, and a man standing by keeps
+off the points, without which, once spent points could not be used again, a carrier
+waited all night beside a point a spare man stood on). The bot fetches from the
 canisters (the nearest man with room goes, a man the charge would slow only if he is
 well the nearest), works the pier feet nearest the stick, and keeps the boat's time,
 lying up in heavy cover within three hexes of the beach until it opens. It never
 signals the boat or blows the road bridge unless `greedy`.
 
-**Baselines** (M42; win %, west / north / valley):
+**Baselines** (M49e; win %, west / north / valley):
 
 | Level | Naive | Seeds | Target |
 |---|---|---|---|
-| Easy | **95 / 93 / 93** | 200 | 95 or more: North and Valley 2 under |
-| Normal | **79 / 74 / 76** | 300 | 75 to 90: North 1 under |
-| Hard | **31 / 15 / 35** | 400 | 25 to 45: North 10 under |
+| Easy | **96 / 98 / 97** | 300 | 95 or more |
+| Normal | **79 / 85 / 79** | 300 | 75 to 90 |
+| Hard | **43 / 26 / 32** | 300 | 25 to 45 |
 
+Since M49e (spent charge points, M49d; the bot's PICK; Hard four charges, not five).
+Normal, other styles (200 seeds): tidy 86 / 95 / 85; careful 88 / 99 / 89, hunter 96 /
+98 / 89; Hard careful 61 / 63 / 38, hunter 79 / 68 / 74. The naive bot's winning scores
+on Normal have their middle half at 25 to 29 (North 21 to 26, Valley 26 to 30), so the
+rating's bands are kept.
+
+M42's, before the bot's PICK and while spent points could still be blown again (M42c to
+M49d): 95 / 93 / 93, 79 / 74 / 76, 31 / 15 / 35 (Hard at five charges, 400 seeds).
 Since M42c (a squad for a body, standing where the body lay; cover on the plough; the
 farmhouse off the aqueduct's east end). Before M42b: 95 / 95 / 93, 81 / 83 / 80,
 33 / 21 / 40. The naive bot knifes
 whoever it finds itself behind, so the squads are what the North run lost: they come
 in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 87;
 tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
-
-**Since M49d these are out of date.** A spent charge point can no longer be blown again,
-and the bot had been doing it: naive 300, Easy **89 / 80 / 66**, Normal **66 / 50 / 70**,
-Hard **24 / 10 / 23**, under every target (DECISIONS.md, M49d). The tidy bot, who plans
-one bang, hardly moved (Normal 85 / 85 / 84). Re-balancing it is open with the operator.
 
 **Known and left, the operator's calls (M48l):**
 - **The hunter check passes as read for this map.** Killing everything is not the best
@@ -349,7 +355,8 @@ one bang, hardly moved (Normal 85 / 85 / 84). Re-balancing it is open with the o
   one as loud as a gunshot, it cost the player who knifes now and then and not the
   hunter, so it is off here (the numbers are in the engine, `alert.knife` and
   `noise.knife`, null). A seventh enemy is untried.
-- **Hard's North run is well under** (15). Its games are Alarmed before the job in
+- **Hard's North run was well under** (15; since M49e, at four charges, 26, at the
+  target's foot). Its games are Alarmed before the job in
   88% (West 49%): the squads called for bodies, and the reserve, come down the road
   through its landing ground and find parachutes and canisters on their way. Moving
   the flight line west, changing its wind, fewer or no body squads on Hard, four
@@ -373,3 +380,4 @@ on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at
 | **M41** | The map as a draft (`?mission=aqueduct`): terrain drawn in code, the garrison, the objectives, the boat as scenery; the bot taught to fetch and to wait |
 | **M42** | Balance (done): the map and beats redrawn to the alert budget, the boat's turn and dawn measured and kept, the levels against the §10 targets, the rating's bands |
 | **M43** | Words, sounds and the art hand-off (done): the garrison's own chip folder, the six's lines, three made sounds, slots for its title card and winter portraits, the art asked for |
+| **M49e** | Rebalanced after M49d's spent charge points: the bot's PICK, Hard four charges, not five |
