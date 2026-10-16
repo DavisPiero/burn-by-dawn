@@ -26,7 +26,7 @@ which carried the water for the ports of Taranto, Bari and Brindisi, with a subm
 waiting off the coast. The same six men and the same 18×13 board, which puts the
 mountains and the sea closer together than the map of Italy does.
 
-The aqueduct is one big target that takes **four charges** (Easy three, Hard five), and
+The aqueduct is one big target that takes **four charges** (Easy three; Hard four too since M49e), and
 the stick has **six, all of them in three canisters** that come down along the run with
 the men. Nobody lands holding a charge. So the first job of the night is not the walk
 to the target but finding out where the explosive is, and who goes to fetch it.
@@ -140,7 +140,7 @@ What it holds:
   round. The hex the torrent runs under it by is ravine, open, and a man can walk
   through it. **Eight charge points** at the piers' feet, four on each side and two
   either side of the torrent, of which the job needs four: a choice of where to stand,
-  and one side is enough, so the party can work together. (Hard's five need both.)
+  and one side is enough, so the party can work together.
   The **farm** stands at its east end, as it did.
 - **The ravine** runs from the aqueduct south-east down to the sea: the quiet way home,
   under cover all the way and slow.
@@ -205,7 +205,8 @@ Numbers are Normal's, per kind in the mission's rules patch.
 | **Road bridge** | 1 charge, of 2 points | 1 / 1 | +3 | 4 | no reserve, no reinforcements; becomes ravine |
 
 **The win**: `destroyPrimary`, and at least the level's `minimumOut` men **in the boat**
-by dawn. Easy: three charges, and no squad is called. Hard: five charges, two squads,
+by dawn. Easy: three charges, and no squad is called. Hard: four charges as on Normal (five
+until M49e), two squads,
 and **the boat stays two turns** (in on 15, gone with 16).
 
 **Time pencils**: 2 to 6 turns, and **the longest, 6, is the one offered first**
