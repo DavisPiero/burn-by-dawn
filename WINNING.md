@@ -37,9 +37,16 @@ carrying a charge does not take it out: he leaves it on the hex he stepped off f
 
 **The way out on a timetable** (`exfil`; `opensTurn` null in France and on the airfield,
 whose exfil is open all night). Where a mission gives a turn, a **boat** lands on it, and
-**no man may enter an exfil hex before it lands**: until then those hexes are not ground
-at all, to the men or the garrison. Nobody is taken off the board by its landing: a man
-goes out by ending a move there, with the card above if it would end the mission short.
+**nobody goes out before it lands**. The exfil's hexes are ground like any other, to the
+men and the garrison: a man may walk onto them and wait there, seen and shot at as
+anywhere (M49d, the operator's). Once the boat is in, a man ending a move there is out,
+and a man already waiting there goes out by **boarding** it (§4, `B`). Nobody is taken
+off the board by its landing, so boarding is the player's to do, and since on the other
+maps a man there would be out already, the game says so: BOARD! [B] in the pen under
+every man waiting there (tips or not), the turn report and the turn card when the boat
+comes in, his button set in red, and on the boat's last turn a card before the turn
+ends with anyone still on the beach. Going out is asked first, by the card above, if it
+would end the mission short.
 - **How long it stays** (`openFor`): that many turns, the turn it lands included, and
   **the mission ends with the last of them** as it would at dawn. Null: until dawn.
 - **It can be called in early** (`call`: `{ apCost, leadTurns }`, or null): a man beside

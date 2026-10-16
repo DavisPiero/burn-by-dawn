@@ -157,7 +157,7 @@ export default [
     const beside = { q: eq, r: er - 1 };
     const place = (state, hex) => ({ ...state, units: state.units.map((u) => (u.id === man.id ? { ...u, ...hex, ap: u.apMax } : u)) });
     const inland = { ...landed, turn: 6 };
-    equal(checkSignalBoat(inland, inland.units[0], rules, map).reason, 'he must be beside the water at the exfil', 'not from up the valley');
+    equal(checkSignalBoat(inland, inland.units[0], rules, map).reason, 'he must be at the water by the exfil', 'not from up the valley');
     const onBeach = place(inland, beside);
     const check = checkSignalBoat(onBeach, onBeach.units[0], rules, map);
     assert(check.ok, 'from beside the exfil he can');
@@ -286,11 +286,11 @@ export default [
     const north = aqueduct.chargeHexes.filter((h) => h.r === 2);
     const south = aqueduct.chargeHexes.filter((h) => h.r === 4);
     equal(`${north.length} ${south.length}`, '4 4', 'four on each side');
-    const torrent = 5; // the arch the torrent runs under is at q 5 on the aqueduct's row
+    const torrent = 6; // the arch the torrent runs under is at q 6 on the aqueduct's row (M49d: the map a hex east)
     equal(`${north.filter((h) => h.q < torrent).length} ${south.filter((h) => h.q + 1 < torrent).length}`, '2 2', 'two west of the torrent on each side');
     for (const h of aqueduct.chargeHexes) equal(terrainIdAt(map, h.q, h.r), 'arch', `(${h.q},${h.r}) is a pier foot`);
     // The mule track: a way up the west bank at a track's pace, from the road to the piers.
-    for (const r of [5, 6, 7, 8, 9]) equal(terrainIdAt(map, 3, r), 'track', `(3,${r}) is the mule track`);
+    for (const r of [5, 6, 7, 8, 9]) equal(terrainIdAt(map, 4, r), 'track', `(4,${r}) is the mule track`);
     equal(rules.charges.fuseTurns, 6, 'the default timer is the longest');
     equal(`${rules.exfil.opensTurn} ${rules.exfil.openFor}`, '15 3', 'Normal: in on 15 for three turns');
     const hard = (await loadAqueduct('hard')).rules;
@@ -333,9 +333,9 @@ export default [
     const { map } = await loadAqueduct();
     assert(map.roadArt.length === 3, 'three drawn roads');
     equal(map.roadArt[1].nudge[1], -0.2, 'the two beside the aqueduct lifted to its channel');
-    for (const [q, r] of [[1, 3], [0, 3], [-1, 3], [8, 3], [9, 2], [10, 1], [11, 0]]) assert(terrainIdAt(map, q, r) !== 'track', `(${q},${r}) is not a track`);
-    equal(terrainIdAt(map, 8, 3), 'hillside', 'the hex the way leaves the aqueduct by is open hillside');
-    equal(terrainIdAt(map, 8, 4), 'farmhouse', 'the farmhouse that stood on it is down and to the right');
+    for (const [q, r] of [[2, 3], [1, 3], [0, 3], [9, 3], [10, 2], [11, 1], [12, 0]]) assert(terrainIdAt(map, q, r) !== 'track', `(${q},${r}) is not a track`);
+    equal(terrainIdAt(map, 9, 3), 'hillside', 'the hex the way leaves the aqueduct by is open hillside');
+    equal(terrainIdAt(map, 9, 4), 'farmhouse', 'the farmhouse that stood on it is down and to the right');
   }],
 
   ['its words, sounds and pictures (M43): Italian cries, lines that named France replaced, its own folders for chips and portraits, its own title card', async () => {

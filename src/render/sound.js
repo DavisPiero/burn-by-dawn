@@ -704,9 +704,9 @@ const CUES = {
   // The back page (M12): bells for a mission accomplished, a toll for the rest,
   // just after the page has turned.
   suppress: [['gunfire', 0.45, 0]],
-  // The kill (M48j, the operator's): one shot from a Thompson, held a little
-  // under the gunner's burst, as the kill is the quieter of the two.
-  kill: [['silenced-shot', 0.2, 0]],
+  // The kill (M49d, the operator's: the single shot was not satisfying): the
+  // gunner's burst again, a little louder than suppressing, as it is the payoff.
+  kill: [['gunfire', 0.55, 0]],
   // A line cut (M48j): the exchange's or the signals tent's.
   lineCut: [['line-cut', 0.4, 0]],
   // The course passed out (M48j): the stamp coming down on the clipboard.

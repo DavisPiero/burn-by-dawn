@@ -135,6 +135,7 @@ export function createObjectives(map) {
     hexes: o.hexes.map(([q, r]) => ({ q, r })),
     chargeHexes: o.chargeHexes.map(([q, r]) => ({ q, r })),
     detonated: 0, // charges that have gone off on it
+    spent: [], // charge points that have gone off: nothing more is set there (M49d)
     destroyed: false,
     cut: false, // destroyed by a scout cutting the line, not by a charge
   }));
@@ -149,6 +150,14 @@ const onHex = (hex) => (h) => h.q === hex.q && h.r === hex.r;
 /** The objective this hex is a charge hex of, or null. */
 export function objectiveForChargeHex(objectives, hex) {
   return objectives.find((o) => o.chargeHexes.some(onHex(hex))) ?? null;
+}
+
+/**
+ * A charge point that has gone off (M49d, the operator's: two points blown
+ * twice made four): spent, so nothing more is set on it.
+ */
+export function isSpentPoint(objective, hex) {
+  return (objective.spent ?? []).some(onHex(hex));
 }
 
 /** The objective whose footprint or charge hexes include this hex, for hover. */
@@ -203,8 +212,26 @@ export function checkSignalBoat(state, unit, rules, map) {
   if (exfilOpen(state, rules)) return result(cost, 'the boat is in');
   if ((state.boatCalledTurn ?? null) !== null) return result(cost, `the boat has the signal: in on turn ${boatLands(state, rules)}`);
   if (state.turn + call.leadTurns >= rules.exfil.opensTurn) return result(cost, `the boat is already on its way: in on turn ${rules.exfil.opensTurn}`);
-  if (!map.exfil.some(([q, r]) => hexDistance(unit, { q, r }) === 1)) return result(cost, 'he must be beside the water at the exfil');
+  if (!map.exfil.some(([q, r]) => hexDistance(unit, { q, r }) <= 1)) return result(cost, 'he must be at the water by the exfil');
   return { ...result(cost, null), lands: state.turn + call.leadTurns, leaves: state.turn + call.leadTurns + (rules.exfil.openFor ?? 1) - 1 };
+}
+
+/**
+ * Board the boat (SPEC.md §10, M49d, the operator's): a man waiting on an exfil
+ * hex goes out once the boat is in, for no AP. Where the way out is open all
+ * night, ending a move there is enough, and there is nothing to board.
+ */
+export function checkBoardBoat(state, unit, rules, map) {
+  if (boatLands(state, rules) === null) return result(0, 'no boat to board');
+  if (!unit || !onBoard(unit)) return result(0, 'not on the board');
+  if (!isExfil(map, unit)) return result(0, 'he must be on the beach at the exfil');
+  if (!exfilOpen(state, rules)) return result(0, `the boat is in on turn ${boatLands(state, rules)}: wait here for it`);
+  return result(0, null);
+}
+
+/** The men waiting on the exfil for a boat that is in, who have only to board it (M49d). */
+export function waitingToBoard(state, rules, map) {
+  return state.units.filter((u) => checkBoardBoat(state, u, rules, map).ok);
 }
 
 // --- the map as the demolitions have left it -----------------------------------
@@ -221,15 +248,13 @@ const effectiveMaps = new WeakMap();
  * list always gives back the same map object, so callers can compare by
  * identity.
  *
- * `state` (M40, M41b): where the mission's exfil waits for a boat that has not
- * landed (exfilOpen), the map carries `closed`, the exfil's hexes, which
- * nobody may enter (map.js enterCost). Left out, the exfil is taken as open.
- * Only its `turn` and `boatCalledTurn` are read.
+ * The exfil's hexes are ground like any other before the boat is in (M49d, the
+ * operator's): men may wait there, and go out once it lands (moveUnit,
+ * checkBoardBoat). `state` is no longer read.
  */
 export function effectiveMap(map, objectives, rules, state = null) {
-  const shut = state !== null && !exfilOpen(state, rules);
   const cached = effectiveMaps.get(objectives);
-  if (cached && cached.base === map && cached.shut === shut) return cached.map;
+  if (cached && cached.base === map) return cached.map;
   let rows = map.rows;
   for (const o of objectives) {
     const terrain = kindOf(o, rules).destroyedTerrain;
@@ -248,9 +273,8 @@ export function effectiveMap(map, objectives, rules, state = null) {
     const cost = kindOf(o, rules).chargePointMoveCost;
     if (cost != null) for (const h of o.chargeHexes) moveCosts.set(hexKey(h.q, h.r), cost);
   }
-  const closed = shut ? new Set(map.exfil.map(([q, r]) => hexKey(q, r))) : null;
-  const damaged = rows === map.rows && moveCosts.size === 0 && !closed ? map : { ...map, rows, moveCosts, ...(closed ? { closed } : {}) };
-  effectiveMaps.set(objectives, { base: map, shut, map: damaged });
+  const damaged = rows === map.rows && moveCosts.size === 0 ? map : { ...map, rows, moveCosts };
+  effectiveMaps.set(objectives, { base: map, map: damaged });
   return damaged;
 }
 
@@ -412,6 +436,7 @@ export function checkPlaceCharge(state, unit, rules, fuse = undefined) {
   if (!objective) return out('not on a charge hex');
   if (objective.destroyed) return out(`${objective.label} is already destroyed`, objective);
   if (state.charges.some(onHex(unit))) return out('a charge is already set here', objective);
+  if (isSpentPoint(objective, unit)) return out('this point has gone off already — set it on another', objective);
   const set = state.charges.filter((c) => c.objectiveId === objective.id).length;
   if (objective.detonated + set >= kindOf(objective, rules).chargesNeeded) return out(`${objective.label} has all the charges it needs`, objective);
   if (!picked) return out(fuse === undefined ? 'every pencil would go off after dawn' : `no ${fuse}-turn pencil`, objective);
@@ -553,7 +578,7 @@ export function runFusePhase(state, rules) {
       // explosion asks only about the night before it (scoring.js).
       alert: next.explosions === 0 ? { ...next.alert, peakBeforeBang: next.alert.peak ?? 0 } : next.alert,
       explosions: next.explosions + 1,
-      objectives: next.objectives.map((o) => (o.id === objective.id ? { ...o, detonated, destroyed } : o)),
+      objectives: next.objectives.map((o) => (o.id === objective.id ? { ...o, detonated, destroyed, spent: [...(o.spent ?? []), ...charges.map((c) => ({ q: c.q, r: c.r }))] } : o)),
     };
     // Every charge that went off, and its blast radius, so the board can
     // show each bang where it happened, as big as it was (M11).

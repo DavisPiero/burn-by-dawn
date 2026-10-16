@@ -296,7 +296,7 @@ function plannedPencil(state, unit, map, assign, open, fallback) {
   const turnsOver = (cost) => Math.ceil(cost / 3);
   // A man with a second charge has the walk to the next point nobody is making for.
   const taken = new Set([...assign.values()].filter((g) => !g.pickUp).map((g) => M.hexKey(g.q, g.r)));
-  const spare = o.chargeHexes.filter((h) => !taken.has(M.hexKey(h.q, h.r)) && !state.charges.some((c) => c.q === h.q && c.r === h.r));
+  const spare = o.chargeHexes.filter((h) => !taken.has(M.hexKey(h.q, h.r)) && !state.charges.some((c) => c.q === h.q && c.r === h.r) && !SB.isSpentPoint(o, h));
   const onward = (from) => (spare.length ? Math.max(1, turnsOver(Math.min(...spare.map((h) => distanceField(map, [h]).get(M.hexKey(from.q, from.r)) ?? 99)))) : 99);
   let latest = unit.charges > 1 ? onward(unit) : 0;
   let coming = unit.charges;
@@ -391,7 +391,7 @@ function assignCharges(state, map) {
   const objectives = state.objectives.filter((o) => !o.destroyed && (job.includes(o) || (OPTS.secondaries && !MI.isWinTarget(state, rules, o))));
   for (const o of objectives) {
     const need = rules.objectives[o.kind].chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length;
-    let free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r));
+    let free = o.chargeHexes.filter((h) => !state.charges.some((c) => c.q === h.q && c.r === h.r) && !SB.isSpentPoint(o, h));
     // A job target with more points than it wants charges (M42, the aqueduct's
     // six for four): the points the shortest walk from the men who will set them.
     if (SENSE && job.includes(o) && need > 0 && free.length > need) free = nearestPoints(state, map, o, free);
@@ -433,6 +433,8 @@ function assignCharges(state, map) {
 }
 
 function actFor(state, unit, map) {
+  // Waiting on the beach with the boat in (M49d): he boards it.
+  if (SB.checkBoardBoat(state, unit, rules, map0).ok) return S.settleMission(S.boardBoat(state, unit.id, rules, map0), rules, map0);
   const assign = assignCharges(state, map);
   // At his goal: place or cut.
   const goal = assign.get(unit.id);
@@ -502,7 +504,8 @@ function actFor(state, unit, map) {
       const r = risk(map, state, unit, path, hide || (c === here && unit.hidden));
       let d = dist.get(M.hexKey(c.q, c.r)) ?? 999;
       if (goals[0]?.standby) d = Math.max(0, d - 4); // near enough: wait in cover
-      const exfil = SB.isExfil(map, c) && !assign.has(unit.id) && !hunting;
+      // Out by ending his move there, once the boat is in (M49d: before it, only waiting).
+      const exfil = SB.isExfil(map, c) && SB.exfilOpen(state, rules) && !assign.has(unit.id) && !hunting;
       let score = d * 10;
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
       const left = SB.lastTurn(state, rules) - state.turn;
@@ -524,7 +527,7 @@ function actFor(state, unit, map) {
   if (!best) return U.onBoard(unit) ? S.holdUnit(state, unit.id) : null;
   if (FIRE === 'cornered' && best.shot) { const fired = returnFire(state, unit, map); if (fired) return fired; }
   let next = state;
-  if (best.plan) next = S.moveUnit(next, unit.id, best.plan, map0);
+  if (best.plan) next = S.moveUnit(next, unit.id, best.plan, map0, rules);
   const moved = U.unitById(next.units, unit.id);
   if (best.hide && U.onBoard(moved)) next = S.hideUnit(next, unit.id, rules);
   else if (!best.plan) next = S.holdUnit(next, unit.id);

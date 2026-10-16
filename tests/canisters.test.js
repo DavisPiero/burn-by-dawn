@@ -6,8 +6,8 @@ import { canisterPoints, jumpPoints, landCanisters } from '../src/drop.js';
 import { runEnemyPhase } from '../src/enemy.js';
 import { hexDistance } from '../src/hex.js';
 import { forEachCell, hexKey, isInPlay, isPassable, loadJson, loadMap, terrainAt } from '../src/map.js';
-import { effectiveMap, exfilOpen, isExfil } from '../src/sabotage.js';
-import { chooseDropRun, createInitialState, jump, pickUpCharge } from '../src/state.js';
+import { checkBoardBoat, effectiveMap, exfilOpen, isExfil } from '../src/sabotage.js';
+import { boardBoat, chooseDropRun, createInitialState, exfilWouldFail, jump, moveUnit, pickUpCharge } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { chargeCapacity, overloadApLoss, planMove, unitById } from '../src/units.js';
 import { landedState } from './fixtures.js';
@@ -141,7 +141,7 @@ export default [
     equal(again.events.filter((e) => e.kind === 'canisterFound').length, 0, 'not reported twice');
   }],
 
-  ['an exfil with an opening turn cannot be entered before it, and is the way out from then on', async () => {
+  ['an exfil with an opening turn: men may wait on it before, and go out only once the boat is in, by boarding (M49d)', async () => {
     const env = await loadAll();
     const { map, traits, roster } = env;
     const rules = { ...env.rules, exfil: { ...env.rules.exfil, opensTurn: 5 } };
@@ -151,12 +151,21 @@ export default [
     const units = s.units.map((u, i) => (u.id === man.id ? { ...u, q: eq, r: er - 1 } : { ...u, q: 200 + i, r: 0 }));
     assert(!exfilOpen({ turn: 4 }, rules) && exfilOpen({ turn: 5 }, rules), 'shut on turn 4, open on turn 5');
 
-    const shut = effectiveMap(map, s.objectives, rules, { turn: 4 });
-    equal(planMove(shut, units, unitById(units, man.id), { q: eq, r: er }, rules, []), null, 'turn 4: no way onto it');
-    assert(effectiveMap(map, s.objectives, rules, { turn: 3 }) === shut, 'still shut the turn before: the same map back');
-    const open = effectiveMap(map, s.objectives, rules, { turn: 5 });
-    const plan = planMove(open, units, unitById(units, man.id), { q: eq, r: er }, rules, []);
-    assert(plan && plan.affordable, 'turn 5: he can step onto it');
+    const ground = effectiveMap(map, s.objectives, rules, { turn: 4 });
+    const plan = planMove(ground, units, unitById(units, man.id), { q: eq, r: er }, rules, []);
+    assert(plan && plan.affordable, 'turn 4: he can step onto it');
+    const early = { ...s, turn: 4, units };
+    const waiting = moveUnit(early, man.id, plan, map, rules);
+    const there = unitById(waiting.units, man.id);
+    assert(!there.out && there.q === eq && there.r === er, 'turn 4: he waits on it, not out');
+    equal(checkBoardBoat(waiting, there, rules, map).reason, 'the boat is in on turn 5: wait here for it', 'nothing to board yet');
+    equal(exfilWouldFail(early, man.id, plan, rules, map), null, 'no card: he is not going out');
+
+    const landed = { ...waiting, turn: 5 };
+    assert(checkBoardBoat(landed, there, rules, map).ok, 'turn 5: he can board');
+    assert(unitById(boardBoat(landed, man.id, rules, map).units, man.id).out, 'boarded: out');
+    const late = { ...early, turn: 5 };
+    assert(unitById(moveUnit(late, man.id, plan, map, rules).units, man.id).out, 'turn 5: stepping on takes him out, as ever');
   }],
 
   ['an opening turn after dawn, or canisters with nothing in them, are refused', async () => {

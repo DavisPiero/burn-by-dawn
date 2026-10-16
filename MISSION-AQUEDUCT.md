@@ -67,9 +67,10 @@ where they are. When the last charge is taken the canister is pulled under cover
 gone.
 
 **The way out on a timetable** (SPEC.md §10, `exfil` in the rules patch): `opensTurn`
-15, `openFor` 3, `call` `{ apCost: 1, leadTurns: 2 }`. Until the boat lands the exfil
-hexes are surf: no man may enter them, and they are drawn shut, in red, with the turn
-the boat comes. The boat is seen rowing in across the sea for the two turns before it
+15, `openFor` 3, `call` `{ apCost: 1, leadTurns: 2 }`. Until the boat lands nobody goes
+out: men may wait on the beach (M49d, the operator's), in the open and in the coast
+watcher's eye, and its outline is drawn shut, dashed red, with the turn the boat comes.
+Once it is in, a man waiting there boards it with B (SPEC.md §10, the way it is told). The boat is seen rowing in across the sea for the two turns before it
 lands, bow toward the beach. The exfil's hover, the orders, the mission panel and the
 turn card say when it comes and when it goes.
 
@@ -128,7 +129,11 @@ Swim is not offered, and no telephone, so Cut the line is not.
 
 ### The map
 
-`data/map-aqueduct.json`, redrawn at M42 for the balance. What it holds:
+`data/map-aqueduct.json`, redrawn at M42 for the balance, and all of it moved a hex east
+at M49d (the operator's: the east side was hardly used): a column of hillside and crag
+added on the west, the sea's last column gone from the east; and three hexes of wood in
+its south-west corner, below Marina (the operator's, to make that corner worth a look).
+What it holds:
 
 - **The aqueduct** across the north of the board, carried over the **ravine** on its
   piers, two hexes east of where it was first drawn so its west end can be walked
@@ -326,6 +331,11 @@ farmhouse off the aqueduct's east end). Before M42b: 95 / 95 / 93, 81 / 83 / 80,
 whoever it finds itself behind, so the squads are what the North run lost: they come
 in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 87;
 tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
+
+**Since M49d these are out of date.** A spent charge point can no longer be blown again,
+and the bot had been doing it: naive 300, Easy **89 / 80 / 66**, Normal **66 / 50 / 70**,
+Hard **24 / 10 / 23**, under every target (DECISIONS.md, M49d). The tidy bot, who plans
+one bang, hardly moved (Normal 85 / 85 / 84). Re-balancing it is open with the operator.
 
 **Known and left, the operator's calls (M48l):**
 - **The hunter check passes as read for this map.** Killing everything is not the best

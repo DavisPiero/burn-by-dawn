@@ -119,7 +119,7 @@ export function hintsFor(state, rules, extra = {}, max = 3) {
  * (the map's, which no hint is handed). Arguments as hintsFor's.
  * @returns {{ text: string, at: { q: number, r: number }[] | 'exfil' }[]}
  */
-export function pointedHints(state, rules, { diversionOk = false, diversionName = 'RAF diversion' } = {}, max = 3) {
+export function pointedHints(state, rules, { diversionOk = false, diversionName = 'RAF diversion', waiting = [] } = {}, max = 3) {
   const list = [];
   const here = (things) => things.map((t) => ({ q: t.q, r: t.r }));
   // `at`: men, enemies, charges or hexes, anything with a q and an r.
@@ -133,6 +133,13 @@ export function pointedHints(state, rules, { diversionOk = false, diversionName 
   const single = rules.mission.win.condition === 'destroyPrimary';
   const turnsLeft = lastTurn(state, rules) - state.turn;
   const leader = men.find((u) => u.leader);
+
+  // Men on the beach with the boat in (M49d): they go out only by boarding,
+  // which on the other maps they would not have had to do. First, always.
+  if (waiting.length) {
+    const who = waiting.length === 1 ? `${waiting[0].shortName} is` : `${waiting.length} men are`;
+    hints.push(`The boat is in and ${who} on the beach: select ${waiting.length === 1 ? 'him' : 'each'} and press B to board${turnsLeft === 0 ? ' before it leaves at the end of this turn' : ''}.`, waiting);
+  }
 
   // The win is in reach: say how far off it is.
   if (won && out < rules.mission.minimumOut) {

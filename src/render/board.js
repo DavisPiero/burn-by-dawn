@@ -79,6 +79,9 @@ export function createBoard(svg, map, handlers) {
   const overlay = (clipped) => el('g', { 'pointer-events': 'none', ...(clipped ? { 'clip-path': 'url(#board-edge)' } : {}) });
   const art = overlay(true);
   const vision = overlay(true);
+  // Parachutes lie on the ground, under the targets' words and the counters
+  // (M49d, the operator's: they sat on ALL CHARGES SET · GET CLEAR).
+  const chutes = overlay(true);
   const sites = overlay(true);
   const reachable = overlay(true);
   const routes = overlay(false);
@@ -91,7 +94,7 @@ export function createBoard(svg, map, handlers) {
   const risk = overlay(false);
   const effects = overlay(false);
   const speech = overlay(false);
-  const layerList = [terrain, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech];
+  const layerList = [terrain, art, vision, chutes, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech];
   for (const layer of layerList) svg.appendChild(layer);
 
   const hexNodes = new Map();
@@ -105,7 +108,7 @@ export function createBoard(svg, map, handlers) {
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
   return {
-    svg, map, corners, handlers, hexNodes, art, vision, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
+    svg, map, corners, handlers, hexNodes, art, vision, chutes, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
     deaths: new Map(), // unit id -> { since, q, r }: a man seen alive, then dead (M21)
@@ -733,7 +736,7 @@ function text(content, attrs) {
  */
 export function renderPieces(layers, state, view) {
   const { corners, map } = layers;
-  for (const layer of [layers.art, layers.vision, layers.sites, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.tokens, layers.risk, layers.effects, layers.speech]) {
+  for (const layer of [layers.art, layers.vision, layers.chutes, layers.sites, layers.reachable, layers.routes, layers.path, layers.highlight, layers.counters, layers.tokens, layers.risk, layers.effects, layers.speech]) {
     layer.replaceChildren();
   }
   const now = performance.now();
@@ -756,6 +759,8 @@ export function renderPieces(layers, state, view) {
   if (view.reachable) drawReachable(layers, view.reachable, view.dangerWash);
   const outlines = [
     view.reachable && { area: view.reachable, casing: [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth], line: [PATH.reachableEdge, PATH.reachableEdgeWidth], extra: {} },
+    // The far bank he could swim to this turn (M49d), in the range's blue, dotted.
+    view.swimArea?.size && { area: view.swimArea, casing: [PATH.reachableEdgeCasing, PATH.swimEdgeCasingWidth], line: [PATH.reachableEdge, PATH.swimEdgeWidth], extra: { 'stroke-dasharray': PATH.swimDash, 'stroke-linecap': 'round' } },
     view.commandArea && { area: view.commandArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.dash } },
     // The inner band, where his orders are strongest (M12), in a finer dash.
     view.commandCloseArea && { area: view.commandCloseArea, casing: [COMMAND.casing, COMMAND.casingWidth], line: [COMMAND.stroke, COMMAND.width], extra: { 'stroke-dasharray': COMMAND.closeDash } },
@@ -2158,14 +2163,10 @@ function drawSites(layers, state, view) {
   const { map } = layers;
   const areaOf = (hexes) => new Map(hexes.map((h) => [hexKey(h.q, h.r), h]));
 
-  // Shut until its boat is in (M41b, the operator's): the sea washed over its
-  // hexes and its outline and label in danger red, dashed; open, green as ever.
+  // Shut until its boat is in (M41b, the operator's): its outline and label in
+  // danger red, dashed; open, green as ever. No wash over it since M49d: it is
+  // beach a man may wait on.
   if (view.exfilShut) {
-    for (const h of view.exfil) {
-      layers.sites.appendChild(el('polygon', {
-        points: cornersToPoints(axialToPixel(h.q, h.r, map.hexSize), layers.corners), fill: EXFIL.shutWash, 'fill-opacity': EXFIL.shutWashOpacity, 'pointer-events': 'none',
-      }));
-    }
     drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth]]);
     drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.shutStroke, EXFIL.width]], { 'stroke-dasharray': EXFIL.shutDash });
   } else {
@@ -2256,8 +2257,9 @@ function drawSites(layers, state, view) {
     // Every charge it needs is set: nowhere left to put one.
     if (view.chargedObjectiveIds.has(objective.id)) continue;
     for (const h of objective.chargeHexes) {
-      // A charge set here is drawn in the point's place, below (M26d).
-      if (state.charges.some((c) => c.q === h.q && c.r === h.r)) continue;
+      // A charge set here is drawn in the point's place, below (M26d); one
+      // gone off is spent, its scorch left to say so (M49d).
+      if (state.charges.some((c) => c.q === h.q && c.r === h.r) || (objective.spent ?? []).some((s) => s.q === h.q && s.r === h.r)) continue;
       const p = axialToPixel(h.q, h.r, map.hexSize);
       const inset = layers.corners.map((c) => `${p.x + c.x * OBJECTIVE.pointInset},${p.y + c.y * OBJECTIVE.pointInset}`).join(' ');
       // A target with a lead to its point (the bowser, the bomb store) is
@@ -2511,8 +2513,9 @@ function drawCanisterDots(layers, canister, count) {
   return nodes;
 }
 
-// A parachute (SPEC.md §9) sits on the left edge of its hex, over the counters:
-// the man standing on his own chute is exactly when the player needs to see it.
+// A parachute (SPEC.md §9) sits toward a corner of its hex, on the ground under
+// the counters and the targets' words (M49d); the corner keeps most of it clear
+// of a man standing on it.
 function drawParachute(layers, chute) {
   const p = axialToPixel(chute.q, chute.r, layers.map.hexSize);
   const size = MARKER.size;
@@ -2526,7 +2529,7 @@ function drawParachute(layers, chute) {
   const marker = el('use', {
     href: '#marker-parachute', x: p.x + Math.cos(angle) * reach - size / 2, y: p.y + Math.sin(angle) * reach - size / 2, width: size, height: size,
   });
-  layers.tokens.appendChild(marker);
+  layers.chutes.appendChild(marker);
   return marker;
 }
 

@@ -184,7 +184,7 @@ board must read at a glance.
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all
-  game.
+  game, on the ground: under the counters and the targets' words (M49d).
 - A man killed floats straight up about a hex and fades over his body before the turn's
   card is laid.
 - **An enemy that raises the alarm says so** (a mission's `words.cries`): a small
@@ -197,8 +197,8 @@ board must read at a glance.
 - **A target with every charge it needs set** says ALL CHARGES SET · GET CLEAR in red
   under its name until it goes up; the pen note of the same words is only for the
   moment it is set.
-- **A shut exfil** (a boat not yet in, §10) has the sea washed over its hexes, its
-  outline dashed in danger red and its label in red with the turn (BOAT · TURN 15);
+- **A shut exfil** (a boat not yet in, §10) has its
+  outline dashed in danger red (no wash of the sea since M49d: men may wait on it) and its label in red with the turn (BOAT · TURN 15);
   open, it is green and reads EXFIL. **The boat** is drawn bow toward the beach, a
   little faint out at sea, and is rowed in from where it stood at each turn's start.
 - **A man about to be fired on** (in contact, and a free enemy would spot him again as

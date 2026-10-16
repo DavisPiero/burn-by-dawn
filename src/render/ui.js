@@ -860,7 +860,7 @@ export function describeEvent(event, place) {
     case 'boat': return {
       called: `The boat has the signal and is coming in: on the beach on turn ${event.opens}, gone at the end of turn ${event.leaves}.`,
       sighted: `The boat is sighted, coming in: on the beach on turn ${event.opens}.`,
-      in: `The boat is in. The way out is open until the end of turn ${event.leaves}.`,
+      in: `The boat is in. The way out is open until the end of turn ${event.leaves}.${event.waiting ? ` ${event.waiting === 1 ? 'The man' : `The ${event.waiting} men`} on the beach must board it: select ${event.waiting === 1 ? 'him' : 'each'} and press B.` : ''}`,
     }[event.what];
     case 'explosion': if (event.setOffBy) return `The ${event.label} beside it goes up with the ${event.setOffBy}. Destroyed.`;
       return event.destroyed ? `BOOM — the ${event.label} goes up. Destroyed.` : `BOOM — a charge goes off on the ${event.label}. It still stands.`;

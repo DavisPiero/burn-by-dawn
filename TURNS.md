@@ -105,14 +105,21 @@ gives the full cost and, when it cannot be used, why not.
 - **Swim** — a **full turn**. From a hex beside the canal, across one canal hex, to any
   free hex on the far bank beside that same water hex. Never onto or from the lock or the
   bridge, which are not banks. Where the canal is two hexes wide there is no swim. A
-  wounded man cannot swim. He cannot hide as he comes out, and is tested on the far bank
+  wounded man cannot swim. While the selected man can swim now, the far-bank hexes he
+  could reach are outlined beyond his move range in its blue, dotted (M49d). He cannot hide as he comes out, and is tested on the far bank
   like any hex he enters. It exists so a man is never stranded by his own demolition, and
   so the telephone exchange can be reached without crossing the watched bridge deck: the
   bridge guards the bonus, never the mission. `requiresDestroyed` can gate it on an
   objective.
 - **Pack a parachute** — 1 AP, standing on one, his own or anyone's (§9).
+- **Board the boat** (only where a mission's way out is a boat, §10) — 0 AP, `B`, by a
+  man **on an exfil hex once the boat is in**: he is out. Men may wait on the beach
+  before it comes, and on the other maps a man there would be out already, so a man
+  waiting with the boat in wears BOARD! [B] in the pen and his button is set in red. It
+  asks first, by the exfil's card, if it would end the mission short. Its button takes
+  Signal's place once the boat is in.
 - **Signal the boat** (`exfil.call`; only where a mission's way out is a boat that can
-  be called, §10) — 1 AP, by a man **beside an exfil hex**, once a mission. The boat
+  be called, §10) — 1 AP, by a man **on or beside an exfil hex**, once a mission. The boat
   lands two turns after the turn he signals and stays its three, and the mission ends
   when it goes. It is never done at a keypress: a card says the turn it will land, the
   turn it will be gone, who is not near the beach yet and whether the job is done, and
@@ -198,5 +205,5 @@ to be casual while still being strategic.
   `R` patrol-route overlay, `?` or `/` how to play (§11: a card of its own, apart from the orders), `M` sound on or off. Actions:
   `H` hide, `S` suppress or return fire, `K` kill, `N` knife, `T` throw a stone, `A` stabilise (aid),
   `P` pick up a charge, `E` pass a charge, `C` place a charge, `X` cut the line, `W` swim,
-  `U` pack a parachute, `B` signal the boat, `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
+  `U` pack a parachute, `B` signal the boat (or board it, once it is in), `D` RAF diversion, `Z` undo. An action with a target outlines where it can go and waits
   for a click; `Esc` backs out of it.

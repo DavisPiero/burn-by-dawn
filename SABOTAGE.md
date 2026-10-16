@@ -44,7 +44,9 @@ A charge sets a **3-turn fuse** by default. The fuse burns down in every fuse ph
 including the one at the end of the turn it was placed, and the charge goes off at 0: a
 charge placed on turn N goes off at the end of turn N+2. Charges can be placed and left.
 An objective is destroyed once as many of its charges have gone off as it needs, in the
-same turn or not.
+same turn or not. **A charge point that has gone off is spent** (M49d, the operator's:
+two points blown twice made the aqueduct's four): nothing more is set on it, and its
+point is no longer drawn, its scorch left to say so.
 
 A trooper within a charge's **kill radius** at detonation dies, wounded or not. Inside the
 **blast radius** but past the kill radius (only the fuel dump has such a ring) he takes
