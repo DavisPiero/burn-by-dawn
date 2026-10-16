@@ -330,6 +330,11 @@ whoever it finds itself behind, so the squads are what the North run lost: they 
 in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 87;
 tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
 
+**Since M49d these are out of date.** A spent charge point can no longer be blown again,
+and the bot had been doing it: naive 300, Easy **89 / 80 / 66**, Normal **66 / 50 / 70**,
+Hard **24 / 10 / 23**, under every target (DECISIONS.md, M49d). The tidy bot, who plans
+one bang, hardly moved (Normal 85 / 85 / 84). Re-balancing it is open with the operator.
+
 **Known and left, the operator's calls (M48l):**
 - **The hunter check passes as read for this map.** Killing everything is not the best
   play: every man hunting, sappers too (`HUNTERS=all`), wins 3 / 3 / 12 on Normal. What
