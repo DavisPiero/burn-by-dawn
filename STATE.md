@@ -4,14 +4,14 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 16 Oct 2026, M49e built on branch `m49e-aqueduct-balance`, awaiting sign-off.
+Last updated: 16 Oct 2026, M49e signed off, merged and pushed.
 
 ## Where we are
 
 - **`main` is M49d**, signed off, merged and pushed: spent charge points, parachutes under
   the targets' words, the dotted swim outline, the kill's burst, the aqueduct's beach to
   wait on and Board boat on B, its map a hex east with woods in the south-west corner.
-- **`m49e-aqueduct-balance` is M49e**, not merged:
+- **`main` is now M49e**, signed off, merged and pushed; no branch open:
   - Most of the aqueduct's fall after M49d was the bot's fault: a spare man stood on a
     fresh charge point and the carrier waited beside him all night. The bot's new `PICK=1`
     mends it and is now in the aqueduct's reference.
@@ -22,9 +22,8 @@ Last updated: 16 Oct 2026, M49e built on branch `m49e-aqueduct-balance`, awaitin
 
 ## Next
 
-1. Sign-off of M49e (merge, push).
-2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
-3. **Redraw the aqueduct's board pictures** from the Priority 22 references (aqueduct,
+1. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
+2. **Redraw the aqueduct's board pictures** from the Priority 22 references (aqueduct,
    road bridge, boat, canister, terraces, olive grove): a milestone of its own.
 
 ## Open with the operator

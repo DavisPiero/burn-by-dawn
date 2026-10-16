@@ -429,7 +429,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M49e, the aqueduct rebalanced, built, awaiting sign-off:** most of the fall after
+**M49e, the aqueduct rebalanced, done:** most of the fall after
 M49d's spent charge points was the bot's (a spare man stood on a fresh point and the
 carrier waited beside him all night), mended by `PICK=1`; Hard's aqueduct takes four
 charges, not five (the operator's pick of the options). Every level inside its target.
