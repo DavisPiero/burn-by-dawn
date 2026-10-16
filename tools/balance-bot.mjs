@@ -33,7 +33,9 @@
 // bot never goes looking for one. Without it the bot never uses the knife.
 // SENSE=1 (M42) mends two faults in his play (below): the aqueduct's reference.
 // PICK=1 (M49e): of a target's free charge points, those no enemy would see a
-// man on come first (since M49d a point that has gone off is spent).
+// man on come first (since M49d a point that has gone off is spent); since
+// M50 also a carrier sets his charge on the free point he stands on, and a
+// fetcher is not sent to a pile a man who cannot take from it stands on.
 //
 // PACK=1 has every man pack the parachute he landed on, first thing on turn 1.
 // Without it the bot never packs, so `chutes found` is what packing would save.
@@ -360,7 +362,8 @@ function goalFor(state, unit, map, assign) {
 function lieUpHexes(map) {
   const out = [];
   M.forEachCell(map, (q, r) => {
-    if (!M.isInPlay(map, q, r) || SB.isExfil(map, { q, r })) return;
+    // An exfil hex in heavy cover counts (M50): he waits on it and boards from it.
+    if (!M.isInPlay(map, q, r)) return;
     const terrain = M.terrainAt(map, q, r);
     if (!M.isPassable(terrain) || terrain.cover !== 'heavy') return;
     if (map.exfil.some(([eq, er]) => (Math.abs(q - eq) + Math.abs(q + r - eq - er) + Math.abs(r - er)) / 2 <= 3)) out.push({ q, r });
@@ -415,6 +418,12 @@ function assignCharges(state, map) {
       const open = free.filter((h) => !state.units.some((u) => U.onBoard(u) && !u.charges && u.q === h.q && u.r === h.r));
       if (open.length >= need) free = open;
     }
+    // A carrier already standing on a free point sets his charge there (PICK, M50):
+    // sent to another, he stood on it all night, blocking the canister under him.
+    if (PICK && need > 0) {
+      const under = free.filter((h) => state.units.some((u) => U.onBoard(u) && u.charges > 0 && u.q === h.q && u.r === h.r));
+      free = [...under, ...free.filter((h) => !under.includes(h))];
+    }
     wanted.push(...free.slice(0, Math.max(0, need)).map((h) => ({ ...h, o })));
   }
   const carriers = state.units.filter((u) => U.onBoard(u) && u.charges > 0);
@@ -423,7 +432,11 @@ function assignCharges(state, map) {
   // down in canisters; elsewhere a carrier has one, and the count is the same).
   const short = wanted.length - carriers.reduce((n, u) => n + u.charges, 0);
   if (short > 0) {
-    for (const dc of state.droppedCharges.slice(0, short)) {
+    // A pile a man stands on who cannot take from it comes last (PICK, M50):
+    // the fetcher sent to it could never step onto his hex.
+    const blocked = (dc) => state.units.some((u) => U.onBoard(u) && u.q === dc.q && u.r === dc.r && !(u.charges < U.chargeRoom(u, rules) && U.canCarryCharges(u)));
+    const pile = PICK ? [...state.droppedCharges].sort((a, b) => blocked(a) - blocked(b)) : state.droppedCharges;
+    for (const dc of pile.slice(0, short)) {
       // Any man with room for one more; where the charges are in canisters, a
       // man it would slow (M38's weight) goes only if he is well the nearest.
       const fetchers = state.units.filter((u) => U.onBoard(u) && u.charges < U.chargeRoom(u, rules) && U.canCarryCharges(u) && !assign.has(u.id));

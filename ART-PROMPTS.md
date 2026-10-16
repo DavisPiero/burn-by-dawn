@@ -710,7 +710,10 @@ sprig of olive tucked in his collar.
 
 ---
 
-## Priority 22 — reference art for the aqueduct's board (for Claude to redraw) — **to make**
+## Priority 22 — reference art for the aqueduct's board (for Claude to redraw) ✅ done (2026-10-16)
+
+Supplied by the operator (`assets/reference/`, all six; no blown aqueduct, so Claude drew
+that from the whole one) and redrawn in code at M50.
 
 As Priorities 5, 9 and 15: the board's pictures stay SVG, since they are recoloured,
 blown up and drawn at 30 to 90 px, so these are **references**, the look to match, and
@@ -987,7 +990,10 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   palette as it stands (a pale wash of the cold blue for winter ground, no new colour):
   the hillside, crags, the ravine with its torrent, terraces, olive groves, plough,
   shingle, shore rocks and the sea; the aqueduct whole and blown, the road bridge whole
-  and blown, the ship's boat and the supply canister. Since M43 the winter ground's wash
+  and blown, the ship's boat and the supply canister. Redrawn at M50 from the operator's
+  references (Priority 22): the aqueduct in two tiers of arches, the road bridge from above
+  with its parapets, the whaler with its sailor, the canister with its spilled chute, the
+  terrace walls as courses of stone over a green bank, the olives as ragged crowns. Since M43 the winter ground's wash
   is a little stronger (the cold blue at 0.18 over the paper, 0.1 before), and the
   hand-off is written: its title card (Priority 20), winter portraits (21), references
   to redraw the board's pictures from (22) and its sounds (23). The Italian chips and

@@ -2464,18 +2464,38 @@ function rockFace(x, y, s = 1) {
   ];
 }
 
-// A dry-stone terrace wall across the hex, bowed with the slope.
+// A dry-stone terrace wall across the hex, bowed with the slope (M50, the
+// operator's reference): a course of pale stones in ink, the bank's shadow in
+// green under it. Every wall meets the hex's sides at the same heights in
+// every variant, so neighbouring terraces join into one hillside of walls.
 function terraceWall(y, bow) {
-  const d = `M12 ${y} Q40 ${y + bow} 68 ${y}`;
-  return [line(d, 4.4), line(d, 2.4, 'stroke-paper', { 'stroke-dasharray': '6 2.5' })];
+  const d = `M0 ${y} Q40 ${y + bow} 80 ${y}`;
+  const shade = `M0 ${y + 1} Q40 ${y + bow + 1} 80 ${y + 1} V${y + 7} Q40 ${y + bow + 5} 0 ${y + 7} Z`;
+  return [
+    fill(shade, 'green', { 'fill-opacity': 0.55 }),
+    line(d, 5.2), line(d, 3.2, 'stroke-paper', { 'stroke-dasharray': '4.2 1.6', 'stroke-linecap': 'butt' }),
+  ];
 }
 
-// An olive: a small grey-green crown over its shadow.
+// An olive (M50, the operator's reference): a ragged grey-green crown, small,
+// over a solid ink shadow down and to the right, a twist of trunk under it.
+function oliveCrown(x, y, s, turn) {
+  let d = '';
+  const n = 11;
+  for (let i = 0; i < n * 2; i++) {
+    const a = (i / (n * 2)) * Math.PI * 2 + turn;
+    const r = (i % 2 === 0 ? 8.4 + ((i * 7) % 3) * 0.5 : 6.9) * s;
+    d += `${i === 0 ? 'M' : 'L'}${(x + Math.cos(a) * r).toFixed(1)} ${(y + Math.sin(a) * r).toFixed(1)} `;
+  }
+  return `${d}Z`;
+}
 function oliveTree(x, y, s = 1) {
+  const turn = (x * 7 + y * 3) % 10 / 10;
+  const crown = oliveCrown(x, y, s, turn);
   return [
-    svg('ellipse', { cx: x + 3 * s, cy: y + 5 * s, rx: 7 * s, ry: 3 * s, class: 'ink', opacity: 0.25 }),
-    circle(x, y, 6.5 * s, 'paper'), circle(x, y, 6.5 * s, 'green', { 'fill-opacity': 0.6 }), ring(x, y, 6.5 * s, 1.3),
-    line(`M${x - 2.5 * s} ${y - 1 * s} q${2 * s} ${-2.5 * s} ${4.5 * s} ${-0.5 * s}`, 0.9, 'stroke-ink', { opacity: 0.55 }),
+    fill(crown, 'ink', { transform: `translate(${2.6 * s} ${2.2 * s})` }),
+    line(`M${x} ${y + 3 * s} l-1.5 ${4.5 * s} M${x} ${y + 3 * s} l1.8 ${4 * s}`, 1, 'stroke-ink'),
+    fill(crown, 'paper'), fill(crown, 'green', { 'fill-opacity': 0.85 }), fill(crown, toneClass('green', 50)), line(crown, 1.1),
   ];
 }
 
@@ -2503,11 +2523,11 @@ const ITALY_TERRAIN = {
   'terrain-ravine-01': () => [...torrent('M30 22 Q46 36 36 50 T48 74'), ...wadiStone(26, 44, 4, 3), ...wadiStone(52, 58, 4.4, 3.2)],
   'terrain-ravine-02': () => [...torrent('M46 20 Q30 38 44 52 T34 76'), ...wadiStone(54, 38, 3.6, 2.6), ...wadiStone(28, 62, 4.2, 3)],
   'terrain-ravine-03': () => [...torrent('M38 20 Q50 40 38 54 T46 76'), ...wadiStone(26, 34, 3.2, 2.4), ...wadiStone(54, 66, 3.6, 2.6)],
-  'terrain-terrace-01': () => [...terraceWall(34, 5), ...terraceWall(50, 6), ...terraceWall(66, 4)],
-  'terrain-terrace-02': () => [...terraceWall(30, -4), ...terraceWall(46, -5), ...terraceWall(62, -4)],
-  'terrain-olives-01': () => [...oliveTree(28, 38), ...oliveTree(50, 46, 0.9), ...oliveTree(36, 62, 0.95)],
-  'terrain-olives-02': () => [...oliveTree(46, 34, 0.95), ...oliveTree(28, 52), ...oliveTree(52, 62, 0.9)],
-  'terrain-olives-03': () => [...oliveTree(34, 36, 0.9), ...oliveTree(54, 48), ...oliveTree(30, 62, 0.95)],
+  'terrain-terrace-01': () => [...terraceWall(30, 6), ...terraceWall(48, 7), ...terraceWall(66, 5)],
+  'terrain-terrace-02': () => [...terraceWall(30, -5), ...terraceWall(48, -6), ...terraceWall(66, -4)],
+  'terrain-olives-01': () => [...wadiStone(54, 66, 1.8, 1.3), ...oliveTree(28, 36), ...oliveTree(52, 44, 0.9), ...oliveTree(34, 60, 0.95)],
+  'terrain-olives-02': () => [...wadiStone(26, 68, 1.6, 1.2), ...oliveTree(46, 32, 0.95), ...oliveTree(26, 50), ...oliveTree(52, 60, 0.9)],
+  'terrain-olives-03': () => [...wadiStone(50, 30, 1.7, 1.2), ...oliveTree(32, 36, 0.9), ...oliveTree(54, 50), ...oliveTree(30, 62, 0.95)],
   'terrain-plough-01': () => [line('M20 34 L58 30 M18 44 L62 40 M18 54 L62 50 M22 64 L60 60', 1.1, 'stroke-ink', { opacity: 0.24 })],
   'terrain-plough-02': () => [line('M22 30 L56 36 M18 40 L62 46 M18 50 L62 56 M24 60 L58 66', 1.1, 'stroke-ink', { opacity: 0.24 })],
   // The foot of a pier: dressed stone laid in courses, seen from above.
@@ -2525,101 +2545,178 @@ const ITALY_TERRAIN = {
   'terrain-sea-02': () => [line('M30 32 Q36 28 42 32 Q48 36 54 32 M20 54 Q26 50 32 54 Q38 58 44 54', 1.4, 'stroke-paper', { opacity: 0.5 })],
 };
 
-// The aqueduct, seen from the south and a little above, as the rail bridge is:
-// the channel on top with its water, the masonry face below it with an arch
-// between every pair of piers. Six hexes long, a hex to 80. The fourth hex is
-// the torrent's: there the face is left open, pier to pier, so the ravine
+// The aqueduct, seen from the south and a little above, as the rail bridge is,
+// redrawn from the operator's reference (M50): pale dressed stone, the open
+// channel along the top with its water, and two tiers of round arches on
+// square piers, an upper arcade over a tall lower one, a pier on every hex's
+// edge and a bay to every hex. Six hexes long, a hex to 80. The fourth bay is
+// the torrent's: its lower arch is left open, pier to pier, so the ravine
 // printed under it runs on through and reads as the way under (M41b, the
-// operator's), with only the channel carried across overhead.
-function aqueduct(blown) {
+// operator's); the other lower arches are dark, a wall the men go round.
+const AQ = { top: 22, channel: [26, 31], cornice: 34, upper: [37, 50], string: 53, foot: 80, gap: 3, bays: 6, pier: 15 };
+function aqueductArcade() {
   const parts = [];
-  const GAP = [248, 312]; // the open arch over the torrent
-  // Whole, the face is two runs either side of the torrent; blown, the pier
-  // west of it is gone and the two spans it carried with it.
-  const faces = blown ? [[4, 152], [344, 476]] : [[4, GAP[0]], [GAP[1], 476]];
-  const tops = blown ? [[4, 152], [344, 476]] : [[4, 476]];
-  for (const [x0, x1] of faces) parts.push(fill(`M${x0} 72 H${x1} V80 H${x0} Z`, 'ink', { 'fill-opacity': 0.22 }));
-  for (const [x0, x1] of faces) {
-    const face = `M${x0} 46 H${x1} V72 H${x0} Z`;
-    parts.push(...inked(face, 'paper', 2), fill(face, toneClass('ink', 20)));
-    for (let k = 0; k < 6; k++) {
-      const cx = 40 + 80 * k, r = 15;
-      if (k === 3 || cx - r < x0 + 4 || cx + r > x1 - 4) continue;
-      const arch = `M${cx - r} 72 V66 A${r} 10 0 0 1 ${cx + r} 66 V72 Z`;
-      parts.push(fill(arch, 'ink', { 'fill-opacity': 0.75 }), line(arch, 1.4));
+  const W = 80 * AQ.bays;
+  // Every arch: the dark of the opening, then its ring of voussoirs.
+  const arch = (cx, half, spring, rise, bottom) => `M${cx - half} ${bottom} V${spring} A${half} ${rise} 0 0 1 ${cx + half} ${spring} V${bottom} Z`;
+  const half = 40 - AQ.pier;
+  const gx = 40 + 80 * AQ.gap;
+  // Its shadow on the ground under it, broken where the torrent runs through.
+  parts.push(fill(`M2 ${AQ.foot} H${gx - half} V${AQ.foot + 6} H10 Z M${gx + half} ${AQ.foot} H${W - 2} L${W - 8} ${AQ.foot + 6} H${gx + half} Z`, 'ink', { 'fill-opacity': 0.22 }));
+  // The whole face in pale stone, with the torrent's bay cut clean out of it
+  // so the ravine printed under it shows through.
+  const face = `M0 ${AQ.top} H${W} V${AQ.foot} H0 Z`;
+  const cut = `${face} ${arch(gx, half, 71, 14, AQ.foot)}`;
+  parts.push(fill(cut, 'paper', { 'fill-rule': 'evenodd' }), fill(cut, toneClass('ink', 10), { 'fill-rule': 'evenodd' }));
+  for (let k = 0; k < AQ.bays; k++) {
+    const cx = 40 + 80 * k;
+    const up = arch(cx, half, 45, 6, AQ.upper[1]);
+    parts.push(fill(up, 'ink', { 'fill-opacity': 0.6 }), line(up, 1.4));
+    parts.push(line(`M${cx - half - 3} 45 A${half + 3} 9 0 0 1 ${cx + half + 3} 45`, 0.9, 'stroke-ink', { opacity: 0.5 }));
+    const low = arch(cx, half, 71, 14, AQ.foot);
+    if (k === AQ.gap) {
+      // The torrent's bay: open, only the soffit and the piers' inner edges.
+      parts.push(line(`M${cx - half} ${AQ.foot} V71 A${half} 14 0 0 1 ${cx + half} 71 V${AQ.foot}`, 1.4));
+    } else {
+      parts.push(fill(low, 'ink', { 'fill-opacity': 0.66 }), line(low, 1.4));
+      // The hillside seen through it, a lighter slope across the dark.
+      parts.push(fill(`M${cx - half} ${AQ.foot} L${cx - half} ${AQ.foot - 5 - (k % 3) * 2} Q${cx} ${AQ.foot - 12 + (k % 2) * 5} ${cx + half} ${AQ.foot - 7} V${AQ.foot} Z`, toneClass('ink', 35), { opacity: 0.9 }));
     }
+    parts.push(line(`M${cx - half - 3} 71 A${half + 3} 17 0 0 1 ${cx + half + 3} 71`, 0.9, 'stroke-ink', { opacity: 0.5 }));
   }
-  for (const [x0, x1] of tops) {
-    const top = `M${x0} 28 H${x1} V46 H${x0} Z`;
-    parts.push(...inked(top, 'paper', 2), fill(`M${x0 + 2} 33 H${x1 - 2} V41 H${x0 + 2} Z`, 'blue'));
-    let joints = '';
-    for (let x = x0 + 20; x < x1 - 6; x += 20) joints += `M${x} 28 V33 M${x} 41 V46 `;
-    parts.push(line(joints, 0.9, 'stroke-ink', { opacity: 0.5 }), line(`M${x0 + 2} 37 H${x1 - 2}`, 1, 'stroke-paper', { opacity: 0.6, 'stroke-dasharray': '9 7' }));
+  // The piers' shaded east faces, and the pilaster lines down them.
+  let pilasters = '';
+  for (let k = 0; k <= AQ.bays; k++) {
+    const x = 80 * k;
+    if (k > 0 && k < AQ.bays) parts.push(fill(`M${x + 2} ${AQ.cornice + 2} H${x + AQ.pier - 0.5} V${AQ.foot} H${x + 2} Z`, toneClass('ink', 20)));
+    pilasters += `M${x + 2} ${AQ.cornice + 2} V${AQ.foot} `;
   }
-  if (!blown) {
-    // The soffit of the open arch: a light line under the channel, no wall.
-    parts.push(line(`M${GAP[0]} 60 Q${(GAP[0] + GAP[1]) / 2} 44 ${GAP[1]} 60`, 1.2, 'stroke-ink', { opacity: 0.45 }));
-    return parts;
+  parts.push(line(pilasters, 0.8, 'stroke-ink', { opacity: 0.45 }));
+  // The string course between the tiers and the cornice under the channel.
+  parts.push(...inked(`M0 ${AQ.upper[1]} H${W} V${AQ.string} H0 Z`, 'paper', 1.2));
+  parts.push(...inked(`M0 ${AQ.channel[1]} H${W} V${AQ.cornice + 3} H0 Z`, 'paper', 1.2));
+  // The channel: its two parapets and the water between, seen a little from above.
+  parts.push(...inked(`M0 ${AQ.top} H${W} V${AQ.channel[0]} H0 Z`, 'paper', 1.4));
+  parts.push(fill(`M0 ${AQ.channel[0]} H${W} V${AQ.channel[1]} H0 Z`, 'blue'));
+  parts.push(line(`M2 ${(AQ.channel[0] + AQ.channel[1]) / 2} H${W - 2}`, 0.9, 'stroke-paper', { opacity: 0.6, 'stroke-dasharray': '11 9' }));
+  let joints = '';
+  for (let x = 20; x < W; x += 20) joints += `M${x} ${AQ.top} V${AQ.channel[0]} `;
+  // Dressed blocks here and there in the spandrels.
+  for (let k = 0; k < AQ.bays; k++) {
+    const cx = 40 + 80 * k;
+    joints += `M${cx - 36} 60 h6 M${cx + 29} 63 h5 M${cx - 37} 41 h5 M${cx + 31} 40 h5 `;
   }
+  parts.push(line(joints, 0.8, 'stroke-ink', { opacity: 0.45 }));
+  parts.push(line(`M0 ${AQ.foot} V${AQ.top} H${W} V${AQ.foot} M0 ${AQ.foot} H${gx - half} M${gx + half} ${AQ.foot} H${W}`, 2));
+  return parts;
+}
+
+function aqueduct(blown) {
+  if (!blown) return aqueductArcade();
+  // Blown (no reference was supplied for it; drawn from the whole one): the
+  // two piers either side of the torrent's bay down and the bays they
+  // carried, the channel broken and pouring from both ends.
+  const keep = [[0, 152], [344, 480]];
+  const parts = keep.map(([x0, x1], i) => svg('g', { 'clip-path': `url(#aq-keep-${i})` }, [
+    svg('clipPath', { id: `aq-keep-${i}` }, [svg('path', { d: i === 0 ? 'M-10 0 H150 L162 30 L150 44 L164 60 L152 92 H-10 Z' : 'M490 0 H346 L334 32 L344 48 L330 62 L342 92 H490 Z' })]),
+    ...aqueductArcade(),
+  ]));
   const block = ([x, y, w, h, a]) => [
     svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
+    svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: toneClass('ink', 10), transform: `rotate(${a} ${x} ${y})` }),
     svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.3, transform: `rotate(${a} ${x} ${y})` }),
   ];
   parts.push(
-    // Scorched ground under the breach, and the standing masonry blackened and cracked beside it.
-    svg('ellipse', { cx: 248, cy: 70, rx: 104, ry: 16, class: 'ink', opacity: 0.28 }),
-    fill('M112 28 H152 V72 H112 Z', 'ink', { 'fill-opacity': 0.28 }), fill('M344 28 H388 V72 H344 Z', 'ink', { 'fill-opacity': 0.28 }),
-    line('M120 28 L128 42 L118 54 L130 72 M96 46 L104 58 L98 72 M372 28 L364 44 L376 56 L366 72 M400 46 L394 60 L402 72', 1.3),
-    // The broken ends, and the water pouring out of them.
-    ...inked('M152 28 L164 34 L154 44 L166 58 L152 72 Z', toneClass('ink', 35), 1.8),
-    ...inked('M344 28 L332 36 L342 46 L330 60 L344 72 Z', toneClass('ink', 35), 1.8),
-    fill('M154 34 Q176 44 170 82 L186 84 Q190 44 160 30 Z', 'blue', { 'fill-opacity': 0.85 }),
-    fill('M342 34 Q322 46 326 82 L312 84 Q308 46 338 30 Z', 'blue', { 'fill-opacity': 0.85 }),
-    line('M160 40 Q176 52 176 80 M338 40 Q324 52 320 80', 1.1, 'stroke-paper', { opacity: 0.8 }),
-    // The fallen pier and spans, strewn across the bed.
-    ...[[196, 70, 14, 9, -14], [218, 78, 16, 8, 10], [236, 64, 11, 8, 28], [206, 56, 9, 7, -30], [258, 74, 15, 9, -8], [280, 62, 12, 8, 36], [300, 76, 13, 8, 14], [268, 52, 9, 6, -40], [232, 46, 8, 6, 20]].flatMap(block),
-    ...flame(206, 62, 0.5), ...flame(292, 66, 0.45),
-    ...smoke(216, 26, 1.3), ...smoke(286, 22, 1.1),
+    // Scorch under the breach, and the standing masonry blackened beside it.
+    svg('ellipse', { cx: 248, cy: 74, rx: 104, ry: 13, class: 'ink', opacity: 0.28 }),
+    fill('M112 22 H158 V80 H112 Z', 'ink', { 'fill-opacity': 0.22 }), fill('M338 22 H388 V80 H338 Z', 'ink', { 'fill-opacity': 0.22 }),
+    // The broken edges inked over the cut.
+    line('M150 22 L162 30 L150 44 L164 60 L152 80', 1.8), line('M346 22 L334 32 L344 48 L330 62 L342 80', 1.8),
+    line('M124 24 L132 40 L122 52 L134 72 M372 24 L364 42 L376 56 L366 74', 1.2),
+    // The stump of the torrent's west pier in the bed.
+    ...inked('M232 80 V70 L236 66 L241 71 L246 64 L248 80 Z', 'paper', 1.4),
+    // The water pouring from both ends of the channel.
+    fill('M156 26 Q182 34 176 84 L190 86 Q194 36 160 24 Z', 'blue', { 'fill-opacity': 0.88 }),
+    fill('M340 26 Q316 36 322 84 L308 86 Q304 38 336 24 Z', 'blue', { 'fill-opacity': 0.88 }),
+    line('M162 30 Q180 44 182 82 M334 30 Q318 44 314 82', 1.1, 'stroke-paper', { opacity: 0.8 }),
+    // The fallen piers and spans strewn across the bed.
+    ...[[198, 74, 15, 9, -14], [218, 80, 17, 8, 10], [258, 76, 15, 9, -8], [282, 66, 13, 8, 36], [300, 78, 14, 8, 14], [206, 60, 10, 7, -30], [270, 54, 9, 6, -40], [228, 50, 8, 6, 20]].flatMap(block),
+    ...flame(208, 66, 0.5), ...flame(292, 68, 0.45),
+    ...smoke(216, 20, 1.3), ...smoke(286, 16, 1.1),
   );
   return parts;
 }
 
-// The road bridge: one stone arch carrying the road over the torrent, the
-// road running from the hex's upper right to its lower left, as the map's does.
+// The road bridge, from directly above (M50, the operator's reference): one
+// stone arch over the torrent's rocky bed, a parapet of coping stones down
+// each side of the road, and on its downstream face the ring of the arch over
+// the water. Drawn with the road along x and the torrent along y, then turned
+// so the road runs from the hex's upper right to its lower left, as the map's
+// does, and the bed across it.
 function roadBridge(blown) {
-  const bed = 'M6 30 L74 62';
-  const parts = [
-    line(bed, 30, 'stroke-ink', { opacity: 0.32, 'stroke-linecap': 'butt' }),
-    line('M10 34 Q40 40 70 58', 3, 'stroke-blue'),
+  const local = [];
+  // The torrent's bed: dark stony ground, the water braided down it, boulders.
+  local.push(fill('M-17 -40 Q-21 0 -16 40 H17 Q22 0 16 -40 Z', 'ink', { 'fill-opacity': 0.3 }));
+  local.push(line('M-3 -40 Q-7 -20 -1 -6 T-4 22 T1 40', 5, 'stroke-blue'), line('M6 -40 Q3 -22 7 -8 T3 24 T7 40', 3, 'stroke-blue'));
+  local.push(line('M-3 -37 Q-6 -20 -1 -6 M-2 24 T1 38 M6 -32 Q4 -20 7 -10', 1, 'stroke-paper', { opacity: 0.85 }));
+  for (const [x, y, rx, ry] of [[-11, -28, 3.2, 2.3], [11, -20, 2.6, 1.9], [-12, 26, 3.4, 2.4], [11, 31, 3, 2.1], [-9, -13, 2.1, 1.5]]) local.push(...wadiStone(x, y, rx, ry));
+  const parapet = (y, x0, x1) => {
+    const out = [...inked(`M${x0} ${y - 1.9} H${x1} V${y + 1.9} H${x0} Z`, 'paper', 1.2)];
+    let joints = '';
+    for (let x = x0 + 4.5; x < x1 - 1; x += 4.5) joints += `M${x.toFixed(1)} ${y - 1.9} V${y + 1.9} `;
+    out.push(line(joints, 0.7, 'stroke-ink', { opacity: 0.7 }));
+    return out;
+  };
+  const deck = (x0, x1) => [
+    fill(`M${x0} -8 H${x1} V8 H${x0} Z`, 'paper'), fill(`M${x0} -8 H${x1} V8 H${x0} Z`, toneClass('ink', 10)),
+    line(`M${x0} -8 H${x1} M${x0} 8 H${x1}`, 1.4),
   ];
-  const deck = (d) => [line(d, 19, 'stroke-ink', { 'stroke-linecap': 'butt' }), line(d, 14, 'stroke-paper', { 'stroke-linecap': 'butt' })];
+  // The ring of the arch on the downstream face, the water dark under it.
+  const ring = [
+    fill('M-14 -9.5 A14 7 0 0 1 14 -9.5 Z', 'ink', { 'fill-opacity': 0.75 }),
+    ...inked('M-17 -9.5 A17 9.5 0 0 1 17 -9.5 H14 A14 7 0 0 0 -14 -9.5 Z', 'paper', 1),
+    line('M-12 -13 l-2 -2 M-6 -15.6 l-1 -2.4 M0 -16.4 V-19 M6 -15.6 l1 -2.4 M12 -13 l2 -2', 0.7, 'stroke-ink', { opacity: 0.7 }),
+  ];
   if (!blown) {
-    parts.push(...deck('M64 4 L16 88'), line('M58 4 L10 88 M70 4 L22 88', 1, 'stroke-ink', { opacity: 0.45, 'stroke-dasharray': '4 4' }));
+    local.push(...ring, ...deck(-56, 56), ...parapet(-8, -26, 26), ...parapet(8, -26, 26));
   } else {
-    parts.push(
-      ...deck('M64 4 L48 32'), ...deck('M32 60 L16 88'),
-      line('M42 28 L52 30 L48 36 L56 36 M26 58 L34 56 L30 62 L38 64', 1.6),
-      ...[[40, 44, 9, 6, 20], [46, 52, 7, 5, -25], [34, 50, 6, 5, 50]].flatMap(([x, y, w, h, a]) => [
-        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
-        svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2, transform: `rotate(${a} ${x} ${y})` }),
-      ]),
-      ...smoke(44, 30, 0.9),
-    );
+    // Its middle gone into the bed: the two ends broken off, the stones below.
+    for (const [x0, x1, edge] of [[-56, -11, 'M-11 -8 L-7 -3 L-12 2 L-8 8'], [11, 56, 'M11 -8 L8 -2 L13 3 L9 8']]) {
+      local.push(...deck(x0, x1), ...parapet(-8, Math.max(x0, -26), Math.min(x1, 26)), ...parapet(8, Math.max(x0, -26), Math.min(x1, 26)), line(edge, 1.6));
+    }
+    local.push(...[[-3, -2, 8, 5, 20], [4, 6, 7, 5, -25], [-4, 10, 6, 5, 50], [2, -12, 6, 4, -10]].flatMap(([x, y, w, h, a]) => [
+      svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, class: 'paper', transform: `rotate(${a} ${x} ${y})` }),
+      svg('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2, transform: `rotate(${a} ${x} ${y})` }),
+    ]), ...smoke(0, -10, 0.9));
   }
-  return parts;
+  return [svg('g', { transform: 'translate(40 46) rotate(119.7)' }, local)];
 }
 
-// The boat from the submarine, drawn up at the water's edge: a clinker dinghy
-// seen from above, its thwarts and oars, and the hooded green lamp, the one
-// friendly light on the map (as France's barn has).
+// The boat from the submarine, drawn up at the water's edge, from directly
+// above (M50, the operator's reference): a wooden whaler, bow toward the
+// beach, its strakes and three thwarts, the oars shipped along the sides,
+// and a sailor in a duffel coat at the tiller with the hooded green lamp, the
+// one friendly light on the map (as France's barn has).
 function shipsBoat() {
-  const hull = 'M40 22 C56 30 58 58 50 74 H30 C22 58 24 30 40 22 Z';
+  const hull = 'M40 14 C52 24 58 42 57 58 C56 68 53 76 51 80 H29 C27 76 24 68 23 58 C22 42 28 24 40 14 Z';
+  const inner = 'M40 20 C49 29 53 43 52.5 57 C52 66 50 72 48.5 76 H31.5 C30 72 28 66 27.5 57 C27 43 31 29 40 20 Z';
+  const thwart = (y, half) => inked(`M${40 - half} ${y - 2.2} H${40 + half} V${y + 2.2} H${40 - half} Z`, 'paper', 1);
   return [
-    svg('ellipse', { cx: 44, cy: 52, rx: 17, ry: 28, class: 'ink', opacity: 0.25 }),
-    ...inked(hull, 'paper', 2), fill(hull, toneClass('green', 50)),
-    line('M40 26 V72 M29 46 H51 M28 58 H52', 1.4),
-    line('M30 52 L10 60 M50 52 L70 60', 2.4), line('M10 60 l-5 4 M70 60 l5 4', 4),
-    circle(40, 34, 4.5, toneClass('green', 50)), circle(40, 34, 2.2, 'green'), ring(40, 34, 2.2, 0.9),
+    svg('ellipse', { cx: 43, cy: 51, rx: 19, ry: 34, class: 'ink', opacity: 0.25 }),
+    ...inked(hull, 'paper', 2), fill(hull, toneClass('ink', 20)),
+    fill(inner, toneClass('ink', 35)), line(inner, 1.2),
+    line('M40 23 C46 31 48.5 44 48.3 57 C48 66 46.5 71 45.5 74 M40 23 C34 31 31.5 44 31.7 57 C32 66 33.5 71 34.5 74', 0.7, 'stroke-ink', { opacity: 0.55 }),
+    ...thwart(36, 10), ...thwart(50, 12), ...thwart(63, 12),
+    // The oars shipped, blade forward, one each side of the thwarts.
+    line('M33 70 L35 30', 1.8), ...inked('M34.2 33 L36.6 22 L37.8 23 L36.4 33.6 Z', 'green', 0.8),
+    line('M47 70 L45 30', 1.8), ...inked('M45.8 33 L43.4 22 L42.2 23 L43.6 33.6 Z', 'green', 0.8),
+    // The sailor at the stern, hood up, and his lamp held out beside him.
+    ...inked('M33 68 Q33 60 40 59 Q47 60 47 68 Q47 74 40 75 Q33 74 33 68 Z', 'green', 1.3),
+    circle(40, 64, 4.4, toneClass('green', 50)), ring(40, 64, 4.4, 1.1),
+    line('M37.5 70 h2 M40.5 71 h2', 1, 'stroke-paper'),
+    circle(47.5, 60.5, 4.2, 'paper', { opacity: 0.55 }), circle(47.5, 60.5, 2.2, 'green'), ring(47.5, 60.5, 2.2, 0.9),
+    // The tiller over the transom.
+    line('M40 79 V85', 2.2),
   ];
 }
 
@@ -2639,17 +2736,25 @@ const ITALY_OBJECTIVES = {
       svg('ellipse', { cx: 40, cy: 48, rx: 11, ry: 9, class: 'ink', opacity: 0.4 }),
     ],
   },
-  // A supply canister on the ground (SPEC.md §9): a steel drum in army green,
-  // banded, with the lines of its own small parachute trailing off it.
+  // A supply canister on the ground (SPEC.md §9), from the operator's
+  // reference (M50): a long steel container in army green, lying slantwise,
+  // its open end dark, two bands and a carrying handle, and its small
+  // parachute spilled beside it with the lines run back to it.
   'marker-canister': {
     viewBox: '0 0 28 28',
     draw: () => [
-      line('M5 9 Q2 5 6 3 M5 9 Q8 4 11 5', 1),
-      svg('g', { transform: 'rotate(18 14 14)' }, [
-        svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, class: 'green' }),
-        line('M4.5 12 H23.5', 1, 'stroke-paper', { opacity: 0.6 }),
-        line('M9 9 V20 M14 9 V20 M19 9 V20', 1.3),
-        svg('rect', { x: 3, y: 9, width: 22, height: 11, rx: 5, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.8 }),
+      // The chute, collapsed below the body, its lines to the near end.
+      ...inked('M17 25.5 Q14.5 22 17.5 19.5 Q21 18 24 20.5 Q26 23.5 23.5 26 Q20 27.5 17 25.5 Z', 'paper', 1.1),
+      line('M18.5 21 Q20 23 18.6 25.5 M21.5 19.4 Q22.4 22.5 21.6 26.4', 0.6, 'stroke-ink', { opacity: 0.6 }),
+      line('M7.5 19 Q12 23 17.2 21.8 M8.5 20 Q13 25 17.4 24.8', 0.6, 'stroke-ink', { opacity: 0.75 }),
+      svg('g', { transform: 'rotate(-26 14 14)' }, [
+        svg('rect', { x: 2, y: 12.5, width: 24, height: 9, rx: 2, class: 'ink', opacity: 0.3, transform: 'translate(1.2 1.6)' }),
+        svg('rect', { x: 2, y: 9.5, width: 24, height: 9, rx: 2, class: 'green' }),
+        line('M4 11.6 H24', 1, 'stroke-paper', { opacity: 0.5 }),
+        line('M9 9.5 V18.5 M19 9.5 V18.5', 2, 'stroke-ink'),
+        line('M12 9.4 V7.6 H16 V9.4', 1.1),
+        svg('rect', { x: 2, y: 9.5, width: 24, height: 9, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
+        svg('ellipse', { cx: 3.4, cy: 14, rx: 1.6, ry: 3.6, class: 'ink' }),
       ]),
     ],
   },

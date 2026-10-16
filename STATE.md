@@ -4,37 +4,38 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 16 Oct 2026, M49e signed off, merged and pushed.
+Last updated: 16 Oct 2026, M50 built on branch `m50-aqueduct-art-hard`, not yet signed off.
 
 ## Where we are
 
-- **M49d** (before it), signed off: spent charge points, parachutes under
-  the targets' words, the dotted swim outline, the kill's burst, the aqueduct's beach to
-  wait on and Board boat on B, its map a hex east with woods in the south-west corner.
-- **`main` is now M49e**, signed off, merged and pushed; no branch open:
-  - Most of the aqueduct's fall after M49d was the bot's fault: a spare man stood on a
-    fresh charge point and the carrier waited beside him all night. The bot's new `PICK=1`
-    mends it and is now in the aqueduct's reference.
-  - Hard's aqueduct takes **four charges, not five** (the operator's option A).
-  - Naive bot, west / north / valley: Easy 96 / 98 / 97, Normal 79 / 85 / 79, Hard
-    43 / 26 / 32. Every level inside its target. Build M49e.
+- **`main` is M49e**, signed off and pushed.
+- **M50 is on its branch**, waiting for your sign-off:
+  - **The aqueduct's pictures redrawn** from your six references: the aqueduct whole and
+    blown (two tiers of arches, the torrent's bay a real hole so the ravine shows
+    through), the road bridge from above, the boat, the canister, terraces and olives.
+  - **On Hard, careful play now wins as often as hunting** (careful 69 / 61 / 63, hunter
+    68 / 62 / 65). Two bot faults mended; the boat comes in under the shore rocks as well
+    as on the beach (all levels); Hard's aqueduct takes five charges again (your pick).
+  - Naive bot, west / north / valley: Easy 96 / 98 / 98, Normal 83 / 87 / 82, Hard
+    32 / 16 / 33. **Hard's North is 9 under its target**, the cost of your pick.
 - Tests: 243 headless (`node tools/run-tests.mjs`), 246 in tests.html.
 
 ## Next
 
-1. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
-2. **Redraw the aqueduct's board pictures** from the Priority 22 references (aqueduct,
-   road bridge, boat, canister, terraces, olive grove): a milestone of its own.
+1. Your look at M50, then sign-off (merge, push, delete the branch).
+2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
+3. The aqueduct's north-east corner redrawn with you, for Hard's North run.
 
 ## Open with the operator
 
-1. **France is a little easier than its baselines say.** The same bot fault blocked its
-   bridge's two points. With `PICK=1`: Normal 93 / 92 / 94 (target 75 to 90), Hard
-   41 / 40 / 55 (25 to 45). Its reference left as it was; whether to retune is yours.
-2. **On Hard the hunter still beats careful play** on the aqueduct (79 / 68 / 74 against
-   61 / 63 / 38), as M48l found and you left.
-3. **Listen to the kill's burst** (levelled by reading, not by ear).
-4. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
+1. **Look at the redrawn pictures** in the game, and say what to change. My guesses,
+   unconfirmed: the boat's lamp kept green (red means danger here); no ochre road or
+   red rocks on the road bridge (colour rules); the aqueduct's arches flatter than your
+   reference, to keep the picture inside its own row of hexes.
+2. **Hard's North run at 16** (target 25 to 45): left for the corner redraw.
+3. **France is a little easier than its baselines say**: left, your call ("ok for now").
+4. **Listen to the kill's burst** (levelled by reading, not by ear).
+5. **Still standing from before:** the ? pages' lines are Claude's; the bugle for a lesson
    passed; the knife's cry worded "a cry"; the record's tab at the top centre.
 
 ## Owed

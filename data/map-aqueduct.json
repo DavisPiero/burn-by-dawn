@@ -182,8 +182,9 @@
       ]
     }
   ],
-  "_exfil": "SPEC.md §10, §14. The beach: three hexes at the water's edge, nobody out until the boat is in (men may wait on it, M49d) (data/missions.json rules exfil.opensTurn). `exfilArt` picks its picture, the boat. `boatRun` (M41, art only) is the line the boat comes in along, from out at sea to the beach: it is seen on it for the two turns before the beach opens.",
+  "_exfil": "SPEC.md §10, §14. The beach: three hexes at the water's edge and, since M50 (the operator's), the shore rocks at its west end, where a man may lie up hidden for the boat and board it, nobody out until the boat is in (men may wait on it, M49d) (data/missions.json rules exfil.opensTurn). `exfilArt` picks its picture, the boat. `boatRun` (M41, art only) is the line the boat comes in along, from out at sea to the beach: it is seen on it for the two turns before the beach opens.",
   "exfil": [
+    [1, 12],
     [2, 12],
     [3, 12],
     [4, 12]

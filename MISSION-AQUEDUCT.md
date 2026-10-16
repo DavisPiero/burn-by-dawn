@@ -26,7 +26,7 @@ which carried the water for the ports of Taranto, Bari and Brindisi, with a subm
 waiting off the coast. The same six men and the same 18×13 board, which puts the
 mountains and the sea closer together than the map of Italy does.
 
-The aqueduct is one big target that takes **four charges** (Easy three; Hard four too since M49e), and
+The aqueduct is one big target that takes **four charges** (Easy three, Hard five), and
 the stick has **six, all of them in three canisters** that come down along the run with
 the men. Nobody lands holding a charge. So the first job of the night is not the walk
 to the target but finding out where the explosive is, and who goes to fetch it.
@@ -69,7 +69,9 @@ gone.
 **The way out on a timetable** (SPEC.md §10, `exfil` in the rules patch): `opensTurn`
 15, `openFor` 3, `call` `{ apCost: 1, leadTurns: 2 }`. Until the boat lands nobody goes
 out: men may wait on the beach (M49d, the operator's), in the open and in the coast
-watcher's eye, and its outline is drawn shut, dashed red, with the turn the boat comes.
+watcher's eye, or in the shore rocks at its west end, which are part of the way out since
+M50 (the operator's pick: heavy cover, so a man lying up there hidden is seen only from
+beside him, and boards from where he lies), and its outline is drawn shut, dashed red, with the turn the boat comes.
 Once it is in, a man waiting there boards it with B (SPEC.md §10, the way it is told). The boat is seen rowing in across the sea for the two turns before it
 lands, bow toward the beach. The exfil's hover, the orders, the mission panel and the
 turn card say when it comes and when it goes.
@@ -153,7 +155,7 @@ What it holds:
   the south-west piers: a track's pace on the slowest side of the map, in the open,
   beside a ravine that is cover and half the speed.
 - **The beach** in the south, west of the torrent's mouth, **shore rocks** at its west
-  end, the **sea** open to its east, where the boat comes from. The exfil is three hexes at the water's edge. The boat's run in across
+  end, the **sea** open to its east, where the boat comes from. The exfil is four hexes: three at the water's edge and, since M50, the shore rocks at its west end, where a careful stick lies up for the boat. The boat's run in across
   the sea (`boatRun`, art only) ends there.
 - **Three drop runs**, all landing north and west of the road bridge so nobody starts
   below the job, told apart as France's are: **West**, across the hillside three rows below the
@@ -205,8 +207,8 @@ Numbers are Normal's, per kind in the mission's rules patch.
 | **Road bridge** | 1 charge, of 2 points | 1 / 1 | +3 | 4 | no reserve, no reinforcements; becomes ravine |
 
 **The win**: `destroyPrimary`, and at least the level's `minimumOut` men **in the boat**
-by dawn. Easy: three charges, and no squad is called. Hard: four charges as on Normal (five
-until M49e), two squads,
+by dawn. Easy: three charges, and no squad is called. Hard: five charges (four from M49e
+to M50), two squads,
 and **the boat stays two turns** (in on 15, gone with 16).
 
 **Time pencils**: 2 to 6 turns, and **the longest, 6, is the one offered first**
@@ -305,9 +307,10 @@ operator to reword.
   or signalled, and oars and surf the turn it lands. The back page is France's bells
   and toll.
 - **Pictures.** Drawn in code (M41): the canister, the boat, the aqueduct and its
-  arches, the road bridge, the eleven kinds of ground. Painted: its contents panel, its title card with BURN BY DAWN painted in, and the
-  Italian chips. Still asked of the operator in ART-PROMPTS.md: the six in winter kit (21, optional; `portraits`: `assets/portraits/winter`), and
-  references to redraw the board's pictures from (22).
+  arches, the road bridge, the eleven kinds of ground. The aqueduct (whole and blown, in
+  two tiers of arches), the road bridge, the boat, the canister, the terraces and the
+  olive groves were redrawn at M50 from the operator's references (ART-PROMPTS.md 22). Painted: its contents panel, its title card with BURN BY DAWN painted in, and the
+  Italian chips. Still asked of the operator in ART-PROMPTS.md: the six in winter kit (21, optional; `portraits`: `assets/portraits/winter`).
 
 ### Balance
 
@@ -315,27 +318,30 @@ Targets are §10's. The aqueduct's reference is `MISSION=aqueduct KNIFE=1 SENSE=
 node tools/balance-bot.mjs 300 naive` (SENSE: SPEC.md §10; PICK since M49e: a man setting
 a charge picks a point no enemy watches and nobody stands on, and a man standing by keeps
 off the points, without which, once spent points could not be used again, a carrier
-waited all night beside a point a spare man stood on). The bot fetches from the
+waited all night beside a point a spare man stood on; since M50 also a carrier sets his
+charge on the free point he stands on, and no man is sent to fetch from a canister
+another man stands on, two more ways the careful bot's men stood still all night). The bot fetches from the
 canisters (the nearest man with room goes, a man the charge would slow only if he is
 well the nearest), works the pier feet nearest the stick, and keeps the boat's time,
 lying up in heavy cover within three hexes of the beach until it opens. It never
 signals the boat or blows the road bridge unless `greedy`.
 
-**Baselines** (M49e; win %, west / north / valley):
+**Baselines** (M50; win %, west / north / valley):
 
 | Level | Naive | Seeds | Target |
 |---|---|---|---|
-| Easy | **96 / 98 / 97** | 300 | 95 or more |
-| Normal | **79 / 85 / 79** | 300 | 75 to 90 |
-| Hard | **43 / 26 / 32** | 300 | 25 to 45 |
+| Easy | **96 / 98 / 98** | 300 | 95 or more |
+| Normal | **83 / 87 / 82** | 300 | 75 to 90 |
+| Hard | **32 / 16 / 33** | 300 | 25 to 45 |
 
-Since M49e (spent charge points, M49d; the bot's PICK; Hard four charges, not five).
-Normal, other styles (200 seeds): tidy 86 / 95 / 85; careful 88 / 99 / 89, hunter 96 /
-98 / 89; Hard careful 61 / 63 / 38, hunter 79 / 68 / 74. The naive bot's winning scores
-on Normal have their middle half at 25 to 29 (North 21 to 26, Valley 26 to 30), so the
-rating's bands are kept.
+Since M50 (the bot's PICK mended twice more; the boat in under the shore rocks too; Hard
+five charges again). Normal, other styles (200 seeds): tidy 90 / 96 / 82; careful 92 /
+99 / 86, hunter 97 / 98 / 93; **Hard careful 69 / 61 / 63, hunter 68 / 62 / 65**, level
+everywhere. The naive bot's winning scores on Normal have their middle half at 26 to 30
+(North 21 to 24, Valley 24 to 29), so the rating's bands are kept.
 
-M42's, before the bot's PICK and while spent points could still be blown again (M42c to
+M49e's, before the bot's second mending and the rocks, Hard at four charges: 96 / 98 /
+97, 79 / 85 / 79, 43 / 26 / 32; Hard careful 61 / 63 / 38, hunter 79 / 68 / 74. M42's, before the bot's PICK and while spent points could still be blown again (M42c to
 M49d): 95 / 93 / 93, 79 / 74 / 76, 31 / 15 / 35 (Hard at five charges, 400 seeds).
 Since M42c (a squad for a body, standing where the body lay; cover on the plough; the
 farmhouse off the aqueduct's east end). Before M42b: 95 / 95 / 93, 81 / 83 / 80,
@@ -344,8 +350,22 @@ whoever it finds itself behind, so the squads are what the North run lost: they 
 in through its landing ground. Normal, other styles (200 seeds): careful 91 / 93 / 87;
 tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
 
+**Hard's hunter check, mended at M50 (the operator's: reward careful play rather than
+punish hunting).** Traced in the careful bot's lost games, two things beat it, not the
+garrison: bot faults, a carrier sent to a far point while standing on a free one, over
+the canister his fetcher needed, and a man holding a charge on a canister; and the
+beach, where the careful men lay up two or three hexes off and, with the coast watcher
+and the posted squads looking on, would not walk out to the boat until the last turn,
+pinned. The fixes were measured against each other (200 seeds, careful / hunter / naive
+on Hard): the bot mended alone 76 / 65 / 58, 78 / 67 / 79, 56 / 29 / 40; with the boat
+under the rocks 82 / 73 / 71, 78 / 70 / 79, 66 / 31 / 52; a man seen worth 2 on Hard, a
+parachute found worth 2 on Hard, decay after three quiet turns and the squads posted up
+the road all moved little. The operator took the rocks with five charges on Hard, the
+one that put careful level with hunting on every run; its cost is Hard's North run,
+under its target again (16).
+
 **Known and left, the operator's calls (M48l):**
-- **The hunter check passes as read for this map.** Killing everything is not the best
+- **The hunter check passes as read for this map on Normal.** Killing everything is not the best
   play: every man hunting, sappers too (`HUNTERS=all`), wins 3 / 3 / 12 on Normal. What
   beats careful play (hunter 95 / 99 / 88 against careful 91 / 93 / 87; Hard 73 / 59 /
   63 against 72 / 43 / 50) is the scouts and gunners clearing the way while the sappers
@@ -355,8 +375,8 @@ tidy, which never knifes, 86 / 91 / 68, never Alarmed in 94 / 65 / 82 of them.
   one as loud as a gunshot, it cost the player who knifes now and then and not the
   hunter, so it is off here (the numbers are in the engine, `alert.knife` and
   `noise.knife`, null). A seventh enemy is untried.
-- **Hard's North run was well under** (15; since M49e, at four charges, 26, at the
-  target's foot). Its games are Alarmed before the job in
+- **Hard's North run is under** (15 at M48l; 26 at M49e's four charges; 16 since M50's
+  five). Its games are Alarmed before the job in
   88% (West 49%): the squads called for bodies, and the reserve, come down the road
   through its landing ground and find parachutes and canisters on their way. Moving
   the flight line west, changing its wind, fewer or no body squads on Hard, four
@@ -381,3 +401,4 @@ on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at
 | **M42** | Balance (done): the map and beats redrawn to the alert budget, the boat's turn and dawn measured and kept, the levels against the §10 targets, the rating's bands |
 | **M43** | Words, sounds and the art hand-off (done): the garrison's own chip folder, the six's lines, three made sounds, slots for its title card and winter portraits, the art asked for |
 | **M49e** | Rebalanced after M49d's spent charge points: the bot's PICK, Hard four charges, not five |
+| **M50** | The board's pictures redrawn from the operator's references; Hard's careful play level with hunting: the bot's PICK mended twice more, the boat in under the shore rocks, Hard five charges again |
