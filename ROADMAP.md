@@ -20,16 +20,13 @@ success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
 
-1. **M49e, the aqueduct rebalanced.** M49d's fix (a spent charge point cannot be blown
-   again) put it under every naive target (DECISIONS.md, M49d). Claude brings options,
-   each measured by the bot, and the operator picks one. Then:
-2. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
+1. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`), and a milestone of fixes for what they trip on, as M49b was.
-3. **Redraw the aqueduct's board pictures** from the operator's Priority 22 references, and
+2. **Redraw the aqueduct's board pictures** from the operator's Priority 22 references, and
    **its north-east corner** with the operator, for Hard's North run
    (where the canisters land, the road beside the landing ground). Nothing short of the
    redraw mends it (M48l).
-4. **Then the next big piece, the operator's choice**: a fourth mission (below), or the
+3. **Then the next big piece, the operator's choice**: a fourth mission (below), or the
    comic panels with the in-world tips (Parked). Advised: one new mission first,
    Gunnerside, because it plays least like the three there are. Spec it as
    `MISSION-<NAME>.md` before building, as the airfield and the aqueduct were.

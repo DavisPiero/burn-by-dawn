@@ -48,8 +48,8 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['one primary that takes four charges of eight points (three on Easy, five on Hard), six charges in three canisters, nobody carrying one', async () => {
-    for (const [level, charges, squads] of [['easy', 3, 0], ['normal', 4, 1], ['hard', 5, 2]]) {
+  ['one primary that takes four charges of eight points (three on Easy, four on Hard since M49e), six charges in three canisters, nobody carrying one', async () => {
+    for (const [level, charges, squads] of [['easy', 3, 0], ['normal', 4, 1], ['hard', 4, 2]]) {
       const { map, rules, traits, roster } = await loadAqueduct(level);
       const state = createInitialState(roster, traits, rules, map, 1);
       const { targets } = winTargets(state, rules);

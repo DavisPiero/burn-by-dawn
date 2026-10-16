@@ -32,6 +32,8 @@
 // KNIFE=1 has every man knife an enemy he finds himself behind (M12b); the
 // bot never goes looking for one. Without it the bot never uses the knife.
 // SENSE=1 (M42) mends two faults in his play (below): the aqueduct's reference.
+// PICK=1 (M49e): of a target's free charge points, those no enemy would see a
+// man on come first (since M49d a point that has gone off is spent).
 //
 // PACK=1 has every man pack the parachute he landed on, first thing on turn 1.
 // Without it the bot never packs, so `chutes found` is what packing would save.
@@ -164,6 +166,8 @@ const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
 // and the airfield's baselines were measured without it and are kept so; the
 // aqueduct's reference is with it.
 const SENSE = process.env.SENSE === '1' || Boolean(OPTS.tidy);
+// PICK=1 (M49e): a man setting a charge picks a point nobody would see him on, where there is one.
+const PICK = process.env.PICK === '1';
 const PACK = process.env.PACK === '1' || Boolean(OPTS.tidy);
 const TRAIN = process.env.TRAIN === '1';
 const PENCIL = process.env.PENCIL ?? (OPTS.tidy ? 'plan' : 'default');
@@ -383,6 +387,13 @@ function nearestPoints(state, map, o, free) {
   return [...free].sort((a, b) => order.indexOf(M.hexKey(a.q, a.r)) - order.indexOf(M.hexKey(b.q, b.r)));
 }
 
+function unwatchedFirst(state, map, free) {
+  const carrier = state.units.find((u) => U.onBoard(u) && u.charges > 0) ?? state.units.find(U.onBoard);
+  if (!carrier) return free;
+  const seen = (h) => (E.detectionAt(map, rules, state.enemies, state.alert.points, { ...carrier, hidden: false, q: h.q, r: h.r }, h)?.spotted ? 1 : 0);
+  return free.map((h, i) => ({ h, i, s: seen(h) })).sort((a, b) => a.s - b.s || a.i - b.i).map((x) => x.h);
+}
+
 function assignCharges(state, map) {
   // Nearest carriers to the free charge hexes of objectives still to do.
   const assign = new Map();
@@ -395,6 +406,15 @@ function assignCharges(state, map) {
     // A job target with more points than it wants charges (M42, the aqueduct's
     // six for four): the points the shortest walk from the men who will set them.
     if (SENSE && job.includes(o) && need > 0 && free.length > need) free = nearestPoints(state, map, o, free);
+    // PICK=1 (M49e): of those, the points nobody would see a man on come first,
+    // as a player looking at the arcs would choose. Without it a man may wait
+    // forever a hex from a watched point (the aqueduct guard's pier feet).
+    if (PICK && need > 0 && free.length > need) free = unwatchedFirst(state, map, free);
+    // Nor one another man is standing on, while there are others (PICK, M49e).
+    if (PICK && free.length > need) {
+      const open = free.filter((h) => !state.units.some((u) => U.onBoard(u) && !u.charges && u.q === h.q && u.r === h.r));
+      if (open.length >= need) free = open;
+    }
     wanted.push(...free.slice(0, Math.max(0, need)).map((h) => ({ ...h, o })));
   }
   const carriers = state.units.filter((u) => U.onBoard(u) && u.charges > 0);
@@ -499,6 +519,9 @@ function actFor(state, unit, map) {
       path = [...unit.trail, ...plan.path.slice(1)];
     }
     const apLeft = unit.ap - (plan ? plan.total : 0);
+    // A man standing by does not park on a charge point a carrier needs (PICK, M49e:
+    // since M49d a carrier cannot use a spent one instead, and waited beside him all night).
+    if (PICK && goals[0]?.standby && state.objectives.some((o) => !o.destroyed && o.chargeHexes.some((h) => h.q === c.q && h.r === c.r) && !SB.isSpentPoint(o, c))) continue;
     for (const hide of [false, true]) {
       if (hide && (apLeft < hideCost || unit.hidden)) continue;
       const r = risk(map, state, unit, path, hide || (c === here && unit.hidden));
