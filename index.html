@@ -1637,6 +1637,20 @@
       cursor: default;
       user-select: none;
     }
+    /* The title painting (M55): the stick in silhouette, cropped to the
+       window, fading up once it is in, under a shade that keeps the words
+       readable. Without the file the table stays plain dark. */
+    .loading-painting {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% 46%, rgba(20, 19, 17, 0.62), rgba(20, 19, 17, 0.2) 70%, transparent),
+        linear-gradient(rgba(20, 19, 17, 0.25), rgba(20, 19, 17, 0.25)),
+        var(--title-painting, none) center / cover no-repeat;
+      opacity: 0;
+    }
+    html.title-painted .loading-painting { opacity: 1; transition: opacity 700ms linear; }
+    #loading > :not(.loading-painting) { position: relative; }
     html.opened #loading { opacity: 0; pointer-events: none; transition: opacity 450ms linear; }
     html.loaded #loading { cursor: pointer; }
     .loading-title {
@@ -1761,6 +1775,7 @@
     </aside>
   </main>
   <div id="loading" role="status">
+    <div class="loading-painting" aria-hidden="true"></div>
     <div class="loading-title">BURN BY DAWN</div>
     <div class="loading-fuse"></div>
     <div class="loading-note"><span class="wait">Loading your orders…</span><span class="ready">CLICK OR PRESS ANY KEY FOR YOUR ORDERS</span></div>

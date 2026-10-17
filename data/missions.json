@@ -81,6 +81,7 @@
       "blurb": "Six men drop in darkness to blow the rail line that supplies the coast. Get them out by dawn.",
       "panel": "assets/title/contents-france.jpg",
       "comicPanels": {
+        "dakota": { "art": ["assets/panels/panel-dakota-france.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON. TWENTY MINUTES TO THE DROP ZONE. STAND UP, HOOK UP." },
         "landing": { "art": "assets/panels/panel-landing-france.jpg", "caption": "0140 HOURS. SIX MEN DOWN IN THE DARK." },
         "success": { "art": "assets/title/contents-france_full.jpg", "caption": "THE BRIDGE IS DOWN, AND NO TRAIN COULD CROSS FOR A MONTH." }
       },
@@ -133,6 +134,7 @@
       "blurb": "Paratroopers raid aircraft on an Axis landing ground, on a mission to blow them sky high.",
       "panel": "assets/title/contents-airfield.jpg",
       "comicPanels": {
+        "dakota": { "art": ["assets/panels/panel-dakota-airfield.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON OVER THE DESERT. CHECK YOUR NEIGHBOUR'S KIT." },
         "landing": { "art": "assets/panels/panel-landing-airfield.jpg", "caption": "A COLD, STILL DESERT NIGHT. THE STUKAS SOMEWHERE AHEAD." },
         "success": { "art": "assets/title/contents-airfield_full.jpg", "caption": "BY DAWN THE STUKAS BURNED, AND THE MEN HAD MADE THEIR ESCAPE." }
       },
@@ -208,6 +210,7 @@
       "blurb": "A stone aqueduct in the mountains that takes every charge you carry. Exfil via a boat on the coast that will not wait.",
       "panel": "assets/title/contents-aqueduct.jpg",
       "comicPanels": {
+        "dakota": { "art": ["assets/panels/panel-dakota-aqueduct.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON OVER THE MOUNTAINS. COLD AS ICE IN HERE." },
         "landing": { "art": "assets/panels/panel-landing-aqueduct.jpg", "caption": "SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND CHARGES STASHED IN THEIR CANISTERS." },
         "success": { "art": "assets/title/contents-aqueduct_full.jpg", "caption": "THE AQUEDUCT WAS NO MORE, AND THE BOAT PULLED AWAY INTO THE DARKNESS." }
       },

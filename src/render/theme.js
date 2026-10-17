@@ -186,6 +186,20 @@ export function loadSuppliedClipboard(root = document.documentElement) {
   });
 }
 
+// The title painting (M55, ART-ASSETS.md §7): the stick in silhouette behind
+// the opening page, one for every mission, cropped to the window. A missing
+// file is fine: the table stays plain dark.
+export const TITLE_PAINTING_FILE = { url: 'assets/title/title-painting.jpg' };
+
+/** The title painting behind the opening page, if it is there: its picture to index.html, which fades it up. */
+export function loadSuppliedTitlePainting(root = document.documentElement) {
+  return picture(TITLE_PAINTING_FILE.url).then((ok) => {
+    if (!ok) return;
+    root.style.setProperty('--title-painting', `url("${TITLE_PAINTING_FILE.url}")`);
+    root.classList.add('title-painted');
+  });
+}
+
 export function loadSuppliedPaper(root = document.documentElement) {
   return picture(PAPER_FILE.url).then((ok) => {
     if (!ok) return;
@@ -3712,7 +3726,8 @@ export function loadSuppliedPortraits(unitIds, onLoaded = () => {}, missionDir =
 }
 
 /** The first of these pictures that loads, or null. */
-async function firstPicture(urls) {
+/** The first of these pictures that loads, or null: a mission's own, then the shared one. */
+export async function firstPicture(urls) {
   for (const url of urls) if (await picture(url)) return url;
   return null;
 }

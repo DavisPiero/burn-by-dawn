@@ -67,6 +67,21 @@ export default [
     equal(missionById(json, coming.id).id, json.default, 'asked for anyway, the default plays');
   }],
 
+  ['a comic panel is one painting or a list, the mission\'s own before the shared one (M55)', async () => {
+    const { json } = await loadFrance();
+    for (const m of json.missions.filter((x) => x.status === 'playable' && x.id !== 'training')) {
+      const art = m.comicPanels?.dakota?.art;
+      assert(Array.isArray(art), `${m.id} has a Dakota panel`);
+      equal(art[0], `assets/panels/panel-dakota-${m.id}.jpg`, `${m.id}'s own painting is tried first`);
+      equal(art.at(-1), 'assets/panels/panel-dakota.jpg', `${m.id} falls back to the shared one`);
+    }
+    const france = json.missions.find((m) => m.id === 'france');
+    const withPanel = (art) => ({ ...json, missions: [{ ...france, comicPanels: { dakota: { art } } }] });
+    validateMissions(withPanel('assets/panels/one.jpg'));
+    throws(() => validateMissions(withPanel([])), /list of files/, 'an empty list');
+    throws(() => validateMissions(withPanel(['a.jpg', 7])), /list of files/, 'a list with a number in it');
+  }],
+
   ['bad mission data fails loudly', async () => {
     const { json } = await loadFrance();
     const france = json.missions.find((m) => m.id === 'france');

@@ -101,7 +101,9 @@ export function validateMissions(json, url = 'data/missions.json') {
     }
     if (m.diversionSound !== undefined && (typeof m.diversionSound !== 'string' || !m.diversionSound)) throw new Error(`${where} "diversionSound" must name a sound cue`);
     for (const [moment, panel] of Object.entries(m.comicPanels ?? {})) {
-      if (typeof panel?.art !== 'string' || !panel.art) throw new Error(`${where} comicPanels.${moment} needs "art", a file`);
+      // One file, or a list tried in order (M55): the mission's own, then the shared one.
+      const art = [panel?.art].flat();
+      if (!art.length || art.some((a) => typeof a !== 'string' || !a)) throw new Error(`${where} comicPanels.${moment} needs "art", a file or a list of files`);
       if (panel.caption !== undefined && typeof panel.caption !== 'string') throw new Error(`${where} comicPanels.${moment}.caption must be words`);
     }
     if (m.titleCardLettered !== undefined && typeof m.titleCardLettered !== 'boolean') throw new Error(`${where} "titleCardLettered" must be true or false`);
