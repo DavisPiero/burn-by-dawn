@@ -224,7 +224,7 @@
         "bodyFound": { "reinforcements": 1, "limit": 4 },
         "patrols": { "setOutTurn": 2 },
         "objectives": {
-          "aqueduct": { "label": "Aqueduct", "chargesNeeded": 4, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 1, "score": 10, "setsOff": false },
+          "aqueduct": { "label": "Aqueduct", "chargesNeeded": 5, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": null, "payoff": { "noReserve": false, "withdrawPatrols": 0 }, "reinforcements": 1, "score": 10, "setsOff": false },
           "roadBridge": { "label": "Road Bridge", "chargesNeeded": 1, "blastRadius": 1, "killRadius": 1, "alert": 3, "cutLine": false, "destroyedTerrain": "ravine", "payoff": { "noReserve": true, "withdrawPatrols": 0 }, "reinforcements": 0, "score": 4, "setsOff": false }
         }
       },
@@ -233,7 +233,7 @@
       "win": { "condition": "destroyPrimary" },
       "levels": {
         "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it goes.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
-        "hard": { "summary": "The aqueduct takes five charges of your six, two squads come down the road when it goes (none once the Road Bridge is down), and the boat stays two turns, not three.", "rules": { "exfil": { "openFor": 2 }, "objectives": { "aqueduct": { "chargesNeeded": 5, "reinforcements": 2 } } } }
+        "hard": { "summary": "The aqueduct takes all six charges, so none can be spared for the Road Bridge; two squads come down the road when it goes (none once the Road Bridge is down), and the boat stays two turns, not three.", "rules": { "exfil": { "openFor": 2 }, "objectives": { "aqueduct": { "chargesNeeded": 6, "reinforcements": 2 } } } }
       },
       "briefing": "Tonight six men are to drop into the mountains of southern Italy.",
       "_words": "M41. Placeholder copy for the operator to reword. The line words are asked for by every mission: nothing here has a line to cut, and `lineIsDown` is what stops the squads coming, the road bridge. The diversion is the RAF again, as in 1941: bombers over Foggia.",
