@@ -830,8 +830,7 @@ lettering on the armbands**: a cap badge is a dot at 20 px, and plain white read
 
 In since M52, BURN BY DAWN painted in. Kept as `contents-training_full.jpg` (1223 × 800; the
 game's 480 × 320 copy trims 11 px a side to 3:2) and `title-card-training_full.jpg`
-(2400 × 600; the game loads 1600 × 400). **The title card carries a generator's
-watermark in its bottom-right corner, by the lorry's wheel: to be painted out.**
+(2400 × 600; the game loads 1600 × 400), its watermark painted out by the operator.
 
 
 **Why** (M48g): the course is first on the contents page and is the only line there
@@ -895,12 +894,16 @@ its cut and destroyed states and the wires to its mast drawn to match.
 
 ---
 
-## Priority 28 — comic panels: the landing, one per mission (a test) — **to make**
+## Priority 28 — comic panels: the landing, one per mission ✅ done (2026-10-17)
+
+In since M52, all three, and the panels kept in the game for everyone (the operator's).
+Kept as `panel-landing-<id>_full.jpg`; the game loads 900 × 600 copies.
+
 
 **Why** (M52, the operator's): to try comic-book punctuation at the story's big moments,
 the picture popping up over the board as if the page had turned in a graphic novel, and
 see whether it is worth a phase of its own (ROADMAP.md, Parked). Two moments are wired,
-behind `?panels=on` in the address so nobody else sees them yet:
+now in the game for everyone:
 
 - **Mission accomplished**: the mission's own contents panel (Priority 14), already
   painted. Nothing to make.
@@ -912,7 +915,7 @@ behind `?panels=on` in the address so nobody else sees them yet:
 | Size, format | **As the contents panels**: 3:2, **1200 × 800**, JPEG quality about 85, sRGB, opaque |
 | Shown at | About 550 × 370, over the board, tipped a couple of degrees in a thick ink frame the code draws |
 | Composition | One clear moment, close and dramatic, like a single panel of a comic, not a landscape. **Keep the top-left quarter quiet** (sky or dark ground): the caption box sits over it |
-| Code does | Nothing: drop the file in and reload `?panels=on`. Make one first, France's, and try it before the other two |
+| Code does | Claude makes the 900 × 600 copy the game loads; the original is kept as `_full` |
 
 The panel is seen for a second or two before a click, so it must read at a glance: one
 figure, one action, strong light against dark. Paste the style block after each.

@@ -172,10 +172,10 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   burning down. Ready, it asks for a key or a click — which also lets the browser play
   sound — and the spread fades up with the orders open.
 
-**Comic panels, a test** (M52, the operator's; only with `?panels=on` in the address, off
-for everyone else until they decide). At two story moments a painting pops up over the
-board as a panel in a graphic novel would: tipped 2°, in a thick ink frame on a paper
-gutter with a hard shadow, popping in from smaller and more tipped (220 ms), its caption
+**Comic panels** (M52, the operator's: tried behind a switch, then kept for everyone). At
+two story moments a painting pops up over the board as a panel in a graphic novel would:
+tipped 4° (the operator's: 2° read as a panel not quite level), in a thick ink frame on a paper
+gutter with a hard shadow, popping in from smaller and more tipped (220 ms, from 11°), its caption
 in comic lettering in a paper box over the top-left corner (the mission's
 `comicPanels`, placeholder words for the operator), CLICK OR ANY KEY under it. **The
 landing**, when the drop show ends, over the turn card; **mission accomplished**, on a

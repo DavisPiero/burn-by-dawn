@@ -432,11 +432,11 @@ comes after the current milestone is in `ROADMAP.md`.
 **M52, the aqueduct rebalanced and comic panels tried, done:** the aqueduct measured
 against the mended bot and brought inside every target by the operator's pick of the
 options: Normal five charges, Hard all six (`MISSION-AQUEDUCT.md`, Balance); comic panels
-at two story moments, the landing and the mission accomplished, a test behind
-`?panels=on` (`ART-PLAY.md`), with the landing paintings asked for in `ART-PROMPTS.md` 28;
-and the Practice Ground's painted panel and title card. The milestones before it are in
-`MILESTONES.md`. Still open, the operator's: whether to pursue the comic panels; the
-rewording of the placeholder copy. v1.0 is tagged.
+at two story moments, the landing and the mission accomplished, tried behind a switch
+and kept (`ART-PLAY.md`), with the operator's three landing paintings; and the Practice
+Ground's painted panel and title card. The milestones before it are in `MILESTONES.md`.
+Still open, the operator's: the rewording of the placeholder copy, the panels' captions
+among it. v1.0 is tagged.
 
 ### Done
 

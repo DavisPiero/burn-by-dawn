@@ -191,12 +191,10 @@ let tipsOn = new URLSearchParams(window.location.search).get('tips') !== 'off';
 // only, for the session; M still turns every sound off. Carried in the
 // address as `?music=off` when the contents page loads another mission (M29b).
 let musicOff = new URLSearchParams(window.location.search).get('music') === 'off';
-// Comic panels at story moments (M52, the operator's test): off unless
-// `?panels=on`. A mission's `comicPanels` names a painting and its caption for
-// each moment (the landing, the mission accomplished); each is shown once a
-// game, over the board, until a click or key, and a painting not yet supplied
-// shows nothing. Display only.
-const panelsOn = new URLSearchParams(window.location.search).get('panels') === 'on';
+// Comic panels at story moments (M52, the operator's): a mission's
+// `comicPanels` names a painting and its caption for each moment (the landing,
+// the mission accomplished); each is shown once a game, over the board, until a
+// click or key, and a painting not yet supplied shows nothing. Display only.
 let comicPanel = null;
 let panelsSeen = new Set();
 let panelTimer = null;
@@ -3403,7 +3401,7 @@ function endDropShow() {
  */
 function showComicPanel(moment, delay = 0) {
   const panel = mission.comicPanels?.[moment];
-  if (!panelsOn || !panel || panelsSeen.has(moment)) return;
+  if (!panel || panelsSeen.has(moment)) return;
   panelsSeen.add(moment);
   clearTimeout(panelTimer);
   panelTimer = setTimeout(() => {

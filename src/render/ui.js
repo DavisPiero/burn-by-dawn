@@ -1139,7 +1139,7 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
 /**
- * A comic panel over the board (M52, a test behind `?panels=on`): the
+ * A comic panel over the board (M52, the operator's): the
  * mission's painting for a moment, tipped in an ink frame, its caption boxed
  * in the corner as a comic's is. `panel` is { src, caption }, or null to put
  * it away. Any click or key puts it away (main.js); it covers nothing else.
