@@ -1103,9 +1103,11 @@
     /* What a step points at on the page (M48b): ringed in the red pen, throbbing as the board's rings do. */
     @keyframes lesson-point { 50% { outline-color: transparent; } }
     .lesson-point { outline: 5px solid var(--red); outline-offset: 3px; animation: lesson-point 1.2s ease-in-out infinite; }
-    /* A click the step does not ask for: the card shakes its head. */
-    @keyframes lesson-nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-    #lesson.nudge { animation: lesson-nudge 180ms steps(4, end) 2; }
+    /* The card comes up when it appears, when its step changes, and at a click
+       the step does not ask for: one small, quick scale-in (M54b, the operator's:
+       the old side-to-side shake read as a telling-off). */
+    @keyframes lesson-pop { from { transform: scale(0.94); } to { transform: scale(1); } }
+    #lesson.pop { animation: lesson-pop 140ms ease-out; }
     /* A turn card (or the diversion's) sits in the bottom right of the map,
        where the men seldom go, narrower and with nothing darkened, so what it
        reports can be seen beside it (M13). Any click still puts it away. */

@@ -105,3 +105,8 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m54 | The new lines sit on the wording sheet as F77b, F77c under each line they vary, and WORDING-SOURCES.md points each at its index in the list ([1], [2])
 2026-10-17 | m54 | The practice ground's game panel is the operator's new painting at 480 x 320; it is 3:2 already, so nothing is trimmed
 2026-10-17 | m54 | M54 signed off by the operator and merged
+2026-10-17 | m54b | The two M54 lines that lost rules are reworded to say them plainly: the canister line names the enemy as the one who finds a canister until it is empty, as a parachute; Hard aqueduct's says the squads come because the Road Bridge still stands, and that the boat waits two turns, not three
+2026-10-17 | m54b | The counter key's NEXT TURN is "It will face" again (the operator's): "Enemy will face" fitted with 3 px to spare. RAISED THE ALARM keeps "Enemy saw or found something", which fits
+2026-10-17 | m54b | The lesson card's jitter had a cause beyond the shake: three render-time checks (may he swim?) went through lessonAllows, which shakes the card at a wrong click, so every redraw, a hover included, shook it on a lesson where swimming was not live. They ask lessonLive now, which only checks
+2026-10-17 | m54b | The shake is gone: the card scales in from 94% over 140 ms when it appears, when what it says changes, and at a click the step does not ask for. It is placed before the scale-in starts and placed again when it ends, as placing measures the card on the page
+2026-10-17 | m54b | M54b signed off by the operator and merged

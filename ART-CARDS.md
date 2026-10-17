@@ -120,7 +120,8 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   At its foot, small: ◀ STEP BACK (not on the first step), START AGAIN and COURSE
   MENU. After a whistle, **WHISTLE! FITCH was seen. Try that step again.**
   in red above the sentence. Only its buttons take clicks. A click the step does not
-  ask for makes the card shake its head, twice, a few pixels. The step's own line is
+  ask for brings the card up again in a small, quick scale-in, as it comes up when it
+  appears or its step changes (M54b: the shake read as a telling-off). The step's own line is
   on the board in the red pen, at the hex it is about, with the pen's throbbing ring on
   each hex it names. A ring on a man is wider, round his whole hex, so it frames his
   counter and the parachute beside it, with his line under the ring. A step about a

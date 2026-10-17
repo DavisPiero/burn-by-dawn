@@ -39,7 +39,7 @@ within a minute, and never reads a paragraph to learn a rule.
    list, at any time. So each lesson sets up its own small situation and needs nothing
    from the one before.
 3. **Idiot proof.** Only what a step asks for does anything; a wrong click is ignored
-   and the lesson card shakes its head. Steps can be gone back through one at a time,
+   and the lesson card comes up again in a quick scale-in. Steps can be gone back through one at a time,
    and a lesson started again.
 4. **Nobody is hurt and it cannot be lost.** Caught out, the umpire's whistle blows and
    the step is put back as it began, with the reason on the lesson card.
