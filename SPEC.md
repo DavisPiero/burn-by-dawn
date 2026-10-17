@@ -429,15 +429,14 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M51, the operator's notes on the M50 pictures and the aqueduct measured truly, done:**
-START HERE moved down between the dotted line and the line under it; the torrent printed on under the road bridge (`printedAs`,
-§11) and its arch the right way up; the canister's chute clear of its dots; and the bot's
-naive man taught to get clear of a blast (`CLEAR=1`), which was what held Hard's North
-run under its target. With it the aqueduct is easier than its old baselines said, and
-four runs are over their targets (`MISSION-AQUEDUCT.md`, Balance), left for the
-operator. The milestones before it are in `MILESTONES.md`. Still open, the operator's:
-the paintings and recordings asked for in `ART-PROMPTS.md` (21 to 23) and the rewording
-of the placeholder copy. v1.0 is tagged.
+**M52, the aqueduct rebalanced and comic panels tried, done:** the aqueduct measured
+against the mended bot and brought inside every target by the operator's pick of the
+options: Normal five charges, Hard all six (`MISSION-AQUEDUCT.md`, Balance); comic panels
+at two story moments, the landing and the mission accomplished, a test behind
+`?panels=on` (`ART-PLAY.md`), with the landing paintings asked for in `ART-PROMPTS.md` 28;
+and the Practice Ground's painted panel and title card. The milestones before it are in
+`MILESTONES.md`. Still open, the operator's: whether to pursue the comic panels; the
+rewording of the placeholder copy. v1.0 is tagged.
 
 ### Done
 
@@ -469,6 +468,6 @@ the lesson engine that runs it. The engine is built and the course, all seventee
 
 **In `MISSION-AQUEDUCT.md`**, playable from the contents page and balanced at M42:
 southern Italy, February 1941.
-One big target that takes four charges, every charge down in a supply canister, and a
+One big target that takes five charges (Hard all six), every charge down in a supply canister, and a
 boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine
 rules, written above: supply canisters (§9) and the way out on a timetable (§10).
