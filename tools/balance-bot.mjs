@@ -170,6 +170,11 @@ const KNIFE = process.env.KNIFE === '1' || Boolean(OPTS.hunt);
 const SENSE = process.env.SENSE === '1' || Boolean(OPTS.tidy);
 // PICK=1 (M49e): a man setting a charge picks a point nobody would see him on, where there is one.
 const PICK = process.env.PICK === '1';
+// CLEAR=1 (M51): a man standing where a blast goes this turn looks at every
+// hex he can reach to get clear of it, as the game's ALL CHARGES SET · GET
+// CLEAR tells a player to. Without it the naive man looked only along his
+// route, and on the aqueduct stood still beside the piers as they went up.
+const CLEAR = process.env.CLEAR === '1';
 const PACK = process.env.PACK === '1' || Boolean(OPTS.tidy);
 const TRAIN = process.env.TRAIN === '1';
 const PENCIL = process.env.PENCIL ?? (OPTS.tidy ? 'plan' : 'default');
@@ -519,7 +524,7 @@ function actFor(state, unit, map) {
     // A first-timer: hovers the next few hexes of the obvious route toward his
     // goal, and a couple of hexes either side of it, not the whole board.
     const onRoute = [...reach.values()].sort((a, b) => (dist.get(M.hexKey(a.q, a.r)) ?? 999) - (dist.get(M.hexKey(b.q, b.r)) ?? 999));
-    cands = [here, ...onRoute.slice(0, 4)];
+    cands = CLEAR && SB.inBlast(blasts, here) ? [here, ...onRoute] : [here, ...onRoute.slice(0, 4)];
   }
   const hideCost = rules.actions.hide.apCost;
   let best = null;
