@@ -19,15 +19,20 @@ Last updated: 17 Oct 2026, M52 signed off, merged and pushed.
 
 ## Next
 
-1. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes:
+1. **A wording sheet** (your go-ahead): every line the player sees, by where it shows,
+   in one document free of code and notes, for you to reword; Claude carries the
+   changes back into `data/` and the code. Its own session.
+2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes:
    watch whether the panels feel like a reward or a speed bump.
-2. Then the next big piece, your choice (ROADMAP.md): a fourth mission, or more panel
+3. Then the next big piece, your choice (ROADMAP.md): a fourth mission, or more panel
    moments with the in-world tips.
 
 ## Open with the operator
 
 1. **Hard's orders still say "Bonus: ROAD BRIDGE +4"**, though with all six charges
-   needed blowing it loses the mission (the level's summary says so). Reword, or keep?
+   needed blowing it loses the mission. Recommended, not yet answered: the orders mark
+   any bonus target the stick has no charge to spare for, "(no charge to spare)", as
+   one general rule.
 2. **The panel captions are placeholder copy**, for you to reword (`comicPanels` in
    `data/missions.json`).
 3. **Still standing:** France a little easier than its baselines say ("ok for now"); the ?

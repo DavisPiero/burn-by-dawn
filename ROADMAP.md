@@ -13,19 +13,20 @@ Phase N" means the archive.
 
 ## Where we are
 
-17 Oct 2026, build M51. Three missions (France, the airfield, the aqueduct) and the
+17 Oct 2026, build M52. Three missions (France, the airfield, the aqueduct) and the
 training course, all playable from the contents page, at three difficulty levels, with
 painted art and recorded sound. The test of the game is SPEC.md's two pillars: every
 success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
 
-1. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
+1. **A wording sheet** (the operator's go-ahead, 17 Oct 2026): every on-screen line in
+   one document grouped by where it shows, for the operator's wording pass, carried back
+   into the files by Claude. The words are spread over `data/` (missions, roster,
+   lessons, help, maps, terrain, traits, difficulty) and the code (main.js, ui.js,
+   hints.js), and notes sit beside them, so editing in place is hard.
+2. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`), and a milestone of fixes for what they trip on, as M49b was.
-2. **The aqueduct rebalanced to the mended bot** (M51 found its naive man stood in his
-   own blast; with `CLEAR=1` Normal is 92 / 97 / 82 and Hard 51 / 42 / 52, four runs
-   over their targets). The north-east corner redraw is no longer needed for it: two
-   versions were measured at M51 and moved nothing.
 3. **Then the next big piece, the operator's choice**: a fourth mission (below), or the
    comic panels with the in-world tips (Parked). Advised: one new mission first,
    Gunnerside, because it plays least like the three there are. Spec it as

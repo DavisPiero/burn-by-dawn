@@ -91,3 +91,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m52 | The Practice Ground's title card replaced by the operator with the watermark painted out; its 1600 x 400 copy made again
 2026-10-17 | m52 | START HERE moved by the operator with ?layout: contents.flag [55, 17]
 2026-10-17 | m52 | Normal's hunter 8 over careful on the aqueduct's West run (94 against 86): left, the operator's ("it's fine")
+2026-10-17 | m52 | A wording sheet next (the operator's go-ahead): the on-screen words gathered in one document by where they show, since they are spread over data/ and the code with notes beside them
