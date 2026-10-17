@@ -181,9 +181,9 @@
       },
       "_dialogue": "M31: only the lines that name France or its ground (Fitch's cabbages and dirt, Vance's church, Barrow's trees, bridge and mud).",
       "dialogue": {
-        "fitch": { "onLand": ["Down soft as you like. Sand in places I'll not mention.", "Sand, sand and more sand.", "Soft landing. Desert's good for something."], "onHide": ["Nice and snug in the sand.", "Burrowed in like a lizard.", "Sand in my teeth. Quiet, mind."] },
-        "vance": { "onLand": ["I can see those aircraft. We're about right.", "Stukas dead ahead. Spot on.", "Airstrip's that way. I'd know it anywhere."] },
-        "barrow": { "onLand": ["Look at this place... not a tree for a hundred miles.", "No trees to miss. Shame.", "Flat as a billiard table out here."], "onWounded": ["Leave it. Get to the aircraft.", "Don't stop. The planes!", "Just a nick. Get to the planes."], "onHide": ["Going to need a bath after this.", "Dust up my nose.", "Lying in the dust again."] }
+        "fitch": { "onLand": ["Down soft as you like. Sand in places I'll not mention.", "Sand, sand and more damn sand.", "Soft landing. The desert IS good for something."], "onHide": ["Snug in the sand.", "Lying here like a lizard.", "Got sand in me teeth."] },
+        "vance": { "onLand": ["I can see those aircraft. We're in the right spot.", "Stukas dead ahead. Spot on.", "Airstrip's that way."] },
+        "barrow": { "onLand": ["Look at this place... not a tree for a hundred miles.", "No trees to miss. Shame that.", "Flat like a billiard table out here."], "onWounded": ["Leave it. Get to the aircraft.", "Don't stop. The planes!", "Just a nick. It's those planes we should worry about."], "onHide": ["Going to need a bath after this.", "Dust up me nose.", "Lyin' in the dust again."] }
       },
       "portraits": "assets/portraits/desert",
       "counterColour": "burnt",
@@ -250,10 +250,10 @@
       },
       "_dialogue": "M43: only the lines that name France or its ground (Fitch's cabbages, Vance's church, Barrow's trees and bridge), and Nunn's, who carries no spare down here: nobody jumps with a charge. Placeholder copy for the operator to reword.",
       "dialogue": {
-        "fitch": { "onLand": ["Fancy an olive boys?", "Snow? Nobody said snow.", "Olive grove. Lovely."] },
-        "vance": { "onLand": ["I can see the aqueduct from here.", "Aqueduct's that way. Big old thing.", "Got the aqueduct in sight."] },
-        "barrow": { "onLand": ["Lovely place this. Shame there's so much work to be done.", "Cold as charity up here.", "Mountains. Not a tree to speak of. Good."], "onWounded": ["Leave it. Get to the aqueduct.", "Don't wait. The aqueduct!", "I'm fine. Get to the aqueduct."] },
-        "nunn": { "onLand": ["Where'd that canister land?", "No load for once. Where's the canister?", "Light as a feather today. Find the canister."] }
+        "fitch": { "onLand": ["Fancy an olive boys?", "Snow? Nobody said snow!", "Olive groves. Lovely."] },
+        "vance": { "onLand": ["I can see the aqueduct from here.", "Aqueduct's that way.", "Got the aqueduct in sight."] },
+        "barrow": { "onLand": ["Lovely place. Shame there's work to be done.", "It's freezin' up here.", "Not like England is it?"], "onWounded": ["Leave it. Get to the aqueduct.", "Don't wait. The aqueduct!", "I'm fine. Get to the aqueduct."] },
+        "nunn": { "onLand": ["Where'd that canister land?", "Where's the canister?", "Find the canister."] }
       },
       "_pictures": "M43. Its own pictures, each a slot that falls back until the operator's painting is in the folder (ART-PROMPTS.md Priorities 19 to 21): `enemyChips`, the garrison's chips, Italian here, tried type by type before assets/enemies (the German ones); `portraits`, the six in winter kit, tried man by man before assets/portraits; `titleCard`, its own painting, France's until the file is there.",
       "enemyChips": "assets/enemies/italian",
