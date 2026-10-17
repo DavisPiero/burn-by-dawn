@@ -4,11 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 17 Oct 2026, M53 built on branch `m53-wording`, not yet signed off.
+Last updated: 17 Oct 2026, M53 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M52.** Branch **`m53-wording`** holds M53, waiting for your sign-off:
+- **`main` is M53**, signed off, merged and pushed; no branch open:
   - **The wording sheet**, `docs/WORDING.md`: 1,389 lines the player sees, in 14 groups
     by where they show (contents, orders, how to play, the drop, the map, the men, the
     right page, actions, the hover readout, cards in play, the report, the back page,
@@ -30,8 +30,7 @@ Last updated: 17 Oct 2026, M53 built on branch `m53-wording`, not yet signed off
 
 ## Open with the operator
 
-1. **Sign off M53** (merge `m53-wording` into main).
-2. **Still standing:** France a little easier than its baselines say ("ok for now"); the
+1. **Still standing:** France a little easier than its baselines say ("ok for now"); the
    bugle for a lesson passed; the knife's cry worded "a cry"; the record's tab at the
    top centre.
 

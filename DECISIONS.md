@@ -97,3 +97,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m53 | 1,389 lines in 14 groups by where they show (A contents … N the training course, a third of it). Data lines copied from the files by a scratch script, exact; code lines written out by hand as the player sees them, with the game's parts in ‹› as examples and `/` between alternatives. Left out: the debug pages (?layout, ?playtest), test pages, notes keys, sprite and file names
 2026-10-17 | m53 | Where each tag lives is in docs/WORDING-SOURCES.md (data file and key, or the code file and what builds it), so the carry-back session need not search, and the sheet stays free of code
 2026-10-17 | m53 | The orders' (no charge to spare) mark: the operator could not follow the question whether TONIGHT should carry it too, and took the recommendation, the orders only
+2026-10-17 | m53 | M53 signed off by the operator and merged
