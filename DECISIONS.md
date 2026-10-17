@@ -90,3 +90,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m52 | The operator's three landing paintings in, kept as panel-landing-<id>_full.jpg (1200 x 800, about 700 KB each); the game loads 900 x 600 copies at quality 80 (about 300 KB), since the panel shows about 550 wide and quality alone saved little on the grain
 2026-10-17 | m52 | The Practice Ground's title card replaced by the operator with the watermark painted out; its 1600 x 400 copy made again
 2026-10-17 | m52 | START HERE moved by the operator with ?layout: contents.flag [55, 17]
+2026-10-17 | m52 | Normal's hunter 8 over careful on the aqueduct's West run (94 against 86): left, the operator's ("it's fine")

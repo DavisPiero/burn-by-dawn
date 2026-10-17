@@ -28,11 +28,9 @@ Last updated: 17 Oct 2026, M52 signed off, merged and pushed.
 
 1. **Hard's orders still say "Bonus: ROAD BRIDGE +4"**, though with all six charges
    needed blowing it loses the mission (the level's summary says so). Reword, or keep?
-2. **Normal's hunter is 8 over careful on West** (94 against 86), the pattern you left at
-   M48l.
-3. **The panel captions are placeholder copy**, for you to reword (`comicPanels` in
+2. **The panel captions are placeholder copy**, for you to reword (`comicPanels` in
    `data/missions.json`).
-4. **Still standing:** France a little easier than its baselines say ("ok for now"); the ?
+3. **Still standing:** France a little easier than its baselines say ("ok for now"); the ?
    pages' lines are Claude's; the bugle for a lesson passed; the knife's cry worded
    "a cry"; the record's tab at the top centre.
 
