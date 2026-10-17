@@ -51,6 +51,9 @@ success makes the rest harder, and the player is hunter and hunted at once.
   design pass first: which moments, how a panel shows and is dismissed without slowing
   play, one set shared by all missions or some per mission, and the art spec. A phase of
   its own after the airfield is playable.
+  **In the game since M52** (the operator's, after trying it): two moments, the landing
+  and mission accomplished (ART-PLAY.md). What is still parked is the rest: more moments
+  (Dutch killed, the first enemy seen, the last charge set, failure) and their paintings.
 
 - **Different teams for different missions**, such as Australians at Nadzab, New Guinea
   (the operator's wish, not yet). For now every mission uses the same six men, and every

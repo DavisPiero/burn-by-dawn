@@ -26,7 +26,7 @@ which carried the water for the ports of Taranto, Bari and Brindisi, with a subm
 waiting off the coast. The same six men and the same 18×13 board, which puts the
 mountains and the sea closer together than the map of Italy does.
 
-The aqueduct is one big target that takes **four charges** (Easy three, Hard five), and
+The aqueduct is one big target that takes **five charges** (Easy three, Hard all six; M52), and
 the stick has **six, all of them in three canisters** that come down along the run with
 the men. Nobody lands holding a charge. So the first job of the night is not the walk
 to the target but finding out where the explosive is, and who goes to fetch it.
@@ -46,7 +46,7 @@ reinforcements.
 
 Its pillar check. What the player does: send a scout for the far canister while the
 sappers load up at the near one, empty a canister before the patrol finds it, knife the
-aqueduct's guard, set four timers to one turn, drop the road bridge to keep the lorries
+aqueduct's guard, set five timers to one turn, drop the road bridge to keep the lorries
 off the beach, knife the coast watcher and lie up in the rocks for the boat. What each
 costs: a fetch is turns off the walk home; a charge on the bridge is a spare the
 aqueduct may want and three points on the dial; a long timer is a charge left set where
@@ -98,8 +98,8 @@ two**. So:
 | Nunn (gunner, Ox) | 1 | — |
 | Vance, Barrow (scouts), Speers (gunner) | 0 | 1 |
 
-The two sappers and Nunn can carry five between them at full pace, so the sixth charge,
-or any charge a sapper cannot get to, is a scout's fetch at a sapper's pace. Losing a
+The two sappers and Nunn can carry five between them at full pace, Normal's whole job, so
+Hard's sixth charge, or any charge a sapper cannot get to, is a scout's fetch at a sapper's pace. Losing a
 sapper drops two charges on his hex. Whoever carries a charge can set it.
 
 ### The ground
@@ -141,8 +141,9 @@ What it holds:
   piers, two hexes east of where it was first drawn so its west end can be walked
   round. The hex the torrent runs under it by is ravine, open, and a man can walk
   through it. **Eight charge points** at the piers' feet, four on each side and two
-  either side of the torrent, of which the job needs four: a choice of where to stand,
-  and one side is enough, so the party can work together.
+  either side of the torrent, of which the job needs five (M52; four before): a choice
+  of where to stand, but no longer one side alone, so a man must work the far side of
+  the piers too, and timing them to one bang is harder.
   The **farm** stands at its east end, as it did.
 - **The ravine** runs from the aqueduct south-east down to the sea: the quiet way home,
   under cover all the way and slow.
@@ -203,17 +204,17 @@ Numbers are Normal's, per kind in the mission's rules patch.
 
 | Objective | Needs | Blast / kills within | Alert | Score | Pays |
 |---|---|---|---|---|---|
-| **Aqueduct** (PRIMARY) | 4 charges, of 8 points | 1 / 1 | +3 | 10 | the win; calls up 1 squad |
+| **Aqueduct** (PRIMARY) | 5 charges, of 8 points | 1 / 1 | +3 | 10 | the win; calls up 1 squad |
 | **Road bridge** | 1 charge, of 2 points | 1 / 1 | +3 | 4 | no reserve, no reinforcements; becomes ravine |
 
 **The win**: `destroyPrimary`, and at least the level's `minimumOut` men **in the boat**
-by dawn. Easy: three charges, and no squad is called. Hard: five charges (four from M49e
-to M50), two squads,
+by dawn. Easy: three charges, and no squad is called. Hard: **all six charges** (M52; five
+before), so there is none to spare for the road bridge, two squads,
 and **the boat stays two turns** (in on 15, gone with 16).
 
 **Time pencils**: 2 to 6 turns, and **the longest, 6, is the one offered first**
 (Dutch, Steady Hands: 1 to 5, and 5). A timer that would go off after dawn cannot be
-picked, as ever. Four charges are four men's work or two turns', so timers set to the
+picked, as ever. Five charges are five men's work or two turns', so timers set to the
 same turn make **one bang**, and that is worth a whole step of the dial here. The game
 helps: a first charge on six turns leaves the others five to arrive in, and the tin
 then offers each of them the timer that goes off with it (SPEC.md §7).
@@ -232,7 +233,7 @@ costs.**
 
 | What happens | Points | Running |
 |---|---|---|
-| The aqueduct, all four charges in one bang | +3 | 3, Suspicious |
+| The aqueduct, all five charges in one bang | +3 | 3, Suspicious |
 | Up to three slips: a man seen, a parachute or canister found, a stone, a body found, a silenced kill | +1 each | 4 to 6, Alert |
 | A fourth slip | +1 | 7, Alarmed |
 | The aqueduct in two bangs instead of one | +3 more | Alarmed with one slip |
@@ -329,24 +330,30 @@ well the nearest), works the pier feet nearest the stick, and keeps the boat's t
 lying up in heavy cover within three hexes of the beach until it opens. It never
 signals the boat or blows the road bridge unless `greedy`.
 
-**Baselines** (M51, with CLEAR; win %, west / north / valley):
+**Baselines** (M52: Normal five charges, Hard all six; with CLEAR; win %, west / north / valley):
 
 | Level | Naive | Seeds | Target |
 |---|---|---|---|
 | Easy | **96 / 99 / 98** | 300 | 95 or more |
-| Normal | **92 / 97 / 82** | 300 | 75 to 90 |
-| Hard | **51 / 42 / 52** | 300 | 25 to 45 |
+| Normal | **89 / 83 / 82** | 300 | 75 to 90 |
+| Hard | **37 / 33 / 41** | 300 | 25 to 45 |
 
-**Normal's West and North and Hard's West and Valley are over their targets**: not a
-change to the game but a truer measure of it. Before CLEAR the naive bot killed its own
-men with the aqueduct's blast in most games on Hard (92 men in 60 North games, 66 West,
-48 Valley; 14 North with it), which is what held Hard's North at 16. Not rebalanced
-here: the operator's call. Without CLEAR, as at M50: 96 / 98 / 98, 83 / 87 / 82,
-32 / 16 / 33. The other styles move freely already, so CLEAR does not change them, byte
-for byte. Normal, other styles (200 seeds): tidy 90 / 96 / 82; careful 92 /
-99 / 86, hunter 97 / 98 / 93; **Hard careful 69 / 61 / 63, hunter 68 / 62 / 65**, level
-everywhere. The naive bot's winning scores on Normal have their middle half at 26 to 30
-(North 21 to 24, Valley 24 to 29), so the rating's bands are kept.
+Every run is inside its target. Normal, other styles (200 seeds): tidy 85 / 86 / 79
+(with KNIFE=1); careful 86 / 92 / 86, hunter 94 / 93 / 89 (West 8 over careful, as at
+M48l, "passes as read"; below). **Hard careful 42 / 46 / 45, hunter 43 / 45 / 46**, level
+everywhere. The naive bot's winning scores on Normal have their middle half at 26 to 31
+(North 23 to 28, Valley 26 to 31), so the rating's bands are kept.
+
+**How it was chosen (M52, the operator's pick of options measured).** With CLEAR (M51)
+the bot had the aqueduct down by turn 12 and waited at the beach, and the runs were over
+their targets (Normal 92 / 97 / 82, Hard 51 / 42 / 52). Measured and moving little, a
+point or three: the boat a turn sooner, more squads for the bang, the longest pencil 5,
+the plough bare of its cover, each run's men jumping a hex sooner or later (the West
+run's line has no hex to spare for it). What moved it was the number of charges: more
+fetching and men on both sides of the piers. Normal five 89 / 83 / 82; five with the
+boat staying two turns 87 / 76 / 79; the boat two turns and pencil 5 without them
+91 / 90 / 80. Hard six 37 / 33 / 41. Before M52, with CLEAR: 96 / 99 / 98, 92 / 97 / 82,
+51 / 42 / 52; without it, as at M50: 96 / 98 / 98, 83 / 87 / 82, 32 / 16 / 33.
 
 M49e's, before the bot's second mending and the rocks, Hard at four charges: 96 / 98 /
 97, 79 / 85 / 79, 43 / 26 / 32; Hard careful 61 / 63 / 38, hunter 79 / 68 / 74. M42's, before the bot's PICK and while spent points could still be blown again (M42c to
@@ -384,7 +391,7 @@ under its target again (16).
   hunter, so it is off here (the numbers are in the engine, `alert.knife` and
   `noise.knife`, null). A seventh enemy is untried.
 - **Hard's North run was under** (15 at M48l, 16 at M50), and it was the bot's: its
-  sappers stood beside the piers as they went up (CLEAR, above; 42 since). The road
+  sappers stood beside the piers as they went up (CLEAR, above; 42 at M51, 33 with six charges at M52). The road
   into the north-east corner was redrawn two ways and measured at M51 before that was
   found (in from the east edge below the farm, or along row 6): Hard's North 17 for
   both, the chutes found there halved by the second, so it is left as it was.
@@ -392,8 +399,8 @@ under its target again (16).
   others: men who land in the torrent's bed lose turn 1 and the tidy bot waits for them.
 
 **The rating's bands** (SPEC.md §10): **24, 30 and 35**. The naive bot's winning scores
-on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at 22 to
-28; with the Road Bridge the middle half is 31 to 35 and the best games 39 or 40.
+on Normal have their middle half at 26 to 31 (North 23 to 28; M52), the tidy bot's at 22 to
+28 (M42); with the Road Bridge the middle half is 31 to 35 and the best games 39 or 40.
 
 ### The order it is built in
 
@@ -407,3 +414,4 @@ on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at
 | **M49e** | Rebalanced after M49d's spent charge points: the bot's PICK, Hard four charges, not five |
 | **M50** | The board's pictures redrawn from the operator's references; Hard's careful play level with hunting: the bot's PICK mended twice more, the boat in under the shore rocks, Hard five charges again |
 | **M51** | The operator's notes on the pictures (the torrent under the road bridge, its arch, the canister's chute); the bot's `CLEAR=1`, and the baselines measured with it |
+| **M52** | Rebalanced to the mended bot: Normal five charges, Hard all six |

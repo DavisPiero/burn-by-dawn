@@ -304,6 +304,15 @@ id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:
 beside each mission's line on the contents page, shown about 180 x 120 (ART-PROMPTS.md
 Priority 14).
 
+**Comic panels** (M52; a mission's `comicPanels` in missions.json, ART-PROMPTS.md
+Priority 28): `assets/panels/panel-landing-<mission id>.jpg`, one per mission
+(`panel-landing-france.jpg`, `panel-landing-airfield.jpg`, `panel-landing-aqueduct.jpg`),
+supplied at **3:2, 1200 x 800**, sRGB, opaque, no text, and kept as
+`panel-landing-<id>_full.jpg`; the game loads a 900 x 600 copy at quality 80 (`sips -s
+format jpeg -s formatOptions 80 -z 600 900`). Shown about 550 x 370 over the board, tipped, in an ink frame the code draws, its
+caption boxed over the top-left corner. The mission accomplished panel is the mission's
+own `contents-<id>_full.jpg`. A panel not supplied is simply not shown.
+
 **The course's clipboard** (M48j, ART-PROMPTS.md Priority 26): `assets/course/clipboard.png`,
 **536 x 714** (3:4, upright), PNG on transparency: a wooden clipboard from straight above,
 its steel clip in the top 12%, a sheet of blank cream paper on it. Shown at 268 x 357 on

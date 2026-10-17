@@ -1138,6 +1138,33 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
  * The results (SPEC.md §10), printed as the back page of the annual over the
  * right page: masthead, outcome, all six by name and fate, and the score.
  */
+/**
+ * A comic panel over the board (M52, the operator's): the
+ * mission's painting for a moment, tipped in an ink frame, its caption boxed
+ * in the corner as a comic's is. `panel` is { src, caption }, or null to put
+ * it away. Any click or key puts it away (main.js); it covers nothing else.
+ */
+export function renderComicPanel(element, panel) {
+  if (!panel) {
+    element.hidden = true;
+    element.replaceChildren();
+    element.dataset.src = '';
+    return;
+  }
+  // Drawn once per panel, so the pop plays once and not on every redraw.
+  if (!element.hidden && element.dataset.src === panel.src) return;
+  element.replaceChildren();
+  element.dataset.src = panel.src;
+  const frame = html('figure', 'comic-frame');
+  const img = html('img');
+  img.src = panel.src;
+  img.alt = '';
+  frame.append(img);
+  if (panel.caption) frame.append(html('figcaption', 'comic-caption', panel.caption));
+  element.append(frame, html('div', 'comic-dismiss', 'CLICK OR ANY KEY'));
+  element.hidden = false;
+}
+
 export function renderResults(element, outcome, levelLabel, banner, onAgain, onContents, rating = null) {
   element.replaceChildren();
   element.hidden = !outcome;
