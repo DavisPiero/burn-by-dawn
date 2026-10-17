@@ -4,14 +4,13 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 17 Oct 2026, M51 built on branch `m51-north-east-corner`, not signed off.
+Last updated: 17 Oct 2026, M51 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M50.** The branch `m51-north-east-corner` holds M51, waiting for your
-  sign-off:
-  - **Your three picture notes:** START HERE on its own paper, so the dots stop at its
-    edge; the torrent runs on under the road bridge, and the bridge's arch hangs from the
+- **`main` is M51**, signed off, merged and pushed; no branch open:
+  - **Your three picture notes:** START HERE moved down between the dotted line and the
+    line under it; the torrent runs on under the road bridge, and the bridge's arch hangs from the
     deck the right way up, as in your reference; the canister's chute lies crumpled above
     it, clear of the orange dots.
   - **Hard's North run was the bot's fault, not the map's.** The naive bot blew up its
@@ -24,10 +23,9 @@ Last updated: 17 Oct 2026, M51 built on branch `m51-north-east-corner`, not sign
 
 ## Next
 
-1. **Your sign-off on M51**, then merge.
-2. **The aqueduct rebalanced to the mended bot**: Normal West 2 over and North 7 over,
+1. **The aqueduct rebalanced to the mended bot**: Normal West 2 over and North 7 over,
    Hard West 6 and Valley 7 over. Options to be measured for you to pick from.
-3. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
+2. More playtests with new people (`docs/PLAYTEST.md`, `?playtest`), then their notes.
 
 ## Open with the operator
 

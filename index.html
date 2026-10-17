@@ -1445,14 +1445,7 @@
     /* A mission's flag (M48h, the operator's): START HERE on the course, in
        the same red rubber as NEXT YEAR'S ANNUAL, faded, over a line still printed full. */
     /* Over the dotted leader, clear of the words (M48j, the operator's: it lay on the blurb). */
-    /* Its faded red is mixed with the paper, not see-through, and the paper
-       is under it, so the leader's dots stop at its edge (M51, the operator's:
-       they ran through the letters). */
-    #briefing .contents-stamp.flag {
-      top: 25px; right: 185px; opacity: 1; transform: translateY(-50%) rotate(-5deg);
-      color: color-mix(in srgb, var(--red) 60%, var(--paper)); border-color: color-mix(in srgb, var(--red) 60%, var(--paper));
-      background-color: var(--paper); background-image: var(--paper-fibre); background-size: var(--paper-fibre-size);
-    }
+    #briefing .contents-stamp.flag { top: 25px; right: 185px; opacity: 0.55; transform: translateY(-50%) rotate(-5deg); }
     /* A course's list (M48f, the operator's): a two-page spread. The lessons
        down the left page, a line each with its tick, and the clipboard on the
        right: the training record, ticked as the lessons are passed. */

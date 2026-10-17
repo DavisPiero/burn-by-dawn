@@ -429,8 +429,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M51, the operator's notes on the M50 pictures and the aqueduct measured truly:**
-START HERE on its own paper; the torrent printed on under the road bridge (`printedAs`,
+**M51, the operator's notes on the M50 pictures and the aqueduct measured truly, done:**
+START HERE moved down between the dotted line and the line under it; the torrent printed on under the road bridge (`printedAs`,
 §11) and its arch the right way up; the canister's chute clear of its dots; and the bot's
 naive man taught to get clear of a blast (`CLEAR=1`), which was what held Hard's North
 run under its target. With it the aqueduct is easier than its old baselines said, and
