@@ -131,7 +131,7 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
   const underArt = new Set((map.objectives ?? []).flatMap((o) => o.hexes.map((h) => (Array.isArray(h) ? hexKey(h[0], h[1]) : hexKey(h.q, h.r)))));
   forEachCell(map, (q, r) => {
     const center = axialToPixel(q, r, map.hexSize);
-    const terrainId = terrainIdAt(map, q, r);
+    const terrainId = printedIdAt(map, q, r);
     const style = terrainArt(terrainId);
     const inPlay = isInPlay(map, q, r);
     const points = cornersToPoints(center, corners);
@@ -211,6 +211,18 @@ export function resetBoardMemory(layers) {
   layers.cueSince = null;
 }
 
+/**
+ * The terrain a hex is printed as (art only): a map's `printedAs` may print one
+ * terrain as another under its picture. The aqueduct's road bridge stands on
+ * the torrent, so its ground is printed as the ravine's, one stream with the
+ * hexes above and below it (M51, the operator's: the bridge's own narrow bed
+ * read oddly beside them). Every rule still reads the hex's own terrain.
+ */
+function printedIdAt(map, q, r) {
+  const id = terrainIdAt(map, q, r);
+  return map.printedAs?.[id] ?? id;
+}
+
 // --- area terrain (SPEC.md §11) --------------------------------------------------
 // Woods, orchards, marsh and the ridge are printed as one shape over each run
 // of neighbouring hexes of the same terrain, the way a map draws a wood, not
@@ -228,7 +240,7 @@ function drawAreas(layer, defs, map, corners, clipPrefix = 'area-clip') {
   const motifs = [];
   const shadows = [];
   forEachCell(map, (q0, r0) => {
-    const id = terrainIdAt(map, q0, r0);
+    const id = printedIdAt(map, q0, r0);
     const style = terrainArt(id);
     if (!style.area || seen.has(hexKey(q0, r0))) return;
     // The run of hexes, and each edge of it that faces something else, in
@@ -241,7 +253,7 @@ function drawAreas(layer, defs, map, corners, clipPrefix = 'area-clip') {
       run.push(h);
       for (const d of NEIGHBOR_DIRS) {
         const n = { q: h.q + d.q, r: h.r + d.r };
-        if (seen.has(hexKey(n.q, n.r)) || terrainIdAt(map, n.q, n.r) !== id) continue;
+        if (seen.has(hexKey(n.q, n.r)) || printedIdAt(map, n.q, n.r) !== id) continue;
         seen.add(hexKey(n.q, n.r));
         stack.push(n);
       }
@@ -250,7 +262,7 @@ function drawAreas(layer, defs, map, corners, clipPrefix = 'area-clip') {
     for (const h of run) {
       const c = axialToPixel(h.q, h.r, map.hexSize);
       NEIGHBOR_DIRS.forEach((d, dir) => {
-        if (terrainIdAt(map, h.q + d.q, h.r + d.r) === id) return;
+        if (printedIdAt(map, h.q + d.q, h.r + d.r) === id) return;
         let [i, j] = edges[dir];
         if (j !== (i + 1) % 6) [i, j] = [j, i];
         segments.push({ a: { x: c.x + corners[i].x, y: c.y + corners[i].y }, b: { x: c.x + corners[j].x, y: c.y + corners[j].y } });

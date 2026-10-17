@@ -190,6 +190,8 @@
     [4, 12]
   ],
   "exfilArt": "boat",
+  "_printedAs": "SPEC.md §11, M51 (the operator's). Art only: the road bridge's hex is printed as the ravine it stands on, so the torrent runs on under the bridge as one stream with the hexes above and below it. Every rule still reads it as bridge.",
+  "printedAs": { "bridge": "ravine" },
   "boatRun": {
     "from": [12, 11],
     "to": [4, 12]

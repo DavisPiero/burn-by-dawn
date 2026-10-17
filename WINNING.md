@@ -195,4 +195,7 @@ to one bang, and would rather lose a turn than be seen. `ALERT=1` prints where t
 dial's points came from. `SENSE=1` mends two faults in the bot's play found there (it
 knifed standing in its own blast; it took a target's first-listed charge points, not
 the nearest): the aqueduct's numbers are with it, and France's and the airfield's were
-measured without it and are kept so.
+measured without it and are kept so. `CLEAR=1` (M51) has a naive man standing where a blast goes
+this turn look at every hex he can reach to get clear, not only along his route: the
+aqueduct's numbers are with it; France's and the airfield's are kept without it (France's
+Normal moves 2 to 5 points with it).

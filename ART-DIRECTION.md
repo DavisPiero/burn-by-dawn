@@ -128,6 +128,10 @@ board must read at a glance.
   the west and, a hex past its east end, away to the north-east. A line may be nudged
   (`{ through, nudge }`, in hex radii) to meet a picture's own road: those two are
   lifted to the aqueduct's channel.
+- **A hex may be printed as other ground** (`printedAs` in a map, art only, M51): the
+  aqueduct's road bridge stands on the torrent, so its hex is printed as ravine, one stream
+  with the hexes above and below it, and the bridge's picture is only its deck, parapets
+  and its arch's face hanging from the deck over the water. The rules read the bridge.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
   water, the rest in italic, each nudged off its hex (`dx`, `dy`) to sit in what it names.
   The turn report uses them ("the field by Ferme Lebrun").
@@ -180,7 +184,8 @@ board must read at a glance.
 - **A supply canister counts its charges in fire-orange dots**, one for each still in
   it, as a man's counter counts his: under the middle of its hex, clear of its edge, and over any counter,
   so they show with a man standing on it. They stand in for the satchel drawn where a
-  charge lies loose.
+  charge lies loose. The canister's spilled chute lies above it, crumpled and grey, so
+  nothing round and pale sits beside the dots (M51).
 - Bodies are drawn half as big again, near the middle of their hex. A knifed enemy's
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all

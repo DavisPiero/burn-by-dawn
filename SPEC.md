@@ -429,40 +429,15 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M50, the aqueduct redrawn and Hard's careful play rewarded, done:** its board
-pictures redrawn from the operator's six references (the aqueduct whole and blown in
-two tiers of arches, the road bridge from above, the boat, the canister, terraces and
-olive groves); on Hard the careful player now wins as often as the hunter, by two more
-bot faults mended, the boat coming in under the shore rocks as well as on the beach,
-and Hard's aqueduct taking five charges again (the operator's pick of the options,
-`MISSION-AQUEDUCT.md`, Balance). Before it, **M49e, the aqueduct rebalanced, done:** most of the fall after
-M49d's spent charge points was the bot's (a spare man stood on a fresh point and the
-carrier waited beside him all night), mended by `PICK=1`; Hard's aqueduct takes four
-charges, not five (the operator's pick of the options). Every level inside its target.
-Before it, **M49d, the
-operator's notes after M49c, done:** a charge point that
-has gone off is spent; parachutes under the targets' words; the far bank a man could
-swim to dotted on hover; the kill the gunner's burst again; on the aqueduct, men may
-wait on the beach before the boat and board it with B once it is in, told so by the
-pen, the report, the turn card and a card on its last turn; the aqueduct's map a hex
-east, with three woods in its south-west corner. Before it, **M49b, the first playtest's notes, done:** a ✕ on how to play,
-◀ CONTENTS on the course's list, a wave on the selected man who could swim now, the
-operator's fanfare for a mission accomplished, a lesson step done that adds and takes
-nothing away, the goods train coming on time to a bridge blown early and stopping short,
-and a blast's dead left as bodies already found. Before it, **M49, the playtest kit,
-built; the playtests themselves are the operator's.** With
-`?playtest` in the address the game times what a new player does (the first move, the
-first charge set, each lesson, every wrong click and whistle by step) and COPY RECORD
-gives it as plain lines; `docs/PLAYTEST.md` is the sheet. What they trip on is fixed in
-M49b, from the operator's notes. Before it, **M48l**: a knife that is heard was built,
-measured and left off; Hard's North run is left under its target, both the operator's
-calls (`MISSION-AQUEDUCT.md`, Balance). Before that, M48k, the
-layout tool (`?layout`, `data/layout.json`; §11), and **M48, the course** (§15, `MISSION-TRAINING.md`), done: it has all seventeen lessons, the course's list as a two-page spread and the clipboard, umpires with their own counters and cries, and it is
-playable from the contents page, flagged START HERE. The ? pages' diagrams are built (M48i, §11). Still open from before: M43 gave the aqueduct (§14) its words, sounds and art hand-off, which
-ends Phase 4 as it was planned. What is open is the operator's: the paintings and
-recordings still asked for in `ART-PROMPTS.md` (Priorities 21 to 23), the rewording of its
-placeholder copy, and Hard's North run, well under its target, which wants that corner
-of the map redrawn together (`MISSION-AQUEDUCT.md`, Balance). v1.0 is tagged.
+**M51, the operator's notes on the M50 pictures and the aqueduct measured truly, done:**
+START HERE moved down between the dotted line and the line under it; the torrent printed on under the road bridge (`printedAs`,
+§11) and its arch the right way up; the canister's chute clear of its dots; and the bot's
+naive man taught to get clear of a blast (`CLEAR=1`), which was what held Hard's North
+run under its target. With it the aqueduct is easier than its old baselines said, and
+four runs are over their targets (`MISSION-AQUEDUCT.md`, Balance), left for the
+operator. The milestones before it are in `MILESTONES.md`. Still open, the operator's:
+the paintings and recordings asked for in `ART-PROMPTS.md` (21 to 23) and the rewording
+of the placeholder copy. v1.0 is tagged.
 
 ### Done
 

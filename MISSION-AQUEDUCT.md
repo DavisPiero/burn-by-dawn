@@ -315,7 +315,10 @@ operator to reword.
 ### Balance
 
 Targets are §10's. The aqueduct's reference is `MISSION=aqueduct KNIFE=1 SENSE=1 PICK=1
-node tools/balance-bot.mjs 300 naive` (SENSE: SPEC.md §10; PICK since M49e: a man setting
+CLEAR=1 node tools/balance-bot.mjs 300 naive` (SENSE: SPEC.md §10; CLEAR since M51: a
+man standing where a blast goes this turn looks at every hex he can reach to get clear,
+where the naive man looked only along his route and stood beside the piers as they went
+up; PICK since M49e: a man setting
 a charge picks a point no enemy watches and nobody stands on, and a man standing by keeps
 off the points, without which, once spent points could not be used again, a carrier
 waited all night beside a point a spare man stood on; since M50 also a carrier sets his
@@ -326,16 +329,21 @@ well the nearest), works the pier feet nearest the stick, and keeps the boat's t
 lying up in heavy cover within three hexes of the beach until it opens. It never
 signals the boat or blows the road bridge unless `greedy`.
 
-**Baselines** (M50; win %, west / north / valley):
+**Baselines** (M51, with CLEAR; win %, west / north / valley):
 
 | Level | Naive | Seeds | Target |
 |---|---|---|---|
-| Easy | **96 / 98 / 98** | 300 | 95 or more |
-| Normal | **83 / 87 / 82** | 300 | 75 to 90 |
-| Hard | **32 / 16 / 33** | 300 | 25 to 45 |
+| Easy | **96 / 99 / 98** | 300 | 95 or more |
+| Normal | **92 / 97 / 82** | 300 | 75 to 90 |
+| Hard | **51 / 42 / 52** | 300 | 25 to 45 |
 
-Since M50 (the bot's PICK mended twice more; the boat in under the shore rocks too; Hard
-five charges again). Normal, other styles (200 seeds): tidy 90 / 96 / 82; careful 92 /
+**Normal's West and North and Hard's West and Valley are over their targets**: not a
+change to the game but a truer measure of it. Before CLEAR the naive bot killed its own
+men with the aqueduct's blast in most games on Hard (92 men in 60 North games, 66 West,
+48 Valley; 14 North with it), which is what held Hard's North at 16. Not rebalanced
+here: the operator's call. Without CLEAR, as at M50: 96 / 98 / 98, 83 / 87 / 82,
+32 / 16 / 33. The other styles move freely already, so CLEAR does not change them, byte
+for byte. Normal, other styles (200 seeds): tidy 90 / 96 / 82; careful 92 /
 99 / 86, hunter 97 / 98 / 93; **Hard careful 69 / 61 / 63, hunter 68 / 62 / 65**, level
 everywhere. The naive bot's winning scores on Normal have their middle half at 26 to 30
 (North 21 to 24, Valley 24 to 29), so the rating's bands are kept.
@@ -375,15 +383,11 @@ under its target again (16).
   one as loud as a gunshot, it cost the player who knifes now and then and not the
   hunter, so it is off here (the numbers are in the engine, `alert.knife` and
   `noise.knife`, null). A seventh enemy is untried.
-- **Hard's North run is under** (15 at M48l; 26 at M49e's four charges; 16 since M50's
-  five). Its games are Alarmed before the job in
-  88% (West 49%): the squads called for bodies, and the reserve, come down the road
-  through its landing ground and find parachutes and canisters on their way. Moving
-  the flight line west, changing its wind, fewer or no body squads on Hard, four
-  charges on Hard and a three-turn boat on Hard were all measured and none mends it
-  without breaking another run (DECISIONS.md, M48l). Cover on the plough did not move
-  it either (M42b). Mending it wants that corner of the map redrawn, with the
-  operator.
+- **Hard's North run was under** (15 at M48l, 16 at M50), and it was the bot's: its
+  sappers stood beside the piers as they went up (CLEAR, above; 42 since). The road
+  into the north-east corner was redrawn two ways and measured at M51 before that was
+  found (in from the east edge below the farm, or along row 6): Hard's North 17 for
+  both, the chutes found there halved by the second, so it is left as it was.
 - **The Valley run's tidy bot wins least** (70) though its naive bot is level with the
   others: men who land in the torrent's bed lose turn 1 and the tidy bot waits for them.
 
@@ -402,3 +406,4 @@ on Normal have their middle half at 25 to 31 (North 23 to 29), the tidy bot's at
 | **M43** | Words, sounds and the art hand-off (done): the garrison's own chip folder, the six's lines, three made sounds, slots for its title card and winter portraits, the art asked for |
 | **M49e** | Rebalanced after M49d's spent charge points: the bot's PICK, Hard four charges, not five |
 | **M50** | The board's pictures redrawn from the operator's references; Hard's careful play level with hunting: the bot's PICK mended twice more, the boat in under the shore rocks, Hard five charges again |
+| **M51** | The operator's notes on the pictures (the torrent under the road bridge, its arch, the canister's chute); the bot's `CLEAR=1`, and the baselines measured with it |

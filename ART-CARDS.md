@@ -29,7 +29,9 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. **A mission may be flagged** (`flag`): the
   course's line is stamped START HERE in the same red rubber, fainter, over a line
-  still printed full (the operator's, M48h: the pen's lettering did not suit).
+  still printed full (the operator's, M48h: the pen's lettering did not suit), between
+  the dotted leader and the line under it (M51; `data/layout.json`), the dots showing
+  through its faded ink.
   **Where the operator places things by hand** is `data/layout.json` (M48k): START HERE,
   the clipboard, each mission's drop cue and its rings' notes. `?layout` in the address
   outlines them, dashed in leader blue, to be dragged; a panel's COPY gives the whole

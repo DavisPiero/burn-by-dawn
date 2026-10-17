@@ -993,7 +993,9 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   and blown, the ship's boat and the supply canister. Redrawn at M50 from the operator's
   references (Priority 22): the aqueduct in two tiers of arches, the road bridge from above
   with its parapets, the whaler with its sailor, the canister with its spilled chute, the
-  terrace walls as courses of stone over a green bank, the olives as ragged crowns. Since M43 the winter ground's wash
+  terrace walls as courses of stone over a green bank, the olives as ragged crowns. At M51
+  (the operator's notes) the road bridge's arch hangs from the deck the right way up, over
+  the torrent printed on under it, and the canister's chute lies above it, clear of its dots. Since M43 the winter ground's wash
   is a little stronger (the cold blue at 0.18 over the paper, 0.1 before), and the
   hand-off is written: its title card (Priority 20), winter portraits (21), references
   to redraw the board's pictures from (22) and its sounds (23). The Italian chips and
