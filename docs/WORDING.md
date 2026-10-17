@@ -624,44 +624,122 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### What the men say (every mission unless replaced below)
 
 - F77 DUTCH, onLand | Pack the chutes boys!
+- F77b DUTCH, onLand | On me, lads. Quick and quiet.
+- F77c DUTCH, onLand | Chutes away. Nobody wanders off.
 - F78 DUTCH, onPlaceCharge | Charge set. Walk... then run.
+- F78b DUTCH, onPlaceCharge | That's her set. Clear off, the lot of you.
+- F78c DUTCH, onPlaceCharge | Set and timed. Don't hang about.
 - F79 DUTCH, onWounded | Only a scratch. Keep the lads moving.
+- F79b DUTCH, onWounded | I'm hit. Doesn't change the plan.
+- F79c DUTCH, onWounded | Patch it later. Keep going.
 - F80 DUTCH, onWoundedCarrying | Charge is by my boots. Somebody fetch it and I'll catch up.
+- F80b DUTCH, onWoundedCarrying | Dropped the charge. Someone pick it up, sharpish.
+- F80c DUTCH, onWoundedCarrying | Charge is down. Don't leave it lying.
 - F81 DUTCH, onKill | One less to worry about. Now keep your heads down.
+- F81b DUTCH, onKill | Quiet as you like. Move on.
+- F81c DUTCH, onKill | That's one. Eyes open for the rest.
 - F82 DUTCH, onSpotted | We've been seen. Nobody panic.
+- F82b DUTCH, onSpotted | They've seen us. Stick to the plan.
+- F82c DUTCH, onSpotted | We're blown. Steady, lads.
 - F83 DUTCH, onHide | Get down and stay down. That's an order.
+- F83b DUTCH, onHide | Everyone flat. Not a peep.
+- F83c DUTCH, onHide | Down. Let them walk past.
 - F84 FITCH, onLand | Touchdown. Soft as can be.
+- F84b FITCH, onLand | Not a scratch on me. Lucky old Fitch.
+- F84c FITCH, onLand | Landed like a feather, me.
 - F85 FITCH, onPlaceCharge | All done.
+- F85b FITCH, onPlaceCharge | Easy. Next!
+- F85c FITCH, onPlaceCharge | Done before you'd blinked.
 - F86 FITCH, onWounded | Oh bugger, that's torn it.
+- F86b FITCH, onWounded | Ow! That's not fair.
+- F86c FITCH, onWounded | Ah, hell. Caught one.
 - F87 FITCH, onWoundedCarrying | Oh, that's torn it. Charge is on the deck — mind how you lift it.
+- F87b FITCH, onWoundedCarrying | Ah, hell. Dropped the charge. Careful with it.
+- F87c FITCH, onWoundedCarrying | Hit! Charge is on the ground, somebody grab it.
 - F88 FITCH, onKill | Sorry pal, nothing personal.
+- F88b FITCH, onKill | Him or me, wasn't it?
+- F88c FITCH, onKill | Shouldn't have looked this way, mate.
 - F89 FITCH, onSpotted | Uh-oh... He's looking right at me.
+- F89b FITCH, onSpotted | Ah. Hello there.
+- F89c FITCH, onSpotted | He's clocked me. Bugger.
 - F90 FITCH, onHide | Nice and snug here in the dirt.
+- F90b FITCH, onHide | Face in the dirt. Lovely.
+- F90c FITCH, onHide | Quiet as a mouse, me.
 - F91 VANCE, onLand | This is a fine spot Sarge.
+- F91b VANCE, onLand | Know just where we are.
+- F91c VANCE, onLand | Good ground, this. Bridge is that way.
 - F92 VANCE, onPlaceCharge | Not my trade, this. Hope it goes bang.
+- F92b VANCE, onPlaceCharge | Done, I think. Ask a sapper.
+- F92c VANCE, onPlaceCharge | Set. Don't look at me if it fizzles.
 - F93 VANCE, onWounded | Should've kept my head down damn it. Go on, I'll catch up.
+- F93b VANCE, onWounded | Damn. They've winged me.
+- F93c VANCE, onWounded | Caught one. Still got my eyes.
 - F94 VANCE, onKill | Didn't hear a thing, did he?
+- F94b VANCE, onKill | Never saw me coming.
+- F94c VANCE, onKill | Sorry, mate. Wrong place.
 - F95 VANCE, onSpotted | Spotted. I'll have to be quick about it.
+- F95b VANCE, onSpotted | They've seen me. Time to be elsewhere.
+- F95c VANCE, onSpotted | Made me. Moving now.
 - F96 VANCE, onHide | Don't make a sound...
+- F96b VANCE, onHide | Still as stone.
+- F96c VANCE, onHide | Just a shadow, me.
 - F97 BARROW, onLand | Missed every tree in France. Told you I would.
+- F97b BARROW, onLand | Not a branch touched me. Not one.
+- F97c BARROW, onLand | Trees? What trees?
 - F98 BARROW, onPlaceCharge | Which end's the dangerous one?
+- F98b BARROW, onPlaceCharge | Don't rush me, I'm reading the label.
+- F98c BARROW, onPlaceCharge | If I lose a finger, I'm blaming Sarge.
 - F99 BARROW, onWounded | Leave it. Get to the bridge.
+- F99b BARROW, onWounded | Don't wait for me. The bridge!
+- F99c BARROW, onWounded | Just a nick. Bridge first.
 - F100 BARROW, onKill | Hope nobody was fond of him.
+- F100b BARROW, onKill | Should've stayed in bed, pal.
+- F100c BARROW, onKill | He won't be missed. Not by me.
 - F101 BARROW, onSpotted | The bastard's seen me.
+- F101b BARROW, onSpotted | Oh, he's seen me alright.
+- F101c BARROW, onSpotted | Right. I'm rumbled.
 - F102 BARROW, onHide | Down in the mud, where I belong.
+- F102b BARROW, onHide | Flat as a pancake.
+- F102c BARROW, onHide | Mud in my ears again.
 - F103 SPEERS, onLand | Bren's in one piece. That's all that matters.
+- F103b SPEERS, onLand | Bren and me, both down safe.
+- F103c SPEERS, onLand | Gun's dry. Good.
 - F104 SPEERS, onPlaceCharge | Don't ask me to do that again.
+- F104b SPEERS, onPlaceCharge | Gunner's job now, is it?
+- F104c SPEERS, onPlaceCharge | Set. Don't tell anyone I did that.
 - F105 SPEERS, onWounded | Bit of bother. Still got one good arm.
+- F105b SPEERS, onWounded | Hit. I can still pull a trigger.
+- F105c SPEERS, onWounded | Nicked me. Doesn't matter.
 - F106 SPEERS, onKill | One down. Quietly, mind.
+- F106b SPEERS, onKill | Got him.
+- F106c SPEERS, onKill | Clean shot. Moving on.
 - F107 SPEERS, onSpotted | Been made. Somebody sort this bloke out.
+- F107b SPEERS, onSpotted | He's seen me. I've seen him too.
+- F107c SPEERS, onSpotted | Spotted. Bren's ready if it comes to it.
 - F108 SPEERS, onHide | Head down. Bren's quiet.
+- F108b SPEERS, onHide | Bren's down, I'm down.
+- F108c SPEERS, onHide | Gun under me. Not a sound.
 - F109 NUNN, onLand | All the way down in one piece, Sarge.
+- F109b NUNN, onLand | Landed heavy. Nothing broke.
+- F109c NUNN, onLand | Ground's still there. Good.
 - F110 NUNN, onPlaceCharge | Heavy old thing. Glad to be done with it.
+- F110b NUNN, onPlaceCharge | There. My back thanks you.
+- F110c NUNN, onPlaceCharge | That's the weight off.
 - F111 NUNN, onWounded | Takes more than that to put me out of business.
+- F111b NUNN, onWounded | Just a bee sting.
+- F111c NUNN, onWounded | Hit. Still standing, mind.
 - F112 NUNN, onWoundedCarrying | Somebody take my charge.
+- F112b NUNN, onWoundedCarrying | Charge is down. Someone grab it.
+- F112c NUNN, onWoundedCarrying | Can't carry it now. Over to you.
 - F113 NUNN, onKill | That's him sorted.
+- F113b NUNN, onKill | He picked the wrong fella.
+- F113c NUNN, onKill | Down he goes.
 - F114 NUNN, onSpotted | Bit hard to hide a man my size.
+- F114b NUNN, onSpotted | Seen. Can't miss me, can they?
+- F114c NUNN, onSpotted | He's spotted me. Course he has.
 - F115 NUNN, onHide | Small as I can make myself. Which ain't small.
+- F115b NUNN, onHide | Just a big rock, me.
+- F115c NUNN, onHide | Hunched up. Not that it helps.
 
 ### What the men say instead: The Practice Ground
 
@@ -675,19 +753,41 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### What the men say instead: The Airfield
 
 - F122 FITCH, onLand | Down soft as you like. Sand in places I'll not mention.
+- F122b FITCH, onLand | Sand, sand and more sand.
+- F122c FITCH, onLand | Soft landing. Desert's good for something.
 - F123 FITCH, onHide | Nice and snug in the sand.
+- F123b FITCH, onHide | Burrowed in like a lizard.
+- F123c FITCH, onHide | Sand in my teeth. Quiet, mind.
 - F124 VANCE, onLand | I can see those aircraft. We're about right.
+- F124b VANCE, onLand | Stukas dead ahead. Spot on.
+- F124c VANCE, onLand | Airstrip's that way. I'd know it anywhere.
 - F125 BARROW, onLand | Look at this place... not a tree for a hundred miles.
+- F125b BARROW, onLand | No trees to miss. Shame.
+- F125c BARROW, onLand | Flat as a billiard table out here.
 - F126 BARROW, onWounded | Leave it. Get to the aircraft.
+- F126b BARROW, onWounded | Don't stop. The planes!
+- F126c BARROW, onWounded | Just a nick. Get to the planes.
 - F127 BARROW, onHide | Going to need a bath after this.
+- F127b BARROW, onHide | Dust up my nose.
+- F127c BARROW, onHide | Lying in the dust again.
 
 ### What the men say instead: The Aqueduct
 
 - F128 FITCH, onLand | Fancy an olive boys?
+- F128b FITCH, onLand | Snow? Nobody said snow.
+- F128c FITCH, onLand | Olive grove. Lovely.
 - F129 VANCE, onLand | I can see the aqueduct from here.
+- F129b VANCE, onLand | Aqueduct's that way. Big old thing.
+- F129c VANCE, onLand | Got the aqueduct in sight.
 - F130 BARROW, onLand | Lovely place this. Shame there's so much work to be done.
+- F130b BARROW, onLand | Cold as charity up here.
+- F130c BARROW, onLand | Mountains. Not a tree to speak of. Good.
 - F131 BARROW, onWounded | Leave it. Get to the aqueduct.
+- F131b BARROW, onWounded | Don't wait. The aqueduct!
+- F131c BARROW, onWounded | I'm fine. Get to the aqueduct.
 - F132 NUNN, onLand | Where'd that canister land?
+- F132b NUNN, onLand | No load for once. Where's the canister?
+- F132c NUNN, onLand | Light as a feather today. Find the canister.
 
 (When each is said: onLand on landing, onPlaceCharge setting a charge, onWounded when hit, onWoundedCarrying hit while carrying a charge, onKill after a kill, onSpotted the first time he is seen, onHide going to ground.)
 

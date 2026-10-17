@@ -12,75 +12,75 @@
       "id": "holloway", "name": "Sgt. Alec \"Dutch\" Holloway", "shortName": "DUTCH", "role": "sapper", "leader": true,
       "traits": ["steady-hands"],
       "dialogue": {
-        "onLand": "Pack the chutes boys!",
-        "onPlaceCharge": "Charge set. Walk... then run.",
-        "onWounded": "Only a scratch. Keep the lads moving.",
-        "onWoundedCarrying": "Charge is by my boots. Somebody fetch it and I'll catch up.",
-        "onKill": "One less to worry about. Now keep your heads down.",
-        "onSpotted": "We've been seen. Nobody panic.",
-        "onHide": "Get down and stay down. That's an order."
+        "onLand": ["Pack the chutes boys!", "On me, lads. Quick and quiet.", "Chutes away. Nobody wanders off."],
+        "onPlaceCharge": ["Charge set. Walk... then run.", "That's her set. Clear off, the lot of you.", "Set and timed. Don't hang about."],
+        "onWounded": ["Only a scratch. Keep the lads moving.", "I'm hit. Doesn't change the plan.", "Patch it later. Keep going."],
+        "onWoundedCarrying": ["Charge is by my boots. Somebody fetch it and I'll catch up.", "Dropped the charge. Someone pick it up, sharpish.", "Charge is down. Don't leave it lying."],
+        "onKill": ["One less to worry about. Now keep your heads down.", "Quiet as you like. Move on.", "That's one. Eyes open for the rest."],
+        "onSpotted": ["We've been seen. Nobody panic.", "They've seen us. Stick to the plan.", "We're blown. Steady, lads."],
+        "onHide": ["Get down and stay down. That's an order.", "Everyone flat. Not a peep.", "Down. Let them walk past."]
       }
     },
     {
       "id": "fitch", "name": "Pte. Ronnie Fitch", "shortName": "FITCH", "role": "sapper",
       "traits": ["quick-work"],
       "dialogue": {
-        "onLand": "Touchdown. Soft as can be.",
-        "onPlaceCharge": "All done.",
-        "onWounded": "Oh bugger, that's torn it.",
-        "onWoundedCarrying": "Oh, that's torn it. Charge is on the deck — mind how you lift it.",
-        "onKill": "Sorry pal, nothing personal.",
-        "onSpotted": "Uh-oh... He's looking right at me.",
-        "onHide": "Nice and snug here in the dirt."
+        "onLand": ["Touchdown. Soft as can be.", "Not a scratch on me. Lucky old Fitch.", "Landed like a feather, me."],
+        "onPlaceCharge": ["All done.", "Easy. Next!", "Done before you'd blinked."],
+        "onWounded": ["Oh bugger, that's torn it.", "Ow! That's not fair.", "Ah, hell. Caught one."],
+        "onWoundedCarrying": ["Oh, that's torn it. Charge is on the deck — mind how you lift it.", "Ah, hell. Dropped the charge. Careful with it.", "Hit! Charge is on the ground, somebody grab it."],
+        "onKill": ["Sorry pal, nothing personal.", "Him or me, wasn't it?", "Shouldn't have looked this way, mate."],
+        "onSpotted": ["Uh-oh... He's looking right at me.", "Ah. Hello there.", "He's clocked me. Bugger."],
+        "onHide": ["Nice and snug here in the dirt.", "Face in the dirt. Lovely.", "Quiet as a mouse, me."]
       }
     },
     {
       "id": "vance", "name": "Cpl. Eddie Vance", "shortName": "VANCE", "role": "scout",
       "traits": ["cats-eyes"],
       "dialogue": {
-        "onLand": "This is a fine spot Sarge.",
-        "onPlaceCharge": "Not my trade, this. Hope it goes bang.",
-        "onWounded": "Should've kept my head down damn it. Go on, I'll catch up.",
-        "onKill": "Didn't hear a thing, did he?",
-        "onSpotted": "Spotted. I'll have to be quick about it.",
-        "onHide": "Don't make a sound..."
+        "onLand": ["This is a fine spot Sarge.", "Know just where we are.", "Good ground, this. Bridge is that way."],
+        "onPlaceCharge": ["Not my trade, this. Hope it goes bang.", "Done, I think. Ask a sapper.", "Set. Don't look at me if it fizzles."],
+        "onWounded": ["Should've kept my head down damn it. Go on, I'll catch up.", "Damn. They've winged me.", "Caught one. Still got my eyes."],
+        "onKill": ["Didn't hear a thing, did he?", "Never saw me coming.", "Sorry, mate. Wrong place."],
+        "onSpotted": ["Spotted. I'll have to be quick about it.", "They've seen me. Time to be elsewhere.", "Made me. Moving now."],
+        "onHide": ["Don't make a sound...", "Still as stone.", "Just a shadow, me."]
       }
     },
     {
       "id": "barrow", "name": "Pte. Tom Barrow", "shortName": "BARROW", "role": "scout",
       "traits": ["treetops"],
       "dialogue": {
-        "onLand": "Missed every tree in France. Told you I would.",
-        "onPlaceCharge": "Which end's the dangerous one?",
-        "onWounded": "Leave it. Get to the bridge.",
-        "onKill": "Hope nobody was fond of him.",
-        "onSpotted": "The bastard's seen me.",
-        "onHide": "Down in the mud, where I belong."
+        "onLand": ["Missed every tree in France. Told you I would.", "Not a branch touched me. Not one.", "Trees? What trees?"],
+        "onPlaceCharge": ["Which end's the dangerous one?", "Don't rush me, I'm reading the label.", "If I lose a finger, I'm blaming Sarge."],
+        "onWounded": ["Leave it. Get to the bridge.", "Don't wait for me. The bridge!", "Just a nick. Bridge first."],
+        "onKill": ["Hope nobody was fond of him.", "Should've stayed in bed, pal.", "He won't be missed. Not by me."],
+        "onSpotted": ["The bastard's seen me.", "Oh, he's seen me alright.", "Right. I'm rumbled."],
+        "onHide": ["Down in the mud, where I belong.", "Flat as a pancake.", "Mud in my ears again."]
       }
     },
     {
       "id": "speers", "name": "Cpl. Stan Speers", "shortName": "SPEERS", "role": "gunner",
       "traits": ["cool-head"],
       "dialogue": {
-        "onLand": "Bren's in one piece. That's all that matters.",
-        "onPlaceCharge": "Don't ask me to do that again.",
-        "onWounded": "Bit of bother. Still got one good arm.",
-        "onKill": "One down. Quietly, mind.",
-        "onSpotted": "Been made. Somebody sort this bloke out.",
-        "onHide": "Head down. Bren's quiet."
+        "onLand": ["Bren's in one piece. That's all that matters.", "Bren and me, both down safe.", "Gun's dry. Good."],
+        "onPlaceCharge": ["Don't ask me to do that again.", "Gunner's job now, is it?", "Set. Don't tell anyone I did that."],
+        "onWounded": ["Bit of bother. Still got one good arm.", "Hit. I can still pull a trigger.", "Nicked me. Doesn't matter."],
+        "onKill": ["One down. Quietly, mind.", "Got him.", "Clean shot. Moving on."],
+        "onSpotted": ["Been made. Somebody sort this bloke out.", "He's seen me. I've seen him too.", "Spotted. Bren's ready if it comes to it."],
+        "onHide": ["Head down. Bren's quiet.", "Bren's down, I'm down.", "Gun under me. Not a sound."]
       }
     },
     {
       "id": "nunn", "name": "Pte. Wilf Nunn", "shortName": "NUNN", "role": "gunner",
       "traits": ["ox"],
       "dialogue": {
-        "onLand": "All the way down in one piece, Sarge.",
-        "onPlaceCharge": "Heavy old thing. Glad to be done with it.",
-        "onWounded": "Takes more than that to put me out of business.",
-        "onWoundedCarrying": "Somebody take my charge.",
-        "onKill": "That's him sorted.",
-        "onSpotted": "Bit hard to hide a man my size.",
-        "onHide": "Small as I can make myself. Which ain't small."
+        "onLand": ["All the way down in one piece, Sarge.", "Landed heavy. Nothing broke.", "Ground's still there. Good."],
+        "onPlaceCharge": ["Heavy old thing. Glad to be done with it.", "There. My back thanks you.", "That's the weight off."],
+        "onWounded": ["Takes more than that to put me out of business.", "Just a bee sting.", "Hit. Still standing, mind."],
+        "onWoundedCarrying": ["Somebody take my charge.", "Charge is down. Someone grab it.", "Can't carry it now. Over to you."],
+        "onKill": ["That's him sorted.", "He picked the wrong fella.", "Down he goes."],
+        "onSpotted": ["Bit hard to hide a man my size.", "Seen. Can't miss me, can they?", "He's spotted me. Course he has."],
+        "onHide": ["Small as I can make myself. Which ain't small.", "Just a big rock, me.", "Hunched up. Not that it helps."]
       }
     }
   ]
