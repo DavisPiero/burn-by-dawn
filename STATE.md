@@ -4,11 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 17 Oct 2026, M54 built on `m54-wording-and-lines`, not yet signed off.
+Last updated: 17 Oct 2026, M54 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M53.** Branch **`m54-wording-and-lines`** holds M54, waiting on you:
+- **`main` is M54**, signed off, merged and pushed:
   - **Your rewording is in the game**: every line you changed on `docs/WORDING.md`
     (contents, orders, How to Play, the drop, the counter key, the men, the panels), and
     the spec's quotes of them follow.
@@ -22,10 +22,9 @@ Last updated: 17 Oct 2026, M54 built on `m54-wording-and-lines`, not yet signed 
 
 ## Next
 
-1. **Sign off M54**, or send notes.
-2. **Your rewording of the new lines** (the `b` and `c` tags in section F), then a
+1. **Your rewording of the new lines** (the `b` and `c` tags in section F), then a
    short session to carry them back.
-3. More playtests with new people; then the next big piece (ROADMAP.md).
+2. More playtests with new people; then the next big piece (ROADMAP.md).
 
 ## Open with the operator
 

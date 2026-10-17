@@ -104,3 +104,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m54 | Two more lines for every moment in the three missions, the missions' own lines too, so each moment has three. Not the practice ground's landing lines: a lesson is played once and scripted. No line names a German ("Jerry"): the base lines are said in Italy too
 2026-10-17 | m54 | The new lines sit on the wording sheet as F77b, F77c under each line they vary, and WORDING-SOURCES.md points each at its index in the list ([1], [2])
 2026-10-17 | m54 | The practice ground's game panel is the operator's new painting at 480 x 320; it is 3:2 already, so nothing is trimmed
+2026-10-17 | m54 | M54 signed off by the operator and merged
