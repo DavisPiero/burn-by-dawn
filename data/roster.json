@@ -5,7 +5,7 @@
 
   "_shortName": "What fits on the counter's name strip. It is not required to be the surname: Holloway goes by his nickname.",
 
-  "_dialogue": "Three lines every man must have, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5), even a man who will never place a charge. The rest are optional, and a man without one is silent. onWoundedCarrying: said instead of onWounded when he is hit still carrying a charge, which then drops on his hex, so a line about the charge is only said when there is one to fetch; give it to the men who start with charges, and onWounded must then not mention one. onKill: after a gunner's kill or anyone's knife. onSpotted: the first time he is seen, not each turn he stays in view. onHide: going to ground. These are PLACEHOLDER lines, written to be replaced.",
+  "_dialogue": "Three lines every man must have, keyed onLand, onPlaceCharge, onWounded (SPEC.md §5), even a man who will never place a charge. The rest are optional, and a man without one is silent. onWoundedCarrying: said instead of onWounded when he is hit still carrying a charge, which then drops on his hex, so a line about the charge is only said when there is one to fetch; give it to the men who start with charges, and onWounded must then not mention one. onKill: after a gunner's kill or anyone's knife. onSpotted: the first time he is seen, not each turn he stays in view. onHide: going to ground. These are PLACEHOLDER lines, written to be replaced. Any line may be a list of lines (M54): one is said, fixed by the seed, the turn, the man and the moment, never rolled (units.js lineFor).",
 
   "troopers": [
     {

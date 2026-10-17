@@ -286,8 +286,10 @@ Each character has lines in `roster.json` keyed to `onLand`, `onPlaceCharge` and
 one is silent): `onWoundedCarrying`, said instead of `onWounded` when he is hit still
 carrying a charge; `onKill`, after a gunner's kill or anyone's knife; `onSpotted`, the
 first time he is seen (not each turn he stays in view, and never on top of a wound: a man
-hit says his wounded line); and `onHide`, going to ground. They show as speech bubbles on
-the board (§11). This is data and costs nothing mechanically, and it is most of what makes
+hit says his wounded line); and `onHide`, going to ground. A moment may hold a list of
+lines instead of one (M54: three each in the three missions); which one he says is fixed
+by the seed, the turn, the man and the moment (`rng.js pickFixed`), never rolled, so the
+lines cost a seeded game nothing. They show as speech bubbles on the board (§11). This is data and costs nothing mechanically, and it is most of what makes
 the six feel like six people.
 
 ---
