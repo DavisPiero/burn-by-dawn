@@ -13,37 +13,37 @@
       "traits": ["steady-hands"],
       "dialogue": {
         "onLand": "Pack the chutes boys!",
-        "onPlaceCharge": "Set. Walk away from it — then run.",
+        "onPlaceCharge": "Charge set. Walk... then run.",
         "onWounded": "Only a scratch. Keep the lads moving.",
-        "onWoundedCarrying": "Charge is by my boots. Somebody fetch it — I'll catch you up.",
-        "onKill": "One fewer. Now keep your heads down.",
+        "onWoundedCarrying": "Charge is by my boots. Somebody fetch it and I'll catch up.",
+        "onKill": "One less to worry about. Now keep your heads down.",
         "onSpotted": "We've been seen. Nobody panic.",
-        "onHide": "Down, and stay down. That's an order."
+        "onHide": "Get down and stay down. That's an order."
       }
     },
     {
       "id": "fitch", "name": "Pte. Ronnie Fitch", "shortName": "FITCH", "role": "sapper",
       "traits": ["quick-work"],
       "dialogue": {
-        "onLand": "Down soft as you like. Whose cabbages are these?",
-        "onPlaceCharge": "Done. You'd not have got the wrapper off.",
-        "onWounded": "Oh, that's torn it.",
+        "onLand": "Touchdown. Soft as can be.",
+        "onPlaceCharge": "All done.",
+        "onWounded": "Oh bugger, that's torn it.",
         "onWoundedCarrying": "Oh, that's torn it. Charge is on the deck — mind how you lift it.",
-        "onKill": "Sorry, pal. Nothing personal.",
-        "onSpotted": "Uh-oh. He's looking right at me.",
-        "onHide": "Nice and snug in the dirt."
+        "onKill": "Sorry pal, nothing personal.",
+        "onSpotted": "Uh-oh... He's looking right at me.",
+        "onHide": "Nice and snug here in the dirt."
       }
     },
     {
       "id": "vance", "name": "Cpl. Eddie Vance", "shortName": "VANCE", "role": "scout",
       "traits": ["cats-eyes"],
       "dialogue": {
-        "onLand": "I can see the church from here. We're about right.",
+        "onLand": "This is a fine spot Sarge.",
         "onPlaceCharge": "Not my trade, this. Hope it goes bang.",
-        "onWounded": "Should've kept my head down. Go on, I'll catch up.",
+        "onWounded": "Should've kept my head down damn it. Go on, I'll catch up.",
         "onKill": "Didn't hear a thing, did he?",
         "onSpotted": "Spotted. I'll have to be quick about it.",
-        "onHide": "Not a sound. Not a movement."
+        "onHide": "Don't make a sound..."
       }
     },
     {
@@ -54,7 +54,7 @@
         "onPlaceCharge": "Which end's the dangerous one?",
         "onWounded": "Leave it. Get to the bridge.",
         "onKill": "Hope nobody was fond of him.",
-        "onSpotted": "He's seen me. Ask me how I know.",
+        "onSpotted": "The bastard's seen me.",
         "onHide": "Down in the mud, where I belong."
       }
     },
@@ -66,7 +66,7 @@
         "onPlaceCharge": "Don't ask me to do that again.",
         "onWounded": "Bit of bother. Still got one good arm.",
         "onKill": "One down. Quietly, mind.",
-        "onSpotted": "Been made. Somebody get his head down.",
+        "onSpotted": "Been made. Somebody sort this bloke out.",
         "onHide": "Head down. Bren's quiet."
       }
     },
@@ -74,13 +74,13 @@
       "id": "nunn", "name": "Pte. Wilf Nunn", "shortName": "NUNN", "role": "gunner",
       "traits": ["ox"],
       "dialogue": {
-        "onLand": "Carried the spare all the way down, Sarge.",
-        "onPlaceCharge": "Heavy old thing. Glad to be shot of it.",
-        "onWounded": "Takes more than that to put an ox down.",
-        "onWoundedCarrying": "Somebody take the charge off me.",
-        "onKill": "That's him seen to.",
-        "onSpotted": "Bit hard to hide, a man my size.",
-        "onHide": "Small as I can make myself. Which isn't small."
+        "onLand": "All the way down in one piece, Sarge.",
+        "onPlaceCharge": "Heavy old thing. Glad to be done with it.",
+        "onWounded": "Takes more than that to put me out of business.",
+        "onWoundedCarrying": "Somebody take my charge.",
+        "onKill": "That's him sorted.",
+        "onSpotted": "Bit hard to hide a man my size.",
+        "onHide": "Small as I can make myself. Which ain't small."
       }
     }
   ]

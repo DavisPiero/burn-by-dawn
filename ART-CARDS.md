@@ -24,7 +24,7 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   click, and says so beside its button.
 
 - **The contents page comes first** (§10 Missions), as the annual's contents: the title
-  card with PARACHUTE RAIDS BEHIND THE LINES, then each mission as a contents line, its
+  card with PARATROOPER RAIDS BEHIND ENEMY LINES, then each mission as a contents line, its
   title run to its page number with a dotted leader, its place in italic and a line about
   it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. **A mission may be flagged** (`flag`): the

@@ -12,8 +12,8 @@
       "title": "The Practice Ground",
       "place": "Tatton Park, England",
       "page": 2,
-      "blurb": "The parachute school's course, a lesson at a time: umpires for a garrison, a training bridge, and nobody hurt.",
-      "tagline": "SIX MEN · ONE TRAINING BRIDGE · NOBODY HURT",
+      "blurb": "The paratrooper training course, one lesson at a time.",
+      "tagline": "SIX MEN · ONE TRAINING BRIDGE · NOBODY GETS HURT",
       "panel": "assets/title/contents-training.jpg",
       "map": "data/map-training.json",
       "roster": "data/roster.json",
@@ -34,7 +34,7 @@
       "win": {
         "condition": "destroyPrimary"
       },
-      "briefing": "Today six men are on the practice ground at the parachute school.",
+      "briefing": "Today six men train on the practice ground at the paratrooper school.",
       "_words": "Placeholder copy, mine, for the operator to reword. The whistle and the umpire's words are the lesson engine's.",
       "words": {
         "lineGoesDead": "its telephones go dead",
@@ -45,7 +45,7 @@
         "cries": {
           "spotted": [
             "YOU THERE!",
-            "SEEN YOU!",
+            "I'VE SEEN YOU!",
             "I SAY! YOU!"
           ],
           "found": [
@@ -61,10 +61,10 @@
       "dialogue": {
         "holloway": { "onLand": "Feet together, lads. Just like the tower." },
         "fitch": { "onLand": "Softer than the hangar floor, that." },
-        "vance": { "onLand": "Down. Didn't feel a thing." },
-        "barrow": { "onLand": "Not one tree. Where's the sport in that?" },
-        "speers": { "onLand": "Down in one piece. Is there tea?" },
-        "nunn": { "onLand": "Whoever packed this one, I owe him a pint." }
+        "vance": { "onLand": "Touchdown. Didn't feel a thing." },
+        "barrow": { "onLand": "Didn't hit one tree. Where's the sport in that?" },
+        "speers": { "onLand": "Down in one piece. Tea time yet?" },
+        "nunn": { "onLand": "I owe a pint to whoever packed this." }
       },
       "titleCard": "assets/title/title-card-training.jpg",
       "endSounds": {
@@ -78,11 +78,11 @@
       "title": "The Rail Bridge",
       "place": "Canal St-Rémy, France",
       "page": 4,
-      "blurb": "Six men drop by night to blow the bridge that carries the line to the coast, and must be out before dawn.",
+      "blurb": "Six men drop in darkness to blow the rail line that supplies the coast. Get them out by dawn.",
       "panel": "assets/title/contents-france.jpg",
       "comicPanels": {
-        "landing": { "art": "assets/panels/panel-landing-france.jpg", "caption": "0140 HOURS. SIX MEN DOWN IN THE DARK, AND NOT ONE OF THEM WHERE HE SHOULD BE." },
-        "success": { "art": "assets/title/contents-france_full.jpg", "caption": "THE BRIDGE WENT INTO THE CANAL. NO TRAIN WOULD CROSS IT FOR A MONTH." }
+        "landing": { "art": "assets/panels/panel-landing-france.jpg", "caption": "0140 HOURS. SIX MEN DOWN IN THE DARK." },
+        "success": { "art": "assets/title/contents-france_full.jpg", "caption": "THE BRIDGE IS DOWN, AND NO TRAIN COULD CROSS FOR A MONTH." }
       },
       "tagline": "SIX MEN · ONE BRIDGE · DAWN AT SIXTEEN",
       "map": "data/map.json",
@@ -98,7 +98,7 @@
           "rules": { "objectives": { "bridge": { "chargesNeeded": 1 } } }
         },
         "hard": {
-          "summary": "Blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, none once the Telephone Exchange is down.",
+          "summary": "Blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, and none once the Telephone Exchange is down.",
           "rules": { "objectives": { "bridge": { "reinforcements": 2 }, "fuelDump": { "reinforcements": 1 } } }
         }
       },
@@ -130,11 +130,11 @@
       "title": "The Airfield",
       "place": "Southern Tunisia",
       "page": 18,
-      "blurb": "Paratroopers raid aircraft in their pens on an Axis landing ground, ready to blow them sky high.",
+      "blurb": "Paratroopers raid aircraft on an Axis landing ground, on a mission to blow them sky high.",
       "panel": "assets/title/contents-airfield.jpg",
       "comicPanels": {
-        "landing": { "art": "assets/panels/panel-landing-airfield.jpg", "caption": "THE DESERT NIGHT WAS COLD AND STILL. SOMEWHERE AHEAD, THE STUKAS SLEPT." },
-        "success": { "art": "assets/title/contents-airfield_full.jpg", "caption": "BY DAWN THE STUKAS WERE BURNING WRECKS, AND THE STICK WAS GONE." }
+        "landing": { "art": "assets/panels/panel-landing-airfield.jpg", "caption": "A COLD, STILL DESERT NIGHT. THE STUKAS SOMEWHERE AHEAD." },
+        "success": { "art": "assets/title/contents-airfield_full.jpg", "caption": "BY DAWN THE STUKAS BURNED, AND THE MEN HAD MADE THEIR ESCAPE." }
       },
       "tagline": "SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY",
       "map": "data/map-airfield.json",
@@ -163,11 +163,11 @@
       "levels": {
         "easy": { "summary": "Three aircraft will do.", "rules": { "mission": { "win": { "count": 3 } } } },
         "hard": {
-          "summary": "Seven aircraft are wanted: with five bombs, the bowser and the bomb store both have to go.",
+          "summary": "Seven aircraft need destroying: with your five bombs, the bowser and bomb store will both have to be blown.",
           "rules": { "mission": { "win": { "count": 7 } } }
         }
       },
-      "briefing": "Tonight six men are to drop on an enemy landing ground.",
+      "briefing": "Tonight six men are to drop on an enemy airstrip in the desert.",
       "_words": "M31. The RAF diversion is a jeep raid here (the operator's, M29b): the same rule, in the mission's words, with the map's diversionRun for the jeep's drive past the north wire and its own sound. Placeholder copy for the operator to reword.",
       "words": {
         "lineGoesDead": "its field telephones go dead",
@@ -182,8 +182,8 @@
       "_dialogue": "M31: only the lines that name France or its ground (Fitch's cabbages and dirt, Vance's church, Barrow's trees, bridge and mud).",
       "dialogue": {
         "fitch": { "onLand": "Down soft as you like. Sand in places I'll not mention.", "onHide": "Nice and snug in the sand." },
-        "vance": { "onLand": "I can see the tails of the aircraft from here. We're about right." },
-        "barrow": { "onLand": "Not a tree for a hundred miles. Told you I'd miss them all.", "onWounded": "Leave it. Get to the aircraft.", "onHide": "Down in the dust, where I belong." }
+        "vance": { "onLand": "I can see those aircraft. We're about right." },
+        "barrow": { "onLand": "Look at this place... not a tree for a hundred miles.", "onWounded": "Leave it. Get to the aircraft.", "onHide": "Going to need a bath after this." }
       },
       "portraits": "assets/portraits/desert",
       "counterColour": "burnt",
@@ -205,11 +205,11 @@
       "title": "The Aqueduct",
       "place": "Southern Italy",
       "page": 32,
-      "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait.",
+      "blurb": "A stone aqueduct in the mountains that takes every charge you carry. Exfil via a boat on the coast that will not wait.",
       "panel": "assets/title/contents-aqueduct.jpg",
       "comicPanels": {
-        "landing": { "art": "assets/panels/panel-landing-aqueduct.jpg", "caption": "SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND EVERY CHARGE STILL IN ITS CANISTER." },
-        "success": { "art": "assets/title/contents-aqueduct_full.jpg", "caption": "THE WATER WAS CUT. THE BOAT PULLED AWAY INTO THE DARK." }
+        "landing": { "art": "assets/panels/panel-landing-aqueduct.jpg", "caption": "SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND CHARGES STASHED IN THEIR CANISTERS." },
+        "success": { "art": "assets/title/contents-aqueduct_full.jpg", "caption": "THE AQUEDUCT WAS NO MORE, AND THE BOAT PULLED AWAY INTO THE DARKNESS." }
       },
       "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT",
       "map": "data/map-aqueduct.json",
@@ -233,8 +233,8 @@
       "enemies": { "types": { "reserve": { "killable": true } } },
       "win": { "condition": "destroyPrimary" },
       "levels": {
-        "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it goes.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
-        "hard": { "summary": "The aqueduct takes all six charges, so none can be spared for the Road Bridge; two squads come down the road when it goes (none once the Road Bridge is down), and the boat stays two turns, not three.", "rules": { "exfil": { "openFor": 2 }, "objectives": { "aqueduct": { "chargesNeeded": 6, "reinforcements": 2 } } } }
+        "easy": { "summary": "The aqueduct takes three charges, and no squad comes down the road when it's blasted.", "rules": { "objectives": { "aqueduct": { "chargesNeeded": 3, "reinforcements": 0 } } } },
+        "hard": { "summary": "The aqueduct takes all six charges, so none can be spared for the Road Bridge, and two squads come down the road when the aqueduct is blasted. The boat only stays for two turns.", "rules": { "exfil": { "openFor": 2 }, "objectives": { "aqueduct": { "chargesNeeded": 6, "reinforcements": 2 } } } }
       },
       "briefing": "Tonight six men are to drop into the mountains of southern Italy.",
       "_words": "M41. Placeholder copy for the operator to reword. The line words are asked for by every mission: nothing here has a line to cut, and `lineIsDown` is what stops the squads coming, the road bridge. The diversion is the RAF again, as in 1941: bombers over Foggia.",
@@ -244,16 +244,16 @@
         "diversionName": "RAF diversion",
         "diversionKicker": "BOMBERS OVER FOGGIA",
         "diversionLog": "bombers over Foggia",
-        "cries": { "spotted": ["ALLARME!", "CHI VA LÀ?", "ALTO LÀ!"], "found": ["MADONNA!", "MAMMA MIA!", "ALLARME!"] },
+        "cries": { "spotted": ["ALLARME!", "CHI VA LÀ?!", "ALTO LÀ!"], "found": ["MADONNA!", "MAMMA MIA!", "ALLARME!"] },
         "cleanBonus": "a quiet night",
         "cleanOrders": "Getting in and out with as little enemy attention as possible earns a special bonus!"
       },
       "_dialogue": "M43: only the lines that name France or its ground (Fitch's cabbages, Vance's church, Barrow's trees and bridge), and Nunn's, who carries no spare down here: nobody jumps with a charge. Placeholder copy for the operator to reword.",
       "dialogue": {
-        "fitch": { "onLand": "Down soft as you like. Whose olives are these?" },
-        "vance": { "onLand": "I can see the aqueduct from here. We're about right." },
-        "barrow": { "onLand": "Missed every tree in Italy. Told you I would.", "onWounded": "Leave it. Get to the aqueduct." },
-        "nunn": { "onLand": "Nothing to carry down, Sarge. Where's that canister?" }
+        "fitch": { "onLand": "Fancy an olive boys?" },
+        "vance": { "onLand": "I can see the aqueduct from here." },
+        "barrow": { "onLand": "Lovely place this. Shame there's so much work to be done.", "onWounded": "Leave it. Get to the aqueduct." },
+        "nunn": { "onLand": "Where'd that canister land?" }
       },
       "_pictures": "M43. Its own pictures, each a slot that falls back until the operator's painting is in the folder (ART-PROMPTS.md Priorities 19 to 21): `enemyChips`, the garrison's chips, Italian here, tried type by type before assets/enemies (the German ones); `portraits`, the six in winter kit, tried man by man before assets/portraits; `titleCard`, its own painting, France's until the file is there.",
       "enemyChips": "assets/enemies/italian",

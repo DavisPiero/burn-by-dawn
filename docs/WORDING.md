@@ -631,7 +631,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - F82 DUTCH, onSpotted | We've been seen. Nobody panic.
 - F83 DUTCH, onHide | Get down and stay down. That's an order.
 - F84 FITCH, onLand | Touchdown. Soft as can be.
-- F85 FITCH, onPlaceCharge | All done. 
+- F85 FITCH, onPlaceCharge | All done.
 - F86 FITCH, onWounded | Oh bugger, that's torn it.
 - F87 FITCH, onWoundedCarrying | Oh, that's torn it. Charge is on the deck — mind how you lift it.
 - F88 FITCH, onKill | Sorry pal, nothing personal.
@@ -642,7 +642,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - F93 VANCE, onWounded | Should've kept my head down damn it. Go on, I'll catch up.
 - F94 VANCE, onKill | Didn't hear a thing, did he?
 - F95 VANCE, onSpotted | Spotted. I'll have to be quick about it.
-- F96 VANCE, onHide | Don't make a sound... 
+- F96 VANCE, onHide | Don't make a sound...
 - F97 BARROW, onLand | Missed every tree in France. Told you I would.
 - F98 BARROW, onPlaceCharge | Which end's the dangerous one?
 - F99 BARROW, onWounded | Leave it. Get to the bridge.
@@ -667,7 +667,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 
 - F116 DUTCH, onLand | Feet together, lads. Just like the tower.
 - F117 FITCH, onLand | Softer than the hangar floor, that.
-- F118 VANCE, onLand | Touch down. Didn't feel a thing.
+- F118 VANCE, onLand | Touchdown. Didn't feel a thing.
 - F119 BARROW, onLand | Didn't hit one tree. Where's the sport in that?
 - F120 SPEERS, onLand | Down in one piece. Tea time yet?
 - F121 NUNN, onLand | I owe a pint to whoever packed this.
@@ -676,7 +676,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 
 - F122 FITCH, onLand | Down soft as you like. Sand in places I'll not mention.
 - F123 FITCH, onHide | Nice and snug in the sand.
-- F124 VANCE, onLand | I can see the those aircraft. We're about right.
+- F124 VANCE, onLand | I can see those aircraft. We're about right.
 - F125 BARROW, onLand | Look at this place... not a tree for a hundred miles.
 - F126 BARROW, onWounded | Leave it. Get to the aircraft.
 - F127 BARROW, onHide | Going to need a bath after this.
@@ -684,7 +684,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### What the men say instead: The Aqueduct
 
 - F128 FITCH, onLand | Fancy an olive boys?
-- F129 VANCE, onLand | I can see the aqueduct from here. 
+- F129 VANCE, onLand | I can see the aqueduct from here.
 - F130 BARROW, onLand | Lovely place this. Shame there's so much work to be done.
 - F131 BARROW, onWounded | Leave it. Get to the aqueduct.
 - F132 NUNN, onLand | Where'd that canister land?

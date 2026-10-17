@@ -102,7 +102,7 @@ const CLOSING_TURNS = 3;
 // The game's title, set over the title card on the orders and the back page.
 const GAME_TITLE = 'BURN BY DAWN';
 // The contents page's strapline (M27): the game's, not any one mission's.
-const CONTENTS_TAGLINE = 'PARACHUTE RAIDS BEHIND THE LINES';
+const CONTENTS_TAGLINE = 'PARATROOPER RAIDS BEHIND ENEMY LINES';
 
 let state = null;
 // `baseMap` is data/map.json as loaded; `map` is the board as the demolitions
@@ -2672,7 +2672,7 @@ function describeBriefing(which, view) {
       banner: { title: GAME_TITLE, tagline: CONTENTS_TAGLINE },
       title: 'CONTENTS',
       kicker: 'IN THIS ANNUAL',
-      paragraphs: ['Click a mission to play it. Each one stands alone: one night behind the lines, and out by dawn.'],
+      paragraphs: ['Click a mission to play. Each one stands alone: one night behind the lines, out by dawn.'],
       contents: {
         entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null, flag: m.flag ?? null })),
         flagAt: contentsOffset(layout, 'flag'),
@@ -2848,9 +2848,9 @@ function describeBriefing(which, view) {
       // A page a tab (M48i): a scene and its few lines, or TONIGHT, what this mission asks.
       const page = help.pages[helpPage];
       const tonight = [
-        ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
+        ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies that line and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
         // The operator's words (M31d): "charge target", and "Stukas- 1ea".
-        `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P]. A canister is found like a parachute until it is empty` : `The squad carries ${carried}`}.`
+        `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P] an available charge (orange circle)` : `The squad carries ${carried}`}.`
           + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
         ...(timerLine ? [timerLine] : []),
         ...setterLines,
@@ -3254,7 +3254,7 @@ function describeDiversionCard(before) {
     kicker: mission.words.diversionKicker,
     // Headed in the diversion's own blue, as its button is (M11).
     tone: 'raf',
-    paragraphs: ['The radio worked. The garrison looks the other way.'],
+    paragraphs: ['The radio worked! The garrison looks the other way.'],
     sections: [
       { heading: 'WHAT IT DID', lines },
       { heading: 'THE RADIO', lines: [left > 0 ? `${left === 1 ? 'One more call' : `${left} more calls`} left, while the leader lives.` : 'No more calls this mission.'] },

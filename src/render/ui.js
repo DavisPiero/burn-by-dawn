@@ -97,7 +97,7 @@ const KEYS = [
   ['1–6', 'select a man'],
   ['A', 'stabilise a wounded man (aid)'],
   ['C', 'place a charge'],
-  ['B', 'signal the boat in early, from the beach (where there is one)'],
+  ['B', 'signal for the boat early, from the beach (where there is one)'],
   ['D', 'the diversion (the leader\'s radio)'],
   ['E', 'pass a charge'],
   ['Esc', 'deselect, or back out of aiming (or right-click)'],
@@ -709,7 +709,7 @@ function briefChoice(choice) {
     const picked = choice.options.find((o) => o.selected);
     const button = html('button', 'btn active', picked.label.toUpperCase());
     button.type = 'button';
-    attachPopup(button, [html('b', null, picked.label.toUpperCase()), `\n${picked.summary}\nFixed once the stick has jumped.`]);
+    attachPopup(button, [html('b', null, picked.label.toUpperCase()), `\n${picked.summary}\nFixed once the team has jumped.`]);
     row.appendChild(button);
     return row;
   }
@@ -1651,7 +1651,7 @@ export function renderReadout(element, state, map, view) {
   }
   if (!hex) {
     if (state.phase === 'drop') {
-      setText(element, view?.dropLabel ?? 'Pick a drop run with its number or its button. Hover the board to see what landing there would mean.');
+      setText(element, view?.dropLabel ?? 'Pick a drop run by pressing its number or button. Hover the board to see what landing there would mean.');
       return;
     }
     setText(element, state.selectedUnitId

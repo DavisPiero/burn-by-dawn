@@ -294,15 +294,15 @@ operator to reword.
   signal it, and "The charges are in the 3 CANISTERS, 2 in each. Nobody jumps with one."
 - **The tagline**: SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT.
 - **The garrison is Italian**: in February 1941 the aqueduct's guards were. Its cries
-  are (ALLARME!, CHI VA LÀ?, MADONNA!), where the other two missions' are German, and
+  are (ALLARME!, CHI VA LÀ?!, MADONNA!), where the other two missions' are German, and
   its chips have a folder of their own (`enemyChips`: `assets/enemies/italian`), tried
   type by type before the usual one: the operator's three paintings (M43b).
-- **The contents page** keeps its line: "A great aqueduct in the mountains that wants
-  every charge you carry, and a boat on the coast that will not wait."
+- **The contents page** keeps its line: "A stone aqueduct in the mountains that takes
+  every charge you carry. Exfil via a boat on the coast that will not wait."
 - **The diversion** is the RAF again, as it was in 1941: BOMBERS OVER FOGGIA.
 - **The six's lines**: only those that name France's ground change, as on the airfield
-  (Fitch's olives, Vance's aqueduct, Barrow's trees in Italy), and Nunn's, who carries
-  no spare down here: "Nothing to carry down, Sarge. Where's that canister?"
+  (Fitch's olives, Vance's aqueduct, Barrow's work to be done), and Nunn's, who carries
+  no spare down here: "Where'd that canister land?"
 - **Sounds**, made in code until recordings are found (ART-PROMPTS.md Priority 23): the
   canisters' thumps as the stick lands, one as each canister's ring pops on, the boat's oars far off the turn it is sighted
   or signalled, and oars and surf the turn it lands. The back page is France's bells

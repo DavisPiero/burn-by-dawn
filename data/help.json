@@ -11,7 +11,7 @@
       "id": "moving",
       "tab": "MOVING",
       "lines": [
-        "Click a man, or press 1–6: the blue is how far he can go this turn. Hover a hex: the line is his way there, each step the AP spent by then.",
+        "Click a man, or press 1–6: The blue is how far he can go this turn. Hover a hex: The line is his way there, each step shows the AP spent by then.",
         "Click to go. Cover is slow going: 2 AP a hex. SPACE ends the turn: the garrison moves, and every man's AP comes back.",
         "Hover anything on the board to ask what it is. KEYBOARD lists every key."
       ],
@@ -33,7 +33,7 @@
       "tab": "BEING SEEN",
       "lines": [
         "Hover before he moves: red ground gets him seen on the way; blue is safe. Cover blocks sight: woods, hedges, dunes, walls and buildings.",
-        "Seen is a warning (the red !). Next turn, get him out of sight, or he is fired on at the end of it.",
+        "Seen is a warning (the red !). Next turn, get him out of sight, or he is fired on at the end of the turn.",
         "Hide [H] makes a man harder to see, and ends his turn."
       ],
       "scene": {
@@ -60,8 +60,8 @@
       "tab": "CHARGES",
       "lines": [
         "The red dashed hexes are charge points. Stand a man with a charge (an orange dot) on one and press C.",
-        { "text": "The fuse burns {charges.fuseTurns} turns, counted down on the watch beside it. Get him clear before it goes.", "unless": "charges.fuseChoice" },
-        { "text": "Every charge takes a timer: after C, pick a time pencil from the tin. Get him clear before it goes.", "if": "charges.fuseChoice" },
+        { "text": "The fuse burns {charges.fuseTurns} turns, counted down on the watch beside it. Get him clear before it blows.", "unless": "charges.fuseChoice" },
+        { "text": "Every charge takes a timer: after pressing C, pick a time pencil from the tin. Get clear before it blows.", "if": "charges.fuseChoice" },
         "Every bang stirs the garrison."
       ],
       "scene": {
@@ -112,8 +112,8 @@
       "id": "out",
       "tab": "GETTING OUT",
       "lines": [
-        "When the job is done, walk the men onto the EXFIL. A man who reaches it is out, off the board.",
-        "Get at least {mission.minimumOut} out before dawn, or the mission fails however much is burning."
+        "When the job is done move the men onto the EXFIL. A man who reaches it is out, off the board.",
+        "Get at least {mission.minimumOut} out before dawn, or the mission fails."
       ],
       "scene": {
         "rows": ["FFFFFFFF", "FFFFFFFF", "FFFFFFFF", "FFFFFFFF"],
