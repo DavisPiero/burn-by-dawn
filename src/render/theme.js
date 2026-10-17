@@ -2648,18 +2648,15 @@ function aqueduct(blown) {
 }
 
 // The road bridge, from directly above (M50, the operator's reference): one
-// stone arch over the torrent's rocky bed, a parapet of coping stones down
-// each side of the road, and on its downstream face the ring of the arch over
-// the water. Drawn with the road along x and the torrent along y, then turned
-// so the road runs from the hex's upper right to its lower left, as the map's
-// does, and the bed across it.
+// stone arch over the torrent, a parapet of coping stones down each side of
+// the road, and on its downstream face the ring of the arch, rising from the
+// water to the deck. Drawn with the road along x and the torrent along y, then
+// turned so the road runs from the hex's upper right to its lower left, as the
+// map's does, and the bed across it. The torrent itself is the ravine printed
+// under it (the map's `printedAs`, M51, the operator's: its own narrow bed read
+// oddly beside the hexes above and below).
 function roadBridge(blown) {
   const local = [];
-  // The torrent's bed: dark stony ground, the water braided down it, boulders.
-  local.push(fill('M-17 -40 Q-21 0 -16 40 H17 Q22 0 16 -40 Z', 'ink', { 'fill-opacity': 0.3 }));
-  local.push(line('M-3 -40 Q-7 -20 -1 -6 T-4 22 T1 40', 5, 'stroke-blue'), line('M6 -40 Q3 -22 7 -8 T3 24 T7 40', 3, 'stroke-blue'));
-  local.push(line('M-3 -37 Q-6 -20 -1 -6 M-2 24 T1 38 M6 -32 Q4 -20 7 -10', 1, 'stroke-paper', { opacity: 0.85 }));
-  for (const [x, y, rx, ry] of [[-11, -28, 3.2, 2.3], [11, -20, 2.6, 1.9], [-12, 26, 3.4, 2.4], [11, 31, 3, 2.1], [-9, -13, 2.1, 1.5]]) local.push(...wadiStone(x, y, rx, ry));
   const parapet = (y, x0, x1) => {
     const out = [...inked(`M${x0} ${y - 1.9} H${x1} V${y + 1.9} H${x0} Z`, 'paper', 1.2)];
     let joints = '';
@@ -2671,11 +2668,18 @@ function roadBridge(blown) {
     fill(`M${x0} -8 H${x1} V8 H${x0} Z`, 'paper'), fill(`M${x0} -8 H${x1} V8 H${x0} Z`, toneClass('ink', 10)),
     line(`M${x0} -8 H${x1} M${x0} 8 H${x1}`, 1.4),
   ];
-  // The ring of the arch on the downstream face, the water dark under it.
+  // The downstream face (M51, the operator's: the arch was drawn upside
+  // down), as in the reference: a stone wall hanging from the deck's edge,
+  // the arch's opening cut up into it from the water, its crown under the
+  // road, dark inside, with the ring of voussoirs round it.
+  const opening = 'M-13 -22.5 V-19 A13 8 0 0 0 13 -19 V-22.5 Z';
   const ring = [
-    fill('M-14 -9.5 A14 7 0 0 1 14 -9.5 Z', 'ink', { 'fill-opacity': 0.75 }),
-    ...inked('M-17 -9.5 A17 9.5 0 0 1 17 -9.5 H14 A14 7 0 0 0 -14 -9.5 Z', 'paper', 1),
-    line('M-12 -13 l-2 -2 M-6 -15.6 l-1 -2.4 M0 -16.4 V-19 M6 -15.6 l1 -2.4 M12 -13 l2 -2', 0.7, 'stroke-ink', { opacity: 0.7 }),
+    ...inked('M-25 -8 H25 L23 -22.5 H-23 Z', 'paper', 1.2), fill('M-25 -8 H25 L23 -22.5 H-23 Z', toneClass('ink', 20)),
+    line('M-22 -13 H-15 M-20 -18 H-15.5 M15 -13 H22 M15.5 -18 H20', 0.6, 'stroke-ink', { opacity: 0.55 }),
+    fill('M-16 -22.5 V-19 A16 11 0 0 0 16 -19 V-22.5 Z', 'paper'),
+    fill(opening, 'ink', { 'fill-opacity': 0.82 }), line(opening, 1.1),
+    line('M-16 -22.5 V-19 A16 11 0 0 0 16 -19 V-22.5', 1),
+    line('M-11.5 -15.2 L-14.1 -13.8 M-8.0 -12.7 L-9.9 -10.3 M-3.1 -11.2 L-3.9 -8.3 M3.1 -11.2 L3.9 -8.3 M8.0 -12.7 L9.9 -10.3 M11.5 -15.2 L14.1 -13.8', 0.7, 'stroke-ink', { opacity: 0.7 }),
   ];
   if (!blown) {
     local.push(...ring, ...deck(-56, 56), ...parapet(-8, -26, 26), ...parapet(8, -26, 26));
@@ -2739,14 +2743,18 @@ const ITALY_OBJECTIVES = {
   // A supply canister on the ground (SPEC.md §9), from the operator's
   // reference (M50): a long steel container in army green, lying slantwise,
   // its open end dark, two bands and a carrying handle, and its small
-  // parachute spilled beside it with the lines run back to it.
+  // parachute spilled beside it with the lines run back to it. The chute lies
+  // crumpled above its top end, greyed, clear of the charges' dots under the
+  // hex's middle (M51, the operator's: a white ball beside the orange dots
+  // read as one of them).
   'marker-canister': {
     viewBox: '0 0 28 28',
     draw: () => [
-      // The chute, collapsed below the body, its lines to the near end.
-      ...inked('M17 25.5 Q14.5 22 17.5 19.5 Q21 18 24 20.5 Q26 23.5 23.5 26 Q20 27.5 17 25.5 Z', 'paper', 1.1),
-      line('M18.5 21 Q20 23 18.6 25.5 M21.5 19.4 Q22.4 22.5 21.6 26.4', 0.6, 'stroke-ink', { opacity: 0.6 }),
-      line('M7.5 19 Q12 23 17.2 21.8 M8.5 20 Q13 25 17.4 24.8', 0.6, 'stroke-ink', { opacity: 0.75 }),
+      // The chute, collapsed above the body, its lines to the near end.
+      ...inked('M12.5 4.6 Q14.6 1.2 18.6 1.9 Q22.8 0.7 26.4 2.5 Q27.6 4.7 25.5 6.1 Q21.8 7.3 18.3 6.5 Q14.8 7.5 12.5 4.6 Z', 'paper', 1),
+      fill('M12.5 4.6 Q14.6 1.2 18.6 1.9 Q22.8 0.7 26.4 2.5 Q27.6 4.7 25.5 6.1 Q21.8 7.3 18.3 6.5 Q14.8 7.5 12.5 4.6 Z', toneClass('ink', 20)),
+      line('M16.6 2.2 Q17.6 4.4 16.4 6.8 M21.2 1.3 Q22.2 4 21.2 6.9', 0.6, 'stroke-ink', { opacity: 0.6 }),
+      line('M23.6 6.6 L23.4 9.2 M25.6 6 L24.6 9', 0.6, 'stroke-ink', { opacity: 0.75 }),
       svg('g', { transform: 'rotate(-26 14 14)' }, [
         svg('rect', { x: 2, y: 12.5, width: 24, height: 9, rx: 2, class: 'ink', opacity: 0.3, transform: 'translate(1.2 1.6)' }),
         svg('rect', { x: 2, y: 9.5, width: 24, height: 9, rx: 2, class: 'green' }),
