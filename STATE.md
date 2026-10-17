@@ -26,9 +26,20 @@ Last updated: 17 Oct 2026, M54b signed off, merged and pushed.
 
 ## Next
 
-1. **Your rewording of the new lines** (the `b` and `c` tags in section F), then a
-   short session to carry them back.
-2. More playtests with new people; then the next big piece (ROADMAP.md).
+1. **M55, the title and Dakota panels** (decided 17 Oct 2026, ROADMAP.md item 1):
+   - **A title painting** behind the opening page ("BURN BY DAWN / click or press any
+     key", now plain dark): the stick in silhouette on a mission.
+   - **A Dakota panel**: the men in the back of the aircraft readying to jump, shown as
+     a comic panel after START GAME and before the drop run is picked, in every mission.
+     One shared painting first; desert or winter variants later through each mission's
+     own picture folder, which falls back to the shared one.
+   - Claude writes both into `ART-PROMPTS.md` (sizes, prompts) and puts a placeholder
+     in the game for each, so your paintings drop straight in.
+   - Plus carrying back your rewording of the new lines (the `b` and `c` tags in section
+     F of `docs/WORDING.md`), if it is ready.
+2. **Then the Gunnerside spec**, `MISSION-GUNNERSIDE.md`, written in Claude Code (it
+   has to fit the engine and data), for your approval before anything is built.
+3. Playtests with new people whenever one can be found (`docs/PLAYTEST.md`).
 
 ## Open with the operator
 
@@ -42,6 +53,7 @@ Last updated: 17 Oct 2026, M54b signed off, merged and pushed.
 
 ## Owed
 
-- **From the operator:** the new lines' wording; optional art 21 (winter kit).
-- **Parked in ROADMAP.md:** more panel moments, tips as in-world briefings, an Advice
+- **From the operator:** the new lines' wording; the title and Dakota paintings once
+  M55 has specified them; optional art 21 (winter kit).
+- **Parked in ROADMAP.md:** more panel moments (beyond M55's two), tips as in-world briefings, an Advice
   button, hiding a body.

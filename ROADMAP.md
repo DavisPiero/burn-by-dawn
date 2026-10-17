@@ -20,15 +20,21 @@ success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
 
-1. **The men's new lines** (M54, 17 Oct 2026): the operator's first rewording is carried
-   back; Claude wrote two more lines for each of the men's moments (tags F77b, F77c… in
-   `docs/WORDING.md`). The operator rewords those; Claude carries them back as before.
-2. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
-   `?playtest`), and a milestone of fixes for what they trip on, as M49b was.
-3. **Then the next big piece, the operator's choice**: a fourth mission (below), or the
-   comic panels with the in-world tips (Parked). Advised: one new mission first,
-   Gunnerside, because it plays least like the three there are. Spec it as
-   `MISSION-<NAME>.md` before building, as the airfield and the aqueduct were.
+1. **M55, the title and Dakota panels** (the operator's, 17 Oct 2026: the panels
+   "flesh the game out well for flavour"): a title painting of the stick in silhouette
+   behind the opening page, and a comic panel of the men in the back of the Dakota,
+   shown after START GAME and before the drop run is picked, in every mission. One
+   shared Dakota painting first; per-mission variants later through the missions'
+   picture folders (as the aqueduct's portraits fall back). Claude specifies both in
+   ART-PROMPTS.md and puts placeholders in the game; the operator paints them. With it,
+   the carry-back of the operator's rewording of the men's new lines (the b and c tags
+   in `docs/WORDING.md`, section F), if ready.
+2. **Then the fourth mission, Gunnerside** (chosen 17 Oct 2026), because it plays least
+   like the three there are. Spec it first as `MISSION-GUNNERSIDE.md`, in Claude Code
+   (it must fit the engine and the data), as the airfield and the aqueduct were.
+3. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
+   `?playtest`) whenever a tester can be found, and a milestone of fixes for what they
+   trip on, as M49b was.
 
 ---
 

@@ -110,3 +110,5 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m54b | The lesson card's jitter had a cause beyond the shake: three render-time checks (may he swim?) went through lessonAllows, which shakes the card at a wrong click, so every redraw, a hover included, shook it on a lesson where swimming was not live. They ask lessonLive now, which only checks
 2026-10-17 | m54b | The shake is gone: the card scales in from 94% over 140 ms when it appears, when what it says changes, and at a click the step does not ask for. It is placed before the scale-in starts and placed again when it ends, as placing measures the card on the page
 2026-10-17 | m54b | M54b signed off by the operator and merged
+2026-10-17 | m54b | Next is M55, the title and Dakota panels (the operator's): one shared Dakota painting first, per-mission variants later through the picture folders' fallback, so variants are art, not code
+2026-10-17 | m54b | Then Gunnerside, its spec written in Claude Code rather than a chat, as it must fit the engine, the data and the mission specs' pattern; playtests whenever a tester can be found
