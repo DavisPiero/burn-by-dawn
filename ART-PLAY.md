@@ -172,6 +172,17 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   burning down. Ready, it asks for a key or a click — which also lets the browser play
   sound — and the spread fades up with the orders open.
 
+**Comic panels, a test** (M52, the operator's; only with `?panels=on` in the address, off
+for everyone else until they decide). At two story moments a painting pops up over the
+board as a panel in a graphic novel would: tipped 2°, in a thick ink frame on a paper
+gutter with a hard shadow, popping in from smaller and more tipped (220 ms), its caption
+in comic lettering in a paper box over the top-left corner (the mission's
+`comicPanels`, placeholder words for the operator), CLICK OR ANY KEY under it. **The
+landing**, when the drop show ends, over the turn card; **mission accomplished**, on a
+win, once the bang has been seen, beside the back page: the mission's contents panel.
+Each shows once a game; a click or any key puts it away and does nothing else. A
+painting not supplied shows nothing. No sound of its own.
+
 ### Sound
 
 The sounds of the table, not the battlefield (ART-ASSETS.md §9), every one a supplied

@@ -889,6 +889,67 @@ its cut and destroyed states and the wires to its mast drawn to match.
 
 ---
 
+## Priority 28 — comic panels: the landing, one per mission (a test) — **to make**
+
+**Why** (M52, the operator's): to try comic-book punctuation at the story's big moments,
+the picture popping up over the board as if the page had turned in a graphic novel, and
+see whether it is worth a phase of its own (ROADMAP.md, Parked). Two moments are wired,
+behind `?panels=on` in the address so nobody else sees them yet:
+
+- **Mission accomplished**: the mission's own contents panel (Priority 14), already
+  painted. Nothing to make.
+- **The landing**: the moment after the jump, before turn 1. **These three are to make.**
+
+| | |
+|---|---|
+| Files | `assets/panels/panel-landing-france.jpg`, `panel-landing-airfield.jpg`, `panel-landing-aqueduct.jpg` |
+| Size, format | **As the contents panels**: 3:2, **1200 × 800**, JPEG quality about 85, sRGB, opaque |
+| Shown at | About 550 × 370, over the board, tipped a couple of degrees in a thick ink frame the code draws |
+| Composition | One clear moment, close and dramatic, like a single panel of a comic, not a landscape. **Keep the top-left quarter quiet** (sky or dark ground): the caption box sits over it |
+| Code does | Nothing: drop the file in and reload `?panels=on`. Make one first, France's, and try it before the other two |
+
+The panel is seen for a second or two before a click, so it must read at a glance: one
+figure, one action, strong light against dark. Paste the style block after each.
+
+### Prompt — France, `panel-landing-france.jpg`
+
+> A single comic-book panel, night, Normandy, June 1944, seen from low down and close:
+> a British paratrooper in a rimless steel helmet and a camouflaged Denison smock hits
+> the ground in a wet hayfield and rolls on his shoulder, Sten gun strapped to his
+> chest, kitbag on its line beside him, his round parachute collapsing in great pale
+> folds behind him. A dark hedgerow along the field's edge, and far off on the right
+> the black girders of a railway bridge against a moonlit sky. Cold slate-blue night,
+> cream moonlight on the canopy and his face, dew flying from the grass. The top-left
+> of the picture is open dark sky.
+
+### Prompt — the airfield, `panel-landing-airfield.jpg`
+
+> A single comic-book panel, night, a desert landing ground in Tunisia, 1942, seen from
+> low down and close: a British paratrooper in a rimless steel helmet and khaki drill,
+> sleeves rolled, lands hard in soft sand and stones and goes down on one knee, his
+> round parachute dragging and spilling behind him in the wind, a spray of sand off his
+> boots. Low scrub and a dry wadi bank beside him, and far off on the right the
+> silhouette of a Stuka's bent wing and a few dim lights of an airfield. A huge starry
+> sky, cold blue night over pale ochre sand. The top-left of the picture is open sky.
+
+### Prompt — the aqueduct, `panel-landing-aqueduct.jpg`
+
+> A single comic-book panel, a cold winter night in the mountains of southern Italy,
+> February 1941, seen from low down and close: a British paratrooper in a padded cloth
+> jump helmet and a plain jump jacket lands on a snow-dusted terraced hillside between
+> olive trees and stumbles forward, breath steaming, his round parachute caught and
+> collapsing on a dry-stone terrace wall behind him. Beside him a long cylindrical
+> supply container lies half in the snow, its own small parachute trailing. Far off on
+> the right, the pale arches of a stone aqueduct cross a ravine under a low moon. Deep
+> slate-blue and cold grey night, cream moonlight on the snow and the canopy. The
+> top-left of the picture is open dark sky.
+
+If a generator puts a second man in, that is fine; if it puts in a face that is clearly
+one of the six (Dutch's moustache, Fitch's cigarette), even better, but it is not asked
+for: whoever lands first is different every game.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
