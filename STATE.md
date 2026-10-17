@@ -4,7 +4,7 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 17 Oct 2026, M54 signed off, merged and pushed.
+Last updated: 17 Oct 2026, M54 signed off and pushed; M54b on `m54b-notes`, not yet signed off.
 
 ## Where we are
 
@@ -18,13 +18,18 @@ Last updated: 17 Oct 2026, M54 signed off, merged and pushed.
     seen, going to ground), in the three missions. Which one he says changes with the
     seed and the turn, never with a dice roll, so a seed still plays the same game.
     The new lines are on the wording sheet as F77b, F77c and so on, for you to reword.
+- **Branch `m54b-notes`** holds your notes on M54: the canister line and Hard
+  aqueduct's orders say their rules plainly again, the counter key says "It will face",
+  and the lesson card comes up with a quick scale-in instead of shaking (the shake also
+  fired on every hover; that is fixed).
 - Tests: 247 headless (`node tools/run-tests.mjs`), 250 in `tests.html`.
 
 ## Next
 
-1. **Your rewording of the new lines** (the `b` and `c` tags in section F), then a
+1. **Sign off M54b**, or send notes.
+2. **Your rewording of the new lines** (the `b` and `c` tags in section F), then a
    short session to carry them back.
-2. More playtests with new people; then the next big piece (ROADMAP.md).
+3. More playtests with new people; then the next big piece (ROADMAP.md).
 
 ## Open with the operator
 
