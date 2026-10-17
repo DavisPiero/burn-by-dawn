@@ -8,7 +8,7 @@ import { runEnemyPhase } from '../src/enemy.js';
 import { applyDifficulty, levelById, validateDifficulty } from '../src/difficulty.js';
 import { hexDistance } from '../src/hex.js';
 import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
-import { missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets } from '../src/missions.js';
+import { chargeToSpareFor, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets } from '../src/missions.js';
 import { applyPayoff, boatLands, checkSignalBoat, effectiveMap, exfilOpen, isExfil, kindOf, lastTurn, offeredPencil, pencilWithTheOthers } from '../src/sabotage.js';
 import { chooseDropRun, createInitialState, endTurn, isDawn, jump, knifeEnemy, placeCharge, signalBoat } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
@@ -386,5 +386,15 @@ export default [
     const { x, y } = CANISTER.cue.ringAt;
     const dotEdge = (rules.canisters.charges - 1) / 2 * CANISTER.dots.pitch + CANISTER.dots.radius;
     assert(Math.hypot(dotEdge - x, CANISTER.dots.y - y) + CANISTER.dots.radius < CANISTER.cue.ringRadius - CANISTER.cue.ringWidth / 2 - 1, 'the ring clears the charge dots');
+  }],
+  ['the orders say when the road bridge has no charge to spare (M53, the operator\'s): on Hard, not on Normal or Easy, before the drop and after it', async () => {
+    for (const [levelId, spare] of [['easy', true], ['normal', true], ['hard', false]]) {
+      const { map, rules, traits, roster } = await loadAqueduct(levelId);
+      const before = createInitialState(roster, traits, rules, map, 1);
+      const bridge = before.objectives.find((o) => o.kind === 'roadBridge');
+      equal(chargeToSpareFor(before, rules, bridge), spare, `${levelId}, before the drop`);
+      const landed = jump(chooseDropRun(before, map, map.dropRuns[0].id), map, rules);
+      equal(chargeToSpareFor(landed, rules, bridge), spare, `${levelId}, landed with the canisters down`);
+    }
   }],
 ];

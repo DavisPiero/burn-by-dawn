@@ -275,10 +275,19 @@ export function winMet(state, rules) {
  * any set of them together (M33, the bomb store beside it).
  */
 export function winShortfall(state, rules) {
+  const want = chargesForWin(state, rules);
+  if (want === 0) return 0;
+  const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
+  const carrier = state.units.some((u) => onBoard(u) && chargeRoom(u, rules) > 0);
+  return Math.max(0, want - carried - (carrier ? state.droppedCharges.length : 0));
+}
+
+/** The charges still to set for the win, by its cheapest way (winShortfall). */
+function chargesForWin(state, rules) {
   const { targets, needed } = winTargets(state, rules);
   const toGo = needed - targets.filter((o) => o.destroyed).length;
   if (toGo <= 0) return 0;
-  const still = (o) => Math.max(0, kindOf(o, rules).chargesNeeded - o.detonated - state.charges.filter((c) => c.objectiveId === o.id).length);
+  const still = (o) => stillWanted(state, rules, o);
   const cheapest = (left, count) => {
     const wants = left.map(still).sort((a, b) => a - b);
     return wants.length < count ? Infinity : wants.slice(0, count).reduce((n, w) => n + w, 0);
@@ -307,9 +316,34 @@ export function winShortfall(state, rules) {
     }
   };
   tryWays(0, new Set(), new Set(), 0);
-  const carried = state.units.filter(onBoard).reduce((n, u) => n + u.charges, 0);
-  const carrier = state.units.some((u) => onBoard(u) && chargeRoom(u, rules) > 0);
-  return Math.max(0, want - carried - (carrier ? state.droppedCharges.length : 0));
+  return want;
+}
+
+/** Charges an objective still wants: its need, less what went off and what is set on it. */
+function stillWanted(state, rules, objective) {
+  return Math.max(0, kindOf(objective, rules).chargesNeeded - objective.detonated - state.charges.filter((c) => c.objectiveId === objective.id).length);
+}
+
+/**
+ * Can the stick blow this bonus target and still do the job (M53, the
+ * operator's: Hard's aqueduct takes all six charges, and the orders still
+ * offered the road bridge)? Its own charges and the job's cheapest way after
+ * them, against every charge the stick has: carried, lying, set, and before
+ * the drop those still in the canisters. A target the job's way blows anyway
+ * (the airfield's bowser) costs nothing extra, nor one a scout can cut.
+ */
+export function chargeToSpareFor(state, rules, objective) {
+  const before = state.phase === 'drop';
+  const inField = (u) => (before ? !u.dead && !u.out : onBoard(u));
+  const carried = state.units.filter(inField).reduce((n, u) => n + u.charges, 0);
+  const carrier = state.units.some((u) => inField(u) && chargeRoom(u, rules) > 0);
+  const lying = carrier ? state.droppedCharges.length : 0;
+  const unlanded = before && rules.canisters && state.canisters.length === 0 ? rules.canisters.count * rules.canisters.charges : 0;
+  // A line a scout can cut takes no charge at all (the airfield's signals tent on Hard).
+  if (kindOf(objective, rules).cutLine && state.units.some((u) => inField(u) && rules.roles[u.role].cutLine)) return true;
+  const own = stillWanted(state, rules, objective);
+  const set = { ...state, charges: [...state.charges, ...Array.from({ length: own }, () => ({ objectiveId: objective.id }))] };
+  return own + chargesForWin(set, rules) <= carried + lying + unlanded;
 }
 
 /**

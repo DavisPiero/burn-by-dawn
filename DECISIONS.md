@@ -92,3 +92,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m52 | START HERE moved by the operator with ?layout: contents.flag [55, 17]
 2026-10-17 | m52 | Normal's hunter 8 over careful on the aqueduct's West run (94 against 86): left, the operator's ("it's fine")
 2026-10-17 | m52 | A wording sheet next (the operator's go-ahead): the on-screen words gathered in one document by where they show, since they are spread over data/ and the code with notes beside them
+2026-10-17 | m53 | The orders mark a bonus target the stick has no charge to spare for "(no charge to spare)", as one general rule (the operator's go-ahead): its charges and the job's cheapest way after them against every charge carried, lying, set or still in the canisters. One a scout can cut, or one the job's own way blows (the airfield's bowser), is never marked. Only Hard's road bridge is marked today; on the orders only, since Hard's summary already says it
