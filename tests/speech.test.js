@@ -7,7 +7,7 @@ import {
   chooseDropRun, createInitialState, endTurn, holdUnit, jump, moveUnit, placeCharge, silenceUnits,
 } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
-import { onBoard, planMove, unitById, woundedLine } from '../src/units.js';
+import { lineFor, onBoard, planMove, unitById, woundedLine } from '../src/units.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -25,6 +25,8 @@ async function loadAll() {
 }
 
 const lineOf = (state, unitId) => state.speech.find((s) => s.unitId === unitId)?.line ?? null;
+// A moment's lines (M54): one, or a list to choose from.
+const linesOf = (line) => [].concat(line ?? []);
 
 export default [
   ['nobody speaks before the drop; everyone who lands says his landing line', async () => {
@@ -35,8 +37,8 @@ export default [
     for (const unit of landed.units.filter(onBoard)) {
       const wet = landed.report.some((e) => e.kind === 'landed' && e.unitId === unit.id && e.outcome === 'wounds');
       const carrying = start.units.find((u) => u.id === unit.id).charges > 0;
-      const woundedLine = (carrying && unit.dialogue.onWoundedCarrying) || unit.dialogue.onWounded;
-      equal(lineOf(landed, unit.id), wet ? woundedLine : unit.dialogue.onLand, `${unit.shortName}'s line`);
+      const said = linesOf(wet ? ((carrying && unit.dialogue.onWoundedCarrying) || unit.dialogue.onWounded) : unit.dialogue.onLand);
+      assert(said.includes(lineOf(landed, unit.id)), `${unit.shortName}'s line: one of ${JSON.stringify(said)}`);
     }
     equal(new Set(landed.speech.map((s) => s.unitId)).size, landed.speech.length, 'one line per man');
   }],
@@ -83,7 +85,7 @@ export default [
       : { ...u, q: 200 + i, r: 0 }));
     const placed = placeCharge({ ...base, units, enemies: [] }, sapper.id, rules);
     equal(placed.charges.length, 1, 'charge set');
-    equal(lineOf(placed, sapper.id), unitById(placed.units, sapper.id).dialogue.onPlaceCharge, 'his line');
+    assert(linesOf(unitById(placed.units, sapper.id).dialogue.onPlaceCharge).includes(lineOf(placed, sapper.id)), 'his line');
   }],
 
   ['a man hit still carrying a charge says his carrying line if he has one; without a charge, his plain wounded line', async () => {
@@ -93,10 +95,34 @@ export default [
     assert(carriers.length > 0, 'the roster has carrying lines');
     for (const u of carriers) {
       assert(u.charges > 0, `${u.shortName} starts with a charge to talk about`);
-      equal(woundedLine(u), u.dialogue.onWoundedCarrying, `${u.shortName} carrying`);
-      equal(woundedLine({ ...u, charges: 0 }), u.dialogue.onWounded, `${u.shortName} with his charge gone`);
+      assert(linesOf(u.dialogue.onWoundedCarrying).includes(woundedLine(u, start)), `${u.shortName} carrying`);
+      assert(linesOf(u.dialogue.onWounded).includes(woundedLine({ ...u, charges: 0 }, start)), `${u.shortName} with his charge gone`);
     }
     const plain = start.units.find((u) => !u.dialogue.onWoundedCarrying);
-    equal(woundedLine({ ...plain, charges: 1 }), plain.dialogue.onWounded, 'no carrying line: the plain one, charge or not');
+    assert(linesOf(plain.dialogue.onWounded).includes(woundedLine({ ...plain, charges: 1 }, start)), 'no carrying line: the plain one, charge or not');
+  }],
+
+  ['a moment with several lines (M54): the same seed, turn, man and moment always say the same one, and between them every one is said', async () => {
+    const man = { id: 'fitch', dialogue: { onLand: ['one', 'two', 'three'], onHide: 'only' } };
+    const heard = new Set();
+    for (let seed = 0; seed < 40; seed++) {
+      const line = lineFor(man, 'onLand', { seed, turn: 1 });
+      equal(lineFor(man, 'onLand', { seed, turn: 1 }), line, `seed ${seed} says the same twice`);
+      heard.add(line);
+    }
+    equal(heard.size, 3, 'all three are said across seeds');
+    equal(lineFor(man, 'onHide', { seed: 5, turn: 2 }), 'only', 'a single line is said as it is');
+    equal(lineFor(man, 'onKill', { seed: 5, turn: 2 }), null, 'no line: silent');
+  }],
+
+  ['every line in the roster and the missions is words, alone or in a list', async () => {
+    const { roster } = await loadAll();
+    const missions = await loadJson('data/missions.json');
+    const sets = [...roster.troopers.map((t) => t.dialogue), ...missions.missions.flatMap((m) => Object.values(m.dialogue ?? {}))];
+    for (const set of sets) {
+      for (const [key, line] of Object.entries(set)) {
+        assert(linesOf(line).length > 0 && linesOf(line).every((l) => typeof l === 'string' && l.trim() === l && l !== ''), `${key}: ${JSON.stringify(line)}`);
+      }
+    }
   }],
 ];

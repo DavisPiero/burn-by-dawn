@@ -584,16 +584,16 @@ export default [
     const man = unitIn(fresh, unitId);
     const first = runDetection(fresh, map, rules).events.find((ev) => ev.kind === 'spotted');
     equal(first.first, true, 'the sighting is marked as his first');
-    equal(lineOf(endTurn(fresh, rules, map), unitId), man.dialogue.onSpotted, 'he says his spotted line');
+    assert([].concat(man.dialogue.onSpotted).includes(lineOf(endTurn(fresh, rules, map), unitId)), 'he says his spotted line');
     // Already in contact: seen again is not a new sighting, so no spotted line. If the
     // shot lands he says his wounded line, as before M26.
     const { state: held } = scenario(state, 'sapper', at, [e], { inContact: true });
     equal(runDetection(held, map, rules).events.find((ev) => ev.kind === 'spotted').first, false, 'seen again is not first');
     const shot = endTurn(held, rules, map);
     assert(shot.report.some((ev) => ev.kind === 'wounded' && ev.unitId === unitId), 'a man in contact and seen again is hit');
-    equal(lineOf(shot, unitId), woundedLine(unitIn(held, unitId)), 'he says his wounded line, not his spotted one');
+    equal(lineOf(shot, unitId), woundedLine(unitIn(held, unitId), held), 'he says his wounded line, not his spotted one');
     const pinned = endTurn(scenario(state, 'sapper', at, [{ ...e, q: row.q - 1 }], { inContact: true }).state, rules, map);
-    assert(lineOf(pinned, unitId) !== man.dialogue.onSpotted, 'never the spotted line for a man already in contact');
+    assert(![].concat(man.dialogue.onSpotted).includes(lineOf(pinned, unitId)), 'never the spotted line for a man already in contact');
   }],
 
   ['a shot from beyond hitRange pins a man in the open; within it, it hits (M13b)', async () => {

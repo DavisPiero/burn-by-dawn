@@ -14,6 +14,7 @@
 
 import { hexDistance, inArc, neighbors } from './hex.js';
 import { enterCost, findPath, hasLineOfSight, hexKey, isInPlay, reachableWithin, terrainAt } from './map.js';
+import { pickFixed } from './rng.js';
 import { applyHook } from './traits.js';
 
 /**
@@ -33,10 +34,18 @@ export const DIALOGUE_KEYS = ['onLand', 'onPlaceCharge', 'onWounded'];
  */
 export const OPTIONAL_DIALOGUE_KEYS = ['onWoundedCarrying', 'onKill', 'onSpotted', 'onHide'];
 
+/**
+ * What a man says for a moment, a dialogue key (M54): a moment may hold one
+ * line or a list of them, and which he says is fixed by the seed, the turn, the
+ * man and the moment (rng.js pickFixed), never rolled. Null if he has none.
+ */
+export function lineFor(unit, key, state) {
+  return pickFixed([].concat(unit.dialogue?.[key] ?? []), state.seed, state.turn, unit.id, key);
+}
+
 /** What a man says when he is wounded; `unit` as he was just before the hit. */
-export function woundedLine(unit) {
-  const dialogue = unit.dialogue ?? {};
-  return (unit.charges > 0 && dialogue.onWoundedCarrying) || dialogue.onWounded || null;
+export function woundedLine(unit, state) {
+  return (unit.charges > 0 && lineFor(unit, 'onWoundedCarrying', state)) || lineFor(unit, 'onWounded', state);
 }
 
 /**
@@ -176,10 +185,13 @@ function resolveTraits(trooper, traits, rosterUrl) {
   });
 }
 
+// A moment's line: words, or a list of them (M54), none of them empty.
+const isLine = (line) => (Array.isArray(line) ? line.length > 0 && line.every(isLine) : typeof line === 'string' && line !== '');
+
 function validateDialogue(trooper, rosterUrl) {
   const dialogue = trooper.dialogue;
   for (const key of DIALOGUE_KEYS) {
-    if (typeof dialogue?.[key] !== 'string' || dialogue[key] === '') {
+    if (!isLine(dialogue?.[key])) {
       throw new Error(`${rosterUrl}: trooper "${trooper.id}" needs a "dialogue.${key}" line`);
     }
   }
@@ -187,7 +199,7 @@ function validateDialogue(trooper, rosterUrl) {
     if (!DIALOGUE_KEYS.includes(key) && !OPTIONAL_DIALOGUE_KEYS.includes(key)) {
       throw new Error(`${rosterUrl}: trooper "${trooper.id}" has dialogue key "${key}"; the keys are ${[...DIALOGUE_KEYS, ...OPTIONAL_DIALOGUE_KEYS].join(', ')}`);
     }
-    if (typeof dialogue[key] !== 'string' || dialogue[key] === '') {
+    if (!isLine(dialogue[key])) {
       throw new Error(`${rosterUrl}: trooper "${trooper.id}" has an empty "dialogue.${key}" line`);
     }
   }
