@@ -7,7 +7,7 @@ import { hexDistance } from '../src/hex.js';
 import { runEnemyPhase } from '../src/enemy.js';
 import { hexKey, isInPlay, isPassable, loadJson, loadMap, reachableWithin, terrainAt, terrainIdAt } from '../src/map.js';
 import {
-  missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winTargets, winWords,
+  chargeToSpareFor, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winTargets, winWords,
 } from '../src/missions.js';
 import { blastEffect, blastHexesThisTurn, blastsOfCharge, caughtBy, checkPlaceCharge, defaultPencil, isExfil, laterBlasts, offeredPencil, pencils, runFusePhase } from '../src/sabotage.js';
 import { chooseDropRun, createInitialState, endTurn, jump, placeCharge } from '../src/state.js';
@@ -492,5 +492,14 @@ export default [
 
     const france = missionRules(missionById(validateMissions(await loadJson('data/missions.json')), 'france'), await loadJson('data/rules.json'));
     equal(france.patrols.setOutTurn, 1, 'France\'s patrols walk from the start');
+  }],
+  ['the orders offer every bonus target on every level (M53): on Hard the job\'s own way blows the bowser and the bomb store, and the signals tent is cut, so none costs a charge the job needs', async () => {
+    for (const levelId of ['easy', 'normal', 'hard']) {
+      const { map, rules, traits, roster } = await loadAirfield(levelId);
+      const state = createInitialState(roster, traits, rules, map, 1);
+      const bonus = state.objectives.filter((o) => !isWinTarget(state, rules, o));
+      assert(bonus.length > 0, `${levelId}: the airfield has bonus targets`);
+      for (const o of bonus) equal(chargeToSpareFor(state, rules, o), true, `${levelId}: ${o.label}`);
+    }
   }],
 ];

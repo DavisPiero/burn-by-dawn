@@ -20,11 +20,9 @@ success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
 
-1. **A wording sheet** (the operator's go-ahead, 17 Oct 2026): every on-screen line in
-   one document grouped by where it shows, for the operator's wording pass, carried back
-   into the files by Claude. The words are spread over `data/` (missions, roster,
-   lessons, help, maps, terrain, traits, difficulty) and the code (main.js, ui.js,
-   hints.js), and notes sit beside them, so editing in place is hard.
+1. **The wording pass** (M53 made the sheet, 17 Oct 2026): the operator rewords
+   `docs/WORDING.md`; Claude carries the changed lines back into `data/` and the code,
+   by their tags and `docs/WORDING-SOURCES.md`, and makes the spec's quotes follow.
 2. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`), and a milestone of fixes for what they trip on, as M49b was.
 3. **Then the next big piece, the operator's choice**: a fourth mission (below), or the

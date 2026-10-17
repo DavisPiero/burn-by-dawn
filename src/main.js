@@ -19,7 +19,7 @@ import {
   blastEffect, blastHexesThisTurn, checkCutLine, checkPlaceCharge, checkSwim, boatLands, checkBoardBoat, checkSignalBoat, effectiveMap, inBlast, exfilOpen, isExfil, isSpentPoint, waitingToBoard, kindOf, lastTurn,
   objectiveAt, objectiveForChargeHex, swimTargets, blastsOfCharge, caughtBy, chainFrom, laterBlasts, offeredPencil, pencilWithTheOthers, pencils,
 } from './sabotage.js';
-import { canPlay, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
+import { canPlay, chargeToSpareFor, isWinTarget, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, ratingOf, validateMissions, winShortfall, winTargets, winMet, winWords } from './missions.js';
 import { aidPrompts, aidWords, diversionPrompt, ordersWords, pointedHints } from './hints.js';
 import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
@@ -2878,7 +2878,9 @@ function describeBriefing(which, view) {
     // play is behind ?.
     const boat = rules.exfil.opensTurn;
     const extras = [
-      ...bonusTargets.map((o) => `${o.label.toUpperCase()} +${kindOf(o, rules).score}`),
+      // One that would leave too few for the job is said so (M53, the operator's:
+      // Hard's aqueduct takes all six, and the road bridge was still offered).
+      ...bonusTargets.map((o) => `${o.label.toUpperCase()} +${kindOf(o, rules).score}${o.destroyed || chargeToSpareFor(state, rules, o) ? '' : ' (no charge to spare)'}`),
       // When it comes, too (M48j, the operator's): it is worth planning for.
       ...(rules.train ? [`${rules.train.label.toUpperCase()} on turn ${rules.train.turn} +${rules.train.score}`] : []),
       ...(salvo ? [`${salvo.count} in one bang +${salvo.points}`] : []),

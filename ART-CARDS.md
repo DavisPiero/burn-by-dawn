@@ -51,7 +51,8 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   boat's turn in bold where the way out is a boat); the canisters in bold where there
   are any; and one Bonus line naming everything that pays extra with its points (the
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
-  words, `words.cleanBonus`). At its foot: **Music off** and beside it **Play tips**
+  words, `words.cleanBonus`); a bonus target that would leave too few charges for the job,
+  as the road bridge on Hard's aqueduct, is marked "(no charge to spare)"). At its foot: **Music off** and beside it **Play tips**
   (ticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON.
   **Play tips are also in the menu** (ART-DIRECTION.md, the spread), to be turned on or off at any time. A card too tall for the window is set tighter a step at a time (less
   air, then 14 px, then 13) before anything is cut.
