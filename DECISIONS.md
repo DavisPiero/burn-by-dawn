@@ -112,3 +112,9 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-17 | m54b | M54b signed off by the operator and merged
 2026-10-17 | m54b | Next is M55, the title and Dakota panels (the operator's): one shared Dakota painting first, per-mission variants later through the picture folders' fallback, so variants are art, not code
 2026-10-17 | m54b | Then Gunnerside, its spec written in Claude Code rather than a chat, as it must fit the engine, the data and the mission specs' pattern; playtests whenever a tester can be found
+2026-10-18 | m55 | The operator's rewording of the men's lines (76 on the sheet, untagged and b/c alike) carried into roster.json and missions.json by finding each old line as text; each was found exactly once, so no line went to the wrong man
+2026-10-18 | m55 | The title painting is one for the whole game, as the opening page comes before a mission is picked; the code keeps setting BURN BY DAWN, the fuse and the click line over it, so the painting has no lettering to fight them
+2026-10-18 | m55 | It is 16:10 and cropped to fill the window (cover), with a dark shade over its middle, so it suits any window shape; the operator keeps the middle band clear and the men inside the central 80%
+2026-10-18 | m55 | No visible stand-in for either painting: the operator pushes straight to the live site, so each is a slot that shows nothing until its file is in, as the landing panels were
+2026-10-18 | m55 | A comic panel's `art` may be a list, tried in order: the Dakota panel names the mission's own file, then the shared one, so a desert or winter variant is a file dropped in, not a code change
+2026-10-18 | m55 | The Dakota panel is not shown in the course: it has no START GAME, and a lesson is not a mission

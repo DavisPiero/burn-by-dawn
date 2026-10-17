@@ -313,6 +313,21 @@ format jpeg -s formatOptions 80 -z 600 900`). Shown about 550 x 370 over the boa
 caption boxed over the top-left corner. The mission accomplished panel is the mission's
 own `contents-<id>_full.jpg`. A panel not supplied is simply not shown.
 
+**The Dakota panel** (M55, ART-PROMPTS.md Priority 30): a comic panel shown at START
+GAME, sized and handled as the landing panels: `assets/panels/panel-dakota.jpg`, shared
+by every mission, and optionally `panel-dakota-<mission id>.jpg`, tried first (a
+mission's `comicPanels.dakota.art` is that list). Supplied at 3:2, 1200 x 800, kept as
+`_full.jpg`; the game loads a 900 x 600 copy. Not supplied, nothing is shown.
+
+**The title painting** (M55, ART-PROMPTS.md Priority 29): `assets/title/title-painting.jpg`,
+**16:10, 2400 x 1500**, JPEG, sRGB, opaque, no text, behind the opening page, cropped
+to fill the window under a dark shade (`.loading-painting` in index.html,
+`TITLE_PAINTING_FILE` in `src/render/theme.js`). The game loads a 1600 x 1000 copy at
+quality 85; the painting is kept as `title-painting_full.jpg`
+(`sips -s format jpeg -s formatOptions 85 -z 1000 1600 title-painting_full.jpg --out title-painting.jpg`).
+Keep the middle band, about 35% to 65% of the height, clear and dark for the title.
+Without it the table stays plain dark.
+
 **The course's clipboard** (M48j, ART-PROMPTS.md Priority 26): `assets/course/clipboard.png`,
 **536 x 714** (3:4, upright), PNG on transparency: a wooden clipboard from straight above,
 its steel clip in the top 12%, a sheet of blank cream paper on it. Shown at 268 x 357 on

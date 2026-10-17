@@ -1460,12 +1460,15 @@ The cards that come up over the board between turns and at moments in the game.
 
 ## M. The comic panels
 
-Painted panels over the board: one after the landing, one on a win.
+Painted panels over the board: one at START GAME (M55), one after the landing, one on a win.
 
+- M1a The Rail Bridge, in the Dakota (new, placeholder) | RED LIGHT ON. TWENTY MINUTES TO THE DROP ZONE. STAND UP, HOOK UP.
 - M1 The Rail Bridge, after the landing | 0140 HOURS. SIX MEN DOWN IN THE DARK.
 - M2 The Rail Bridge, mission accomplished | THE BRIDGE IS DOWN, AND NO TRAIN COULD CROSS FOR A MONTH.
+- M3a The Airfield, in the Dakota (new, placeholder) | RED LIGHT ON OVER THE DESERT. CHECK YOUR NEIGHBOUR'S KIT.
 - M3 The Airfield, after the landing | A COLD, STILL DESERT NIGHT. THE STUKAS SOMEWHERE AHEAD.
 - M4 The Airfield, mission accomplished | BY DAWN THE STUKAS BURNED, AND THE MEN HAD MADE THEIR ESCAPE.
+- M5a The Aqueduct, in the Dakota (new, placeholder) | RED LIGHT ON OVER THE MOUNTAINS. COLD AS ICE IN HERE.
 - M5 The Aqueduct, after the landing | SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND CHARGES STASHED IN THEIR CANISTERS.
 - M6 The Aqueduct, mission accomplished | THE AQUEDUCT WAS NO MORE, AND THE BOAT PULLED AWAY INTO THE DARKNESS.
 

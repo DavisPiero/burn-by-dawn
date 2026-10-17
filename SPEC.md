@@ -431,12 +431,11 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M53, the wording sheet:** every line the player sees gathered into `docs/WORDING.md`,
-grouped by where it shows, for the operator's rewording pass, with
-`docs/WORDING-SOURCES.md` saying where each line lives; the rewording is carried back
-into `data/` and the code in a session of its own. And the orders mark a bonus target
-the stick has no charge to spare for (`ART-CARDS.md`). The milestones before it are in
-`MILESTONES.md`. v1.0 is tagged.
+**M55, the title and Dakota panels:** a title painting behind the opening page and a
+comic panel of the men in the back of the Dakota at START GAME, each a slot for the
+operator's painting (ART-PLAY.md, ART-PROMPTS.md Priorities 29 and 30), and the
+operator's rewording of the men's new lines carried back. The milestones before it are
+in `MILESTONES.md`. v1.0 is tagged.
 
 ### Done
 
