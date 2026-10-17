@@ -826,7 +826,13 @@ lettering on the armbands**: a cap badge is a dot at 20 px, and plain white read
 
 ---
 
-## Priority 25 — the practice ground's contents panel and title card — optional, **to make**
+## Priority 25 — the practice ground's contents panel and title card ✅ done (2026-10-17)
+
+In since M52, BURN BY DAWN painted in. Kept as `contents-training_full.jpg` (1223 × 800; the
+game's 480 × 320 copy trims 11 px a side to 3:2) and `title-card-training_full.jpg`
+(2400 × 600; the game loads 1600 × 400). **The title card carries a generator's
+watermark in its bottom-right corner, by the lorry's wheel: to be painted out.**
+
 
 **Why** (M48g): the course is first on the contents page and is the only line there
 with no small painting beside it; and its orders open under France's title card.
