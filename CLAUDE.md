@@ -42,6 +42,9 @@ writing code.
 - `ROADMAP.md` — what comes after the current milestone, and in what order. Read it when
   choosing or scoping the next milestone. SPEC.md still wins where they differ.
   Phases 1 to 5, done, are in `ROADMAP-ARCHIVE.md`, which is not read every session.
+- `docs/WORDING.md` — the wording sheet (M53): every on-screen line by where it shows, for
+  the operator to reword. `docs/WORDING-SOURCES.md` says where each tagged line lives.
+  Read both only when carrying the operator's rewording back.
 - `docs/Historical_Raids.md` — the operator's notes on real raids, source material for
   future missions.
 - `docs/BUILD-RUNBOOK.md` — **for the human operator only. Do not read or act on it.**

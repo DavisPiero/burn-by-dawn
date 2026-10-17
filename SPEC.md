@@ -429,14 +429,12 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M52, the aqueduct rebalanced and comic panels tried, done:** the aqueduct measured
-against the mended bot and brought inside every target by the operator's pick of the
-options: Normal five charges, Hard all six (`MISSION-AQUEDUCT.md`, Balance); comic panels
-at two story moments, the landing and the mission accomplished, tried behind a switch
-and kept (`ART-PLAY.md`), with the operator's three landing paintings; and the Practice
-Ground's painted panel and title card. The milestones before it are in `MILESTONES.md`.
-Still open, the operator's: the rewording of the placeholder copy, the panels' captions
-among it. v1.0 is tagged.
+**M53, the wording sheet:** every line the player sees gathered into `docs/WORDING.md`,
+grouped by where it shows, for the operator's rewording pass, with
+`docs/WORDING-SOURCES.md` saying where each line lives; the rewording is carried back
+into `data/` and the code in a session of its own. And the orders mark a bonus target
+the stick has no charge to spare for (`ART-CARDS.md`). The milestones before it are in
+`MILESTONES.md`. v1.0 is tagged.
 
 ### Done
 
