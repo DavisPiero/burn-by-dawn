@@ -20,9 +20,9 @@ success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
 
-1. **The wording pass** (M53 made the sheet, 17 Oct 2026): the operator rewords
-   `docs/WORDING.md`; Claude carries the changed lines back into `data/` and the code,
-   by their tags and `docs/WORDING-SOURCES.md`, and makes the spec's quotes follow.
+1. **The men's new lines** (M54, 17 Oct 2026): the operator's first rewording is carried
+   back; Claude wrote two more lines for each of the men's moments (tags F77b, F77c… in
+   `docs/WORDING.md`). The operator rewords those; Claude carries them back as before.
 2. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`), and a milestone of fixes for what they trip on, as M49b was.
 3. **Then the next big piece, the operator's choice**: a fourth mission (below), or the

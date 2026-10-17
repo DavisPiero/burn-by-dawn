@@ -3351,7 +3351,7 @@ export function drawCounterKey(svg, examples, numbers) {
     [tip(east), 428 + air, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
     // WHO above NEXT TURN (M16): the other way round, their pointers crossed.
     [{ x: nameEnd, y: 45.5 }, 500 + air, ['WHO', 'Sentry, patrol', 'or reserve']],
-    [tip(southEast), 552 + air, ['NEXT TURN', 'It will face', 'here (dashed)']],
+    [tip(southEast), 552 + air, ['NEXT TURN', 'Enemy will face', 'here (dashed)']],
   ];
   for (const [p, y, lines] of enemyLabels) {
     pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
@@ -3362,7 +3362,7 @@ export function drawCounterKey(svg, examples, numbers) {
   row(602 + air, mini, ['SUPPRESSED', 'Head down this turn: it', 'does not see, fire or move'], 76);
   row(656 + air, markerAt('marker-open-kill', 656 + air), ['OPEN TO A KILL [K]', 'The turn after: it sees again']);
   row(692 + air, markerAt('marker-no-kill', 692 + air), ['CANNOT BE KILLED', 'The reserve squad']);
-  row(728 + air, markerAt('marker-spotted', 728 + air), ['RAISED THE ALARM', 'It saw or found something']);
+  row(728 + air, markerAt('marker-spotted', 728 + air), ['RAISED THE ALARM', 'Enemy saw or found something']);
 }
 
 // --- the ? pages' scenes (M48i) ------------------------------------------------

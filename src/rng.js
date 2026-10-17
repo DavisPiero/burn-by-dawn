@@ -17,6 +17,19 @@ export function freshSeed(now) {
 }
 
 /**
+ * One of `list`, fixed by `parts` (M54, a man's lines): the same parts always
+ * pick the same one. Not a roll: it never touches a generator, so a choice made
+ * this way costs the seeded game nothing and a seed still plays the same.
+ * Null for an empty list.
+ */
+export function pickFixed(list, ...parts) {
+  if (!list?.length) return null;
+  let hash = 2166136261;
+  for (const ch of parts.join('|')) hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return list[hash % list.length];
+}
+
+/**
  * A generator for `seed`. Each call to next() advances it. Two generators made
  * from the same seed give the same numbers in the same order.
  */

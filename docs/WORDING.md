@@ -20,17 +20,17 @@ Made 17 Oct 2026 (build M53). The game is unchanged until your rewording is carr
 ### The loading page
 
 - A1 | BURN BY DAWN
-- A2 | Loading the orders…
+- A2 | Loading your orders…
 - A3 | CLICK OR PRESS ANY KEY FOR YOUR ORDERS
 - A4 | Loading map…
 
 ### The contents page
 
 - A5 | BURN BY DAWN
-- A6 | PARACHUTE RAIDS BEHIND THE LINES
+- A6 | PARATROOPER RAIDS BEHIND ENEMY LINES
 - A7 | CONTENTS
 - A8 | IN THIS ANNUAL
-- A9 | Click a mission to play it. Each one stands alone: one night behind the lines, and out by dawn.
+- A9 | Click a mission to play. Each one stands alone: one night behind the lines, out by dawn.
 - A10 | NEXT YEAR’S ANNUAL
 
 ### Its line: The Practice Ground
@@ -38,29 +38,29 @@ Made 17 Oct 2026 (build M53). The game is unchanged until your rewording is carr
 - A11 | START HERE
 - A12 | The Practice Ground
 - A13 | Tatton Park, England
-- A14 | The parachute school's course, a lesson at a time: umpires for a garrison, a training bridge, and nobody hurt.
+- A14 | The paratrooper training course, one lesson at a time.
 
 ### Its line: The Rail Bridge
 
 - A15 | The Rail Bridge
 - A16 | Canal St-Rémy, France
-- A17 | Six men drop by night to blow the bridge that carries the line to the coast, and must be out before dawn.
+- A17 | Six men drop in darkness to blow the rail line that supplies the coast. Get them out by dawn.
 
 ### Its line: The Airfield
 
 - A18 | The Airfield
 - A19 | Southern Tunisia
-- A20 | Paratroopers raid aircraft in their pens on an Axis landing ground, ready to blow them sky high.
+- A20 | Paratroopers raid aircraft on an Axis landing ground, on a mission to blow them sky high.
 
 ### Its line: The Aqueduct
 
 - A21 | The Aqueduct
 - A22 | Southern Italy
-- A23 | A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait.
+- A23 | A stone aqueduct in the mountains that takes every charge you carry. Exfil via a boat on the coast that will not wait.
 
 ### The taglines along the foot of each title card
 
-- A24 | SIX MEN · ONE TRAINING BRIDGE · NOBODY HURT
+- A24 | SIX MEN · ONE TRAINING BRIDGE · NOBODY GETS HURT
 - A25 | SIX MEN · ONE BRIDGE · DAWN AT SIXTEEN
 - A26 | SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY
 - A27 | SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT
@@ -83,9 +83,9 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 
 ### The first line: where they are dropping
 
-- B7 | Today six men are on the practice ground at the parachute school.
+- B7 | Today six men train on the practice ground at the paratrooper school.
 - B8 | Tonight six men are to drop behind enemy lines.
-- B9 | Tonight six men are to drop on an enemy landing ground.
+- B9 | Tonight six men are to drop on an enemy airstrip in the desert.
 - B10 | Tonight six men are to drop into the mountains of southern Italy.
 
 ### The job and the clock
@@ -120,20 +120,20 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 
 ### The difficulty rollovers
 
-- B32 | Two men out will do, the diversion can be called twice, orders reach 3 hexes, hiding counts double, enemy shots hit only from 2 hexes off, and undo goes back as far as the start of the turn.
+- B32 | Two men out will do. The diversion can be called twice. Orders reach 3 hexes. Hiding counts double. Enemy shots hit only from 2 hexes off. Undo goes back as far as the start of the turn.
 - B33 | The mission as planned.
 - B34 | Four men must get out, and every sentry and patrol sees a hex further and wider.
 - B35 | Click to play at this level.
-- B36 | Fixed once the stick has jumped.
+- B36 | Fixed once the team has jumped.
 
 ### What each level does to one mission (said before the level’s own line)
 
 - B37 The Rail Bridge, Easy | The bridge takes one charge.
-- B38 The Rail Bridge, Hard | Blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, none once the Telephone Exchange is down.
+- B38 The Rail Bridge, Hard | Blowing a target calls up reinforcements to guard the way out: two squads for the Rail Bridge, one for the Fuel Dump, and none once the Telephone Exchange is down.
 - B39 The Airfield, Easy | Three aircraft will do.
-- B40 The Airfield, Hard | Seven aircraft are wanted: with five bombs, the bowser and the bomb store both have to go.
-- B41 The Aqueduct, Easy | The aqueduct takes three charges, and no squad comes down the road when it goes.
-- B42 The Aqueduct, Hard | The aqueduct takes all six charges, so none can be spared for the Road Bridge; two squads come down the road when it goes (none once the Road Bridge is down), and the boat stays two turns, not three.
+- B40 The Airfield, Hard | Seven aircraft need destroying: with your five bombs, the bowser and bomb store will both have to be blown.
+- B41 The Aqueduct, Easy | The aqueduct takes three charges, and no squad comes down the road when it's blasted.
+- B42 The Aqueduct, Hard | The aqueduct takes all six charges, so none can be spared for the Road Bridge, and two squads come down the road when the aqueduct is blasted. The boat only stays for two turns.
 
 ## C. How to play, the keyboard and the counter key
 
@@ -148,7 +148,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### Page: MOVING
 
 - C6 | MOVING
-- C7 | Click a man, or press 1–6: the blue is how far he can go this turn. Hover a hex: the line is his way there, each step the AP spent by then.
+- C7 | Click a man, or press 1–6: The blue is how far he can go this turn. Hover a hex: The line is his way there, each step shows the AP spent by then.
 - C8 | Click to go. Cover is slow going: 2 AP a hex. SPACE ends the turn: the garrison moves, and every man's AP comes back.
 - C9 | Hover anything on the board to ask what it is. KEYBOARD lists every key.
 
@@ -156,15 +156,15 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 
 - C10 | BEING SEEN
 - C11 | Hover before he moves: red ground gets him seen on the way; blue is safe. Cover blocks sight: woods, hedges, dunes, walls and buildings.
-- C12 | Seen is a warning (the red !). Next turn, get him out of sight, or he is fired on at the end of it.
+- C12 | Seen is a warning (the red !). Next turn, get him out of sight, or he is fired on at the end of the turn.
 - C13 | Hide [H] makes a man harder to see, and ends his turn.
 
 ### Page: CHARGES
 
 - C14 | CHARGES
 - C15 | The red dashed hexes are charge points. Stand a man with a charge (an orange dot) on one and press C.
-- C16 | The fuse burns ‹3› turns, counted down on the watch beside it. Get him clear before it goes.
-- C17 | Every charge takes a timer: after C, pick a time pencil from the tin. Get him clear before it goes.
+- C16 | The fuse burns ‹3› turns, counted down on the watch beside it. Get him clear before it blows.
+- C17 | Every charge takes a timer: after pressing C, pick a time pencil from the tin. Get clear before it blows.
 - C18 | Every bang stirs the garrison.
 - C19 | TARGET
 
@@ -179,15 +179,15 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### Page: GETTING OUT
 
 - C25 | GETTING OUT
-- C26 | When the job is done, walk the men onto the EXFIL. A man who reaches it is out, off the board.
-- C27 | Get at least {mission.minimumOut} out before dawn, or the mission fails however much is burning.
+- C26 | When the job is done move the men onto the EXFIL. A man who reaches it is out, off the board.
+- C27 | Get at least {mission.minimumOut} out before dawn, or the mission fails.
 
 ### Page: TONIGHT
 
 - C28 | TONIGHT
-- C29 | Pick the ‹WEST, NORTH or EAST› run with ‹1–3›. The Dakota flies it and the men jump along it, drifting a hex or two downwind. SPACE to jump.
+- C29 | Pick the ‹WEST, NORTH or EAST› run with ‹1–3›. The Dakota flies that line and the men jump along it, drifting a hex or two downwind. SPACE to jump.
 - C30 | You don’t fill every charge target. Charges needed: ‹Rail Bridge- 2, one per charge target; Telephone Exchange- 1 at its charge target›. The squad carries ‹3›.
-- C31 | The canisters hold ‹6›: stand on one and Pick up [P]. A canister is found like a parachute until it is empty.
+- C31 | The canisters hold ‹6›: stand on one and Pick up [P] an available charge (orange circle).
 - C32 | Or a ‹scout› can cut the ‹Telephone Exchange›’s lines [X]: a whole turn, and quiet.
 - C33 | Every charge takes a timer: after C, pick a time pencil from the tin (‹2›–‹6› turns; ‹4› is offered first), then SET. A long timer lets charges set over several turns go off together, with the stick already on its way out.
 - C34 | ‹3› ‹aircraft› up in one bang: bonus +‹5›.
@@ -207,7 +207,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - C45 | 1–6 Select a man
 - C46 | A Stabilise a wounded man (aid)
 - C47 | C Place a charge
-- C48 | B Signal the boat in early, from the beach (where there is one)
+- C48 | B Signal for the boat early, from the beach (where there is one)
 - C49 | D The diversion (the leader's radio)
 - C50 | E Pass a charge
 - C51 | Esc Deselect, or back out of aiming (or right-click)
@@ -246,11 +246,11 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - C81 | THE GARRISON
 - C82 | FACING — Sees ‹90›° this …
 - C83 | WHO — Sentry, patrol …
-- C84 | NEXT TURN — It will face here (dashed)
+- C84 | NEXT TURN — Enemy will face here (dashed)
 - C85 | SUPPRESSED — Head down this turn: it does not see, fire or move
 - C86 | OPEN TO A KILL [K] — The turn after: it sees again
 - C87 | CANNOT BE KILLED — The reserve squad
-- C88 | RAISED THE ALARM — It saw or found something
+- C88 | RAISED THE ALARM — Enemy saw or found something
 
 ## D. The drop
 
@@ -261,7 +261,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - D3 | CLICK THE DROP RUN (1)
 - D4 | JUMP!  [SPACE]
 - D5 | The Dakota troop aircraft flies one of these lines; your men jump along it and drift downwind a hex or two. Pick a run, then jump.
-- D6 | Pick a drop run with its number or its button. Hover the board to see what landing there would mean.
+- D6 | Pick a drop run by pressing its number or button. Hover the board to see what landing there would mean.
 - D7 | Not before the drop
 
 ### The red pen before the jump (Play tips)
@@ -298,13 +298,13 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 
 - D26 | West run
 - D27 | QUIET
-- D28 | Wood and ridge line: under cover the whole way, but the longest walk to the bridge, and trees make for bad landings. A patrol walks the wood: pack your chutes.
+- D28 | Wood and ridge line: under cover the whole way, but the longest walk to the bridge... and trees make for bad landings. A patrol walks the wood: pack your chutes.
 - D29 | North run
 - D30 | STEADY
 - D31 | Hedgerow lanes: the middle way. Soft landings in the hedges and the most reliable run, with two patrol routes to cross.
 - D32 | East run
 - D33 | FAST
-- D34 | The fields above the bridge: down closest to the primary, the wind carrying you off the canal. Tricky: the bridge post and its patrol are close by.
+- D34 | The fields above the bridge: down closest to the primary objective, the wind carrying you off the canal. Tricky: the bridge post and its patrol are close by.
 
 ### The runs: The Airfield
 
@@ -492,7 +492,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### The garrison’s cries: The Practice Ground
 
 - E131 seeing a man | YOU THERE!
-- E132 seeing a man | SEEN YOU!
+- E132 seeing a man | I'VE SEEN YOU!
 - E133 seeing a man | I SAY! YOU!
 - E134 finding something | WHAT'S THIS?
 - E135 finding something | HULLO! WHOSE IS THIS?
@@ -519,7 +519,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### The garrison’s cries: The Aqueduct
 
 - E149 seeing a man | ALLARME!
-- E150 seeing a man | CHI VA LÀ?
+- E150 seeing a man | CHI VA LÀ?!
 - E151 seeing a man | ALTO LÀ!
 - E152 finding something | MADONNA!
 - E153 finding something | MAMMA MIA!
@@ -548,17 +548,17 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### Traits
 
 - F16 | Steady Hands
-- F17 | Cuts his fuses short. His charges go off a turn sooner — good near dawn, bad if he is still inside the blast.
+- F17 | Cuts his fuses short. His charges go off a turn sooner — good near dawn, bad if he's still inside the blast.
 - F18 | Quick Work
-- F19 | Has a charge set before anyone else has the wrapper off. Placing a charge costs him nothing.
+- F19 | Placing a charge costs him nothing.
 - F20 | Cat's Eyes
 - F21 | Sees them before they see him, and keeps out of their eyeline. One harder to spot.
 - F22 | Treetops
-- F23 | Knows how to come down through branches. A bad landing costs him nothing.
+- F23 | Knows how to come down through branches, so a bad landing costs him nothing.
 - F24 | Cool Head
 - F25 | Fires short, controlled bursts. His gunfire raises the alert one step less.
 - F26 | Ox
-- F27 | Carries more than he should. One extra charge.
+- F27 | Carries extra weight, one extra charge.
 
 ### Traits in numbers (on each man’s row)
 
@@ -624,70 +624,170 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 ### What the men say (every mission unless replaced below)
 
 - F77 DUTCH, onLand | Pack the chutes boys!
-- F78 DUTCH, onPlaceCharge | Set. Walk away from it — then run.
+- F77b DUTCH, onLand | On me, lads. Quick and quiet.
+- F77c DUTCH, onLand | Chutes away. Nobody wanders off.
+- F78 DUTCH, onPlaceCharge | Charge set. Walk... then run.
+- F78b DUTCH, onPlaceCharge | That's her set. Clear off, the lot of you.
+- F78c DUTCH, onPlaceCharge | Set and timed. Don't hang about.
 - F79 DUTCH, onWounded | Only a scratch. Keep the lads moving.
-- F80 DUTCH, onWoundedCarrying | Charge is by my boots. Somebody fetch it — I'll catch you up.
-- F81 DUTCH, onKill | One fewer. Now keep your heads down.
+- F79b DUTCH, onWounded | I'm hit. Doesn't change the plan.
+- F79c DUTCH, onWounded | Patch it later. Keep going.
+- F80 DUTCH, onWoundedCarrying | Charge is by my boots. Somebody fetch it and I'll catch up.
+- F80b DUTCH, onWoundedCarrying | Dropped the charge. Someone pick it up, sharpish.
+- F80c DUTCH, onWoundedCarrying | Charge is down. Don't leave it lying.
+- F81 DUTCH, onKill | One less to worry about. Now keep your heads down.
+- F81b DUTCH, onKill | Quiet as you like. Move on.
+- F81c DUTCH, onKill | That's one. Eyes open for the rest.
 - F82 DUTCH, onSpotted | We've been seen. Nobody panic.
-- F83 DUTCH, onHide | Down, and stay down. That's an order.
-- F84 FITCH, onLand | Down soft as you like. Whose cabbages are these?
-- F85 FITCH, onPlaceCharge | Done. You'd not have got the wrapper off.
-- F86 FITCH, onWounded | Oh, that's torn it.
+- F82b DUTCH, onSpotted | They've seen us. Stick to the plan.
+- F82c DUTCH, onSpotted | We're blown. Steady, lads.
+- F83 DUTCH, onHide | Get down and stay down. That's an order.
+- F83b DUTCH, onHide | Everyone flat. Not a peep.
+- F83c DUTCH, onHide | Down. Let them walk past.
+- F84 FITCH, onLand | Touchdown. Soft as can be.
+- F84b FITCH, onLand | Not a scratch on me. Lucky old Fitch.
+- F84c FITCH, onLand | Landed like a feather, me.
+- F85 FITCH, onPlaceCharge | All done.
+- F85b FITCH, onPlaceCharge | Easy. Next!
+- F85c FITCH, onPlaceCharge | Done before you'd blinked.
+- F86 FITCH, onWounded | Oh bugger, that's torn it.
+- F86b FITCH, onWounded | Ow! That's not fair.
+- F86c FITCH, onWounded | Ah, hell. Caught one.
 - F87 FITCH, onWoundedCarrying | Oh, that's torn it. Charge is on the deck — mind how you lift it.
-- F88 FITCH, onKill | Sorry, pal. Nothing personal.
-- F89 FITCH, onSpotted | Uh-oh. He's looking right at me.
-- F90 FITCH, onHide | Nice and snug in the dirt.
-- F91 VANCE, onLand | I can see the church from here. We're about right.
+- F87b FITCH, onWoundedCarrying | Ah, hell. Dropped the charge. Careful with it.
+- F87c FITCH, onWoundedCarrying | Hit! Charge is on the ground, somebody grab it.
+- F88 FITCH, onKill | Sorry pal, nothing personal.
+- F88b FITCH, onKill | Him or me, wasn't it?
+- F88c FITCH, onKill | Shouldn't have looked this way, mate.
+- F89 FITCH, onSpotted | Uh-oh... He's looking right at me.
+- F89b FITCH, onSpotted | Ah. Hello there.
+- F89c FITCH, onSpotted | He's clocked me. Bugger.
+- F90 FITCH, onHide | Nice and snug here in the dirt.
+- F90b FITCH, onHide | Face in the dirt. Lovely.
+- F90c FITCH, onHide | Quiet as a mouse, me.
+- F91 VANCE, onLand | This is a fine spot Sarge.
+- F91b VANCE, onLand | Know just where we are.
+- F91c VANCE, onLand | Good ground, this. Bridge is that way.
 - F92 VANCE, onPlaceCharge | Not my trade, this. Hope it goes bang.
-- F93 VANCE, onWounded | Should've kept my head down. Go on, I'll catch up.
+- F92b VANCE, onPlaceCharge | Done, I think. Ask a sapper.
+- F92c VANCE, onPlaceCharge | Set. Don't look at me if it fizzles.
+- F93 VANCE, onWounded | Should've kept my head down damn it. Go on, I'll catch up.
+- F93b VANCE, onWounded | Damn. They've winged me.
+- F93c VANCE, onWounded | Caught one. Still got my eyes.
 - F94 VANCE, onKill | Didn't hear a thing, did he?
+- F94b VANCE, onKill | Never saw me coming.
+- F94c VANCE, onKill | Sorry, mate. Wrong place.
 - F95 VANCE, onSpotted | Spotted. I'll have to be quick about it.
-- F96 VANCE, onHide | Not a sound. Not a movement.
+- F95b VANCE, onSpotted | They've seen me. Time to be elsewhere.
+- F95c VANCE, onSpotted | Made me. Moving now.
+- F96 VANCE, onHide | Don't make a sound...
+- F96b VANCE, onHide | Still as stone.
+- F96c VANCE, onHide | Just a shadow, me.
 - F97 BARROW, onLand | Missed every tree in France. Told you I would.
+- F97b BARROW, onLand | Not a branch touched me. Not one.
+- F97c BARROW, onLand | Trees? What trees?
 - F98 BARROW, onPlaceCharge | Which end's the dangerous one?
+- F98b BARROW, onPlaceCharge | Don't rush me, I'm reading the label.
+- F98c BARROW, onPlaceCharge | If I lose a finger, I'm blaming Sarge.
 - F99 BARROW, onWounded | Leave it. Get to the bridge.
+- F99b BARROW, onWounded | Don't wait for me. The bridge!
+- F99c BARROW, onWounded | Just a nick. Bridge first.
 - F100 BARROW, onKill | Hope nobody was fond of him.
-- F101 BARROW, onSpotted | He's seen me. Ask me how I know.
+- F100b BARROW, onKill | Should've stayed in bed, pal.
+- F100c BARROW, onKill | He won't be missed. Not by me.
+- F101 BARROW, onSpotted | The bastard's seen me.
+- F101b BARROW, onSpotted | Oh, he's seen me alright.
+- F101c BARROW, onSpotted | Right. I'm rumbled.
 - F102 BARROW, onHide | Down in the mud, where I belong.
+- F102b BARROW, onHide | Flat as a pancake.
+- F102c BARROW, onHide | Mud in my ears again.
 - F103 SPEERS, onLand | Bren's in one piece. That's all that matters.
+- F103b SPEERS, onLand | Bren and me, both down safe.
+- F103c SPEERS, onLand | Gun's dry. Good.
 - F104 SPEERS, onPlaceCharge | Don't ask me to do that again.
+- F104b SPEERS, onPlaceCharge | Gunner's job now, is it?
+- F104c SPEERS, onPlaceCharge | Set. Don't tell anyone I did that.
 - F105 SPEERS, onWounded | Bit of bother. Still got one good arm.
+- F105b SPEERS, onWounded | Hit. I can still pull a trigger.
+- F105c SPEERS, onWounded | Nicked me. Doesn't matter.
 - F106 SPEERS, onKill | One down. Quietly, mind.
-- F107 SPEERS, onSpotted | Been made. Somebody get his head down.
+- F106b SPEERS, onKill | Got him.
+- F106c SPEERS, onKill | Clean shot. Moving on.
+- F107 SPEERS, onSpotted | Been made. Somebody sort this bloke out.
+- F107b SPEERS, onSpotted | He's seen me. I've seen him too.
+- F107c SPEERS, onSpotted | Spotted. Bren's ready if it comes to it.
 - F108 SPEERS, onHide | Head down. Bren's quiet.
-- F109 NUNN, onLand | Carried the spare all the way down, Sarge.
-- F110 NUNN, onPlaceCharge | Heavy old thing. Glad to be shot of it.
-- F111 NUNN, onWounded | Takes more than that to put an ox down.
-- F112 NUNN, onWoundedCarrying | Somebody take the charge off me.
-- F113 NUNN, onKill | That's him seen to.
-- F114 NUNN, onSpotted | Bit hard to hide, a man my size.
-- F115 NUNN, onHide | Small as I can make myself. Which isn't small.
+- F108b SPEERS, onHide | Bren's down, I'm down.
+- F108c SPEERS, onHide | Gun under me. Not a sound.
+- F109 NUNN, onLand | All the way down in one piece, Sarge.
+- F109b NUNN, onLand | Landed heavy. Nothing broke.
+- F109c NUNN, onLand | Ground's still there. Good.
+- F110 NUNN, onPlaceCharge | Heavy old thing. Glad to be done with it.
+- F110b NUNN, onPlaceCharge | There. My back thanks you.
+- F110c NUNN, onPlaceCharge | That's the weight off.
+- F111 NUNN, onWounded | Takes more than that to put me out of business.
+- F111b NUNN, onWounded | Just a bee sting.
+- F111c NUNN, onWounded | Hit. Still standing, mind.
+- F112 NUNN, onWoundedCarrying | Somebody take my charge.
+- F112b NUNN, onWoundedCarrying | Charge is down. Someone grab it.
+- F112c NUNN, onWoundedCarrying | Can't carry it now. Over to you.
+- F113 NUNN, onKill | That's him sorted.
+- F113b NUNN, onKill | He picked the wrong fella.
+- F113c NUNN, onKill | Down he goes.
+- F114 NUNN, onSpotted | Bit hard to hide a man my size.
+- F114b NUNN, onSpotted | Seen. Can't miss me, can they?
+- F114c NUNN, onSpotted | He's spotted me. Course he has.
+- F115 NUNN, onHide | Small as I can make myself. Which ain't small.
+- F115b NUNN, onHide | Just a big rock, me.
+- F115c NUNN, onHide | Hunched up. Not that it helps.
 
 ### What the men say instead: The Practice Ground
 
 - F116 DUTCH, onLand | Feet together, lads. Just like the tower.
 - F117 FITCH, onLand | Softer than the hangar floor, that.
-- F118 VANCE, onLand | Down. Didn't feel a thing.
-- F119 BARROW, onLand | Not one tree. Where's the sport in that?
-- F120 SPEERS, onLand | Down in one piece. Is there tea?
-- F121 NUNN, onLand | Whoever packed this one, I owe him a pint.
+- F118 VANCE, onLand | Touchdown. Didn't feel a thing.
+- F119 BARROW, onLand | Didn't hit one tree. Where's the sport in that?
+- F120 SPEERS, onLand | Down in one piece. Tea time yet?
+- F121 NUNN, onLand | I owe a pint to whoever packed this.
 
 ### What the men say instead: The Airfield
 
 - F122 FITCH, onLand | Down soft as you like. Sand in places I'll not mention.
+- F122b FITCH, onLand | Sand, sand and more sand.
+- F122c FITCH, onLand | Soft landing. Desert's good for something.
 - F123 FITCH, onHide | Nice and snug in the sand.
-- F124 VANCE, onLand | I can see the tails of the aircraft from here. We're about right.
-- F125 BARROW, onLand | Not a tree for a hundred miles. Told you I'd miss them all.
+- F123b FITCH, onHide | Burrowed in like a lizard.
+- F123c FITCH, onHide | Sand in my teeth. Quiet, mind.
+- F124 VANCE, onLand | I can see those aircraft. We're about right.
+- F124b VANCE, onLand | Stukas dead ahead. Spot on.
+- F124c VANCE, onLand | Airstrip's that way. I'd know it anywhere.
+- F125 BARROW, onLand | Look at this place... not a tree for a hundred miles.
+- F125b BARROW, onLand | No trees to miss. Shame.
+- F125c BARROW, onLand | Flat as a billiard table out here.
 - F126 BARROW, onWounded | Leave it. Get to the aircraft.
-- F127 BARROW, onHide | Down in the dust, where I belong.
+- F126b BARROW, onWounded | Don't stop. The planes!
+- F126c BARROW, onWounded | Just a nick. Get to the planes.
+- F127 BARROW, onHide | Going to need a bath after this.
+- F127b BARROW, onHide | Dust up my nose.
+- F127c BARROW, onHide | Lying in the dust again.
 
 ### What the men say instead: The Aqueduct
 
-- F128 FITCH, onLand | Down soft as you like. Whose olives are these?
-- F129 VANCE, onLand | I can see the aqueduct from here. We're about right.
-- F130 BARROW, onLand | Missed every tree in Italy. Told you I would.
+- F128 FITCH, onLand | Fancy an olive boys?
+- F128b FITCH, onLand | Snow? Nobody said snow.
+- F128c FITCH, onLand | Olive grove. Lovely.
+- F129 VANCE, onLand | I can see the aqueduct from here.
+- F129b VANCE, onLand | Aqueduct's that way. Big old thing.
+- F129c VANCE, onLand | Got the aqueduct in sight.
+- F130 BARROW, onLand | Lovely place this. Shame there's so much work to be done.
+- F130b BARROW, onLand | Cold as charity up here.
+- F130c BARROW, onLand | Mountains. Not a tree to speak of. Good.
 - F131 BARROW, onWounded | Leave it. Get to the aqueduct.
-- F132 NUNN, onLand | Nothing to carry down, Sarge. Where's that canister?
+- F131b BARROW, onWounded | Don't wait. The aqueduct!
+- F131c BARROW, onWounded | I'm fine. Get to the aqueduct.
+- F132 NUNN, onLand | Where'd that canister land?
+- F132b NUNN, onLand | No load for once. Where's the canister?
+- F132c NUNN, onLand | Light as a feather today. Find the canister.
 
 (When each is said: onLand on landing, onPlaceCharge setting a charge, onWounded when hit, onWoundedCarrying hit while carrying a charge, onKill after a kill, onSpotted the first time he is seen, onHide going to ground.)
 
@@ -1190,7 +1290,7 @@ The cards that come up over the board between turns and at moments in the game.
 - J55 The Rail Bridge | BOMBERS OVER THE TOWN
 - J56 The Airfield | JEEPS ON THE NORTH WIRE
 - J57 The Aqueduct | BOMBERS OVER FOGGIA
-- J58 | The radio worked. The garrison looks the other way.
+- J58 | The radio worked! The garrison looks the other way.
 - J59 | WHAT IT DID
 - J60 | The alert drops: ‹Alarmed› → ‹Alert›.
 - J61 | The alert stays ‹Suspicious›: after an explosion it never drops lower.
@@ -1362,12 +1462,12 @@ The cards that come up over the board between turns and at moments in the game.
 
 Painted panels over the board: one after the landing, one on a win.
 
-- M1 The Rail Bridge, after the landing | 0140 HOURS. SIX MEN DOWN IN THE DARK, AND NOT ONE OF THEM WHERE HE SHOULD BE.
-- M2 The Rail Bridge, mission accomplished | THE BRIDGE WENT INTO THE CANAL. NO TRAIN WOULD CROSS IT FOR A MONTH.
-- M3 The Airfield, after the landing | THE DESERT NIGHT WAS COLD AND STILL. SOMEWHERE AHEAD, THE STUKAS SLEPT.
-- M4 The Airfield, mission accomplished | BY DAWN THE STUKAS WERE BURNING WRECKS, AND THE STICK WAS GONE.
-- M5 The Aqueduct, after the landing | SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND EVERY CHARGE STILL IN ITS CANISTER.
-- M6 The Aqueduct, mission accomplished | THE WATER WAS CUT. THE BOAT PULLED AWAY INTO THE DARK.
+- M1 The Rail Bridge, after the landing | 0140 HOURS. SIX MEN DOWN IN THE DARK.
+- M2 The Rail Bridge, mission accomplished | THE BRIDGE IS DOWN, AND NO TRAIN COULD CROSS FOR A MONTH.
+- M3 The Airfield, after the landing | A COLD, STILL DESERT NIGHT. THE STUKAS SOMEWHERE AHEAD.
+- M4 The Airfield, mission accomplished | BY DAWN THE STUKAS BURNED, AND THE MEN HAD MADE THEIR ESCAPE.
+- M5 The Aqueduct, after the landing | SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND CHARGES STASHED IN THEIR CANISTERS.
+- M6 The Aqueduct, mission accomplished | THE AQUEDUCT WAS NO MORE, AND THE BOAT PULLED AWAY INTO THE DARKNESS.
 
 ## N. The training course
 

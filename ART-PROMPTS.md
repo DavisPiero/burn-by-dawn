@@ -828,8 +828,8 @@ lettering on the armbands**: a cap badge is a dot at 20 px, and plain white read
 
 ## Priority 25 — the practice ground's contents panel and title card ✅ done (2026-10-17)
 
-In since M52, BURN BY DAWN painted in. Kept as `contents-training_full.jpg` (1223 × 800; the
-game's 480 × 320 copy trims 11 px a side to 3:2) and `title-card-training_full.jpg`
+In since M52, BURN BY DAWN painted in; the panel repainted by the operator in M54. Kept as
+`contents-training_full.jpg` (1200 × 800; the game's copy is it at 480 × 320) and `title-card-training_full.jpg`
 (2400 × 600; the game loads 1600 × 400), its watermark painted out by the operator.
 
 

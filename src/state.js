@@ -28,7 +28,7 @@ import { trainEvents } from './train.js';
 import { applyHook } from './traits.js';
 import {
   checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
-  createUnits, fillActionPoints, onBoard, overloadApLoss, unitById,
+  createUnits, fillActionPoints, lineFor, onBoard, overloadApLoss, unitById,
 } from './units.js';
 
 /**
@@ -288,7 +288,7 @@ export function jump(state, map, rules, fixed = null) {
   if (rules.canisters) {
     next = landCanisters(next, scatterCanisters(map, rules, run, next.units, state.enemies, rng), rules).state;
   }
-  return { ...next, speech: speechFrom(landed.events, next.units) };
+  return { ...next, speech: speechFrom(landed.events, next.units, state) };
 }
 
 /**
@@ -300,14 +300,14 @@ export function jump(state, map, rules, fixed = null) {
  * A man first seen says his onSpotted line (M26); if he was also hit it comes
  * later in the events than his sighting, so his wounded line replaces it.
  */
-function speechFrom(events, units) {
+function speechFrom(events, units, state) {
   let speech = [];
   for (const event of events) {
     const unit = units.find((u) => u.id === event.unitId);
     if (!unit || !onBoard(unit)) continue;
     let line = null;
     if (event.kind === 'landed' || event.kind === 'wounded' || event.kind === 'blastWounded') line = event.line;
-    else if (event.kind === 'spotted' && event.first) line = unit.dialogue?.onSpotted ?? null;
+    else if (event.kind === 'spotted' && event.first) line = lineFor(unit, 'onSpotted', state);
     if (line) speech = say(speech, unit.id, line);
   }
   return speech;
@@ -432,7 +432,7 @@ export function hideUnit(state, unitId, rules) {
   const unit = unitById(state.units, unitId);
   if (!checkHide(unit, rules).ok) return state;
   const hidden = spend(state, unitId, unit.ap, { hidden: true });
-  return { ...hidden, speech: say(hidden.speech, unitId, unit.dialogue?.onHide ?? null) };
+  return { ...hidden, speech: say(hidden.speech, unitId, lineFor(unit, 'onHide', state)) };
 }
 
 /**
@@ -472,7 +472,7 @@ export function killEnemy(state, unitId, enemyId, map, rules) {
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, facing: restFacing(enemy) }],
   };
   const shot = reserveLost(makeNoise(fired, 'silenced', unit, alert, rules).state, enemy, rules);
-  return { ...shot, speech: say(shot.speech, unitId, unit.dialogue?.onKill ?? null) };
+  return { ...shot, speech: say(shot.speech, unitId, lineFor(unit, 'onKill', state)) };
 }
 
 // The way a dead enemy looked at rest, kept on his body (M42c): a squad sent
@@ -498,7 +498,7 @@ export function knifeEnemy(state, unitId, enemyId, rules) {
   const spent = reserveLost(spend(state, unitId, unit.ap), enemy, rules);
   const knifed = {
     ...spent,
-    speech: say(spent.speech, unitId, unit.dialogue?.onKill ?? null),
+    speech: say(spent.speech, unitId, lineFor(unit, 'onKill', state)),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, knifed: true, facing: restFacing(enemy) }],
   };
@@ -620,7 +620,7 @@ export function placeCharge(state, unitId, rules, fuse = undefined) {
   const spent = spend(state, unitId, check.cost, { charges: unit.charges - 1 });
   return {
     ...spent,
-    speech: say(spent.speech, unitId, unit.dialogue?.onPlaceCharge ?? null),
+    speech: say(spent.speech, unitId, lineFor(unit, 'onPlaceCharge', state)),
     charges: [...state.charges, { objectiveId: check.objective.id, q: unit.q, r: unit.r, fuse: check.fuse, length: check.fuse, unitId }],
   };
 }
@@ -718,7 +718,7 @@ function playOutTurn(state, rules, baseMap, dawn) {
     ...next,
     turn: dawn ? state.turn : state.turn + 1,
     report: [...detected.events, ...moved.events, ...fused.events, ...decayed.events, ...trainEvents(state, next, rules, baseMap), ...boatEvents(state, { ...next, turn: dawn ? state.turn : state.turn + 1 }, rules, baseMap)],
-    speech: speechFrom(detected.events, next.units),
+    speech: speechFrom(detected.events, next.units, state),
     // Pools are refilled from where everyone is standing at the turn boundary,
     // so the leader's command radius is measured now, not mid-turn.
     // A turn lost to a bad landing is spent now.

@@ -6,13 +6,13 @@
   "traits": {
     "steady-hands": {
       "name": "Steady Hands",
-      "description": "Cuts his fuses short. His charges go off a turn sooner — good near dawn, bad if he is still inside the blast.",
+      "description": "Cuts his fuses short. His charges go off a turn sooner — good near dawn, bad if he's still inside the blast.",
       "hook": "onPlaceCharge",
       "modifier": { "stat": "fuse", "op": "add", "value": -1 }
     },
     "quick-work": {
       "name": "Quick Work",
-      "description": "Has a charge set before anyone else has the wrapper off. Placing a charge costs him nothing.",
+      "description": "Placing a charge costs him nothing.",
       "hook": "onPlaceCharge",
       "modifier": { "stat": "apCost", "op": "set", "value": 0 }
     },
@@ -28,7 +28,7 @@
     },
     "treetops": {
       "name": "Treetops",
-      "description": "Knows how to come down through branches. A bad landing costs him nothing.",
+      "description": "Knows how to come down through branches, so a bad landing costs him nothing.",
       "hook": "onLand",
       "modifier": { "stat": "landingPenalty", "op": "set", "value": 0 }
     },
@@ -40,7 +40,7 @@
     },
     "ox": {
       "name": "Ox",
-      "description": "Carries more than he should. One extra charge.",
+      "description": "Carries extra weight, one extra charge.",
       "hook": "onChargeCapacity",
       "modifier": { "stat": "charges", "op": "add", "value": 1 }
     }

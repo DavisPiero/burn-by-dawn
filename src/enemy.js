@@ -490,7 +490,7 @@ export function runDetection(state, map, rules) {
     const shot = applyHit(unit, rules);
     events.push({
       kind: shot.dead ? 'killed' : 'wounded', unitId: unit.id, unitName: unit.shortName,
-      by, line: shot.dead ? null : woundedLine(unit),
+      by, line: shot.dead ? null : woundedLine(unit, state),
     });
     if (unit.charges > 0) {
       droppedCharges = [...droppedCharges, ...Array.from({ length: unit.charges }, () => ({ q: unit.q, r: unit.r }))];

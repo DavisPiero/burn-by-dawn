@@ -169,7 +169,7 @@ export default [
     equal(unit.charges, 0, 'charge gone');
     equal(result.state.droppedCharges.filter((c) => c.q === at.q && c.r === at.r).length, before.charges, 'charge on his hex');
     const wound = result.events.find((ev) => ev.kind === 'wounded');
-    equal(wound.line, before.dialogue.onWoundedCarrying ?? before.dialogue.onWounded, 'carrying a charge: his carrying line if he has one');
+    assert([].concat(before.dialogue.onWoundedCarrying ?? before.dialogue.onWounded).includes(wound.line), 'carrying a charge: his carrying line if he has one');
     const refilled = fillActionPoints(result.state.units, rules);
     equal(unitIn({ units: refilled }, unitId).apMax, rules.combat.woundedActionPoints, 'wounded pool');
   }],
@@ -559,15 +559,15 @@ export default [
     const target = enemy(row.q + 2, row.r, 'W');
     const { state: pair, ids: [first, second] } = twoGunners(state, row, [target]);
     const killed = killEnemy(suppressEnemy(pair, first, target.id, map, rules), second, target.id, map, rules);
-    equal(lineOf(killed, second), unitIn(killed, second).dialogue.onKill, 'the killer says his kill line');
+    assert([].concat(unitIn(killed, second).dialogue.onKill).includes(lineOf(killed, second)), 'the killer says his kill line');
     equal(lineOf(killed, first), null, 'the other gunner says nothing');
     // Anyone's knife.
     const behind = enemy(row.q + 1, row.r, 'E');
     const { state: k, unitId: knifer } = scenario(state, 'sapper', row, [behind]);
-    equal(lineOf(knifeEnemy(k, knifer, behind.id, rules), knifer), unitIn(k, knifer).dialogue.onKill, 'the knife says it too');
+    assert([].concat(unitIn(k, knifer).dialogue.onKill).includes(lineOf(knifeEnemy(k, knifer, behind.id, rules), knifer)), 'the knife says it too');
     // Going to ground.
     const { state: h, unitId: hider } = scenario(state, 'sapper', { q: row.q + 3, r: row.r }, [enemy(row.q, row.r, 'E')]);
-    equal(lineOf(hideUnit(h, hider, rules), hider), unitIn(h, hider).dialogue.onHide, 'hiding says his hide line');
+    assert([].concat(unitIn(h, hider).dialogue.onHide).includes(lineOf(hideUnit(h, hider, rules), hider)), 'hiding says his hide line');
     // No line, no words.
     const mute = (s, id) => ({ ...s, units: s.units.map((u) => (u.id === id ? { ...u, dialogue: { ...u.dialogue, onKill: undefined, onHide: undefined } } : u)) });
     equal(lineOf(knifeEnemy(mute(k, knifer), knifer, behind.id, rules), knifer), null, 'a man with no kill line is silent');
@@ -584,16 +584,16 @@ export default [
     const man = unitIn(fresh, unitId);
     const first = runDetection(fresh, map, rules).events.find((ev) => ev.kind === 'spotted');
     equal(first.first, true, 'the sighting is marked as his first');
-    equal(lineOf(endTurn(fresh, rules, map), unitId), man.dialogue.onSpotted, 'he says his spotted line');
+    assert([].concat(man.dialogue.onSpotted).includes(lineOf(endTurn(fresh, rules, map), unitId)), 'he says his spotted line');
     // Already in contact: seen again is not a new sighting, so no spotted line. If the
     // shot lands he says his wounded line, as before M26.
     const { state: held } = scenario(state, 'sapper', at, [e], { inContact: true });
     equal(runDetection(held, map, rules).events.find((ev) => ev.kind === 'spotted').first, false, 'seen again is not first');
     const shot = endTurn(held, rules, map);
     assert(shot.report.some((ev) => ev.kind === 'wounded' && ev.unitId === unitId), 'a man in contact and seen again is hit');
-    equal(lineOf(shot, unitId), woundedLine(unitIn(held, unitId)), 'he says his wounded line, not his spotted one');
+    equal(lineOf(shot, unitId), woundedLine(unitIn(held, unitId), held), 'he says his wounded line, not his spotted one');
     const pinned = endTurn(scenario(state, 'sapper', at, [{ ...e, q: row.q - 1 }], { inContact: true }).state, rules, map);
-    assert(lineOf(pinned, unitId) !== man.dialogue.onSpotted, 'never the spotted line for a man already in contact');
+    assert(![].concat(man.dialogue.onSpotted).includes(lineOf(pinned, unitId)), 'never the spotted line for a man already in contact');
   }],
 
   ['a shot from beyond hitRange pins a man in the open; within it, it hits (M13b)', async () => {

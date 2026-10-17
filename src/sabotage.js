@@ -650,7 +650,7 @@ function feelBlast(state, at, kind, label, rules) {
       // The edge of the blast (M20): a hit, as from a shot, but nobody has
       // him in their sights for it. His charges drop on his hex.
       next = woundInBlast(next, unit, { ...hit, inContact: unit.inContact });
-      events.push({ kind: 'blastWounded', unitId: unit.id, unitName: unit.shortName, label, line: woundedLine(unit) });
+      events.push({ kind: 'blastWounded', unitId: unit.id, unitName: unit.shortName, label, line: woundedLine(unit, state) });
       continue;
     }
     next = killInBlast(next, unit);
