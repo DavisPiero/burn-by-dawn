@@ -79,6 +79,10 @@
       "page": 4,
       "blurb": "Six men drop by night to blow the bridge that carries the line to the coast, and must be out before dawn.",
       "panel": "assets/title/contents-france.jpg",
+      "comicPanels": {
+        "landing": { "art": "assets/panels/panel-landing-france.jpg", "caption": "0140 HOURS. SIX MEN DOWN IN THE DARK, AND NOT ONE OF THEM WHERE HE SHOULD BE." },
+        "success": { "art": "assets/title/contents-france_full.jpg", "caption": "THE BRIDGE WENT INTO THE CANAL. NO TRAIN WOULD CROSS IT FOR A MONTH." }
+      },
       "tagline": "SIX MEN · ONE BRIDGE · DAWN AT SIXTEEN",
       "map": "data/map.json",
       "roster": "data/roster.json",
@@ -127,6 +131,10 @@
       "page": 18,
       "blurb": "Paratroopers raid aircraft in their pens on an Axis landing ground, ready to blow them sky high.",
       "panel": "assets/title/contents-airfield.jpg",
+      "comicPanels": {
+        "landing": { "art": "assets/panels/panel-landing-airfield.jpg", "caption": "THE DESERT NIGHT WAS COLD AND STILL. SOMEWHERE AHEAD, THE STUKAS SLEPT." },
+        "success": { "art": "assets/title/contents-airfield_full.jpg", "caption": "BY DAWN THE STUKAS WERE BURNING WRECKS, AND THE STICK WAS GONE." }
+      },
       "tagline": "SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY",
       "map": "data/map-airfield.json",
       "roster": "data/roster.json",
@@ -198,6 +206,10 @@
       "page": 32,
       "blurb": "A great aqueduct in the mountains that wants every charge you carry, and a boat on the coast that will not wait.",
       "panel": "assets/title/contents-aqueduct.jpg",
+      "comicPanels": {
+        "landing": { "art": "assets/panels/panel-landing-aqueduct.jpg", "caption": "SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND EVERY CHARGE STILL IN ITS CANISTER." },
+        "success": { "art": "assets/title/contents-aqueduct_full.jpg", "caption": "THE WATER WAS CUT. THE BOAT PULLED AWAY INTO THE DARK." }
+      },
       "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT",
       "map": "data/map-aqueduct.json",
       "roster": "data/roster.json",

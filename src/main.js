@@ -47,7 +47,7 @@ import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
   describeDiversion, hidePopup, markedReport, placeName, renderActions, renderBriefing, renderAlertDial, renderDawnStrip, renderDiversion, renderDropRuns,
   renderEndTurnButton, renderError, renderUndoButton, describeUndo, renderGutter, renderKeys, renderMission, renderReadout, renderReport,
-  capitalise, renderContentsBack, renderLesson, renderLessonArrow, renderRestart, renderResults, renderTimerTin, renderMusicToggle, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
+  capitalise, renderContentsBack, renderComicPanel, renderLesson, renderLessonArrow, renderRestart, renderResults, renderTimerTin, renderMusicToggle, renderSeed, renderSoundToggle, renderTipsToggle, renderTurnCounter, renderVersion, showPopup, titled, useMissionWords,
 } from './render/ui.js';
 
 const svg = document.getElementById('board');
@@ -65,6 +65,7 @@ const actionBar = document.getElementById('actions');
 const diversionButton = document.getElementById('diversion');
 const missionList = document.getElementById('mission');
 const resultsBox = document.getElementById('results');
+const comicPanelBox = document.getElementById('comic-panel');
 const seedBox = document.getElementById('seed');
 const soundToggle = document.getElementById('sound-toggle');
 const tipsToggleButton = document.getElementById('tips-toggle');
@@ -190,6 +191,15 @@ let tipsOn = new URLSearchParams(window.location.search).get('tips') !== 'off';
 // only, for the session; M still turns every sound off. Carried in the
 // address as `?music=off` when the contents page loads another mission (M29b).
 let musicOff = new URLSearchParams(window.location.search).get('music') === 'off';
+// Comic panels at story moments (M52, the operator's test): off unless
+// `?panels=on`. A mission's `comicPanels` names a painting and its caption for
+// each moment (the landing, the mission accomplished); each is shown once a
+// game, over the board, until a click or key, and a painting not yet supplied
+// shows nothing. Display only.
+const panelsOn = new URLSearchParams(window.location.search).get('panels') === 'on';
+let comicPanel = null;
+let panelsSeen = new Set();
+let panelTimer = null;
 // The turns before this one, newest first, for the report's log (M21b): display only.
 let earlierReports = [];
 // Brings the report's ▲ ▼ up to date after a redraw (M22).
@@ -1683,6 +1693,9 @@ function render() {
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: mission.tagline }, () => { notePlay('restart', mission.id); restartMission(); }, openContents,
     state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null);
   // Every man's name is set in bold on the card, as in the report.
+  // Mission accomplished (M52): its panel once the bang has been seen.
+  if (state.outcome?.kind === 'success') showComicPanel('success', state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0);
+  renderComicPanel(comicPanelBox, comicPanel);
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
   showCounterKey(briefing?.kind === 'help');
   renderBriefing(briefingBackdrop, briefingCard, card, (on) => { briefingsOn = on; });
@@ -2625,6 +2638,9 @@ function startMission(nextLevel, seed) {
   sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedOn: new Set() };
   cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
   earlierReports = [];
+  clearTimeout(panelTimer);
+  comicPanel = null;
+  panelsSeen = new Set();
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 
@@ -3376,6 +3392,32 @@ function endDropShow() {
   }
   if (briefingAfterDrop) briefing = { kind: 'turn' };
   briefingAfterDrop = false;
+  if (!course?.lesson) showComicPanel('landing');
+  render();
+}
+
+/**
+ * The mission's panel for a moment (M52), `delay` ms from now, once a game:
+ * shown when its painting has loaded, so a painting not yet supplied shows
+ * nothing at all.
+ */
+function showComicPanel(moment, delay = 0) {
+  const panel = mission.comicPanels?.[moment];
+  if (!panelsOn || !panel || panelsSeen.has(moment)) return;
+  panelsSeen.add(moment);
+  clearTimeout(panelTimer);
+  panelTimer = setTimeout(() => {
+    const img = new Image();
+    img.onload = () => {
+      comicPanel = { src: panel.art, caption: panel.caption ?? null };
+      render();
+    };
+    img.src = panel.art;
+  }, delay);
+}
+
+function dismissComicPanel() {
+  comicPanel = null;
   render();
 }
 
@@ -3452,6 +3494,12 @@ function handleKey(event) {
   if (!opened) {
     event.preventDefault();
     if (loaded) openGame();
+    return;
+  }
+  // A comic panel up (M52): any key puts it away, and does nothing else.
+  if (comicPanel) {
+    event.preventDefault();
+    dismissComicPanel();
     return;
   }
   // The menu open (M48b): Esc shuts it, and does nothing else.
@@ -3742,6 +3790,7 @@ try {
   syncReportScroll = attachReportScroll(reportList, reportScroll, document.getElementById('report-up'), document.getElementById('report-down'));
   endTurnButton.addEventListener('click', handleEndTurn);
   undoButton.addEventListener('click', undoLast);
+  comicPanelBox.addEventListener('click', dismissComicPanel);
   attachPopup(undoButton, () => describeUndo(rules.undo.steps));
   diversionButton.addEventListener('click', () => handleAction('diversion'));
   // Before anything else hears them, so the click or key that sets a charge
