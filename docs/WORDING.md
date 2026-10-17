@@ -133,7 +133,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - B39 The Airfield, Easy | Three aircraft will do.
 - B40 The Airfield, Hard | Seven aircraft need destroying: with your five bombs, the bowser and bomb store will both have to be blown.
 - B41 The Aqueduct, Easy | The aqueduct takes three charges, and no squad comes down the road when it's blasted.
-- B42 The Aqueduct, Hard | The aqueduct takes all six charges, so none can be spared for the Road Bridge, and two squads come down the road when the aqueduct is blasted. The boat only stays for two turns.
+- B42 The Aqueduct, Hard | The aqueduct takes all six charges, so none can be spared for the Road Bridge. With the Road Bridge still standing, two squads come down the road when the aqueduct is blasted. The boat only waits two turns, not three.
 
 ## C. How to play, the keyboard and the counter key
 
@@ -187,7 +187,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - C28 | TONIGHT
 - C29 | Pick the ‹WEST, NORTH or EAST› run with ‹1–3›. The Dakota flies that line and the men jump along it, drifting a hex or two downwind. SPACE to jump.
 - C30 | You don’t fill every charge target. Charges needed: ‹Rail Bridge- 2, one per charge target; Telephone Exchange- 1 at its charge target›. The squad carries ‹3›.
-- C31 | The canisters hold ‹6›: stand on one and Pick up [P] an available charge (orange circle).
+- C31 | The canisters hold ‹6›: stand on one and Pick up [P] an available charge (orange circle). Until a canister is empty, the enemy can find it, just as they can a parachute.
 - C32 | Or a ‹scout› can cut the ‹Telephone Exchange›’s lines [X]: a whole turn, and quiet.
 - C33 | Every charge takes a timer: after C, pick a time pencil from the tin (‹2›–‹6› turns; ‹4› is offered first), then SET. A long timer lets charges set over several turns go off together, with the stick already on its way out.
 - C34 | ‹3› ‹aircraft› up in one bang: bonus +‹5›.
@@ -246,7 +246,7 @@ The card you see before each mission. ‹Words in angle brackets› are filled i
 - C81 | THE GARRISON
 - C82 | FACING — Sees ‹90›° this …
 - C83 | WHO — Sentry, patrol …
-- C84 | NEXT TURN — Enemy will face here (dashed)
+- C84 | NEXT TURN — It will face here (dashed)
 - C85 | SUPPRESSED — Head down this turn: it does not see, fire or move
 - C86 | OPEN TO A KILL [K] — The turn after: it sees again
 - C87 | CANNOT BE KILLED — The reserve squad

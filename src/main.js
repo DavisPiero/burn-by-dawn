@@ -84,6 +84,8 @@ const alertBox = document.getElementById('alert');
 const briefingBackdrop = document.getElementById('briefing-backdrop');
 const briefingCard = document.getElementById('briefing');
 const lessonCard = document.getElementById('lesson');
+// A render during the scale-in measured the card small: place it and its arrow again at full size.
+lessonCard.addEventListener('animationend', () => placeLessonCard(lessonPointed));
 const lessonArrow = document.getElementById('lesson-arrow');
 // The parts of the page a lesson's step may point at (lessons.js POINT_KINDS).
 const LESSON_POINTS = {
@@ -236,6 +238,10 @@ let pencilLifted = null;
 let briefingAfterDrop = false;
 // Which card or page was last on show, so each one rustles once as it opens.
 let cardShown = null;
+// What the lesson card last said (M54b), so it comes up only when that changes,
+// and what it points at, to place it again once its scale-in is over.
+let lessonSaid = null;
+let lessonPointed = null;
 
 // The course (M47, SPEC.md §15): where a mission names a lessons file, its
 // lessons, those passed this session (nothing is stored), the lesson being
@@ -468,7 +474,7 @@ function deriveView() {
   // A wave on each of them (M49b, the operator's), unless the lesson would not
   // let him swim: full on every man who can swim now, faint on one who has
   // spent part of his turn.
-  const swimAllowed = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
+  const swimAllowed = !lessonStep() || lessonLive({ kind: 'action', id: 'swim' });
   view.swimMarks = new Map(swimAllowed ? [...cuesFor.banks].map((id) => [id, cuesFor.swimNow.has(id) ? 'now' : 'faint']) : []);
   view.blastPulse = !state.outcome && view.blastArea.size > 0;
   view.getClear = tipsOn ? cuesFor.clear : null;
@@ -635,7 +641,7 @@ function deriveView() {
   // Where he could swim to this turn, dotted beyond his move range (M49d, the
   // operator's: the range stopped at the water's edge), unless the lesson would
   // not let him swim.
-  const swimOpen = !lessonStep() || lessonAllows({ kind: 'action', id: 'swim' });
+  const swimOpen = !lessonStep() || lessonLive({ kind: 'action', id: 'swim' });
   view.swimArea = swimOpen && canSwimNow(map, rules, state, unit)
     ? new Map(swimTargets(map, state, unit, rules).map((h) => [hexKey(h.q, h.r), h])) : null;
   // What going to each of those hexes would do (M45): red where he would be
@@ -1215,7 +1221,7 @@ function actionsFor(unit) {
     placeChargeAction(unit),
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     // Shown greyed where he could swim with his turn unspent (M49b, the operator's).
-    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, shown: canSwimHere(map, rules, state, unit) && (!lessonStep() || lessonAllows({ kind: 'action', id: 'swim' })), ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
+    { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, shown: canSwimHere(map, rules, state, unit) && (!lessonStep() || lessonLive({ kind: 'action', id: 'swim' })), ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
   ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
 }
 
@@ -1707,8 +1713,13 @@ function render() {
   // What a step done shows lights up too (M49b), but the card stays put.
   const lit = !briefing && course?.progress?.met ? lessonStep()?.show ?? null : null;
   for (const kind of POINT_KINDS) LESSON_POINTS[kind].classList.toggle('lesson-point', kind === pointed || kind === lit);
-  renderLesson(lessonCard, lessonView(), { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
+  const lessonShown = lessonView();
+  renderLesson(lessonCard, lessonShown, { next: lessonNext, back: lessonBack, again: () => startLesson(course.lesson.id), course: openCourse });
   placeLessonCard(pointed);
+  // It comes up when it appears or says something new (M54b), not at each render.
+  const lessonSays = lessonShown && JSON.stringify(lessonShown);
+  if (lessonSays && lessonSays !== lessonSaid) popLessonCard();
+  lessonSaid = lessonSays;
   dropStalePopup();
   // A card laid down, or the back page turned over, rustles once.
   const shown = state.outcome ? 'results' : briefing?.kind ?? null;
@@ -2850,7 +2861,7 @@ function describeBriefing(which, view) {
       const tonight = [
         ...(before ? [`Pick the ${runList} run with ${baseMap.dropRuns.length === 1 ? '1' : `1–${baseMap.dropRuns.length}`}. The Dakota flies that line and the men jump along it, drifting a hex or two downwind. SPACE to jump.`] : []),
         // The operator's words (M31d): "charge target", and "Stukas- 1ea".
-        `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P] an available charge (orange circle)` : `The squad carries ${carried}`}.`
+        `You don’t fill every charge target. Charges needed: ${needs}. ${rules.canisters ? `The canisters hold ${rules.canisters.count * rules.canisters.charges}: stand on one and Pick up [P] an available charge (orange circle). Until a canister is empty, the enemy can find it, just as they can a parachute` : `The squad carries ${carried}`}.`
           + (cuttable && cutter ? ` Or a ${cutter.label.toLowerCase()} can cut the ${cuttable.label}’s lines [X]: a whole turn, and quiet.` : ''),
         ...(timerLine ? [timerLine] : []),
         ...setterLines,
@@ -3005,7 +3016,7 @@ function lessonStep() {
   return on && !course.progress.done ? on.steps[course.progress.step] : null;
 }
 
-/** May the player do this now? If not, the lesson card shakes its head and nothing happens. */
+/** May the player do this now? If not, the lesson card comes up again and nothing happens. Only for the player's own input: a render asks lessonLive. */
 function lessonAllows(input) {
   if (lessonLive(input)) {
     // A step done and held: exactly what the next asks for is its NEXT (M48c).
@@ -3013,10 +3024,15 @@ function lessonAllows(input) {
     return true;
   }
   notePlay('shake', stepName());
-  lessonCard.classList.remove('nudge');
-  void lessonCard.getBoundingClientRect();
-  lessonCard.classList.add('nudge');
+  popLessonCard();
   return false;
+}
+
+/** The lesson card's scale-in (M54b): placed first, so it is measured at its full size. */
+function popLessonCard() {
+  lessonCard.classList.remove('pop');
+  void lessonCard.offsetWidth;
+  lessonCard.classList.add('pop');
 }
 
 /** Would this do anything now (lessons.js `live`)? Asked for the buttons too, so none looks pressable that is not. */
@@ -3142,6 +3158,7 @@ function openCourse() {
  * Layout only: it reads where things are on the page.
  */
 function placeLessonCard(pointed) {
+  lessonPointed = pointed;
   lessonCard.style.top = '';
   lessonCard.style.bottom = '';
   // A lesson at the bridge keeps its card in the far corner (M48c).

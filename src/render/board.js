@@ -3351,7 +3351,7 @@ export function drawCounterKey(svg, examples, numbers) {
     [tip(east), 428 + air, ['FACING', `Sees ${numbers.arc}° this`, 'way']],
     // WHO above NEXT TURN (M16): the other way round, their pointers crossed.
     [{ x: nameEnd, y: 45.5 }, 500 + air, ['WHO', 'Sentry, patrol', 'or reserve']],
-    [tip(southEast), 552 + air, ['NEXT TURN', 'Enemy will face', 'here (dashed)']],
+    [tip(southEast), 552 + air, ['NEXT TURN', 'It will face', 'here (dashed)']],
   ];
   for (const [p, y, lines] of enemyLabels) {
     pointer({ x: 216, y: y - 4 }, on(ex, ey, ek, p));
