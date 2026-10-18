@@ -317,10 +317,16 @@
           "gunfire": 18
         },
         "alert": {
-          "gunfire": 4
+          "gunfire": 6,
+          "states": [
+            { "id": "calm", "label": "Calm", "from": 0, "visionBonus": 0, "detectionBonus": 0, "hearingBonus": 0 },
+            { "id": "suspicious", "label": "Suspicious", "from": 2, "visionBonus": 1, "detectionBonus": 0, "hearingBonus": 0 },
+            { "id": "alert", "label": "Alert", "from": 4, "visionBonus": 1, "detectionBonus": 1, "hearingBonus": 1 },
+            { "id": "alarmed", "label": "Alarmed", "from": 9, "visionBonus": 1, "detectionBonus": 1, "hearingBonus": 1 }
+          ]
         },
         "bodyFound": {
-          "reinforcements": 1,
+          "reinforcements": 0,
           "limit": 3
         },
         "patrols": {
