@@ -1,7 +1,7 @@
 # CLAUDE.md — working agreement
 
 Read `SPEC.md` before doing anything. It is the source of truth, with the files that
-hold its §4, §6, §7, §10, §11, §13, §14, §15 and §16 (below). If a request conflicts with any of them, say so before
+hold its §4, §6, §7, §9, §10, §11, §13, §14, §15 and §16 (below). If a request conflicts with any of them, say so before
 writing code.
 
 ## Files in this repo
@@ -32,6 +32,8 @@ writing code.
     reinforcements. **Read it before working on `src/enemy.js` or `src/sight.js`.**
   - `SABOTAGE.md` — SPEC §7: objectives, charges, fuses and time pencils, explosions,
     payoffs. **Read it before working on `src/sabotage.js`.**
+  - `DROP.md` — SPEC §9: the drop runs and scatter, parachutes, supply canisters, tracks
+    in the snow. **Read it before working on `src/drop.js` or `src/tracks.js`.**
 - `MILESTONES.md` — the table of milestones done (SPEC §12). Add a row at each merge.
 - `ART-ASSETS.md` — the art asset manifest. **Read it at milestone M7**, and whenever you
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
