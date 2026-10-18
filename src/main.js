@@ -873,10 +873,11 @@ function deriveDrop(view, hex) {
       ...state.objectives.map((o) => ({
         // The primary is ringed twice; where any few of many will do (M28),
         // each is ringed once and the first carries the note for them all.
-        // Every ring takes in its target's charge points (M58e, the operator's:
-        // the cell hall's sat outside its ring), so the two read as one thing;
-        // where there are many (M29b), each ring is tight.
-        hexes: [...o.hexes, ...o.chargeHexes], tight: !single,
+        // Where there are many (M29b, the operator's), a tight ring takes in
+        // each target's charge points with it, so the two read as one thing;
+        // so does a target whose map says `ringCharges` (M58e, art only: the
+        // cell hall's points sat outside its ring).
+        hexes: !single || baseMap.objectives.find((m) => m.id === o.id)?.ringCharges ? [...o.hexes, ...o.chargeHexes] : o.hexes, tight: !single,
         primary: single && targets.includes(o), colour: 'red',
         noteNudge: noteNudge(layout, mission.id, o.id), layoutKey: `mission:${mission.id}:${o.id}`,
         // The charges it takes, so three dashed points never read as three charges.

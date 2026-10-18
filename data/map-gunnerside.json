@@ -247,11 +247,12 @@
       }
     ]
   },
-  "_objectives": "SPEC.md §7, §16. The cell hall is the primary: its footprint is the cells along the hall's back wall; its four charge points are the hall floor beside them, so a man on one when they go is in the kill radius. The duct at its west end and the main door at its east end are the ways in. The telephone line's junction box stands on its rock by the road under the gorge, a charge point either side; a scout can cut it there.",
+  "_objectives": "SPEC.md §7, §16. `ringCharges` (M58e, art only) has the pen ring before the drop take in the charge points too. The cell hall is the primary: its footprint is the cells along the hall's back wall; its four charge points are the hall floor beside them, so a man on one when they go is in the kill radius. The duct at its west end and the main door at its east end are the ways in. The telephone line's junction box stands on its rock by the road under the gorge, a charge point either side; a scout can cut it there.",
   "objectives": [
     {
       "id": "cell-hall",
       "label": "Cell Hall",
+      "ringCharges": true,
       "kind": "cellHall",
       "primary": true,
       "hexes": [
