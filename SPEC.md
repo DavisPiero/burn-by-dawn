@@ -386,7 +386,7 @@ comes after the current milestone is in `ROADMAP.md`.
 **M58, mission 4's map as a draft** (§16, `MISSION-GUNNERSIDE.md`, The order it is
 built in): `?mission=gunnerside`, stamped NEXT YEAR'S ANNUAL on the contents page; the
 terrain drawn in code, the garrison, the objectives, the ski trail, and the bot taught
-the prints and the climb. The milestones before it are in `MILESTONES.md`. v1.0 is
+the prints and the climb. Built on its branch, waiting for sign-off. The milestones before it are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done
