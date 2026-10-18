@@ -30,8 +30,10 @@ success makes the rest harder, and the player is hunter and hunted at once.
    the carry-back of the operator's rewording of the men's new lines (the b and c tags
    in `docs/WORDING.md`, section F), if ready.
 2. **Then the fourth mission, Gunnerside** (chosen 17 Oct 2026), because it plays least
-   like the three there are. Spec it first as `MISSION-GUNNERSIDE.md`, in Claude Code
-   (it must fit the engine and the data), as the airfield and the aqueduct were.
+   like the three there are. **Specified at M56** in `MISSION-GUNNERSIDE.md` (18 Oct
+   2026): the stealth mission, a gorge to climb, tracks in the snow, NOT A SHOT FIRED.
+   Built as M57 (engine) to M60 (words, sounds, art), with M61 for new comic panel
+   moments if wanted; the order is in that file.
 3. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`) whenever a tester can be found, and a milestone of fixes for what they
    trip on, as M49b was.
@@ -59,6 +61,9 @@ success makes the rest harder, and the player is hunter and hunted at once.
   **In the game since M52** (the operator's, after trying it): two moments, the landing
   and mission accomplished (ART-PLAY.md). What is still parked is the rest: more moments
   (Dutch killed, the first enemy seen, the last charge set, failure) and their paintings.
+  **Gunnerside's spec (M56) designs the next step**: a short fixed list of panel
+  triggers (first onto a terrain, the first shot, the primary destroyed, the outcome)
+  and five moments for that mission, as M61 (MISSION-GUNNERSIDE.md, Comic panels).
 
 - **Different teams for different missions**, such as Australians at Nadzab, New Guinea
   (the operator's wish, not yet). For now every mission uses the same six men, and every

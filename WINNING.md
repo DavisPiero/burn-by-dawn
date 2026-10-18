@@ -31,7 +31,9 @@ will end it: WITHDRAWN." — with the reason; Enter or its button goes anyway, a
 or click stays. The hover readout says it first, and charges still burning that would
 finish the job are counted.
 
-**Exfil** is a short run of hexes on the **south map edge**, away from all three drop runs.
+**Exfil** is a short run of hexes on a map edge, away from all three drop runs: the south
+edge in France and on the aqueduct, the south-west corner on the airfield, the north-east
+on the heavy water plant (§16).
 A trooper who ends a move on an exfil hex is out: removed, safe, and counted. A man
 carrying a charge does not take it out: he leaves it on the hex he stepped off from.
 
