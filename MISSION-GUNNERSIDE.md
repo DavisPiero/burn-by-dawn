@@ -7,10 +7,9 @@ it (§4, §6, §7, §9, §10, §11) are SPEC.md's.
 **Specified 18 Oct 2026 (M56). Its engine is built (M57): tracks in the snow (SPEC.md §9
 Tracks), the no-shot clean run and the card before the first shot, all off until the
 mission's patch turns them on. The map is drawn as a draft (M58), `?mission=gunnerside`,
-not yet balanced or worded.** This file says what is to be built and
+balanced at M59 (Balance, below), not yet worded.** This file says what is to be built and
 how it is to play; once the mission is playable it will say how things are, and keep no
-history (DECISIONS.md has it). Every number in it is a starting point for the balance
-milestone unless it says the operator chose it. The words and names are placeholder
+history (DECISIONS.md has it). Its numbers are M59's unless it says the operator chose them. The words and names are placeholder
 copy for the operator to reword.
 
 The operator's calls (18 Oct 2026):
@@ -87,9 +86,9 @@ mission, so nothing changes there).
   the snow off, the road and the line are trodden or swept. Landing leaves none (the
   parachute is evidence enough), and nor does a throw, a knife or anything that is not
   a step. The garrison leaves none that matter.
-- **Prints last `turns` turns** (3 to start): laid in turn N, they are there through the
-  enemy phases of N, N+1 and N+2, and gone at the end of turn N+2, when the wind and the
-  falling snow have filled them. A hex walked again takes the newest prints.
+- **Prints last `turns` turns** (2, M59: at 3 the plateau was a minefield of finds): laid
+  in turn N, they are there through the enemy phases of N and N+1, and gone at the end of
+  turn N+1, when the wind and the falling snow have filled them. A hex walked again takes the newest prints.
 - **They are found as a parachute is** (SPEC.md §9): an enemy coming onto or beside a
   hex with prints, on any hex it walks through or where it ends its go, finds them:
   **alert +1**, a noise there (heard 3 hexes, as a parachute found), and that hex becomes
@@ -122,7 +121,7 @@ and leave none. Stealth costs turns; speed costs alert.
 Not a rule of its own: numbers in the rules patch, and one small engine addition.
 
 - **The gorge echoes.** Gunfire (a gunner's suppress, anyone's fire back) raises the
-  alert **+4** here, not +2, and is **heard across the whole board** (`noise.gunfire` 18),
+  alert **+6** here, not +2, and is **heard across the whole board** (`noise.gunfire` 18),
   so every patrol comes to look. One shot from a quiet night puts the garrison straight
   to Alert; one shot and the bang is Alarmed. A silenced kill still needs a suppress
   first (SPEC.md §4), so there is no quiet shot to be had. **Speers's Cool Head** (gunfire
@@ -134,13 +133,14 @@ Not a rule of its own: numbers in the rules patch, and one small engine addition
   and the back page call it NOT A SHOT FIRED.
 - **The first shot asks first** (`confirmShot`, the engine addition's second half; off
   elsewhere). The first time in a night a man would fire, a card asks, as the exfil's
-  does (SPEC.md §10): "A shot here is heard by the whole garrison. Alert +4, and the
+  does (SPEC.md §10): "A shot here is heard by the whole garrison. Alert +6, and the
   NOT A SHOT FIRED bonus is lost." Only Enter or its button fires; any other key or
   click stands down. After the first shot it does not ask again: the bonus is gone.
 - **The knife is the weapon** (SPEC.md §4, unchanged: silent, a full turn, a body left).
-  Its body, found, still raises the alert, and **calls a squad** to stand where it lay,
-  as on the aqueduct (DETECTION.md, `bodyFound.reinforcements` 1, `limit` 3). So a
-  knife clears the way tonight and costs later; a gun costs now, at once, and everywhere.
+  Its body, found, still raises the alert and draws the patrols, but **calls no squad**
+  (`bodyFound.reinforcements` 0, M59: squads called for bodies stood on the crossings for
+  the rest of the night, and the stick could not get across). So a knife clears the way
+  tonight and costs later; a gun costs now, at once, and everywhere.
 
 ### The decoy flare
 
@@ -256,7 +256,8 @@ and the snow rather than to fight.
   below it, so the climb beside the bridge can be timed; the **gate guard**, facing the
   road and the main door.
 - **Patrols**: the **plateau patrol**, across the snow between the East run's ground and
-  the road, the one that reads prints; the **rim patrol**, along the north rim of the
+  the road, east of it (M59: walking west of it, it crossed every run's way to the gorge
+  and found prints three times a night), the one that reads prints; the **rim patrol**, along the north rim of the
   gorge west of the bridge, touching the West run's ground at one end; the **plant
   patrol**, round the cell hall and along the railway to the duct; the **road patrol**,
   on the road between the junction box, the gate and the town.
@@ -266,8 +267,8 @@ and the snow rather than to fight.
   guard on the ski trail. It cannot be killed, as in France.
 - **Reinforcements**: the hall going up calls **one squad** (Hard two) up the road from
   the town, across the bridge, to posts on the way out. **None comes once the telephone
-  line is cut**, and none for a body found either: the exchange's payoff in France.
-- **A body found calls a squad**, as on the aqueduct (The shot, above), three at most.
+  line is cut**: the exchange's payoff in France.
+- **A body found calls no squad** (The shot, above), unlike the aqueduct.
 
 ### The objectives
 
@@ -294,13 +295,17 @@ garrison waking; a long one is three charges left ticking where the plant patrol
 inside.)
 
 **The score**: France's, with no train and no salvo, the clean run NOT A SHOT FIRED at 5.
-The rating's bands are set at balance; their names say what this mission rewards, lowest
-first (placeholders): HEARD IN ELVEBYEN, A QUIET JOB, LIKE GHOSTS, NOT A SHOT FIRED.
+The rating's bands (M59, from the bot's winning scores on Normal, whose middle half is 20
+to 27): under 21 HEARD IN ELVEBYEN, 21 A QUIET JOB, 27 LIKE GHOSTS, 33 NOT A SHOT FIRED,
+the top wanting the telephone or the clean run. The names are placeholders.
 
 ### The alert on this ground
 
-Budgeted before the map is drawn, as for the aqueduct. The states begin at 0, 2, 4 and 7
-points (DETECTION.md).
+Budgeted before the map was drawn, as for the aqueduct, and moved at M59. The states
+begin at 0, 2, 4 and, **on this ground only, 9** (the mission's `alert.states`; 7
+elsewhere, DETECTION.md): the snow and the knife leave more slips than the other maps
+do, and at 7 not half the bot's tidy wins stayed below Alarmed (the operator's pick of
+options measured, M59).
 
 **A tidy win on Normal ends at Suspicious or Alert, never Alarmed; a shot is the
 quickest way to Alarmed there is.**
@@ -308,10 +313,10 @@ quickest way to Alarmed there is.**
 | What happens | Points | Running |
 |---|---|---|
 | The cell hall, three charges in one bang | +3 | 3, Suspicious |
-| Up to three slips: prints or a parachute found, a man seen, a stone, a body found | +1 each | 4 to 6, Alert |
-| A fourth slip | +1 | 7, Alarmed |
-| The hall in two bangs | +3 more | Alarmed with one slip |
-| **One shot** | +4 | Alarmed with the bang alone |
+| Up to five slips: prints or a parachute found, a man seen, a stone, a body found | +1 each | 4 to 8, Alert |
+| A sixth slip | +1 | 9, Alarmed |
+| The hall in two bangs | +3 more | Alarmed with three slips |
+| **One shot** | +6 | Alert from a quiet night; Alarmed with the bang |
 | The telephone cut | +1 | a slip, but nothing comes up the road |
 
 **The measure** (balance milestone): the bot's `tidy` style, taught to keep off open snow
@@ -340,9 +345,9 @@ of a job where the quiet way is the professional way.
 - **The turn card on turn 1** says it again in a line ("Stay off the open snow where you
   can: the patrols read tracks."), and on the first turn a gunner is selected beside a
   target he could fire on, the hint names the cost ("A shot is heard across the board:
-  alert +4"). The hints already put a charge about to blow first; these come after it.
+  alert +6"). The hints already put a charge about to blow first; these come after it.
 - **The Suppress and Fire back buttons and rollovers** give the cost in red on this map
-  ("+4 alert · heard everywhere"), and the enemy's hover FIRE row says the same.
+  ("+6 alert · heard everywhere"), and the enemy's hover FIRE row says the same.
 - **The first shot asks first** (The shot, above).
 - **The men's lines** (a `dialogue` patch, three to a moment, as M54): the gunners on
   holding fire (Speers onLand: "Sten stays slung tonight, lads."; Nunn: "Not a shot? Then
@@ -446,15 +451,41 @@ Made in code until recordings are found (ART-PROMPTS.md at M60).
 ### Balance
 
 Targets are SPEC.md §10's, and this file's alert measure and stealth check above. The
-reference run is to be `MISSION=gunnerside KNIFE=1 SENSE=1 PICK=1 CLEAR=1 node
-tools/balance-bot.mjs 300 naive`, with the bot taught at M58 to see prints (a careful
-man keeps off open snow where it costs him no more than a turn) and to climb the gorge
-as well as cross the bridge. Things to measure, in order:
-1. Dawn: 20 turns, or fewer once the bot shows the slack.
-2. The gorge's width: two turns where it narrows, three in the middle (M58b); whether
-   the climb is worth it against the bridge.
-3. Prints: `turns` 3, or 2 if the plateau is a minefield of finds.
-4. The levels, the runs and the rating's bands.
+reference is `MISSION=gunnerside KNIFE=1 SENSE=1 PICK=1 CLEAR=1 STAY=1 node
+tools/balance-bot.mjs 300 naive`; the alert measure is the `tidy` style with `KNIFE=1
+PICK=1 CLEAR=1 STAY=1` and `ALERT=1`. The bot was taught at M58 to see prints and to
+climb, and at M59 `STAY=1`: a man with nothing to set lies up near the way out until
+the job's charges are set, rather than walking out on turn 2 from beside the North
+landing. `ALERT=1` counts prints found, and `ALERT=who` says who found them.
+
+**Baselines** (M59, 200 seeds, win %, west / north / east):
+
+| Level | Naive | Target |
+|---|---|---|
+| Easy | **97 / 99 / 100** | 95 or more |
+| Normal | **75 / 87 / 89** | 75 to 90 |
+| Hard | **3 / 2 / 0** | 25 to 45: **outside, open with the operator** |
+
+Normal, other styles: careful 86 / 95 / 98, hunter 73 / 71 / 83 (below careful on every
+run); tidy 87 / 96 / 92, its wins below Alarmed **45 / 66 / 83 %** (the measure asks 70:
+West and North short); tidy `FIRE=always` 85 / 76 / 82, fewer on every run (West only
+just). Winning scores' middle half 20 to 27, so the bands above.
+
+**How it was chosen (M59).** The gorge had two holes, its west end's floor opening onto
+the shelf and one cliff beside the bridge's west foot, so West crossed with one climb
+and won 99%; closed. The plateau patrol walked west of the road across every run's way
+to the gorge; moved east of it, as this file had it. Prints last 2 turns, not 3. Then
+the operator picked, of options measured: a body found calls no squad (the squads stood
+on the crossings), Alarmed from 9 here, and a shot +6 so one shot and the bang still
+reach it. Measured and moving little: a 22-turn night, decay after 3 quiet turns, the
+West run's line a row south. Prints raising no alert (only noise) would put tidy at
+69 / 58 / 94 % below Alarmed, but takes the teeth out of the snow.
+
+**Hard** is lost because the stick cannot keep four men alive: on open snow, with every
+enemy seeing four hexes, three die before the hall goes (the East run's men walk over
+the bridge under the posts, spotted four times a game). Three charges and three men out
+would give 31 / 32 / 1, but a mission cannot yet say how many men out a level asks
+(the Hard line on the orders says four in every mission).
 
 ### The order it is built in
 
