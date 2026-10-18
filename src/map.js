@@ -27,6 +27,17 @@ export async function loadMap(
 }
 
 /**
+ * A loaded map checked again as loadMap checks it (M59c): its rows against
+ * its legend, and every enemy's post, route and entry against its ground.
+ * The terrain painter's paints are checked with it. Throws as loadMap does.
+ */
+export function checkMap(map, mapUrl = 'the painted map') {
+  validate(map, { types: map.terrain }, mapUrl, 'data/terrain.json');
+  validateEnemies(map, map.enemyTypes, mapUrl, 'data/enemies.json');
+  return map;
+}
+
+/**
  * Fetch and parse a JSON data file. Exported because every /data file wants
  * the same cache behaviour and the same loud failure, and map.js is where
  * that behaviour already lived.

@@ -79,7 +79,8 @@ tests.html        every test suite, in the browser
   hints.js        the turn card's hints (§11)
   sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
   cues.js         what the board points at: who he could strike, get clear, the way out (§4)
-  layout.js       data/layout.json: where the things placed by hand sit, and the layout tool's moves
+  layout.js       data/layout.json: where the things placed by hand sit, and the layout tool's moves;
+                  the terrain painter's rows (M59c)
   playtest.js     ?playtest: the moments a new player passes, timed, as plain lines (M49)
   lessons.js      the lesson engine: a course's lessons, steps and what each allows (§15)
   difficulty.js   the difficulty patches (§10)
@@ -93,7 +94,8 @@ tests.html        every test suite, in the browser
     ui.js         the right page, readout, log, cards, fitting the spread
     theme.js      colour tokens, halftone, the sprite registry, supplied art
     sound.js      cues, supplied recordings, made fallbacks, title music
-    layout-tool.js  ?layout: drag what is placed by hand, copy data/layout.json
+    layout-tool.js  ?layout: drag what is placed by hand, copy data/layout.json; paint a map's
+                    ground before the jump and copy its rows for Claude (M59c)
     playtest-panel.js  ?playtest: the record's tab and COPY RECORD
 /data
   missions.json   the missions: files, patches, win condition, words, title card (§10)
@@ -383,7 +385,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-Next (STATE.md): **M59c, a terrain painter in the layout tool**, then M60, mission 4's
+Next (STATE.md): **M60**, mission 4's
 words, sounds and art hand-off (§16, `MISSION-GUNNERSIDE.md`), its spec split first. The milestones before them are in `MILESTONES.md`. v1.0 is
 tagged.
 

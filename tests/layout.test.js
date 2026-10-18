@@ -1,9 +1,9 @@
 // The layout (M48k, data/layout.json): where the things the operator places
 // by hand sit, and the layout tool's moves and Copy, which are pure.
 
-import { clearHexes, contentsOffset, dropCueAt, layoutText, moved, toggledClear, movedCount, noteNudge, pixelsToAxial, pixelsToRadii, validateLayout } from '../src/layout.js';
+import { clearHexes, contentsOffset, dropCueAt, groundSwatches, layoutText, moved, paintedCount, paintedRows, rowsText, targetsOn, toggledClear, movedCount, noteNudge, pixelsToAxial, pixelsToRadii, validateLayout } from '../src/layout.js';
 import { axialToPixel } from '../src/hex.js';
-import { inBounds, loadJson } from '../src/map.js';
+import { checkMap, inBounds, legendCharAt, loadJson, loadMap } from '../src/map.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -99,6 +99,37 @@ export default [
         assert(inBounds(map, q, r), `${id}'s clear hex ${q},${r} is on its map`);
       }
     }
+  }],
+  ['the terrain painter (M59c): a hex painted changes that one letter of the rows, is counted, and paints back as it was', async () => {
+    const map = await loadMap('data/map-gunnerside.json');
+    equal(groundSwatches(map).map((s) => s.char).join(''), Object.keys(map.legend).join(''), 'the map\'s own ground, in the legend\'s order');
+    equal(groundSwatches(map)[0].label, 'Snowfield', 'named as the terrain table names it');
+    const was = legendCharAt(map, 11, 3);
+    const rows = paintedRows(map, 11, 3, 'P');
+    equal(legendCharAt({ ...map, rows }, 11, 3), 'P', 'the hex is pines');
+    equal(paintedCount(map.rows, rows), 1, 'one hex painted');
+    equal(map.rows[3], (await loadJson('data/map-gunnerside.json')).rows[3], 'the map as loaded untouched');
+    equal(paintedRows({ ...map, rows }, 11, 3, was), map.rows, 'painted back as it was');
+    assert(paintedRows(map, 11, 3, was) === map.rows, 'painting a hex its own ground is no change');
+    assert(paintedRows(map, 11, 3, '?') === map.rows, 'a letter not in the legend paints nothing');
+    assert(paintedRows(map, 99, 3, 'P') === map.rows, 'nor a hex off the map');
+    equal(targetsOn(map, 2, 11), ['Cell Hall'], 'the cells are the hall\'s own ground');
+    equal(targetsOn(map, 1, 10), [], 'a charge point is not');
+  }],
+  ['the terrain painter\'s rows are the map file\'s text, byte for byte, for every mission (M59c)', async () => {
+    const missions = (await loadJson('data/missions.json')).missions;
+    for (const mission of missions) {
+      const map = await loadJson(mission.map);
+      const file = await (await fetch(mission.map, { cache: 'no-cache' })).text();
+      assert(file.includes(rowsText(map.rows)), `${mission.map}'s rows read as the painter writes them`);
+    }
+  }],
+  ['a paint the map cannot take is refused, saying why (M59c): a patrol\'s waypoint painted crag', async () => {
+    const map = await loadMap('data/map-gunnerside.json');
+    checkMap(map);
+    let said = '';
+    try { checkMap({ ...map, rows: paintedRows(map, 14, 3, 'C') }); } catch (error) { said = error.message; }
+    assert(/route\[1\] \(14, 3\) is crag, which is impassable/.test(said), `refused for the plateau patrol's beat: ${said}`);
   }],
 ];
 

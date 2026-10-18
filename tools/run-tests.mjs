@@ -14,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..');
 globalThis.fetch = async (url) => {
   const text = readFileSync(join(REPO, String(url)), 'utf8');
-  return { ok: true, json: async () => JSON.parse(text) };
+  return { ok: true, json: async () => JSON.parse(text), text: async () => text };
 };
 
 let passed = 0;

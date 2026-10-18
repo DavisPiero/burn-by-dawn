@@ -4,11 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 19 Oct 2026: M59 and M59b signed off, merged and pushed.
+Last updated: 19 Oct 2026: M59c signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M59b, pushed.** The margin says build M59b. Tests: 273 headless, 276 in
+- **`main` is M59c, pushed.** The margin says build M59c. Tests: 276 headless, 279 in
   `tests.html`.
 - **Four missions and the course.** France, the airfield and the aqueduct playable; the
   heavy water plant (Gunnerside) a draft at `?mission=gunnerside`, balanced (M59, M59b),
@@ -21,15 +21,17 @@ Last updated: 19 Oct 2026: M59 and M59b signed off, merged and pushed.
 
 ## Next
 
-1. **M59c, a terrain painter in `?layout`** (the operator's, 19 Oct 2026: useful for
-   future maps): paint any ground type on a hex, and copy the map's rows for Claude to
-   commit after the checks (the two-ways test among them). Today PAINT CLEAR paints
-   bare paper only (art, `layout.json`); terrain is rules, so the painter's output is
-   the map file's `rows`, not layout.json. Plan first.
-2. **M60**: first split MISSION-GUNNERSIDE.md (517 lines): its "Telling the player"
+1. **M60**: first split MISSION-GUNNERSIDE.md (517 lines): its "Telling the player"
    and "Comic panels" to a file of their own; then the words, sounds and art hand-off.
-3. M61 (panel moments), if wanted. **The Dakota panel** whenever it is painted
+2. M61 (panel moments), if wanted. **The Dakota panel** whenever it is painted
    (ART-PROMPTS.md Priority 30).
+
+## The terrain painter (M59c)
+
+`?layout`, before the jump: PAINT GROUND, pick a ground, click or drag over hexes; a
+paint the map cannot take is refused with the reason. COPY ROWS and send the rows to
+Claude, who puts them in the map file after the tests and a 200-seed bot run, and
+shows the numbers before and after.
 
 ## Open with the operator
 

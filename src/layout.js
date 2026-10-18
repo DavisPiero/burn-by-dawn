@@ -5,7 +5,13 @@
  * colour. Art only: no rule reads it. Pure, so the layout
  * tool's moves and its Copy are tested headless; the dragging is
  * src/render/layout-tool.js.
+ *
+ * And (M59c) the terrain painter's: a map's `rows` with a hex painted, and
+ * the rows as text. Those are rules, not art: the operator sends them to
+ * Claude, who puts them in the map file after the tests and the bot.
  */
+
+import { columnOf, inBounds } from './map.js';
 
 const isPair = (value) => Array.isArray(value) && value.length === 2 && value.every(Number.isFinite);
 
@@ -122,4 +128,39 @@ export function movedCount(before, after) {
 /** The whole file as text, to paste over data/layout.json: two spaces, each [x, y] on one line. */
 export function layoutText(layout) {
   return `${JSON.stringify(layout, null, 2).replace(/\[\s+(-?[\d.e+-]+),\s+(-?[\d.e+-]+)\s+\]/g, '[$1, $2]')}\n`;
+}
+
+/** The ground the painter offers for a map (M59c): its legend's, in the legend's order, as { char, id, label }. */
+export function groundSwatches(map) {
+  return Object.entries(map.legend).map(([char, id]) => ({ char, id, label: map.terrain?.[id]?.label ?? id }));
+}
+
+/** A map's rows with hex (q, r) given the legend letter `char`, as a new list; the same list if it is that already, or off the map. */
+export function paintedRows(map, q, r, char) {
+  if (!inBounds(map, q, r) || !map.legend[char]) return map.rows;
+  const i = columnOf(q, r);
+  const row = map.rows[r];
+  if (row[i] === char) return map.rows;
+  const rows = [...map.rows];
+  rows[r] = `${row.slice(0, i)}${char}${row.slice(i + 1)}`;
+  return rows;
+}
+
+/** How many hexes differ between two maps' rows of the same size. */
+export function paintedCount(before, after) {
+  let count = 0;
+  before.forEach((row, r) => {
+    for (let i = 0; i < row.length; i++) if (row[i] !== after[r][i]) count++;
+  });
+  return count;
+}
+
+/** The objectives whose own ground hex (q, r) is (what its ruins replace when it goes up), by label. */
+export function targetsOn(map, q, r) {
+  return (map.objectives ?? []).filter((o) => o.hexes.some(([oq, or]) => oq === q && or === r)).map((o) => o.label);
+}
+
+/** The rows as the map file has them, to send to Claude: `"rows": [ ... ]`, a row a line. */
+export function rowsText(rows) {
+  return `  "rows": [\n${rows.map((row) => `    ${JSON.stringify(row)}`).join(',\n')}\n  ]\n`;
 }

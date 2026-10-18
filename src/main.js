@@ -8,7 +8,7 @@ import {
 import { canLandOn, canisterPoints, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, axialToPixel, hexDistance } from './hex.js';
-import { forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
+import { checkMap, forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
 import { createRng, freshSeed, seedFromQuery } from './rng.js';
 import {
   callDiversion, checkDiversion, chooseDropRun, createInitialState, cutLine, deselect, endTurn, hideUnit,
@@ -121,6 +121,10 @@ let layers = null;
 // the level in play; `rules` and `baseMap` above are already patched by it.
 let rawRules = null;
 let rawMap = null;
+// The mission's lessons file as loaded, or null (M47); and its map's rows as
+// the file has them, which the terrain painter (M59c) paints over and puts back.
+let missionLessons = null;
+let fileRows = null;
 let difficulty = null;
 // The mission being played (data/missions.json, M27): its map, roster and
 // patches are already in `rawMap`, `roster` and `rawRules`; this is its own
@@ -2698,6 +2702,18 @@ async function loadMission(id, seed) {
   applyGround(mission.ground ?? null);
   // The drop cue in the mission's own colour, if it names one (M58e).
   applyDropCueColour(mission.dropCueColour ?? null);
+  missionLessons = lessons;
+  fileRows = rawMap.rows;
+  return layBoard(seed);
+}
+
+/**
+ * Set the mission up on `seed` over the map as it stands and draw its board:
+ * at loading, and again (M59c) when the terrain painter repaints a hex before
+ * the jump. Returns the supplied pictures, still loading.
+ */
+function layBoard(seed) {
+  const lessons = missionLessons;
   // The level being played is kept from one mission to the next; the address's at first.
   const levelId = level && difficulty.levels.some((l) => l.id === level.id) ? level.id : difficultyFromQuery(window.location.search, difficulty);
   startMission(levelById(difficulty, levelId), seed);
@@ -2738,6 +2754,41 @@ async function loadMission(id, seed) {
     loadSuppliedBlast(),
     loadSuppliedEnemyChips(Object.keys(baseMap.enemyTypes), mission.enemyChips ?? null, mission.enemyKit ?? null),
   ];
+}
+
+/**
+ * The terrain painter (M59c, ?layout): the mission set up again on the same
+ * seed over `rows`, if the map takes them, as loading would check them; or,
+ * if it cannot, left as it was. Before the jump only, so nothing is at stake.
+ * Returns why a paint was refused, or null.
+ */
+function repaint(rows) {
+  if (state.phase !== 'drop') return 'Paint before the jump: the stick is on the ground. Start the mission again to paint.';
+  const was = rawMap;
+  // The checks' words, without the file's name, and an enemy by his name, not his place in the list.
+  const named = (message) => message.replace(/^(Painted|data\/map\.json): /, '').replace(/^enemies\[(\d+)\]/, (whole, i) => was.enemies[Number(i)]?.label ?? whole)
+    .replace(/^objectives\[(\d+)\]/, (whole, i) => `The ${was.objectives[Number(i)]?.label ?? whole}'s`)
+    .replace(/chargeHexes\[(\d+)\]/, (whole, i) => `charge point ${Number(i) + 1}`)
+    .replace(/route\[(\d+)\]/, (whole, i) => `beat, waypoint ${Number(i) + 1},`);
+  try {
+    checkMap({ ...was, rows }, 'Painted');
+  } catch (error) {
+    return named(error.message);
+  }
+  clearShows();
+  resetBoardMemory(layers);
+  rawMap = { ...was, rows };
+  try {
+    layBoard(state.seed);
+  } catch (error) {
+    // The targets' and the lessons' checks are run as the mission is set up.
+    rawMap = was;
+    layBoard(state.seed);
+    render();
+    return named(error.message);
+  }
+  render();
+  return null;
 }
 
 // A turn card, or the diversion's, lets the board be seen and clicked round
@@ -4051,7 +4102,11 @@ try {
   // The layout tool (M48k): `?layout` lets the operator drag what they place by hand.
   if (layoutFromQuery(window.location.search)) {
     const loaded = layout;
-    startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize, missionId: () => mission.id });
+    startLayoutTool({
+      layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize, missionId: () => mission.id,
+      // The terrain painter (M59c): the map as painted, its rows as the file has them, and a paint.
+      ground: () => ({ map: rawMap, fileRows, file: mission.map }), onPaint: repaint,
+    });
   }
   // The playtest record (M49): COPY RECORD in the corner gives it as plain lines.
   if (playtest) startPlaytestPanel(() => recordText(playtest, { build: version, now: Date.now() }));
