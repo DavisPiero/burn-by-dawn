@@ -24,7 +24,7 @@
       "wind": "W",
       "labelAlong": 0.05,
       "labelNudge": [
-        2.7,
+        4.43,
         -0.9
       ]
     },
@@ -46,8 +46,8 @@
       "wind": "NE",
       "labelAlong": 0.0,
       "labelNudge": [
-        2.4,
-        0.1
+        0.67,
+        0.85
       ]
     },
     {
@@ -68,8 +68,8 @@
       "wind": "W",
       "labelAlong": 0.0,
       "labelNudge": [
-        -1.6,
-        1.0
+        -3.33,
+        -0.5
       ]
     }
   ],
@@ -252,6 +252,10 @@
     {
       "id": "cell-hall",
       "label": "Cell Hall",
+      "nameNudge": [
+        -0.87,
+        0
+      ],
       "ringCharges": true,
       "kind": "cellHall",
       "primary": true,
@@ -315,7 +319,7 @@
       ]
     }
   ],
-  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes down the east edge from the corner, open all night. exfilArt names its picture: two lines of ski tracks and a cairn.",
+  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes down the east edge from the corner, open all night. exfilArt names its picture: two lines of ski tracks and a cairn. `exfilLabelNudge` (art only, the operator's, after M59c) moves the EXFIL label by [x, y] hex radii: up two rows, beside the way out rather than under it.",
   "exfil": [
     [
       17,
@@ -331,6 +335,10 @@
     ]
   ],
   "exfilArt": "skiTrail",
+  "exfilLabelNudge": [
+    0,
+    -3
+  ],
   "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the duct. Its hexes are Railway ground (terrain.json), which is what the rules read. `railwayStops` (M59b): the line ends at the duct rather than running on to the board's edge, over the plant.",
   "railway": [
     [
@@ -357,10 +365,10 @@
       "name": "Vassdal Works",
       "kind": "village",
       "at": [
-        4,
+        3,
         9
       ],
-      "dy": -0.95
+      "dy": 0.15
     },
     {
       "name": "Mørkgjelet Gorge",

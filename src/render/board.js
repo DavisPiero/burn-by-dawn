@@ -2260,7 +2260,9 @@ function drawSites(layers, state, view) {
   const exfilAt = labelPoint(map, view.exfil);
   const exfilWords = view.exfilLabel ?? 'EXFIL';
   const exfilLabelAt = labelInside(map, exfilAt, exfilWords);
-  layers.sites.appendChild(casedText(exfilWords, exfilLabelAt.x, exfilLabelAt.y, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
+  // Moved by the map's `exfilLabelNudge`, in hex radii (art only).
+  const [lx, ly] = (map.exfilLabelNudge ?? [0, 0]).map((v) => v * map.hexSize);
+  layers.sites.appendChild(casedText(exfilWords, exfilLabelAt.x + lx, exfilLabelAt.y + ly, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
   // The job is done and the way out is open (M46): its ground throbs green,
   // and with the tips on GET OUT! is lettered over it in the same green.
   if (view.goOut) {
