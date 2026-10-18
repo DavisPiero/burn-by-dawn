@@ -181,6 +181,28 @@ export default [
     assert(map.exfil.every(([q, r]) => isPassable(terrainAt(map, q, r))), 'the way out can be walked onto');
   }],
 
+  ['two ways to every charge point (M59b, the third note of men trapped in the plant): with any one hex of the hall or the duct blocked, a wounded man say, every other charge point can still be reached from the shelf', async () => {
+    const { map } = await loadGunnerside();
+    const hall = map.objectives.find((o) => o.id === 'cell-hall');
+    const inside = [];
+    for (let r = 0; r < map.height; r++) {
+      for (let q = -Math.floor(r / 2); q < map.width - Math.floor(r / 2); q++) {
+        if (['hall', 'duct'].includes(terrainIdAt(map, q, r))) inside.push({ q, r });
+      }
+    }
+    assert(inside.length >= 12, 'a hall with room in it');
+    const shelf = { q: -4, r: 9 }; // the railway at the west edge
+    for (const x of inside) {
+      const blocked = new Set([hexKey(x.q, x.r)]);
+      for (const [q, r] of hall.chargeHexes) {
+        const c = { q, r };
+        if (c.q === x.q && c.r === x.r) continue;
+        assert(findPath(map, shelf, c, blocked), `${c.q},${c.r} reached with ${x.q},${x.r} blocked`);
+      }
+    }
+    assert(inside.some((h) => terrainIdAt(map, h.q, h.r) === 'duct'), 'the duct is one of the ways in');
+  }],
+
   ['the footprint wash (M58c): the snow the garrison would find prints on next turn (M59b: underfoot or ahead in its arc), only ground that takes prints, nothing without tracks', async () => {
     const { map, rules, traits, roster } = await loadGunnerside();
     const state = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 3), map, 'north'), map, rules);
