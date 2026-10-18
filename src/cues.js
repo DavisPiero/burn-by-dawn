@@ -102,7 +102,7 @@ export function wayOut(map, rules, state, turns = 3) {
 }
 
 // What puts points on the alert and happens at a hex (SPEC.md §6).
-const RAISES = new Set(['spotted', 'bodyFound', 'parachuteFound', 'canisterFound', 'explosion']);
+const RAISES = new Set(['spotted', 'bodyFound', 'parachuteFound', 'canisterFound', 'tracksFound', 'explosion']);
 
 /**
  * Where the alert's new points came from, between two states: the hexes of

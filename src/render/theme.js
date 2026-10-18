@@ -788,6 +788,21 @@ export const MARKER = {
   chuteReach: 0.72, // hex radii from the centre into a corner, clear of most of a counter (M13)
 };
 
+// Tracks in the snow on the board (M57): the half-hex `prints` sprite's size
+// in hex radii (its length is the middle to an edge), how strong full ink is,
+// the dashed outline round a hovered trail, the boot mark on a hovered path,
+// and the red flash of a trail found.
+export const PRINTS = {
+  length: Math.sqrt(3) / 2, // the hex's middle to an edge's middle, in hex radii
+  aspect: 24 / 40,
+  opacity: 0.85,
+  hoverDash: '4 3',
+  hoverWidth: 1.6,
+  bootSize: 15,
+  bootAt: { x: 0, y: 17 }, // under the path's AP count, clear of the line
+  flashMs: 900,
+};
+
 export const RISK = {
   // Who sees him there (M45): a line from the enemy to the hex the pips are
   // noted on, red if he is spotted, ink and dashed if only seen; that hex's
@@ -1206,6 +1221,7 @@ export const CUE = {
   sightsOpacity: 0.85,
   manNoteSize: 17,
   manNoteDrop: 50, // under the middle of his counter
+  manNoteUnderScale: 0.7, // a note's second line, smaller (M57: TRACKS! / the patrols will follow them)
   // Where the charge goes (M43c, from playtesting: new players stood on the
   // bridge and could not set a charge there). While the selected man carries
   // a charge within `pointRange` hexes of a target that still wants one, each
@@ -1371,6 +1387,15 @@ function svg(name, attrs = {}, children = []) {
   for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
   for (const child of children) node.appendChild(child);
   return node;
+}
+
+// One boot print in the snow (M57), toes toward +x at (x, y), turned `tilt`
+// degrees and scaled by `k`: a sole and its heel.
+function bootSole(x, y, tilt = 0, k = 1) {
+  const sole = `M${-2.2} ${-1.5} Q${1} ${-2.3} ${3} ${-1.3} Q${4.2} 0 ${3} ${1.3} Q${1} ${2.3} ${-2.2} ${1.5} Z`;
+  const heel = `M${-5} ${-1.3} L${-3.3} ${-1.4} L${-3.3} ${1.4} L${-5} ${1.3} Z`;
+  // In currentColor, ink as the board draws it, so a trail found flashes red.
+  return svg('g', { transform: `translate(${x} ${y}) rotate(${tilt}) scale(${k})`, fill: 'currentColor' }, [svg('path', { d: sole }), svg('path', { d: heel })]);
 }
 
 // Shorthands for the procedural art below.
@@ -3374,6 +3399,21 @@ const SPRITES = {
         svg('rect', { x: 11, y: 22.5, width: 6, height: 4.5, rx: 1, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.5 }),
       ];
     },
+  },
+  // Tracks in the snow (M57, MISSION-GUNNERSIDE.md Its pictures): half a hex
+  // of a man's walk, from a hex edge (x 0) to the hex's middle (x 40), toes
+  // toward +x, two lines of boot prints a little uneven. The board draws it
+  // twice a hex, the way he came in and the way he went out, turned to each
+  // edge, so a straight walk is one trail and a bend turns in the hex.
+  prints: {
+    viewBox: '0 0 40 24',
+    draw: () => [0, 1, 2, 3].map((i) => bootSole(5 + i * 10, i % 2 ? 8.6 : 15.4, i % 2 ? -4 : 3)),
+  },
+  // A boot mark on a hovered path's hex that would take prints (M57): one
+  // print, toes up, on a paper disc.
+  'marker-boot': {
+    viewBox: '0 0 16 16',
+    draw: () => [circle(8, 8, 7.2, 'paper'), svg('g', { transform: 'rotate(-90 8 8)' }, [bootSole(8.6, 8, 0, 1.35)]), ring(8, 8, 7.2, 1.2)],
   },
   // A charge point (SPEC.md §7): an empty satchel with its fuse, and a red
   // plus — where a charge goes, not a charge.

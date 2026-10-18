@@ -30,6 +30,7 @@ import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
 import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
 import { startPlaytestPanel } from './render/playtest-panel.js';
 import { helpFrames, helpLines, sceneMap } from './help.js';
+import { printAge, printFillsTurn, takesPrints } from './tracks.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import { createUnits } from './units.js';
@@ -177,6 +178,9 @@ let menPicked = false;
 // HOVER A HEX. CLICK TO GO. under the selected man until the first move of
 // the game (M45: the orders no longer say how, since M44).
 let firstMoveMade = false;
+// The play tip TRACKS! (M57): the first trail a man lays in a game, lettered
+// in the pen while it is on the board that turn; `shown` once one has been.
+let tracksTip = { shown: false, trail: null, turn: null };
 // The danger wash and who is fired on, kept for the state they were worked
 // out on: the mouse moving redraws the board, and neither changes with it.
 let sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedOn: new Set() };
@@ -282,17 +286,40 @@ function visionById() {
 // the garrison turned "unpredictably"). The rules are pure, so this is the
 // same sum the turn will do; it changes as the men move, so it is worked out
 // again only when the enemies, the men, the noises or the alert do.
-let forecastCache = { keys: null, byId: null };
+let forecastCache = { keys: null, byId: null, trailsFound: null };
 
 function forecast() {
   if (state.phase === 'drop' || state.outcome) return null;
-  const keys = [state.enemies, state.units, state.noises, state.alert, map];
+  const keys = [state.enemies, state.units, state.noises, state.alert, state.prints, map];
   if (forecastCache.keys && keys.every((k, i) => k === forecastCache.keys[i])) return forecastCache.byId;
   const detected = runDetection(state, map, rules).state;
-  const after = runEnemyPhase(detected, map, rules).state;
-  const byId = new Map(after.enemies.map((e) => [e.id, e]));
-  forecastCache = { keys, byId };
+  const phase = runEnemyPhase(detected, map, rules);
+  const byId = new Map(phase.state.enemies.map((e) => [e.id, e]));
+  forecastCache = { keys, byId, trailsFound: trailFinders(phase.events) };
   return byId;
+}
+
+// Who would find each trail in the coming enemy phase (M57): trail id to the
+// finder's label, from a forecast's events.
+function trailFinders(events) {
+  const finders = new Map();
+  for (const e of events) if (e.kind === 'tracksFound') finders.set(e.trail, e.label);
+  return finders;
+}
+
+// Who would find the prints a hovered move lays, in the coming enemy phase if
+// the turn ended after it (M57; SPEC.md §9 Tracks): the same sum the turn will
+// do, as next turn's facings are. Kept for the state and plan it was worked on.
+let tracksAhead = { state: null, key: null, finder: null };
+function tracksFinder(unit, plan) {
+  const key = plan.path.map((h) => hexKey(h.q, h.r)).join(' ');
+  if (tracksAhead.state === state && tracksAhead.key === key) return tracksAhead.finder;
+  const moved = moveUnit(state, unit.id, plan, baseMap, rules);
+  const trail = `${unit.id}:${state.trailsLaid ?? 0}`;
+  const detected = runDetection(moved, map, rules).state;
+  const found = runEnemyPhase(detected, map, rules).events.find((e) => e.kind === 'tracksFound' && e.trail === trail);
+  tracksAhead = { state, key, finder: found?.label ?? null };
+  return tracksAhead.finder;
 }
 
 /**
@@ -328,6 +355,10 @@ function deriveView() {
     traitEffectsById,
     // The goods train where it stands (M34), each car with the line's direction under it.
     train: trainView(),
+    // Tracks in the snow (M57): each print with how faded it is, full ink the
+    // turn it is laid and a step fainter each turn after, gone with its last.
+    prints: (state.prints ?? []).map((p) => ({ ...p, strength: 1 - printAge(p, state.turn) / rules.tracks.turns })),
+    hoverTrail: null,
     // The boat coming in, and what the exfil is called while it is shut (M41).
     boat: boatAt(state, rules, baseMap),
     exfilLabel: exfilOpen(state, rules) ? 'EXFIL' : `BOAT · TURN ${boatLands(state, rules)}`,
@@ -484,6 +515,12 @@ function deriveView() {
   // A man on the beach with the boat in (M49d, the operator's: elsewhere he
   // would be out already): told to board, tips or not.
   if (!state.outcome && state.phase !== 'drop') view.manNotes = [...view.manNotes, ...waitingToBoard(state, rules, baseMap).map((u) => ({ q: u.q, r: u.r, words: 'BOARD! [B]' }))];
+  // TRACKS! (M57, a tip): beside the first trail of the game, the turn it is laid.
+  const tipTrail = tipsOn && tracksTip.trail && state.turn === tracksTip.turn ? (state.prints ?? []).filter((p) => p.trail === tracksTip.trail) : [];
+  if (tipTrail.length > 0) {
+    const last = tipTrail.at(-1);
+    view.manNotes.push({ q: last.q, r: last.r, words: 'TRACKS!', under: 'the patrols will follow them' });
+  }
   // What the turn card's hint is about, ringed while the card is up (M46).
   if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
   // A lesson's step (M47): what it rings, and its line in the pen.
@@ -545,6 +582,19 @@ function deriveView() {
         ? { label: 'FOUND', text: 'The garrison has found it. Its charges are still in it' }
         : { label: 'RISK', text: `found by an enemy on or next to it: alert +${rules.alert.parachuteFound}. It keeps its charges` },
       { label: 'EMPTY', text: 'Once its last charge is taken it is pulled under cover: nothing left to find' },
+    ] };
+  } else if (hex && (state.prints ?? []).some((p) => p.q === hex.q && p.r === hex.r)) {
+    // Prints in the snow (M57): whose, when they fill in, who finds them next.
+    const print = state.prints.find((p) => p.q === hex.q && p.r === hex.r);
+    const finder = forecastCache.trailsFound?.get(print.trail);
+    const fills = printFillsTurn(print, rules);
+    view.hoverTrail = print.trail;
+    view.site = { title: `${print.name}'s tracks`, rows: [
+      { label: 'HERE', text: `found by an enemy on or next to any of them: alert +${rules.tracks.alert}, and his whole trail from that move goes` },
+      { label: 'FILLS', text: fills === state.turn ? 'snowed over at the end of this turn' : `snowed over at the end of turn ${fills}` },
+      finder
+        ? { label: 'NEXT', text: `found next turn by the ${finder.toLowerCase()}`, tone: 'danger' }
+        : { label: 'NEXT', text: 'no patrol passes them next turn' },
     ] };
   } else if (hex && view.train?.cars.some((c) => c.q === hex.q && c.r === hex.r)) {
     view.site = { title: rules.train.label, rows: trainRows(view.train) };
@@ -692,6 +742,15 @@ function deriveView() {
       return { ...result, shot, shotResult: shot ? shotResultOf(result, rules) : null, drawnOff: shot ? null : drawnOff(unit, result) };
     });
     view.riskLabel = describeRisk(plan, view.risk, view.place);
+    // Tracks in the snow (M57): a boot mark on each hex the move would leave
+    // prints on, and who would find them next turn.
+    view.bootHexes = plan.path.slice(1).filter((h) => takesPrints(baseMap, rules, h));
+    if (view.bootHexes.length > 0 && plan.affordable) {
+      const finder = tracksFinder(unit, plan);
+      view.tracksLabel = finder
+        ? { text: `found next turn by the ${finder.toLowerCase()}`, tone: 'danger' }
+        : { text: `prints in the snow, ${rules.tracks.turns} turns: no patrol passes them next turn` };
+    }
     const end = plan.path[plan.path.length - 1];
     // The cover where the move ends, as a shield on the hex (M45).
     if (plan.steps > 0) view.coverAt = { q: end.q, r: end.r, cover: terrainAt(map, end.q, end.r).cover ?? 'none' };
@@ -1795,7 +1854,9 @@ function commit(next, cue = 'action') {
 
 /** A move, in silence (M24, the operator's: neither M23's slides nor the snap before them suited it). */
 function commitMove(unitId, plan) {
+  const trails = state.trailsLaid ?? 0;
   commit(moveUnit(state, unitId, plan, baseMap, rules), null);
+  if (!tracksTip.shown && (state.trailsLaid ?? 0) > trails) tracksTip = { shown: true, trail: `${unitId}:${trails}`, turn: state.turn };
   firstMoveMade = true;
   notePlay('move');
 }
@@ -1860,6 +1921,8 @@ function undoLast() {
   pencilsFor = null;
   playCue('move');
   state = { ...previous, hoverHex: state.hoverHex, showRoutes: state.showRoutes, targeting: null };
+  // The first trail taken back: TRACKS! is still to be shown (M57).
+  if (tracksTip.trail && !(state.prints ?? []).some((p) => p.trail === tracksTip.trail) && (state.trailsLaid ?? 0) === 0) tracksTip = { shown: false, trail: null, turn: null };
   render();
 }
 
@@ -2235,6 +2298,7 @@ function alarmReasons() {
     if (e.kind === 'bodyFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s body in ${place(e)}` });
     if (e.kind === 'parachuteFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found ${e.name}'s parachute in ${place(e)}` });
     if (e.kind === 'canisterFound' && e.enemyId) add(e.enemyId, { kind: 'found', words: `found a canister in ${place(e)}` });
+    if (e.kind === 'tracksFound' && e.enemyId) add(e.enemyId, { kind: 'tracks', words: `found ${e.name}'s tracks in ${place(e)}` });
   }
   return reasons;
 }
@@ -2255,7 +2319,9 @@ function enemyCries() {
     return list?.length ? list[hash % list.length] : null;
   };
   for (const [id, reasons] of alarmReasons()) {
-    const cry = pick(reasons.some((r) => r.kind === 'spotted') ? words.spotted : words.found, id);
+    // Tracks have their own cry where the mission gives one (M57), else a find's.
+    const found = reasons.every((r) => r.kind === 'tracks') && words.tracks ? words.tracks : words.found;
+    const cry = pick(reasons.some((r) => r.kind === 'spotted') ? words.spotted : found, id);
     if (cry) cries.set(id, cry);
   }
   return cries;
@@ -2271,6 +2337,7 @@ function describeAlarm(enemy) {
     after.push(`It has ${man ? man.shortName : 'him'} in its sights (the dashed line): if it sees him again at the end of this turn it fires. Get him out of its view, hide him [H], or ${fireBackWords()}.`);
   }
   if (reasons.some((r) => r.kind === 'found')) after.push(`What it found put the alert up +${rules.alert.bodyFound}, and the patrols in earshot come to look.`);
+  else if (reasons.some((r) => r.kind === 'tracks')) after.push(`It follows them: the patrols in earshot come to look where they were found.`);
   return titled('RAISED THE ALARM', `At the end of last turn the ${enemy.label.toLowerCase()} ${what}. ${after.join(' ')}`.trim());
 }
 
@@ -2286,14 +2353,17 @@ function describeGarrisonShow(after) {
   const alarmed = new Map();
   for (const e of after.report) {
     if (e.kind === 'spotted') for (const id of e.enemyIds ?? []) alarmed.set(id, 0);
-    if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound' || e.kind === 'canisterFound') && e.enemyId && !alarmed.has(e.enemyId)) {
+    if ((e.kind === 'bodyFound' || e.kind === 'parachuteFound' || e.kind === 'canisterFound' || e.kind === 'tracksFound') && e.enemyId && !alarmed.has(e.enemyId)) {
       const walked = after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0;
       alarmed.set(e.enemyId, walked * msPerHex);
     }
   }
   const heard = after.report.filter((e) => e.kind === 'heard').map((e) => ({ q: e.q, r: e.r }));
-  const busy = steps > 0 || alarmed.size > 0 || heard.length > 0;
-  return { since: performance.now(), alarmed, heard, msPerHex, length: busy ? steps * msPerHex + GARRISON_SHOW.tailMs : 0 };
+  // Trails found (M57): each flashes red as its finder gets there, and goes.
+  const trailsFound = after.report.filter((e) => e.kind === 'tracksFound')
+    .map((e) => ({ hexes: e.hexes, at: (after.enemies.find((x) => x.id === e.enemyId)?.walked?.length ?? 0) * msPerHex }));
+  const busy = steps > 0 || alarmed.size > 0 || heard.length > 0 || trailsFound.length > 0;
+  return { since: performance.now(), alarmed, heard, trailsFound, msPerHex, length: busy ? steps * msPerHex + GARRISON_SHOW.tailMs : 0 };
 }
 
 function endBangHold() {
@@ -2649,6 +2719,7 @@ function startMission(nextLevel, seed) {
   undoStack = [];
   menPicked = false;
   firstMoveMade = false;
+  tracksTip = { shown: false, trail: null, turn: null };
   sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedOn: new Set() };
   cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
   earlierReports = [];

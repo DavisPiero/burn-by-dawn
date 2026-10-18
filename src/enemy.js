@@ -851,7 +851,7 @@ export function runEnemyPhase(state, map, rules) {
         printAlerts++;
       }
       noises.push({ kind: 'found', q: find.at.q, r: find.at.r });
-      events.push({ kind: 'tracksFound', label: moved.label, enemyId: moved.id, unitId: find.at.unitId, name: find.at.name, q: find.at.q, r: find.at.r, hexes: find.hexes.map(({ q, r }) => ({ q, r })) });
+      events.push({ kind: 'tracksFound', label: moved.label, enemyId: moved.id, trail: find.trail, unitId: find.at.unitId, name: find.at.name, q: find.at.q, r: find.at.r, hexes: find.hexes.map(({ q, r, inDir, outDir }) => ({ q, r, inDir, outDir })) });
       prints = prints.filter((p) => p.trail !== find.trail);
     }
   }

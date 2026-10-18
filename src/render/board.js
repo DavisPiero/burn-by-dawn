@@ -22,7 +22,7 @@ import { DIRECTION_NAMES, NEIGHBOR_DIRS, axialToPixel, hexCorners, hexDistance, 
 import { forEachCell, hexKey, inBounds, isInPlay, terrainIdAt } from '../map.js';
 import { pixelsToAxial } from '../layout.js';
 import {
-  BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, RAIL, RISK, ROAD, ROUTE,
+  BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, PRINTS, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
   AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
@@ -786,6 +786,7 @@ export function renderPieces(layers, state, view) {
   if (view.throwPreview) drawThrow(layers, view.throwPreview);
 
   if (view.plan && !view.planHidden) drawPlan(layers, view.plan, view.risk);
+  if (view.plan && !view.planHidden) for (const hex of view.bootHexes ?? []) drawBootMark(layers, hex);
   if (view.plan && view.risk && !view.planHidden) drawRisk(layers, view.plan, view.risk, { enemies: state.enemies, cover: view.coverAt, now });
   else if (view.landing) drawRisk(layers, view.landing.plan, view.landing.risk);
 
@@ -801,6 +802,7 @@ export function renderPieces(layers, state, view) {
   }
   const show = view.dropShow ? dropTimeline(map, view.dropShow) : null;
   const elapsed = show ? now - view.dropShow.since : 0;
+  drawPrints(layers, view, now);
   for (const chute of state.parachutes) appear(drawParachute(layers, chute), show?.byUnit.get(chute.unitId), elapsed);
   // A supply canister (SPEC.md §9, M41), across the hex from the charges in it.
   // Its charges are counted in dots (M42b), not drawn as one satchel on another.
@@ -1196,12 +1198,16 @@ function drawManNote(layers, note) {
   const p = axialToPixel(note.q, note.r, map.hexSize);
   const edge = boardEdges(map);
   const size = CUE.manNoteSize;
-  const width = note.words.length * size * CUE.noteAdvance;
+  // A second, smaller line under the first where a note has one (M57: TRACKS!).
+  const lines = note.under ? [note.words, note.under] : [note.words];
+  const sizes = note.under ? [size, size * CUE.manNoteUnderScale] : [size];
+  const width = Math.max(...lines.map((l, i) => l.length * sizes[i] * CUE.noteAdvance));
   const x = Math.min(Math.max(p.x, edge.left + width / 2 + CUE.noteEdgeGap), edge.right - width / 2 - CUE.noteEdgeGap);
   // Under a lesson's wide ring on a man (M48b), clear of it.
   const drop = CUE.manNoteDrop + (note.low ? CUE.manRingNoteDrop : 0);
-  const under = p.y + drop + size <= edge.bottom;
-  const letters = penLetters([note.words], x, under ? p.y + drop : p.y - drop + size * 0.4, [size]);
+  const tall = sizes.reduce((n, h) => n + h, 0);
+  const under = p.y + drop + tall <= edge.bottom;
+  const letters = penLetters(lines, x, under ? p.y + drop : p.y - drop - tall + size * 1.4, sizes);
   letters.setAttribute('pointer-events', 'none');
   layers.effects.appendChild(letters);
 }
@@ -2555,6 +2561,57 @@ function drawParachute(layers, chute) {
   });
   layers.chutes.appendChild(marker);
   return marker;
+}
+
+// Tracks in the snow (M57): each print hex is two halves of the `prints`
+// sprite, in from the edge he came by and out by the edge he left by, faded by
+// its age; a hovered trail is outlined dashed; and a trail the garrison found
+// this turn stays in ink until its finder gets there, flashes red, and goes.
+function drawPrints(layers, view, now) {
+  const { map } = layers;
+  for (const print of view.prints ?? []) drawPrintHex(layers.chutes, map, print, { opacity: PRINTS.opacity * print.strength, color: PALETTE.ink });
+  if (view.hoverTrail) {
+    for (const print of view.prints.filter((p) => p.trail === view.hoverTrail)) {
+      const p = axialToPixel(print.q, print.r, map.hexSize);
+      layers.chutes.appendChild(el('polygon', {
+        points: cornersToPoints(p, layers.corners), fill: 'none', stroke: PALETTE.ink, 'stroke-width': PRINTS.hoverWidth, 'stroke-dasharray': PRINTS.hoverDash,
+      }));
+    }
+  }
+  const show = view.garrisonShow;
+  for (const found of show?.trailsFound ?? []) {
+    const since = now - show.since - found.at;
+    if (since >= PRINTS.flashMs) continue;
+    const flashing = since >= 0;
+    for (const print of found.hexes) {
+      // Red as it is found, fading as it goes (the sprite is drawn in currentColor).
+      drawPrintHex(layers.chutes, map, print, { opacity: flashing ? 1 - since / PRINTS.flashMs : PRINTS.opacity, color: flashing ? PALETTE.red : PALETTE.ink });
+    }
+  }
+}
+
+function drawPrintHex(parent, map, print, attrs = {}) {
+  const p = axialToPixel(print.q, print.r, map.hexSize);
+  const length = map.hexSize * PRINTS.length;
+  const height = length * PRINTS.aspect;
+  const angleOf = (dir) => {
+    const v = axialToPixel(NEIGHBOR_DIRS[dir].q, NEIGHBOR_DIRS[dir].r, 1);
+    return (Math.atan2(v.y, v.x) * 180) / Math.PI;
+  };
+  const g = el('g', attrs);
+  // In: from the edge he came by to the middle, toes toward the middle.
+  g.appendChild(el('use', { href: '#prints', x: -length, y: -height / 2, width: length, height, transform: `translate(${p.x} ${p.y}) rotate(${angleOf(print.inDir) + 180})` }));
+  // Out: from the middle to the edge he left by.
+  g.appendChild(el('use', { href: '#prints', x: 0, y: -height / 2, width: length, height, transform: `translate(${p.x} ${p.y}) rotate(${angleOf(print.outDir)})` }));
+  parent.appendChild(g);
+  return g;
+}
+
+// A boot mark on a hovered path's hex that would take prints (M57).
+function drawBootMark(layers, hex) {
+  const p = axialToPixel(hex.q, hex.r, layers.map.hexSize);
+  const size = PRINTS.bootSize;
+  layers.path.appendChild(el('use', { href: '#marker-boot', x: p.x + PRINTS.bootAt.x - size / 2, y: p.y + PRINTS.bootAt.y - size / 2, width: size, height: size, color: PALETTE.ink }));
 }
 
 // The hex a hovered line of the turn report is about.
