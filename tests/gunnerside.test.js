@@ -57,7 +57,7 @@ export default [
   ['its rules patch turns M57\'s engine on: tracks, the no-shot clean run worth 5, the first shot asked; the shot +4 and heard everywhere; a 20-turn night', async () => {
     const { rules } = await loadGunnerside();
     equal(rules.turnLimit, 20, 'dawn');
-    equal(rules.tracks.turns, 3, 'prints last');
+    equal(rules.tracks.turns, 2, 'prints last');
     equal(rules.tracks.alertPerPhase, 1, 'prints raise the alert once a phase at most');
     equal(rules.scoring.cleanNoShot, true, 'NOT A SHOT FIRED');
     equal(rules.scoring.clean, 5, 'its bonus');

@@ -176,6 +176,13 @@ const PICK = process.env.PICK === '1';
 // CLEAR tells a player to. Without it the naive man looked only along his
 // route, and on the aqueduct stood still beside the piers as they went up.
 const CLEAR = process.env.CLEAR === '1';
+// STAY=1 (M59): a man with nothing to set does not go out while the job's
+// charges are still to set: he lies up in cover near the way out, on the
+// board to fetch a fallen carrier's charges. Without it he walks out at once,
+// which on Gunnerside, whose way out is beside the landing, had the scouts
+// gone on turn 2 and nobody left to fetch a wounded sapper's. (Standing by at
+// the job instead, as a sapper's spare does, blocked the hall's one-hex floor.)
+const STAY = process.env.STAY === '1';
 const PACK = process.env.PACK === '1' || Boolean(OPTS.tidy);
 const TRAIN = process.env.TRAIN === '1';
 const PENCIL = process.env.PENCIL ?? (OPTS.tidy ? 'plan' : 'default');
@@ -391,6 +398,10 @@ function isHunting(state, unit, assign) {
   return state.enemies.some((e) => e.killable);
 }
 
+function jobUndone(state) {
+  return jobTargets(state).some((o) => o.detonated + state.charges.filter((c) => c.objectiveId === o.id).length < rules.objectives[o.kind].chargesNeeded);
+}
+
 function goalFor(state, unit, map, assign) {
   if (isHunting(state, unit, assign)) return huntGoals(state, unit, map);
   if (assign.has(unit.id)) return [assign.get(unit.id)];
@@ -404,8 +415,8 @@ function goalFor(state, unit, map, assign) {
   }
   // The way out not open yet (M41, the aqueduct's boat): he lies up in heavy
   // cover near it until it is, as a player would, rather than stand on the beach.
-  if (!SB.exfilOpen(state, rules)) {
-    const near = lieUpHexes(map);
+  if (!SB.exfilOpen(state, rules) || (STAY && job && U.canCarryCharges(unit))) {
+    const near = lieUpHexes(map).filter((h) => SB.exfilOpen(state, rules) ? !SB.isExfil(map, h) : true);
     if (near.length > 0) return near;
   }
   return map.exfil.map(([q, r]) => ({ q, r }));
@@ -575,6 +586,8 @@ function actFor(state, unit, map) {
     cands = CLEAR && SB.inBlast(blasts, here) ? [here, ...onRoute] : [here, ...onRoute.slice(0, 4)];
   }
   const hideCost = rules.actions.hide.apCost;
+  // STAY=1: a man lying up for the job does not step out by the way out.
+  const staying = STAY && goals.length > 0 && !goals[0].standby && U.canCarryCharges(unit) && jobUndone(state);
   let best = null;
   for (const c of cands) {
     if (SB.inBlast(blasts, c)) continue;
@@ -595,6 +608,7 @@ function actFor(state, unit, map) {
       if (goals[0]?.standby) d = Math.max(0, d - 4); // near enough: wait in cover
       // Out by ending his move there, once the boat is in (M49d: before it, only waiting).
       const exfil = SB.isExfil(map, c) && SB.exfilOpen(state, rules) && !assign.has(unit.id) && !hunting;
+      if (exfil && staying) continue;
       let score = d * 10;
       // Urgency: as dawn nears with the job undone, a sighting is worth risking.
       const left = SB.lastTurn(state, rules) - state.turn;
@@ -647,7 +661,7 @@ function play(seed, runId) {
   let state = S.createInitialState(roster, traits, rules, map0, seed);
   state = S.jump(S.chooseDropRun(state, map0, runId), map0, rules);
   let bridgeTurn = null;
-  const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0, chutes: 0, reinforced: 0, canisters: 0, bodies: 0, bangs: 0, alarmedTurn: null, beachTurn: null, by: {}, spotted1: 0, slipsBefore: 0 };
+  const ev = { spotted: 0, pinned: 0, wounded: 0, killed: 0, found: 0, chutes: 0, reinforced: 0, canisters: 0, bodies: 0, bangs: 0, prints: 0, alarmedTurn: null, beachTurn: null, by: {}, spotted1: 0, slipsBefore: 0 };
   const top = rules.alert.states.at(-1).from;
   // How the stick came down: hurt in the water, or a bad landing that costs turns.
   const landings = state.report.filter((e) => e.kind === 'landed');
@@ -656,6 +670,8 @@ function play(seed, runId) {
   while (!state.outcome) {
     state = playTurn(state);
     if (TRACE_ON) console.log(`turn ${state.turn - 1}: ${(state.report ?? []).map((e) => `${e.kind}${e.label ? ` ${e.label}` : ''}${e.unitName ? ` ${e.unitName}` : ''}${e.enemyLabel ? ` by ${e.enemyLabel}` : ''}${e.q !== undefined ? ` (${e.q},${e.r})` : ''}`).join(' · ')}\n   men ${state.units.map((u) => `${u.shortName}${u.out ? ' out' : u.dead ? ' dead' : ` (${u.q},${u.r})${u.charges ? ` c${u.charges}` : ''}`}`).join(', ')}\n   charges ${state.charges.map((c) => `(${c.q},${c.r}) f${c.fuse}`).join(' ')}  dial ${state.alert.points}  enemies ${state.enemies.map((e) => `${e.label.split(' ')[0]}(${e.q},${e.r})`).join(' ')}`);
+    // Prints found (M59): they raise the dial once an enemy phase at most.
+    if ((state.report ?? []).some((e) => e.kind === 'tracksFound')) ev.prints++;
     for (const e of state.report ?? []) {
       if (e.kind === 'spotted') ev.spotted++;
       if (e.kind === 'pinned') ev.pinned++;
@@ -672,7 +688,7 @@ function play(seed, runId) {
       if (e.kind === 'bodyFound') ev.bodies++;
       if (e.kind === 'explosion') ev.bangs++;
       // Who raised it, and whether the job was done yet.
-      const who = e.kind === 'spotted' ? e.enemyLabel : ['bodyFound', 'parachuteFound', 'canisterFound'].includes(e.kind) ? e.label : null;
+      const who = e.kind === 'spotted' ? e.enemyLabel : ['bodyFound', 'parachuteFound', 'canisterFound', 'tracksFound'].includes(e.kind) ? e.label : null;
       if (e.kind === 'spotted' && e.first) ev.spotted1++;
       if (who && (e.kind !== 'spotted' || e.first)) { const k = `${e.kind} ${who} ${bridgeTurn === null ? 'before' : 'after'}`; ev.by[k] = (ev.by[k] ?? 0) + 1; }
     }
@@ -682,7 +698,7 @@ function play(seed, runId) {
     if (ev.beachTurn === null && MI.winMet(state, rules)
       && state.units.filter((u) => u.out || (U.onBoard(u) && map0.exfil.some(([q, r]) => H.hexDistance(u, { q, r }) <= 3))).length >= rules.mission.minimumOut) ev.beachTurn = state.turn - 1;
     // The dial's points before and at the job, bangs left out: the slips.
-    if (bridgeTurn === null && !MI.winMet(state, rules)) ev.slipsBefore = ev.spotted1 + ev.chutes + ev.canisters + ev.bodies;
+    if (bridgeTurn === null && !MI.winMet(state, rules)) ev.slipsBefore = ev.spotted1 + ev.chutes + ev.canisters + ev.bodies + ev.prints;
     // When the job was done (the key keeps France's name for it).
     if (MI.winMet(state, rules) && bridgeTurn === null) bridgeTurn = state.turn;
     if (state.turn > 25) break;
@@ -736,11 +752,11 @@ for (const run of runs) {
     const pct = (n, of) => (of ? `${((100 * n) / of).toFixed(0)}%` : '-');
     const mean = (list, f) => (list.length ? (list.reduce((n, r) => n + f(r), 0) / list.length).toFixed(1) : '-');
     summary[run].alert = {
-      sightings: avg((r) => r.spotted1), chutes: avg((r) => r.chutes), canisters: avg((r) => r.canisters), bodies: avg((r) => r.bodies), bangs: avg((r) => r.bangs),
+      sightings: avg((r) => r.spotted1), chutes: avg((r) => r.chutes), canisters: avg((r) => r.canisters), bodies: avg((r) => r.bodies), bangs: avg((r) => r.bangs), prints: avg((r) => r.prints),
       winsBelow: pct(wins.filter((r) => (r.peak ?? 0) < top).length, wins.length),
-      slips: mean(wins, (r) => r.spotted1 + r.chutes + r.canisters + r.bodies),
+      slips: mean(wins, (r) => r.spotted1 + r.chutes + r.canisters + r.bodies + r.prints),
       slipsBefore: mean(wins, (r) => r.slipsBefore),
-      slips3: pct(wins.filter((r) => r.spotted1 + r.chutes + r.canisters + r.bodies <= 3).length, wins.length),
+      slips3: pct(wins.filter((r) => r.spotted1 + r.chutes + r.canisters + r.bodies + r.prints <= 3).length, wins.length),
       oneBang: pct(wins.filter((r) => r.bangs === 1).length, wins.length),
       beforeJob: pct(res.filter((r) => r.alarmedTurn !== null && (r.bridgeTurn === null || r.alarmedTurn < r.bridgeTurn)).length, N),
       beachTurn: mean(res.filter((r) => r.beachTurn !== null && r.bridgeTurn !== null), (r) => r.beachTurn),
@@ -756,7 +772,7 @@ if (AS_JSON) {
   for (const [run, v] of Object.entries(summary)) {
     console.log(`  ${run.padEnd(6)} win ${v.win.padStart(4)}  withdrawn ${v.withdrawn}  failed ${v.failed}  score ${v.avgScore}  ends turn ${v.endTurn}`
       + `  bridge down turn ${v.avgBridgeTurn}${OPTS.secondaries ? `  bonus ${Object.entries(v.bonusPct).map(([id, p]) => `${id} ${p}`).join(' ')}` : ''}  spotted ${v.spotted}  dead ${v.avgDead}  landed wet ${v.landedWet} bad ${v.landedBad}  reached ${rules.alert.states.at(-1).label} ${v.alarmedPct}  clean ${v.cleanPct}${rules.scoring.salvo ? `  salvo ${v.salvoPct}` : ''}${rules.train ? `  train ${v.trainPct}` : ''}  kills ${v.kills}  chutes found ${v.chutes}${Number(v.reinforced) > 0 ? `  reinforcements ${v.reinforced}` : ''}`);
-    if (v.alert) console.log(`      dial: sightings ${v.alert.sightings}  chutes ${v.alert.chutes}  canisters ${v.alert.canisters}  bodies ${v.alert.bodies}  bangs ${v.alert.bangs}\n      wins: below ${rules.alert.states.at(-1).label} ${v.alert.winsBelow}  one bang ${v.alert.oneBang}  slips ${v.alert.slips} (${v.alert.slipsBefore} before the job), three or fewer ${v.alert.slips3}  |  ${rules.alert.states.at(-1).label} before the job ${v.alert.beforeJob}  |  stick at the shore, turn ${v.alert.winBeachTurn}`);
+    if (v.alert) console.log(`      dial: sightings ${v.alert.sightings}  chutes ${v.alert.chutes}  canisters ${v.alert.canisters}  bodies ${v.alert.bodies}  bangs ${v.alert.bangs}${rules.tracks ? `  prints ${v.alert.prints}` : ''}\n      wins: below ${rules.alert.states.at(-1).label} ${v.alert.winsBelow}  one bang ${v.alert.oneBang}  slips ${v.alert.slips} (${v.alert.slipsBefore} before the job), three or fewer ${v.alert.slips3}  |  ${rules.alert.states.at(-1).label} before the job ${v.alert.beforeJob}  |  stick at the shore, turn ${v.alert.winBeachTurn}`);
     if (v.alert && process.env.ALERT === 'who') console.log(`      who: ${v.alert.by.join(' · ')}`);
     if (process.env.SCORES) console.log(`      winning scores, lowest / quartiles / highest: ${v.winScores.join(' / ')}`);
     for (const [why, n] of Object.entries(v.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)) console.log(`      ${String(n).padStart(3)}  ${why}`);
