@@ -31,7 +31,7 @@ async function loadGunnerside(levelId = 'normal') {
   const { rules, map } = applyDifficulty(levelById(difficulty, levelId), loadedRules, loadedMap);
   const traits = validateTraits(await loadJson('data/traits.json'));
   const roster = missionRoster(mission, await loadJson(mission.roster));
-  return { json, mission, map, rules, traits, roster };
+  return { json, mission, map, rules, traits, roster, difficulty };
 }
 
 // The board's rows (MISSION-GUNNERSIDE.md, The map): the plateau above the
@@ -54,9 +54,9 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['its rules patch turns M57\'s engine on: tracks, the no-shot clean run worth 5, the first shot asked; the shot +6 and heard everywhere; Alarmed from 9; a body found calls no squad; a 20-turn night', async () => {
+  ['its rules patch turns M57\'s engine on: tracks, the no-shot clean run worth 5, the first shot asked; the shot +6 and heard everywhere; Alarmed from 9; a body found calls no squad; an 18-turn night', async () => {
     const { rules } = await loadGunnerside();
-    equal(rules.turnLimit, 20, 'dawn');
+    equal(rules.turnLimit, 18, 'dawn (M59b)');
     equal(rules.tracks.turns, 2, 'prints last');
     equal(rules.tracks.alertPerPhase, 1, 'prints raise the alert once a phase at most');
     equal(rules.scoring.cleanNoShot, true, 'NOT A SHOT FIRED');
@@ -72,8 +72,8 @@ export default [
     equal(rules.canisters ?? null, null, 'no canisters');
   }],
 
-  ['the cell hall takes three charges of four points (two on Easy, four on Hard) and calls 1 squad (0, 2); the telephone line can be cut and stops the reserve', async () => {
-    for (const [level, charges, squads] of [['easy', 2, 0], ['normal', 3, 1], ['hard', 4, 2]]) {
+  ['the cell hall takes three charges of four points (two on Easy, three on Hard too since M59b) and calls 1 squad (0, 2); the telephone line can be cut and stops the reserve', async () => {
+    for (const [level, charges, squads] of [['easy', 2, 0], ['normal', 3, 1], ['hard', 3, 2]]) {
       const { map, rules, traits, roster } = await loadGunnerside(level);
       const state = createInitialState(roster, traits, rules, map, 1);
       const { targets } = winTargets(state, rules);
@@ -179,6 +179,21 @@ export default [
     }
     equal(exfilArtId(map.exfilArt), 'objective-ski-trail', 'the ski trail at the way out');
     assert(map.exfil.every(([q, r]) => isPassable(terrainAt(map, q, r))), 'the way out can be walked onto');
+  }],
+
+  ['Hard asks three men out here, and its line on the orders says so (M59b): a level\'s summary takes its numbers from the rules it plays by', async () => {
+    const { rules, difficulty } = await loadGunnerside('hard');
+    equal(rules.mission.minimumOut, 3, 'three out on Hard here');
+    const hard = levelById(difficulty, 'hard').summary;
+    assert(hard.includes('Three men must get out'), `Gunnerside's Hard says three: ${hard}`);
+    assert(!hard.includes('{'), 'no placeholder left');
+    const json = validateMissions(await loadJson('data/missions.json'));
+    const france = missionById(json, 'france');
+    const franceRules = missionRules(france, await loadJson('data/rules.json'));
+    const franceMap = await loadMap(france.map);
+    const levels = missionLevels(france, validateDifficulty(await loadJson('data/difficulty.json'), franceRules, { types: franceMap.enemyTypes }), franceRules, franceMap.enemyTypes);
+    assert(levelById(levels, 'hard').summary.includes('Four men must get out'), 'France\'s Hard still says four');
+    assert(levelById(levels, 'easy').summary.includes('Two men out will do'), 'and its Easy two');
   }],
 
   ['two ways to every charge point (M59b, the third note of men trapped in the plant): with any one hex of the hall or the duct blocked, a wounded man say, every other charge point can still be reached from the shelf', async () => {
