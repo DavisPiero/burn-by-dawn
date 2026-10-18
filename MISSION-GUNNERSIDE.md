@@ -6,7 +6,8 @@ it (§4, §6, §7, §9, §10, §11) are SPEC.md's.
 
 **Specified 18 Oct 2026 (M56). Its engine is built (M57): tracks in the snow (SPEC.md §9
 Tracks), the no-shot clean run and the card before the first shot, all off until the
-mission's patch turns them on. The map is not yet built.** This file says what is to be built and
+mission's patch turns them on. The map is drawn as a draft (M58), `?mission=gunnerside`,
+not yet balanced or worded.** This file says what is to be built and
 how it is to play; once the mission is playable it will say how things are, and keep no
 history (DECISIONS.md has it). Every number in it is a starting point for the balance
 milestone unless it says the operator chose it. The words and names are placeholder
@@ -62,7 +63,7 @@ night; and the bang turns the whole shelf out between the stick and home.
 ### Its two rules
 
 **The gorge** (data only: a new terrain, no code). The gorge's sides are **Gorge side**,
-whose move cost is more than any man's pool, so a man steps onto one only at full AP,
+whose move cost (30) is more than any man's pool, so a man steps onto one only at full AP,
 with the step every man always has (SPEC.md §4, `minimumStep`), and it takes his whole
 turn: climbing down is a turn, and climbing out is a turn. They are heavy cover and block
 sight. At the bottom the river is frozen: **Ice**, 1 AP, heavy cover, so a man down
@@ -72,7 +73,9 @@ two sentries watch. It is France's swim against the bridge, sharpened, and the m
 draft sets the exact hexes to that aim. A wounded man can still climb (the step needs
 only a full pool), at the same cost. The garrison does not climb: its routes keep to the
 bridge, and a patrol hunting at Alarmed paths round by the bridge, as it would round
-any ground that dear.
+any ground that dear. (The operator's, M58: a whole turn, never 3 AP, so the gorge is
+the slow way that keeps a man out of a fight. The 30 is never shown: the hover says
+"a climb: a whole turn", and the move "climb · his whole turn".)
 
 **Tracks in the snow** (an engine rule, `tracks` in the rules patch; null in every other
 mission, so nothing changes there).
@@ -191,7 +194,9 @@ telephone line, so Cut the line is.
 ### The map
 
 `data/map-gunnerside.json`, drawn at M58 to this outline; the balance milestone moves
-what it must.
+what it must. As drawn: the plateau in rows 0 to 4, the gorge in rows 5 to 7, the shelf
+in rows 8 to 12; the bridge runs straight south-west, from column 11 on the rim to
+column 9 on the shelf, a sentry beside each end.
 
 - **The plateau** fills the north third: snowfield and drift, pine woods in clumps, rock
   outcrops, a hut. All three drop runs are over it, and **nobody lands south of the
@@ -214,7 +219,8 @@ what it must.
   the town, with its **junction box** on the shelf below the gate: south of the gorge,
   so it is cut on the way in or not at all.
 - **The way out** is a **ski trail** off the north-east corner of the plateau, three
-  hexes on the edge, as far from the drop runs as the plateau allows: drawn as two lines
+  hexes down the east edge from the corner (M58: along the top edge its picture fell
+  off the board), as far from the drop runs as the plateau allows: drawn as two lines
   of ski tracks running off the board into the dark with a cairn beside them
   (`exfilArt`). Open all night: no timetable.
 - **Three drop runs**, all over the plateau, told apart as France's are:

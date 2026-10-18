@@ -215,9 +215,8 @@ function distanceField(map, goals) {
 }
 
 // Tracks in the snow (M58): where the garrison walks in the coming enemy
-// phase if the turn ended now, and every hex beside that. A move that lays
-// prints there is a trail found next turn, which the bot weighs as being seen,
-// as the hover's TRACKS row tells a player. Worked out once a state, not once
+// phase if the turn ended now, and every hex beside that: where prints laid
+// now are found next turn, as the hover's TRACKS row tells a player. Worked out once a state, not once
 // a candidate: the walk barely moves with one man's step. Nothing where the
 // mission has no tracks.
 let watchedFor = { enemies: null, units: null, hexes: null };
@@ -236,9 +235,23 @@ function watchedSnow(state, map) {
   watchedFor = { enemies: state.enemies, units: state.units, hexes };
   return hexes;
 }
-function trailFound(map, state, path) {
+// The map his route sums are worked on: snow the garrison walks beside next
+// turn costs him a turn's walk more (the sapper's pool), so he takes a way
+// round where it is no longer than that and crosses where there is none, as
+// MISSION-GUNNERSIDE.md (Balance) asks. A cost in the route, not in the choice
+// of move: weighed against moving, it made standing still free, and the stick
+// waited at the rim for a way that was never coming.
+const TRAIL_COST = rules.roles.sapper.actionPoints;
+function routeMap(state, map) {
   const watched = watchedSnow(state, map);
-  return Boolean(watched) && path.slice(1).some((h) => TR.takesPrints(map, rules, h) && watched.has(M.hexKey(h.q, h.r)));
+  if (!watched) return map;
+  const moveCosts = new Map(map.moveCosts ?? []);
+  for (const key of watched) {
+    const [q, r] = key.split(',').map(Number);
+    const cost = M.enterCost(map, q, r, null);
+    if (cost !== null && TR.takesPrints(map, rules, { q, r })) moveCosts.set(key, cost + TRAIL_COST);
+  }
+  return { ...map, moveCosts };
 }
 
 function risk(map, state, unit, path, endHidden) {
@@ -550,7 +563,7 @@ function actFor(state, unit, map) {
   if (PACK && state.turn === 1 && U.checkPackParachute(state.parachutes, unit, rules).ok) return S.packParachute(state, unit.id, rules);
 
   const goals = goalFor(state, unit, map, assign);
-  const dist = distanceField(map, goals);
+  const dist = distanceField(routeMap(state, map), goals);
   const blasts = SB.blastHexesThisTurn(state, rules);
   const reach = U.reachableFor(map, state.units, unit, rules, state.enemies);
   const here = { q: unit.q, r: unit.r, cost: 0 };
@@ -589,7 +602,6 @@ function actFor(state, unit, map) {
       // The tidy man (M42) would rather lose a turn than be seen, to the last turn of the night.
       const urgency = OPTS.tidy ? (left > 0 ? 1 : 0.2) : done ? Math.min(1, left / 6) : Math.min(1, Math.max(0.2, (left - 8) / 6));
       if (r.spotted && !unit.inContact) score += 45 * urgency;
-      else if (plan && trailFound(map, state, plan.path)) score += 45 * urgency;
       if (r.shot === 'hit') score += 400;
       if (r.shot === 'pinned') score += 60 * urgency;
       if (r.spotted && unit.inContact && !r.shot) score += 5;

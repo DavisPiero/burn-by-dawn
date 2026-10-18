@@ -9,7 +9,7 @@ describe the engine through mission 1, the rail bridge in occupied France. How i
 and sounds (§11) is in `ART-DIRECTION.md`, `ART-CARDS.md` and `ART-PLAY.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
 `MISSION-AQUEDUCT.md`), is playable too, picked from the contents page. Mission 4, the
-heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is specified and not yet built.
+heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is a draft: `?mission=gunnerside`.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -100,6 +100,7 @@ tests.html        every test suite, in the browser
   map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
   map-airfield.json  the airfield's (§13), in the same shape
   map-aqueduct.json  the aqueduct's (§14)
+  map-gunnerside.json  the heavy water plant's (§16)
   map-training.json  the practice ground's (§15)
   lessons-training.json  the training course's lessons (§15)
   terrain.json    terrain types (§3)
@@ -420,15 +421,15 @@ the lesson engine that runs it. The engine is built and the course, all seventee
 southern Italy, February 1941.
 One big target that takes five charges (Hard all six), every charge down in a supply canister, and a
 boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine
-rules, written above: supply canisters (§9) and the way out on a timetable (§10).
+rules: supply canisters (§9, `DROP.md`) and the way out on a timetable (§10).
 
 ---
 
 ## 16. Mission 4 — the heavy water plant
 
-**In `MISSION-GUNNERSIDE.md`**, specified at M56 and not yet built: Norway, February
+**In `MISSION-GUNNERSIDE.md`**, specified at M56, its map a draft since M58: Norway, February
 1943, loosely Operation Gunnerside. The stealth mission: a gorge to climb, tracks in the
 snow, gunfire heard across the board, and NOT A SHOT FIRED as its clean run. Its one
-engine rule, tracks in the snow, is built (M57) and written in §9; with it the no-shot
+engine rule, tracks in the snow, is built (M57) and written in §9 (`DROP.md`); with it the no-shot
 clean run (§10, `scoring.cleanNoShot`) and the card before the first shot (§4,
 `confirmShot`). All three are off in the other missions.

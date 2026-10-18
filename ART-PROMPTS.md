@@ -1052,6 +1052,10 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The soft drop shadow under counters.
 - Prints in the snow (M57, `prints`, half a hex of boot prints) and the boot mark on a
   hovered path (`marker-boot`); Gunnerside's painted footprints come at M60 if wanted.
+- The heavy water plant's ground and targets (M58, a draft for M60's art hand-off): the
+  snowfield, drift, pine woods, rock, gorge sides, ice, plant walls, hall floor, cable
+  duct, pipes, barracks and the suspension bridge's deck; the cells, the junction box on
+  its pole, and the ski trail with its cairn at the way out.
 - The mouse arrow in the ? pages' scenes (M48i, `help-cursor`): plain paper and ink.
 - The cover shields on a hovered move (M45): empty, half green, all green.
 - The strike marks on an enemy's chip (M46: knife, crosshair, crosshair struck through,
