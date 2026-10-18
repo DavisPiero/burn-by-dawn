@@ -1055,7 +1055,11 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
 - The heavy water plant's ground and targets (M58, a draft for M60's art hand-off): the
   snowfield, drift, pine woods, rock, gorge sides, ice, plant walls, hall floor, cable
   duct, pipes, barracks and the suspension bridge's deck; the cells, the junction box on
-  its pole, and the ski trail with its cairn at the way out.
+  its pole, and the ski trail with its cairn at the way out. Since M58d its land is the
+  pale frost, the drifts the deep frost.
+- The ground colours (M58d): meadow for the green country, frost for snow, deep frost
+  for winter slopes, flat under every map but the airfield's; roads and the land beside
+  water left bare paper.
 - The mouse arrow in the ? pages' scenes (M48i, `help-cursor`): plain paper and ink.
 - The cover shields on a hovered move (M45): empty, half green, all green.
 - The strike marks on an enemy's chip (M46: knife, crosshair, crosshair struck through,
@@ -1131,7 +1135,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   airfield's own title card (`titleCard` in data/missions.json) is France's until the
   operator paints one (Priority 13).
 - The aqueduct (M41, SPEC.md §14), a first drawing for the draft, all of it in the
-  palette as it stands (a pale wash of the cold blue for winter ground, no new colour):
+  palette as it stood (a pale wash of the cold blue for winter ground; since M58d the
+  land is the deep frost, the mission's ground colour):
   the hillside, crags, the ravine with its torrent, terraces, olive groves, plough,
   shingle, shore rocks and the sea; the aqueduct whole and blown, the road bridge whole
   and blown, the ship's boat and the supply canister. Redrawn at M50 from the operator's

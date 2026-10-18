@@ -43,7 +43,7 @@ import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCo
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, firstPicture, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitlePainting, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, applyGround, firstPicture, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitlePainting, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -2690,6 +2690,8 @@ async function loadMission(id, seed) {
   useMissionWords(mission.words);
   // Our men's counters in the mission's own colour, if it has one (M31d).
   applyCounterColour(mission.counterColour ?? null);
+  // The land printed in the mission's ground colour, if it has one (M58d).
+  applyGround(mission.ground ?? null);
   // The level being played is kept from one mission to the next; the address's at first.
   const levelId = level && difficulty.levels.some((l) => l.id === level.id) ? level.id : difficultyFromQuery(window.location.search, difficulty);
   startMission(levelById(difficulty, levelId), seed);

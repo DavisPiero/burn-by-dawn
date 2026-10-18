@@ -105,10 +105,10 @@ sapper drops two charges on his hex. Whoever carries a charge can set it.
 ### The ground
 
 New terrain, as data in `terrain.json` and drawn in `theme.js`. Only this map has these
-types, so no code asks which mission is on. Its wash is the palette's **cold blue**,
-thin over the paper, for rock and winter ground, as the desert's ochre is for sand
-(ART-DIRECTION.md, Colour): no new colour, and every colour that means something left
-alone.
+types, so no code asks which mission is on. Its land is printed in the palette's
+**deep frost**, the mission's `ground` (M58d; a thin wash of the cold blue until then),
+as the desert's ochre is for sand (ART-DIRECTION.md, Colour); the plough, terraces and
+beach stay bare paper, and every colour that means something is left alone.
 
 | Terrain | Move cost | Cover | Blocks sight | Notes |
 |---|---|---|---|---|

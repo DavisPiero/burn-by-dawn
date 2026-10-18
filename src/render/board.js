@@ -24,7 +24,7 @@ import { pixelsToAxial } from '../layout.js';
 import {
   BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, PRINTS, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, baseFill, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -145,7 +145,8 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
     // Printed in plates: the flat base, a flat tint and a halftone screen over
     // it where the terrain has them, and the motif. Area terrain is printed
     // over all the hexes at once, below; the grid rule goes over everything.
-    hex.appendChild(el('polygon', { points, fill: style.fill }));
+    const beside = NEIGHBOR_DIRS.map((d) => [q + d.q, r + d.r]).filter(([nq, nr]) => inBounds(map, nq, nr)).map(([nq, nr]) => terrainArt(printedIdAt(map, nq, nr)));
+    hex.appendChild(el('polygon', { points, fill: baseFill(style, beside) }));
     // A hex's own wash goes under an area's shape too (M29: the desert's sand
     // under its dunes and wadi, so their rounded corners meet sand). France's
     // area terrain has none, so it prints as before.
