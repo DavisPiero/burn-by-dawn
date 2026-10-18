@@ -388,10 +388,10 @@ const TERRAIN_ART = {
   gorgeSide: { base: 'paper', tint: ['ink', 0.3], motif: 'terrain-gorge', variants: 3 },
   ice: { base: 'paper', tint: ['blue', 0.16], motif: 'terrain-ice', variants: 3 },
   railway: { base: 'paper', motif: null },
-  plantWall: { base: 'paper', tint: ['ink', 0.6], motif: 'terrain-plant-roof', building: true },
+  plantWall: { base: 'paper', tint: ['ink', 0.6], motif: 'terrain-plant-roof', building: true, wall: true },
   hall: { base: 'paper', tint: ['ink', 0.06], motif: 'terrain-hall-floor' },
   duct: { base: 'paper', tint: ['ink', 0.16], motif: 'terrain-duct' },
-  cells: { base: 'paper', tint: ['ink', 0.1], motif: null },
+  cells: { base: 'paper', tint: ['ink', 0.1], motif: null, wall: true },
   pipes: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-pipes' },
   barracks: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-barracks', building: true },
   // The suspension bridge's deck, printed over the gorge (the map's
@@ -405,6 +405,9 @@ const TERRAIN_ART = {
 // reads as a wood on a map rather than a patch of hexes. The push is fixed by
 // where the edge is, never rolled, so the map is the same every time.
 export const AREA = { wobble: 6 };
+
+// The hard edge of a wall (M58b, board.js drawWalls): ground marked `wall`.
+export const WALL = { width: 3.2 };
 
 /** A fixed push, -1 to 1, for the point (x, y). */
 export function wobbleAt(x, y) {

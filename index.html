@@ -1016,18 +1016,19 @@
       font-size: 18px;
       letter-spacing: 1px;
     }
-    /* The rating (M32): the band earned as a red rubber stamp's words, and
-       the annual's score table under it, the earned row in bold. */
+    /* The rating (M32): the band earned as a stamp's words, and the annual's
+       score table under it, the earned row in bold. Green since M58b (the
+       operator's: in red a good rating read as something gone wrong). */
     #results .rating { margin-top: 8px; }
     #results .rating-earned { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
     #results .rating-earned small { font-family: var(--slab); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; }
-    #results .rating-earned b { font-family: var(--slab); font-size: 16px; letter-spacing: 0.5px; white-space: nowrap; color: var(--red); }
+    #results .rating-earned b { font-family: var(--slab); font-size: 16px; letter-spacing: 0.5px; white-space: nowrap; color: var(--green); }
     #results .rating table { margin-bottom: 0; font-size: 12px; color: color-mix(in srgb, var(--ink) 62%, transparent); }
     #results .rating td:first-child { width: 7.5em; }
-    #results .rating td:last-child { width: 1.5em; color: var(--red); }
+    #results .rating td:last-child { width: 1.5em; color: var(--green); }
     #results .rating td:nth-child(2) { text-align: left; }
     #results .rating tr.earned td { color: var(--ink); font-weight: bold; }
-    #results .rating tr.earned td:last-child { color: var(--red); }
+    #results .rating tr.earned td:last-child { color: var(--green); }
     #results .rating tr:nth-last-child(2) td { padding-bottom: 0; }
     /* The two buttons on one line (M32: stacked, with the rating above them,
        they ran off the foot of a long score sheet). */

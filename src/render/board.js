@@ -24,7 +24,7 @@ import { pixelsToAxial } from '../layout.js';
 import {
   BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, PRINTS, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PALETTE, PLACE, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, WALL, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -184,6 +184,7 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
   });
   grid.appendChild(wash);
   terrain.appendChild(grid);
+  drawWalls(terrain, map, corners);
 
   const lines = el('g', { 'pointer-events': 'none' });
   const railway = railwayHexes(map);
@@ -221,6 +222,28 @@ export function resetBoardMemory(layers) {
 function printedIdAt(map, q, r) {
   const id = terrainIdAt(map, q, r);
   return map.printedAs?.[id] ?? id;
+}
+
+// --- walls (M58b) -----------------------------------------------------------------
+// Ground a man cannot walk through that is not plainly water or rock (the
+// plant's walls, its cells) gets a hard ink edge wherever it meets ground he
+// can, so it reads as a wall at a glance (the operator's: the pipes and the
+// walls trapped men who could not see they were there). `wall` in theme.js.
+
+function drawWalls(layer, map, corners) {
+  const edges = edgeCorners(corners, map.hexSize);
+  const isWall = (q, r) => Boolean(terrainArt(printedIdAt(map, q, r)).wall);
+  let d = '';
+  forEachCell(map, (q, r) => {
+    if (!isWall(q, r) || !isInPlay(map, q, r)) return;
+    const c = axialToPixel(q, r, map.hexSize);
+    NEIGHBOR_DIRS.forEach((n, dir) => {
+      if (isWall(q + n.q, r + n.r) || !isInPlay(map, q + n.q, r + n.r)) return;
+      const [a, b] = edges[dir].map((i) => corners[i]);
+      d += `M${(c.x + a.x).toFixed(1)} ${(c.y + a.y).toFixed(1)} L${(c.x + b.x).toFixed(1)} ${(c.y + b.y).toFixed(1)} `;
+    });
+  });
+  if (d) layer.appendChild(el('path', { d, fill: 'none', stroke: PALETTE.ink, 'stroke-width': WALL.width, 'stroke-linecap': 'round', 'pointer-events': 'none' }));
 }
 
 // --- area terrain (SPEC.md §11) --------------------------------------------------
@@ -2031,7 +2054,10 @@ function drawArt(layers, state, view) {
     const p = axialToPixel(middle.q, middle.r, map.hexSize);
     // Moved by the map's `exfilArtNudge`, in hex radii (M31d, art only).
     const [nx, ny] = map.exfilArtNudge ?? [0, 0];
-    const x = p.x + nx * map.hexSize, y = p.y + ny * map.hexSize;
+    // Kept on the board (M58b): a way out in a corner had half its picture off it.
+    const edge = boardEdges(map);
+    const x = Math.min(Math.max(p.x + nx * map.hexSize, edge.left + 40), edge.right - 40);
+    const y = Math.min(Math.max(p.y + ny * map.hexSize, edge.top + 46), edge.bottom - 46);
     // Where the way out is a boat on a timetable (M41) it is drawn where it
     // has got to, out at sea and fainter until it is in, and not at all before.
     if (!map.boatRun) layers.art.appendChild(el('use', { href: `#${exfilArtId(map.exfilArt)}`, x: x - 40, y: y - 46, width: 80, height: 92 }));
@@ -2203,7 +2229,9 @@ function drawSites(layers, state, view) {
     drawAreaEdge(layers, layers.sites, areaOf(view.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
   }
   const exfilAt = labelPoint(map, view.exfil);
-  layers.sites.appendChild(casedText(view.exfilLabel ?? 'EXFIL', exfilAt.x, exfilAt.top - map.hexSize * 0.6, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
+  const exfilWords = view.exfilLabel ?? 'EXFIL';
+  const exfilLabelAt = labelInside(map, exfilAt, exfilWords);
+  layers.sites.appendChild(casedText(exfilWords, exfilLabelAt.x, exfilLabelAt.y, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
   // The job is done and the way out is open (M46): its ground throbs green,
   // and with the tips on GET OUT! is lettered over it in the same green.
   if (view.goOut) {
@@ -2473,7 +2501,23 @@ function labelPoint(map, hexes) {
     x: points.reduce((n, p) => n + p.x, 0) / points.length,
     y: points.reduce((n, p) => n + p.y, 0) / points.length,
     top: Math.min(...points.map((p) => p.y)),
+    bottom: Math.max(...points.map((p) => p.y)),
   };
+}
+
+/**
+ * Where a ring's label goes (M58b): above the ring, as ever, unless that is
+ * off the board's top, when it goes under the ring instead; and never past
+ * its sides. A way out at the board's edge lost its EXFIL off the top (the
+ * operator's, M58), as the airfield's had needed a nudge at M29c.
+ */
+function labelInside(map, at, content, lift = 0.6) {
+  const edge = boardEdges(map);
+  const above = at.top - map.hexSize * lift;
+  const y = above - OBJECTIVE.labelSize < edge.top ? at.bottom + map.hexSize * (lift + 0.35) + OBJECTIVE.labelSize : above;
+  const half = content.length * OBJECTIVE.labelSize * 0.36;
+  const x = Math.min(Math.max(at.x, edge.left + half + 4), edge.right - half - 4);
+  return { x, y };
 }
 
 function casedText(content, x, y, fill) {
@@ -3470,7 +3514,8 @@ export function drawHelpScene(svg, map, frame, cast) {
   if (frame.exfil.length) {
     drawAreaEdge(layers, layers.sites, areaOf(frame.exfil), [[EXFIL.casing, EXFIL.casingWidth], [EXFIL.stroke, EXFIL.width]]);
     const at = labelPoint(map, frame.exfil);
-    layers.sites.appendChild(casedText('EXFIL', at.x, at.top - map.hexSize * 0.6, EXFIL.label));
+    const exfilLabelAt = labelInside(map, at, 'EXFIL');
+    layers.sites.appendChild(casedText('EXFIL', exfilLabelAt.x, exfilLabelAt.y, EXFIL.label));
   }
   if (frame.blast) {
     fillArea(layers, areaOf(frame.blast), BLAST.opacity);
