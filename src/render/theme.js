@@ -453,6 +453,20 @@ export function terrainArt(terrainId) {
 // counters' colour is, before the board is printed.
 let groundColour = PALETTE.paper;
 
+// The drop cue's colour for this mission (M58e): `dropCueColour` in
+// data/missions.json names a PALETTE colour, CUE.kit when it names none.
+let cueColour = null;
+
+/** Letter and ring the drop cue in the PALETTE colour `name`, or the default. */
+export function applyDropCueColour(name) {
+  cueColour = PALETTE[name] ?? null;
+}
+
+/** The colour the drop cue is lettered and ringed in. */
+export function dropCueColour() {
+  return cueColour ?? CUE.kit;
+}
+
 /** Print the land in the PALETTE colour `name`, or bare paper. */
 export function applyGround(name) {
   groundColour = PALETTE[name] ?? PALETTE.paper;
@@ -1315,7 +1329,9 @@ export const CUE = {
   noteAdvance: 0.72, // a letter's width in the pen lettering, in note sizes, for keeping a note on the board
   noteEdgeGap: 14,
   // Choosing the drop is lettered and ringed in the blue of our kit (M46, the
-  // operator's: in red it read as part of the targets' rings).
+  // operator's: in red it read as part of the targets' rings), unless the
+  // mission names its own `dropCueColour` (M58e: blue on the frost was hard to
+  // read, so the aqueduct and Norway say green). See applyDropCueColour.
   kit: PALETTE.leader,
   // Drawn on in turn as the drop is first shown, before the targets' rings
   // (M49b, the operator's), which wait `gapMs` after the last.

@@ -24,7 +24,7 @@ import { pixelsToAxial } from '../layout.js';
 import {
   BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, PRINTS, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, baseFill, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, baseFill, dropCueColour, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -1165,13 +1165,13 @@ function drawDropCue(layers, cue, names, place = null, now = 0) {
     const pen = { d, fill: 'none', 'stroke-linecap': 'round', pathLength: 1, 'stroke-dasharray': 1 };
     for (const path of [
       el('path', { ...pen, stroke: CUE.halo, 'stroke-width': width + 4, opacity: 0.7 }),
-      el('path', { ...pen, stroke: CUE.kit, 'stroke-width': width, 'stroke-linejoin': 'round', opacity }),
+      el('path', { ...pen, stroke: dropCueColour(), 'stroke-width': width, 'stroke-linejoin': 'round', opacity }),
     ]) {
       g.appendChild(path);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { delay: i * staggerMs, duration: drawMs }, elapsed);
     }
   });
-  const letters = penLetters(lines, x, y, [CUE.size, CUE.subSize], CUE.kit);
+  const letters = penLetters(lines, x, y, [CUE.size, CUE.subSize], dropCueColour());
   // The lettering is what the layout tool drags (M48k), from where it stands now.
   if (place?.layoutKey) {
     letters.dataset.layout = place.layoutKey;

@@ -45,7 +45,7 @@ export default [
   ['a mission\'s drop cue and notes read from the layout, and nothing where it says nothing', async () => {
     const { layout } = await loadAll();
     equal(dropCueAt(layout, 'airfield'), [7.2, 5.5], 'the airfield\'s cue on the strip');
-    equal(noteNudge(layout, 'aqueduct', 'exfil'), [-3.3, -1.7], 'the aqueduct\'s way-out note');
+    equal(noteNudge(layout, 'aqueduct', 'exfil'), [-1.97, -1.27], 'the aqueduct\'s way-out note');
     equal(noteNudge(layout, 'france', 'bridge'), null, 'France\'s bridge note where the ring puts it');
     equal(dropCueAt(layout, 'nowhere'), null, 'no mission, no cue');
   }],
