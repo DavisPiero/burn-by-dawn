@@ -178,3 +178,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-19 | m59c | The rows are rules, not art: COPY ROWS gives `"rows": [ ... ]` as the map files have them (a test holds every map file to that text byte for byte), for the operator to send to Claude, who puts them in the file after the tests and a 200-seed naive bot run, and shows the numbers before and after. COPY still gives data/layout.json, pasted by the operator, as before
 2026-10-19 | m59c | Painting a target's own ground (the cells, a depot) is allowed when the checks pass, with a word in the panel: it is what the ruins take the place of
 2026-10-19 | m59c | A repaint fetches the mission's supplied pictures again (layBoard does, as at loading); the ones not painted yet (the winter portraits) 404 each time, as they do at loading. Harmless; left
+2026-10-19 | m59c | M59c signed off by the operator ("M59c is signed off, merge it") and merged; next M60, MISSION-GUNNERSIDE.md split first
