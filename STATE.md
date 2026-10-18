@@ -4,37 +4,40 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M55b and M55c signed off and merged into main (not yet pushed).
+Last updated: 18 Oct 2026, M56 (the Gunnerside spec) written on branch
+`m56-gunnerside-spec`, waiting for the operator's read and sign-off.
 
 ## Where we are
 
-- **`main` is M55c**, signed off and merged; push it when you are ready. M55b:
-  - **The opening title** is twice the size (108 px, its spacing and shadow doubled with
-    it) and its shadow is the palette's cold blue `#3D5A73` instead of red. CLICK OR PRESS ANY KEY sits closer under it.
-  - **The train turns with the line.** The playtester's diagonal look: since M49b the
-    track bends down 16° past the fuel dump, and each car kept the angle it stops at for
-    its whole run, so cars came in tilted or slid sideways round the bend. Each now turns
-    to the track at every hex.
-  - **Your wording is in:** the taglines (OUT BY DAWN for France and the airfield) and
-    the panel captions M1a, M3, M3a, M5, M5a.
-- **M55c:** a click on the landing panel puts the panel away first, so
-  the turn card under it can be read (it was shutting the hidden card instead).
-- Tests: 249 headless (`node tools/run-tests.mjs`), 252 in `tests.html`.
+- **`main` is M55c, pushed to GitHub** (18 Oct 2026). The live site has M55b and M55c.
+- **M56, on its branch:** `MISSION-GUNNERSIDE.md`, SPEC §16, mission 4 written before
+  it is built. No code. The heavy water plant, Norway 1943: drop on a snowy plateau,
+  cross a gorge (a turn down, a turn on the ice, a turn up) or the guarded bridge, get
+  into the cell hall by the cable duct, out by a ski trail in the north-east. Its one
+  engine rule: **tracks in the snow**, drawn as footprints turned the way a man walked,
+  fading over three turns, found by patrols like parachutes. Gunfire heard across the
+  board (+4); the clean run NOT A SHOT FIRED (+5); a card before the first shot; a
+  decoy flare for the diversion. How the game tells the player stealth is the point,
+  and five new comic panel moments, are sections of their own.
+- SPEC.md, CLAUDE.md, ROADMAP.md and WINNING.md point at it (WINNING's "exfil on the
+  south edge" now says "on a map edge").
+- Tests: 249 headless, 252 in `tests.html` (unchanged; nothing in the game changed).
 
 ## Next
 
-1. **Push main.**
-2. **Paint the Dakota panel** (ART-PROMPTS.md Priority 30). Until its file is in
-   `assets/panels/` the game shows nothing at START GAME, which is why you have not seen
-   it. Drop it in as named; Claude makes the smaller copy the game loads.
-3. **Then the Gunnerside spec**, `MISSION-GUNNERSIDE.md`, written in Claude Code, for
-   your approval before anything is built.
-4. Playtests with new people whenever one can be found (`docs/PLAYTEST.md`).
+1. **The operator reads `MISSION-GUNNERSIDE.md`** and signs it off, or notes changes.
+2. **M57, the engine** for it: tracks, the no-shot clean run, the first-shot card, all
+   off in the other missions.
+3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30): nothing shows
+   at START GAME until `assets/panels/panel-dakota.jpg` exists.
 
 ## Open with the operator
 
-1. **The title's blue**: the cold blue as it is. Say if you want it darker.
-2. **PICK A DROP DIRECTION draws itself on behind the Dakota panel**: judge it once the
+1. **Guesses in the spec to confirm or change** (all marked as starting points): a
+   20-turn night; prints last 3 turns; three charges for the hall (Easy 2, Hard 4),
+   sappers carrying two; the telephone line the one bonus target; seven enemies; the
+   placeholder names (Vassdal Works, Mørkgjelet, Isvidda, Elvebyen) and all the words.
+2. **PICK A DROP DIRECTION drawing in behind the Dakota panel**: judge it once the
    painting is in.
 3. **Still standing:** France a little easier than its baselines say ("ok for now"); the
    bugle for a lesson passed; the knife's cry worded "a cry"; the record's tab at the top
@@ -42,7 +45,7 @@ Last updated: 18 Oct 2026, M55b and M55c signed off and merged into main (not ye
 
 ## Owed
 
-- **From the operator:** the Dakota panel; optional art 21 (winter kit); optional
-  per-mission Dakota panels.
-- **Parked in ROADMAP.md:** more panel moments, tips as in-world briefings, an Advice
-  button, hiding a body.
+- **From the operator:** the Dakota panel; optional art 21 (winter kit, which Gunnerside
+  uses too); optional per-mission Dakota panels (Gunnerside's would be a Halifax).
+- **Parked in ROADMAP.md:** more panel moments (Gunnerside's spec designs them), tips as
+  in-world briefings, an Advice button, hiding a body.
