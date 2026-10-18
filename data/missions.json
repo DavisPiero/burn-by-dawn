@@ -368,7 +368,7 @@
           }
         }
       },
-      "enemies": {},
+      "enemies": { "types": { "patrol": { "speed": 2 } } },
       "win": {
         "condition": "destroyPrimary"
       },
