@@ -170,9 +170,10 @@ his hex, in the snow, for a scout to fetch.
 ### The ground
 
 New terrain, as data in `terrain.json` and drawn in `theme.js`. Only this map has these
-types, so no code asks which mission is on. Its wash is the aqueduct's **cold blue**,
-thin over the paper, the snow the paper itself left nearly bare so it reads white
-beside everything else: no new colour (ART-DIRECTION.md, Colour).
+types, so no code asks which mission is on. Its land is printed in the palette's pale
+**frost**, the mission's `ground` (M58d), so the snow reads white and cold beside
+everything else; the drifts are the deep frost, the rest the cold blue, thin, and the
+plant's buildings bare paper (ART-DIRECTION.md, Colour).
 
 | Terrain | Move cost | Cover | Blocks sight | Prints | Notes |
 |---|---|---|---|---|---|
