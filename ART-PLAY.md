@@ -169,16 +169,21 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   end of the turn if never heard.
 - **The loading page**: the spread stays hidden until it is drawn and its supplied
   pictures are in (never more than 8 s), while the table shows BURN BY DAWN and a fuse
-  burning down. Ready, it asks for a key or a click — which also lets the browser play
+  burning down. **The title painting** (M55), the stick in silhouette, fades up behind
+  them as soon as it is in, cropped to the window under a dark shade; without it the
+  table is plain dark. Ready, it asks for a key or a click — which also lets the browser play
   sound — and the spread fades up with the orders open.
 
 **Comic panels** (M52, the operator's: tried behind a switch, then kept for everyone). At
-two story moments a painting pops up over the board as a panel in a graphic novel would:
+three story moments a painting pops up over the board as a panel in a graphic novel would:
 tipped 4° (the operator's: 2° read as a panel not quite level), in a thick ink frame on a paper
 gutter with a hard shadow, popping in from smaller and more tipped (220 ms, from 11°), its caption
 in comic lettering in a paper box over the top-left corner (the mission's
 `comicPanels`, placeholder words for the operator), CLICK OR ANY KEY under it. **The
-landing**, when the drop show ends, over the turn card; **mission accomplished**, on a
+Dakota** (M55), the men in the back of the aircraft, when START GAME puts the orders
+away, before a run is picked, in every mission but the course: the mission's own
+painting if there is one, else the shared one (`art` may be a list, tried in order).
+**The landing**, when the drop show ends, over the turn card; **mission accomplished**, on a
 win, once the bang has been seen, beside the back page: the mission's contents panel.
 Each shows once a game; a click or any key puts it away and does nothing else. A
 painting not supplied shows nothing. No sound of its own.

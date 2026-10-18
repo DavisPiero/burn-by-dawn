@@ -41,7 +41,7 @@ import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCo
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, firstPicture, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitlePainting, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -2484,6 +2484,8 @@ function closeBriefing(byButton = false) {
   // map behind it, a stray key no longer turns to one unasked.
   if (briefing?.kind === 'contents') return;
   if (wantsItsButton() && !byButton) return;
+  // START GAME on a mission's orders (M55): the men in the back of the Dakota.
+  const starting = briefing?.kind === 'orders' && !course && state.phase === 'drop';
   // The course's list is put away by taking a lesson: the next not yet
   // passed. A lesson passed leads on to the one after it, or back to the list.
   if (course && !course.lesson && briefing?.kind === 'orders') return startLesson(nextLesson().id);
@@ -2493,6 +2495,7 @@ function closeBriefing(byButton = false) {
     return next ? startLesson(next.id) : openCourse();
   }
   briefing = briefing?.under ?? null;
+  if (starting) showComicPanel('dakota');
   render();
 }
 
@@ -3416,20 +3419,21 @@ function endDropShow() {
 /**
  * The mission's panel for a moment (M52), `delay` ms from now, once a game:
  * shown when its painting has loaded, so a painting not yet supplied shows
- * nothing at all.
+ * nothing at all. `art` may be a list (M55), tried in order: the mission's
+ * own painting, then the shared one.
  */
 function showComicPanel(moment, delay = 0) {
   const panel = mission.comicPanels?.[moment];
   if (!panel || panelsSeen.has(moment)) return;
   panelsSeen.add(moment);
   clearTimeout(panelTimer);
-  panelTimer = setTimeout(() => {
-    const img = new Image();
-    img.onload = () => {
-      comicPanel = { src: panel.art, caption: panel.caption ?? null };
-      render();
-    };
-    img.src = panel.art;
+  const shownFor = mission;
+  panelTimer = setTimeout(async () => {
+    const src = await firstPicture([panel.art].flat());
+    // Not if the game moved on meanwhile (another mission loaded in place).
+    if (!src || mission !== shownFor || !panelsSeen.has(moment)) return;
+    comicPanel = { src, caption: panel.caption ?? null };
+    render();
   }, delay);
 }
 
@@ -3771,10 +3775,12 @@ window.dispatchEvent(new Event('night-drop-started'));
 
 try {
   applyDocumentTheme();
+  // The title painting first (M55): it is the opening page's, seen while the rest loads.
+  const paintingLoaded = loadSuppliedTitlePainting();
   const paperLoaded = loadSuppliedPaper();
   loadSuppliedClipboard();
   const fontsLoaded = loadSuppliedFonts().then(() => document.documentElement.classList.add('fonts-ready'));
-  loadingProgress([paperLoaded, fontsLoaded]);
+  loadingProgress([paintingLoaded, paperLoaded, fontsLoaded]);
   // The mission (M27): `?mission=` picks one, as `?seed=` picks a seed; its
   // files and patches are loaded here, before the level's go over them.
   missions = validateMissions(await loadJson('data/missions.json'));

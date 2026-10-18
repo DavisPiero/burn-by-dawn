@@ -1450,10 +1450,13 @@ fixed words. The operator does not need this file.
 
 ## M. The comic panels
 
+- M1a | data/missions.json `missions[1].comicPanels.dakota.caption`
 - M1 | data/missions.json `missions[1].comicPanels.landing.caption`
 - M2 | data/missions.json `missions[1].comicPanels.success.caption`
+- M3a | data/missions.json `missions[2].comicPanels.dakota.caption`
 - M3 | data/missions.json `missions[2].comicPanels.landing.caption`
 - M4 | data/missions.json `missions[2].comicPanels.success.caption`
+- M5a | data/missions.json `missions[3].comicPanels.dakota.caption`
 - M5 | data/missions.json `missions[3].comicPanels.landing.caption`
 - M6 | data/missions.json `missions[3].comicPanels.success.caption`
 

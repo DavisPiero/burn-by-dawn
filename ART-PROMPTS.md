@@ -959,6 +959,74 @@ for: whoever lands first is different every game.
 
 ---
 
+## Priority 29 — the title painting (the opening page) — to make
+
+**Why** (M55, the operator's): the opening page, BURN BY DAWN and "click or press any
+key", was a plain dark table. A painting behind it sets the night before the first click.
+One painting for the whole game: this page comes before any mission is picked.
+
+| | |
+|---|---|
+| File | `assets/title/title-painting.jpg` |
+| Size, format | **16:10, 2400 × 1500**, JPEG quality about 85, sRGB, opaque, **no text** |
+| Shown at | The whole window, cropped to fill it (a wider window loses a little top and bottom, a squarer one a little of each side), under a dark shade so the words read |
+| Composition | **Keep the middle band clear and dark**: roughly the central half of the width, from 35% to 65% of the height. Code sets BURN BY DAWN, the fuse and the "click" line there. Put the men in the lower third and keep everything that matters inside the central 80% of the width, so no crop cuts a man in half |
+| Code does | Claude makes a 1600 × 1000 copy at quality 85 for the game to load; the original is kept as `title-painting_full.jpg`. It fades up behind the title as soon as it has loaded |
+
+### Prompt (add the style block)
+
+> A wide night scene, Normandy, 1944: six British paratroopers in single file walk along
+> the crest of a low hedged ridge, seen from below and far off as pure black silhouettes
+> against a huge moonlit sky. Rimless steel helmets, rifles and a Bren gun slung, kitbags
+> and charges on their backs, the leading man pointing ahead. A big pale moon low on the
+> right, thin cloud, a few far-off parachute canopies drifting down in the distance on
+> the left. The men and the ridge fill only the bottom third of the picture; above them
+> is open, dark, empty slate-blue sky. Cold slate blue and near-black, a little cream
+> moonlight on the cloud edges.
+
+If the generator puts the men too big or too high, crop or extend the canvas downward:
+the sky above them is where the title goes.
+
+---
+
+## Priority 30 — the Dakota panel (before the drop) — to make
+
+**Why** (M55, the operator's): a comic panel of the men in the back of the aircraft
+readying to jump, after START GAME and before the drop run is picked, in every mission.
+It works like the landing panels (Priority 28): the same frame, tilt and caption box,
+once a game, a click or any key puts it away.
+
+**One shared painting first.** Each mission tries its own file before the shared one, so
+a desert or winter version can be added later with no code change:
+`panel-dakota-airfield.jpg` (khaki drill), `panel-dakota-aqueduct.jpg` (winter; the real
+1941 raid flew in Whitley bombers, jumping through a hole in the floor, if you want it
+true), `panel-dakota-france.jpg`.
+
+| | |
+|---|---|
+| Files | `assets/panels/panel-dakota.jpg` (shared); later, optionally, `panel-dakota-<mission>.jpg` |
+| Size, format | **As the landing panels**: 3:2, **1200 × 800**, JPEG quality about 85, sRGB, opaque, **no text** |
+| Shown at | About 550 × 370, over the board, tipped in a thick ink frame the code draws |
+| Composition | One clear moment, close and dramatic. **Keep the top-left quarter quiet** (dark fuselage): the caption box sits over it |
+| Code does | Claude makes the 900 × 600 copy the game loads; the original is kept as `_full` |
+
+### Prompt — the shared one, `panel-dakota.jpg` (add the style block)
+
+> A single comic-book panel, night, inside the dark cabin of a Douglas Dakota transport
+> aircraft, seen from low down near the open door, looking forward up the fuselage: a
+> stick of British paratroopers in rimless steel helmets and camouflaged Denison smocks
+> stands in a tight line, each with one hand on the static line hooked to the cable
+> overhead, kitbags strapped to their legs. The nearest man, close to us, grim and
+> lit red from one side, checks the man in front's kit. A small red jump light glows
+> beside the open door on the right, cold wind and dark night sky and a sliver of moon
+> through the doorway. Ribbed metal fuselage walls, bucket seats folded up. Deep shadow
+> and red light against cold slate blue. The top-left of the picture is dark fuselage.
+
+The caption over it is a placeholder in `data/missions.json` (`comicPanels.dakota`), one
+per mission, for you to reword.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
