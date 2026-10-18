@@ -383,10 +383,10 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M58, mission 4's map as a draft** (§16, `MISSION-GUNNERSIDE.md`, The order it is
-built in): `?mission=gunnerside`, stamped NEXT YEAR'S ANNUAL on the contents page; the
-terrain drawn in code, the garrison, the objectives, the ski trail, and the bot taught
-the prints and the climb. Built on its branch, waiting for sign-off. The milestones before it are in `MILESTONES.md`. v1.0 is
+Next, in order (STATE.md): **the palette**, two ground washes to tell the grassy maps
+(the practice ground, France) from the snowy ones (the aqueduct, the heavy water plant),
+a milestone of its own; then **M59, mission 4's balance** (§16, `MISSION-GUNNERSIDE.md`,
+The order it is built in). The milestones before them are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done

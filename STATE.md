@@ -4,13 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M58, M58b and M58c built on branch `m58-gunnerside-map`, not
-yet signed off.
+Last updated: 18 Oct 2026, M58 to M58c signed off by the operator, merged into main and
+pushed.
 
 ## Where we are
 
-- **`main` is M57, pushed. The branch `m58-gunnerside-map` is M58 to M58c**, waiting
-  for the operator's sign-off. The margin says build M58c.
+- **`main` is M58c, pushed.** The margin says build M58c.
 - **M58c**: the footprint wash (snow the garrison passes next turn, hatched in ink while
   a man is selected); ARE YOU SURE? before ending a turn with men who have not moved
   (every mission); the cell hall two hexes west.
@@ -32,12 +31,11 @@ yet signed off.
 
 ## Next
 
-1. **The operator's look at M58c**, then sign-off and merge.
-2. **The palette** (liked by the operator): meadow and frost ground washes to tell the
+1. **The palette** (liked by the operator): meadow and frost ground washes to tell the
    grassy maps from the snowy ones, a milestone of its own.
-3. **M59, balance** (MISSION-GUNNERSIDE.md, Balance): West is too easy beside the
+2. **M59, balance** (MISSION-GUNNERSIDE.md, Balance): West is too easy beside the
    gorge's narrow end (95-99%); hunter beats careful; the alert budget. Then M60 (words, sounds, art), M61 (panel moments).
-4. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
+3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
 ## Open with the operator
 
