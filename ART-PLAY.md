@@ -168,8 +168,8 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   shows it without using it up), when he moves off the hex where he said it, and at the
   end of the turn if never heard.
 - **The loading page**: the spread stays hidden until it is drawn and its supplied
-  pictures are in (never more than 8 s), while the table shows BURN BY DAWN and a fuse
-  burning down. **The title painting** (M55), the stick in silhouette, fades up behind
+  pictures are in (never more than 8 s), while the table shows BURN BY DAWN (108 px, its
+  hard shadow cold blue, M55b) and a fuse burning down. **The title painting** (M55), the stick in silhouette, fades up behind
   them as soon as it is in, cropped to the window under a dark shade; without it the
   table is plain dark. Ready, it asks for a key or a click — which also lets the browser play
   sound — and the spread fades up with the orders open.

@@ -118,3 +118,6 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-18 | m55 | No visible stand-in for either painting: the operator pushes straight to the live site, so each is a slot that shows nothing until its file is in, as the landing panels were
 2026-10-18 | m55 | A comic panel's `art` may be a list, tried in order: the Dakota panel names the mission's own file, then the shared one, so a desert or winter variant is a file dropped in, not a code change
 2026-10-18 | m55 | The Dakota panel is not shown in the course: it has no START GAME, and a lesson is not a mission
+2026-10-18 | m55b | The opening title doubled whole: 108 px with its letter spacing (16 px) and shadow offset (6 px) doubled too, so it reads as the same title bigger; it is 1005 px wide in a 1280 window
+2026-10-18 | m55b | Its shadow is the palette's cold blue #3D5A73 as it is, not darkened: over the shaded painting it reads as blue (the operator to judge; a darker blue is a one-line change)
+2026-10-18 | m55b | The train's diagonal look (a playtester's) was each car held at the angle it stops at while it ran: since M49b's step down past the fuel dump the line bends 16 degrees, so cars came in tilted or slid sideways round the bend; each now turns to the line at every hex of its run
