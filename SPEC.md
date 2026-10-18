@@ -384,7 +384,7 @@ comes after the current milestone is in `ROADMAP.md`.
 ### Current
 
 Next (STATE.md): **M59b, mission 4's Hard and the operator's notes on it** (§16,
-`MISSION-GUNNERSIDE.md`), then M60. The milestones before them are in `MILESTONES.md`. v1.0 is
+`MISSION-GUNNERSIDE.md`), built and awaiting sign-off; then M60. The milestones before them are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done
