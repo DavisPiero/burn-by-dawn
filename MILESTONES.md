@@ -17,6 +17,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M55 | The operator's rewording of the men's lines carried back; the operator's title painting behind the opening page; a Dakota panel at START GAME (a mission's own painting, else the shared one), specified for the operator in ART-PROMPTS.md |
 | M54b | The operator's notes on M54: the canister and Hard aqueduct rules said plainly again, "It will face" on the counter key, and the lesson card's shake replaced by a quick scale-in (the shake had fired on every hover) |
 | M54 | The operator's rewording carried back into the game; the practice ground's new painting; three lines for each of the men's moments, picked by seed and turn, never rolled |
 | M53 | The wording sheet: every line the player sees in `docs/WORDING.md`, by where it shows, for the operator's rewording, with `docs/WORDING-SOURCES.md` saying where each lives; the orders mark a bonus target with "(no charge to spare)" (Hard's road bridge) |

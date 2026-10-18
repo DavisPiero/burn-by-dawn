@@ -4,16 +4,16 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M55 built on `m55-title-dakota-panels`, waiting for sign-off.
+Last updated: 18 Oct 2026, M55 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M54b**, pushed. **M55 is on its branch**, not merged:
+- **`main` is M55**, signed off, merged and pushed:
   - **Your rewording of the men's lines is in the game**: all 76 lines you changed in
     section F of `docs/WORDING.md`, in the three missions.
-  - **The title painting**: a slot behind the opening page. Your painting fades up behind
-    BURN BY DAWN as soon as it loads, cropped to fill the window under a dark shade.
-    Without it the page is plain dark, as before.
+  - **Your title painting** is behind the opening page: it fades up behind BURN BY DAWN
+    as soon as it loads, cropped to fill the window under a dark shade (your 2400 x 1500
+    kept as `title-painting_full.jpg`; the game loads a 1600 x 1000 copy).
   - **The Dakota panel**: a comic panel when START GAME is clicked, before a drop run is
     picked, in France, the airfield and the aqueduct (not the course). Each mission tries
     its own painting first, then the shared one. Without either, nothing shows.
@@ -24,9 +24,12 @@ Last updated: 18 Oct 2026, M55 built on `m55-title-dakota-panels`, waiting for s
 
 ## Next
 
-1. **Your sign-off on M55**, then the merge.
-2. **Paint the two pictures** (Priorities 29 and 30). Drop them in as named; Claude makes
-   the smaller copies the game loads.
+1. **The opening page's title (the operator's note, 18 Oct 2026):** BURN BY DAWN twice
+   as big (54 px to 108 px, `.loading-title` in index.html), its drop shadow dark blue
+   instead of red. Guess: the palette's cold blue `#3D5A73` (leader blue is reserved for
+   the leader), darkened if it reads too light over the painting.
+2. **Paint the Dakota panel** (Priority 30). Drop it in as named; Claude makes the smaller
+   copy the game loads.
 3. **Then the Gunnerside spec**, `MISSION-GUNNERSIDE.md`, written in Claude Code, for your
    approval before anything is built.
 4. Playtests with new people whenever one can be found (`docs/PLAYTEST.md`).
@@ -46,7 +49,7 @@ Last updated: 18 Oct 2026, M55 built on `m55-title-dakota-panels`, waiting for s
 
 ## Owed
 
-- **From the operator:** the title painting and the Dakota panel; optional art 21 (winter
+- **From the operator:** the Dakota panel; optional art 21 (winter
   kit); optional per-mission Dakota panels.
 - **Parked in ROADMAP.md:** more panel moments, tips as in-world briefings, an Advice
   button, hiding a body.
