@@ -181,7 +181,7 @@ export default [
     assert(map.exfil.every(([q, r]) => isPassable(terrainAt(map, q, r))), 'the way out can be walked onto');
   }],
 
-  ['the footprint wash (M58c): the snow on or beside where the garrison stands or walks next turn, only ground that takes prints, nothing without tracks', async () => {
+  ['the footprint wash (M58c): the snow the garrison would find prints on next turn (M59b: underfoot or ahead in its arc), only ground that takes prints, nothing without tracks', async () => {
     const { map, rules, traits, roster } = await loadGunnerside();
     const state = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 3), map, 'north'), map, rules);
     const detected = runDetection(state, map, rules).state;
@@ -192,7 +192,7 @@ export default [
       const [q, r] = key.split(',').map(Number);
       assert(takesPrints(map, rules, { q, r }), `${key} takes prints`);
       const stood = [...detected.enemies, ...after.flatMap((e) => [...(e.walked ?? []), e])];
-      assert(stood.some((e) => hexDistance(e, { q, r }) <= 1), `${key} is beside the garrison's walk`);
+      assert(stood.some((e) => hexDistance(e, { q, r }) <= rules.tracks.findRange), `${key} is within findRange of the garrison's walk`);
     }
     equal(watchedSnow(map, { ...rules, tracks: null }, detected.enemies, after), null, 'off without tracks');
   }],

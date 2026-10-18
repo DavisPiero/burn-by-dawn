@@ -305,6 +305,7 @@
         },
         "tracks": {
           "turns": 2,
+          "findRange": 1,
           "alert": 1,
           "alertPerPhase": 1
         },
