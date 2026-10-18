@@ -1,72 +1,87 @@
 {
-  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md, M58): mission 4's map, a first drawing in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. The plateau in rows 0-4, the gorge in rows 5-7 (a gorge side, the ice, a gorge side, crag at each end), the suspension bridge carrying the road over it, running south-west from column 11 on the rim to column 9 on the shelf, the shelf with the plant in rows 8-12.",
+  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md): mission 4's map, in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. M58b (the operator's notes on the M58 draft): the gorge wanders and is two deep where it narrows (a crossing two turns), three with the ice only in its middle stretch; the plant moved east, a thin shell of wall; the pipes are no longer ground; pine lanes on the plateau.",
   "name": "The heavy water plant at Vassdal",
   "width": 18,
   "height": 13,
   "hexSize": 46,
-  "_dropRuns": "SPEC.md §9, §16. All three over the plateau, so nobody lands south of the gorge. West over the pine woods in the north-west (under the trees, far from the bridge; a man in the pines loses his first turn); North along the plateau's open middle (soft landings, prints wherever they go); East down beside the road toward the bridge (nearest the crossing and the way out, and the bridge post and the plateau patrol).",
+  "_dropRuns": "SPEC.md §9, §16. Three runs from three sides over the plateau, their names on three edges: West in from the west edge over the pine woods (a man in the pines loses his first turn; the narrow west end of the gorge is close); North down from the top edge over the open middle (soft landings, prints wherever they go); East in from the east edge toward the road and the bridge (nearest the crossing and the way out, and the bridge post and the plateau patrol).",
   "dropRuns": [
     {
       "id": "west",
       "label": "West run",
       "tag": "quiet",
-      "description": "The pine woods in the north-west: under the trees the whole way and far from the bridge, the longest walk round to the climb. A man who comes down in the pines loses his first turn.",
+      "description": "In from the west over the pine woods: under the trees, and close to where the gorge narrows. A man who comes down in the pines loses his first turn.",
       "from": [
-        1,
-        0
+        -1,
+        2
       ],
       "to": [
-        3,
-        3
+        8,
+        2
       ],
-      "jumpAt": 0,
+      "jumpAt": 1,
       "spacing": 1,
-      "wind": "SW"
+      "wind": "W",
+      "labelAlong": 0.05,
+      "labelNudge": [
+        2.7,
+        -0.9
+      ]
     },
     {
       "id": "north",
       "label": "North run",
       "tag": "steady",
-      "description": "The open snow in the middle of the plateau: the softest landing on the map, and prints wherever the men go.",
+      "description": "Down from the north over the open middle of the plateau: the softest landing on the map, and prints wherever the men go.",
       "from": [
-        3,
-        1
+        11,
+        0
       ],
       "to": [
-        9,
-        1
+        4,
+        3
       ],
-      "jumpAt": 0,
+      "jumpAt": 1,
       "spacing": 1,
-      "wind": "E"
+      "wind": "NE",
+      "labelAlong": 0.0,
+      "labelNudge": [
+        2.4,
+        0.1
+      ]
     },
     {
       "id": "east",
       "label": "East run",
       "tag": "fast",
-      "description": "Down beside the road toward the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.",
+      "description": "In from the east toward the road and the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.",
       "from": [
-        16,
-        0
+        15,
+        4
       ],
       "to": [
-        10,
-        3
+        13,
+        1
       ],
       "jumpAt": 0,
       "spacing": 1,
-      "wind": "W"
+      "wind": "W",
+      "labelAlong": 0.0,
+      "labelNudge": [
+        -1.6,
+        1.0
+      ]
     }
   ],
-  "_enemies": "SPEC.md §6, §16. Seven, as few as the aqueduct's, set to watch the crossings and the snow. Posts: the bridge post, one at each end beside the road, each sweeping between the deck and the gorge below; the gate guard by the main door. Patrols: the plateau patrol between the East run's ground and the road, the one that reads prints; the rim patrol along the gorge's north rim west of the bridge; the plant patrol along the railway from the duct to the gate; the road patrol on the road between the gate and the junction box. They set out on turn 2 (missions.json patrols.setOutTurn).",
+  "_enemies": "SPEC.md §6, §16. Seven. Posts: the bridge post, one beside each end, each sweeping between the deck and the gorge; the gate guard by the main door. Patrols: the plateau patrol across the East run's ground to the road, the one that reads prints; the rim patrol along the gorge's north rim west of the bridge; the plant patrol along the railway to the duct; the road patrol on the road between the gate and the town. They set out on turn 2.",
   "enemies": [
     {
       "id": "post-bridge-north",
       "label": "Bridge post (north)",
       "type": "sentry",
       "at": [
-        8,
-        4
+        9,
+        5
       ],
       "facing": "SE",
       "sweep": "SW"
@@ -76,7 +91,7 @@
       "label": "Bridge post (south)",
       "type": "sentry",
       "at": [
-        6,
+        8,
         8
       ],
       "facing": "NW",
@@ -87,25 +102,25 @@
       "label": "Gate guard",
       "type": "sentry",
       "at": [
-        6,
-        9
+        9,
+        12
       ],
-      "facing": "W",
-      "sweep": "SW"
+      "facing": "NW",
+      "sweep": "NE"
     },
     {
       "id": "patrol-plateau",
       "label": "Plateau patrol",
       "type": "patrol",
-      "facing": "NW",
+      "facing": "E",
       "loop": false,
       "route": [
         [
-          14,
-          4
+          9,
+          3
         ],
         [
-          12,
+          14,
           2
         ]
       ]
@@ -118,11 +133,11 @@
       "loop": false,
       "route": [
         [
-          6,
+          8,
           4
         ],
         [
-          0,
+          3,
           4
         ]
       ]
@@ -135,12 +150,12 @@
       "loop": false,
       "route": [
         [
-          3,
-          8
+          6,
+          9
         ],
         [
-          -4,
-          10
+          2,
+          11
         ]
       ]
     },
@@ -152,11 +167,11 @@
       "loop": false,
       "route": [
         [
-          5,
-          10
+          9,
+          9
         ],
         [
-          8,
+          10,
           12
         ]
       ]
@@ -170,16 +185,16 @@
     "facing": "NW",
     "entryHexes": [
       [
-        7,
-        9
-      ],
-      [
-        8,
-        9
-      ],
-      [
-        6,
+        11,
         10
+      ],
+      [
+        12,
+        10
+      ],
+      [
+        11,
+        11
       ]
     ],
     "guardHex": [
@@ -188,7 +203,7 @@
     ],
     "guardFacing": "SW"
   },
-  "_reinforcements": "SPEC.md §6, §16. Up the road from Elvebyen off the south-east edge when the hall goes up (one squad on Normal, two on Hard, none on Easy; none once the telephone line is cut), across the bridge to posts on the way out; and a squad for a body found (missions.json bodyFound), to where it lay.",
+  "_reinforcements": "SPEC.md §6, §16. Up the road from Elvebyen off the south-east edge when the hall goes up (one squad on Normal, two on Hard, none on Easy; none once the telephone line is cut), across the bridge to posts on the way out; and a squad for a body found, to where it lay.",
   "reinforcements": {
     "id": "reinforcements",
     "label": "Reinforcements",
@@ -204,21 +219,21 @@
         12
       ],
       [
-        9,
-        12
+        10,
+        11
       ]
     ],
     "posts": [
       {
         "guardHex": [
-          10,
-          4
+          11,
+          5
         ],
         "guardFacing": "NE"
       },
       {
         "guardHex": [
-          14,
+          13,
           2
         ],
         "guardFacing": "NE"
@@ -226,13 +241,13 @@
       {
         "guardHex": [
           13,
-          1
+          0
         ],
         "guardFacing": "E"
       }
     ]
   },
-  "_objectives": "SPEC.md §7, §16. The cell hall is the primary: its footprint is the cells along the hall's back wall; its four charge points are the hall floor beside them, so a man inside when they go is in the kill radius. The duct at its west end and the main door at its east end are the ways in. The telephone line's junction box stands on the rock below the gate, a charge point either side of it on the road's verge; a scout can cut it there.",
+  "_objectives": "SPEC.md §7, §16. The cell hall is the primary: its footprint is the cells along the hall's back wall; its four charge points are the hall floor beside them, so a man on one when they go is in the kill radius. The duct at its west end and the main door at its east end are the ways in. The telephone line's junction box stands on its rock by the road under the gorge, a charge point either side; a scout can cut it there.",
   "objectives": [
     {
       "id": "cell-hall",
@@ -241,38 +256,38 @@
       "primary": true,
       "hexes": [
         [
-          -1,
-          11
+          4,
+          12
         ],
         [
-          0,
-          11
+          5,
+          12
         ],
         [
-          1,
-          11
+          6,
+          12
         ],
         [
-          2,
-          11
+          7,
+          12
         ]
       ],
       "chargeHexes": [
         [
-          -1,
-          10
+          5,
+          11
         ],
         [
-          0,
-          10
+          6,
+          11
         ],
         [
-          1,
-          10
+          7,
+          11
         ],
         [
-          2,
-          10
+          8,
+          11
         ]
       ]
     },
@@ -283,18 +298,18 @@
       "primary": false,
       "hexes": [
         [
-          7,
-          11
+          11,
+          8
         ]
       ],
       "chargeHexes": [
         [
-          6,
-          11
+          10,
+          8
         ],
         [
-          8,
-          11
+          12,
+          8
         ]
       ]
     }
@@ -315,39 +330,44 @@
     ]
   ],
   "exfilArt": "skiTrail",
-  "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the plant. Its hexes are Railway ground (terrain.json), which is what the rules read.",
+  "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the duct. Its hexes are Railway ground (terrain.json), which is what the rules read.",
   "railway": [
     [
-      -3,
-      8
+      -4,
+      9
     ],
     [
       3,
-      8
+      9
+    ],
+    [
+      3,
+      10
     ]
   ],
   "_printedAs": "SPEC.md §11, art only: the bridge's hexes are printed as the suspension bridge's deck over the gorge (theme.js `suspension`). Every rule still reads Bridge.",
   "printedAs": {
     "bridge": "suspension"
   },
-  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword (MISSION-GUNNERSIDE.md).",
+  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword (MISSION-GUNNERSIDE.md). The gorge's name in the village names' spaced capitals along it (M58b, the operator's: it did not read as a gorge).",
   "places": [
     {
       "name": "Vassdal Works",
       "kind": "village",
       "at": [
-        1,
-        9
+        6,
+        10
       ],
-      "dy": -0.9
+      "dy": -0.95
     },
     {
-      "name": "Mørkgjelet",
-      "kind": "wadi",
+      "name": "Mørkgjelet Gorge",
+      "kind": "gorge",
       "at": [
-        2,
+        3,
         6
-      ]
+      ],
+      "dx": 0.87
     },
     {
       "name": "Isvidda",
@@ -362,10 +382,11 @@
       "name": "to Elvebyen",
       "kind": "other",
       "at": [
-        9,
+        10,
         12
       ],
-      "dy": 0.9
+      "dy": 0.9,
+      "dx": -0.6
     }
   ],
   "legend": {
@@ -383,23 +404,22 @@
     "A": "hall",
     "U": "duct",
     "E": "cells",
-    "Z": "pipes",
     "B": "barracks",
     "F": "farmhouse"
   },
   "rows": [
-    "PPPPSSDSSSSTSSDSSS",
-    "PPPPSSSSDSSTKSSDSS",
-    "PPPKSSFSSSSTSSPPSS",
-    "PPPSSDDSKSSTSSPPDS",
-    "KPSSSSSSSSSTSSKSSK",
-    "CCGGGGGGGGXGGGGGCC",
-    "CCIIIIIIIIXIIIIICC",
-    "CCGGGGGGGXGGGGGGCC",
-    "SLLLLLLLKTSSSSSKKS",
-    "SPMMMMMMMTSBBSSPKK",
-    "PSUAAAAAATTBBSSPPP",
-    "PPMMEEEEMSTSKSSPPK",
-    "PPKSSZZSSSSTTTTTTT"
+    "PPPPSSSSSSSSTSDDSS",
+    "PPPPSSDDSSSKTSSSSS",
+    "PPPPPSSSSKFSTSSSSS",
+    "PPPKPPSDDSSSTSKPPS",
+    "CCGGGPSSSSSSTSSPPS",
+    "CCGGGGGGGGGSTSSSPS",
+    "CCSSSIIIIGGGXGGGCC",
+    "SPPSSGGGGSSXGGGGCC",
+    "SSSKSSSKSSSTSSSKSS",
+    "LLLLLLLLSSSTTTTTSS",
+    "PPSSSSSSLMMMMMMTBB",
+    "PPPSSPPSUAAAAAATBS",
+    "PPPSKSPSSMEEEEMSTT"
   ]
 }

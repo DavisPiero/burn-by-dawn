@@ -136,7 +136,7 @@ export default [
 
   ['the garrison never climbs: a walk from the rim to the shelf goes round by the bridge', async () => {
     const { map } = await loadGunnerside();
-    const path = findPath(map, { q: 1, r: 4 }, { q: 0, r: 8 }, null);
+    const path = findPath(map, { q: 4, r: 3 }, { q: -1, r: 8 }, null);
     assert(path.some((h) => terrainIdAt(map, h.q, h.r) === 'bridge'), 'over the bridge');
     assert(!path.some((h) => terrainIdAt(map, h.q, h.r) === 'gorgeSide'), 'never down a gorge side');
   }],
