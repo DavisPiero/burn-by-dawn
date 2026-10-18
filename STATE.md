@@ -35,6 +35,9 @@ shows the numbers before and after.
 
 ## Open with the operator
 
+0. **Labels the layout tool cannot drag** (19 Oct 2026): the run tabs, place names,
+   target names and EXFIL were placed by hand from the operator's notes. Proposed:
+   make them draggable in `?layout`, so the operator places them and COPY saves it.
 1. **Guesses in M59b**, kept unless changed: prints found 2 hexes ahead; the plant one
    up and one west, the plateau and gorge left; charge points two above and two below
    the cells; the gate guard looking E, sweeping NW; the bands 24 / 30 / 35. **In M59**:
