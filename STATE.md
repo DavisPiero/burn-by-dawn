@@ -4,12 +4,11 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, end of session: M59 built on its branch, not yet signed off.
+Last updated: 18 Oct 2026: M59 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M58e, pushed. M59 is on `m59-gunnerside-balance`**, not merged; the
-  margin there says build M59. Tests: 270 headless, 273 in `tests.html`.
+- **`main` is M59, pushed.** The margin says build M59. Tests: 270 headless, 273 in `tests.html`.
 - **Four missions and the course.** France, the airfield and the aqueduct playable; the
   heavy water plant (Gunnerside) a draft at `?mission=gunnerside`, balanced on Normal
   and Easy at M59, not yet worded.
@@ -21,7 +20,7 @@ Last updated: 18 Oct 2026, end of session: M59 built on its branch, not yet sign
 
 ## Next
 
-1. **The operator signs off M59, or not** (see Open, 1 to 3).
+1. **M59b, Gunnerside's Hard**, with the operator's notes from playing it (Open, 1).
 2. Then M60 (words, sounds, art hand-off) and M61 (panel moments).
 3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
