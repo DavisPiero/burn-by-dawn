@@ -795,7 +795,7 @@ export const MARKER = {
 export const PRINTS = {
   length: Math.sqrt(3) / 2, // the hex's middle to an edge's middle, in hex radii
   aspect: 24 / 40,
-  opacity: 0.85,
+  opacity: 1,
   hoverDash: '4 3',
   hoverWidth: 1.6,
   bootSize: 15,
@@ -3407,7 +3407,7 @@ const SPRITES = {
   // edge, so a straight walk is one trail and a bend turns in the hex.
   prints: {
     viewBox: '0 0 40 24',
-    draw: () => [0, 1, 2, 3].map((i) => bootSole(5 + i * 10, i % 2 ? 8.6 : 15.4, i % 2 ? -4 : 3)),
+    draw: () => [0, 1, 2, 3].map((i) => bootSole(5 + i * 10, i % 2 ? 7.5 : 16.5, i % 2 ? -4 : 3, 1.35)),
   },
   // A boot mark on a hovered path's hex that would take prints (M57): one
   // print, toes up, on a paper disc.

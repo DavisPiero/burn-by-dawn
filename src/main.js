@@ -516,12 +516,10 @@ function deriveView() {
   // A man on the beach with the boat in (M49d, the operator's: elsewhere he
   // would be out already): told to board, tips or not.
   if (!state.outcome && state.phase !== 'drop') view.manNotes = [...view.manNotes, ...waitingToBoard(state, rules, baseMap).map((u) => ({ q: u.q, r: u.r, words: 'BOARD! [B]' }))];
-  // TRACKS! (M57, a tip): beside the first trail of the game, the turn it is laid.
+  // TRACKS! (M57, a tip): beside the first trail of the game, the turn it is
+  // laid, under its first print: the man stands on its last.
   const tipTrail = tipsOn && tracksTip.trail && state.turn === tracksTip.turn ? (state.prints ?? []).filter((p) => p.trail === tracksTip.trail) : [];
-  if (tipTrail.length > 0) {
-    const last = tipTrail.at(-1);
-    view.manNotes.push({ q: last.q, r: last.r, words: 'TRACKS!', under: 'the patrols will follow them' });
-  }
+  if (tipTrail.length > 0) view.manNotes.push({ q: tipTrail[0].q, r: tipTrail[0].r, words: 'TRACKS!', under: 'the patrols will follow them' });
   // What the turn card's hint is about, ringed while the card is up (M46).
   if (briefing?.kind === 'turn') view.hintRings = hintRings(view);
   // A lesson's step (M47): what it rings, and its line in the pen.
