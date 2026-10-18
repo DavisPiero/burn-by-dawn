@@ -121,3 +121,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-18 | m55b | The opening title doubled whole: 108 px with its letter spacing (16 px) and shadow offset (6 px) doubled too, so it reads as the same title bigger; it is 1005 px wide in a 1280 window
 2026-10-18 | m55b | Its shadow is the palette's cold blue #3D5A73 as it is, not darkened: over the shaded painting it reads as blue (the operator to judge; a darker blue is a one-line change)
 2026-10-18 | m55b | The train's diagonal look (a playtester's) was each car held at the angle it stops at while it ran: since M49b's step down past the fuel dump the line bends 16 degrees, so cars came in tilted or slid sideways round the bend; each now turns to the line at every hex of its run
+2026-10-18 | m55b | CLICK OR PRESS ANY KEY FOR YOUR ORDERS rises 51 px once loaded (the operator's: halfway to the title's letters), only when ready, so it never sits on the fuse while loading; it changes words at the same moment

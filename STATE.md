@@ -4,14 +4,13 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M55b built on branch `m55b-title-train-taglines`, not yet
-signed off.
+Last updated: 18 Oct 2026, M55b signed off and merged into main (not yet pushed).
 
 ## Where we are
 
-- **`main` is M55**, signed off and pushed. **The branch has M55b** on top of it:
+- **`main` is M55b**, signed off and merged; push it when you are ready:
   - **The opening title** is twice the size (108 px, its spacing and shadow doubled with
-    it) and its shadow is the palette's cold blue `#3D5A73` instead of red.
+    it) and its shadow is the palette's cold blue `#3D5A73` instead of red. CLICK OR PRESS ANY KEY sits closer under it.
   - **The train turns with the line.** The playtester's diagonal look: since M49b the
     track bends down 16° past the fuel dump, and each car kept the angle it stops at for
     its whole run, so cars came in tilted or slid sideways round the bend. Each now turns
@@ -22,7 +21,7 @@ signed off.
 
 ## Next
 
-1. **Your sign-off on M55b** (merge, then you push).
+1. **Push main.**
 2. **Paint the Dakota panel** (ART-PROMPTS.md Priority 30). Until its file is in
    `assets/panels/` the game shows nothing at START GAME, which is why you have not seen
    it. Drop it in as named; Claude makes the smaller copy the game loads.
