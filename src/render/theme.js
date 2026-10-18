@@ -38,6 +38,15 @@ export const PALETTE = {
   // the charges a man carries still stand off it in their paper rings. A
   // mission names it as its `counterColour` (data/missions.json).
   burnt: '#B4592A',
+  // The ground colours (M58d, the operator's: to tell the grassy maps from
+  // the snowy ones at a glance), used only as a mission's `ground`: the land
+  // its board is printed on, in place of the bare paper. Meadow for the green
+  // country (the practice ground, France); frost for the winter ground, pale
+  // for snow (the heavy water plant), deeper for winter slopes (the aqueduct)
+  // and Norway's drifts.
+  meadow: '#D9DDB0',
+  frost: '#EEF2F2',
+  frostDeep: '#CFDCE3',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -313,7 +322,9 @@ export function loadSuppliedTitleCard(url = TITLE_CARD.url, lettered = TITLE_CAR
 }
 
 // ---------------------------------------------------------------------------
-// Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base, an optional
+// Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base (`ground`
+// is the mission's ground colour, M58d, bare paper when it names none;
+// `paper` stays paper, for what man has built or cleared), an optional
 // flat tint of one spot colour over it (a printer's tint, at an opacity), an
 // optional halftone screen, a motif, and the grid line. The board has to read
 // at a glance (SPEC.md §11, M7b): open ground is flat colour, and the screen
@@ -324,25 +335,25 @@ export function loadSuppliedTitleCard(url = TITLE_CARD.url, lettered = TITLE_CAR
 // (the canal) gets a bank on every edge that faces dry land.
 
 const TERRAIN_ART = {
-  field: { base: 'paper', motif: 'terrain-field', variants: 3, sparse: 0.22 },
-  track: { base: 'paper', motif: null, road: true },
-  hedgerow: { base: 'paper', tint: ['green', 0.12], motif: 'terrain-hedgerow', variants: 3, hedge: true },
+  field: { base: 'ground', motif: 'terrain-field', variants: 3, sparse: 0.22 },
+  track: { base: 'ground', motif: null, road: true },
+  hedgerow: { base: 'ground', tint: ['green', 0.12], motif: 'terrain-hedgerow', variants: 3, hedge: true },
   // `area` terrain is printed as one shape across every run of neighbouring
   // hexes of it (see AREA), with its motif scattered over the shape.
   // `shadows`: each motif has a `<motif>-shadow` sprite, printed for the whole
   // run before any motif, so no tree is darkened by its neighbour's (M17).
-  wood: { base: 'paper', area: { fill: 'green', tone: ['ink', 35], outline: 1.8 }, motif: 'terrain-wood', variants: 3, shadows: true },
-  orchard: { base: 'paper', area: { tint: ['green', 0.08], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-orchard', variants: 3, shadows: true },
-  marsh: { base: 'paper', area: { tint: ['blue', 0.16] }, motif: 'terrain-marsh' },
+  wood: { base: 'ground', area: { fill: 'green', tone: ['ink', 35], outline: 1.8 }, motif: 'terrain-wood', variants: 3, shadows: true },
+  orchard: { base: 'ground', area: { tint: ['green', 0.08], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-orchard', variants: 3, shadows: true },
+  marsh: { base: 'ground', area: { tint: ['blue', 0.16] }, motif: 'terrain-marsh' },
   // High ground in tonal bands: darker at the crest, a paler band round the
   // edge where it falls away, a contour at its foot, and no symbol.
-  ridge: { base: 'paper', area: { tint: ['ink', 0.13], rim: { width: 26, opacity: 0.5 }, outline: 1.2, outlineOpacity: 0.45, dash: '8 3' }, motif: null },
+  ridge: { base: 'ground', area: { tint: ['ink', 0.13], rim: { width: 26, opacity: 0.5 }, outline: 1.2, outlineOpacity: 0.45, dash: '8 3' }, motif: null },
   canal: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
   lock: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
   farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse', building: true },
   emplacement: { base: 'paper', tint: ['red', 0.1], motif: 'terrain-emplacement' },
   // The bridge and the dump are drawn by their objective art, over the hexes.
-  bridge: { base: 'paper', motif: null, road: true },
+  bridge: { base: 'ground', motif: null, road: true },
   depot: { base: 'paper', tint: ['ink', 0.07], motif: null },
   // The desert (SPEC.md §13, M29), in desert ochre over the paper: sand a pale
   // wash of it, dunes a stronger one in bands, the wadi the ochre darkened
@@ -350,44 +361,45 @@ const TERRAIN_ART = {
   // sand. Area terrain here keeps the sand's wash under its shape (`tint`
   // with `area`), so its rounded corners meet sand, not bare paper. The wire
   // is a line, like a hedge (`fence`, drawn by board.js with WIRE).
-  sand: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-sand', variants: 3, sparse: 0.4 },
-  scrub: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-scrub', variants: 3 },
-  dunes: { base: 'paper', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.4], outline: 1, outlineOpacity: 0.35, dash: '6 4' }, motif: 'terrain-dunes', variants: 3 },
+  sand: { base: 'ground', tint: ['ochre', 0.3], motif: 'terrain-sand', variants: 3, sparse: 0.4 },
+  scrub: { base: 'ground', tint: ['ochre', 0.3], motif: 'terrain-scrub', variants: 3 },
+  dunes: { base: 'ground', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.4], outline: 1, outlineOpacity: 0.35, dash: '6 4' }, motif: 'terrain-dunes', variants: 3 },
   // The wadi a touch lighter (M29b, the operator's: too strong): the ochre at
   // 75% and a lighter ink tone, still the darkest ground on the board.
-  wadi: { base: 'paper', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.75], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-wadi', variants: 3 },
-  wire: { base: 'paper', tint: ['ochre', 0.3], motif: null, fence: true },
+  wadi: { base: 'ground', tint: ['ochre', 0.3], area: { tint: ['ochre', 0.75], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-wadi', variants: 3 },
+  wire: { base: 'ground', tint: ['ochre', 0.3], motif: null, fence: true },
   strip: { base: 'paper', tint: ['ink', 0.07], motif: 'terrain-strip' },
-  pen: { base: 'paper', tint: ['ochre', 0.3], motif: 'terrain-pen' },
-  aircraft: { base: 'paper', tint: ['ochre', 0.3], motif: null },
+  pen: { base: 'ground', tint: ['ochre', 0.3], motif: 'terrain-pen' },
+  aircraft: { base: 'ground', tint: ['ochre', 0.3], motif: null },
   camp: { base: 'paper', motif: 'terrain-camp', variants: 2, building: true },
-  // The winter hills (SPEC.md §14, M41): a wash of the cold blue over the
-  // paper where the desert has its ochre (0.18 since M43; at 0.1 the slopes
-  // read grey, not cold, beside the plough's bare paper), the ravine the blue darkened with
-  // ink as the wadi is, the crags in ink. The plough and the beach stay bare
-  // paper, and the sea is the canal's blue. No new colour.
-  hillside: { base: 'paper', tint: ['blue', 0.18], motif: 'terrain-hillside', variants: 3, sparse: 0.6 },
-  crag: { base: 'paper', tint: ['blue', 0.18], area: { tint: ['ink', 0.3], outline: 1.8 }, motif: 'terrain-crag', variants: 2 },
-  ravine: { base: 'paper', tint: ['blue', 0.18], area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
+  // The winter hills (SPEC.md §14, M41): the mission's ground, the deeper
+  // frost, where the desert has its ochre (M58d; until then a wash of the cold
+  // blue, which read grey beside the plough), the ravine the blue darkened with
+  // ink as the wadi is, the crags in ink. The plough, the terraces and the
+  // beach stay bare paper, warm beside the slopes, and the sea is the canal's blue.
+  hillside: { base: 'ground', motif: 'terrain-hillside', variants: 3, sparse: 0.6 },
+  crag: { base: 'ground', area: { tint: ['ink', 0.3], outline: 1.8 }, motif: 'terrain-crag', variants: 2 },
+  ravine: { base: 'ground', area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
   terrace: { base: 'paper', tint: ['green', 0.14], motif: 'terrain-terrace', variants: 2 },
-  olives: { base: 'paper', tint: ['blue', 0.18], area: { tint: ['green', 0.1], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-olives', variants: 3 },
+  olives: { base: 'ground', area: { tint: ['green', 0.1], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-olives', variants: 3 },
   plough: { base: 'paper', motif: 'terrain-plough', variants: 2 },
-  aqueduct: { base: 'paper', tint: ['blue', 0.18], motif: null },
+  aqueduct: { base: 'ground', motif: null },
   arch: { base: 'paper', tint: ['ink', 0.1], motif: 'terrain-arch' },
   shingle: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-shingle', variants: 2 },
   rocks: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-rocks', variants: 2 },
   sea: { base: 'blue', motif: 'terrain-sea', variants: 2, banks: ['sea'] },
-  // Norway (SPEC.md §16, M58): the aqueduct's cold blue, thinner, the snow the
-  // paper itself left nearly bare so it reads white beside everything else.
-  // No new colour. The pines are a wood's area in ink and green with snow on
+  // Norway (SPEC.md §16, M58): the snow the mission's ground, the pale frost
+  // (M58d), so it reads white and cold beside everything else; the drifts the
+  // deeper frost, the rest the cold blue, thin. The plant's buildings stay
+  // warm paper, indoors. The pines are a wood's area in ink and green with snow on
   // their tiers; the gorge's sides cliff hatching on a dark tint, straight-edged, the ice pale between them.
-  snowfield: { base: 'paper', motif: 'terrain-snowfield', variants: 2, sparse: 0.3 },
-  drift: { base: 'paper', area: { tint: ['blue', 0.1], outline: 1, outlineClass: 'stroke-blue', outlineOpacity: 0.45, dash: '6 4' }, motif: 'terrain-drift', variants: 2 },
-  pines: { base: 'paper', area: { tint: ['blue', 0.14], outline: 1.4 }, motif: 'terrain-pines', variants: 3, shadows: true },
-  rock: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-rock', variants: 2 },
-  gorgeSide: { base: 'paper', tint: ['ink', 0.3], motif: 'terrain-gorge', variants: 3 },
-  ice: { base: 'paper', tint: ['blue', 0.16], motif: 'terrain-ice', variants: 3 },
-  railway: { base: 'paper', motif: null },
+  snowfield: { base: 'ground', motif: 'terrain-snowfield', variants: 2, sparse: 0.3 },
+  drift: { base: 'ground', area: { tint: ['frostDeep', 1], outline: 1, outlineClass: 'stroke-blue', outlineOpacity: 0.45, dash: '6 4' }, motif: 'terrain-drift', variants: 2 },
+  pines: { base: 'ground', area: { tint: ['blue', 0.14], outline: 1.4 }, motif: 'terrain-pines', variants: 3, shadows: true },
+  rock: { base: 'ground', tint: ['blue', 0.1], motif: 'terrain-rock', variants: 2 },
+  gorgeSide: { base: 'ground', tint: ['ink', 0.3], motif: 'terrain-gorge', variants: 3 },
+  ice: { base: 'ground', tint: ['blue', 0.16], motif: 'terrain-ice', variants: 3 },
+  railway: { base: 'ground', motif: null },
   plantWall: { base: 'paper', tint: ['ink', 0.6], motif: 'terrain-plant-roof', building: true, wall: true },
   hall: { base: 'paper', tint: ['ink', 0.06], motif: 'terrain-hall-floor' },
   duct: { base: 'paper', tint: ['ink', 0.16], motif: 'terrain-duct' },
@@ -396,7 +408,7 @@ const TERRAIN_ART = {
   // The suspension bridge's deck, printed over the gorge (the map's
   // `printedAs`, art only: the rules read Bridge), turned to run south-west
   // as the map's does; the road is drawn over it.
-  suspension: { base: 'paper', tint: ['blue', 0.18], motif: 'terrain-suspension' },
+  suspension: { base: 'ground', tint: ['blue', 0.18], motif: 'terrain-suspension' },
 };
 
 // Area terrain's outline: it follows the hexes' edges, rounded off at every
@@ -427,7 +439,19 @@ export function terrainArt(terrainId) {
   const art = TERRAIN_ART[terrainId];
   if (!art) return UNKNOWN_TERRAIN;
   const area = art.area ? { ...art.area, tintFill: art.area.tint ? PALETTE[art.area.tint[0]] : null } : null;
-  return { ...art, area, fill: PALETTE[art.base], tintFill: art.tint ? PALETTE[art.tint[0]] : null };
+  const fill = art.base === 'ground' ? groundColour : PALETTE[art.base];
+  return { ...art, area, fill, tintFill: art.tint ? PALETTE[art.tint[0]] : null };
+}
+
+// The mission's ground (M58d): `ground` in data/missions.json names a PALETTE
+// colour the land is printed in; bare paper when it names none (the airfield,
+// whose sand is its ochre's wash over the paper). Art only, set as the
+// counters' colour is, before the board is printed.
+let groundColour = PALETTE.paper;
+
+/** Print the land in the PALETTE colour `name`, or bare paper. */
+export function applyGround(name) {
+  groundColour = PALETTE[name] ?? PALETTE.paper;
 }
 
 /** Which variant of a motif a hex gets, or none: fixed by its coordinates, not rolled. */

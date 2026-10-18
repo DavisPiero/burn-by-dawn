@@ -11,6 +11,7 @@ import { loadJson, loadMap } from '../src/map.js';
 import { createInitialState, settleMission } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { MUSIC_TRACKS, SOUND_FILES } from '../src/render/sound.js';
+import { PALETTE, applyGround, terrainArt } from '../src/render/theme.js';
 import { landedState } from './fixtures.js';
 
 function assert(condition, message) {
@@ -207,6 +208,27 @@ export default [
       assert(MUSIC_TRACKS.includes(track), `${track} is not in MUSIC_TRACKS`);
       const response = await fetch(`${SOUND_FILES.dir}/${track}.m4a`);
       assert(response.ok, `${track}.m4a is missing`);
+    }
+  }],
+  ['a mission\'s ground is a palette colour, and the land is printed in it (M58d)', async () => {
+    const json = validateMissions(await loadJson('data/missions.json'));
+    const ground = (id) => missionById(json, id).ground;
+    equal(ground('training'), 'meadow', 'the practice ground is meadow');
+    equal(ground('france'), 'meadow', 'France is meadow');
+    equal(ground('aqueduct'), 'frostDeep', 'the aqueduct the deeper frost');
+    equal(ground('gunnerside'), 'frost', 'Norway the pale frost');
+    equal(ground('airfield'), undefined, 'the desert names none');
+    for (const m of json.missions) if (m.ground) assert(PALETTE[m.ground], `${m.id}'s ground ${m.ground} is not in PALETTE`);
+    try {
+      applyGround('meadow');
+      equal(terrainArt('field').fill, PALETTE.meadow, 'a field prints in meadow');
+      equal(terrainArt('wood').fill, PALETTE.meadow, 'and under a wood, so its corners meet meadow');
+      equal(terrainArt('farmhouse').fill, PALETTE.paper, 'a farmhouse stays bare paper');
+      equal(terrainArt('canal').fill, PALETTE.blue, 'the water keeps its blue');
+      applyGround(null);
+      equal(terrainArt('field').fill, PALETTE.paper, 'with no ground, the land is bare paper');
+    } finally {
+      applyGround(null);
     }
   }],
 ];
