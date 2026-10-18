@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M58e (the operator's notes on M58d) built on branch
-`m58e-notes`, not yet signed off. main is M58d.
+Last updated: 18 Oct 2026, M58e (the operator's notes on M58d) signed off by the
+operator, merged into main and pushed.
 
 ## Where we are
 
-- **`main` is M58d, pushed.** Branch `m58e-notes` holds M58e; its margin says build M58e.
+- **`main` is M58e, pushed.** The margin says build M58e.
 - **M58e, the notes**: the dog louder; the new contents line; the aqueduct's notes where
   the operator dragged them; the drop cue in a mission's own colour (green on the aqueduct
   and in Norway); the cell hall's ring takes in its charge points; PAINT CLEAR in
@@ -43,15 +43,14 @@ Last updated: 18 Oct 2026, M58e (the operator's notes on M58d) built on branch
 
 ## Next
 
-1. **Sign off M58e**, or repaint: start a mission with `?layout`, PAINT CLEAR, COPY.
-2. **M59, balance** (MISSION-GUNNERSIDE.md, Balance): West is too easy beside the
+1. **M59, balance** (MISSION-GUNNERSIDE.md, Balance): West is too easy beside the
    gorge's narrow end (95-99%); hunter beats careful; the alert budget. Then M60 (words, sounds, art), M61 (panel moments).
-3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
+2. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
 ## Open with the operator
 
-1. **Guesses in M58e**: which fields by Ferme Lebrun and by the practice ground's exfil
-   were cleared (repaint at will); the lane off the top west of the hall, not through it.
+1. **Guesses in M58e**, signed off: the lane off the top west of the hall; the cleared
+   hexes are the operator's to repaint with PAINT CLEAR in `?layout`.
 2. **Guesses in M58d**, signed off as built: only the road hexes cleared, not their
    neighbours; Gunnerside's ice not counted as water; its roads warm paper in the snow.
 3. **Guesses in M58c**: the wash hatched in ink; the end-turn card asks about men left
