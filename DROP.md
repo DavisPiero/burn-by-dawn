@@ -79,14 +79,18 @@ step leave anything behind.) Where a mission gives `{ turns, alert, alertPerPhas
 - **They last `turns` turns**: laid in turn N, with 3, they are there through the enemy
   phases of N, N+1 and N+2, and gone at the end of N+2. Undo takes them back with the
   move that laid them.
-- **They are found as a parachute is**: an enemy coming onto or beside one, on any hex
-  it walks through or where it ends its go, finds it: a noise there (heard as a
+- **They are found where an enemy looks** (M59b, the operator's: prints found behind an
+  enemy's back were a puzzle): on any hex it walks onto, or ahead of it inside its arc
+  within `findRange` hexes with a clear line, from each hex it walks through (facing
+  the way it walks) and where it ends its go (facing as it ends). A parachute is still
+  found on or beside, whatever the facing. A find makes a noise there (heard as a
   parachute found), so that hex becomes a last known contact, and **every print that
   man's one move laid goes with it**, so a long walk across the open is one find. A find
   raises the alert by `alert`, but prints raise it **no more than `alertPerPhase` times
   in one enemy phase**, however many trails are found. The diversion leaves them where
   they are. There is no action to brush them out: the answer is the route.
-- **Seen first**: the hovered path marks each hex that would take prints with a boot,
+- **Seen first** (the footprint wash, while a man is selected, is the same sum: the snow
+  ahead of the garrison's next walk): the hovered path marks each hex that would take prints with a boot,
   and its TRACKS row says who would find them next turn, by the same sum the turn will
   do; a print's hover says whose it is, the turn it fills in and who finds it next turn;
   the turn report says who found whose. With the tips on, the first trail of a game has

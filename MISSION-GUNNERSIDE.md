@@ -33,10 +33,9 @@ a handful of Norwegian commandos skied across the Hardanger plateau, climbed dow
 the gorge below the Vemork plant and up its far side, went in through a cable duct, set
 their charges on the heavy-water cells and were gone before the garrison knew where the
 bang had come from. Not a shot was fired. Here it is the same six British paratroopers,
-the same 18×13 board, and a **20-turn night** (a February night in Norway is long; the
-balance milestone measures it).
+the same 18×13 board, and an **18-turn night** (M59b: at 20 the bot showed the slack).
 
-The job is **the cell hall** inside the plant: three charges (Easy two, Hard four) on
+The job is **the cell hall** inside the plant: three charges (Easy two, Hard three too) on
 the cells, set from inside, the way in one cable duct or one watched door. The plant
 stands on a shelf on the far side of a **gorge** from where the stick lands, and the way
 out is back across it. So the night has two crossings: one quiet, on the way in, while
@@ -89,8 +88,9 @@ mission, so nothing changes there).
 - **Prints last `turns` turns** (2, M59: at 3 the plateau was a minefield of finds): laid
   in turn N, they are there through the enemy phases of N and N+1, and gone at the end of
   turn N+1, when the wind and the falling snow have filled them. A hex walked again takes the newest prints.
-- **They are found as a parachute is** (SPEC.md §9): an enemy coming onto or beside a
-  hex with prints, on any hex it walks through or where it ends its go, finds them:
+- **They are found where an enemy looks** (SPEC.md §9, M59b): on a hex it walks onto,
+  or ahead of it in its arc within `findRange` 2 hexes, from any hex it walks through or
+  where it ends its go, never behind it; an enemy that finds them gets:
   **alert +1**, a noise there (heard 3 hexes, as a parachute found), and that hex becomes
   a last known contact. **Finding one hex of a trail clears the whole trail**: every
   print that man laid in that one move. So a long walk across the open is one find, not
@@ -164,7 +164,8 @@ aqueduct, and the men jump with them: no canisters.
 | Vance, Barrow (scouts), Speers (gunner) | 0 | 1 |
 
 Five in the stick. Normal's hall takes three, so two are spare: the telephone, or a
-sapper lost. Hard's takes four, so one is spare. Losing a sapper drops two charges on
+sapper lost. Hard's takes three too (M59b, the operator's: four of five, after the
+telephone took one, was four for four and unforgiving). Losing a sapper drops two charges on
 his hex, in the snow, for a scout to fetch.
 
 ### The ground
@@ -215,11 +216,16 @@ south-west where the gorge narrows east of the middle, a sentry beside each end.
   sentries, one at each end.
 - **The shelf** in the south third, where the plant stands, a little east of the middle (M58c: two hexes back west, out of the crowd round the telephone line and the gate), with
   open ground and pines to the west of it (M58b, the operator's: the first draft's walls
-  and pipes jammed the men up): the **cell hall**, a thin shell, one row of wall on its
-  north side and the cells along its back on the board's south edge, its charge points on
-  the hall floor beside them; the **cable duct** into its west end, at the railway's
-  end; the **main door** at its east end, facing the gate; the **barracks** east of the
-  plant. Every wall has a hard ink edge, so it reads as a wall. The **pipes** are not
+  and pipes jammed the men up): the **cell hall**, its north wall a row below the shelf,
+  the cells in the middle of its floor and **the floor running all the way round them**,
+  down to the board's south edge (M59b, the operator's: in the one-hex hall a wounded
+  man blocked the job for good, and a man who set a charge at the east end had no way
+  out), its four charge points on the floor above and below the cells; the **cable
+  duct** into its west end, where the railway stops; the **main door**, its open east
+  end, with clear ground between it and the road so a man can come round the gate
+  guard; the **barracks** east of the plant. **Every place a man must reach has two ways
+  in and out**: with any one hex of the hall blocked, every charge point can still be
+  reached (a test holds the map to it, after three notes of men trapped in the plant). Every wall has a hard ink edge, so it reads as a wall. The **pipes** are not
   ground: they come down the hillside behind the plant off the board, a picture for M60.
 - **The railway** runs along the shelf from the west edge to the plant: the quick way
   from the gorge to the duct, open but leaving no prints. Where the gorge side meets it
@@ -253,16 +259,19 @@ and the snow rather than to fight.
 
 - **Sentries**: the **bridge post**, two of them, one at each end, each sweeping
   (DETECTION.md: one way on odd turns, the other on even) between the deck and the gorge
-  below it, so the climb beside the bridge can be timed; the **gate guard**, facing the
-  road and the main door.
+  below it, so the climb beside the bridge can be timed; the **gate guard**, at the gate,
+  looking down the road to the town and sweeping to the main door (M59b: facing the door
+  it left no way round it).
 - **Patrols**: the **plateau patrol**, across the snow between the East run's ground and
   the road, east of it (M59: walking west of it, it crossed every run's way to the gorge
   and found prints three times a night), the one that reads prints; the **rim patrol**, along the north rim of the
   gorge west of the bridge, touching the West run's ground at one end; the **plant
-  patrol**, round the cell hall and along the railway to the duct; the **road patrol**,
+  patrol**, along the plant's north wall and the railway to the duct; the **road patrol**,
   on the road between the junction box, the gate and the town.
 - **The patrols set out on turn 2** (`patrols.setOutTurn`), as on the airfield and the
-  aqueduct: turn 1 is for gathering and getting off the open snow.
+  aqueduct: turn 1 is for gathering and getting off the open snow. **They walk 2 hexes a
+  turn here, not 3** (the mission's enemies patch, M59b, the operator's: more timing to
+  slip past them); the squads and the reinforcements are patrols, so they march slower too.
 - **The reserve** turns out of the barracks at Alarmed, crosses the bridge and stands
   guard on the ski trail. It cannot be killed, as in France.
 - **Reinforcements**: the hall going up calls **one squad** (Hard two) up the road from
@@ -280,7 +289,9 @@ Numbers are Normal's, per kind in the mission's rules patch.
 | **Telephone line** | 1 charge, or cut the line | 1 / 1 | +3 (cut +1) | 4 | no reserve, no reinforcements, no squads for bodies |
 
 **The win**: `destroyPrimary`, and `minimumOut` men out by the ski trail by dawn. Easy:
-two charges, no squad. Hard: four charges, two squads.
+two charges, no squad. Hard: three charges and **three men out** (the mission's part of
+the level sets `minimumOut`, and the level's line on the orders says three, M59b), two
+squads.
 
 There is only one bonus target, fewer than any other mission, because the bonus here is
 the quiet night. The telephone is the quiet bonus: a scout cuts it in silence, and the
@@ -295,8 +306,8 @@ garrison waking; a long one is three charges left ticking where the plant patrol
 inside.)
 
 **The score**: France's, with no train and no salvo, the clean run NOT A SHOT FIRED at 5.
-The rating's bands (M59, from the bot's winning scores on Normal, whose middle half is 20
-to 27): under 21 HEARD IN ELVEBYEN, 21 A QUIET JOB, 27 LIKE GHOSTS, 33 NOT A SHOT FIRED,
+The rating's bands (M59b, from the bot's winning scores on Normal, whose middle half is
+23 to 34): under 24 HEARD IN ELVEBYEN, 24 A QUIET JOB, 30 LIKE GHOSTS, 35 NOT A SHOT FIRED,
 the top wanting the telephone or the clean run. The names are placeholders.
 
 ### The alert on this ground
@@ -458,34 +469,40 @@ climb, and at M59 `STAY=1`: a man with nothing to set lies up near the way out u
 the job's charges are set, rather than walking out on turn 2 from beside the North
 landing. `ALERT=1` counts prints found, and `ALERT=who` says who found them.
 
-**Baselines** (M59, 200 seeds, win %, west / north / east):
+**Baselines** (M59b, 200 seeds, win %, west / north / east):
 
-| Level | Naive | Target |
-|---|---|---|
-| Easy | **97 / 99 / 100** | 95 or more |
-| Normal | **75 / 87 / 89** | 75 to 90 |
-| Hard | **3 / 2 / 0** | 25 to 45: **outside, open with the operator** |
+| Level | Naive | Careful | Target |
+|---|---|---|---|
+| Easy | **97 / 95 / 94** | — | 95 or more (East a point under, noise) |
+| Normal | **87 / 92 / 79** | 91 / 97 / 97 | 75 to 90 (North 2 over) |
+| Hard | **47 / 18 / 6** | 72 / 51 / 53 | 25 to 45: **North and East under** |
 
-Normal, other styles: careful 86 / 95 / 98, hunter 73 / 71 / 83 (below careful on every
-run); tidy 87 / 96 / 92, its wins below Alarmed **45 / 66 / 83 %** (the measure asks 70:
-West and North short); tidy `FIRE=always` 85 / 76 / 82, fewer on every run (West only
-just). Winning scores' middle half 20 to 27, so the bands above.
+Normal, other styles: hunter 67 / 75 / 76, below careful on every run (Hard 49 / 23 /
+23, below too); tidy 92 / 97 / 94, its wins below Alarmed **86 / 88 / 87 %** (the
+measure, 70, met). **The stealth check is not shown**: tidy `FIRE=always` wins as often
+(92 / 97 / 94) and below Alarmed less (81 / 79 / 64 %), because a man seen as seldom as
+now seldom has anyone to fire back at; the hunter's guns and knives are what cost.
+Winning scores' middle half 23 to 34, so the bands above.
 
-**How it was chosen (M59).** The gorge had two holes, its west end's floor opening onto
+**How it was chosen.** M59: the gorge had two holes, its west end's floor opening onto
 the shelf and one cliff beside the bridge's west foot, so West crossed with one climb
 and won 99%; closed. The plateau patrol walked west of the road across every run's way
-to the gorge; moved east of it, as this file had it. Prints last 2 turns, not 3. Then
-the operator picked, of options measured: a body found calls no squad (the squads stood
-on the crossings), Alarmed from 9 here, and a shot +6 so one shot and the bang still
-reach it. Measured and moving little: a 22-turn night, decay after 3 quiet turns, the
-West run's line a row south. Prints raising no alert (only noise) would put tidy at
-69 / 58 / 94 % below Alarmed, but takes the teeth out of the snow.
+to the gorge; moved east of it. Prints last 2 turns, not 3. The operator's pick of
+options measured: a body found calls no squad (the squads stood on the crossings),
+Alarmed from 9 here, and a shot +6 so one shot and the bang still reach it.
 
-**Hard** is lost because the stick cannot keep four men alive: on open snow, with every
-enemy seeing four hexes, three die before the hall goes (the East run's men walk over
-the bridge under the posts, spotted four times a game). Three charges and three men out
-would give 31 / 32 / 1, but a mission cannot yet say how many men out a level asks
-(the Hard line on the orders says four in every mission).
+M59b, the operator's notes from playing Hard: prints found only where an enemy looks
+(underfoot, or ahead in its arc within 2 hexes: 1 left Normal at 93 / 98 / 92), the
+cell hall a loop round the cells with its east end open and the gate guard looking down
+the road, patrols at 2 hexes a turn, and Hard three charges and three men out. Those
+together took Normal to 93 / 98 / 92 and the alert measure past 70 for the first time;
+then the night came down from 20 turns to 18 (19: 87 / 95 / 89). Alarmed back at 7 was
+measured and moved the naive bot by a point or two, so the operator's 9 stays.
+
+**Hard** is lost on North and East with the hall still standing at dawn: the naive men
+wait all night at the bridge for posts that see four hexes on Hard, where a careful
+player goes round by the ice (careful wins half its games there). Two more turns on
+Hard alone measured a few points.
 
 ### The order it is built in
 
@@ -495,5 +512,6 @@ would give 31 / 32 / 1, but a mission cannot yet say how many men out a level as
 | **M57** | The engine, off in every other mission and their bot output unchanged byte for byte: tracks (laying, ageing, finding, undo, the readout, the footprint sprite turned and fading); `scoring.cleanNoShot`; `confirmShot` |
 | **M58** | The map as a draft (`?mission=gunnerside`, stamped NEXT YEAR'S ANNUAL on the contents page): the terrain drawn in code, the garrison, the objectives, the ski trail; the bot taught prints and the climb |
 | **M59** | Balance: the map and beats to the alert budget, dawn, the gorge, the prints, the levels, the stealth check, the rating's bands |
+| **M59b** | The operator's notes from playing Hard: prints found where an enemy looks, the cell hall a loop with two ways to every charge point, the gate guard, slower patrols, Hard three charges and three men out, an 18-turn night |
 | **M60** | Words, sounds and the art hand-off: the stealth wording everywhere above, the men's lines, the decoy flare, the three panels in today's slots, the art asked for |
 | **M61** | The new panel moments (the panel triggers), if the operator wants them then |
