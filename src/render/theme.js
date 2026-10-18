@@ -474,12 +474,13 @@ export function applyGround(name) {
 
 /**
  * A hex's base colour on the board (M58d): its terrain's, except that ground
- * on a road, or beside water (`shore`, given as the neighbours' art), is left
+ * on a road, or beside water (`shore`, given as the neighbours' art), or one
+ * the operator cleared by hand (`cleared`, data/layout.json, M58e), is left
  * bare paper. Art only: the terrain, and what it costs, are unchanged.
  */
-export function baseFill(art, neighbourArts = []) {
+export function baseFill(art, neighbourArts = [], cleared = false) {
   if (art.base !== 'ground') return art.fill;
-  if (art.clear || neighbourArts.some((n) => n.shore)) return PALETTE.paper;
+  if (cleared || art.clear || neighbourArts.some((n) => n.shore)) return PALETTE.paper;
   return art.fill;
 }
 

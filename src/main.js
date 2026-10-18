@@ -25,7 +25,7 @@ import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
-import { contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
+import { clearHexes, contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
 import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
 import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
 import { startPlaytestPanel } from './render/playtest-panel.js';
@@ -39,7 +39,7 @@ import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, paintClearHexes, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
@@ -1738,6 +1738,8 @@ function render() {
   const view = deriveView();
   currentView = view;
   noteHeard();
+  // The hexes the operator left clear of the ground colour (M58e, art only).
+  paintClearHexes(layers, clearHexes(layout, mission.id));
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex, earlierReports);
@@ -4048,7 +4050,7 @@ try {
   // The layout tool (M48k): `?layout` lets the operator drag what they place by hand.
   if (layoutFromQuery(window.location.search)) {
     const loaded = layout;
-    startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize });
+    startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize, missionId: () => mission.id });
   }
   // The playtest record (M49): COPY RECORD in the corner gives it as plain lines.
   if (playtest) startPlaytestPanel(() => recordText(playtest, { build: version, now: Date.now() }));

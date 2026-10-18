@@ -1,7 +1,8 @@
 /**
  * Where the things the operator places by hand sit (M48k, data/layout.json):
  * START HERE and the clipboard on the contents pages, and each mission's drop
- * cue and its rings' notes. Art only: no rule reads it. Pure, so the layout
+ * cue and its rings' notes, and (M58e) the hexes left clear of its ground
+ * colour. Art only: no rule reads it. Pure, so the layout
  * tool's moves and its Copy are tested headless; the dragging is
  * src/render/layout-tool.js.
  */
@@ -20,6 +21,9 @@ export function validateLayout(json, { missions = null } = {}) {
     if (id.startsWith('_')) continue;
     if (missions && !missions.includes(id)) throw new Error(`${where} names a mission missions.json does not have: "${id}"`);
     if (entry.dropCue !== null && entry.dropCue !== undefined && !isPair(entry.dropCue)) throw new Error(`${where} ${id}.dropCue must be [q, r]`);
+    if (entry.clear !== undefined && !(Array.isArray(entry.clear) && entry.clear.every((h) => isPair(h) && h.every(Number.isInteger)))) {
+      throw new Error(`${where} ${id}.clear must be a list of [q, r] hexes`);
+    }
     for (const [key, nudge] of Object.entries(entry.notes ?? {})) {
       if (!isPair(nudge)) throw new Error(`${where} ${id}.notes.${key} must be [x, y] in hex radii`);
     }
@@ -40,6 +44,23 @@ export function dropCueAt(layout, missionId) {
 /** How far a ring's note is moved, [x, y] hex radii: `key` is an objective's id, or 'exfil'. */
 export function noteNudge(layout, missionId, key) {
   return layout?.missions?.[missionId]?.notes?.[key] ?? null;
+}
+
+/** The hexes of a mission left bare paper whatever their ground (M58e), as a set of "q,r" keys. */
+export function clearHexes(layout, missionId) {
+  return new Set((layout?.missions?.[missionId]?.clear ?? []).map(([q, r]) => `${q},${r}`));
+}
+
+/** The layout with hex (q, r) of a mission switched between clear and its ground, as a new object; the list kept in order. */
+export function toggledClear(layout, missionId, q, r) {
+  const copy = structuredClone(layout);
+  const entry = (copy.missions[missionId] ??= { notes: {} });
+  const list = (entry.clear ?? []).filter(([cq, cr]) => cq !== q || cr !== r);
+  if (list.length === (entry.clear ?? []).length) list.push([q, r]);
+  list.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  if (list.length) entry.clear = list;
+  else delete entry.clear;
+  return copy;
 }
 
 /** Where each thing the tool can place lives in the file, by the key the board and page mark it with. */
@@ -88,12 +109,13 @@ export function movedCount(before, after) {
       if (id.startsWith('_')) continue;
       found.set(`mission:${id}:dropCue`, entry.dropCue ?? null);
       for (const [note, nudge] of Object.entries(entry.notes ?? {})) found.set(`mission:${id}:${note}`, nudge);
+      for (const [q, r] of entry.clear ?? []) found.set(`clear:${id}:${q},${r}`, true);
     }
     return found;
   };
-  const was = pairs(before);
+  const was = pairs(before), now = pairs(after);
   let count = 0;
-  for (const [key, value] of pairs(after)) if (JSON.stringify(value) !== JSON.stringify(was.get(key) ?? null)) count++;
+  for (const key of new Set([...was.keys(), ...now.keys()])) if (JSON.stringify(now.get(key) ?? null) !== JSON.stringify(was.get(key) ?? null)) count++;
   return count;
 }
 

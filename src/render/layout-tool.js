@@ -3,13 +3,15 @@
  * operator places by hand (marked `data-layout` by the page and the board) is
  * outlined, dashed, and dragged where they want it. A panel says how many have
  * moved; COPY puts the whole of data/layout.json on the clipboard, to paste
- * over the file; PUT BACK returns everything to where the file has it. Nothing
+ * over the file; PUT BACK returns everything to where the file has it. PAINT
+ * CLEAR (M58e) turns the board's hexes into switches: a click leaves a hex bare
+ * paper, or gives it back its ground colour. Nothing
  * is kept in the browser (CLAUDE.md rule 9): the file is the save.
  *
  * It reads the page and asks main.js, through `onChange`, for a new layout;
  * the game's state is never touched.
  */
-import { layoutText, moved, movedCount, pixelsToAxial, pixelsToRadii } from '../layout.js';
+import { layoutText, moved, movedCount, pixelsToAxial, pixelsToRadii, toggledClear } from '../layout.js';
 
 /** Whether the address asks for the tool: `?layout`. */
 export function layoutFromQuery(search) {
@@ -18,9 +20,10 @@ export function layoutFromQuery(search) {
 
 /**
  * `layout()` is the layout now, `original` the file as loaded, `onChange(next)`
- * takes a new one (main.js redraws with it), `hexSize` the board's.
+ * takes a new one (main.js redraws with it), `hexSize` the board's,
+ * `missionId()` the mission on the board.
  */
-export function startLayoutTool({ layout, original, onChange, hexSize }) {
+export function startLayoutTool({ layout, original, onChange, hexSize, missionId }) {
   document.documentElement.classList.add('layout-mode');
   const count = document.createElement('span');
   const said = document.createElement('div');
@@ -38,7 +41,15 @@ export function startLayoutTool({ layout, original, onChange, hexSize }) {
   const head = document.createElement('div');
   head.className = 'layout-head';
   head.append('LAYOUT · drag what is dashed · ', count);
-  panel.append(head, button('COPY', copy), button('PUT BACK', () => { onChange(original); say(''); update(); }), said);
+  let painting = false;
+  const paint = button('PAINT CLEAR: OFF', () => {
+    painting = !painting;
+    paint.textContent = `PAINT CLEAR: ${painting ? 'ON' : 'OFF'}`;
+    paint.classList.toggle('on', painting);
+    document.documentElement.classList.toggle('layout-painting', painting);
+    say(painting ? 'Click a hex to leave it bare paper, or click again to give it back its ground colour.' : '');
+  });
+  panel.append(head, button('COPY', copy), button('PUT BACK', () => { onChange(original); say(''); update(); }), paint, said);
   // The panel's clicks and keys are its own, never the game's.
   for (const type of ['pointerdown', 'click', 'keydown']) panel.addEventListener(type, (event) => event.stopPropagation());
   document.body.appendChild(panel);
@@ -64,6 +75,17 @@ export function startLayoutTool({ layout, original, onChange, hexSize }) {
       box.select();
     }
   }
+
+  // Painting: a click on a hex switches it, and the game never hears the click.
+  document.addEventListener('click', (event) => {
+    if (!painting) return;
+    const hex = event.target.closest?.('#board g[data-q][data-r]');
+    if (!hex) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onChange(toggledClear(layout(), missionId(), Number(hex.dataset.q), Number(hex.dataset.r)));
+    update();
+  }, true);
 
   // A drag: the thing follows the mouse, and on letting go the layout is
   // moved by as much, in the thing's own units.
