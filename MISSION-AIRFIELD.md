@@ -197,7 +197,7 @@ All of it data in `missions.json` and the map.
   the aircraft keep their stars and nothing else is named.
 - **Our men's counters** are burnt orange here, and a fallen man's grave mound with them.
 - **Its title card** is `assets/title/title-card-airfield.jpg`, with BURN BY DAWN painted
-  in. The tagline is SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY.
+  in. The tagline is SIX MEN · EIGHT AIRCRAFT · OUT BY DAWN.
 - The paintings and recordings it uses are listed in ART-ASSETS.md and ART-PROMPTS.md.
 
 ### Balance
