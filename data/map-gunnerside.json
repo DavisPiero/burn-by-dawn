@@ -299,12 +299,8 @@
       ]
     }
   ],
-  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes on the edge, open all night. exfilArt names its picture: two lines of ski tracks and a cairn.",
+  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes down the east edge from the corner, open all night. exfilArt names its picture: two lines of ski tracks and a cairn.",
   "exfil": [
-    [
-      16,
-      0
-    ],
     [
       17,
       0
@@ -312,6 +308,10 @@
     [
       16,
       1
+    ],
+    [
+      16,
+      2
     ]
   ],
   "exfilArt": "skiTrail",
@@ -326,37 +326,10 @@
       8
     ]
   ],
-  "_roadArt": "SPEC.md §11, art only: the road runs on off the board, north over the plateau and south-east down to the town.",
-  "roadArt": [
-    [
-      [
-        11,
-        0
-      ],
-      [
-        11,
-        -1
-      ],
-      [
-        11,
-        -2
-      ]
-    ],
-    [
-      [
-        11,
-        12
-      ],
-      [
-        12,
-        12
-      ],
-      [
-        12,
-        13
-      ]
-    ]
-  ],
+  "_printedAs": "SPEC.md §11, art only: the bridge's hexes are printed as the suspension bridge's deck over the gorge (theme.js `suspension`). Every rule still reads Bridge.",
+  "printedAs": {
+    "bridge": "suspension"
+  },
   "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword (MISSION-GUNNERSIDE.md).",
   "places": [
     {
