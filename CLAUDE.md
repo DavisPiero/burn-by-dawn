@@ -1,7 +1,7 @@
 # CLAUDE.md — working agreement
 
 Read `SPEC.md` before doing anything. It is the source of truth, with the files that
-hold its §4, §6, §7, §10, §11, §13, §14 and §15 (below). If a request conflicts with any of them, say so before
+hold its §4, §6, §7, §10, §11, §13, §14, §15 and §16 (below). If a request conflicts with any of them, say so before
 writing code.
 
 ## Files in this repo
@@ -20,6 +20,8 @@ writing code.
     a `MISSION-<NAME>.md` like it, written before the mission is built.
   - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, playable, not yet balanced. **Read it
     before working on the aqueduct.**
+  - `MISSION-GUNNERSIDE.md` — SPEC §16: mission 4, specified, not yet built. **Read it
+    before working on Gunnerside.**
   - `MISSION-TRAINING.md` — SPEC §15: the training course and its lesson engine. **Read
     it before working on a lesson or on `src/lessons.js`.**
   - `TURNS.md` — SPEC §4: the turn, every action and its cost, mouse and keyboard.

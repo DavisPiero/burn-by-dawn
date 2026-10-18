@@ -17,6 +17,7 @@ Each is recorded in full in DECISIONS.md and the git history.
 | M28–M31d | Mission 2, the airfield (§13): the engine work, the map, time pencils and the bowser, its words, sounds and art, the operator's notes |
 | M34–M34b | France's goods train: scenery with a timetable, on the Rail Bridge in turn 17 (turn 10 since M37), 5 points for the bridge down within a turn of it |
 | M33–M33b | The airfield's bomb store, a second target that sets off its neighbours, and the salvo score; Hard wants seven aircraft; France's Fuel Dump sends two patrols away and scores 5 |
+| M56 | Mission 4, the heavy water plant, specified in MISSION-GUNNERSIDE.md (no code): the gorge, tracks in the snow drawn as footprints, NOT A SHOT FIRED, the decoy flare, how the game tells the player stealth is the point, new comic panel moments |
 | M55c | A click on a comic panel puts the panel away before the turn card under it |
 | M55b | The opening title twice as big with a cold blue shadow; the train turns with the line round its bend; the operator's taglines (OUT BY DAWN) and panel captions carried back |
 | M55 | The operator's rewording of the men's lines carried back; the operator's title painting behind the opening page; a Dakota panel at START GAME (a mission's own painting, else the shared one), specified for the operator in ART-PROMPTS.md |

@@ -8,7 +8,8 @@ and sabotage German infrastructure before dawn. It is an engine plus missions: �
 describe the engine through mission 1, the rail bridge in occupied France. How it looks
 and sounds (§11) is in `ART-DIRECTION.md`, `ART-CARDS.md` and `ART-PLAY.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
-`MISSION-AQUEDUCT.md`), is playable too, picked from the contents page.
+`MISSION-AQUEDUCT.md`), is playable too, picked from the contents page. Mission 4, the
+heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is specified and not yet built.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -431,10 +432,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M55, the title and Dakota panels:** a title painting behind the opening page and a
-comic panel of the men in the back of the Dakota at START GAME, each a slot for the
-operator's painting (ART-PLAY.md, ART-PROMPTS.md Priorities 29 and 30), and the
-operator's rewording of the men's new lines carried back. The milestones before it are
+**M56, the Gunnerside spec:** `MISSION-GUNNERSIDE.md` (§16), mission 4 written before
+it is built, with the operator's calls; no code. Its build order is in that file. The milestones before it are
 in `MILESTONES.md`. v1.0 is tagged.
 
 ### Done
@@ -470,3 +469,12 @@ southern Italy, February 1941.
 One big target that takes five charges (Hard all six), every charge down in a supply canister, and a
 boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine
 rules, written above: supply canisters (§9) and the way out on a timetable (§10).
+
+---
+
+## 16. Mission 4 — the heavy water plant
+
+**In `MISSION-GUNNERSIDE.md`**, specified at M56 and not yet built: Norway, February
+1943, loosely Operation Gunnerside. The stealth mission: a gorge to climb, tracks in the
+snow, gunfire heard across the board, and NOT A SHOT FIRED as its clean run. Its one
+engine rule, tracks in the snow, will be written here when it is built.
