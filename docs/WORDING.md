@@ -30,7 +30,7 @@ Made 17 Oct 2026 (build M53). The game is unchanged until your rewording is carr
 - A6 | PARATROOPER RAIDS BEHIND ENEMY LINES
 - A7 | CONTENTS
 - A8 | IN THIS ANNUAL
-- A9 | Click a mission to play. Each one stands alone: one night behind the lines, out by dawn.
+- A9 | Each mission stands alone: one night behind the lines, out by dawn.
 - A10 | NEXT YEAR’S ANNUAL
 
 ### Its line: The Practice Ground

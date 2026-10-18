@@ -77,7 +77,8 @@ board must read at a glance.
   plant's buildings), and so do the aqueduct's plough, terraces and beach, warm beside
   the cold slopes. Roads and bridges are left paper, and so is any land beside water
   (the canal, the sea, the ravine's torrent), so the maps keep clear ground along their
-  roads and banks: art only, what the hex costs is unchanged. The airfield names none: its sand is the ochre's wash over the
+  roads and banks: art only, what the hex costs is unchanged. Any other hex can be left
+  bare paper by hand: `clear` in `data/layout.json`, painted with PAINT CLEAR in `?layout`. The airfield names none: its sand is the ochre's wash over the
   paper. Nothing else.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, objectives,
   the enemy's vision and in the chrome, printed faint, close to the colour beneath.

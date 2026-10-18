@@ -3,13 +3,15 @@
  * operator places by hand (marked `data-layout` by the page and the board) is
  * outlined, dashed, and dragged where they want it. A panel says how many have
  * moved; COPY puts the whole of data/layout.json on the clipboard, to paste
- * over the file; PUT BACK returns everything to where the file has it. Nothing
+ * over the file; PUT BACK returns everything to where the file has it. PAINT
+ * CLEAR (M58e) turns the board's hexes into switches: a click leaves a hex bare
+ * paper, or gives it back its ground colour. Nothing
  * is kept in the browser (CLAUDE.md rule 9): the file is the save.
  *
  * It reads the page and asks main.js, through `onChange`, for a new layout;
  * the game's state is never touched.
  */
-import { layoutText, moved, movedCount, pixelsToAxial, pixelsToRadii } from '../layout.js';
+import { layoutText, moved, movedCount, pixelsToAxial, pixelsToRadii, toggledClear } from '../layout.js';
 
 /** Whether the address asks for the tool: `?layout`. */
 export function layoutFromQuery(search) {
@@ -18,9 +20,10 @@ export function layoutFromQuery(search) {
 
 /**
  * `layout()` is the layout now, `original` the file as loaded, `onChange(next)`
- * takes a new one (main.js redraws with it), `hexSize` the board's.
+ * takes a new one (main.js redraws with it), `hexSize` the board's,
+ * `missionId()` the mission on the board.
  */
-export function startLayoutTool({ layout, original, onChange, hexSize }) {
+export function startLayoutTool({ layout, original, onChange, hexSize, missionId }) {
   document.documentElement.classList.add('layout-mode');
   const count = document.createElement('span');
   const said = document.createElement('div');
@@ -38,7 +41,15 @@ export function startLayoutTool({ layout, original, onChange, hexSize }) {
   const head = document.createElement('div');
   head.className = 'layout-head';
   head.append('LAYOUT · drag what is dashed · ', count);
-  panel.append(head, button('COPY', copy), button('PUT BACK', () => { onChange(original); say(''); update(); }), said);
+  let painting = false;
+  const paint = button('PAINT CLEAR: OFF', () => {
+    painting = !painting;
+    paint.textContent = `PAINT CLEAR: ${painting ? 'ON' : 'OFF'}`;
+    paint.classList.toggle('on', painting);
+    document.documentElement.classList.toggle('layout-painting', painting);
+    say(painting ? 'Click a hex to leave it bare paper, or click again to give it back its ground colour.' : '');
+  });
+  panel.append(head, button('COPY', copy), button('PUT BACK', () => { onChange(original); say(''); update(); }), paint, said);
   // The panel's clicks and keys are its own, never the game's.
   for (const type of ['pointerdown', 'click', 'keydown']) panel.addEventListener(type, (event) => event.stopPropagation());
   document.body.appendChild(panel);
@@ -65,6 +76,17 @@ export function startLayoutTool({ layout, original, onChange, hexSize }) {
     }
   }
 
+  // Painting: a click on a hex switches it, and the game never hears the click.
+  document.addEventListener('click', (event) => {
+    if (!painting) return;
+    const hex = event.target.closest?.('#board g[data-q][data-r]');
+    if (!hex) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onChange(toggledClear(layout(), missionId(), Number(hex.dataset.q), Number(hex.dataset.r)));
+    update();
+  }, true);
+
   // A drag: the thing follows the mouse, and on letting go the layout is
   // moved by as much, in the thing's own units.
   let drag = null;
@@ -73,28 +95,36 @@ export function startLayoutTool({ layout, original, onChange, hexSize }) {
     if (!target || event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
-    drag = { target, x: event.clientX, y: event.clientY, delta: [0, 0], base: target.style.translate, transform: target.getAttribute('transform') };
+    // What it is and its scale are taken now (M58e): the board may be redrawn
+    // under the drag, which leaves this element out of the page.
+    const svgUnits = Boolean(target.ownerSVGElement);
+    drag = { target, key: target.dataset.layout, svgUnits, scale: scaleOf(target), x: event.clientX, y: event.clientY, delta: [0, 0], base: target.style.translate };
     target.classList.add('layout-dragging');
+    // No hover while dragging: a hex hovered redraws the board (the operator's
+    // M58e error, dragging a note in Norway across the plateau).
+    document.documentElement.classList.add('layout-drag-on');
   }, true);
   document.addEventListener('pointermove', (event) => {
     if (!drag) return;
     event.preventDefault();
-    drag.delta = local(drag.target, event.clientX - drag.x, event.clientY - drag.y);
+    drag.delta = [(event.clientX - drag.x) / drag.scale[0], (event.clientY - drag.y) / drag.scale[1]];
     const [dx, dy] = drag.delta;
-    if (drag.target.ownerSVGElement) drag.target.setAttribute('transform', `translate(${dx} ${dy})`);
-    else drag.target.style.translate = translated(drag.base, dx, dy);
+    const target = live(drag);
+    if (!target) return;
+    if (drag.svgUnits) target.setAttribute('transform', `translate(${dx} ${dy})`);
+    else target.style.translate = translated(drag.base, dx, dy);
   }, true);
   document.addEventListener('pointerup', (event) => {
     if (!drag) return;
     event.stopPropagation();
-    const { target, delta } = drag;
+    const { delta, key, svgUnits } = drag;
+    const target = live(drag);
     drag = null;
-    target.classList.remove('layout-dragging');
+    document.documentElement.classList.remove('layout-drag-on');
+    target?.classList.remove('layout-dragging');
     if (!delta[0] && !delta[1]) return;
-    const key = target.dataset.layout;
-    const svgUnits = Boolean(target.ownerSVGElement);
     const step = !svgUnits ? delta.map(Math.round) : key.endsWith(':dropCue') ? pixelsToAxial(delta, hexSize) : pixelsToRadii(delta, hexSize);
-    const from = target.dataset.layoutAt ? JSON.parse(target.dataset.layoutAt) : [0, 0];
+    const from = target?.dataset.layoutAt ? JSON.parse(target.dataset.layoutAt) : [0, 0];
     onChange(moved(layout(), key, step, from));
     say('');
     update();
@@ -126,16 +156,27 @@ export function startLayoutTool({ layout, original, onChange, hexSize }) {
   update();
 }
 
-/** A move on the screen in the thing's own pixels: the board's units for SVG, or the page's before it is zoomed to fit. */
-function local(target, dx, dy) {
+/** Screen pixels per the thing's own pixel, [x, y]: the board's units for SVG, or the page's before it is zoomed to fit. */
+function scaleOf(target) {
   const svg = target.ownerSVGElement;
   if (svg) {
     const m = svg.getScreenCTM();
-    return m ? [dx / m.a, dy / m.d] : [dx, dy];
+    return m && m.a && m.d ? [m.a, m.d] : [1, 1];
   }
   const parent = target.parentElement;
-  const zoom = parent.getBoundingClientRect().width / (parent.offsetWidth || 1) || 1;
-  return [dx / zoom, dy / zoom];
+  const zoom = parent ? parent.getBoundingClientRect().width / (parent.offsetWidth || 1) || 1 : 1;
+  return [zoom, zoom];
+}
+
+/** The thing being dragged as the page has it now: the same element, or, if the board was redrawn, the one drawn in its place. */
+function live(drag) {
+  if (drag.target.isConnected) return drag.target;
+  const now = [...document.querySelectorAll('[data-layout]')].find((el) => el.dataset.layout === drag.key);
+  if (now) {
+    drag.target = now;
+    now.classList.add('layout-dragging');
+  }
+  return now ?? null;
 }
 
 /** A CSS `translate` moved by more. */

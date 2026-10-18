@@ -25,7 +25,7 @@ import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
-import { contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
+import { clearHexes, contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
 import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
 import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
 import { startPlaytestPanel } from './render/playtest-panel.js';
@@ -39,11 +39,11 @@ import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, paintClearHexes, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
-  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, applyGround, firstPicture, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitlePainting, loadSuppliedTitleCard, loadSuppliedVehicle,
+  BLAST, CUE, DEATH, DROP_SHOW, GARRISON_SHOW, KNIFE_SPLAT, POWER_CUT, SHOT, TRAIN, applyCounterColour, applyDocumentTheme, applyDropCueColour, applyGround, firstPicture, loadSuppliedAircraft, loadSuppliedClipboard, loadSuppliedBlast, loadSuppliedEnemyChips, loadSuppliedFonts, loadSuppliedPaper, loadSuppliedPortraits, loadSuppliedTitlePainting, loadSuppliedTitleCard, loadSuppliedVehicle,
 } from './render/theme.js';
 import {
   attachPopup, attachReportScroll, describeAlertStates, dropStalePopup, fitSpread, describeDetection, describePlan, describeRisk, describeRun,
@@ -874,8 +874,10 @@ function deriveDrop(view, hex) {
         // The primary is ringed twice; where any few of many will do (M28),
         // each is ringed once and the first carries the note for them all.
         // Where there are many (M29b, the operator's), a tight ring takes in
-        // each target's charge points with it, so the two read as one thing.
-        hexes: single ? o.hexes : [...o.hexes, ...o.chargeHexes], tight: !single,
+        // each target's charge points with it, so the two read as one thing;
+        // so does a target whose map says `ringCharges` (M58e, art only: the
+        // cell hall's points sat outside its ring).
+        hexes: !single || baseMap.objectives.find((m) => m.id === o.id)?.ringCharges ? [...o.hexes, ...o.chargeHexes] : o.hexes, tight: !single,
         primary: single && targets.includes(o), colour: 'red',
         noteNudge: noteNudge(layout, mission.id, o.id), layoutKey: `mission:${mission.id}:${o.id}`,
         // The charges it takes, so three dashed points never read as three charges.
@@ -1737,6 +1739,8 @@ function render() {
   const view = deriveView();
   currentView = view;
   noteHeard();
+  // The hexes the operator left clear of the ground colour (M58e, art only).
+  paintClearHexes(layers, clearHexes(layout, mission.id));
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex, earlierReports);
@@ -2692,6 +2696,8 @@ async function loadMission(id, seed) {
   applyCounterColour(mission.counterColour ?? null);
   // The land printed in the mission's ground colour, if it has one (M58d).
   applyGround(mission.ground ?? null);
+  // The drop cue in the mission's own colour, if it names one (M58e).
+  applyDropCueColour(mission.dropCueColour ?? null);
   // The level being played is kept from one mission to the next; the address's at first.
   const levelId = level && difficulty.levels.some((l) => l.id === level.id) ? level.id : difficultyFromQuery(window.location.search, difficulty);
   startMission(levelById(difficulty, levelId), seed);
@@ -2804,7 +2810,7 @@ function describeBriefing(which, view) {
       banner: { title: GAME_TITLE, tagline: CONTENTS_TAGLINE },
       title: 'CONTENTS',
       kicker: 'IN THIS ANNUAL',
-      paragraphs: ['Click a mission to play. Each one stands alone: one night behind the lines, out by dawn.'],
+      paragraphs: ['Each mission stands alone: one night behind the lines, out by dawn.'],
       contents: {
         entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null, flag: m.flag ?? null })),
         flagAt: contentsOffset(layout, 'flag'),
@@ -4045,7 +4051,7 @@ try {
   // The layout tool (M48k): `?layout` lets the operator drag what they place by hand.
   if (layoutFromQuery(window.location.search)) {
     const loaded = layout;
-    startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize });
+    startLayoutTool({ layout: () => layout, original: loaded, onChange: (next) => { layout = next; render(); }, hexSize: map.hexSize, missionId: () => mission.id });
   }
   // The playtest record (M49): COPY RECORD in the corner gives it as plain lines.
   if (playtest) startPlaytestPanel(() => recordText(playtest, { build: version, now: Date.now() }));

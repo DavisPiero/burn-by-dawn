@@ -4,12 +4,17 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M58d (the palette) signed off by the operator, merged into
-main and pushed.
+Last updated: 18 Oct 2026, M58e (the operator's notes on M58d) signed off by the
+operator, merged into main and pushed.
 
 ## Where we are
 
-- **`main` is M58d, pushed.** The margin says build M58d.
+- **`main` is M58e, pushed.** The margin says build M58e.
+- **M58e, the notes**: the dog louder; the new contents line; the aqueduct's notes where
+  the operator dragged them; the drop cue in a mission's own colour (green on the aqueduct
+  and in Norway); the cell hall's ring takes in its charge points; PAINT CLEAR in
+  `?layout` to leave any hex bare paper (`clear` in `layout.json`), with the hexes asked
+  for painted; the practice ground's lane runs off the top.
 - **M58d, the palette**: three ground colours, named by a mission's `ground` in
   `missions.json`: meadow `#D3D6B7` under France and the practice ground, pale frost
   `#EEF2F2` under Gunnerside's snow (its drifts deep frost), deep frost `#D2DBE0` under
@@ -34,7 +39,7 @@ main and pushed.
   the garrison always goes round by the bridge.
 - **The bot** climbs and keeps its prints away from where the garrison walks; France,
   the airfield and the aqueduct play byte for byte as before.
-- Tests: 269 headless, 272 in `tests.html`.
+- Tests: 270 headless, 273 in `tests.html`.
 
 ## Next
 
@@ -44,20 +49,22 @@ main and pushed.
 
 ## Open with the operator
 
-1. **Guesses in M58d**, signed off as built: only the road hexes cleared, not their
+1. **Guesses in M58e**, signed off: the lane off the top west of the hall; the cleared
+   hexes are the operator's to repaint with PAINT CLEAR in `?layout`.
+2. **Guesses in M58d**, signed off as built: only the road hexes cleared, not their
    neighbours; Gunnerside's ice not counted as water; its roads warm paper in the snow.
-2. **Guesses in M58c**: the wash hatched in ink; the end-turn card asks about men left
+3. **Guesses in M58c**: the wash hatched in ink; the end-turn card asks about men left
    still on purpose too (there is no Hold).
-3. **Guesses in M58**, kept unless changed: the hall drawn as a plan (walls, floor,
+4. **Guesses in M58**, kept unless changed: the hall drawn as a plan (walls, floor,
    cells), not a roofed building; the bridge running south-west; the way out down the
    east edge from the corner; the rating bands the aqueduct's numbers under
    Gunnerside's names; the draft's placeholder words.
-4. **Guesses in M57**: prints forecast one turn ahead only; the shot card's words
+5. **Guesses in M57**: prints forecast one turn ahead only; the shot card's words
    (placeholder until M60); TRACKS! under the trail's first print.
-5. **Guesses in the Gunnerside spec**, starting points for M59: a 20-turn night; prints
+6. **Guesses in the Gunnerside spec**, starting points for M59: a 20-turn night; prints
    last 3 turns; the hall takes 3 charges (Easy 2, Hard 4); seven enemies; every word.
-6. **PICK A DROP DIRECTION drawing in behind the Dakota panel**: judge it once painted.
-7. **Still standing:** France a little easier than its baselines say; the bugle for a
+7. **PICK A DROP DIRECTION drawing in behind the Dakota panel**: judge it once painted.
+8. **Still standing:** France a little easier than its baselines say; the bugle for a
    lesson passed; the knife's cry worded "a cry"; the record's tab at the top centre.
 
 ## Owed

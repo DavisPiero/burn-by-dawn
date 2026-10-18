@@ -24,7 +24,7 @@ import { pixelsToAxial } from '../layout.js';
 import {
   BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, PRINTS, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, baseFill, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, baseFill, dropCueColour, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -145,8 +145,7 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
     // Printed in plates: the flat base, a flat tint and a halftone screen over
     // it where the terrain has them, and the motif. Area terrain is printed
     // over all the hexes at once, below; the grid rule goes over everything.
-    const beside = NEIGHBOR_DIRS.map((d) => [q + d.q, r + d.r]).filter(([nq, nr]) => inBounds(map, nq, nr)).map(([nq, nr]) => terrainArt(printedIdAt(map, nq, nr)));
-    hex.appendChild(el('polygon', { points, fill: baseFill(style, beside) }));
+    hex.appendChild(el('polygon', { points, fill: baseFill(style, besideArts(map, q, r)), class: 'hex-base' }));
     // A hex's own wash goes under an area's shape too (M29: the desert's sand
     // under its dunes and wadi, so their rounded corners meet sand). France's
     // area terrain has none, so it prints as before.
@@ -205,6 +204,27 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
     fill: 'none', stroke: GRID.border, 'stroke-width': GRID.borderWidth, 'pointer-events': 'none',
   }));
+}
+
+/** The art of the terrain printed round hex (q, r), on the board. */
+function besideArts(map, q, r) {
+  return NEIGHBOR_DIRS.map((d) => [q + d.q, r + d.r]).filter(([nq, nr]) => inBounds(map, nq, nr)).map(([nq, nr]) => terrainArt(printedIdAt(map, nq, nr)));
+}
+
+/**
+ * The hexes the operator has left clear of the ground colour (M58e,
+ * data/layout.json `clear`, a set of "q,r" keys) printed bare paper, and the
+ * rest as their terrain has it. Redone only when the set changes.
+ */
+export function paintClearHexes(layers, clear) {
+  const stamp = [...clear].sort().join(' ');
+  if (layers.clearStamp === stamp) return;
+  layers.clearStamp = stamp;
+  for (const [key, hex] of layers.hexNodes) {
+    const [q, r] = key.split(',').map(Number);
+    const base = hex.querySelector('.hex-base');
+    if (base) base.setAttribute('fill', baseFill(terrainArt(printedIdAt(layers.map, q, r)), besideArts(layers.map, q, r), clear.has(key)));
+  }
 }
 
 /** Forget what was last drawn where, for a new game on the same board (M12 restart). */
@@ -1165,13 +1185,13 @@ function drawDropCue(layers, cue, names, place = null, now = 0) {
     const pen = { d, fill: 'none', 'stroke-linecap': 'round', pathLength: 1, 'stroke-dasharray': 1 };
     for (const path of [
       el('path', { ...pen, stroke: CUE.halo, 'stroke-width': width + 4, opacity: 0.7 }),
-      el('path', { ...pen, stroke: CUE.kit, 'stroke-width': width, 'stroke-linejoin': 'round', opacity }),
+      el('path', { ...pen, stroke: dropCueColour(), 'stroke-width': width, 'stroke-linejoin': 'round', opacity }),
     ]) {
       g.appendChild(path);
       playFrom(path, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { delay: i * staggerMs, duration: drawMs }, elapsed);
     }
   });
-  const letters = penLetters(lines, x, y, [CUE.size, CUE.subSize], CUE.kit);
+  const letters = penLetters(lines, x, y, [CUE.size, CUE.subSize], dropCueColour());
   // The lettering is what the layout tool drags (M48k), from where it stands now.
   if (place?.layoutKey) {
     letters.dataset.layout = place.layoutKey;

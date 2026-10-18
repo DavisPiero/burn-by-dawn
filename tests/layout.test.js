@@ -1,9 +1,9 @@
 // The layout (M48k, data/layout.json): where the things the operator places
 // by hand sit, and the layout tool's moves and Copy, which are pure.
 
-import { contentsOffset, dropCueAt, layoutText, moved, movedCount, noteNudge, pixelsToAxial, pixelsToRadii, validateLayout } from '../src/layout.js';
+import { clearHexes, contentsOffset, dropCueAt, layoutText, moved, toggledClear, movedCount, noteNudge, pixelsToAxial, pixelsToRadii, validateLayout } from '../src/layout.js';
 import { axialToPixel } from '../src/hex.js';
-import { loadJson } from '../src/map.js';
+import { inBounds, loadJson } from '../src/map.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -45,7 +45,7 @@ export default [
   ['a mission\'s drop cue and notes read from the layout, and nothing where it says nothing', async () => {
     const { layout } = await loadAll();
     equal(dropCueAt(layout, 'airfield'), [7.2, 5.5], 'the airfield\'s cue on the strip');
-    equal(noteNudge(layout, 'aqueduct', 'exfil'), [-3.3, -1.7], 'the aqueduct\'s way-out note');
+    equal(noteNudge(layout, 'aqueduct', 'exfil'), [-1.97, -1.27], 'the aqueduct\'s way-out note');
     equal(noteNudge(layout, 'france', 'bridge'), null, 'France\'s bridge note where the ring puts it');
     equal(dropCueAt(layout, 'nowhere'), null, 'no mission, no cue');
   }],
@@ -77,6 +77,28 @@ export default [
     equal(JSON.parse(text), layout, 'the same data');
     assert(/"flag": \[-?[\d.]+, -?[\d.]+\]/.test(text), 'a pair on one line');
     assert(text.endsWith('}\n'), 'ends with a newline');
+  }],
+  ['a hex painted clear is switched in and out of the list, counted, and each one a real hex of its map (M58e)', async () => {
+    const layout = validateLayout(await loadJson('data/layout.json'));
+    const before = clearHexes(layout, 'france').size;
+    const once = toggledClear(layout, 'france', 0, 0);
+    const had = clearHexes(layout, 'france').has('0,0');
+    equal(clearHexes(once, 'france').has('0,0'), !had, 'a click switches the hex');
+    equal(clearHexes(layout, 'france').size, before, 'the old layout untouched');
+    equal(movedCount(layout, once), 1, 'and counted as one change');
+    const twice = toggledClear(once, 'france', 0, 0);
+    equal(JSON.stringify(twice), JSON.stringify(layout), 'a second click puts it back as it was');
+    let threw = false;
+    try { validateLayout({ ...layout, missions: { france: { clear: [[1.5, 2]] } } }); } catch (error) { threw = /clear/.test(error.message); }
+    assert(threw, 'a clear hex is whole numbers');
+    const missions = (await loadJson('data/missions.json')).missions;
+    for (const [id, entry] of Object.entries(layout.missions)) {
+      if (!entry.clear) continue;
+      const map = await loadJson(missions.find((m) => m.id === id).map);
+      for (const [q, r] of entry.clear) {
+        assert(inBounds(map, q, r), `${id}'s clear hex ${q},${r} is on its map`);
+      }
+    }
   }],
 ];
 

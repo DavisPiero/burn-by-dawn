@@ -16,7 +16,8 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   (the operator's, M42b: a chip on a ringed target cut the pen mark in two), kept to
   the board, with the notes on top. Picking a run clears them. Where the win is
   any few of many (the airfield), each target's ring is tight and takes in its charge
-  points too, so target and point read as one; where every target takes one charge, only
+  points too, so target and point read as one, as does a target whose map says
+  `ringCharges` (the cell hall, whose points stand outside its cells); where every target takes one charge, only
   the win's note says so, and a bonus target's note names it (BOWSER: BONUS +2). A note may be moved into clear ground (`notes` in
   `data/layout.json`, by objective id or `exfil`; art only). A ring may carry
   one thing in bigger letters under its note: the exfil's, where there is a boat (NO WAY
@@ -27,7 +28,9 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
   the player's pen, **in the blue of our kit** (the canisters' blue: in red it read as one
-  with the targets' rings), with a blue pen ring round each run's tab, drawn on in turn before the targets' red rings
+  with the targets' rings), or in the mission's own `dropCueColour` (`missions.json`: army
+  green on the aqueduct and in Norway, where blue on the frost was hard to read), with a
+  pen ring of the same colour round each run's tab, drawn on in turn before the targets' red rings
   are (a second later), among the runs' tabs (or centred on the mission's `dropCue` hex in
   `data/layout.json`: every mission has one, the airfield's on the strip), still, on the map at 1280x800. Every
   pen note is kept whole on the map: CLICK A MAN TO START is moved in from an edge the
