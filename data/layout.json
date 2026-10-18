@@ -49,8 +49,11 @@
       }
     },
     "gunnerside": {
-      "dropCue": [0.3, 8.6],
-      "notes": {}
+      "dropCue": [10.03, 1.45],
+      "notes": {
+        "cell-hall": [5.68, 1.2],
+        "telephone": [2.05, -0.16]
+      }
     },
     "aqueduct": {
       "dropCue": [2.51, 4.47],
