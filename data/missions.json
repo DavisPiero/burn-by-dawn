@@ -290,7 +290,7 @@
       "roster": "data/roster.json",
       "_rules": "MISSION-GUNNERSIDE.md (SPEC.md §16). A draft (M58), balanced at M59. A 20-turn night. Tracks in the snow on (2 turns, alert +1, once an enemy phase at most). The shot: gunfire +6 and heard across the whole board, the first shot of the night asked first (confirmShot), and the clean run NOT A SHOT FIRED (cleanNoShot) pays 5. Alarmed from 9 on this ground, not 7 (M59, the operator's pick): the snow and the knife leave more slips than elsewhere, and one shot and the bang still reach it. A sapper has room for two and the men jump with them, no canisters. Time pencils as on the aqueduct. The patrols set out on turn 2. A body found raises the alert but calls no squad (M59: the squads stood on the crossings for the rest of the night). The cell hall calls one squad up the road when it goes; the telephone line down stops the reserve and every squad (the exchange's payoff in France).",
       "rules": {
-        "turnLimit": 20,
+        "turnLimit": 18,
         "roles": {
           "sapper": {
             "charges": 2
@@ -305,6 +305,7 @@
         },
         "tracks": {
           "turns": 2,
+          "findRange": 2,
           "alert": 1,
           "alertPerPhase": 1
         },
@@ -367,7 +368,7 @@
           }
         }
       },
-      "enemies": {},
+      "enemies": { "types": { "patrol": { "speed": 2 } } },
       "win": {
         "condition": "destroyPrimary"
       },
@@ -384,11 +385,14 @@
           }
         },
         "hard": {
-          "summary": "The cell hall takes four charges, so only one can be spared for the telephone line. With the line still up, two squads come up the road when the hall goes.",
+          "summary": "With the telephone line still up, two squads come up the road when the cell hall goes.",
           "rules": {
+            "mission": {
+              "minimumOut": 3
+            },
             "objectives": {
               "cellHall": {
-                "chargesNeeded": 4,
+                "chargesNeeded": 3,
                 "reinforcements": 2
               }
             }
@@ -428,15 +432,15 @@
           "label": "HEARD IN ELVEBYEN"
         },
         {
-          "from": 21,
+          "from": 24,
           "label": "A QUIET JOB"
         },
         {
-          "from": 27,
+          "from": 30,
           "label": "LIKE GHOSTS"
         },
         {
-          "from": 33,
+          "from": 35,
           "label": "NOT A SHOT FIRED"
         }
       ],

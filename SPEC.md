@@ -383,8 +383,8 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-Next (STATE.md): **M59b, mission 4's Hard and the operator's notes on it** (§16,
-`MISSION-GUNNERSIDE.md`), then M60. The milestones before them are in `MILESTONES.md`. v1.0 is
+Next (STATE.md): **M59c, a terrain painter in the layout tool**, then M60, mission 4's
+words, sounds and art hand-off (§16, `MISSION-GUNNERSIDE.md`), its spec split first. The milestones before them are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done

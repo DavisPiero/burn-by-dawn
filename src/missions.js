@@ -168,18 +168,32 @@ export function missionLevels(mission, difficulty, rules, enemyTypes, url = 'dat
     ...difficulty,
     levels: difficulty.levels.map((level) => {
       const part = mission.levels?.[level.id];
-      if (!part) return level;
       const levelRules = deepMerge(rules, level.rules ?? {});
+      if (!part) return { ...level, summary: fillSummary(level.summary, levelRules) };
       const levelTypes = deepMerge({ types: enemyTypes }, level.enemies ?? {});
       requireKnownKeys(part.rules ?? {}, levelRules, `${url}: ${mission.id}.levels.${level.id}.rules`, []);
       requireKnownKeys(part.enemies ?? {}, levelTypes, `${url}: ${mission.id}.levels.${level.id}.enemies`, []);
+      const own = fillSummary(level.summary, deepMerge(levelRules, part.rules ?? {}));
       return {
         ...level,
-        summary: part.summary ? `${part.summary} ${level.summary}` : level.summary,
+        summary: part.summary ? `${part.summary} ${own}` : own,
         mission: { rules: part.rules ?? {}, enemies: part.enemies ?? {} },
       };
     }),
   };
+}
+
+const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
+
+/**
+ * A level's summary with its numbers filled in from the rules it plays by
+ * (M59b): `{minimumOut}` is how many men must get out, as a word, so a mission
+ * whose own part of a level asks for a different number is not told the
+ * level's (Gunnerside's Hard asks three, every other mission's four).
+ */
+function fillSummary(summary, levelRules) {
+  const out = levelRules.mission?.minimumOut;
+  return summary.replace('{minimumOut}', COUNT_WORDS[out] ?? String(out));
 }
 
 /**

@@ -4,11 +4,11 @@
 // with its fields made to take prints and the rules patched.
 
 import { runEnemyPhase } from '../src/enemy.js';
-import { NEIGHBOR_DIRS, hexDistance } from '../src/hex.js';
+import { NEIGHBOR_DIRS, facingToward, hexDistance } from '../src/hex.js';
 import { forEachCell, loadJson, loadMap, terrainAt } from '../src/map.js';
 import { cleanRun } from '../src/scoring.js';
 import { createInitialState, endTurn, killEnemy, moveUnit, suppressEnemy } from '../src/state.js';
-import { agePrints, printAge, printFillsTurn, printsFor, takesPrints, trailsFound } from '../src/tracks.js';
+import { agePrints, findsFrom, lookouts, printAge, printFillsTurn, printsFor, takesPrints, trailsFound } from '../src/tracks.js';
 import { validateTraits } from '../src/traits.js';
 import { unitById } from '../src/units.js';
 import { landedState } from './fixtures.js';
@@ -54,9 +54,11 @@ function walk(state, unitId, path, map, rules) {
   return moveUnit(placed, unitId, { path, total: path.length - 1 }, map, rules);
 }
 
-// Only one enemy, a post that stands still where it is put.
-function postAt(state, hex) {
-  const enemy = { ...state.enemies.find((e) => e.speed === 0), q: hex.q, r: hex.r, holding: null, investigating: null };
+// Only one enemy, a post that stands still where it is put:
+// a post standing on `hex`, looking at `toward` (M59b: prints are found ahead of it).
+function postAt(state, hex, toward) {
+  const facing = toward ? facingToward(hex, toward) : state.enemies.find((e) => e.speed === 0).facing;
+  const enemy = { ...state.enemies.find((e) => e.speed === 0), q: hex.q, r: hex.r, facing, homeFacing: facing, sweep: null, holding: null, investigating: null };
   return { ...state, enemies: [enemy] };
 }
 
@@ -136,13 +138,15 @@ export default [
     equal(counts.join(), '3,3,0', 'after turns 1, 2 and 3');
   }],
 
-  ['an enemy beside one print finds the whole trail: alert +1, a noise where it found it, reported', async () => {
+  ['an enemy beside one print, facing it, finds the whole trail: alert +1, a noise where it found it, reported', async () => {
     const env = await loadAll();
     let s = landedState(env.roster, env.traits, env.withTracks, env.snowMap);
     const row = openRow(env, s);
     s = walk(s, s.units[0].id, row, env.snowMap, env.withTracks);
     const at = step(row[3], 1); // beside only the last print
-    s = postAt(s, at);
+    const away = postAt(s, at, step(at, 1));
+    equal(runEnemyPhase(away, env.snowMap, env.withTracks).state.prints.length, 3, 'facing away, it finds nothing (M59b)');
+    s = postAt(s, at, row[3]);
     const before = s.alert.points;
     const after = runEnemyPhase(s, env.snowMap, env.withTracks);
     equal(after.state.prints.length, 0, 'the whole trail goes');
@@ -161,8 +165,8 @@ export default [
     let s = landedState(env.roster, env.traits, env.withTracks, env.snowMap);
     const row = openRow(env, s);
     s = walk(s, s.units[0].id, [row[0], row[1]], env.snowMap, env.withTracks);
-    s = walk(s, s.units[1].id, [row[2], row[3]], env.snowMap, env.withTracks);
-    s = postAt(s, row[2]); // between the two: beside row[1] and row[3]
+    s = walk(s, s.units[1].id, [row[3], row[2]], env.snowMap, env.withTracks);
+    s = postAt(s, row[2], row[1]); // on the second trail's print, looking at the first's
     const far = { q: s.enemies[0].q + 6, r: s.enemies[0].r, unitId: s.units[2].id, name: s.units[2].shortName, trail: 'far', turn: 1, inDir: 5, outDir: E };
     s = { ...s, prints: [...s.prints, far] };
     const before = s.alert.points;
@@ -173,14 +177,29 @@ export default [
     equal(after.state.prints.map((p) => p.trail).join(), 'far', 'a trail far off is left');
   }],
 
-  ['trailsFound takes each trail once, at the first print the walker came beside', async () => {
+  ['trailsFound takes each trail once, at the first print the walker found ahead of him', async () => {
     const prints = [
       { q: 0, r: 0, trail: 'a' }, { q: 1, r: 0, trail: 'a' }, { q: 5, r: 0, trail: 'b' },
     ];
-    const found = trailsFound(prints, [{ q: 2, r: 0 }, { q: 1, r: 0 }]);
+    const rules = { tracks: { findRange: 1 } };
+    const west = { facing: 5, arcDegrees: 110 };
+    const found = trailsFound(null, rules, prints, [{ q: 2, r: 0, ...west }, { q: 1, r: 0, ...west }]);
     equal(found.length, 1, 'only a');
-    equal(`${found[0].at.q}`, '1', 'at the print beside the first hex it stood on');
+    equal(`${found[0].at.q}`, '1', 'at the print ahead of the first hex it stood on');
     equal(found[0].hexes.length, 2, 'both of its prints');
+  }],
+
+  ['prints behind an enemy are not found (M59b): only underfoot, or ahead in its arc within findRange', async () => {
+    const rules = { tracks: { findRange: 2 } };
+    const at = { q: 0, r: 0, facing: 2, arcDegrees: 110 }; // facing E
+    assert(findsFrom(null, rules, at, { q: 0, r: 0 }), 'underfoot');
+    assert(findsFrom(null, rules, at, { q: 1, r: 0 }), 'the hex ahead');
+    assert(findsFrom(null, rules, at, { q: 2, r: 0 }), 'two ahead, within findRange');
+    assert(!findsFrom(null, rules, at, { q: 3, r: 0 }), 'three ahead is past findRange');
+    assert(!findsFrom(null, rules, at, { q: -1, r: 0 }), 'not the hex behind');
+    assert(!findsFrom(null, rules, at, { q: 0, r: -1 }), 'not a hex to its side');
+    const walked = lookouts({ q: 0, r: 0, facing: 5 }, [{ q: 1, r: 0 }, { q: 2, r: 0 }], { q: 2, r: 0, facing: 0, arcDegrees: 110 });
+    equal(walked.map((l) => l.facing).join(), '2,2,0', 'it looks the way it walked, then the way it ends facing');
   }],
 
   ['the first shot is recorded once, by suppress or kill; the no-shot clean run asks it', async () => {

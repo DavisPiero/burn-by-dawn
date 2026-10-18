@@ -1,8 +1,9 @@
 // Tracks in the snow (SPEC.md §9 Tracks, M57; MISSION-GUNNERSIDE.md, Its two
 // rules). A man who steps onto ground that takes prints (`tracks: true` in
 // terrain.json) leaves them there; they fill in after `rules.tracks.turns`
-// turns; an enemy that comes onto or beside one finds the whole trail that
-// move laid, as it would a parachute. `rules.tracks` null (every mission but
+// turns; an enemy that walks onto one, or has one ahead of it in its sight
+// wedge within `tracks.findRange` (M59b, the operator's: prints found behind
+// an enemy's back were a puzzle), finds the whole trail that move laid. `rules.tracks` null (every mission but
 // Gunnerside) turns all of it off.
 //
 // Pure functions over plain data, as enemy.js is. A print is
@@ -11,8 +12,8 @@
 // hex edges (indexes into NEIGHBOR_DIRS) he came in by and went out by, which
 // is all the board needs to turn it the way he walked.
 
-import { directionOf, hexDistance, neighbors } from './hex.js';
-import { hexKey, terrainAt } from './map.js';
+import { directionOf, hexDistance, inArc } from './hex.js';
+import { forEachCell, hasLineOfSight, hexKey, isInPlay, terrainAt } from './map.js';
 
 /** Does this hex take prints? Off where the mission has no tracks. */
 export function takesPrints(map, rules, hex) {
@@ -65,17 +66,46 @@ export function printFillsTurn(print, rules) {
 }
 
 /**
- * The trails an enemy finds where it stood this go (`stood`, the hexes it
- * walked onto in order and where it ended): each trail one of whose prints is
- * on or beside one of those hexes, once, at the first print it came beside.
- * Returns [{ trail, at, hexes }]: `at` the print it found, `hexes` every print
- * of that trail, all of which go.
+ * Where an enemy looked from this go (M59b): each hex it walked onto, facing
+ * the way it walked, and where it ended, facing as it ended. `start` is where
+ * it began the go, `walked` the hexes it entered in order, `end` the enemy
+ * after its go. Returns [{ q, r, facing, arcDegrees }].
  */
-export function trailsFound(prints, stood) {
+export function lookouts(start, walked, end) {
+  const out = [];
+  let from = start;
+  for (const hex of walked ?? []) {
+    const facing = directionOf(from, hex);
+    out.push({ q: hex.q, r: hex.r, facing: facing < 0 ? end.facing : facing, arcDegrees: end.arcDegrees });
+    from = hex;
+  }
+  out.push({ q: end.q, r: end.r, facing: end.facing, arcDegrees: end.arcDegrees });
+  return out;
+}
+
+/**
+ * Does an enemy looking from `at` find a print on `hex`? On its own hex, or
+ * ahead of it inside its arc, within `tracks.findRange`, with a clear line.
+ */
+export function findsFrom(map, rules, at, hex) {
+  const d = hexDistance(at, hex);
+  if (d === 0) return true;
+  if (d > (rules.tracks.findRange ?? 1)) return false;
+  if (!inArc(at, at.facing, hex, at.arcDegrees)) return false;
+  return !map || hasLineOfSight(map, at, hex);
+}
+
+/**
+ * The trails an enemy finds from where it looked this go (`looked`, from
+ * lookouts): each trail one of whose prints it finds from one of those hexes,
+ * once, at the first print it found. Returns [{ trail, at, hexes }]: `at` the
+ * print it found, `hexes` every print of that trail, all of which go.
+ */
+export function trailsFound(map, rules, prints, looked) {
   const found = [];
-  for (const hex of stood) {
+  for (const at of looked) {
     for (const p of prints) {
-      if (hexDistance(hex, p) > 1 || found.some((f) => f.trail === p.trail)) continue;
+      if (found.some((f) => f.trail === p.trail) || !findsFrom(map, rules, at, p)) continue;
       found.push({ trail: p.trail, at: p, hexes: prints.filter((o) => o.trail === p.trail) });
     }
   }
@@ -84,20 +114,28 @@ export function trailsFound(prints, stood) {
 
 /**
  * The snow where prints laid now would be found next turn (M58c, the
- * operator's: avoiding a find felt like luck): every hex that takes prints on
- * or beside where an enemy stands now, walks through in the coming enemy
- * phase, or ends its go. `before` and `after` are the enemies either side of
- * that phase (main.js's forecast, the same sum the turn will do). A Set of
- * hexKeys; null where the mission has no tracks.
+ * operator's: avoiding a find felt like luck): every hex that takes prints
+ * that an enemy would find (findsFrom) from where it stands now, from each
+ * hex it walks through in the coming enemy phase, or where it ends its go.
+ * `before` and `after` are the enemies either side of that phase (main.js's
+ * forecast, the same sum the turn will do). A Set of hexKeys; null where the
+ * mission has no tracks.
  */
 export function watchedSnow(map, rules, before, after) {
   if (!rules?.tracks) return null;
-  const stood = [...before, ...after.flatMap((e) => [...(e.walked ?? []), e])];
+  const startOf = new Map(before.map((e) => [e.id, e]));
+  const looked = [
+    ...before,
+    ...after.flatMap((e) => lookouts(startOf.get(e.id) ?? e, e.walked, e)),
+  ];
+  const range = rules.tracks.findRange ?? 1;
   const watched = new Set();
-  for (const at of stood) {
-    for (const hex of [at, ...neighbors(at.q, at.r)]) {
-      if (takesPrints(map, rules, hex)) watched.add(hexKey(hex.q, hex.r));
-    }
+  for (const at of looked) {
+    forEachCell(map, (q, r) => {
+      const hex = { q, r };
+      if (hexDistance(at, hex) > range || !isInPlay(map, q, r) || !takesPrints(map, rules, hex)) return;
+      if (findsFrom(map, rules, at, hex)) watched.add(hexKey(q, r));
+    });
   }
   return watched;
 }

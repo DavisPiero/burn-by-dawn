@@ -157,7 +157,7 @@ beside the seed and on the back page, and `?difficulty=easy|hard` picks it.
 |---|---|
 | **Easy** | The bridge takes 1 charge; 2 men out will do; the RAF can be called twice; the leader's orders reach 3 hexes; hiding gives +2 concealment; shots hit only from 2 hexes off; undo goes back to the start of the turn |
 | **Normal** | The mission as above |
-| **Hard** | 4 men must get out; every enemy sees 4 hexes in a 120° arc; blowing the bridge calls up 2 squads of reinforcements and the fuel dump 1, none once the exchange is down (§6) |
+| **Hard** | 4 men must get out (a mission's own part of the level may ask fewer: the heavy water plant's three, M59b, and the orders say so); every enemy sees 4 hexes in a 120° arc; blowing the bridge calls up 2 squads of reinforcements and the fuel dump 1, none once the exchange is down (§6) |
 
 ### Balance
 
@@ -192,8 +192,8 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
 Today France's runs are inside them but Normal's East, 4 over; the airfield's are in §13,
-the aqueduct's in §14 and the heavy water plant's in §16 (its Hard outside the target,
-open with the operator).
+the aqueduct's in §14 and the heavy water plant's in §16 (its Hard under the target on
+North and East for the naive bot, inside it for the careful one).
 
 The aqueduct has a third style, **`tidy`**, the player its alert budget is measured by
 (§14): the `careful` mover who packs his parachute on turn 1, times a target's charges

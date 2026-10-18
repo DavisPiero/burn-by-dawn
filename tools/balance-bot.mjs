@@ -222,7 +222,7 @@ function distanceField(map, goals) {
 }
 
 // Tracks in the snow (M58): where the garrison walks in the coming enemy
-// phase if the turn ended now, and every hex beside that: where prints laid
+// phase if the turn ended now, and what it looks at (M59b): where prints laid
 // now are found next turn, as the hover's TRACKS row tells a player. Worked out once a state, not once
 // a candidate: the walk barely moves with one man's step. Nothing where the
 // mission has no tracks.
@@ -231,14 +231,8 @@ function watchedSnow(state, map) {
   if (!rules.tracks) return null;
   if (watchedFor.enemies === state.enemies && watchedFor.units === state.units) return watchedFor.hexes;
   const phase = E.runEnemyPhase(E.runDetection(state, map, rules).state, map, rules);
-  const hexes = new Set();
-  for (const e of phase.state.enemies) {
-    const before = state.enemies.find((o) => o.id === e.id);
-    for (const at of [...(before ? [before] : []), ...(e.walked ?? []), e]) {
-      hexes.add(M.hexKey(at.q, at.r));
-      for (const n of H.neighbors(at.q, at.r)) hexes.add(M.hexKey(n.q, n.r));
-    }
-  }
+  // The game's own sum since M59b: the snow an enemy would find prints on.
+  const hexes = TR.watchedSnow(map, rules, state.enemies, phase.state.enemies);
   watchedFor = { enemies: state.enemies, units: state.units, hexes };
   return hexes;
 }

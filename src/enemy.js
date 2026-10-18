@@ -12,7 +12,7 @@
 
 import { DIRECTION_NAMES, directionOf, facingToward, hexDistance, inArc } from './hex.js';
 import { enterCost, findPath, forEachCell, hasLineOfSight, hexKey, isInPlay, terrainAt } from './map.js';
-import { trailsFound } from './tracks.js';
+import { lookouts, trailsFound } from './tracks.js';
 import { applyHook } from './traits.js';
 import { onBoard, woundedLine } from './units.js';
 
@@ -843,9 +843,9 @@ export function runEnemyPhase(state, map, rules) {
       events.push({ kind: 'canisterFound', label: moved.label, enemyId: moved.id, q: canister.q, r: canister.r });
       return { ...canister, found: true };
     });
-    // Tracks in the snow (SPEC.md §9 Tracks, M57): found as a parachute is,
-    // and one find takes the whole trail that move laid.
-    for (const find of prints.length > 0 ? trailsFound(prints, stood) : []) {
+    // Tracks in the snow (SPEC.md §9 Tracks, M57): found underfoot or ahead
+    // in its sight wedge (M59b), and one find takes the whole trail that move laid.
+    for (const find of prints.length > 0 ? trailsFound(map, rules, prints, lookouts(enemy, entered, moved)) : []) {
       if (printAlerts < rules.tracks.alertPerPhase) {
         alert = raiseAlert(alert, rules.tracks.alert, rules);
         printAlerts++;
