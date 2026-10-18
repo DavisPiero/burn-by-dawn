@@ -46,16 +46,16 @@
       "tag": "fast",
       "description": "Down beside the road toward the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.",
       "from": [
-        14,
+        16,
         0
       ],
       "to": [
-        9,
-        4
+        10,
+        3
       ],
       "jumpAt": 0,
       "spacing": 1,
-      "wind": "SW"
+      "wind": "W"
     }
   ],
   "_enemies": "SPEC.md §6, §16. Seven, as few as the aqueduct's, set to watch the crossings and the snow. Posts: the bridge post, one at each end beside the road, each sweeping between the deck and the gorge below; the gate guard by the main door. Patrols: the plateau patrol between the East run's ground and the road, the one that reads prints; the rim patrol along the gorge's north rim west of the bridge; the plant patrol along the railway from the duct to the gate; the road patrol on the road between the gate and the junction box. They set out on turn 2 (missions.json patrols.setOutTurn).",
@@ -97,16 +97,16 @@
       "id": "patrol-plateau",
       "label": "Plateau patrol",
       "type": "patrol",
-      "facing": "SW",
+      "facing": "NW",
       "loop": false,
       "route": [
         [
-          13,
-          2
+          14,
+          4
         ],
         [
-          11,
-          4
+          12,
+          2
         ]
       ]
     },
