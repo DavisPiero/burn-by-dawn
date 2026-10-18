@@ -5,15 +5,33 @@
     "flag": [86, 21],
     "clipboard": [0, 0]
   },
-  "_missions": "Each mission's drop screen, by its id in missions.json. dropCue is the hex PICK A DROP DIRECTION centres on, [q, r], fractions allowed; with none it centres on the runs' names. notes moves a ring's note by [x, y] hex radii (a hex across is 1.73, a row 1.5): keyed by the objective's id in its map, and exfil for the way out's. These were each map's noteNudge, exfilNoteNudge and dropCueAt, and France's drop cue an offset in theme.js, before M48k.",
+  "_missions": "Each mission's drop screen, by its id in missions.json. dropCue is the hex PICK A DROP DIRECTION centres on, [q, r], fractions allowed; with none it centres on the runs' names. clear (M58e) lists the hexes printed bare paper whatever the mission's ground colour, painted with PAINT CLEAR in ?layout. notes moves a ring's note by [x, y] hex radii (a hex across is 1.73, a row 1.5): keyed by the objective's id in its map, and exfil for the way out's. These were each map's noteNudge, exfilNoteNudge and dropCueAt, and France's drop cue an offset in theme.js, before M48k.",
   "missions": {
     "training": {
       "dropCue": [1.4, 6.2],
-      "notes": {}
+      "notes": {},
+      "clear": [
+        [4, 9],
+        [3, 10],
+        [2, 11],
+        [3, 11],
+        [3, 12]
+      ]
     },
     "france": {
       "dropCue": [3.98, 2.03],
-      "notes": {}
+      "notes": {},
+      "clear": [
+        [15, 2],
+        [14, 4],
+        [2, 6],
+        [3, 6],
+        [13, 6],
+        [14, 6],
+        [2, 7],
+        [3, 7],
+        [1, 8]
+      ]
     },
     "airfield": {
       "dropCue": [7.2, 5.5],
