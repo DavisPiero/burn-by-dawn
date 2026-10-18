@@ -61,8 +61,8 @@ Made 17 Oct 2026 (build M53). The game is unchanged until your rewording is carr
 ### The taglines along the foot of each title card
 
 - A24 | SIX MEN · ONE TRAINING BRIDGE · NOBODY GETS HURT
-- A25 | SIX MEN · ONE BRIDGE · DAWN AT SIXTEEN
-- A26 | SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY
+- A25 | SIX MEN · ONE BRIDGE · OUT BY DAWN
+- A26 | SIX MEN · EIGHT AIRCRAFT · OUT BY DAWN
 - A27 | SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT
 
 ## B. The orders
@@ -1462,14 +1462,14 @@ The cards that come up over the board between turns and at moments in the game.
 
 Painted panels over the board: one at START GAME (M55), one after the landing, one on a win.
 
-- M1a The Rail Bridge, in the Dakota (new, placeholder) | RED LIGHT ON. TWENTY MINUTES TO THE DROP ZONE. STAND UP, HOOK UP.
+- M1a The Rail Bridge, in the Dakota | TWENTY MINUTES TO THE DROP ZONE.
 - M1 The Rail Bridge, after the landing | 0140 HOURS. SIX MEN DOWN IN THE DARK.
 - M2 The Rail Bridge, mission accomplished | THE BRIDGE IS DOWN, AND NO TRAIN COULD CROSS FOR A MONTH.
-- M3a The Airfield, in the Dakota (new, placeholder) | RED LIGHT ON OVER THE DESERT. CHECK YOUR NEIGHBOUR'S KIT.
-- M3 The Airfield, after the landing | A COLD, STILL DESERT NIGHT. THE STUKAS SOMEWHERE AHEAD.
+- M3a The Airfield, in the Dakota | RED LIGHT ON. CHECK YOUR NEIGHBOUR'S KIT.
+- M3 The Airfield, after the landing | A COLD, STILL DESERT NIGHT. THE STUKAS ARE UP AHEAD.
 - M4 The Airfield, mission accomplished | BY DAWN THE STUKAS BURNED, AND THE MEN HAD MADE THEIR ESCAPE.
-- M5a The Aqueduct, in the Dakota (new, placeholder) | RED LIGHT ON OVER THE MOUNTAINS. COLD AS ICE IN HERE.
-- M5 The Aqueduct, after the landing | SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND CHARGES STASHED IN THEIR CANISTERS.
+- M5a The Aqueduct, in the Dakota | OVER THE MOUNTAINS, READY TO DROP. COLD AS ICE IN HERE.
+- M5 The Aqueduct, after the landing | SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, CHARGES STASHED IN THEIR CANISTERS.
 - M6 The Aqueduct, mission accomplished | THE AQUEDUCT WAS NO MORE, AND THE BOAT PULLED AWAY INTO THE DARKNESS.
 
 ## N. The training course

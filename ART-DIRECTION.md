@@ -118,8 +118,8 @@ board must read at a glance.
   side) so it shows against the green ground it comes in over. Wrecked, each car is
   thrown off the line a different way, the engine burns, and a car over the fallen bridge
   is printed fainter. **It runs between turns**: in the garrison's turn each car travels
-  the hexes it made, 300 ms a hex, coming on from off the board's edge and its tail
-  running off the far one, and a wrecked car keeps to the line until it gets there,
+  the hexes it made, 300 ms a hex, turning with the line as it goes round a bend,
+  coming on from off the board's edge and its tail running off the far one, and a wrecked car keeps to the line until it gets there,
   then is thrown off it.
 - **A road may be only drawn** (`roadArt` in a map, art only): a line through hexes'
   centres, on or off the board, printed as the roads are over ground that is whatever

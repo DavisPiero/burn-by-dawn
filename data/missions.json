@@ -81,11 +81,11 @@
       "blurb": "Six men drop in darkness to blow the rail line that supplies the coast. Get them out by dawn.",
       "panel": "assets/title/contents-france.jpg",
       "comicPanels": {
-        "dakota": { "art": ["assets/panels/panel-dakota-france.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON. TWENTY MINUTES TO THE DROP ZONE. STAND UP, HOOK UP." },
+        "dakota": { "art": ["assets/panels/panel-dakota-france.jpg", "assets/panels/panel-dakota.jpg"], "caption": "TWENTY MINUTES TO THE DROP ZONE." },
         "landing": { "art": "assets/panels/panel-landing-france.jpg", "caption": "0140 HOURS. SIX MEN DOWN IN THE DARK." },
         "success": { "art": "assets/title/contents-france_full.jpg", "caption": "THE BRIDGE IS DOWN, AND NO TRAIN COULD CROSS FOR A MONTH." }
       },
-      "tagline": "SIX MEN · ONE BRIDGE · DAWN AT SIXTEEN",
+      "tagline": "SIX MEN · ONE BRIDGE · OUT BY DAWN",
       "map": "data/map.json",
       "roster": "data/roster.json",
       "_rules": "M38b: `turnLimit` 16 (the operator's, after a turn at 15; 20 until M38: with the train at 10 the night had five turns of slack; the bot wins as often with dawn at 15, hurrying as it nears, and the Fuel Dump becomes the thing there is rarely time for). M34: France's other patch is its goods train (data/rules.json `train`): on the Rail Bridge in the enemy phase of turn 10 (M37, the operator's: waiting for it at 17 was dull; 14 at first, then 17 from M34b, when waiting for it cost nothing), seen coming on from the west edge three turns before; the bridge down on turn 16, 17 or 18 pays 5 (the operator's: within a turn of it, score only, scenery). Everything else is the files as they are.",
@@ -134,11 +134,11 @@
       "blurb": "Paratroopers raid aircraft on an Axis landing ground, on a mission to blow them sky high.",
       "panel": "assets/title/contents-airfield.jpg",
       "comicPanels": {
-        "dakota": { "art": ["assets/panels/panel-dakota-airfield.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON OVER THE DESERT. CHECK YOUR NEIGHBOUR'S KIT." },
-        "landing": { "art": "assets/panels/panel-landing-airfield.jpg", "caption": "A COLD, STILL DESERT NIGHT. THE STUKAS SOMEWHERE AHEAD." },
+        "dakota": { "art": ["assets/panels/panel-dakota-airfield.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON. CHECK YOUR NEIGHBOUR'S KIT." },
+        "landing": { "art": "assets/panels/panel-landing-airfield.jpg", "caption": "A COLD, STILL DESERT NIGHT. THE STUKAS ARE UP AHEAD." },
         "success": { "art": "assets/title/contents-airfield_full.jpg", "caption": "BY DAWN THE STUKAS BURNED, AND THE MEN HAD MADE THEIR ESCAPE." }
       },
-      "tagline": "SIX MEN · EIGHT AIRCRAFT · DAWN AT TWENTY",
+      "tagline": "SIX MEN · EIGHT AIRCRAFT · OUT BY DAWN",
       "map": "data/map-airfield.json",
       "roster": "data/roster.json",
       "_rules": "SPEC.md §13. Lewes bombs are small, so the scouts carry one each as well as the sappers (M29b, the operator's: with none, and two a sapper, the scouts had nothing to do here); still five in the stick with Nunn's. The win pays 10 on top of each aircraft's own 2, since no target here is worth the bridge's 10 on its own. M32: the garrison is Alarmed by the end of every raid here, so the clean run asks only that it was below Alert when the first bang went (and no jeep raid), and the jeep raid is urged only for men in contact, never for the Alarmed garrison. Three new objective kinds; their numbers are Normal's, first guesses for M30's balance.",
@@ -210,8 +210,8 @@
       "blurb": "A stone aqueduct in the mountains that takes every charge you carry. Exfil via a boat on the coast that will not wait.",
       "panel": "assets/title/contents-aqueduct.jpg",
       "comicPanels": {
-        "dakota": { "art": ["assets/panels/panel-dakota-aqueduct.jpg", "assets/panels/panel-dakota.jpg"], "caption": "RED LIGHT ON OVER THE MOUNTAINS. COLD AS ICE IN HERE." },
-        "landing": { "art": "assets/panels/panel-landing-aqueduct.jpg", "caption": "SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, AND CHARGES STASHED IN THEIR CANISTERS." },
+        "dakota": { "art": ["assets/panels/panel-dakota-aqueduct.jpg", "assets/panels/panel-dakota.jpg"], "caption": "OVER THE MOUNTAINS, READY TO DROP. COLD AS ICE IN HERE." },
+        "landing": { "art": "assets/panels/panel-landing-aqueduct.jpg", "caption": "SOUTHERN ITALY, FEBRUARY 1941. SNOW ON THE HILLS, CHARGES STASHED IN THEIR CANISTERS." },
         "success": { "art": "assets/title/contents-aqueduct_full.jpg", "caption": "THE AQUEDUCT WAS NO MORE, AND THE BOAT PULLED AWAY INTO THE DARKNESS." }
       },
       "tagline": "SIX MEN · ONE AQUEDUCT · THE BOAT WILL NOT WAIT",
