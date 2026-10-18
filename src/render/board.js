@@ -737,7 +737,8 @@ function drawHedges(layer, map) {
 
 /**
  * The railway: through where it runs in each of its hexes (railTrack),
- * carried on past the first and last to the board's edge, as a bed, two rails
+ * carried on past the first and last to the board's edge (past the last only
+ * where the map has no `railwayStops`), as a bed, two rails
  * and the sleepers across them. Straight lines between those points, each
  * corner rounded off from the middle of the one before to the middle of the
  * one after, so the line never swings out past them (M49c, the operator's:
@@ -755,7 +756,9 @@ function drawRailway(layer, map, edge, railway) {
   const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
   let d = `M${f(extend(points[1], points[0]))} L${f(points[0])} L${f(mid(points[0], points[1]))}`;
   for (let i = 1; i < points.length - 1; i++) d += ` Q${f(points[i])} ${f(mid(points[i], points[i + 1]))}`;
-  d += ` L${f(points.at(-1))} L${f(extend(points.at(-2), points.at(-1)))}`;
+  // A line that ends on the board (`railwayStops`, M59b, art only: Gunnerside's
+  // runs into the cable duct) stops at its last point instead of running off.
+  d += ` L${f(points.at(-1))}${map.railwayStops ? '' : ` L${f(extend(points.at(-2), points.at(-1)))}`}`;
   const rail = (attrs) => el('path', { d, fill: 'none', 'stroke-linecap': 'butt', 'stroke-linejoin': 'round', ...attrs });
   layer.appendChild(rail({ stroke: RAIL.bed, 'stroke-width': RAIL.bedWidth, 'stroke-opacity': RAIL.bedOpacity }));
   layer.appendChild(rail({ stroke: RAIL.rail, 'stroke-width': RAIL.railWidth }));

@@ -331,7 +331,7 @@
     ]
   ],
   "exfilArt": "skiTrail",
-  "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the duct. Its hexes are Railway ground (terrain.json), which is what the rules read.",
+  "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the duct. Its hexes are Railway ground (terrain.json), which is what the rules read. `railwayStops` (M59b): the line ends at the duct rather than running on to the board's edge, over the plant.",
   "railway": [
     [
       -4,
@@ -340,8 +340,13 @@
     [
       -1,
       9
+    ],
+    [
+      -1,
+      10
     ]
   ],
+  "railwayStops": true,
   "_printedAs": "SPEC.md §11, art only: the bridge's hexes are printed as the suspension bridge's deck over the gorge (theme.js `suspension`). Every rule still reads Bridge.",
   "printedAs": {
     "bridge": "suspension"
