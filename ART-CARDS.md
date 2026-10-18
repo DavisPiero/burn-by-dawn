@@ -146,6 +146,7 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   drives that line on the ground instead; then a card headed
   in the diversion's blue says what it did and what calls are left.
 - **The back page** (§10) is headed by the title card, smaller, with the six, the score
-  and the rating under it, and fits the right page at 1280x800 on the longest score
+  and the rating under it (the rating in green since M58b, the operator's: in red a good
+  night read as something gone wrong), and fits the right page at 1280x800 on the longest score
   sheet. PLAY AGAIN and CONTENTS sit side by side at its foot; Play again starts a new
   mission without a reload, and the orders open again.

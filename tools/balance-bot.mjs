@@ -131,6 +131,7 @@ const T = await mod('src/traits.js');
 const D = await mod('src/difficulty.js');
 const H = await mod('src/hex.js');
 const MI = await mod('src/missions.js');
+const TR = await mod('src/tracks.js');
 
 // The mission (M27): MISSION=<id>, as ?mission= in the address; the default otherwise.
 const missions = MI.validateMissions(await M.loadJson('data/missions.json'));
@@ -195,15 +196,62 @@ function returnFire(state, unit, map) {
 const HUNTERS = process.env.HUNTERS ?? 'free';
 if (!['free', 'all'].includes(HUNTERS)) throw new Error(`HUNTERS must be free or all, not "${HUNTERS}"`);
 
+// The climb (M58, Gunnerside's gorge): ground dearer than any pool is entered
+// only with the minimum step and takes his whole turn, so in the route sums it
+// counts as one turn's walk, the largest role's pool, not its 30. Nowhere else
+// has such ground, so nothing else changes.
+const CLIMB_CAP = Math.max(...Object.values(rules.roles).map((r) => r.actionPoints));
+const climbCost = (cost) => (cost > U.largestPool(rules) ? CLIMB_CAP : cost);
+
 function distanceField(map, goals) {
   // Cost to walk from any hex to the nearest goal (entering-cost of hexes on the way).
   const dist = new Map();
   for (const g of goals) {
-    const reach = M.reachableWithin(map, g, 999, null);
+    const reach = M.reachableWithin(map, g, 999, null, climbCost);
     dist.set(M.hexKey(g.q, g.r), 0);
     for (const [k, v] of reach) if (!dist.has(k) || dist.get(k) > v.cost) dist.set(k, v.cost);
   }
   return dist;
+}
+
+// Tracks in the snow (M58): where the garrison walks in the coming enemy
+// phase if the turn ended now, and every hex beside that: where prints laid
+// now are found next turn, as the hover's TRACKS row tells a player. Worked out once a state, not once
+// a candidate: the walk barely moves with one man's step. Nothing where the
+// mission has no tracks.
+let watchedFor = { enemies: null, units: null, hexes: null };
+function watchedSnow(state, map) {
+  if (!rules.tracks) return null;
+  if (watchedFor.enemies === state.enemies && watchedFor.units === state.units) return watchedFor.hexes;
+  const phase = E.runEnemyPhase(E.runDetection(state, map, rules).state, map, rules);
+  const hexes = new Set();
+  for (const e of phase.state.enemies) {
+    const before = state.enemies.find((o) => o.id === e.id);
+    for (const at of [...(before ? [before] : []), ...(e.walked ?? []), e]) {
+      hexes.add(M.hexKey(at.q, at.r));
+      for (const n of H.neighbors(at.q, at.r)) hexes.add(M.hexKey(n.q, n.r));
+    }
+  }
+  watchedFor = { enemies: state.enemies, units: state.units, hexes };
+  return hexes;
+}
+// The map his route sums are worked on: snow the garrison walks beside next
+// turn costs him a turn's walk more (the sapper's pool), so he takes a way
+// round where it is no longer than that and crosses where there is none, as
+// MISSION-GUNNERSIDE.md (Balance) asks. A cost in the route, not in the choice
+// of move: weighed against moving, it made standing still free, and the stick
+// waited at the rim for a way that was never coming.
+const TRAIL_COST = rules.roles.sapper.actionPoints;
+function routeMap(state, map) {
+  const watched = watchedSnow(state, map);
+  if (!watched) return map;
+  const moveCosts = new Map(map.moveCosts ?? []);
+  for (const key of watched) {
+    const [q, r] = key.split(',').map(Number);
+    const cost = M.enterCost(map, q, r, null);
+    if (cost !== null && TR.takesPrints(map, rules, { q, r })) moveCosts.set(key, cost + TRAIL_COST);
+  }
+  return { ...map, moveCosts };
 }
 
 function risk(map, state, unit, path, endHidden) {
@@ -515,7 +563,7 @@ function actFor(state, unit, map) {
   if (PACK && state.turn === 1 && U.checkPackParachute(state.parachutes, unit, rules).ok) return S.packParachute(state, unit.id, rules);
 
   const goals = goalFor(state, unit, map, assign);
-  const dist = distanceField(map, goals);
+  const dist = distanceField(routeMap(state, map), goals);
   const blasts = SB.blastHexesThisTurn(state, rules);
   const reach = U.reachableFor(map, state.units, unit, rules, state.enemies);
   const here = { q: unit.q, r: unit.r, cost: 0 };

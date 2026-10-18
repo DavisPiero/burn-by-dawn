@@ -377,6 +377,26 @@ const TERRAIN_ART = {
   shingle: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-shingle', variants: 2 },
   rocks: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-rocks', variants: 2 },
   sea: { base: 'blue', motif: 'terrain-sea', variants: 2, banks: ['sea'] },
+  // Norway (SPEC.md §16, M58): the aqueduct's cold blue, thinner, the snow the
+  // paper itself left nearly bare so it reads white beside everything else.
+  // No new colour. The pines are a wood's area in ink and green with snow on
+  // their tiers; the gorge's sides cliff hatching on a dark tint, straight-edged, the ice pale between them.
+  snowfield: { base: 'paper', motif: 'terrain-snowfield', variants: 2, sparse: 0.3 },
+  drift: { base: 'paper', area: { tint: ['blue', 0.1], outline: 1, outlineClass: 'stroke-blue', outlineOpacity: 0.45, dash: '6 4' }, motif: 'terrain-drift', variants: 2 },
+  pines: { base: 'paper', area: { tint: ['blue', 0.14], outline: 1.4 }, motif: 'terrain-pines', variants: 3, shadows: true },
+  rock: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-rock', variants: 2 },
+  gorgeSide: { base: 'paper', tint: ['ink', 0.3], motif: 'terrain-gorge', variants: 3 },
+  ice: { base: 'paper', tint: ['blue', 0.16], motif: 'terrain-ice', variants: 3 },
+  railway: { base: 'paper', motif: null },
+  plantWall: { base: 'paper', tint: ['ink', 0.6], motif: 'terrain-plant-roof', building: true, wall: true },
+  hall: { base: 'paper', tint: ['ink', 0.06], motif: 'terrain-hall-floor' },
+  duct: { base: 'paper', tint: ['ink', 0.16], motif: 'terrain-duct' },
+  cells: { base: 'paper', tint: ['ink', 0.1], motif: null, wall: true },
+  barracks: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-barracks', building: true },
+  // The suspension bridge's deck, printed over the gorge (the map's
+  // `printedAs`, art only: the rules read Bridge), turned to run south-west
+  // as the map's does; the road is drawn over it.
+  suspension: { base: 'paper', tint: ['blue', 0.18], motif: 'terrain-suspension' },
 };
 
 // Area terrain's outline: it follows the hexes' edges, rounded off at every
@@ -384,6 +404,13 @@ const TERRAIN_ART = {
 // reads as a wood on a map rather than a patch of hexes. The push is fixed by
 // where the edge is, never rolled, so the map is the same every time.
 export const AREA = { wobble: 6 };
+
+// The hard edge of a wall (M58b, board.js drawWalls): ground marked `wall`.
+export const WALL = { width: 3.2 };
+
+// The footprint wash (M58c, board.js drawPrintWatch): snow where prints laid
+// now would be found next turn, hatched in ink, so it reads over the red danger wash too.
+export const PRINT_WATCH = { pattern: 'print-watch-hatch', stroke: PALETTE.ink, width: 2.6, spacing: 10, opacity: 0.42 };
 
 /** A fixed push, -1 to 1, for the point (x, y). */
 export function wobbleAt(x, y) {
@@ -466,6 +493,9 @@ export const PLACE = {
   village: { size: 19, weight: 'bold', italic: false, capitals: true, spacing: 4, fill: PALETTE.ink, opacity: 0.5 },
   water: { size: 17, weight: 'bold', italic: true, capitals: false, spacing: 1.5, fill: PALETTE.paper, opacity: 0.6, halo: false },
   other: { size: 17, weight: 'normal', italic: true, capitals: false, spacing: 0.5, fill: PALETTE.ink, opacity: 0.5 },
+  // A gorge (M58b, the operator's: Gunnerside's did not read as one): the
+  // village's spaced capitals, a little darker, along the ice.
+  gorge: { size: 18, weight: 'bold', italic: false, capitals: true, spacing: 5, fill: PALETTE.ink, opacity: 0.62 },
   // A dry watercourse (M31d, the operator's: the wadi's name was lost under its
   // stones): water's paper italic, solid, on a soft ink halo so it prints over
   // the stones rather than among them.
@@ -963,7 +993,11 @@ const OBJECTIVE_ART = {
   fuelDump: { intact: 'objective-fuel-dump', destroyed: 'objective-fuel-destroyed' },
   // The aqueduct's (M41).
   aqueduct: { intact: 'objective-aqueduct', destroyed: 'objective-aqueduct-destroyed' },
-  roadBridge: { intact: 'objective-road-bridge', destroyed: 'objective-road-bridge-destroyed' },
+  roadBridge: { intact: 'objective-road-bridge', destroyed: 'objective-road-bridge-destroyed' },  // The heavy water plant's (M58): the cells along the hall's back wall, and
+  // the telephone line's junction box on its pole, its lines to the poles
+  // on its charge points.
+  cellHall: { intact: 'objective-cells', destroyed: 'objective-cells-destroyed' },
+  telephone: { intact: 'objective-junction', destroyed: 'objective-junction-destroyed', cut: 'objective-junction-cut', wires: { x: 40, y: 24 } },
 };
 
 /** The orders chevrons for a man's bonus from the leader: one, or two for more than one AP (M12). */
@@ -1016,7 +1050,7 @@ export const TRAIN = {
 
 // The exfil's picture, by the map's `exfilArt` (M29): France's barn, or the
 // trucks waiting at the airfield's rendezvous.
-const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks', boat: 'objective-boat' };
+const EXFIL_ART = { barn: 'objective-rally-point', trucks: 'objective-trucks', boat: 'objective-boat', skiTrail: 'objective-ski-trail' };
 
 // The boat on its way in (M41): the exfil's own picture, printed out at sea
 // and a little fainter until it is on the beach.
@@ -2823,6 +2857,156 @@ function canopy(colour) {
   return parts;
 }
 
+// ---------------------------------------------------------------------------
+// The heavy water plant's ground and targets (SPEC.md §16, M58), drawn in
+// code until painted; in the same hand as the aqueduct's. Nothing here is
+// used by the other maps.
+
+// A fir, in tiers, dark green under ink, snow lying on each tier's upper edge.
+function firPath(x, y, s) {
+  const p = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  return `M${p(0, -15)} L${p(7, -5)} L${p(4, -5)} L${p(10, 4)} L${p(5, 4)} L${p(12, 13)} L${p(-12, 13)} L${p(-5, 4)} L${p(-10, 4)} L${p(-4, -5)} L${p(-7, -5)} Z`;
+}
+function fir(x, y, s = 1) {
+  const p = (dx, dy) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  const d = firPath(x, y, s);
+  return [
+    line(`M${p(0, 13)} V${(y + 17 * s).toFixed(1)}`, 1.6),
+    fill(d, 'green'), fill(d, toneClass('ink', 35)), line(d, 1.2),
+    // The snow on the tiers: a paper stroke along each upper left edge.
+    line(`M${p(-1, -13)} L${p(-5, -6)} M${p(-2, -4)} L${p(-8, 3)} M${p(-3, 5)} L${p(-10, 12)}`, 2, 'stroke-paper', { 'stroke-linecap': 'round' }),
+  ];
+}
+function firShadow(x, y, s = 1) {
+  return [fill(firPath(x + 3.5 * s, y + 3 * s, s), 'ink', { 'fill-opacity': 0.5 })];
+}
+const FIRS = [
+  [[24, 30, 1], [54, 26, 0.9], [40, 52, 1.1], [20, 70, 0.85], [60, 66, 1]],
+  [[34, 24, 1], [60, 42, 0.85], [20, 48, 0.95], [44, 62, 1.1], [26, 78, 0.8]],
+  [[22, 28, 0.85], [48, 30, 1.05], [28, 58, 1], [58, 60, 0.9], [44, 82, 0.8]],
+];
+
+// Cliff hatching down a gorge side: close strokes falling down the hex.
+function cliff(marks) {
+  return [line(marks.map(([x, y, l]) => `M${x} ${y} l${(l * 0.18).toFixed(1)} ${l}`).join(' '), 1.3, 'stroke-ink', { opacity: 0.55 })];
+}
+
+// The ice: a pale line along the river's middle, and its cracks.
+function iceCracks(d, cracks) {
+  return [line(d, 2.2, 'stroke-paper', { opacity: 0.8 }), line(cracks, 0.9, 'stroke-ink', { opacity: 0.4 })];
+}
+
+// A snow-roofed hut from above: the roof's two slopes either side of its
+// ridge, the shaded one toned, an ink edge.
+function hut(x, y, w, h) {
+  const r = `M${x - w / 2} ${y - h / 2} H${x + w / 2} V${y + h / 2} H${x - w / 2} Z`;
+  return [
+    svg('rect', { x: x - w / 2 + 3, y: y - h / 2 + 3, width: w, height: h, class: 'ink', opacity: 0.35 }),
+    fill(r, 'paper'), fill(`M${x - w / 2} ${y} H${x + w / 2} V${y + h / 2} H${x - w / 2} Z`, toneClass('ink', 20)),
+    line(r, 1.4), line(`M${x - w / 2} ${y} H${x + w / 2}`, 1),
+  ];
+}
+
+const NORWAY_TERRAIN = {
+  'terrain-snowfield-01': () => [line('M24 50 Q40 44 56 50', 1, 'stroke-blue', { opacity: 0.4 })],
+  'terrain-snowfield-02': () => [line('M30 40 Q38 36 46 40 M38 58 Q48 54 58 58', 1, 'stroke-blue', { opacity: 0.35 })],
+  'terrain-drift-01': () => [line('M8 38 Q40 28 72 38 M14 58 Q40 48 66 58', 1.6, 'stroke-blue', { opacity: 0.5 }), line('M10 40 Q40 30 70 40', 1, 'stroke-paper', { opacity: 0.8 })],
+  'terrain-drift-02': () => [line('M10 46 Q40 36 70 46 M20 66 Q42 58 62 66', 1.6, 'stroke-blue', { opacity: 0.5 }), line('M12 48 Q40 38 68 48', 1, 'stroke-paper', { opacity: 0.8 })],
+  ...Object.fromEntries(FIRS.flatMap((trees, i) => [
+    [`terrain-pines-0${i + 1}`, () => trees.flatMap(([x, y, k]) => fir(x, y, k))],
+    [`terrain-pines-0${i + 1}-shadow`, () => trees.flatMap(([x, y, k]) => firShadow(x, y, k))],
+  ])),
+  'terrain-rock-01': () => [svg('ellipse', { cx: 44, cy: 56, rx: 16, ry: 6, class: 'blue', opacity: 0.35 }), ...rockFace(40, 46, 0.9)],
+  'terrain-rock-02': () => [svg('ellipse', { cx: 38, cy: 52, rx: 13, ry: 5, class: 'blue', opacity: 0.35 }), ...rockFace(34, 42, 0.7), ...rockFace(54, 58, 0.55)],
+  'terrain-gorge-01': () => cliff([[14, 22, 14], [24, 30, 16], [36, 20, 14], [48, 34, 16], [60, 24, 14], [20, 54, 16], [34, 58, 14], [46, 60, 16], [58, 52, 14], [66, 60, 12]]),
+  'terrain-gorge-02': () => cliff([[18, 26, 16], [30, 22, 14], [42, 30, 16], [56, 22, 14], [66, 34, 12], [14, 56, 14], [28, 52, 16], [40, 60, 14], [52, 54, 16], [62, 62, 12]]),
+  'terrain-gorge-03': () => cliff([[16, 30, 14], [28, 24, 16], [40, 22, 14], [52, 30, 16], [64, 26, 12], [22, 58, 14], [36, 54, 16], [48, 58, 14], [60, 50, 16]]),
+  'terrain-ice-01': () => iceCracks('M0 46 Q20 42 40 47 T80 45', 'M22 44 l-4 -8 M46 47 l3 9 M58 46 l6 -7'),
+  'terrain-ice-02': () => iceCracks('M0 47 Q22 50 40 45 T80 47', 'M16 48 l3 8 M38 45 l-2 -9 M62 46 l5 8'),
+  'terrain-ice-03': () => iceCracks('M0 45 Q18 48 40 46 T80 46', 'M28 47 l-5 7 M50 46 l4 -8 M70 46 l-2 8'),
+  'terrain-plant-roof': () => [line('M8 30 L30 8 M8 52 L52 8 M10 72 L72 10 M28 76 L72 32 M50 78 L72 56', 1.2, 'stroke-paper', { opacity: 0.25 })],
+  'terrain-hall-floor': () => [line('M14 28 H66 M10 46 H70 M14 64 H66 M27 20 V72 M40 18 V74 M53 20 V72', 0.8, 'stroke-ink', { opacity: 0.18 })],
+  'terrain-duct': () => [
+    line('M0 40 H80 M0 46 H80 M0 52 H80', 2, 'stroke-ink', { opacity: 0.7 }),
+    line('M20 37 V55 M40 37 V55 M60 37 V55', 1.2, 'stroke-ink', { opacity: 0.5 }),
+  ],
+  'terrain-barracks': () => hut(40, 46, 44, 24),
+  // The deck along x, its cables either side and their hangers, turned to
+  // run south-west; the gorge shows dark through the gaps under it.
+  'terrain-suspension': () => {
+    const local = [
+      svg('rect', { x: -46, y: -15, width: 92, height: 30, class: 'ink', opacity: 0.3 }),
+      fill('M-46 -9 H46 V9 H-46 Z', 'paper'), fill('M-46 -9 H46 V9 H-46 Z', toneClass('ink', 10)),
+      line('M-46 -9 H46 M-46 9 H46', 1.4),
+    ];
+    let hangers = '';
+    for (let x = -40; x <= 40; x += 10) hangers += `M${x} -13 V-9 M${x} 13 V9 `;
+    local.push(line(hangers, 0.8), line('M-46 -13 H46 M-46 13 H46', 1.6));
+    return [svg('g', { transform: 'translate(40 46) rotate(120)' }, local)];
+  },
+};
+
+// The electrolysis cells along the hall's back wall, four hexes long: two
+// rows of steel tanks under their bus bars, seen from above.
+function cellRow(blown) {
+  const out = [fill('M4 18 H316 V74 H4 Z', toneClass('ink', 20)), line('M4 18 H316 V74 H4 Z', 1.6)];
+  for (let i = 0; i < 18; i++) {
+    for (const y of [26, 50]) {
+      const x = 12 + i * 17;
+      if (blown && (i * 7 + y) % 3 === 0) continue;
+      const turn = blown ? ((i * 37 + y) % 40) - 20 : 0;
+      out.push(svg('rect', { x, y, width: 13, height: 18, rx: 2, class: 'paper', transform: `rotate(${turn} ${x + 6.5} ${y + 9})` }));
+      out.push(svg('rect', { x, y, width: 13, height: 18, rx: 2, class: toneClass('ink', 35), transform: `rotate(${turn} ${x + 6.5} ${y + 9})` }));
+      out.push(svg('rect', { x, y, width: 13, height: 18, rx: 2, fill: 'none', class: 'stroke-ink', 'stroke-width': 1, transform: `rotate(${turn} ${x + 6.5} ${y + 9})` }));
+    }
+  }
+  if (!blown) out.push(line('M8 46 H312', 2.4, 'stroke-ink'), line('M8 46 H312', 1, 'stroke-paper', { opacity: 0.6 }));
+  return out;
+}
+
+// The junction box on its pole by the road: the box, the crossarm its lines
+// leave from (OBJECTIVE_ART `wires`), the pole's shadow on the snow.
+function junction(state) {
+  const out = [
+    line('M44 80 L64 86', 3, 'stroke-ink', { opacity: 0.25 }),
+    line('M40 18 V82', 3.2),
+    line('M28 24 H52', 2.4),
+    ...[30, 50].map((x) => circle(x, 22.5, 1.8, 'paper')),
+    ...inked('M33 44 H47 V62 H33 Z', state === 'blown' ? 'ink' : 'green', 1.4),
+  ];
+  if (state !== 'blown') out.push(line('M36 48 H44 M36 52 H44', 0.9, 'stroke-paper', { opacity: 0.7 }));
+  if (state === 'cut') out.push(line('M37 64 l-4 8 M43 64 l5 7', 1.1));
+  if (state === 'blown') out.push(...smoke(40, 30, 0.8), ...flame(40, 52, 0.6));
+  return out;
+}
+
+// The way out (exfilArt `skiTrail`): two lines of ski tracks running off the
+// board to the north-east, and the cairn that marks them.
+function skiTrail() {
+  return [
+    line('M10 86 Q34 60 50 36 T76 4 M18 88 Q40 62 56 38 T82 8', 1.4, 'stroke-ink', { opacity: 0.8 }),
+    line('M24 90 Q46 64 62 40 T88 10 M32 92 Q52 66 68 42 T94 14', 1.4, 'stroke-ink', { opacity: 0.8 }),
+    svg('ellipse', { cx: 26, cy: 62, rx: 11, ry: 4, class: 'ink', opacity: 0.3 }),
+    ...[[20, 58, 7, 4.5], [30, 58, 6, 4], [24, 51, 7, 4.2], [26, 44, 5, 3.6], [25, 38, 3.6, 3]].flatMap(([x, y, rx, ry]) => [
+      svg('ellipse', { cx: x, cy: y, rx, ry, class: 'paper' }),
+      svg('ellipse', { cx: x, cy: y, rx, ry, class: toneClass('ink', 35) }),
+      svg('ellipse', { cx: x, cy: y, rx, ry, fill: 'none', class: 'stroke-ink', 'stroke-width': 1.2 }),
+    ]),
+  ];
+}
+
+const NORWAY_OBJECTIVES = {
+  'objective-cells': { viewBox: '0 0 320 92', draw: () => cellRow(false) },
+  'objective-cells-destroyed': {
+    viewBox: '0 0 320 92',
+    draw: () => [...cellRow(true), fill('M30 74 Q90 88 160 80 Q230 90 290 74 Z', 'blue', { 'fill-opacity': 0.5 }), ...smoke(110, 30, 1.2), ...smoke(220, 34, 1.1), ...flame(160, 48, 0.9)],
+  },
+  'objective-junction': { viewBox: '0 0 80 92', draw: () => junction('intact') },
+  'objective-junction-cut': { viewBox: '0 0 80 92', draw: () => junction('cut') },
+  'objective-junction-destroyed': { viewBox: '0 0 80 92', draw: () => junction('blown') },
+  'objective-ski-trail': { viewBox: '0 0 80 92', draw: skiTrail },
+};
+
 const SPRITES = {
   // --- counters and symbols (ART-ASSETS.md §3) ---
   'counter-frame-allied': { viewBox: '0 0 56 56', draw: () => alliedFrame('ink') },
@@ -2930,6 +3114,8 @@ const SPRITES = {
   ...DESERT_OBJECTIVES,
   ...Object.fromEntries(Object.entries(ITALY_TERRAIN).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
   ...ITALY_OBJECTIVES,
+  ...Object.fromEntries(Object.entries(NORWAY_TERRAIN).map(([id, draw]) => [id, { viewBox: '0 0 80 92', draw }])),
+  ...NORWAY_OBJECTIVES,
   'train-engine': { viewBox: '0 0 80 46', draw: trainEngine },
   'train-wagon': { viewBox: '0 0 80 46', draw: trainWagon },
   // A hedge's clumps (M17): board.js lays them along each hedge, every shadow first.

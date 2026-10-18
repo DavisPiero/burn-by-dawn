@@ -24,6 +24,7 @@
         "exfil": [-4.25, 0]
       }
     },
+    "gunnerside": { "dropCue": [0.3, 8.6], "notes": {} },
     "aqueduct": {
       "dropCue": [11.8, 2.5],
       "notes": {

@@ -316,6 +316,17 @@ export function occupiedHexes(units, exceptId = null, enemies = []) {
  * never enter a 3 AP marsh hex and two thirds of the roster are locked out of
  * the canal towpath approach (SPEC.md §8). Unused AP is still never banked.
  */
+/**
+ * The biggest pool any man can have: the largest role's AP and the leader's
+ * close bonus. Ground dearer than this (Gorge side, M58) is a climb, entered
+ * only with the minimum step, so it is worded as a whole turn, never its cost.
+ */
+export function largestPool(rules) {
+  const roles = Object.values(rules.roles).map((role) => role.actionPoints);
+  const bonus = rules.command ? Math.max(rules.command.bonusActionPoints, rules.command.closeBonusActionPoints) : 0;
+  return Math.max(...roles) + bonus;
+}
+
 export function affordability(unit, cost, steps, rules) {
   if (steps === 0) return { affordable: false, reason: 'already there' };
   if (cost <= unit.ap) return { affordable: true, minimumStep: false };
@@ -323,6 +334,7 @@ export function affordability(unit, cost, steps, rules) {
     return { affordable: true, minimumStep: true };
   }
   if (unit.ap === 0) return { affordable: false, reason: 'no AP left this turn' };
+  if (steps === 1 && cost > largestPool(rules)) return { affordable: false, reason: 'a climb takes a whole turn: start the turn beside it' };
   return { affordable: false, reason: `needs ${cost} AP, has ${unit.ap}` };
 }
 
@@ -352,8 +364,10 @@ export function planMove(map, units, unit, target, rules, enemies = []) {
     if (costs[i] <= unit.ap) affordableUpTo = i;
   }
   if (affordable) affordableUpTo = path.length - 1;
+  // A climb (M58): a step onto ground dearer than any pool, worded by its turn, not its cost.
+  const climb = costs.some((c, i) => i > 0 && c - costs[i - 1] > largestPool(rules));
 
-  return { path, costs, total, steps, affordable, affordableUpTo, minimumStep, reason };
+  return { path, costs, total, steps, affordable, affordableUpTo, minimumStep, climb, reason };
 }
 
 function runningCosts(map, path, unit) {

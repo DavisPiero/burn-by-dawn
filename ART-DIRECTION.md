@@ -133,8 +133,14 @@ board must read at a glance.
   with the hexes above and below it, and the bridge's picture is only its deck, parapets
   and its arch's face hanging from the deck over the water. The rules read the bridge.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
-  water, the rest in italic, each nudged off its hex (`dx`, `dy`) to sit in what it names.
-  The turn report uses them ("the field by Ferme Lebrun").
+  water, a gorge in spaced capitals along it (M58b), the rest in italic, each nudged off
+  its hex (`dx`, `dy`) to sit in what it names. The turn report uses them ("the field by
+  Ferme Lebrun").
+- **A wall reads as a wall** (M58b, the operator's: the plant's walls and pipes trapped
+  men who could not see them): ground marked `wall` in theme.js (the plant's walls and
+  its cells) gets a hard ink edge wherever it meets ground a man can stand on.
+- **Labels stay on the board** (M58b): a ring's name that would sit off the board's top
+  goes under the ring instead, and the way out's picture is kept inside the board.
 - **Objectives say where to go.** Each is outlined firmly, its art inside, its name above.
   Each charge point is a red dashed hex with an empty satchel a third of the way toward
   its target (`pointNudge`); hovering one says so. A charge set on it is drawn in the

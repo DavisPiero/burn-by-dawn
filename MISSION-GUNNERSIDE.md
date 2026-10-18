@@ -6,7 +6,8 @@ it (§4, §6, §7, §9, §10, §11) are SPEC.md's.
 
 **Specified 18 Oct 2026 (M56). Its engine is built (M57): tracks in the snow (SPEC.md §9
 Tracks), the no-shot clean run and the card before the first shot, all off until the
-mission's patch turns them on. The map is not yet built.** This file says what is to be built and
+mission's patch turns them on. The map is drawn as a draft (M58), `?mission=gunnerside`,
+not yet balanced or worded.** This file says what is to be built and
 how it is to play; once the mission is playable it will say how things are, and keep no
 history (DECISIONS.md has it). Every number in it is a starting point for the balance
 milestone unless it says the operator chose it. The words and names are placeholder
@@ -54,7 +55,7 @@ Its pillar check (SPEC.md, the second pillar). What the player does: send a scou
 the railway where the snow is swept, knife the plateau patrol before it reaches the
 prints, climb into the gorge under the bridge post's nose, cut the telephone line, slip
 through the cable duct, set three timers to one bang and be back on the ice before it
-goes. What each costs: the gorge is three turns the bridge would do in one; open snow
+goes. What each costs: the gorge is two or three turns the bridge would do in one; open snow
 leaves a trail for whoever walks past it; a knifed patrol is a body on the snow where
 the next one walks; the telephone is a charge the hall may want and a turn of a scout's
 night; and the bang turns the whole shelf out between the stick and home.
@@ -62,17 +63,21 @@ night; and the bang turns the whole shelf out between the stick and home.
 ### Its two rules
 
 **The gorge** (data only: a new terrain, no code). The gorge's sides are **Gorge side**,
-whose move cost is more than any man's pool, so a man steps onto one only at full AP,
+whose move cost (30) is more than any man's pool, so a man steps onto one only at full AP,
 with the step every man always has (SPEC.md §4, `minimumStep`), and it takes his whole
 turn: climbing down is a turn, and climbing out is a turn. They are heavy cover and block
-sight. At the bottom the river is frozen: **Ice**, 1 AP, heavy cover, so a man down
-there is seen only from beside him, and nobody is beside him. A crossing is a turn down,
-a turn on the ice, a turn up: **about three turns, against one on the bridge**, which
-two sentries watch. It is France's swim against the bridge, sharpened, and the map
+sight. Where the gorge narrows it is two sides and nothing between: a crossing is a
+turn down and a turn up, **two turns, against one on the bridge**, which two sentries
+watch. In its wider middle stretch the river at the bottom is frozen: **Ice**, 1 AP,
+heavy cover, so a man down there is seen only from beside him, and that crossing is three
+turns (M58b, the operator's: three turns everywhere was too slow, and a scout stuck at
+the edge waiting for a full pool felt like the game, not the gorge). It is France's swim against the bridge, sharpened, and the map
 draft sets the exact hexes to that aim. A wounded man can still climb (the step needs
 only a full pool), at the same cost. The garrison does not climb: its routes keep to the
 bridge, and a patrol hunting at Alarmed paths round by the bridge, as it would round
-any ground that dear.
+any ground that dear. (The operator's, M58: a whole turn, never 3 AP, so the gorge is
+the slow way that keeps a man out of a fight. The 30 is never shown: the hover says
+"a climb: a whole turn", and the move "climb · his whole turn".)
 
 **Tracks in the snow** (an engine rule, `tracks` in the rules patch; null in every other
 mission, so nothing changes there).
@@ -97,7 +102,9 @@ mission, so nothing changes there).
   be building ahead): the answer is the route, the railway, the trees and the turns.
   Undo takes prints back with the move that laid them, as it takes back everything else
   in the player phase.
-- **What the player sees.** The prints on the board (Its pictures, below). On the hover
+- **What the player sees.** The prints on the board (Its pictures, below), and while a
+  man is selected the footprint wash on the snow the garrison will pass next turn
+  (DROP.md, M58c). On the hover
   path, a boot mark on every hex that would take prints, and where a patrol's coming
   walk passes one, TRACKS: FOUND NEXT TURN BY THE PLATEAU PATROL in the readout, so it is
   never a surprise (Feel: the player sees the risk before committing). Hovering a print
@@ -180,7 +187,6 @@ beside everything else: no new colour (ART-DIRECTION.md, Colour).
 | Hall | 1 | heavy | yes | no | inside the cell hall; its charge points are here |
 | Cable duct | 2 | heavy | yes | no | the quiet way into the hall, one hex |
 | Cells | impassable | — | yes | — | the electrolysis cells; the objective stands on them |
-| Pipes | impassable | — | yes | — | the penstocks down the hillside behind the plant |
 | Barracks | 1 | heavy | yes | no | the garrison's huts on the shelf |
 
 Kept from France: **Track** (the road, takes no prints), **Bridge** (the suspension
@@ -191,39 +197,51 @@ telephone line, so Cut the line is.
 ### The map
 
 `data/map-gunnerside.json`, drawn at M58 to this outline; the balance milestone moves
-what it must.
+what it must. As drawn (M58b): the plateau in rows 0 to 4 or 5, the gorge between rows
+4 and 7 as it wanders, the shelf below it; the bridge, two hexes, runs straight
+south-west where the gorge narrows east of the middle, a sentry beside each end.
 
 - **The plateau** fills the north third: snowfield and drift, pine woods in clumps, rock
-  outcrops, a hut. All three drop runs are over it, and **nobody lands south of the
-  gorge**.
-- **The gorge** runs east–west across the middle of the board, a gorge side, the ice and
-  a gorge side, crag at each end so it cannot be walked round. A **suspension bridge**
+  outcrops, a hut, and pine lanes running down to the rim so a careful man has a way
+  across the snow that leaves no prints. All three drop runs are over it, and **nobody
+  lands south of the gorge**.
+- **The gorge** runs east–west across the middle of the board and wanders as it goes, a
+  row up or down along its length so it reads as a gorge, not a ditch (M58b, the
+  operator's): two gorge sides where it narrows, a side, the ice and a side in its wider
+  middle stretch, crag at each end so it cannot be walked round. Its name is lettered
+  along it in capitals, MØRKGJELET GORGE. A **suspension bridge**
   crosses it a little east of the middle, carrying the road; the **bridge post** is two
   sentries, one at each end.
-- **The shelf** in the south third, where the plant stands: the **cell hall**, its walls
-  round a hall of a few hexes with the cells along its back, its charge points on the
-  hall floor beside them; the **cable duct** into its west end, below the railway; the
-  **main door** at its east end, facing the gate; the **barracks** east of the plant;
-  the **pipes** coming down the hillside behind it, impassable, splitting the shelf.
+- **The shelf** in the south third, where the plant stands, a little east of the middle (M58c: two hexes back west, out of the crowd round the telephone line and the gate), with
+  open ground and pines to the west of it (M58b, the operator's: the first draft's walls
+  and pipes jammed the men up): the **cell hall**, a thin shell, one row of wall on its
+  north side and the cells along its back on the board's south edge, its charge points on
+  the hall floor beside them; the **cable duct** into its west end, at the railway's
+  end; the **main door** at its east end, facing the gate; the **barracks** east of the
+  plant. Every wall has a hard ink edge, so it reads as a wall. The **pipes** are not
+  ground: they come down the hillside behind the plant off the board, a picture for M60.
 - **The railway** runs along the shelf from the west edge to the plant: the quick way
   from the gorge to the duct, open but leaving no prints. Where the gorge side meets it
   on the south is the climb's top, as it was.
 - **The road** comes up from the town off the south-east edge, zigzags to the gate,
   crosses the bridge and runs north over the plateau. Reinforcements come up it.
 - **The telephone line** runs on poles beside the road, from the plant down towards
-  the town, with its **junction box** on the shelf below the gate: south of the gorge,
-  so it is cut on the way in or not at all.
+  the town, with its **junction box** on the shelf beside the road, under the gorge:
+  south of it, so it is cut on the way in or not at all.
 - **The way out** is a **ski trail** off the north-east corner of the plateau, three
-  hexes on the edge, as far from the drop runs as the plateau allows: drawn as two lines
+  hexes down the east edge from the corner (M58: along the top edge its picture fell
+  off the board), as far from the drop runs as the plateau allows: drawn as two lines
   of ski tracks running off the board into the dark with a cairn beside them
   (`exfilArt`). Open all night: no timetable.
-- **Three drop runs**, all over the plateau, told apart as France's are:
-  **West · QUIET** over the pine woods in the north-west (under the trees the whole
-  way and far from the bridge, the longest walk round to the climb; a man who lands in
-  the woods loses his first turn); **North · STEADY** along the plateau's
-  middle (open snow, the most reliable landing, and prints wherever the men go);
-  **East · FAST** down the road towards the bridge (nearest the crossing and the way
-  out, and nearest the bridge post and the plateau patrol).
+- **Three drop runs**, all over the plateau, flown in from three sides so their names
+  sit on three edges of the board (M58b, the operator's: in line along the top they
+  overlapped), told apart as France's are: **West · QUIET** in from the west edge over
+  the pine woods (under the trees, near where the gorge narrows; a man who lands in the
+  woods loses his first turn); **North · STEADY** down from the top over the plateau's
+  open middle (the most reliable landing, and prints wherever the men go); **East ·
+  FAST** in from the east edge toward the road and the bridge (nearest the crossing and
+  the way out, and nearest the bridge post and the plateau patrol). PICK A DROP
+  DIRECTION sits on the empty shelf in the west (data/layout.json).
 - Place names are placeholders: the plant **Vassdal Works**, the gorge **Mørkgjelet**,
   the plateau **Isvidda**, the town below **Elvebyen**.
 
@@ -240,7 +258,7 @@ and the snow rather than to fight.
   the road, the one that reads prints; the **rim patrol**, along the north rim of the
   gorge west of the bridge, touching the West run's ground at one end; the **plant
   patrol**, round the cell hall and along the railway to the duct; the **road patrol**,
-  on the zigzag between the gate and the junction box.
+  on the road between the junction box, the gate and the town.
 - **The patrols set out on turn 2** (`patrols.setOutTurn`), as on the airfield and the
   aqueduct: turn 1 is for gathering and getting off the open snow.
 - **The reserve** turns out of the barracks at Alarmed, crosses the bridge and stands
@@ -404,7 +422,8 @@ All drawn in code first (M58), painted art asked for in ART-PROMPTS.md at M60.
   edges; drift in soft bands; pine woods as dark firs in clumps, snow on their tops;
   rock grey with blue shadow; the gorge's sides as cliff hatching in ink, darkening
   down to the ice, a pale line with cracks.
-- **The plant**: the cell hall a long block with a pitched roof and tall windows, the pipes behind it as thick lines down the
+- **The plant**: on the board a plan (M58b: dark walls with hard edges, the floor, the
+  cells), as men stand inside it; for the painted panels the cell hall a long block with a pitched roof and tall windows, the pipes behind it as thick lines down the
   slope, the barracks as huts, the railway with its sleepers, the suspension bridge with
   its cables. Drawn from the operator's references, as the aqueduct was at M50.
 - **The ski trail** at the way out, and its cairn.
@@ -431,7 +450,8 @@ tools/balance-bot.mjs 300 naive`, with the bot taught at M58 to see prints (a ca
 man keeps off open snow where it costs him no more than a turn) and to climb the gorge
 as well as cross the bridge. Things to measure, in order:
 1. Dawn: 20 turns, or fewer once the bot shows the slack.
-2. The gorge's width: three turns to cross, or two if it is never worth it.
+2. The gorge's width: two turns where it narrows, three in the middle (M58b); whether
+   the climb is worth it against the bridge.
 3. Prints: `turns` 3, or 2 if the plateau is a minefield of finds.
 4. The levels, the runs and the rating's bands.
 

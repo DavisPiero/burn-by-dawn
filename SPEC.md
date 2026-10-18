@@ -9,13 +9,13 @@ describe the engine through mission 1, the rail bridge in occupied France. How i
 and sounds (§11) is in `ART-DIRECTION.md`, `ART-CARDS.md` and `ART-PLAY.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
 `MISSION-AQUEDUCT.md`), is playable too, picked from the contents page. Mission 4, the
-heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is specified and not yet built.
+heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is a draft: `?mission=gunnerside`.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
 `DECISIONS.md` (before M49, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
 Turns and actions (§4) are in `TURNS.md`, detection and alert (§6) in `DETECTION.md`,
-sabotage (§7) in `SABOTAGE.md` and winning and scoring (§10) in `WINNING.md`, each as
+sabotage (§7) in `SABOTAGE.md`, the drop (§9) in `DROP.md` and winning and scoring (§10) in `WINNING.md`, each as
 authoritative as this file; the milestones done are in `MILESTONES.md`.
 
 **Design spine — everything serves this:** *every successful sabotage makes the rest of
@@ -100,6 +100,7 @@ tests.html        every test suite, in the browser
   map.json        France's map: terrain rows, drop runs, enemies, routes, objectives, exfil, names
   map-airfield.json  the airfield's (§13), in the same shape
   map-aqueduct.json  the aqueduct's (§14)
+  map-gunnerside.json  the heavy water plant's (§16)
   map-training.json  the practice ground's (§15)
   lessons-training.json  the training course's lessons (§15)
   terrain.json    terrain types (§3)
@@ -344,87 +345,9 @@ bridge; its description says it is tricky, as it is the hardest run for a first-
 
 ## 9. The drop
 
-The drop is not a cutscene. It is the first decision, and it is how the player chooses a
-route.
-
-Before turn 1 the player picks one of **three drop runs**, each a flight line across the
-map with a wind arrow: west over the wood and ridge line, north over the hedgerow lanes,
-east from the north edge above La Butte's east side down toward Ferme Lebrun, nearest the
-primary. All three land west of the canal, so nobody starts on the wrong side of the
-chokepoint. The men jump in roster order along the line. Each lands with **small seeded
-scatter**, 1–2 hexes, rarely 3, leaning **downwind**. Nobody lands out of play, on the
-exfil, on impassable ground other than the canal, on another man, or within 2 hexes of an
-enemy. Landing in Wood or Marsh costs that man his first turn (no AP on turn 1). Landing
-in the Canal wounds him, and he drags himself out onto the nearest bank, his parachute
-with him.
-
-Scatter stays small. It is texture, not chaos: the plan should survive it, and turn 1 is
-always a regroup problem, different every time, never unfair. The player does **not**
-choose landing hexes; the run plus the scatter decides.
-
-### Parachutes
-
-Every trooper leaves a **parachute** on the hex he lands in. It is evidence, and what he
-does about it is the second decision of turn 1.
-
-- A trooper standing on a parachute can **pack it up for 1 AP**, his own or anyone's, one
-  per action.
-- A parachute left behind is found when an enemy comes **onto or beside** it during the
-  enemy phase — on or beside any hex it walks through, or where it ends its go. Alert
-  **+1**, the parachute is removed, and that hex becomes a last known contact. Found once.
-- Patrol routes are drawn, so the player can see which parachutes are at risk.
-
-Stealth costs action points, speed costs alert: the design spine on the drop.
-
-### Supply canisters
-
-(`canisters`; null in France and on the airfield, where the men jump with their charges.)
-Where a mission gives `{ count, charges, scatterWeights }`, **the men jump with no
-charges**, and `count` canisters holding `charges` each leave the aircraft among them:
-spread evenly through the stick, the last with the last man, so three among six leave
-after the second, the fourth and the sixth. Each scatters as a man does, leaning
-downwind, by the canisters' own weights, onto ground a man can stand on: never on a man,
-on another canister, in water, on the exfil, or within 2 hexes of an enemy. They are
-rolled after the men from the same seed, so a seed lands the men the same way with
-canisters or without.
-
-- A canister is **a pile of charges**: a man standing on it takes one with the ordinary
-  Pick up (§4), 1 AP, if he has room.
-- A man's role still says how many he carries at full pace; one more than that costs him
-  1 AP while he carries it (§4), as for any charge he did not jump with.
-- It is **evidence until it is empty**. An enemy coming onto or beside it finds it as it
-  would a parachute: alert +1, a noise there, once. A found canister stays where it is
-  and **keeps its charges**. It cannot be packed; when its last charge is taken it is
-  pulled under cover and is gone.
-- Its charges count toward what the stick can still do (§10 Withdrawn) like any charge
-  left lying.
-
-### Tracks in the snow
-
-(`tracks`; null in every mission but the heavy water plant, §16, so nowhere else does a
-step leave anything behind.) Where a mission gives `{ turns, alert, alertPerPhase }`:
-
-- A man who **steps onto ground that takes prints** (`tracks: true` in `terrain.json`:
-  the Snowfield and the Drift) leaves **prints** there, each turned the way he walked:
-  in by the edge he came from, out by the edge he went to next, and on the last hex of
-  his move straight on the way he came in. Landing, a throw, a knife, a swim, anything
-  that is not a step, leaves none, and so does the garrison. A hex walked again keeps
-  only the newest prints.
-- **They last `turns` turns**: laid in turn N, with 3, they are there through the enemy
-  phases of N, N+1 and N+2, and gone at the end of N+2. Undo takes them back with the
-  move that laid them.
-- **They are found as a parachute is**: an enemy coming onto or beside one, on any hex
-  it walks through or where it ends its go, finds it: a noise there (heard as a
-  parachute found), so that hex becomes a last known contact, and **every print that
-  man's one move laid goes with it**, so a long walk across the open is one find. A find
-  raises the alert by `alert`, but prints raise it **no more than `alertPerPhase` times
-  in one enemy phase**, however many trails are found. The diversion leaves them where
-  they are. There is no action to brush them out: the answer is the route.
-- **Seen first**: the hovered path marks each hex that would take prints with a boot,
-  and its TRACKS row says who would find them next turn, by the same sum the turn will
-  do; a print's hover says whose it is, the turn it fills in and who finds it next turn;
-  the turn report says who found whose. With the tips on, the first trail of a game has
-  TRACKS! lettered under it, with "the patrols will follow them".
+**In `DROP.md`**, a file of its own and as authoritative as this one: the drop runs and
+their scatter, landing on bad ground, parachutes and packing them, supply canisters, and
+tracks in the snow.
 
 ---
 
@@ -460,10 +383,10 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M58, mission 4's map as a draft** (§16, `MISSION-GUNNERSIDE.md`, The order it is
-built in): `?mission=gunnerside`, stamped NEXT YEAR'S ANNUAL on the contents page; the
-terrain drawn in code, the garrison, the objectives, the ski trail, and the bot taught
-the prints and the climb. The milestones before it are in `MILESTONES.md`. v1.0 is
+Next, in order (STATE.md): **the palette**, two ground washes to tell the grassy maps
+(the practice ground, France) from the snowy ones (the aqueduct, the heavy water plant),
+a milestone of its own; then **M59, mission 4's balance** (§16, `MISSION-GUNNERSIDE.md`,
+The order it is built in). The milestones before them are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done
@@ -498,15 +421,15 @@ the lesson engine that runs it. The engine is built and the course, all seventee
 southern Italy, February 1941.
 One big target that takes five charges (Hard all six), every charge down in a supply canister, and a
 boat that is in on turn 15 for three turns, or sooner if a man signals it. Its two rules are engine
-rules, written above: supply canisters (§9) and the way out on a timetable (§10).
+rules: supply canisters (§9, `DROP.md`) and the way out on a timetable (§10).
 
 ---
 
 ## 16. Mission 4 — the heavy water plant
 
-**In `MISSION-GUNNERSIDE.md`**, specified at M56 and not yet built: Norway, February
+**In `MISSION-GUNNERSIDE.md`**, specified at M56, its map a draft since M58: Norway, February
 1943, loosely Operation Gunnerside. The stealth mission: a gorge to climb, tracks in the
 snow, gunfire heard across the board, and NOT A SHOT FIRED as its clean run. Its one
-engine rule, tracks in the snow, is built (M57) and written in §9; with it the no-shot
+engine rule, tracks in the snow, is built (M57) and written in §9 (`DROP.md`); with it the no-shot
 clean run (§10, `scoring.cleanNoShot`) and the card before the first shot (§4,
 `confirmShot`). All three are off in the other missions.

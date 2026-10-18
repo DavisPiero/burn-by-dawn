@@ -271,6 +271,168 @@
       "titleCard": "assets/title/title-card-aqueduct.jpg",
       "endSounds": { "success": "victory", "otherwise": "defeat" },
       "music": "music-aqueduct"
+    },
+    {
+      "id": "gunnerside",
+      "status": "draft",
+      "title": "The Heavy Water Plant",
+      "place": "Norway",
+      "page": 46,
+      "blurb": "A heavy water plant across a frozen gorge. Get in, blow the cells and get out without a shot fired.",
+      "tagline": "SIX MEN · ONE STATION · NOT A SHOT FIRED",
+      "map": "data/map-gunnerside.json",
+      "roster": "data/roster.json",
+      "_rules": "MISSION-GUNNERSIDE.md (SPEC.md §16). A draft (M58): every number is the spec's starting point, for M59 to measure. A 20-turn night. Tracks in the snow on (3 turns, alert +1, once an enemy phase at most). The shot: gunfire +4 and heard across the whole board, the first shot of the night asked first (confirmShot), and the clean run NOT A SHOT FIRED (cleanNoShot) pays 5. A sapper has room for two and the men jump with them, no canisters. Time pencils as on the aqueduct. The patrols set out on turn 2. A body found calls a squad to where it lay, three at most. The cell hall calls one squad up the road when it goes; the telephone line down stops the reserve and every squad (the exchange's payoff in France).",
+      "rules": {
+        "turnLimit": 20,
+        "roles": {
+          "sapper": {
+            "charges": 2
+          }
+        },
+        "charges": {
+          "fuseTurns": 6,
+          "fuseChoice": {
+            "min": 2,
+            "max": 6
+          }
+        },
+        "tracks": {
+          "turns": 3,
+          "alert": 1,
+          "alertPerPhase": 1
+        },
+        "confirmShot": true,
+        "scoring": {
+          "clean": 5,
+          "cleanNoShot": true
+        },
+        "noise": {
+          "gunfire": 18
+        },
+        "alert": {
+          "gunfire": 4
+        },
+        "bodyFound": {
+          "reinforcements": 1,
+          "limit": 3
+        },
+        "patrols": {
+          "setOutTurn": 2
+        },
+        "objectives": {
+          "cellHall": {
+            "label": "Cell Hall",
+            "chargesNeeded": 3,
+            "blastRadius": 1,
+            "killRadius": 1,
+            "alert": 3,
+            "cutLine": false,
+            "destroyedTerrain": null,
+            "payoff": {
+              "noReserve": false,
+              "withdrawPatrols": 0
+            },
+            "reinforcements": 1,
+            "score": 10,
+            "setsOff": false
+          },
+          "telephone": {
+            "label": "Telephone Line",
+            "chargesNeeded": 1,
+            "blastRadius": 1,
+            "killRadius": 1,
+            "alert": 3,
+            "cutLine": true,
+            "destroyedTerrain": null,
+            "payoff": {
+              "noReserve": true,
+              "withdrawPatrols": 0
+            },
+            "reinforcements": 0,
+            "score": 4,
+            "setsOff": false
+          }
+        }
+      },
+      "enemies": {},
+      "win": {
+        "condition": "destroyPrimary"
+      },
+      "levels": {
+        "easy": {
+          "summary": "The cell hall takes two charges, and no squad comes up the road when it goes.",
+          "rules": {
+            "objectives": {
+              "cellHall": {
+                "chargesNeeded": 2,
+                "reinforcements": 0
+              }
+            }
+          }
+        },
+        "hard": {
+          "summary": "The cell hall takes four charges, so only one can be spared for the telephone line. With the line still up, two squads come up the road when the hall goes.",
+          "rules": {
+            "objectives": {
+              "cellHall": {
+                "chargesNeeded": 4,
+                "reinforcements": 2
+              }
+            }
+          }
+        }
+      },
+      "briefing": "Tonight six men are to drop onto a Norwegian plateau in the snow.",
+      "_words": "M58. Placeholder copy from MISSION-GUNNERSIDE.md for the operator to reword at M60; only what the engine needs to load the mission, and the cries. The diversion is a decoy flare: there were no bombers to call in Norway in 1943.",
+      "words": {
+        "lineGoesDead": "the plant's telephone goes dead",
+        "lineIsDown": "the telephone line is already cut",
+        "diversionName": "Decoy flare",
+        "diversionKicker": "A FLARE OVER THE FAR RIDGE",
+        "diversionLog": "a flare over the far ridge",
+        "cries": {
+          "spotted": [
+            "ACHTUNG!",
+            "HALT!",
+            "ALARM!"
+          ],
+          "found": [
+            "MEIN GOTT!",
+            "WAS IST DAS?",
+            "ALARM!"
+          ],
+          "tracks": [
+            "SPUREN!"
+          ]
+        },
+        "cleanBonus": "not a shot fired"
+      },
+      "portraits": "assets/portraits/winter",
+      "_ratings": "M58, a guess: the aqueduct's bands under this mission's names (MISSION-GUNNERSIDE.md), lowest first; M59 sets them.",
+      "ratings": [
+        {
+          "from": 0,
+          "label": "HEARD IN ELVEBYEN"
+        },
+        {
+          "from": 24,
+          "label": "A QUIET JOB"
+        },
+        {
+          "from": 30,
+          "label": "LIKE GHOSTS"
+        },
+        {
+          "from": 35,
+          "label": "NOT A SHOT FIRED"
+        }
+      ],
+      "titleCard": "assets/title/title-card-gunnerside.jpg",
+      "endSounds": {
+        "success": "victory",
+        "otherwise": "defeat"
+      }
     }
   ]
 }

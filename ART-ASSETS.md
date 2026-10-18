@@ -162,6 +162,23 @@ that cover large areas, or the map will look rubber-stamped.
 | `terrain-rocks-01..02.svg` | 80 x 92 | 2: sea-worn boulders |
 | `terrain-sea-01..02.svg` | 80 x 92 | 2: wave marks on the canal's blue, with its bank where it meets land |
 
+**Norway (M58, the heavy water plant, SPEC.md §16)**: the cold blue thinner than the
+aqueduct's, the snow the paper itself, nearly bare. *All drawn by code.*
+
+| Asset | viewBox | Variants |
+|---|---|---|
+| `terrain-snowfield-01..02.svg` | 80 x 92 | 2: a faint blue curl of wind-blown snow; on about three hexes in ten |
+| `terrain-drift-01..02.svg` | 80 x 92 | 2: soft blue bands with a paper crest, over the drift's area (blue, dashed blue edge) |
+| `terrain-pines-01..03.svg` | 80 x 92 | 3: five firs in tiers, snow on each tier, each with a `-shadow`, over the pine wood's area |
+| `terrain-rock-01..02.svg` | 80 x 92 | 2: the aqueduct's rock faces over a blue shadow |
+| `terrain-gorge-01..03.svg` | 80 x 92 | 3: cliff hatching, close strokes falling down the hex, on a dark ink tint, straight-edged |
+| `terrain-ice-01..03.svg` | 80 x 92 | 3: the river's pale line and its cracks, on a pale blue |
+| `terrain-plant-roof.svg` | 80 x 92 | 1: faint paper hatching over the plant wall's dark tint |
+| `terrain-hall-floor.svg` | 80 x 92 | 1: faint floor tiles |
+| `terrain-duct.svg` | 80 x 92 | 1: three cables along the duct, with their ties |
+| `terrain-barracks.svg` | 80 x 92 | 1: a snow-roofed hut from above |
+| `terrain-suspension.svg` | 80 x 92 | 1: the suspension bridge's deck, cables and hangers, turned to run south-west; the bridge's hexes are printed as it (the map's `printedAs`), the road drawn over it |
+
 The perimeter wire is a line, not a motif: board.js lays it like a hedge (`WIRE` in
 theme.js), a strand of ink with concertina coils and a picket every third coil.
 
@@ -210,6 +227,9 @@ These span several hexes and sit as overlays above the terrain layer.
 | `objective-aqueduct.svg`, `-destroyed` | 480 x 92 | M41, the aqueduct from the south and a little above, six hexes long: the channel with its water on top, the masonry face with an arch a hex, the torrent's taller arch the fourth; blown, the third span gone, water pouring from both broken ends onto the fallen stone. *Drawn by code.* |
 | `objective-road-bridge.svg`, `-destroyed` | 80 x 92 | M41, the road bridge: the road from the hex's upper right to its lower left over the torrent's bed; blown, the deck broken off at both banks. *Drawn by code.* |
 | `objective-boat.svg` | 80 x 92 | M41, the aqueduct's exfil (the map's `exfilArt: "boat"`): a ship's boat from above, thwarts, oars and the hooded green lamp. Printed out at sea, fainter, while it is coming in. *Drawn by code.* |
+| `objective-cells.svg`, `-destroyed` | 320 x 92 | M58, the heavy water plant's electrolysis cells along the cell hall's back wall, four hexes long, from above: two rows of steel tanks under their bus bar; blown, tanks thrown about, heavy water spilt, smoke and fire. *Drawn by code.* |
+| `objective-junction.svg`, `-cut`, `-destroyed` | 80 x 92 | M58, the telephone line's junction box on its pole by the road, its lines leaving the crossarm at (40, 24) for the poles on its charge points; cut, its wires hanging from the box; blown, the box black and burning. *Drawn by code.* |
+| `objective-ski-trail.svg` | 80 x 92 | M58, the heavy water plant's exfil (the map's `exfilArt: "skiTrail"`): two pairs of ski tracks running off the board to the north-east, and a cairn of stones. *Drawn by code.* |
 | `landmark-church.svg` | 80 x 92 | village church with a spire. Art only, no rule (SPEC.md §11). The only farmhouse hexes in the village are the exchange's own, so the exchange art draws the church inside itself, beside the building (`church()` in theme.js; M25 took out the stand-alone `landmark-church` sprite nothing used); the church stands whether or not the exchange does. |
 
 ---

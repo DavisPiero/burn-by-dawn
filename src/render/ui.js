@@ -1016,7 +1016,8 @@ export function describeRisk(plan, risk, place) {
   return { text, sum: describeDetection(risk[worstAt]) };
 }
 
-function describeCost(terrain, cost = terrain.moveCost) {
+function describeCost(terrain, cost = terrain.moveCost, climbAbove = Infinity) {
+  if (cost !== null && cost > climbAbove) return 'a climb: a whole turn';
   return cost === null ? 'impassable' : `move ${cost}`;
 }
 
@@ -1668,7 +1669,7 @@ export function renderReadout(element, state, map, view) {
   }
 
   // Only what the ground does, not what it does not (M22: room).
-  const parts = [describeCost(terrain, moveCostAt(map, hex.q, hex.r)), `cover ${terrain.cover}`];
+  const parts = [describeCost(terrain, moveCostAt(map, hex.q, hex.r), view?.climbAbove), `cover ${terrain.cover}`];
   if (terrain.blocksLOS) parts.push('blocks line of sight');
   if (terrain.spotBonus) parts.push(`spot ${terrain.spotBonus > 0 ? '+' : ''}${terrain.spotBonus}`);
   if (terrain.landing === 'bad') parts.push('bad landing');
@@ -1776,6 +1777,8 @@ export function describePlan(plan, unit) {
   if (!plan) return 'no route there';
   if (plan.steps === 0) return `${unit.shortName} is already here`;
   const route = `${plan.steps} hex${plan.steps === 1 ? '' : 'es'}, ${plan.total} AP`;
+  // A climb (M58) is a whole turn, never its 30 AP.
+  if (plan.climb) return plan.affordable ? `climb · his whole turn, all ${unit.apMax} AP` : `climb · ${plan.steps === 1 ? plan.reason : 'a whole turn, from beside it with full AP'}`;
   if (plan.affordable && plan.minimumStep) return `${route} · one step, spends all ${unit.apMax} AP`;
   if (plan.affordable) return `${route} · click to move`;
   // "needs 12 AP, has 6" said the 12 twice (M23).

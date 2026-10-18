@@ -201,6 +201,12 @@ to be casual while still being strategic.
   the wounded man's, or the taker's, hover names who can help. While aiming either, a blue
   ring circles each man it could go to. The turn card's wounded
   hint names the helper. No prompt outlives its use.
+- **Ending a turn with men who have not moved** (M58c, the operator's: a man left in the
+  cell hall as it went up, missed, not chosen): if any man in the field who could act has
+  every AP of his pool unspent, End turn first asks, ARE YOU SURE?, naming them, and in
+  bold any who stand where a charge kills this turn. Enter ends the turn anyway; any
+  other key or click stays. Not in a lesson, whose steps end the turn. Once asked it
+  does not ask again that turn; the boat's own card counts as the asking.
 - **Right-click**: deselect / cancel.
 - **Undo**: the button beside End turn, `Z`, or `Cmd`/`Ctrl`-`Z` takes back the last move
   or action. How far back it goes is `undo.steps`: one step on Normal and Hard, every step
