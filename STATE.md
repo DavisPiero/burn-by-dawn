@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M57 (the Gunnerside engine) built on branch
-`m57-gunnerside-engine`, waiting for the operator's sign-off. Not merged, not pushed.
+Last updated: 18 Oct 2026, M57 (the Gunnerside engine) signed off, merged into main and
+pushed.
 
 ## Where we are
 
-- **`main` is M56, pushed.** The branch adds M57 on top; the margin says build M57.
+- **`main` is M57, pushed.** The margin says build M57.
 - **M57, the engine for mission 4**, all of it off in France, the airfield and the
   aqueduct (the bot plays them byte for byte as before, 9 runs compared):
   - **Tracks in the snow** (SPEC.md §9 Tracks, `src/tracks.js`): prints laid on ground
@@ -25,11 +25,10 @@ Last updated: 18 Oct 2026, M57 (the Gunnerside engine) built on branch
 
 ## Next
 
-1. **The operator signs M57 off** (or not); then merge, a MILESTONES row, push.
-2. **M58, the map as a draft** (MISSION-GUNNERSIDE.md, The order it is built in): the
+1. **M58, the map as a draft** (MISSION-GUNNERSIDE.md, The order it is built in): the
    terrain drawn, the garrison, the objectives, the ski trail, the bot taught prints
    and the climb. Then M59 (balance), M60 (words, sounds, art), M61 (panel moments).
-3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
+2. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
 ## Open with the operator
 

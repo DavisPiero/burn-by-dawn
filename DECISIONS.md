@@ -148,3 +148,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-18 | m57 | TRACKS! is lettered under the trail's first print, not its last: the man stands on the last and the note covered his prints (seen in the browser)
 2026-10-18 | m57 | Prints drawn at 1.35 times the first size, in full ink: the first draw was too faint to read on a field (seen in the browser)
 2026-10-18 | m57 | Tried in the browser on a scratch copy with France's fields as snow and the three switches on; never committed
+2026-10-18 | m57 | M57 signed off by the operator and merged; next is M58, the Gunnerside map as a draft

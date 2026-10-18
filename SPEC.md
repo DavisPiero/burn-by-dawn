@@ -460,10 +460,11 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M57, the engine for mission 4** (§16, `MISSION-GUNNERSIDE.md`, The order it is built
-in): tracks in the snow, the no-shot clean run and the card before the first shot, all
-off in the other missions. The milestones before it are
-in `MILESTONES.md`. v1.0 is tagged.
+**M58, mission 4's map as a draft** (§16, `MISSION-GUNNERSIDE.md`, The order it is
+built in): `?mission=gunnerside`, stamped NEXT YEAR'S ANNUAL on the contents page; the
+terrain drawn in code, the garrison, the objectives, the ski trail, and the bot taught
+the prints and the climb. The milestones before it are in `MILESTONES.md`. v1.0 is
+tagged.
 
 ### Done
 
