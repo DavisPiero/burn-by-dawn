@@ -33,7 +33,8 @@ dots". The player must see risk before committing.
 | **Alarmed** | 7 | As Alert, and every patrol hunts the last known contact. The reserve squad enters and watches the exfil. |
 
 The alert is a **points total**; "From" is where each state begins, and points cap at
-Alarmed. One event is not a whole state: a single sighting leaves the garrison Calm, a
+Alarmed. A mission may move where they begin (its rules patch's `alert.states`): on the
+heavy water plant Alarmed begins at 9 (§16). One event is not a whole state: a single sighting leaves the garrison Calm, a
 second makes it Suspicious.
 
 Raised by: being spotted (+1, only when he was not already in contact), gunfire (+2), a
