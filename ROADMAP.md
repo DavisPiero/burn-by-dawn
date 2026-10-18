@@ -13,9 +13,11 @@ Phase N" means the archive.
 
 ## Where we are
 
-17 Oct 2026, build M52. Three missions (France, the airfield, the aqueduct) and the
+18 Oct 2026, build M58e. Three missions (France, the airfield, the aqueduct) and the
 training course, all playable from the contents page, at three difficulty levels, with
-painted art and recorded sound. The test of the game is SPEC.md's two pillars: every
+painted art and recorded sound; the fourth, Gunnerside, a draft at `?mission=gunnerside`
+awaiting its balance (M59). Each map is printed on its own ground colour (M58d), and
+the operator places notes and clears hexes in `?layout` (M58e). The test of the game is SPEC.md's two pillars: every
 success makes the rest harder, and the player is hunter and hunted at once.
 
 ## Next, in order
