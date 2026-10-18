@@ -2804,7 +2804,7 @@ function describeBriefing(which, view) {
       banner: { title: GAME_TITLE, tagline: CONTENTS_TAGLINE },
       title: 'CONTENTS',
       kicker: 'IN THIS ANNUAL',
-      paragraphs: ['Click a mission to play. Each one stands alone: one night behind the lines, out by dawn.'],
+      paragraphs: ['Each mission stands alone: one night behind the lines, out by dawn.'],
       contents: {
         entries: missions.missions.map((m) => ({ id: m.id, page: m.page, title: m.title, place: m.place, blurb: m.blurb, playable: m.status === 'playable', panel: m.panel ?? null, flag: m.flag ?? null })),
         flagAt: contentsOffset(layout, 'flag'),

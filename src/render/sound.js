@@ -694,7 +694,8 @@ const CUES = {
   move: [['counter-snap', 0.5, 0]],
   action: [['pencil-scratch', 0.35, 0]],
   card: [['paper-rustle', 0.35, 0]],
-  alertRise: [['dog-distant', 0.18, 0.25]],
+  // The dog nearly twice as loud (M58e, the operator's: barks can be louder).
+  alertRise: [['dog-distant', 0.35, 0.25]],
   explosion: [['explosion', 1, 0]],
   // The Dakota over the garrison, and bombers over the town, miles off: three small crumps.
   diversion: [['aircraft', 0.45, 0], ['crump', 0.25, 0.9], ['crump', 0.18, 1.3], ['crump', 0.22, 1.85]],
