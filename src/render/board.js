@@ -62,7 +62,7 @@ export function createBoard(svg, map, handlers) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const defs = createSpriteDefs();
-  // The footprint wash's hatching (M58c): the pen's red in diagonal strokes.
+  // The footprint wash's hatching (M58c): diagonal ink strokes.
   const hatch = el('pattern', { id: PRINT_WATCH.pattern, patternUnits: 'userSpaceOnUse', width: PRINT_WATCH.spacing, height: PRINT_WATCH.spacing, patternTransform: 'rotate(45)' });
   hatch.appendChild(el('line', { x1: 0, y1: 0, x2: 0, y2: PRINT_WATCH.spacing, stroke: PRINT_WATCH.stroke, 'stroke-width': PRINT_WATCH.width, 'stroke-opacity': PRINT_WATCH.opacity }));
   defs.appendChild(hatch);
@@ -3003,7 +3003,7 @@ function edgeCorners(corners, size) {
 /**
  * The footprint wash (M58c, the operator's: keeping prints from being found
  * felt like luck): while a man is selected, the snow where prints laid now
- * would be found next turn is hatched in the pen's red, over the move range,
+ * would be found next turn is hatched in ink, over the move range and its red,
  * so a route that leaves no trail for the garrison can be planned, not hoped for.
  */
 function drawPrintWatch(layers, watched) {

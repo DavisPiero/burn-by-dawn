@@ -409,8 +409,8 @@ export const AREA = { wobble: 6 };
 export const WALL = { width: 3.2 };
 
 // The footprint wash (M58c, board.js drawPrintWatch): snow where prints laid
-// now would be found next turn, hatched in the pen's red.
-export const PRINT_WATCH = { pattern: 'print-watch-hatch', stroke: PALETTE.red, width: 2, spacing: 9, opacity: 0.5 };
+// now would be found next turn, hatched in ink, so it reads over the red danger wash too.
+export const PRINT_WATCH = { pattern: 'print-watch-hatch', stroke: PALETTE.ink, width: 2.6, spacing: 10, opacity: 0.42 };
 
 /** A fixed push, -1 to 1, for the point (x, y). */
 export function wobbleAt(x, y) {
