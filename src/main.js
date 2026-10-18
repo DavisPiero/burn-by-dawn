@@ -34,7 +34,7 @@ import { printAge, printFillsTurn, takesPrints } from './tracks.js';
 import { cleanRun } from './scoring.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
-import { createUnits } from './units.js';
+import { createUnits, largestPool } from './units.js';
 import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
@@ -354,6 +354,8 @@ function deriveView() {
   const exfil = baseMap.exfil.map(([q, r]) => ({ q, r }));
   const view = {
     traitEffectsById,
+    // Ground dearer than any pool is a climb, worded as a whole turn (M58).
+    climbAbove: largestPool(rules),
     // The goods train where it stands (M34), each car with the line's direction under it.
     train: trainView(),
     // Tracks in the snow (M57): each print with how faded it is, full ink the

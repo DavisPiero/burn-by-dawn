@@ -129,6 +129,17 @@
     "rocks": {"label": "Shore rocks", "moveCost": 2, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "where men lie up for the boat"},
     "sea": {"label": "Sea", "moveCost": null, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "no swim; nothing lands in it"},
     "snowfield": {"label": "Snowfield", "moveCost": 1, "cover": "none", "blocksLOS": false, "spotBonus": 0, "tracks": true, "notes": "the open plateau (MISSION-GUNNERSIDE.md): fast, seen, and it keeps your trail. M57: in the table for the tracks rule; no map uses it until M58"},
-    "drift": {"label": "Drift", "moveCost": 2, "cover": "light", "blocksLOS": false, "spotBonus": 0, "tracks": true, "notes": "deep snow: slow, and still leaves a trail. M57: as the snowfield"}
+    "drift": {"label": "Drift", "moveCost": 2, "cover": "light", "blocksLOS": false, "spotBonus": 0, "tracks": true, "notes": "deep snow: slow, and still leaves a trail. M57: as the snowfield"},
+    "pines": {"label": "Pine wood", "moveCost": 2, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "landing": "bad", "notes": "the safe artery on the plateau: the trees hold the snow off, so no prints (MISSION-GUNNERSIDE.md, M58)"},
+    "rock": {"label": "Rock", "moveCost": 2, "cover": "light", "blocksLOS": true, "spotBonus": 0, "notes": "outcrops: a crest hides what lies beyond"},
+    "gorgeSide": {"label": "Gorge side", "moveCost": 30, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "landing": "bad", "notes": "a cliff down into the gorge. 30 is more than any pool, so a man climbs it only with the step every man has at full AP (rules.json minimumStep) and it takes his whole turn; and so dear that the garrison always paths round by the bridge (the operator's, M58: a whole turn, never 3 AP)"},
+    "ice": {"label": "Ice", "moveCost": 1, "cover": "heavy", "blocksLOS": false, "spotBonus": 0, "notes": "the frozen river at the gorge's bottom: seen only from beside it"},
+    "railway": {"label": "Railway", "moveCost": 1, "cover": "none", "blocksLOS": false, "spotBonus": 0, "notes": "the line along the shelf to the plant: swept, fast, open, no prints"},
+    "plantWall": {"label": "Plant wall", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "the plant's buildings"},
+    "hall": {"label": "Hall", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "inside the cell hall; its charge points are here"},
+    "duct": {"label": "Cable duct", "moveCost": 2, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "the quiet way into the hall"},
+    "cells": {"label": "Cells", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "the electrolysis cells; the objective stands on them"},
+    "pipes": {"label": "Pipes", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "the penstocks down the hillside behind the plant"},
+    "barracks": {"label": "Barracks", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "the garrison's huts on the shelf"}
   }
 }
