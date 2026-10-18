@@ -392,7 +392,6 @@ const TERRAIN_ART = {
   hall: { base: 'paper', tint: ['ink', 0.06], motif: 'terrain-hall-floor' },
   duct: { base: 'paper', tint: ['ink', 0.16], motif: 'terrain-duct' },
   cells: { base: 'paper', tint: ['ink', 0.1], motif: null, wall: true },
-  pipes: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-pipes' },
   barracks: { base: 'paper', tint: ['blue', 0.1], motif: 'terrain-barracks', building: true },
   // The suspension bridge's deck, printed over the gorge (the map's
   // `printedAs`, art only: the rules read Bridge), turned to run south-west
@@ -2926,10 +2925,6 @@ const NORWAY_TERRAIN = {
   'terrain-duct': () => [
     line('M0 40 H80 M0 46 H80 M0 52 H80', 2, 'stroke-ink', { opacity: 0.7 }),
     line('M20 37 V55 M40 37 V55 M60 37 V55', 1.2, 'stroke-ink', { opacity: 0.5 }),
-  ],
-  'terrain-pipes': () => [
-    ...[30, 50].flatMap((x) => [line(`M${x} 0 V92`, 8), line(`M${x} 0 V92`, 4, 'stroke-paper', { opacity: 0.55 })]),
-    line('M24 30 H36 M44 30 H56 M24 64 H36 M44 64 H56', 1.6),
   ],
   'terrain-barracks': () => hut(40, 46, 44, 24),
   // The deck along x, its cables either side and their hangers, turned to

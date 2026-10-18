@@ -176,7 +176,6 @@ aqueduct's, the snow the paper itself, nearly bare. *All drawn by code.*
 | `terrain-plant-roof.svg` | 80 x 92 | 1: faint paper hatching over the plant wall's dark tint |
 | `terrain-hall-floor.svg` | 80 x 92 | 1: faint floor tiles |
 | `terrain-duct.svg` | 80 x 92 | 1: three cables along the duct, with their ties |
-| `terrain-pipes.svg` | 80 x 92 | 1: two penstocks down the hex, with their flanges |
 | `terrain-barracks.svg` | 80 x 92 | 1: a snow-roofed hut from above |
 | `terrain-suspension.svg` | 80 x 92 | 1: the suspension bridge's deck, cables and hangers, turned to run south-west; the bridge's hexes are printed as it (the map's `printedAs`), the road drawn over it |
 

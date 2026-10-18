@@ -139,7 +139,6 @@
     "hall": {"label": "Hall", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "inside the cell hall; its charge points are here"},
     "duct": {"label": "Cable duct", "moveCost": 2, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "the quiet way into the hall"},
     "cells": {"label": "Cells", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "the electrolysis cells; the objective stands on them"},
-    "pipes": {"label": "Pipes", "moveCost": null, "cover": "none", "blocksLOS": true, "spotBonus": 0, "notes": "the penstocks down the hillside behind the plant"},
     "barracks": {"label": "Barracks", "moveCost": 1, "cover": "heavy", "blocksLOS": true, "spotBonus": 0, "notes": "the garrison's huts on the shelf"}
   }
 }
