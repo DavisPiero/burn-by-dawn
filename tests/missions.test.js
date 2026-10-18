@@ -11,7 +11,7 @@ import { loadJson, loadMap } from '../src/map.js';
 import { createInitialState, settleMission } from '../src/state.js';
 import { validateTraits } from '../src/traits.js';
 import { MUSIC_TRACKS, SOUND_FILES } from '../src/render/sound.js';
-import { PALETTE, applyGround, terrainArt } from '../src/render/theme.js';
+import { PALETTE, applyGround, baseFill, terrainArt } from '../src/render/theme.js';
 import { landedState } from './fixtures.js';
 
 function assert(condition, message) {
@@ -225,6 +225,10 @@ export default [
       equal(terrainArt('wood').fill, PALETTE.meadow, 'and under a wood, so its corners meet meadow');
       equal(terrainArt('farmhouse').fill, PALETTE.paper, 'a farmhouse stays bare paper');
       equal(terrainArt('canal').fill, PALETTE.blue, 'the water keeps its blue');
+      equal(baseFill(terrainArt('field')), PALETTE.meadow, 'a field in open country is meadow');
+      equal(baseFill(terrainArt('track')), PALETTE.paper, 'a road is left bare paper');
+      equal(baseFill(terrainArt('field'), [terrainArt('field'), terrainArt('canal')]), PALETTE.paper, 'and so is a field on the bank');
+      equal(baseFill(terrainArt('canal'), [terrainArt('field')]), PALETTE.blue, 'the water itself stays blue');
       applyGround(null);
       equal(terrainArt('field').fill, PALETTE.paper, 'with no ground, the land is bare paper');
     } finally {

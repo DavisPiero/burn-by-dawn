@@ -11,10 +11,12 @@ signed off. main is M58c.
 
 - **`main` is M58c, pushed.** Branch `m58d-palette` holds M58d; its margin says build M58d.
 - **M58d, the palette**: three ground colours, named by a mission's `ground` in
-  `missions.json`: meadow `#D9DDB0` under France and the practice ground, pale frost
-  `#EEF2F2` under Gunnerside's snow (its drifts deep frost), deep frost `#CFDCE3` under
+  `missions.json`: meadow `#D3D6B7` under France and the practice ground, pale frost
+  `#EEF2F2` under Gunnerside's snow (its drifts deep frost), deep frost `#D2DBE0` under
   the aqueduct in place of its blue wash. Buildings and yards, and the aqueduct's plough,
-  terraces and beach, stay bare paper. The airfield is unchanged.
+  terraces and beach, stay bare paper, and so do roads and land beside water (the
+  operator's first notes: both colours a third less saturated, clear ground kept). The
+  airfield is unchanged.
 - **M58c**: the footprint wash (snow the garrison passes next turn, hatched in ink while
   a man is selected); ARE YOU SURE? before ending a turn with men who have not moved
   (every mission); the cell hall two hexes west.
@@ -44,7 +46,9 @@ signed off. main is M58c.
 ## Open with the operator
 
 1. **Guesses in M58d**: what stays bare paper (buildings, yards, the aqueduct's plough,
-   terraces and beach) and what takes the ground (roads, bridges, all land); the deep
+   terraces and beach) and what takes the ground (all other land); land beside water counts the canal, sea
+   and ravine, not Gunnerside's ice, and only the road hexes themselves are cleared, not
+   their neighbours; the deep
    frost on the aqueduct, a little bluer than its old wash; the number M58d.
 2. **Guesses in M58c**: the wash hatched in ink; the end-turn card asks about men left
    still on purpose too (there is no Hold).

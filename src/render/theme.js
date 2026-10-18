@@ -44,9 +44,11 @@ export const PALETTE = {
   // country (the practice ground, France); frost for the winter ground, pale
   // for snow (the heavy water plant), deeper for winter slopes (the aqueduct)
   // and Norway's drifts.
-  meadow: '#D9DDB0',
+  // Meadow and deep frost a third less saturated after the first look (M58d,
+  // the operator's: #D9DDB0 and #CFDCE3 read too strong).
+  meadow: '#D3D6B7',
   frost: '#EEF2F2',
-  frostDeep: '#CFDCE3',
+  frostDeep: '#D2DBE0',
 };
 
 // SPEC.md §11: a typewriter Courier for text, a display face for the masthead
@@ -324,7 +326,9 @@ export function loadSuppliedTitleCard(url = TITLE_CARD.url, lettered = TITLE_CAR
 // ---------------------------------------------------------------------------
 // Terrain (ART-ASSETS.md §4). Each hex is printed as a flat base (`ground`
 // is the mission's ground colour, M58d, bare paper when it names none;
-// `paper` stays paper, for what man has built or cleared), an optional
+// `paper` stays paper, for what man has built or cleared; `clear` land is
+// left bare paper too, and so is land beside a `shore`, so the roads and the
+// banks of the water read as the paper they were printed on), an optional
 // flat tint of one spot colour over it (a printer's tint, at an opacity), an
 // optional halftone screen, a motif, and the grid line. The board has to read
 // at a glance (SPEC.md §11, M7b): open ground is flat colour, and the screen
@@ -336,7 +340,7 @@ export function loadSuppliedTitleCard(url = TITLE_CARD.url, lettered = TITLE_CAR
 
 const TERRAIN_ART = {
   field: { base: 'ground', motif: 'terrain-field', variants: 3, sparse: 0.22 },
-  track: { base: 'ground', motif: null, road: true },
+  track: { base: 'ground', clear: true, motif: null, road: true },
   hedgerow: { base: 'ground', tint: ['green', 0.12], motif: 'terrain-hedgerow', variants: 3, hedge: true },
   // `area` terrain is printed as one shape across every run of neighbouring
   // hexes of it (see AREA), with its motif scattered over the shape.
@@ -348,12 +352,12 @@ const TERRAIN_ART = {
   // High ground in tonal bands: darker at the crest, a paler band round the
   // edge where it falls away, a contour at its foot, and no symbol.
   ridge: { base: 'ground', area: { tint: ['ink', 0.13], rim: { width: 26, opacity: 0.5 }, outline: 1.2, outlineOpacity: 0.45, dash: '8 3' }, motif: null },
-  canal: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
-  lock: { base: 'blue', motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
+  canal: { base: 'blue', shore: true, motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
+  lock: { base: 'blue', shore: true, motif: 'terrain-canal', banks: ['canal', 'lock', 'bridge'] },
   farmhouse: { base: 'paper', tint: ['red', 0.08], motif: 'terrain-farmhouse', building: true },
   emplacement: { base: 'paper', tint: ['red', 0.1], motif: 'terrain-emplacement' },
   // The bridge and the dump are drawn by their objective art, over the hexes.
-  bridge: { base: 'ground', motif: null, road: true },
+  bridge: { base: 'ground', clear: true, motif: null, road: true },
   depot: { base: 'paper', tint: ['ink', 0.07], motif: null },
   // The desert (SPEC.md §13, M29), in desert ochre over the paper: sand a pale
   // wash of it, dunes a stronger one in bands, the wadi the ochre darkened
@@ -379,7 +383,7 @@ const TERRAIN_ART = {
   // beach stay bare paper, warm beside the slopes, and the sea is the canal's blue.
   hillside: { base: 'ground', motif: 'terrain-hillside', variants: 3, sparse: 0.6 },
   crag: { base: 'ground', area: { tint: ['ink', 0.3], outline: 1.8 }, motif: 'terrain-crag', variants: 2 },
-  ravine: { base: 'ground', area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
+  ravine: { base: 'ground', shore: true, area: { tint: ['blue', 0.5], tone: ['ink', 25], outline: 1.6 }, motif: 'terrain-ravine', variants: 3 },
   terrace: { base: 'paper', tint: ['green', 0.14], motif: 'terrain-terrace', variants: 2 },
   olives: { base: 'ground', area: { tint: ['green', 0.1], outline: 1.2, outlineClass: 'stroke-green', dash: '3 4' }, motif: 'terrain-olives', variants: 3 },
   plough: { base: 'paper', motif: 'terrain-plough', variants: 2 },
@@ -387,7 +391,7 @@ const TERRAIN_ART = {
   arch: { base: 'paper', tint: ['ink', 0.1], motif: 'terrain-arch' },
   shingle: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-shingle', variants: 2 },
   rocks: { base: 'paper', tint: ['ink', 0.04], motif: 'terrain-rocks', variants: 2 },
-  sea: { base: 'blue', motif: 'terrain-sea', variants: 2, banks: ['sea'] },
+  sea: { base: 'blue', shore: true, motif: 'terrain-sea', variants: 2, banks: ['sea'] },
   // Norway (SPEC.md §16, M58): the snow the mission's ground, the pale frost
   // (M58d), so it reads white and cold beside everything else; the drifts the
   // deeper frost, the rest the cold blue, thin. The plant's buildings stay
@@ -408,7 +412,7 @@ const TERRAIN_ART = {
   // The suspension bridge's deck, printed over the gorge (the map's
   // `printedAs`, art only: the rules read Bridge), turned to run south-west
   // as the map's does; the road is drawn over it.
-  suspension: { base: 'ground', tint: ['blue', 0.18], motif: 'terrain-suspension' },
+  suspension: { base: 'ground', clear: true, tint: ['blue', 0.18], motif: 'terrain-suspension' },
 };
 
 // Area terrain's outline: it follows the hexes' edges, rounded off at every
@@ -452,6 +456,17 @@ let groundColour = PALETTE.paper;
 /** Print the land in the PALETTE colour `name`, or bare paper. */
 export function applyGround(name) {
   groundColour = PALETTE[name] ?? PALETTE.paper;
+}
+
+/**
+ * A hex's base colour on the board (M58d): its terrain's, except that ground
+ * on a road, or beside water (`shore`, given as the neighbours' art), is left
+ * bare paper. Art only: the terrain, and what it costs, are unchanged.
+ */
+export function baseFill(art, neighbourArts = []) {
+  if (art.base !== 'ground') return art.fill;
+  if (art.clear || neighbourArts.some((n) => n.shore)) return PALETTE.paper;
+  return art.fill;
 }
 
 /** Which variant of a motif a hex gets, or none: fixed by its coordinates, not rolled. */

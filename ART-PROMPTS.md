@@ -1058,7 +1058,8 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   its pole, and the ski trail with its cairn at the way out. Since M58d its land is the
   pale frost, the drifts the deep frost.
 - The ground colours (M58d): meadow for the green country, frost for snow, deep frost
-  for winter slopes, flat under every map but the airfield's.
+  for winter slopes, flat under every map but the airfield's; roads and the land beside
+  water left bare paper.
 - The mouse arrow in the ? pages' scenes (M48i, `help-cursor`): plain paper and ink.
 - The cover shields on a hovered move (M45): empty, half green, all green.
 - The strike marks on an enemy's chip (M46: knife, crosshair, crosshair struck through,

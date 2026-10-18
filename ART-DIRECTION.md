@@ -70,12 +70,14 @@ board must read at a glance.
   airfield (a mission's `counterColour`: army green on the desert sat too close to the
   garrison's dark chits). Three **ground colours**, used only as a mission's `ground`
   (`data/missions.json`), the land its board is printed on in place of the bare paper,
-  so a grassy map and a snowy one tell apart at a glance: **meadow `#D9DDB0`** (the
+  so a grassy map and a snowy one tell apart at a glance: **meadow `#D3D6B7`** (the
   practice ground, France), **frost `#EEF2F2`** (the heavy water plant's snow) and
-  **deep frost `#CFDCE3`** (the aqueduct's winter slopes, and Norway's drifts). What
+  **deep frost `#D2DBE0`** (the aqueduct's winter slopes, and Norway's drifts). What
   man has built or cleared stays bare paper (farmhouses, gun pits, the depot, the
   plant's buildings), and so do the aqueduct's plough, terraces and beach, warm beside
-  the cold slopes. The airfield names none: its sand is the ochre's wash over the
+  the cold slopes. Roads and bridges are left paper, and so is any land beside water
+  (the canal, the sea, the ravine's torrent), so the maps keep clear ground along their
+  roads and banks: art only, what the hex costs is unchanged. The airfield names none: its sand is the ochre's wash over the
   paper. Nothing else.
 - Ben-Day halftone dots as SVG `<pattern>` defs, **used sparingly**: on wood, objectives,
   the enemy's vision and in the chrome, printed faint, close to the colour beneath.
