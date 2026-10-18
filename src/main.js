@@ -31,6 +31,7 @@ import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
 import { startPlaytestPanel } from './render/playtest-panel.js';
 import { helpFrames, helpLines, sceneMap } from './help.js';
 import { printAge, printFillsTurn, takesPrints } from './tracks.js';
+import { cleanRun } from './scoring.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
 import { createUnits } from './units.js';
@@ -812,6 +813,14 @@ function confirmSignal() {
   const { unitId } = briefing;
   briefing = null;
   commit(signalBoat(state, unitId, rules, baseMap));
+  render();
+}
+
+/** The first shot's card (M57): fire it, as the click it held back would have. */
+function confirmFirstShot() {
+  const { q, r } = briefing;
+  briefing = null;
+  handleTargetClick(q, r, true);
   render();
 }
 
@@ -1974,7 +1983,7 @@ function handleHexClick(q, r) {
 // for stabilise, whose target is one of the stick, which selects him only if
 // it cannot be done. Any other click takes the action if it can; a miss
 // leaves the player aiming, and the readout already says why it would not work.
-function handleTargetClick(q, r) {
+function handleTargetClick(q, r, shotConfirmed = false) {
   const mover = selectedUnit(state);
   if (!mover) return;
   const other = unitAt(state.units, q, r);
@@ -2008,6 +2017,12 @@ function handleTargetClick(q, r) {
     // shot for a kill, with the muzzle flash and tracer on the board.
     const kind = state.targeting;
     const gun = kind === 'suppress' || kind === 'kill';
+    // The night's first shot asks first where the mission says so (M57,
+    // `confirmShot`): only Enter or the card's button fires it.
+    if (gun && rules.confirmShot && !state.firstShot && !shotConfirmed) {
+      briefing = { kind: 'firstShot', unitId: mover.id, q, r, action: kind };
+      return;
+    }
     const target = gun ? state.enemies.find((e) => e.q === q && e.r === r) : null;
     commit(setTargeting(next, null), gun || kind === 'knife' ? kind : 'action');
     if (target) showShot(kind, mover, target);
@@ -2792,6 +2807,30 @@ function describeBriefing(which, view) {
       sections: [],
       confirm: { label: `${man.shortName} SIGNALS [Enter]`, onConfirm: confirmSignal },
       go: 'NOT YET — any other key or click',
+    };
+  }
+  if (which.kind === 'firstShot') {
+    // What the first shot costs (M57): this man's gunfire, through his onFire
+    // hook, how far it carries, and the clean run it would lose.
+    const man = state.units.find((u) => u.id === which.unitId);
+    const loud = which.action === 'kill' ? rules.alert.silenced : rules.alert.gunfire;
+    const alert = applyHook(man, 'onFire', 'alert', loud).value;
+    const radius = hearingRadius(which.action === 'kill' ? 'silenced' : 'gunfire', state.alert.points, rules);
+    let across = 0;
+    forEachCell(map, (q, r) => { if (isInPlay(map, q, r)) across = Math.max(across, hexDistance(man, { q, r })); });
+    const loses = rules.scoring.cleanNoShot && cleanRun(state, rules).kept;
+    return {
+      title: 'HOLD YOUR FIRE?',
+      kicker: 'THE FIRST SHOT',
+      tone: 'warn',
+      paragraphs: [[
+        { bold: `A shot here is heard ${radius >= across ? 'by the whole garrison' : `${radius} hexes off`}.` },
+        `Alert +${alert}${loses ? `, and the bonus for ${mission.words.cleanBonus ?? 'a clean run'} is lost` : ''}.`,
+        'Once a shot has been fired, nobody asks again.',
+      ]],
+      sections: [],
+      confirm: { label: `${man.shortName} FIRES [Enter]`, onConfirm: confirmFirstShot },
+      go: 'HOLD FIRE — any other key or click',
     };
   }
   if (which.kind === 'boatGoes') {
@@ -3620,13 +3659,14 @@ function handleKey(event) {
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     if (briefing.kind === 'signal' && event.key === 'Enter') return confirmSignal();
     if (briefing.kind === 'boatGoes' && event.key === 'Enter') return confirmBoatGoes();
+    if (briefing.kind === 'firstShot' && event.key === 'Enter') return confirmFirstShot();
     // Enter is a card's green button (M48b, the operator's): the one key that
     // goes on from a card that otherwise wants its button clicked.
     if (wantsItsButton() && event.key === 'Enter') return closeBriefing(true);
     // The arrows turn how to play's pages (M48i), and do nothing else.
     if (briefing.kind === 'help' && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) return turnHelpPage(helpPage + (event.key === 'ArrowRight' ? 1 : -1));
     // ? over a turn card swaps it for the orders (M17), as the button does.
-    if (isHelpKey(event) && !['help', 'exfil', 'signal', 'boatGoes', 'contents'].includes(briefing.kind)) return openHelp();
+    if (isHelpKey(event) && !['help', 'exfil', 'signal', 'boatGoes', 'firstShot', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
     closeBriefing();
     // A man's number, or Tab, puts a turn card away and picks him (M23), as a click on him does.
