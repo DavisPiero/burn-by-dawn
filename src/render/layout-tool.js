@@ -5,13 +5,17 @@
  * moved; COPY puts the whole of data/layout.json on the clipboard, to paste
  * over the file; PUT BACK returns everything to where the file has it. PAINT
  * CLEAR (M58e) turns the board's hexes into switches: a click leaves a hex bare
- * paper, or gives it back its ground colour. Nothing
+ * paper, or gives it back its ground colour. PAINT GROUND (M59c) is the
+ * terrain painter: pick one of the map's own grounds and click or drag over
+ * hexes, before the jump; COPY ROWS gives the map's rows, which are rules,
+ * for Claude to put in the map file after the tests. Nothing
  * is kept in the browser (CLAUDE.md rule 9): the file is the save.
  *
  * It reads the page and asks main.js, through `onChange`, for a new layout;
  * the game's state is never touched.
  */
-import { layoutText, moved, movedCount, pixelsToAxial, pixelsToRadii, toggledClear } from '../layout.js';
+import { groundSwatches, layoutText, moved, movedCount, paintedCount, paintedRows, pixelsToAxial, pixelsToRadii, rowsText, targetsOn, toggledClear } from '../layout.js';
+import { terrainArt } from './theme.js';
 
 /** Whether the address asks for the tool: `?layout`. */
 export function layoutFromQuery(search) {
@@ -21,9 +25,12 @@ export function layoutFromQuery(search) {
 /**
  * `layout()` is the layout now, `original` the file as loaded, `onChange(next)`
  * takes a new one (main.js redraws with it), `hexSize` the board's,
- * `missionId()` the mission on the board.
+ * `missionId()` the mission on the board. `ground()` is the map on the board
+ * as painted, its rows as the file has them and the file's name ({ map,
+ * fileRows, file }), and `onPaint(rows)` sets the mission up over new rows,
+ * returning why not if it cannot (M59c).
  */
-export function startLayoutTool({ layout, original, onChange, hexSize, missionId }) {
+export function startLayoutTool({ layout, original, onChange, hexSize, missionId, ground, onPaint }) {
   document.documentElement.classList.add('layout-mode');
   const count = document.createElement('span');
   const said = document.createElement('div');
@@ -41,31 +48,83 @@ export function startLayoutTool({ layout, original, onChange, hexSize, missionId
   const head = document.createElement('div');
   head.className = 'layout-head';
   head.append('LAYOUT · drag what is dashed · ', count);
+  // One paint at a time: bare paper (PAINT CLEAR) or the ground itself (PAINT GROUND).
   let painting = false;
+  let brush = null;
+  const swatches = document.createElement('div');
+  swatches.className = 'layout-swatches';
   const paint = button('PAINT CLEAR: OFF', () => {
     painting = !painting;
+    if (painting) setBrush(null);
     paint.textContent = `PAINT CLEAR: ${painting ? 'ON' : 'OFF'}`;
     paint.classList.toggle('on', painting);
     document.documentElement.classList.toggle('layout-painting', painting);
     say(painting ? 'Click a hex to leave it bare paper, or click again to give it back its ground colour.' : '');
   });
-  panel.append(head, button('COPY', copy), button('PUT BACK', () => { onChange(original); say(''); update(); }), paint, said);
+  const paintGround = button('PAINT GROUND: OFF', () => {
+    if (brush) {
+      setBrush(null);
+      say('');
+      return;
+    }
+    if (painting) paint.click();
+    showSwatches();
+    setBrush(groundSwatches(ground().map)[0].char);
+    say('Pick a ground, then click a hex, or hold the button down and drag. Before the jump only.');
+  });
+  function setBrush(char) {
+    brush = char;
+    paintGround.textContent = `PAINT GROUND: ${brush ? 'ON' : 'OFF'}`;
+    paintGround.classList.toggle('on', Boolean(brush));
+    swatches.hidden = !brush;
+    for (const swatch of swatches.children) swatch.classList.toggle('on', swatch.dataset.char === brush);
+    document.documentElement.classList.toggle('layout-painting', Boolean(brush) || painting);
+  }
+  // The map's own grounds, each with its colour on the board, its name and its letter.
+  function showSwatches() {
+    swatches.replaceChildren(...groundSwatches(ground().map).map(({ char, id, label }) => {
+      const swatch = button('', () => setBrush(char));
+      swatch.dataset.char = char;
+      swatch.title = `${label}: ${char} in the map's rows`;
+      swatch.append(groundChip(id), `${label} ${char}`);
+      return swatch;
+    }));
+  }
+  const putBack = () => {
+    onChange(original);
+    const { map, fileRows } = ground();
+    const refused = paintedCount(fileRows, map.rows) ? onPaint(fileRows) : null;
+    say(refused ?? '');
+    update();
+  };
+  const buttons = [button('COPY', copy), button('PUT BACK', putBack), paint];
+  if (onPaint) buttons.push(paintGround, button('COPY ROWS', copyRows));
+  panel.append(head, ...buttons, swatches, said);
+  swatches.hidden = true;
   // The panel's clicks and keys are its own, never the game's.
   for (const type of ['pointerdown', 'click', 'keydown']) panel.addEventListener(type, (event) => event.stopPropagation());
   document.body.appendChild(panel);
 
   function update() {
     const n = movedCount(original, layout());
-    count.textContent = n === 0 ? 'nothing moved' : `${n} moved`;
+    const painted = onPaint ? paintedCount(ground().fileRows, ground().map.rows) : 0;
+    count.textContent = `${n === 0 ? 'nothing moved' : `${n} moved`}${painted ? ` · ${painted} ${painted === 1 ? 'hex' : 'hexes'} painted` : ''}`;
   }
   function say(words) {
     said.replaceChildren(words);
   }
-  async function copy() {
-    const text = layoutText(layout());
+  function copy() {
+    return copyText(layoutText(layout()), 'Copied. Open data/layout.json, select all, paste, save.');
+  }
+  // The rows are rules (M59c): they go to Claude, who checks them before they are the map's.
+  function copyRows() {
+    const { map, file } = ground();
+    return copyText(rowsText(map.rows), `Copied the rows of ${file}. Send them to Claude, who puts them in the map after the tests.`);
+  }
+  async function copyText(text, words) {
     try {
       await navigator.clipboard.writeText(text);
-      say('Copied. Open data/layout.json, select all, paste, save.');
+      say(words);
     } catch {
       // No clipboard (an old browser, or not allowed): the text, selected, to copy by hand.
       const box = document.createElement('textarea');
@@ -85,6 +144,51 @@ export function startLayoutTool({ layout, original, onChange, hexSize, missionId
     event.stopPropagation();
     onChange(toggledClear(layout(), missionId(), Number(hex.dataset.q), Number(hex.dataset.r)));
     update();
+  }, true);
+
+  // Painting the ground (M59c): the button down on a hex paints it, and every
+  // hex the mouse goes over until it comes up; the game hears none of it.
+  let brushing = false;
+  let lastPainted = null;
+  const hexUnder = (event) => event.target.closest?.('#board g[data-q][data-r]');
+  const paintHex = (hex) => {
+    const key = `${hex.dataset.q},${hex.dataset.r}`;
+    if (key === lastPainted) return;
+    lastPainted = key;
+    const q = Number(hex.dataset.q), r = Number(hex.dataset.r);
+    const { map } = ground();
+    const rows = paintedRows(map, q, r, brush);
+    if (rows === map.rows) return;
+    const refused = onPaint(rows);
+    if (refused) {
+      brushing = false;
+      say(`Not painted. ${refused}`);
+    } else {
+      const targets = targetsOn(map, q, r);
+      say(targets.length ? `Painted the ${targets.join(' and the ')}'s own ground: what its ruins take the place of when it goes up.` : '');
+    }
+    update();
+  };
+  document.addEventListener('pointerdown', (event) => {
+    if (!brush || event.button !== 0) return;
+    const hex = hexUnder(event);
+    if (!hex) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    brushing = true;
+    lastPainted = null;
+    paintHex(hex);
+  }, true);
+  document.addEventListener('pointermove', (event) => {
+    if (!brushing) return;
+    const hex = hexUnder(event);
+    if (hex) paintHex(hex);
+  }, true);
+  document.addEventListener('pointerup', () => { brushing = false; }, true);
+  document.addEventListener('click', (event) => {
+    if (!brush || !hexUnder(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
   }, true);
 
   // A drag: the thing follows the mouse, and on letting go the layout is
@@ -183,4 +287,27 @@ function live(drag) {
 function translated(base, dx, dy) {
   const [x = 0, y = 0] = (base || '0px 0px').split(' ').map(parseFloat);
   return `${x + dx}px ${y + dy}px`;
+}
+
+/** A ground as a small square of the board (M59c): its colour, its tint and its mark, from the sprite registry. */
+function groundChip(terrainId) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const art = terrainArt(terrainId);
+  const chip = document.createElementNS(ns, 'svg');
+  chip.setAttribute('class', 'layout-chip');
+  chip.setAttribute('viewBox', '0 0 20 20');
+  const square = (fill, opacity) => {
+    const rect = document.createElementNS(ns, 'rect');
+    for (const [name, value] of Object.entries({ width: 20, height: 20, fill, 'fill-opacity': opacity })) rect.setAttribute(name, value);
+    chip.appendChild(rect);
+  };
+  square(art.fill, 1);
+  const tint = art.tint ?? art.area?.tint;
+  if (tint) square(art.tintFill ?? art.area.tintFill, tint[1]);
+  if (art.motif) {
+    const use = document.createElementNS(ns, 'use');
+    for (const [name, value] of Object.entries({ href: `#${art.variants ? `${art.motif}-01` : art.motif}`, width: 20, height: 20 })) use.setAttribute(name, value);
+    chip.appendChild(use);
+  }
+  return chip;
 }
