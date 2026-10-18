@@ -9,34 +9,38 @@ pushed.
 
 ## Where we are
 
-- **`main` is M55c, pushed to GitHub** (18 Oct 2026). The live site has M55b and M55c.
-- **M56, on its branch:** `MISSION-GUNNERSIDE.md`, SPEC §16, mission 4 written before
-  it is built. No code. The heavy water plant, Norway 1943: drop on a snowy plateau,
-  cross a gorge (a turn down, a turn on the ice, a turn up) or the guarded bridge, get
-  into the cell hall by the cable duct, out by a ski trail in the north-east. Its one
-  engine rule: **tracks in the snow**, drawn as footprints turned the way a man walked,
-  fading over three turns, found by patrols like parachutes. Gunfire heard across the
-  board (+4); the clean run NOT A SHOT FIRED (+5); a card before the first shot; a
-  decoy flare for the diversion. How the game tells the player stealth is the point,
-  and five new comic panel moments, are sections of their own.
-- SPEC.md, CLAUDE.md, ROADMAP.md and WINNING.md point at it (WINNING's "exfil on the
-  south edge" now says "on a map edge").
-- Tests: 249 headless, 252 in `tests.html` (unchanged; nothing in the game changed).
+- **`main` is M56, pushed to GitHub.** The game itself is M55c (the margin still says
+  build M55c: M56 changed documents only).
+- **M56:** `MISSION-GUNNERSIDE.md`, SPEC §16, mission 4 written before it is built. The
+  heavy water plant, Norway 1943, tagline SIX MEN · ONE STATION · NOT A SHOT FIRED.
+  Drop on a snowy plateau; cross a gorge (a turn down, a turn on the ice, a turn up) or
+  the guarded bridge; into the cell hall by the cable duct; out by a ski trail in the
+  north-east. Its one engine rule is **tracks in the snow**: footprints turned the way
+  a man walked, fading over three turns, found by patrols like parachutes. Gunfire is
+  heard across the board (+4); the clean run NOT A SHOT FIRED pays 5; a card asks before
+  the first shot; a decoy flare replaces the RAF diversion. How the game tells the
+  player that stealth is the point, and five new comic panel moments, have sections of
+  their own.
+- Tests: 249 headless, 252 in `tests.html`.
 
 ## Next
 
-1. **The operator reads `MISSION-GUNNERSIDE.md`** and signs it off, or notes changes.
-2. **M57, the engine** for it: tracks, the no-shot clean run, the first-shot card, all
-   off in the other missions.
-3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30): nothing shows
-   at START GAME until `assets/panels/panel-dakota.jpg` exists.
+1. **M57, the engine for Gunnerside** (MISSION-GUNNERSIDE.md, The order it is built in):
+   tracks (laying, ageing, finding, undo, the readout, the footprint sprite turned and
+   fading), `scoring.cleanNoShot`, `confirmShot`. All off in the other missions, whose
+   bot output must stay the same byte for byte. There is no map yet, so it is tested in
+   node and on a test board.
+2. Then M58 (the map as a draft), M59 (balance), M60 (words, sounds, art hand-off), M61
+   (new panel moments, if wanted).
+3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
 ## Open with the operator
 
-1. **Guesses in the spec to confirm or change** (all marked as starting points): a
-   20-turn night; prints last 3 turns; three charges for the hall (Easy 2, Hard 4),
-   sappers carrying two; the telephone line the one bonus target; seven enemies; the
-   placeholder names (Vassdal Works, Mørkgjelet, Isvidda, Elvebyen) and all the words.
+1. **Guesses in the Gunnerside spec**, starting points for balance unless you change
+   them: a 20-turn night; prints last 3 turns; the hall takes 3 charges (Easy 2, Hard 4)
+   with sappers carrying two; the telephone line the one bonus target; seven enemies;
+   the names (Vassdal Works, Mørkgjelet, Isvidda, Elvebyen) and every word, which are
+   placeholders.
 2. **PICK A DROP DIRECTION drawing in behind the Dakota panel**: judge it once the
    painting is in.
 3. **Still standing:** France a little easier than its baselines say ("ok for now"); the
@@ -45,7 +49,6 @@ pushed.
 
 ## Owed
 
-- **From the operator:** the Dakota panel; optional art 21 (winter kit, which Gunnerside
-  uses too); optional per-mission Dakota panels (Gunnerside's would be a Halifax).
-- **Parked in ROADMAP.md:** more panel moments (Gunnerside's spec designs them), tips as
-  in-world briefings, an Advice button, hiding a body.
+- **From the operator:** the Dakota panel; optional art 21 (winter kit, used by the
+  aqueduct and Gunnerside); optional per-mission Dakota panels (Gunnerside's a Halifax).
+- **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.

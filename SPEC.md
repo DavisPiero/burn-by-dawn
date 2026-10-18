@@ -432,8 +432,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M56, the Gunnerside spec:** `MISSION-GUNNERSIDE.md` (§16), mission 4 written before
-it is built, with the operator's calls; no code. Its build order is in that file. The milestones before it are
+**M57, the engine for mission 4** (§16, `MISSION-GUNNERSIDE.md`, The order it is built
+in): tracks in the snow, the no-shot clean run and the card before the first shot, all
+off in the other missions. The milestones before it are
 in `MILESTONES.md`. v1.0 is tagged.
 
 ### Done

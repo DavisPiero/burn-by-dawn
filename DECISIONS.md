@@ -134,3 +134,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-18 | m56 | The file is 445 lines, not the 200–250 planned: the stealth wording and the comic panels the operator asked for take about 100 of them
 2026-10-18 | m56 | The tagline is SIX MEN · ONE STATION · NOT A SHOT FIRED (the operator's; ONE PLANT before)
 2026-10-18 | m56 | M56 signed off by the operator and merged
+2026-10-18 | m56 | Next is M57, the Gunnerside engine, in a fresh session; the spec stays at the plan's milestones M57 to M61
