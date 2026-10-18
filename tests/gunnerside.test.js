@@ -54,15 +54,19 @@ export default [
     equal(json.default, 'france', 'France still opens by default');
   }],
 
-  ['its rules patch turns M57\'s engine on: tracks, the no-shot clean run worth 5, the first shot asked; the shot +4 and heard everywhere; a 20-turn night', async () => {
+  ['its rules patch turns M57\'s engine on: tracks, the no-shot clean run worth 5, the first shot asked; the shot +6 and heard everywhere; Alarmed from 9; a body found calls no squad; a 20-turn night', async () => {
     const { rules } = await loadGunnerside();
     equal(rules.turnLimit, 20, 'dawn');
-    equal(rules.tracks.turns, 3, 'prints last');
+    equal(rules.tracks.turns, 2, 'prints last');
     equal(rules.tracks.alertPerPhase, 1, 'prints raise the alert once a phase at most');
     equal(rules.scoring.cleanNoShot, true, 'NOT A SHOT FIRED');
     equal(rules.scoring.clean, 5, 'its bonus');
     equal(rules.confirmShot, true, 'the first shot asks');
-    equal(rules.alert.gunfire, 4, 'a shot\'s alert');
+    equal(rules.alert.gunfire, 6, 'a shot\'s alert');
+    equal(rules.alert.states.at(-1).id, 'alarmed', 'Alarmed is the top state');
+    equal(rules.alert.states.at(-1).from, 9, 'Alarmed from 9 on this ground (M59)');
+    assert(rules.alert.gunfire + rules.objectives.cellHall.alert >= rules.alert.states.at(-1).from, 'one shot and the bang is Alarmed');
+    equal(rules.bodyFound.reinforcements, 0, 'a body found calls no squad (M59)');
     assert(rules.noise.gunfire >= 18, 'a shot is heard across the board');
     equal(rules.roles.sapper.charges, 2, 'a sapper jumps with two');
     equal(rules.canisters ?? null, null, 'no canisters');

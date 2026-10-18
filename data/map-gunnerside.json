@@ -116,12 +116,12 @@
       "loop": false,
       "route": [
         [
-          9,
+          11,
           3
         ],
         [
           14,
-          2
+          3
         ]
       ]
     },
@@ -415,8 +415,8 @@
     "PPPKPPSDDSSSTSKPPS",
     "CCGGGPSSSSSSTSSPPS",
     "CCGGGGGGGGGSTSSSPS",
-    "CCSSSIIIIGGGXGGGCC",
-    "SPPSSGGGGSSXGGGGCC",
+    "CCGGGIIIIGGGXGGGCC",
+    "SPPSGGGGGSGXGGGGCC",
     "SSSKSSSKSSSTSSSKSS",
     "LLLLLLSSSSSTTTSSSS",
     "PPSSSSLMMMMMMTSSBB",
