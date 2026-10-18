@@ -1,0 +1,432 @@
+{
+  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md, M58): mission 4's map, a first drawing in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. The plateau in rows 0-4, the gorge in rows 5-7 (a gorge side, the ice, a gorge side, crag at each end), the suspension bridge carrying the road over it in column 10, the shelf with the plant in rows 8-12.",
+  "name": "The heavy water plant at Vassdal",
+  "width": 18,
+  "height": 13,
+  "hexSize": 46,
+  "_dropRuns": "SPEC.md §9, §16. All three over the plateau, so nobody lands south of the gorge. West over the pine woods in the north-west (under the trees, far from the bridge; a man in the pines loses his first turn); North along the plateau's open middle (soft landings, prints wherever they go); East down beside the road toward the bridge (nearest the crossing and the way out, and the bridge post and the plateau patrol).",
+  "dropRuns": [
+    {
+      "id": "west",
+      "label": "West run",
+      "tag": "quiet",
+      "description": "The pine woods in the north-west: under the trees the whole way and far from the bridge, the longest walk round to the climb. A man who comes down in the pines loses his first turn.",
+      "from": [
+        1,
+        0
+      ],
+      "to": [
+        3,
+        3
+      ],
+      "jumpAt": 0,
+      "spacing": 1,
+      "wind": "SW"
+    },
+    {
+      "id": "north",
+      "label": "North run",
+      "tag": "steady",
+      "description": "The open snow in the middle of the plateau: the softest landing on the map, and prints wherever the men go.",
+      "from": [
+        3,
+        1
+      ],
+      "to": [
+        9,
+        1
+      ],
+      "jumpAt": 0,
+      "spacing": 1,
+      "wind": "E"
+    },
+    {
+      "id": "east",
+      "label": "East run",
+      "tag": "fast",
+      "description": "Down beside the road toward the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.",
+      "from": [
+        14,
+        0
+      ],
+      "to": [
+        9,
+        4
+      ],
+      "jumpAt": 0,
+      "spacing": 1,
+      "wind": "SW"
+    }
+  ],
+  "_enemies": "SPEC.md §6, §16. Seven, as few as the aqueduct's, set to watch the crossings and the snow. Posts: the bridge post, one at each end beside the road, each sweeping between the deck and the gorge below; the gate guard by the main door. Patrols: the plateau patrol between the East run's ground and the road, the one that reads prints; the rim patrol along the gorge's north rim west of the bridge; the plant patrol along the railway from the duct to the gate; the road patrol on the road between the gate and the junction box. They set out on turn 2 (missions.json patrols.setOutTurn).",
+  "enemies": [
+    {
+      "id": "post-bridge-north",
+      "label": "Bridge post (north)",
+      "type": "sentry",
+      "at": [
+        7,
+        4
+      ],
+      "facing": "SE",
+      "sweep": "E"
+    },
+    {
+      "id": "post-bridge-south",
+      "label": "Bridge post (south)",
+      "type": "sentry",
+      "at": [
+        7,
+        8
+      ],
+      "facing": "NW",
+      "sweep": "NE"
+    },
+    {
+      "id": "post-gate",
+      "label": "Gate guard",
+      "type": "sentry",
+      "at": [
+        7,
+        9
+      ],
+      "facing": "W",
+      "sweep": "SW"
+    },
+    {
+      "id": "patrol-plateau",
+      "label": "Plateau patrol",
+      "type": "patrol",
+      "facing": "SW",
+      "loop": false,
+      "route": [
+        [
+          13,
+          2
+        ],
+        [
+          11,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "patrol-rim",
+      "label": "Rim patrol",
+      "type": "patrol",
+      "facing": "W",
+      "loop": false,
+      "route": [
+        [
+          6,
+          4
+        ],
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "patrol-plant",
+      "label": "Plant patrol",
+      "type": "patrol",
+      "facing": "W",
+      "loop": false,
+      "route": [
+        [
+          5,
+          8
+        ],
+        [
+          -3,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "patrol-road",
+      "label": "Road patrol",
+      "type": "patrol",
+      "facing": "SE",
+      "loop": false,
+      "route": [
+        [
+          6,
+          10
+        ],
+        [
+          8,
+          12
+        ]
+      ]
+    }
+  ],
+  "_reserve": "SPEC.md §6, §16. Out of the barracks at Alarmed, over the bridge, to stand guard beside the ski trail. Never, once the telephone line is down (its kind's payoff).",
+  "reserve": {
+    "id": "reserve",
+    "label": "Reserve squad",
+    "type": "reserve",
+    "facing": "NW",
+    "entryHexes": [
+      [
+        8,
+        9
+      ],
+      [
+        9,
+        9
+      ],
+      [
+        7,
+        10
+      ]
+    ],
+    "guardHex": [
+      15,
+      1
+    ],
+    "guardFacing": "SW"
+  },
+  "_reinforcements": "SPEC.md §6, §16. Up the road from Elvebyen off the south-east edge when the hall goes up (one squad on Normal, two on Hard, none on Easy; none once the telephone line is cut), across the bridge to posts on the way out; and a squad for a body found (missions.json bodyFound), to where it lay.",
+  "reinforcements": {
+    "id": "reinforcements",
+    "label": "Reinforcements",
+    "type": "patrol",
+    "facing": "NW",
+    "entryHexes": [
+      [
+        11,
+        12
+      ],
+      [
+        10,
+        12
+      ],
+      [
+        9,
+        12
+      ]
+    ],
+    "posts": [
+      {
+        "guardHex": [
+          9,
+          4
+        ],
+        "guardFacing": "NE"
+      },
+      {
+        "guardHex": [
+          14,
+          2
+        ],
+        "guardFacing": "NE"
+      },
+      {
+        "guardHex": [
+          13,
+          1
+        ],
+        "guardFacing": "E"
+      }
+    ]
+  },
+  "_objectives": "SPEC.md §7, §16. The cell hall is the primary: its footprint is the cells along the hall's back wall; its four charge points are the hall floor beside them, so a man inside when they go is in the kill radius. The duct at its west end and the main door at its east end are the ways in. The telephone line's junction box stands on the rock below the gate, a charge point either side of it on the road's verge; a scout can cut it there.",
+  "objectives": [
+    {
+      "id": "cell-hall",
+      "label": "Cell Hall",
+      "kind": "cellHall",
+      "primary": true,
+      "hexes": [
+        [
+          0,
+          11
+        ],
+        [
+          1,
+          11
+        ],
+        [
+          2,
+          11
+        ],
+        [
+          3,
+          11
+        ]
+      ],
+      "chargeHexes": [
+        [
+          0,
+          10
+        ],
+        [
+          1,
+          10
+        ],
+        [
+          2,
+          10
+        ],
+        [
+          3,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "telephone",
+      "label": "Telephone Line",
+      "kind": "telephone",
+      "primary": false,
+      "hexes": [
+        [
+          8,
+          11
+        ]
+      ],
+      "chargeHexes": [
+        [
+          7,
+          11
+        ],
+        [
+          9,
+          11
+        ]
+      ]
+    }
+  ],
+  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes on the edge, open all night. exfilArt names its picture: two lines of ski tracks and a cairn.",
+  "exfil": [
+    [
+      16,
+      0
+    ],
+    [
+      17,
+      0
+    ],
+    [
+      16,
+      1
+    ]
+  ],
+  "exfilArt": "skiTrail",
+  "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the plant. Its hexes are Railway ground (terrain.json), which is what the rules read.",
+  "railway": [
+    [
+      -3,
+      8
+    ],
+    [
+      4,
+      8
+    ]
+  ],
+  "_roadArt": "SPEC.md §11, art only: the road runs on off the board, north over the plateau and south-east down to the town.",
+  "roadArt": [
+    [
+      [
+        10,
+        0
+      ],
+      [
+        10,
+        -1
+      ],
+      [
+        10,
+        -2
+      ]
+    ],
+    [
+      [
+        11,
+        12
+      ],
+      [
+        12,
+        12
+      ],
+      [
+        12,
+        13
+      ]
+    ]
+  ],
+  "_places": "SPEC.md §11. Art only. Placeholder names for the operator to reword (MISSION-GUNNERSIDE.md).",
+  "places": [
+    {
+      "name": "Vassdal Works",
+      "kind": "village",
+      "at": [
+        2,
+        9
+      ],
+      "dy": -0.9
+    },
+    {
+      "name": "Mørkgjelet",
+      "kind": "wadi",
+      "at": [
+        2,
+        6
+      ]
+    },
+    {
+      "name": "Isvidda",
+      "kind": "high",
+      "at": [
+        6,
+        2
+      ],
+      "dy": -0.6
+    },
+    {
+      "name": "to Elvebyen",
+      "kind": "other",
+      "at": [
+        9,
+        12
+      ],
+      "dy": 0.9
+    }
+  ],
+  "legend": {
+    "S": "snowfield",
+    "D": "drift",
+    "P": "pines",
+    "K": "rock",
+    "G": "gorgeSide",
+    "I": "ice",
+    "C": "crag",
+    "X": "bridge",
+    "T": "track",
+    "L": "railway",
+    "M": "plantWall",
+    "A": "hall",
+    "U": "duct",
+    "E": "cells",
+    "Z": "pipes",
+    "B": "barracks",
+    "F": "farmhouse"
+  },
+  "rows": [
+    "PPPPSSDSSSTSSSDSSS",
+    "PPPPSSSSDSTSKSSDSS",
+    "PPPKSSFSSSTSSSPPSS",
+    "PPPSSDDSKSTSSSPPDS",
+    "KPSSSSSSSSTSSSKSSK",
+    "CCGGGGGGGGXGGGGGCC",
+    "CCIIIIIIIIXIIIIICC",
+    "CCGGGGGGGGXGGGGGCC",
+    "LLLLLLLLLKTSSSSKKS",
+    "SPSMMMMMMMTSBBSSPK",
+    "PPSUAAAAAATTBBSSPP",
+    "PPPMMEEEEMSTSKSPPK",
+    "PPKSSZZSSSSSTTTTTT"
+  ]
+}
