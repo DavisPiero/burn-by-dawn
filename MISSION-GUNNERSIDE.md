@@ -102,7 +102,9 @@ mission, so nothing changes there).
   be building ahead): the answer is the route, the railway, the trees and the turns.
   Undo takes prints back with the move that laid them, as it takes back everything else
   in the player phase.
-- **What the player sees.** The prints on the board (Its pictures, below). On the hover
+- **What the player sees.** The prints on the board (Its pictures, below), and while a
+  man is selected the footprint wash on the snow the garrison will pass next turn
+  (DROP.md, M58c). On the hover
   path, a boot mark on every hex that would take prints, and where a patrol's coming
   walk passes one, TRACKS: FOUND NEXT TURN BY THE PLATEAU PATROL in the readout, so it is
   never a surprise (Feel: the player sees the risk before committing). Hovering a print
@@ -210,7 +212,7 @@ south-west where the gorge narrows east of the middle, a sentry beside each end.
   along it in capitals, MØRKGJELET GORGE. A **suspension bridge**
   crosses it a little east of the middle, carrying the road; the **bridge post** is two
   sentries, one at each end.
-- **The shelf** in the south third, where the plant stands, east of the middle with
+- **The shelf** in the south third, where the plant stands, a little east of the middle (M58c: two hexes back west, out of the crowd round the telephone line and the gate), with
   open ground and pines to the west of it (M58b, the operator's: the first draft's walls
   and pipes jammed the men up): the **cell hall**, a thin shell, one row of wall on its
   north side and the cells along its back on the board's south edge, its charge points on

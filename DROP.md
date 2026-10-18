@@ -91,3 +91,7 @@ step leave anything behind.) Where a mission gives `{ turns, alert, alertPerPhas
   do; a print's hover says whose it is, the turn it fills in and who finds it next turn;
   the turn report says who found whose. With the tips on, the first trail of a game has
   TRACKS! lettered under it, with "the patrols will follow them".
+  While a man is selected, **the footprint wash** hatches in ink every hex of snow on or
+  beside where the garrison stands or walks next turn, by the same sum (M58c, the
+  operator's: keeping prints from being found felt like luck): prints laid there now
+  would be found, so a route round it can be planned.
