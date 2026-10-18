@@ -38,7 +38,7 @@
   "_explosionFloor": "SPEC.md §6: once anything has exploded, the alert never decays below this state. A cut line is not an explosion.",
   "explosionFloor": "suspicious",
 
-  "_scoring": "SPEC.md §10. M18, the operator's: the bridge is worth more than any retreat. M28: what an objective pays is its kind's `score` in `objectives` (the bridge 10, the others 4), and `win` is paid for meeting the mission's win condition: 0 here, as France's bridge carries its own 10; a mission with no primary (the airfield) pays it so that the job done beats the best retreat. A man out pays `perTrooperOut` if he was never hit, `perTrooperOutWounded` if he was (dressed or not). `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion. `cleanUntil` (M32): null asks about the whole mission; \"firstExplosion\" only about the night before the first bang, for a mission whose garrison is Alarmed by the end of every raid (the airfield). `salvo` (M33): null, or { count, points }: `points` for `count` or more of the win's targets going up in one fuse phase, set off by a neighbour or timed together (the airfield); France has one fuse and one primary, so none. `perKill` for each enemy killed by a knife or a gunner's shot, and `perKillFound` (negative) when its body is found — a body is found once, so a kill nobody finds is worth 1 and one they find nothing (M16, the operator's). A blast's kills leave a body already found (M49b) and score nothing: paying for them would pay players to blow targets up beside patrols.",
+  "_scoring": "SPEC.md §10. M18, the operator's: the bridge is worth more than any retreat. M28: what an objective pays is its kind's `score` in `objectives` (the bridge 10, the others 4), and `win` is paid for meeting the mission's win condition: 0 here, as France's bridge carries its own 10; a mission with no primary (the airfield) pays it so that the job done beats the best retreat. A man out pays `perTrooperOut` if he was never hit, `perTrooperOutWounded` if he was (dressed or not). `perTrooperUnseen`: for each man out who was never spotted all mission, on top of `perTrooperOut` (M11b: it replaced a point per two turns left, which paid players to rush). `clean` is the bonus for never reaching the `cleanNeverReached` state and never calling the RAF diversion. `cleanUntil` (M32): null asks about the whole mission; \"firstExplosion\" only about the night before the first bang, for a mission whose garrison is Alarmed by the end of every raid (the airfield). `salvo` (M33): null, or { count, points }: `points` for `count` or more of the win's targets going up in one fuse phase, set off by a neighbour or timed together (the airfield); France has one fuse and one primary, so none. `cleanNoShot` (M57): true asks too that no man fired all night, no suppress, no fire back, no kill (Gunnerside's NOT A SHOT FIRED); false here. `perKill` for each enemy killed by a knife or a gunner's shot, and `perKillFound` (negative) when its body is found — a body is found once, so a kill nobody finds is worth 1 and one they find nothing (M16, the operator's). A blast's kills leave a body already found (M49b) and score nothing: paying for them would pay players to blow targets up beside patrols.",
   "scoring": {
     "win": 0,
     "perTrooperOut": 2,
@@ -47,6 +47,7 @@
     "clean": 3,
     "cleanNeverReached": "alarmed",
     "cleanUntil": null,
+    "cleanNoShot": false,
     "salvo": null,
     "perKill": 1,
     "perKillFound": -1
@@ -57,6 +58,12 @@
 
   "_canisters": "SPEC.md §9, M40: supply canisters. null here; a mission gives { count, charges, scatterWeights }: the men jump with no charges, and `count` canisters holding `charges` each leave the aircraft among them and scatter as the men do, by their own `scatterWeights` (one weight per distance from 0, as landing.scatterWeights). A canister is a pile of charges to pick up from, and evidence until it is empty: found like a parachute (alert.parachuteFound), once, keeping its charges.",
   "canisters": null,
+
+  "_tracks": "SPEC.md §9 Tracks, M57: tracks in the snow. null here; a mission gives { turns, alert, alertPerPhase }: a man who steps onto ground with `tracks: true` in terrain.json leaves prints there, gone at the end of their `turns`th turn (laid in turn N, with 3, there through the enemy phases of N, N+1 and N+2). An enemy coming onto or beside one finds it as it would a parachute: a noise there (noise.found), and every print that man's move laid goes with it. A find raises the alert by `alert`, but prints raise it no more than `alertPerPhase` times in one enemy phase, however many trails are found.",
+  "tracks": null,
+
+  "_confirmShot": "M57: true asks, by a card, before the night's first shot (a suppress, a fire back or a kill); Gunnerside's. false here: the first shot is fired at once, as every other.",
+  "confirmShot": false,
 
   "_exfil": "SPEC.md §10: the way out on a timetable (M40) that can be called in early (M41b, the operator's). `opensTurn` null: the exfil is open all night, and the rest is unused. A mission gives a turn: before the boat lands nobody goes out, though men may stand on the exfil and wait (M49d); once it is in, a man ending a move there is out and one already there boards (B). `openFor`: how many turns it then stays, the turn it lands included; the mission ends with the last of them, dawn or not (null: until turnLimit). `call` null, or { apCost, leadTurns }: a man on or beside an exfil hex may signal, and the boat lands `leadTurns` turns after the turn he does, if that is sooner than `opensTurn`.",
   "exfil": { "opensTurn": null, "openFor": null, "call": null },
