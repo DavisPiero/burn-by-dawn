@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M58d (the palette) built on branch `m58d-palette`, not yet
-signed off. main is M58c.
+Last updated: 18 Oct 2026, M58d (the palette) signed off by the operator, merged into
+main and pushed.
 
 ## Where we are
 
-- **`main` is M58c, pushed.** Branch `m58d-palette` holds M58d; its margin says build M58d.
+- **`main` is M58d, pushed.** The margin says build M58d.
 - **M58d, the palette**: three ground colours, named by a mission's `ground` in
   `missions.json`: meadow `#D3D6B7` under France and the practice ground, pale frost
   `#EEF2F2` under Gunnerside's snow (its drifts deep frost), deep frost `#D2DBE0` under
@@ -38,18 +38,14 @@ signed off. main is M58c.
 
 ## Next
 
-1. **Sign off M58d**, or say what to change: each shade is one line in `theme.js`.
-2. **M59, balance** (MISSION-GUNNERSIDE.md, Balance): West is too easy beside the
+1. **M59, balance** (MISSION-GUNNERSIDE.md, Balance): West is too easy beside the
    gorge's narrow end (95-99%); hunter beats careful; the alert budget. Then M60 (words, sounds, art), M61 (panel moments).
-3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
+2. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
 ## Open with the operator
 
-1. **Guesses in M58d**: what stays bare paper (buildings, yards, the aqueduct's plough,
-   terraces and beach) and what takes the ground (all other land); land beside water counts the canal, sea
-   and ravine, not Gunnerside's ice, and only the road hexes themselves are cleared, not
-   their neighbours; the deep
-   frost on the aqueduct, a little bluer than its old wash; the number M58d.
+1. **Guesses in M58d**, signed off as built: only the road hexes cleared, not their
+   neighbours; Gunnerside's ice not counted as water; its roads warm paper in the snow.
 2. **Guesses in M58c**: the wash hatched in ink; the end-turn card asks about men left
    still on purpose too (there is no Hold).
 3. **Guesses in M58**, kept unless changed: the hall drawn as a plan (walls, floor,

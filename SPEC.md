@@ -383,9 +383,7 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-**M58d, the palette**, under way: the ground colours (ART-DIRECTION.md, Colour), meadow
-for the grassy maps (the practice ground, France), frost for the snowy ones (the aqueduct,
-the heavy water plant). Then **M59, mission 4's balance** (§16, `MISSION-GUNNERSIDE.md`,
+Next (STATE.md): **M59, mission 4's balance** (§16, `MISSION-GUNNERSIDE.md`,
 The order it is built in). The milestones before them are in `MILESTONES.md`. v1.0 is
 tagged.
 
