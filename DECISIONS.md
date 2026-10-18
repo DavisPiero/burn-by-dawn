@@ -132,3 +132,5 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-18 | m56 | New comic panel moments are specified as a short fixed list of triggers in missions.json, never a branch for one mission, built last (M61) so the mission does not wait on them; the Halifax variant uses the Dakota slot that is already built
 2026-10-18 | m56 | WINNING.md's exfil "on the south map edge" reworded to "on a map edge, away from all three drop runs": the airfield's was already in a corner, Gunnerside's is north-east
 2026-10-18 | m56 | The file is 445 lines, not the 200–250 planned: the stealth wording and the comic panels the operator asked for take about 100 of them
+2026-10-18 | m56 | The tagline is SIX MEN · ONE STATION · NOT A SHOT FIRED (the operator's; ONE PLANT before)
+2026-10-18 | m56 | M56 signed off by the operator and merged

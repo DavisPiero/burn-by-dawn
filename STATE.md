@@ -4,8 +4,8 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M56 (the Gunnerside spec) written on branch
-`m56-gunnerside-spec`, waiting for the operator's read and sign-off.
+Last updated: 18 Oct 2026, M56 (the Gunnerside spec) signed off, merged into main and
+pushed.
 
 ## Where we are
 

@@ -309,7 +309,7 @@ of a job where the quiet way is the professional way.
 - **The contents page**: "A heavy water plant across a frozen gorge. Get in, blow the
   cells and get out without a shot fired." Its line is the only one that says how to
   play, because this mission is the only one that asks it.
-- **The tagline**: SIX MEN · ONE PLANT · NOT A SHOT FIRED.
+- **The tagline**: SIX MEN · ONE STATION · NOT A SHOT FIRED.
 - **The orders** (ART-CARDS.md: five lines and one for the rule only this mission has):
   where they drop (the Isvidda, above the gorge); the job, in bold: the cell hall, then
   the ski trail; the clock; **the mission's own line, in bold: "Not a shot. Gunfire
