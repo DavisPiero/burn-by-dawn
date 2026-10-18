@@ -191,7 +191,7 @@ to the game, and the bot's ranges are the guard rails a change must stay inside:
 | **Normal** | Most win within three tries | 75 to 90 | Below careful on the same run (a few points over is the bot's noise) |
 | **Hard** | The real test: a win is earned | 25 to 45 | Below careful on the same run (a few points over is the bot's noise) |
 
-Today France's runs are inside them but Normal's East, 4 over; the airfield's are in §13
+Today France's runs are inside them but Normal's East, 4 over; the airfield's are in §13,
 the aqueduct's in §14 and the heavy water plant's in §16 (its Hard outside the target,
 open with the operator).
 
