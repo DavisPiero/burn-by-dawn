@@ -4,7 +4,8 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 18 Oct 2026, M55b signed off and merged into main (not yet pushed).
+Last updated: 18 Oct 2026, M55b merged into main (not yet pushed); M55c on branch
+`m55c-panel-order`, not yet signed off.
 
 ## Where we are
 
@@ -17,11 +18,13 @@ Last updated: 18 Oct 2026, M55b signed off and merged into main (not yet pushed)
     to the track at every hex.
   - **Your wording is in:** the taglines (OUT BY DAWN for France and the airfield) and
     the panel captions M1a, M3, M3a, M5, M5a.
+- **M55c, on its branch:** a click on the landing panel puts the panel away first, so
+  the turn card under it can be read (it was shutting the hidden card instead).
 - Tests: 249 headless (`node tools/run-tests.mjs`), 252 in `tests.html`.
 
 ## Next
 
-1. **Push main.**
+1. **Your sign-off on M55c**, then push main.
 2. **Paint the Dakota panel** (ART-PROMPTS.md Priority 30). Until its file is in
    `assets/panels/` the game shows nothing at START GAME, which is why you have not seen
    it. Drop it in as named; Claude makes the smaller copy the game loads.

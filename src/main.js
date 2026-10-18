@@ -2627,6 +2627,8 @@ async function loadMission(id, seed) {
 const CARDS_CLICKED_THROUGH = new Set(['turn', 'diversion']);
 
 function clickThroughCard(event) {
+  // A comic panel over the card goes first (M55c, the operator's): the click is its.
+  if (comicPanel) return;
   if (!CARDS_CLICKED_THROUGH.has(briefing?.kind) || briefingCard.contains(event.target)) return;
   const at = event.target.closest?.('#board [data-q]');
   const man = at && unitAt(state.units, Number(at.dataset.q), Number(at.dataset.r));
