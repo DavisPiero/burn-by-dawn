@@ -126,9 +126,11 @@ export function cleanRun(state, rules) {
   const top = rules.alert.states.find((st) => st.id === s.cleanNeverReached);
   const untilBang = s.cleanUntil === 'firstExplosion';
   const peak = untilBang && state.explosions > 0 ? state.alert.peakBeforeBang ?? 0 : state.alert.peak ?? 0;
+  // M57: where the mission asks it (Gunnerside), no man fired all night either.
+  const noShot = s.cleanNoShot === true;
   return {
-    kept: peak < top.from && state.diversionsCalled === 0,
-    label: untilBang ? 'quiet to first bang, no diversion' : `never ${top.label}, no diversion`,
+    kept: peak < top.from && state.diversionsCalled === 0 && !(noShot && state.firstShot),
+    label: `${untilBang ? 'quiet to first bang' : `never ${top.label}`}${noShot ? ', not a shot fired' : ''}, no diversion`,
   };
 }
 

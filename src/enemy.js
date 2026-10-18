@@ -12,6 +12,7 @@
 
 import { DIRECTION_NAMES, directionOf, facingToward, hexDistance, inArc } from './hex.js';
 import { enterCost, findPath, forEachCell, hasLineOfSight, hexKey, isInPlay, terrainAt } from './map.js';
+import { trailsFound } from './tracks.js';
 import { applyHook } from './traits.js';
 import { onBoard, woundedLine } from './units.js';
 
@@ -685,6 +686,8 @@ export function runEnemyPhase(state, map, rules) {
   let bodies = state.bodies;
   let parachutes = state.parachutes ?? [];
   let canisters = state.canisters ?? [];
+  let prints = state.prints ?? [];
+  let printAlerts = 0; // prints raise the alert `tracks.alertPerPhase` times at most a phase (M57)
   const alertBefore = state.alert.points;
   const noises = [];
   const living = state.units.filter(onBoard);
@@ -840,12 +843,23 @@ export function runEnemyPhase(state, map, rules) {
       events.push({ kind: 'canisterFound', label: moved.label, enemyId: moved.id, q: canister.q, r: canister.r });
       return { ...canister, found: true };
     });
+    // Tracks in the snow (SPEC.md §9 Tracks, M57): found as a parachute is,
+    // and one find takes the whole trail that move laid.
+    for (const find of prints.length > 0 ? trailsFound(prints, stood) : []) {
+      if (printAlerts < rules.tracks.alertPerPhase) {
+        alert = raiseAlert(alert, rules.tracks.alert, rules);
+        printAlerts++;
+      }
+      noises.push({ kind: 'found', q: find.at.q, r: find.at.r });
+      events.push({ kind: 'tracksFound', label: moved.label, enemyId: moved.id, trail: find.trail, unitId: find.at.unitId, name: find.at.name, q: find.at.q, r: find.at.r, hexes: find.hexes.map(({ q, r, inDir, outDir }) => ({ q, r, inDir, outDir })) });
+      prints = prints.filter((p) => p.trail !== find.trail);
+    }
   }
 
   enemies = enemies.map((e) => (e.suppressed ? { ...e, suppressed: false, openToKill: true } : e));
   pushAlertChange(events, alertBefore, alert.points, rules);
   return {
-    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, bodySquadsDue, bodySquadsSent, alert, bodies, parachutes, canisters, noises },
+    state: { ...state, enemies, contact, reserveDeployed, reinforcementsDue, reinforcementsSent, bodySquadsDue, bodySquadsSent, alert, bodies, parachutes, canisters, prints, noises },
     events,
   };
 }

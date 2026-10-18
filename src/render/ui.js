@@ -289,7 +289,7 @@ export function describeAlertStates(alert) {
 // worst news at the top and cuts from the bottom.
 const EVENT_WEIGHT = {
   killed: 0, blastKilled: 0, wounded: 1, blastWounded: 1, explosion: 1, train: 1, enemyBlastKilled: 1, noReserve: 1, withdrawn: 1, reinforcementsCalled: 1, reserve: 2, reinforcements: 2, spotted: 2, diversion: 2,
-  pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, canisterFound: 3, boat: 1, searched: 4, canisterLanded: 4, heard: 4, alertDecay: 5, landed: 5,
+  pinned: 3, alertRise: 3, bodyFound: 3, parachuteFound: 3, canisterFound: 3, tracksFound: 3, boat: 1, searched: 4, canisterLanded: 4, heard: 4, alertDecay: 5, landed: 5,
 };
 
 const DEATHS = new Set(['killed', 'blastKilled']);
@@ -793,7 +793,7 @@ export function attachReportScroll(list, strip, up, down) {
 const REPORT_MARKS = {
   spotted: 'marker-spotted', pinned: 'marker-spotted', wounded: 'marker-wounded', blastWounded: 'marker-wounded',
   killed: 'marker-body', blastKilled: 'marker-body', explosion: 'marker-blast', enemyBlastKilled: 'marker-blast',
-  bodyFound: 'marker-body', parachuteFound: 'marker-parachute', landed: 'marker-parachute',
+  bodyFound: 'marker-body', parachuteFound: 'marker-parachute', tracksFound: 'marker-boot', landed: 'marker-parachute',
   canisterLanded: 'marker-canister', canisterFound: 'marker-canister',
 };
 
@@ -852,6 +852,7 @@ export function describeEvent(event, place) {
     case 'heard': return `${listOf(event.labels)} react${event.labels.length === 1 ? 's' : ''} to ${NOISE_WORDS[event.noise] ?? 'something'} in ${at()}.`;
     case 'bodyFound': return `${event.label} finds ${event.name}'s body in ${at()}.`;
     case 'parachuteFound': return `${event.label} finds ${event.name}'s parachute in ${at()}.`;
+    case 'tracksFound': return `${event.label} finds ${event.name}'s tracks in the snow in ${at()}.`;
     case 'landed': return describeLanding(event, at());
     // Supply canisters (SPEC.md §9, M41).
     case 'canisterLanded': return `A canister comes down in ${at()}: ${event.charges} ${event.charges === 1 ? 'charge' : 'charges'} in it.`;
@@ -1690,6 +1691,8 @@ export function renderReadout(element, state, map, view) {
     { label: 'MOVE', text: view?.moveLabel },
     blast && { label: blast.startsWith('MISSION') ? 'EXFIL' : 'BLAST', text: blast.replace(/^BLAST — /, ''), tone: 'danger' },
     ...riskRows(view?.riskLabel, verdict),
+    // Tracks in the snow (M57): who finds what this move would leave.
+    view?.tracksLabel && { label: 'TRACKS', text: view.tracksLabel.text, tone: view.tracksLabel.tone },
     // Stabilise or Pass is open to him (M26); only while he is not off on a move.
     { label: 'AID', text: !view?.plan || view.plan.steps === 0 ? view?.aidLabel : null, tone: 'prompt' },
     { label: 'HIDE', text: view?.hideLabel },

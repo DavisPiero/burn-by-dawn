@@ -81,7 +81,10 @@ killed, left behind), the level, and the score, whatever the outcome:
   (`scoring.cleanUntil: "firstExplosion"`) and name a lower state: the airfield's is
   **below Alert when the first bang goes**, whatever comes after (§13). The orders say it
   is there, in the mission's words (`words.cleanOrders`; France's: "Getting in and out
-  with as little enemy attention as possible earns a special bonus!").
+  with as little enemy attention as possible earns a special bonus!"). Where a mission
+  sets `scoring.cleanNoShot` (false in the files; the heavy water plant's, §16) it asks
+  too that **no man fired all night**: no suppress, no fire back, no kill. The game keeps
+  who fired first and on what turn.
 
 The bridge is worth 10 so that the job done with three men out (22 on a clean run) edges
 out the best retreat (21); a full success tops out at 45 before kills. The score is the

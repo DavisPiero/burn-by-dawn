@@ -135,3 +135,17 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-18 | m56 | The tagline is SIX MEN · ONE STATION · NOT A SHOT FIRED (the operator's; ONE PLANT before)
 2026-10-18 | m56 | M56 signed off by the operator and merged
 2026-10-18 | m56 | Next is M57, the Gunnerside engine, in a fresh session; the spec stays at the plan's milestones M57 to M61
+2026-10-18 | m57 | Tracks in the snow are their own module (src/tracks.js), pure functions, read by moveUnit (laying), the enemy phase (finding, after parachutes and canisters) and the turn's end (ageing); `tracks` null in rules.json turns all of it off
+2026-10-18 | m57 | A print keeps the edge he came in by and the edge he went out by; the sprite `prints` is half a hex, drawn twice a hex, so a straight walk is one trail and any bend turns in the hex without a sprite per angle
+2026-10-18 | m57 | A trail is one move: finding any print of it takes every print that move laid; the noise goes at the first print the finder came beside on its walk; a hex walked again keeps only the newest prints
+2026-10-18 | m57 | A find raises `tracks.alert` (its own number, 1, not the parachute's) at most `tracks.alertPerPhase` times an enemy phase; every enemy finds prints, sentries, reserve and squads too, as for parachutes; the diversion leaves them
+2026-10-18 | m57 | Who finds a trail is forecast one enemy phase ahead only (the next-turn facings' sum): looking further would guess the player's next moves. The hover says "found next turn by X" or "no patrol passes them next turn"
+2026-10-18 | m57 | Snowfield and Drift are in terrain.json now, as data (`tracks: true`), since the rule reads the flag and the tests need it; no map uses them and they are drawn at M58
+2026-10-18 | m57 | The first shot is kept in state as { unitId, turn } in every mission (the back page's "who fired first" at M60 needs it); recording it changes nothing elsewhere, and the bot's output on France, the airfield and the aqueduct is the same byte for byte (9 runs: naive, hunter FIRE=always, tidy)
+2026-10-18 | m57 | The first shot's card works its numbers out for the man (his onFire hook counted, Speers +1 less) and says "by the whole garrison" only where the shot carries over the whole board; the spec's exact line is set with the stealth wording at M60
+2026-10-18 | m57 | Standing down from the shot card leaves the man aiming, as the exfil card leaves him where he was; undoing the first shot brings the card back
+2026-10-18 | m57 | A tracks find has its own cry slot (`words.cries.tracks`), falling back to the mission's found cries; SPUREN! goes in with Gunnerside's words
+2026-10-18 | m57 | TRACKS! is lettered under the trail's first print, not its last: the man stands on the last and the note covered his prints (seen in the browser)
+2026-10-18 | m57 | Prints drawn at 1.35 times the first size, in full ink: the first draw was too faint to read on a field (seen in the browser)
+2026-10-18 | m57 | Tried in the browser on a scratch copy with France's fields as snow and the three switches on; never committed
+2026-10-18 | m57 | M57 signed off by the operator and merged; next is M58, the Gunnerside map as a draft

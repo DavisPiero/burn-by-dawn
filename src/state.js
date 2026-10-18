@@ -24,6 +24,7 @@ import {
 } from './sabotage.js';
 import { finalOutcome, missionCheck } from './scoring.js';
 import { boatEvents } from './boat.js';
+import { agePrints, layPrints, printsFor } from './tracks.js';
 import { trainEvents } from './train.js';
 import { applyHook } from './traits.js';
 import {
@@ -67,6 +68,14 @@ export function createInitialState(roster, traits, rules, map, seed = 0) {
     // SPEC.md §9 Supply canisters (M40): { id, q, r, found }, each until it is
     // emptied. Its charges lie on its hex in `droppedCharges`.
     canisters: [],
+    // Tracks in the snow (SPEC.md §9 Tracks, M57): the prints on the board
+    // (tracks.js), and how many moves have laid any, which names each trail.
+    prints: [],
+    trailsLaid: 0,
+    // The night's first shot (M57): { unitId, turn }, or null while no man has
+    // fired. The no-shot clean run (scoring.cleanNoShot) and the card before
+    // the first shot (confirmShot) ask it.
+    firstShot: null,
     reserveDeployed: false,
     // A bonus target's payoff has kept the reserve away (SPEC.md §7, M11b).
     reserveCancelled: false,
@@ -243,6 +252,16 @@ function validateRules(rules, rulesUrl = 'data/rules.json') {
   }
   requireCount(rules.reserve?.replacements, '"reserve.replacements"', rulesUrl);
   requireCount(rules.mission?.minimumOut, '"mission.minimumOut"', rulesUrl);
+  // Tracks in the snow (M57): null, or how long prints last and what a find raises.
+  if (rules.tracks !== null) {
+    if (!Number.isInteger(rules.tracks?.turns) || rules.tracks.turns < 1) throw new Error(`${rulesUrl}: "tracks.turns" must be a whole number of turns, at least 1`);
+    requireCount(rules.tracks.alert, '"tracks.alert"', rulesUrl);
+    requireCount(rules.tracks.alertPerPhase, '"tracks.alertPerPhase"', rulesUrl);
+  }
+  for (const key of ['cleanNoShot', 'confirmShot']) {
+    const value = key === 'confirmShot' ? rules.confirmShot : rules.scoring.cleanNoShot;
+    if (typeof value !== 'boolean') throw new Error(`${rulesUrl}: "${key === 'confirmShot' ? key : `scoring.${key}`}" must be true or false`);
+  }
   requireCount(rules.diversion?.uses, '"diversion.uses"', rulesUrl);
   requireCount(rules.diversion.statesDown, '"diversion.statesDown"', rulesUrl);
   for (const [id, role] of Object.entries(rules.roles)) {
@@ -364,6 +383,8 @@ export function setHover(state, hex) {
  * before it is in only waits: he boards it when it comes (boardBoat).
  */
 export function moveUnit(state, unitId, plan, map = null, rules = null) {
+  const laid = printsFor(map, rules, unitById(state.units, unitId), plan.path, state.turn, `${unitId}:${state.trailsLaid ?? 0}`);
+  if (laid.length > 0) state = { ...state, prints: layPrints(state.prints ?? [], laid), trailsLaid: (state.trailsLaid ?? 0) + 1 };
   const destination = plan.path[plan.path.length - 1];
   if (map && isExfil(map, destination) && (!rules || exfilOpen(state, rules))) {
     // Charges do not leave with him (M13b): he sets them down on the hex he
@@ -449,6 +470,7 @@ export function suppressEnemy(state, unitId, enemyId, map, rules) {
   const fired = {
     ...spend(state, unitId, check.cost),
     enemies: state.enemies.map((e) => (e.id === enemyId ? { ...e, suppressed: true } : e)),
+    firstShot: firstShotOf(state, unitId),
   };
   return makeNoise(fired, 'gunfire', unit, alert, rules).state;
 }
@@ -470,9 +492,16 @@ export function killEnemy(state, unitId, enemyId, map, rules) {
     ...spend(state, unitId, check.cost),
     enemies: state.enemies.filter((e) => e.id !== enemyId),
     bodies: [...state.bodies, { enemyId, name: `the ${enemy.label.toLowerCase()}`, q: enemy.q, r: enemy.r, found: false, facing: restFacing(enemy) }],
+    firstShot: firstShotOf(state, unitId),
   };
   const shot = reserveLost(makeNoise(fired, 'silenced', unit, alert, rules).state, enemy, rules);
   return { ...shot, speech: say(shot.speech, unitId, lineFor(unit, 'onKill', state)) };
+}
+
+// Who fired first, and when (M57): kept once a man has fired, a suppress, a
+// fire back or a kill alike.
+function firstShotOf(state, unitId) {
+  return state.firstShot ?? { unitId, turn: state.turn };
 }
 
 // The way a dead enemy looked at rest, kept on his body (M42c): a squad sent
@@ -712,7 +741,8 @@ function playOutTurn(state, rules, baseMap, dawn) {
   // anyone walks up to him — and the enemy beside him then finds the body.
   const fused = runFusePhase(moved.state, rules);
   const decayed = decayAlert(fused.state, rules);
-  const next = decayed.state;
+  // Prints at the end of their last turn are filled in (M57).
+  const next = { ...decayed.state, prints: agePrints(decayed.state.prints ?? [], state.turn, rules) };
 
   return {
     ...next,
