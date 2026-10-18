@@ -2095,6 +2095,15 @@ export function trainJourney(map, train, fromHead) {
 }
 
 /**
+ * How far a car standing at `lie` degrees must turn to lie along the line at
+ * rail point `p`, the short way round.
+ */
+export function turnTo(lie, p) {
+  const along = Math.atan2(p.along.y, p.along.x) * 180 / Math.PI;
+  return ((along - lie + 540) % 360) - 180;
+}
+
+/**
  * The goods train (M34, SPEC.md §7): a car on each hex it covers, turned
  * along the railway there. Scenery: it is in the art, under every counter.
  * `train` is train.js trainAt's, with the railway's `line`, its `speed` and
@@ -2157,9 +2166,12 @@ function drawTrain(layers, train, now) {
     if (!moving) return;
 
     // A steady run, a hex a step, fading in over the step that brings it
-    // onto the board and out over the one that takes it off.
+    // onto the board and out over the one that takes it off, and turning
+    // with the line as it goes (M55b, a playtester's: held at the angle it
+    // stops at, a car slid sideways round the bend past the fuel dump).
+    mover.style.transformOrigin = `${end.x}px ${end.y}px`;
     playFrom(mover, car.path.map((p) => ({
-      transform: `translate(${(p.x - end.x).toFixed(2)}px, ${(p.y - end.y).toFixed(2)}px)`, opacity: p.on ? 1 : 0,
+      transform: `translate(${(p.x - end.x).toFixed(2)}px, ${(p.y - end.y).toFixed(2)}px) rotate(${turnTo(lie, p).toFixed(1)}deg)`, opacity: p.on ? 1 : 0,
     })), { duration: journey.ms }, elapsed);
     if (!wrecked) return;
     thrown.style.transformOrigin = `${end.x}px ${end.y}px`;

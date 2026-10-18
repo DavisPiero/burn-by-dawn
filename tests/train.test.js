@@ -7,7 +7,7 @@ import { scoreOf } from '../src/scoring.js';
 import { createInitialState } from '../src/state.js';
 import { railwayLine, trainAt, trainCaught, trainEvents, trainTimetable } from '../src/train.js';
 import { validateTraits } from '../src/traits.js';
-import { railPoint, trainJourney } from '../src/render/board.js';
+import { railPoint, trainJourney, turnTo } from '../src/render/board.js';
 import { TRAIN } from '../src/render/theme.js';
 import { hintsFor } from '../src/hints.js';
 
@@ -138,5 +138,27 @@ export default [
     equal(going.cars.map((c) => (c.path.at(-1).on ? 'x' : '.')).join(''), '...xx', 'the engine and two wagons have left');
     // It has not moved: no journey.
     equal(trainJourney(map, view(10), view(10).head).ms, 0, 'standing still takes no time');
+  }],
+
+  ['each car turns with the line as it runs, so none slides sideways round the bend (M55b)', async () => {
+    const { rules, state, map } = await load('france');
+    const line = railwayLine(map);
+    const view = (turn) => ({ ...trainAt(at(state, turn), rules, map), line, speed: rules.train.speed, length: rules.train.length });
+    const angle = (p) => Math.atan2(p.along.y, p.along.x) * 180 / Math.PI;
+    let bent = 0;
+    for (const turn of [9, 10, 11]) {
+      for (const car of trainJourney(map, view(turn), view(turn - 1).head).cars) {
+        const lie = angle(car.path.at(-1));
+        // Where it stops it needs no turn; everywhere else it lies along the line.
+        assert(Math.abs(turnTo(lie, car.path.at(-1))) < 1e-6, 'no turn where it stops');
+        for (const p of car.path) {
+          assert(Math.abs(lie + turnTo(lie, p) - angle(p)) < 1e-6, 'lies along the line');
+          if (Math.abs(turnTo(lie, p)) > 5) bent++;
+        }
+      }
+    }
+    assert(bent > 0, 'some car turns through the bend past the fuel dump');
+    // The short way round.
+    equal(turnTo(170, { along: { x: -1, y: -0.1 } }).toFixed(1), '15.7', 'across 180 the short way');
   }],
 ];
