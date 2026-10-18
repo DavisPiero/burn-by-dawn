@@ -1,5 +1,5 @@
 {
-  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md, M58): mission 4's map, a first drawing in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. The plateau in rows 0-4, the gorge in rows 5-7 (a gorge side, the ice, a gorge side, crag at each end), the suspension bridge carrying the road over it in column 10, the shelf with the plant in rows 8-12.",
+  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md, M58): mission 4's map, a first drawing in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. The plateau in rows 0-4, the gorge in rows 5-7 (a gorge side, the ice, a gorge side, crag at each end), the suspension bridge carrying the road over it, running south-west from column 11 on the rim to column 9 on the shelf, the shelf with the plant in rows 8-12.",
   "name": "The heavy water plant at Vassdal",
   "width": 18,
   "height": 13,
@@ -65,18 +65,18 @@
       "label": "Bridge post (north)",
       "type": "sentry",
       "at": [
-        7,
+        8,
         4
       ],
       "facing": "SE",
-      "sweep": "E"
+      "sweep": "SW"
     },
     {
       "id": "post-bridge-south",
       "label": "Bridge post (south)",
       "type": "sentry",
       "at": [
-        7,
+        6,
         8
       ],
       "facing": "NW",
@@ -87,7 +87,7 @@
       "label": "Gate guard",
       "type": "sentry",
       "at": [
-        7,
+        6,
         9
       ],
       "facing": "W",
@@ -135,11 +135,11 @@
       "loop": false,
       "route": [
         [
-          5,
+          3,
           8
         ],
         [
-          -3,
+          -4,
           10
         ]
       ]
@@ -152,7 +152,7 @@
       "loop": false,
       "route": [
         [
-          6,
+          5,
           10
         ],
         [
@@ -170,15 +170,15 @@
     "facing": "NW",
     "entryHexes": [
       [
+        7,
+        9
+      ],
+      [
         8,
         9
       ],
       [
-        9,
-        9
-      ],
-      [
-        7,
+        6,
         10
       ]
     ],
@@ -211,7 +211,7 @@
     "posts": [
       {
         "guardHex": [
-          9,
+          10,
           4
         ],
         "guardFacing": "NE"
@@ -241,6 +241,10 @@
       "primary": true,
       "hexes": [
         [
+          -1,
+          11
+        ],
+        [
           0,
           11
         ],
@@ -250,15 +254,15 @@
         ],
         [
           2,
-          11
-        ],
-        [
-          3,
           11
         ]
       ],
       "chargeHexes": [
         [
+          -1,
+          10
+        ],
+        [
           0,
           10
         ],
@@ -268,10 +272,6 @@
         ],
         [
           2,
-          10
-        ],
-        [
-          3,
           10
         ]
       ]
@@ -283,17 +283,17 @@
       "primary": false,
       "hexes": [
         [
-          8,
+          7,
           11
         ]
       ],
       "chargeHexes": [
         [
-          7,
+          6,
           11
         ],
         [
-          9,
+          8,
           11
         ]
       ]
@@ -322,7 +322,7 @@
       8
     ],
     [
-      4,
+      3,
       8
     ]
   ],
@@ -330,15 +330,15 @@
   "roadArt": [
     [
       [
-        10,
+        11,
         0
       ],
       [
-        10,
+        11,
         -1
       ],
       [
-        10,
+        11,
         -2
       ]
     ],
@@ -363,7 +363,7 @@
       "name": "Vassdal Works",
       "kind": "village",
       "at": [
-        2,
+        1,
         9
       ],
       "dy": -0.9
@@ -415,18 +415,18 @@
     "F": "farmhouse"
   },
   "rows": [
-    "PPPPSSDSSSTSSSDSSS",
-    "PPPPSSSSDSTSKSSDSS",
-    "PPPKSSFSSSTSSSPPSS",
-    "PPPSSDDSKSTSSSPPDS",
-    "KPSSSSSSSSTSSSKSSK",
+    "PPPPSSDSSSSTSSDSSS",
+    "PPPPSSSSDSSTKSSDSS",
+    "PPPKSSFSSSSTSSPPSS",
+    "PPPSSDDSKSSTSSPPDS",
+    "KPSSSSSSSSSTSSKSSK",
     "CCGGGGGGGGXGGGGGCC",
     "CCIIIIIIIIXIIIIICC",
-    "CCGGGGGGGGXGGGGGCC",
-    "LLLLLLLLLKTSSSSKKS",
-    "SPSMMMMMMMTSBBSSPK",
-    "PPSUAAAAAATTBBSSPP",
-    "PPPMMEEEEMSTSKSPPK",
-    "PPKSSZZSSSSSTTTTTT"
+    "CCGGGGGGGXGGGGGGCC",
+    "SLLLLLLLKTSSSSSKKS",
+    "SPMMMMMMMTSBBSSPKK",
+    "PSUAAAAAATTBBSSPPP",
+    "PPMMEEEEMSTSKSSPPK",
+    "PPKSSZZSSSSTTTTTTT"
   ]
 }
