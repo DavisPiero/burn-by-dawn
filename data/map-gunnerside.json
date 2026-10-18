@@ -1,5 +1,5 @@
 {
-  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md): mission 4's map, in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. M58b (the operator's notes on the M58 draft): the gorge wanders and is two deep where it narrows (a crossing two turns), three with the ice only in its middle stretch; the plant moved east, a thin shell of wall; the pipes are no longer ground; pine lanes on the plateau.",
+  "_comment": "The heavy water plant (SPEC.md §16, MISSION-GUNNERSIDE.md): mission 4's map, in the same shape as data/map.json, made by a script from a sketch; the file is the truth from now on. rows are row-major: rows[r] is board row r, and character i in that row is the hex at axial q = rowQStart(r) + i. M58b (the operator's notes on the M58 draft; M58c the hall two hexes west, out of the crowd round the telephone line): the gorge wanders and is two deep where it narrows (a crossing two turns), three with the ice only in its middle stretch; the plant moved east, a thin shell of wall; the pipes are no longer ground; pine lanes on the plateau.",
   "name": "The heavy water plant at Vassdal",
   "width": 18,
   "height": 13,
@@ -102,7 +102,7 @@
       "label": "Gate guard",
       "type": "sentry",
       "at": [
-        9,
+        7,
         12
       ],
       "facing": "NW",
@@ -154,8 +154,8 @@
           9
         ],
         [
-          2,
-          11
+          0,
+          10
         ]
       ]
     },
@@ -256,37 +256,37 @@
       "primary": true,
       "hexes": [
         [
+          2,
+          12
+        ],
+        [
+          3,
+          12
+        ],
+        [
           4,
           12
         ],
         [
           5,
           12
-        ],
-        [
-          6,
-          12
-        ],
-        [
-          7,
-          12
         ]
       ],
       "chargeHexes": [
+        [
+          3,
+          11
+        ],
+        [
+          4,
+          11
+        ],
         [
           5,
           11
         ],
         [
           6,
-          11
-        ],
-        [
-          7,
-          11
-        ],
-        [
-          8,
           11
         ]
       ]
@@ -337,11 +337,11 @@
       9
     ],
     [
-      3,
+      1,
       9
     ],
     [
-      3,
+      1,
       10
     ]
   ],
@@ -355,7 +355,7 @@
       "name": "Vassdal Works",
       "kind": "village",
       "at": [
-        6,
+        4,
         10
       ],
       "dy": -0.95
@@ -417,9 +417,9 @@
     "CCSSSIIIIGGGXGGGCC",
     "SPPSSGGGGSSXGGGGCC",
     "SSSKSSSKSSSTSSSKSS",
-    "LLLLLLLLSSSTTTTTSS",
-    "PPSSSSSSLMMMMMMTBB",
-    "PPPSSPPSUAAAAAATBS",
-    "PPPSKSPSSMEEEEMSTT"
+    "LLLLLLSSSSSTTTSSSS",
+    "PPSSSSLMMMMMMTSSBB",
+    "PPPSSPUAAAAAATSSBS",
+    "PPPSKSPMEEEEMSTTTT"
   ]
 }

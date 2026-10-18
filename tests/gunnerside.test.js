@@ -8,7 +8,8 @@ import { findPath, hexKey, isPassable, loadJson, loadMap, terrainAt, terrainIdAt
 import { canPlay, missionById, missionEnemyTypes, missionFromQuery, missionLevels, missionRoster, missionRules, validateMissions, winTargets } from '../src/missions.js';
 import { kindOf } from '../src/sabotage.js';
 import { chooseDropRun, createInitialState, jump } from '../src/state.js';
-import { takesPrints } from '../src/tracks.js';
+import { takesPrints, watchedSnow } from '../src/tracks.js';
+import { runDetection, runEnemyPhase } from '../src/enemy.js';
 import { validateTraits } from '../src/traits.js';
 import { largestPool, planMove } from '../src/units.js';
 import { describePlan } from '../src/render/ui.js';
@@ -174,5 +175,21 @@ export default [
     }
     equal(exfilArtId(map.exfilArt), 'objective-ski-trail', 'the ski trail at the way out');
     assert(map.exfil.every(([q, r]) => isPassable(terrainAt(map, q, r))), 'the way out can be walked onto');
+  }],
+
+  ['the footprint wash (M58c): the snow on or beside where the garrison stands or walks next turn, only ground that takes prints, nothing without tracks', async () => {
+    const { map, rules, traits, roster } = await loadGunnerside();
+    const state = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 3), map, 'north'), map, rules);
+    const detected = runDetection(state, map, rules).state;
+    const after = runEnemyPhase(detected, map, rules).state.enemies;
+    const watched = watchedSnow(map, rules, detected.enemies, after);
+    assert(watched.size > 0, 'some snow is watched');
+    for (const key of watched) {
+      const [q, r] = key.split(',').map(Number);
+      assert(takesPrints(map, rules, { q, r }), `${key} takes prints`);
+      const stood = [...detected.enemies, ...after.flatMap((e) => [...(e.walked ?? []), e])];
+      assert(stood.some((e) => hexDistance(e, { q, r }) <= 1), `${key} is beside the garrison's walk`);
+    }
+    equal(watchedSnow(map, { ...rules, tracks: null }, detected.enemies, after), null, 'off without tracks');
   }],
 ];

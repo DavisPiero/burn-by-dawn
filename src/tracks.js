@@ -11,8 +11,8 @@
 // hex edges (indexes into NEIGHBOR_DIRS) he came in by and went out by, which
 // is all the board needs to turn it the way he walked.
 
-import { directionOf, hexDistance } from './hex.js';
-import { terrainAt } from './map.js';
+import { directionOf, hexDistance, neighbors } from './hex.js';
+import { hexKey, terrainAt } from './map.js';
 
 /** Does this hex take prints? Off where the mission has no tracks. */
 export function takesPrints(map, rules, hex) {
@@ -80,4 +80,24 @@ export function trailsFound(prints, stood) {
     }
   }
   return found;
+}
+
+/**
+ * The snow where prints laid now would be found next turn (M58c, the
+ * operator's: avoiding a find felt like luck): every hex that takes prints on
+ * or beside where an enemy stands now, walks through in the coming enemy
+ * phase, or ends its go. `before` and `after` are the enemies either side of
+ * that phase (main.js's forecast, the same sum the turn will do). A Set of
+ * hexKeys; null where the mission has no tracks.
+ */
+export function watchedSnow(map, rules, before, after) {
+  if (!rules?.tracks) return null;
+  const stood = [...before, ...after.flatMap((e) => [...(e.walked ?? []), e])];
+  const watched = new Set();
+  for (const at of stood) {
+    for (const hex of [at, ...neighbors(at.q, at.r)]) {
+      if (takesPrints(map, rules, hex)) watched.add(hexKey(hex.q, hex.r));
+    }
+  }
+  return watched;
 }

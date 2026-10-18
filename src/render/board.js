@@ -24,7 +24,7 @@ import { pixelsToAxial } from '../layout.js';
 import {
   BLAST, BOAT, CANISTER, HELP, CRY, COMMAND, CONTACT, COUNTER, CUE, DEATH, DROP, DROP_GHOST, DROP_SHOW, ENEMY, KNIFE_SPLAT, POWER_CUT, GARRISON_SHOW, HEDGE, HEDGE_CLUMP, RINGS, EXFIL, GRID, HIGHLIGHT, MARKER, MOTION, NOISE, OBJECTIVE, PATH, PRINTS, RAIL, RISK, ROAD, ROUTE,
   DRIVE_BY, DRIVE_BY_ART, HOSE, TRAIN, SELECTION, SHOT, SPEECH, SUPPRESSED, TARGET, THROW, TYPE, VISION, WATCH, WIRE, WIRES, counterFrameId, exfilArtId, ordersMarkerId, createSpriteDefs, enemySymbolId, fuseMarkerId,
-  AREA, PALETTE, PLACE, WALL, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
+  AREA, PALETTE, PLACE, PRINT_WATCH, WALL, objectiveArt, portraitId, roleSymbolId, speechBubble, terrainArt, terrainMotifId, toneClass, wobbleAt,
 } from './theme.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -62,6 +62,10 @@ export function createBoard(svg, map, handlers) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const defs = createSpriteDefs();
+  // The footprint wash's hatching (M58c): the pen's red in diagonal strokes.
+  const hatch = el('pattern', { id: PRINT_WATCH.pattern, patternUnits: 'userSpaceOnUse', width: PRINT_WATCH.spacing, height: PRINT_WATCH.spacing, patternTransform: 'rotate(45)' });
+  hatch.appendChild(el('line', { x1: 0, y1: 0, x2: 0, y2: PRINT_WATCH.spacing, stroke: PRINT_WATCH.stroke, 'stroke-width': PRINT_WATCH.width, 'stroke-opacity': PRINT_WATCH.opacity }));
+  defs.appendChild(hatch);
   // A straight printed border instead of a serrated one. Only the terrain is
   // clipped: counters overhang the top and bottom edges by a few pixels, which
   // reads as a chit laid near the edge of the page.
@@ -792,6 +796,7 @@ export function renderPieces(layers, state, view) {
   // first, then every line, so where two run along the same hex edge neither
   // casing blanks out the other's line (M13: Dutch's two rings).
   if (view.reachable) drawReachable(layers, view.reachable, view.dangerWash);
+  if (view.printWatch?.size) drawPrintWatch(layers, view.printWatch);
   const outlines = [
     view.reachable && { area: view.reachable, casing: [PATH.reachableEdgeCasing, PATH.reachableEdgeCasingWidth], line: [PATH.reachableEdge, PATH.reachableEdgeWidth], extra: {} },
     // The far bank he could swim to this turn (M49d), in the range's blue, dotted.
@@ -2995,6 +3000,25 @@ function edgeCorners(corners, size) {
  * reachable. The trooper's own hex counts as inside, so the line never cuts
  * between him and his range.
  */
+/**
+ * The footprint wash (M58c, the operator's: keeping prints from being found
+ * felt like luck): while a man is selected, the snow where prints laid now
+ * would be found next turn is hatched in the pen's red, over the move range,
+ * so a route that leaves no trail for the garrison can be planned, not hoped for.
+ */
+function drawPrintWatch(layers, watched) {
+  const { corners, map } = layers;
+  for (const key of watched) {
+    const [q, r] = key.split(',').map(Number);
+    if (!isInPlay(map, q, r)) continue;
+    layers.reachable.appendChild(el('polygon', {
+      points: cornersToPoints(axialToPixel(q, r, map.hexSize), corners),
+      fill: `url(#${PRINT_WATCH.pattern})`,
+      'pointer-events': 'none',
+    }));
+  }
+}
+
 function drawReachable(layers, reachable, wash = null) {
   const { corners, map } = layers;
   for (const { q, r, cost } of reachable.values()) {

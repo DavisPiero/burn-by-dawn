@@ -408,6 +408,10 @@ export const AREA = { wobble: 6 };
 // The hard edge of a wall (M58b, board.js drawWalls): ground marked `wall`.
 export const WALL = { width: 3.2 };
 
+// The footprint wash (M58c, board.js drawPrintWatch): snow where prints laid
+// now would be found next turn, hatched in the pen's red.
+export const PRINT_WATCH = { pattern: 'print-watch-hatch', stroke: PALETTE.red, width: 2, spacing: 9, opacity: 0.5 };
+
 /** A fixed push, -1 to 1, for the point (x, y). */
 export function wobbleAt(x, y) {
   const rng = createRng((Math.round(x * 10) * 73856093) ^ (Math.round(y * 10) * 19349663));

@@ -30,7 +30,7 @@ import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
 import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
 import { startPlaytestPanel } from './render/playtest-panel.js';
 import { helpFrames, helpLines, sceneMap } from './help.js';
-import { printAge, printFillsTurn, takesPrints } from './tracks.js';
+import { printAge, printFillsTurn, takesPrints, watchedSnow } from './tracks.js';
 import { cleanRun } from './scoring.js';
 import { railwayLine, trainAt, trainCaught, trainObjective } from './train.js';
 import { applyHook, validateTraits } from './traits.js';
@@ -287,7 +287,7 @@ function visionById() {
 // the garrison turned "unpredictably"). The rules are pure, so this is the
 // same sum the turn will do; it changes as the men move, so it is worked out
 // again only when the enemies, the men, the noises or the alert do.
-let forecastCache = { keys: null, byId: null, trailsFound: null };
+let forecastCache = { keys: null, byId: null, trailsFound: null, printWatch: null };
 
 function forecast() {
   if (state.phase === 'drop' || state.outcome) return null;
@@ -296,7 +296,7 @@ function forecast() {
   const detected = runDetection(state, map, rules).state;
   const phase = runEnemyPhase(detected, map, rules);
   const byId = new Map(phase.state.enemies.map((e) => [e.id, e]));
-  forecastCache = { keys, byId, trailsFound: trailFinders(phase.events) };
+  forecastCache = { keys, byId, trailsFound: trailFinders(phase.events), printWatch: watchedSnow(map, rules, detected.enemies, phase.state.enemies) };
   return byId;
 }
 
@@ -699,6 +699,8 @@ function deriveView() {
   // spotted, green where a man in contact would break it.
   if (!sameStamp(sightFor.stamp, stamp) || sightFor.unitId !== unit.id) sightFor = { ...sightFor, stamp, unitId: unit.id, wash: dangerWash(map, rules, state, unit, view.reachable) };
   view.dangerWash = sightFor.wash;
+  // The snow where his prints would be found next turn (M58c), while he is selected.
+  view.printWatch = rules.tracks && forecast() ? forecastCache.printWatch : null;
   // The enemies he could strike now, marked on their chips (M46), and the
   // first move's ghost.
   if (!sameStamp(cuesFor.unitStamp, stamp) || cuesFor.unitId !== unit.id) {
@@ -2186,16 +2188,42 @@ function boatGoesWithout() {
 
 function confirmBoatGoes() {
   briefing = null;
-  endTurnNow(true);
+  // One card is enough: the men on the beach are the ones who have not moved.
+  endTurnNow(true, true);
   render();
 }
 
-function endTurnNow(boatAsked = false) {
+/**
+ * The men who have not spent an AP this turn and could have (M58c, the
+ * operator's: a man left in the cell hall as it went up, missed, not chosen).
+ * Each with whether he stands where a charge kills this turn. None in a lesson,
+ * whose steps say when the turn ends.
+ */
+function untouchedMen() {
+  if (lessonStep() || state.phase !== 'play' || state.outcome) return [];
+  const kills = blastHexesThisTurn(state, rules).map((b) => ({ ...b, radius: b.killRadius }));
+  return state.units
+    .filter((u) => onBoard(u) && u.apMax > 0 && u.ap === u.apMax)
+    .map((u) => ({ unit: u, inBlast: inBlast(kills, u) }));
+}
+
+function confirmIdleEnd() {
+  briefing = null;
+  endTurnNow(true, true);
+  render();
+}
+
+function endTurnNow(boatAsked = false, idleAsked = false) {
   if (lessonStep() && !lessonAllows({ kind: 'endTurn' })) return;
   // The boat's last turn with men still on the beach (M49d): asked first,
   // from the button or Space.
   if (!boatAsked && boatGoesWithout().length) {
     briefing = { kind: 'boatGoes' };
+    return render();
+  }
+  // Men who have not moved at all this turn (M58c): asked first, once a turn.
+  if (!idleAsked && untouchedMen().length) {
+    briefing = { kind: 'idleMen' };
     return render();
   }
   undoStack = [];
@@ -2831,6 +2859,24 @@ function describeBriefing(which, view) {
       sections: [],
       confirm: { label: `${man.shortName} FIRES [Enter]`, onConfirm: confirmFirstShot },
       go: 'HOLD FIRE — any other key or click',
+    };
+  }
+  if (which.kind === 'idleMen') {
+    const idle = untouchedMen();
+    const caught = idle.filter((m) => m.inBlast).map((m) => m.unit.shortName);
+    const names = idle.map((m) => m.unit.shortName);
+    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+    return {
+      title: 'ARE YOU SURE?',
+      kicker: 'END TURN',
+      tone: 'warn',
+      paragraphs: [
+        [`${list} ${names.length > 1 ? 'have' : 'has'} not moved or acted this turn.`],
+        ...(caught.length ? [[{ bold: `${caught.join(' and ')} ${caught.length > 1 ? 'are' : 'is'} where a charge goes off this turn.` }]] : []),
+      ],
+      sections: [],
+      confirm: { label: 'END TURN ANYWAY [Enter]', onConfirm: confirmIdleEnd },
+      go: 'STAY — any other key or click',
     };
   }
   if (which.kind === 'boatGoes') {
@@ -3659,6 +3705,7 @@ function handleKey(event) {
     if (briefing.kind === 'exfil' && event.key === 'Enter') return confirmExfil();
     if (briefing.kind === 'signal' && event.key === 'Enter') return confirmSignal();
     if (briefing.kind === 'boatGoes' && event.key === 'Enter') return confirmBoatGoes();
+    if (briefing.kind === 'idleMen' && event.key === 'Enter') return confirmIdleEnd();
     if (briefing.kind === 'firstShot' && event.key === 'Enter') return confirmFirstShot();
     // Enter is a card's green button (M48b, the operator's): the one key that
     // goes on from a card that otherwise wants its button clicked.
@@ -3666,7 +3713,7 @@ function handleKey(event) {
     // The arrows turn how to play's pages (M48i), and do nothing else.
     if (briefing.kind === 'help' && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) return turnHelpPage(helpPage + (event.key === 'ArrowRight' ? 1 : -1));
     // ? over a turn card swaps it for the orders (M17), as the button does.
-    if (isHelpKey(event) && !['help', 'exfil', 'signal', 'boatGoes', 'firstShot', 'contents'].includes(briefing.kind)) return openHelp();
+    if (isHelpKey(event) && !['help', 'exfil', 'signal', 'boatGoes', 'idleMen', 'firstShot', 'contents'].includes(briefing.kind)) return openHelp();
     const picksMan = CARDS_CLICKED_THROUGH.has(briefing.kind) && (/^[1-9]$/.test(event.key) || event.key === 'Tab');
     closeBriefing();
     // A man's number, or Tab, puts a turn card away and picks him (M23), as a click on him does.
