@@ -25,23 +25,24 @@ pushed.
 
 ## Next
 
-1. **M58, the map as a draft** (MISSION-GUNNERSIDE.md, The order it is built in): the
+1. **First, at the start of M58: SPEC.md §9 into `DROP.md`** (the operator's yes, 18 Oct
+   2026): the drop, its runs and scatter, parachutes, canisters and tracks moved to a
+   file of their own as §4, §6, §7 and §10 are, SPEC.md keeping a pointer, CLAUDE.md
+   listing it. SPEC.md is 511 lines.
+2. **M58, the map as a draft** (MISSION-GUNNERSIDE.md, The order it is built in): the
    terrain drawn, the garrison, the objectives, the ski trail, the bot taught prints
    and the climb. Then M59 (balance), M60 (words, sounds, art), M61 (panel moments).
-2. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
+3. **The Dakota panel** whenever it is painted (ART-PROMPTS.md Priority 30).
 
 ## Open with the operator
 
-1. **SPEC.md is 511 lines**, past the 500 the working agreement sets. Proposed: move §9,
-   the drop (runs, scatter, parachutes, canisters, tracks), into `DROP.md`, as §4, §6,
-   §7 and §10 are. Not done: waiting for a yes.
-2. **Guesses in M57**, kept unless changed: prints found one turn ahead only; the shot
+1. **Guesses in M57**, kept unless changed: prints found one turn ahead only; the shot
    card's words (placeholder until M60); TRACKS! under the trail's first print.
-3. **Guesses in the Gunnerside spec**, starting points for balance: a 20-turn night;
+2. **Guesses in the Gunnerside spec**, starting points for balance: a 20-turn night;
    prints last 3 turns; the hall takes 3 charges (Easy 2, Hard 4); the telephone line the
    one bonus target; seven enemies; the names and every word.
-4. **PICK A DROP DIRECTION drawing in behind the Dakota panel**: judge it once painted.
-5. **Still standing:** France a little easier than its baselines say; the bugle for a
+3. **PICK A DROP DIRECTION drawing in behind the Dakota panel**: judge it once painted.
+4. **Still standing:** France a little easier than its baselines say; the bugle for a
    lesson passed; the knife's cry worded "a cry"; the record's tab at the top centre.
 
 ## Owed
