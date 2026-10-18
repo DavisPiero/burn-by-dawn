@@ -190,6 +190,14 @@ board must read at a glance.
   stain spreads slowly out from under the body, dark and wet, over about three seconds,
   and dries to a faint print. Parachutes lie in one corner of their hex, the same one all
   game, on the ground: under the counters and the targets' words (M49d).
+- **Prints in the snow** (M57, SPEC.md §9 Tracks; sprite `prints`) lie on the ground
+  with the parachutes: two lines of small ink boot prints, a little uneven, drawn as two
+  halves a hex, in from the edge he came by and out by the edge he left by, toes forward,
+  so a straight walk is one trail and a bend turns in the hex. Full ink the turn they are
+  laid, two thirds the turn after, a third the turn after that (the steps follow
+  `tracks.turns`). A hovered print's whole trail is outlined dashed. A trail found
+  flashes red as its finder reaches it, and goes. A painted `prints` must keep the
+  half-hex shape.
 - A man killed floats straight up about a hex and fades over his body before the turn's
   card is laid.
 - **An enemy that raises the alarm says so** (a mission's `words.cries`): a small

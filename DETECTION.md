@@ -38,7 +38,7 @@ second makes it Suspicious.
 
 Raised by: being spotted (+1, only when he was not already in contact), gunfire (+2), a
 silenced kill (+1), an explosion (+3, the fuel dump +4), a body found (+1), a parachute
-found (+1, §9), a thrown stone (+1), the telephone line cut (+1). Enemy fire raises
+found (+1, §9), a thrown stone (+1), the telephone line cut (+1), and where a mission has tracks, prints found (+1, once an enemy phase at most, SPEC.md §9 Tracks). Enemy fire raises
 nothing extra: the sighting that caused it already counted.
 
 **Decay:** after 4 quiet turns (no alert raised, nobody spotted) the points drop to the

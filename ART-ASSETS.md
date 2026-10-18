@@ -224,6 +224,8 @@ Small, and they sit on top of counters, so they must read against a busy backgro
 | `effect-soot.svg` | 80 x 92 (M41b: the scorch left on a hex where a charge went off, ragged ink at three strengths. *Drawn by code.*) |
 | `marker-canister.svg` | 28 x 28 (M41, a supply canister on the ground, SPEC.md §9: a banded steel drum in army green with its parachute lines. *Drawn by code.*) |
 | `marker-parachute.svg` | 28 x 28 (an abandoned canopy, §9 — must read as spent kit on the ground, not as a chute in the air) |
+| `prints.svg` | 40 x 24 (M57, tracks in the snow, SPEC.md §9: HALF a hex of a man's walk, from the hex's edge at the left to its middle at the right, toes pointing right, two lines of boot prints; the board draws it twice a hex, turned to the edge he came by and the edge he left by, and fades it. Ink on transparent. *Drawn by code*, in currentColor so a found trail can flash red) |
+| `marker-boot.svg` | 16 x 16 (M57: one boot print on a paper disc, the mark on a hovered path's hex that would take prints. *Drawn by code.*) |
 | `marker-fuse-L-N.svg` | 28 x 28 (a stopwatch for a charge set with an L-turn fuse and N turns left, L 1 to 6, N 1 to L; M30: the face is divided into the charge's own length, a tick a turn, and the burning `.fire` wedge is N of the L parts, from twelve to the hand, full when set; the last turn's wedge red with a burst behind the watch. Drawn at 34 on the board. M15 had `marker-fuse-1..5`, a quarter of the face a turn) |
 | `marker-wounded.svg` | 28 x 28 |
 | `marker-suppressed.svg` | 28 x 28 |

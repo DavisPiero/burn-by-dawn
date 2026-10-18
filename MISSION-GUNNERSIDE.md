@@ -4,7 +4,9 @@ This is §16 of the specification, kept in a file of its own, as MISSION-AIRFIEL
 §13 and MISSION-AQUEDUCT.md §14. It is as authoritative as SPEC.md. Section numbers in
 it (§4, §6, §7, §9, §10, §11) are SPEC.md's.
 
-**Specified 18 Oct 2026 (M56). Not yet built.** This file says what is to be built and
+**Specified 18 Oct 2026 (M56). Its engine is built (M57): tracks in the snow (SPEC.md §9
+Tracks), the no-shot clean run and the card before the first shot, all off until the
+mission's patch turns them on. The map is not yet built.** This file says what is to be built and
 how it is to play; once the mission is playable it will say how things are, and keep no
 history (DECISIONS.md has it). Every number in it is a starting point for the balance
 milestone unless it says the operator chose it. The words and names are placeholder

@@ -75,6 +75,7 @@ tests.html        every test suite, in the browser
   sabotage.js     charges, fuses, explosions, payoffs, reinforcements
   drop.js         drop runs, scatter, supply canisters
   scoring.js      win, withdraw, lose, score
+  tracks.js       tracks in the snow: laying, ageing, finding (§9, M57)
   hints.js        the turn card's hints (§11)
   sight.js        what the board shows of being seen: the danger wash, who is fired on (§4)
   cues.js         what the board points at: who he could strike, get clear, the way out (§4)
@@ -398,6 +399,33 @@ canisters or without.
 - Its charges count toward what the stick can still do (§10 Withdrawn) like any charge
   left lying.
 
+### Tracks in the snow
+
+(`tracks`; null in every mission but the heavy water plant, §16, so nowhere else does a
+step leave anything behind.) Where a mission gives `{ turns, alert, alertPerPhase }`:
+
+- A man who **steps onto ground that takes prints** (`tracks: true` in `terrain.json`:
+  the Snowfield and the Drift) leaves **prints** there, each turned the way he walked:
+  in by the edge he came from, out by the edge he went to next, and on the last hex of
+  his move straight on the way he came in. Landing, a throw, a knife, a swim, anything
+  that is not a step, leaves none, and so does the garrison. A hex walked again keeps
+  only the newest prints.
+- **They last `turns` turns**: laid in turn N, with 3, they are there through the enemy
+  phases of N, N+1 and N+2, and gone at the end of N+2. Undo takes them back with the
+  move that laid them.
+- **They are found as a parachute is**: an enemy coming onto or beside one, on any hex
+  it walks through or where it ends its go, finds it: a noise there (heard as a
+  parachute found), so that hex becomes a last known contact, and **every print that
+  man's one move laid goes with it**, so a long walk across the open is one find. A find
+  raises the alert by `alert`, but prints raise it **no more than `alertPerPhase` times
+  in one enemy phase**, however many trails are found. The diversion leaves them where
+  they are. There is no action to brush them out: the answer is the route.
+- **Seen first**: the hovered path marks each hex that would take prints with a boot,
+  and its TRACKS row says who would find them next turn, by the same sum the turn will
+  do; a print's hover says whose it is, the turn it fills in and who finds it next turn;
+  the turn report says who found whose. With the tips on, the first trail of a game has
+  TRACKS! lettered under it, with "the patrols will follow them".
+
 ---
 
 ## 10. Win, lose, score
@@ -478,4 +506,6 @@ rules, written above: supply canisters (§9) and the way out on a timetable (§1
 **In `MISSION-GUNNERSIDE.md`**, specified at M56 and not yet built: Norway, February
 1943, loosely Operation Gunnerside. The stealth mission: a gorge to climb, tracks in the
 snow, gunfire heard across the board, and NOT A SHOT FIRED as its clean run. Its one
-engine rule, tracks in the snow, will be written here when it is built.
+engine rule, tracks in the snow, is built (M57) and written in §9; with it the no-shot
+clean run (§10, `scoring.cleanNoShot`) and the card before the first shot (§4,
+`confirmShot`). All three are off in the other missions.

@@ -88,7 +88,11 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   SPOTTED or SHOT in red, KILLED if a blast would), then one row per thing under a short
   label, in one column with every row's words starting at the same place, most rows one
   line. For a hex: LANDING, MOVE, BLAST, RISK (how it goes and where), DOTS (the sum, "…
-  = 2 of 3 dots", leaving out any term that is nought), HIDE, HERE, HEARD, GROUND, ORDERS.
+  = 2 of 3 dots", leaving out any term that is nought), TRACKS (where the
+  move would leave prints: who finds them next turn, in red, or that nobody passes
+  them), HIDE, HERE, HEARD, GROUND, ORDERS. A print in the snow is named in the headline
+  (VANCE'S TRACKS) with HERE, FILLS and NEXT, and each path hex that would take prints
+  wears a small boot mark.
   For an enemy: DOING, ALARM, then with a man selected SUPPRESS and KILL (a gunner) or
   FIRE (anyone else: return fire), and KNIFE (he can, in blue, or why not), NEXT, SEES. A target, the exfil or a parachute is named in
   the headline with short rows (HERE, NEEDS, BANG, CUT, WORTH; only HERE and NEEDS while a
@@ -124,7 +128,8 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
 - **Shots**: suppressing fires a burst — flashes at the gunner, red tracer to the enemy,
   its counter flashing. A kill is the same burst, a little louder (M49d).
 - **The pen's coaching is the play tips** (SPEC.md §4): on unless switched off.
-  Where the charge goes, the ghost, BREAK CONTACT!, GET CLEAR! and GET OUT! are tips;
+  Where the charge goes, the ghost, BREAK CONTACT!, GET CLEAR!, GET OUT! and TRACKS! (the
+  game's first trail in the snow, "the patrols will follow them" under it) are tips;
   the marks, throbs and the pip below are not.
 - **Where the charge goes** (a tip): while the selected man carries a charge within one
   hex of a target that still wants one (of the target or any of its charge points), each

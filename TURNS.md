@@ -51,6 +51,13 @@ gives the full cost and, when it cannot be used, why not.
   seen: it pays now (he is not fired on by that enemy) and costs later (the dial, and
   every patrol in earshot coming to look). The button reads Fire back, and its rollover
   and the enemy's hover (a FIRE row) say whether he can, and why not.
+- **The first shot asks first** (`confirmShot`; false in the files, the heavy water
+  plant's, §16). The first time in a night a man would suppress, fire back or kill, a
+  card says what it costs: the alert it raises for him (his onFire hook counted), how far
+  it is heard, "by the whole garrison" where that is the whole board, and the clean run
+  it would lose. Only **Enter** or its button fires; any other key or click stands down
+  and leaves him aiming. Once a shot is fired it does not ask again; undo takes the shot
+  back, and the card with it.
 - **Kill** (gunner only) — 2 AP. The target must be visible, as for suppress, and
   **under suppression**: suppressed this player phase or the one before, so one gunner
   needs two turns (suppress, then kill) and two gunners can do it in one. A kill is **one
