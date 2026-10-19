@@ -1,8 +1,9 @@
 /**
  * Where the things the operator places by hand sit (M48k, data/layout.json):
  * START HERE and the clipboard on the contents pages, and each mission's drop
- * cue and its rings' notes, and (M58e) the hexes left clear of its ground
- * colour. Art only: no rule reads it. Pure, so the layout
+ * cue and its rings' notes, (M58e) the hexes left clear of its ground
+ * colour, and (M59d) its labels: each drop run's tab, each target's name and
+ * EXFIL, and each place name, all moved by [x, y] hex radii. Art only: no rule reads it. Pure, so the layout
  * tool's moves and its Copy are tested headless; the dragging is
  * src/render/layout-tool.js.
  *
@@ -12,6 +13,9 @@
  */
 
 import { columnOf, inBounds } from './map.js';
+
+/** The labels the tool moves (M59d), each a list in a mission's entry by what it is called on the board: a run's id, an objective's id or 'exfil', a place's name. */
+export const LABELS = ['runTabs', 'names', 'places'];
 
 const isPair = (value) => Array.isArray(value) && value.length === 2 && value.every(Number.isFinite);
 
@@ -30,8 +34,10 @@ export function validateLayout(json, { missions = null } = {}) {
     if (entry.clear !== undefined && !(Array.isArray(entry.clear) && entry.clear.every((h) => isPair(h) && h.every(Number.isInteger)))) {
       throw new Error(`${where} ${id}.clear must be a list of [q, r] hexes`);
     }
-    for (const [key, nudge] of Object.entries(entry.notes ?? {})) {
-      if (!isPair(nudge)) throw new Error(`${where} ${id}.notes.${key} must be [x, y] in hex radii`);
+    for (const kind of ['notes', ...LABELS]) {
+      for (const [key, nudge] of Object.entries(entry[kind] ?? {})) {
+        if (!isPair(nudge)) throw new Error(`${where} ${id}.${kind}["${key}"] must be [x, y] in hex radii`);
+      }
     }
   }
   return json;
@@ -50,6 +56,12 @@ export function dropCueAt(layout, missionId) {
 /** How far a ring's note is moved, [x, y] hex radii: `key` is an objective's id, or 'exfil'. */
 export function noteNudge(layout, missionId, key) {
   return layout?.missions?.[missionId]?.notes?.[key] ?? null;
+}
+
+/** A mission's labels (M59d) for the board: each of LABELS as { key: [x, y] }, and `layoutKey`, what the tool's keys for them begin with. */
+export function labelsOf(layout, missionId) {
+  const entry = layout?.missions?.[missionId] ?? {};
+  return { ...Object.fromEntries(LABELS.map((kind) => [kind, entry[kind] ?? {}])), layoutKey: `mission:${missionId}` };
 }
 
 /** The hexes of a mission left bare paper whatever their ground (M58e), as a set of "q,r" keys. */
@@ -71,9 +83,11 @@ export function toggledClear(layout, missionId, q, r) {
 
 /** Where each thing the tool can place lives in the file, by the key the board and page mark it with. */
 export function layoutPath(key) {
-  const [scope, name, sub] = key.split(':');
+  // A place's name is the rest of the key, whatever it holds.
+  const [scope, name, sub, ...rest] = key.split(':');
   if (scope === 'contents') return ['contents', name];
   if (sub === 'dropCue') return ['missions', name, 'dropCue'];
+  if (LABELS.includes(sub)) return ['missions', name, sub, rest.join(':')];
   return ['missions', name, 'notes', sub];
 }
 
@@ -115,6 +129,7 @@ export function movedCount(before, after) {
       if (id.startsWith('_')) continue;
       found.set(`mission:${id}:dropCue`, entry.dropCue ?? null);
       for (const [note, nudge] of Object.entries(entry.notes ?? {})) found.set(`mission:${id}:${note}`, nudge);
+      for (const kind of LABELS) for (const [label, nudge] of Object.entries(entry[kind] ?? {})) found.set(`mission:${id}:${kind}:${label}`, nudge);
       for (const [q, r] of entry.clear ?? []) found.set(`clear:${id}:${q},${r}`, true);
     }
     return found;

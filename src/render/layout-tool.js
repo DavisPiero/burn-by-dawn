@@ -1,7 +1,8 @@
 /**
  * The layout tool (M48k): with `?layout` in the address, each thing the
  * operator places by hand (marked `data-layout` by the page and the board) is
- * outlined, dashed, and dragged where they want it. A panel says how many have
+ * outlined, dashed, and dragged where they want it: since M59d the board's
+ * labels too, each run's tab, each target's name, EXFIL and each place name. A panel says how many have
  * moved; COPY puts the whole of data/layout.json on the clipboard, to paste
  * over the file; PUT BACK returns everything to where the file has it. PAINT
  * CLEAR (M58e) turns the board's hexes into switches: a click leaves a hex bare

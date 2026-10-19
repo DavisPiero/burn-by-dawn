@@ -1554,7 +1554,9 @@
     .clipboard-painted #briefing .clip-sheet { height: 100%; box-sizing: border-box; padding: 10px 12px 6px; background: none; border: none; }
     /* The layout tool (M48k, ?layout): what the operator places is dashed and
        dragged; the board's SVG gets a drawn box (layout-tool.js), the page's an outline. */
-    .layout-mode [data-layout] { pointer-events: all !important; cursor: move; }
+    .layout-mode [data-layout], .layout-mode [data-layout] * { pointer-events: all !important; cursor: move; }
+    /* While painting (M59d), a label lets the click through to the hex under it. */
+    .layout-painting [data-layout], .layout-painting [data-layout] * { pointer-events: none !important; }
     .layout-mode #briefing [data-layout] { outline: 2px dashed var(--leader); outline-offset: 3px; }
     .layout-mode [data-layout].layout-dragging { opacity: 0.75; }
     .layout-outline { fill: none; stroke: var(--leader); stroke-width: 2; stroke-dasharray: 7 5; pointer-events: none; }

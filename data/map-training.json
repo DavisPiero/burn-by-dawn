@@ -103,7 +103,6 @@
     {
       "id": "dummy-bridge",
       "label": "Training Bridge",
-      "nameNudge": [0, 0.4],
       "kind": "bridge",
       "primary": true,
       "hexes": [
@@ -146,9 +145,7 @@
       "at": [
         2,
         1
-      ],
-      "dx": 0.45,
-      "dy": -0.75
+      ]
     },
     {
       "name": "Tatton Mere",
@@ -156,9 +153,7 @@
       "at": [
         11,
         1
-      ],
-      "dx": 0.4,
-      "dy": -0.6
+      ]
     },
     {
       "name": "The Mere Brook",
@@ -167,8 +162,6 @@
         6,
         8
       ],
-      "dx": 0.36,
-      "dy": -0.4,
       "angle": 90
     },
     {
@@ -177,8 +170,7 @@
       "at": [
         10,
         10
-      ],
-      "dy": 0.2
+      ]
     },
     {
       "name": "The Knoll",
@@ -186,8 +178,7 @@
       "at": [
         15,
         2
-      ],
-      "dx": 0.4
+      ]
     }
   ],
   "legend": {
