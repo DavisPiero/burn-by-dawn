@@ -564,6 +564,8 @@ function contentsList({ entries, onChoose, record = null, flagAt = [0, 0], clipb
       const panel = html('img', 'contents-panel');
       panel.src = entry.panel;
       panel.alt = '';
+      // Not painted yet (M60: the heavy water plant's): the line alone, as before it had one.
+      panel.addEventListener('error', () => panel.remove());
       words.unshift(panel);
     }
     const item = html('li', entry.playable ? 'contents-entry' : 'contents-entry coming');
