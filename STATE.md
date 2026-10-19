@@ -4,13 +4,13 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 19 Oct 2026: M60b built on `m60b-wording-start-here`, not yet signed off.
+Last updated: 19 Oct 2026: M60b signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M60, pushed. M60b is on its branch**: the operator's rewording of
-  Gunnerside carried back, START HERE taken off the contents page, the shared Dakota
-  panel in. The margin says build M60b there. Tests: 282 headless, 285 in `tests.html`.
+- **`main` is M60b, pushed**: the operator's rewording of Gunnerside carried back,
+  START HERE taken off the contents page, the shared Dakota panel in. The margin says
+  build M60b. Tests: 282 headless, 285 in `tests.html`.
 - **Four missions and the course, all playable**: the heavy water plant (Gunnerside)
   is on the contents page with its painted panel and title card, worded, with its
   sounds made in code.
@@ -30,10 +30,9 @@ Last updated: 19 Oct 2026: M60b built on `m60b-wording-start-here`, not yet sign
 
 ## Next
 
-1. **Sign off M60b**, or send notes.
-2. **When the panels come** (31c, 31d): Claude makes the game's 900 × 600 copies
+1. **When the panels come** (31c, 31d): Claude makes the game's 900 × 600 copies
    and keeps the originals as `_full`, then moves the item to the archive.
-3. Then the operator's choice: **M61** (Gunnerside's new panel moments), the playtests
+2. Then the operator's choice: **M61** (Gunnerside's new panel moments), the playtests
    (ROADMAP.md), or rewording from the sheet.
 
 ## Open with the operator

@@ -149,3 +149,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-19 | m60b | The operator swapped two ratings (O59, O60): 30 is NOT A SHOT FIRED and the top, 35, LIKE GHOSTS; the lowest band HEARD FOR MILES
 2026-10-19 | m60b | START HERE taken off the contents page (the operator's: The Practice Ground's name says it): the whole feature went, not only its word, so no drawing, layout entry or check is left for something nothing uses: missions.json `flag`, layout.json `contents.flag`, the stamp's style, its tests
 2026-10-19 | m60b | The operator's shared Dakota panel in: a 900 x 600 copy at quality 80, the original kept as `_full`; it shows in every mission at START GAME, Gunnerside too until its Halifax is painted; ART-PROMPTS.md Priority 30 to the archive
+2026-10-19 | m60b | M60b signed off by the operator ("merge it and push") and merged
