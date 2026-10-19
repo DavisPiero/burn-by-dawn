@@ -8,8 +8,7 @@ and what is **to be built next**, each marked; it keeps no history (DECISIONS.md
 The words and names are placeholder copy for the operator to reword.
 
 **State: the lesson engine is built (M47) and so is the course, all seventeen lessons
-(M48). Since M48g it is playable from the contents page, first on it and flagged
-START HERE.**
+(M48). Since M48g it is playable from the contents page, first on it.**
 
 ---
 
@@ -17,8 +16,8 @@ START HERE.**
 
 **A course, not a raid.** A playtester's idea, taken up by the operator (ROADMAP.md,
 Phase 5): a tutorial, one thing to do at a time, with the board holding the player's
-hand. It is first on the contents page, stamped START HERE (a mission's `flag` in
-`missions.json`, in faded red rubber as NEXT YEAR'S ANNUAL is).
+hand. It is first on the contents page; since M60b nothing else marks it out (it was
+stamped START HERE from M48g, taken out by the operator: its name says it).
 
 **The practice ground, Tatton Park, England, 1941**: the park where No. 1 Parachute
 Training School dropped its pupils. The same six men and the same 18×13 board. The

@@ -21,7 +21,7 @@ async function loadAll() {
 export default [
   ['data/layout.json is valid and names only missions there are', async () => {
     const { layout } = await loadAll();
-    equal(contentsOffset(layout, 'flag').length, 2, 'START HERE has a place');
+    equal(contentsOffset(layout, 'clipboard').length, 2, 'the clipboard has a place');
   }],
 
   ['every note in data/layout.json is for an objective of its mission, or its exfil', async () => {
@@ -108,9 +108,9 @@ export default [
 
   ['a move is a new layout, rounded to hundredths, the old one untouched; and counted', async () => {
     const { layout } = await loadAll();
-    const after = moved(layout, 'contents:flag', [12.345, -3]);
-    equal(after.contents.flag, [round(layout.contents.flag[0] + 12.345), round(layout.contents.flag[1] - 3)], 'START HERE moved');
-    equal(layout.contents.flag, (await loadJson('data/layout.json')).contents.flag, 'the old layout as it was');
+    const after = moved(layout, 'contents:clipboard', [12.345, -3]);
+    equal(after.contents.clipboard, [round(layout.contents.clipboard[0] + 12.345), round(layout.contents.clipboard[1] - 3)], 'the clipboard moved');
+    equal(layout.contents.clipboard, (await loadJson('data/layout.json')).contents.clipboard, 'the old layout as it was');
     const note = moved(after, 'mission:france:bridge', [0.5, 1]);
     equal(note.missions.france.notes.bridge, [0.5, 1], 'a note with no nudge moves from none');
     const cue = moved(note, 'mission:france:dropCue', [1, 0]);
@@ -123,7 +123,7 @@ export default [
     const { layout } = await loadAll();
     const text = layoutText(layout);
     equal(JSON.parse(text), layout, 'the same data');
-    assert(/"flag": \[-?[\d.]+, -?[\d.]+\]/.test(text), 'a pair on one line');
+    assert(/"clipboard": \[-?[\d.]+, -?[\d.]+\]/.test(text), 'a pair on one line');
     assert(text.endsWith('}\n'), 'ends with a newline');
   }],
   ['a hex painted clear is switched in and out of the list, counted, and each one a real hex of its map (M58e)', async () => {

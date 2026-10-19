@@ -57,7 +57,7 @@ anything) before the next player sits down.
 Write down the moment, not your view of it ("lesson 5, kept clicking the sentry instead
 of the hedge").
 
-1. **The contents page.** Do they go to The Practice Ground (START HERE) or straight to
+1. **The contents page.** Do they go to The Practice Ground or straight to
    France? Do they say why?
 2. **The first minute.** The aim is a first move within a minute. What do they do first?
    What do they try to click?

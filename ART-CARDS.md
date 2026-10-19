@@ -28,13 +28,10 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   title run to its page number with a dotted leader, its place in italic and a line about
   it, its painted panel beside it at 120 × 80 (M60: at 150 × 100 the fifth mission ran
   off the card's foot at 1280 × 800; a panel not yet painted leaves the line alone). A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
-  askew; a click on it does nothing. **A mission may be flagged** (`flag`): the
-  course's line is stamped START HERE in the same red rubber, fainter, over a line
-  still printed full (the operator's, M48h: the pen's lettering did not suit), between
-  the dotted leader and the line under it (M51; `data/layout.json`), the dots showing
-  through its faded ink.
-  **Where the operator places things by hand** is `data/layout.json` (M48k): START HERE,
-  the clipboard, each mission's drop cue and its rings' notes. `?layout` in the address
+  askew; a click on it does nothing. The course is first, and nothing more marks it
+  out (M60b, the operator's: START HERE was taken out, as The Practice Ground says it).
+  **Where the operator places things by hand** is `data/layout.json` (M48k): the
+  clipboard, each mission's drop cue and its rings' notes. `?layout` in the address
   outlines them, dashed in leader blue, to be dragged; a panel's COPY gives the whole
   file to paste over it. **It lies on the bare table**, as the loading page
   does: no mission's map is seen until one is picked, and then that mission's spread is

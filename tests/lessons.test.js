@@ -39,14 +39,14 @@ export default [
     const withLessons = missions.missions.filter((m) => m.lessons).map((m) => m.id);
     assert(withLessons.join() === 'training', `lessons are off everywhere else: ${withLessons}`);
     const training = missionById(missions, 'training');
-    assert(training.status === 'playable' && training.flag === 'START HERE' && missions.missions[0].id === 'training', 'the course is playable, first on the contents page and flagged (M48g)');
-    assert(missions.missions.filter((m) => m.flag).length === 1, 'and no other mission is flagged');
+    assert(training.status === 'playable' && missions.missions[0].id === 'training', 'the course is playable and first on the contents page');
+    assert(missions.missions.every((m) => m.flag === undefined), 'no START HERE: the operator took it out (M60b)');
     // Its garrison is umpires: a drawn kit, a folder for the paintings, and English cries.
     assert(training.enemyKit === 'umpire' && training.enemyChips === 'assets/enemies/umpire', 'umpires, drawn until painted');
     const cries = [...training.words.cries.spotted, ...training.words.cries.found];
     assert(cries.length >= 4 && !cries.some((c) => /ACHTUNG|HALT|ALARM|GOTT|WAS IST/.test(c)), `an umpire does not cry out in German: ${cries}`);
     const json = await loadJson('data/missions.json');
-    for (const bad of [{ enemyKit: '' }, { flag: '' }, { flag: 3 }]) {
+    for (const bad of [{ enemyKit: '' }]) {
       assert(throws(() => validateMissions({ ...json, missions: json.missions.map((m) => (m.id === 'training' ? { ...m, ...bad } : m)) })), `refused: ${JSON.stringify(bad)}`);
     }
   }],

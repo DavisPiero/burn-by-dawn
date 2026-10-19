@@ -74,8 +74,6 @@ export function validateMissions(json, url = 'data/missions.json') {
     }
     // Its garrison drawn in a kit of its own until painted (M48g: the umpires), optional.
     if (m.enemyKit !== undefined && (typeof m.enemyKit !== 'string' || !m.enemyKit)) throw new Error(`${where} "enemyKit" must name a drawn kit`);
-    // A word printed by its line on the contents page (M48g: START HERE), optional.
-    if (m.flag !== undefined && (typeof m.flag !== 'string' || !m.flag)) throw new Error(`${where} "flag" must be a word or two`);
     // A course (M47, SPEC.md §15): the file its lessons are in, optional.
     if (m.lessons !== undefined && (typeof m.lessons !== 'string' || !m.lessons)) throw new Error(`${where} "lessons" must name a lessons file`);
     for (const key of ['tagline', 'map', 'roster', 'briefing', 'titleCard']) {

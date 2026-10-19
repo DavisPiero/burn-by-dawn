@@ -1,8 +1,7 @@
 {
   "_": "Where things the operator places by hand sit (M48k). Art only: no rule reads this file. Open the game with ?layout in the address, drag what is outlined, press Copy, and paste the result over this whole file. Hand edits are fine too.",
-  "_contents": "The contents pages, in pixels from where the page would set each thing: flag is the START HERE stamp on the course's line, clipboard the course's clipboard. [x, y]: right and down are positive.",
+  "_contents": "The contents pages, in pixels from where the page would set each thing: clipboard is the course's clipboard (START HERE, the course's stamp, was taken out at M60b). [x, y]: right and down are positive.",
   "contents": {
-    "flag": [86, 21],
     "clipboard": [0, 0]
   },
   "_missions": "Each mission's drop screen, by its id in missions.json. dropCue is the hex PICK A DROP DIRECTION centres on, [q, r], fractions allowed; with none it centres on the runs' names. clear (M58e) lists the hexes printed bare paper whatever the mission's ground colour, painted with PAINT CLEAR in ?layout. notes moves a ring's note by [x, y] hex radii (a hex across is 1.73, a row 1.5): keyed by the objective's id in its map, and exfil for the way out's. runTabs, names and places (M59d) move the board's labels by [x, y] hex radii: runTabs a drop run's tab off its line, by the run's id; names a target's name, by its id, and the EXFIL label as exfil; places a place name, by the name as its map spells it. Those were each map's labelNudge, nameNudge, exfilLabelNudge and places' dx and dy before M59d. The rest were each map's noteNudge, exfilNoteNudge and dropCueAt, and France's drop cue an offset in theme.js, before M48k.",
