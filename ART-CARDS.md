@@ -26,7 +26,8 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
 - **The contents page comes first** (§10 Missions), as the annual's contents: the title
   card with PARATROOPER RAIDS BEHIND ENEMY LINES, then each mission as a contents line, its
   title run to its page number with a dotted leader, its place in italic and a line about
-  it. A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
+  it, its painted panel beside it at 120 × 80 (M60: at 150 × 100 the fifth mission ran
+  off the card's foot at 1280 × 800; a panel not yet painted leaves the line alone). A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. **A mission may be flagged** (`flag`): the
   course's line is stamped START HERE in the same red rubber, fainter, over a line
   still printed full (the operator's, M48h: the pen's lettering did not suit), between
@@ -49,9 +50,11 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   the job in bold, two lines, split at its comma so the EXFIL never stands alone; the
   clock ("Dawn comes at the end of turn 16. Every bang stirs the garrison.", or the
   boat's turn in bold where the way out is a boat); the canisters in bold where there
-  are any; and one Bonus line naming everything that pays extra with its points (the
+  are any; the mission's own line in bold where it has one (`words.ordersLine`, M60: the
+  heavy water plant's "Not a shot…"); and one Bonus line naming everything that pays extra with its points (the
   bonus targets, the goods train, the salvo, the clean run in the mission's two or three
-  words, `words.cleanBonus`); a bonus target that would leave too few charges for the job,
+  words, `words.cleanBonus`, first and in capitals where the clean run is not a shot
+  fired, M60); a bonus target that would leave too few charges for the job,
   as the road bridge on Hard's aqueduct, is marked "(no charge to spare)"). At its foot: **Music off** and beside it **Play tips**
   (ticked; in play, Play tips alone), a **HOW TO PLAY [?]** button, and CARRY ON.
   **Play tips are also in the menu** (ART-DIRECTION.md, the spread), to be turned on or off at any time. A card too tall for the window is set tighter a step at a time (less
@@ -139,14 +142,20 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
   puts it away and does nothing else, except that a man's number or Tab also selects
   him; a click on one of our men puts it away and selects him, any other click only puts
   it away. A box on the card turns the turn cards off for the session; the orders still
-  open on a new game.
+  open on a new game. On turn 1 a mission's own line (`words.firstTurn`, M60: the
+  snow) goes under the hint.
 - **The RAF diversion** flies the Dakota across the board over the garrison (display only,
   skipped by any key or click), its engines heard half a second first; where the map gives
   a `diversionRun` (the airfield), the vehicle its `art` names (a jeep, guns flashing)
   drives that line on the ground instead; then a card headed
-  in the diversion's blue says what it did and what calls are left.
+  in the diversion's blue says what it did and what calls are left. Where the mission
+  names the leader's device (M60: the heavy water plant's flare pistol), the card, his
+  particulars and the hint use it and its verb (`words.diversionDevice`,
+  `diversionVerb`, `diversionWorked`, `diversionSpent`), else the radio.
 - **The back page** (§10) is headed by the title card, smaller, with the six, the score
   and the rating under it (the rating in green since M58b, the operator's: in red a good
   night read as something gone wrong), and fits the right page at 1280x800 on the longest score
-  sheet. PLAY AGAIN and CONTENTS sit side by side at its foot; Play again starts a new
+  sheet. Where the clean run is not a shot fired and a man fired (M60), a line under
+  the score in the pen's red says who fired first and on what turn
+  (`words.firstShotHeard`). PLAY AGAIN and CONTENTS sit side by side at its foot; Play again starts a new
   mission without a reload, and the orders open again.

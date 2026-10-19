@@ -9,7 +9,7 @@ describe the engine through mission 1, the rail bridge in occupied France. How i
 and sounds (§11) is in `ART-DIRECTION.md`, `ART-CARDS.md` and `ART-PLAY.md`, and mission 2, the airfield (§13), is in
 `MISSION-AIRFIELD.md`, where it differs. Mission 3, the aqueduct (§14,
 `MISSION-AQUEDUCT.md`), is playable too, picked from the contents page. Mission 4, the
-heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is a draft: `?mission=gunnerside`.
+heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is playable too since M60.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
@@ -385,8 +385,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-Next (STATE.md): **M60**, mission 4's
-words, sounds and art hand-off (§16, `MISSION-GUNNERSIDE.md`), its spec split first. The milestones before them are in `MILESTONES.md`. v1.0 is
+Next (STATE.md): the operator's choice after M60 (mission 4 worded and playable):
+**M61**, Gunnerside's new comic panel moments (`MISSION-GUNNERSIDE-WORDS.md`), if wanted,
+or the playtests in `ROADMAP.md`. The milestones before are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done
@@ -428,7 +429,8 @@ rules: supply canisters (§9, `DROP.md`) and the way out on a timetable (§10).
 ## 16. Mission 4 — the heavy water plant
 
 **In `MISSION-GUNNERSIDE.md`**, with its words, panels, pictures and sounds in
-`MISSION-GUNNERSIDE-WORDS.md` (split at M60); specified at M56, its map a draft since M58: Norway, February
+`MISSION-GUNNERSIDE-WORDS.md` (split at M60); specified at M56, drawn at M58, balanced
+at M59, worded and playable from the contents page at M60: Norway, February
 1943, loosely Operation Gunnerside. The stealth mission: a gorge to climb, tracks in the
 snow, gunfire heard across the board, and NOT A SHOT FIRED as its clean run. Its one
 engine rule, tracks in the snow, is built (M57) and written in §9 (`DROP.md`); with it the no-shot

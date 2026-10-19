@@ -7,9 +7,8 @@ it (§4, §6, §7, §9, §10, §11) are SPEC.md's.
 **Specified 18 Oct 2026 (M56). Its engine is built (M57): tracks in the snow (SPEC.md §9
 Tracks), the no-shot clean run and the card before the first shot, all off until the
 mission's patch turns them on. The map is drawn as a draft (M58), `?mission=gunnerside`,
-balanced at M59 (Balance, below), not yet worded.** This file says what is to be built and
-how it is to play; once the mission is playable it will say how things are, and keep no
-history (DECISIONS.md has it). Its numbers are M59's unless it says the operator chose them. The words and names are placeholder
+balanced at M59 (Balance, below), worded at M60 and playable from the contents page
+since.** This file says how things are and keeps no history (DECISIONS.md has it). Its numbers are M59's unless it says the operator chose them. The words and names are placeholder
 copy for the operator to reword.
 
 The operator's calls (18 Oct 2026):
@@ -226,7 +225,8 @@ south-west where the gorge narrows east of the middle, a sentry beside each end.
   guard; the **barracks** east of the plant. **Every place a man must reach has two ways
   in and out**: with any one hex of the hall blocked, every charge point can still be
   reached (a test holds the map to it, after three notes of men trapped in the plant). Every wall has a hard ink edge, so it reads as a wall. The **pipes** are not
-  ground: they come down the hillside behind the plant off the board, a picture for M60.
+  ground: they come down the hillside behind the plant off the board, in its paintings
+  (ART-PROMPTS.md Priority 31).
 - **The railway** runs along the shelf from the west edge to the plant: the quick way
   from the gorge to the duct, open but leaving no prints. Where the gorge side meets it
   on the south is the climb's top, as it was.

@@ -436,7 +436,7 @@ Say whether BURN BY DAWN is painted in: if not, Claude sets `titleCardLettered: 
 
 ## Priority 14 — the contents page panels ✅ done (2026-09-30)
 
-Wired in M31c at 150 × 100 beside each entry; the game loads 480 × 320 copies, and your
+Wired in M31c at 150 × 100 beside each entry (120 × 80 since M60, so five fit); the game loads 480 × 320 copies, and your
 1200 × 800 originals are kept beside them as `contents-<id>_full.jpg`.
 
 One small painting per mission, beside its line on the contents page, so the page
@@ -449,7 +449,7 @@ without one shows its line as now.
 | Files | `assets/title/contents-france.jpg`, `assets/title/contents-airfield.jpg`, `assets/title/contents-aqueduct.jpg` (in since M41d) |
 | Size | **3:2, 1200 × 800 px** (never below 600 × 400) |
 | Format | JPEG, quality about 85, sRGB, opaque |
-| Shown at | About 180 × 120 px beside the entry, so it must read small: one clear subject, strong light and dark, like a single comic panel |
+| Shown at | 120 × 80 px beside the entry, so it must read small: one clear subject, strong light and dark, like a single comic panel |
 | Code does | The frame, the title, the page number and the NEXT YEAR'S ANNUAL stamp. No text in the picture |
 
 ### Prompt — the rail bridge (add the style block)
@@ -1057,7 +1057,7 @@ orange only for the bang. It should read colder than the aqueduct.
 
 | # | File | Size, format | Shown at | Code does |
 |---|---|---|---|---|
-| 31a | `assets/title/contents-gunnerside.jpg` | **As Priority 14**: 3:2, 1200 × 800, JPEG ~85, sRGB, opaque | 150 × 100 beside its line on the contents page, and again as the **mission accomplished** panel (about 550 × 370) | Claude makes the 480 × 320 copy; your original kept as `contents-gunnerside_full.jpg` |
+| 31a | `assets/title/contents-gunnerside.jpg` | **As Priority 14**: 3:2, 1200 × 800, JPEG ~85, sRGB, opaque | 120 × 80 beside its line on the contents page, and again as the **mission accomplished** panel (about 550 × 370) | Claude makes the 480 × 320 copy; your original kept as `contents-gunnerside_full.jpg` |
 | 31b | `assets/title/title-card-gunnerside.jpg` | **As Priority 2b**: 4:1, 2400 × 600, JPEG ~85 | Across the top of the orders and the back page | Claude makes the 1600 × 400 copy; original kept as `_full`. **Say whether BURN BY DAWN is painted in** |
 | 31c | `assets/panels/panel-dakota-gunnerside.jpg` | **As Priority 30**: 3:2, 1200 × 800, JPEG ~85, no text | After START GAME, before the run is picked. **Top-left quarter quiet**: the caption sits there | Claude makes the 900 × 600 copy; original kept as `_full`. Until it is in, the shared Dakota panel shows (once that is painted) |
 | 31d | `assets/panels/panel-landing-gunnerside.jpg` | **As Priority 28**: 3:2, 1200 × 800, JPEG ~85, no text | After the jump, before turn 1. **Top-left quarter quiet** | As 31c |
@@ -1121,6 +1121,27 @@ the game names the plant itself.
 
 ---
 
+## Priority 32 — the heavy water plant's sounds (find, don't generate) — to find
+
+**Why** (M60): three sounds are made in code for now and play already; a recording
+dropped in with the right name replaces each with no code change, as Priority 11's did.
+Levels are set in code, so they need not match. Formats and limits as ART-ASSETS.md §9:
+M4A or MP3, mono, 44.1 kHz, under 200 KB, no silence at the front.
+
+| File | What it is | Length |
+|---|---|---|
+| `assets/audio/echo.m4a` | **The shot's echo.** Not the shot: what comes back. Gunfire echoing off the far side of a mountain gorge, three or so returns each fainter and duller, then a low roll dying away. Search "gunshot echo canyon", "rifle echo valley" and cut the first shot off | 2–3 s |
+| `assets/audio/flare.m4a` | **The decoy flare, far off.** A flare pistol's pop, the rising hiss of the flare climbing, then a long crackling fizz as it burns. Search "flare gun", "signal flare launch" | 2–3 s |
+| `assets/audio/wind.m4a` | **Wind over high snow.** A hollow gust that swells and falls away, no whistling trees, no rain. Search "wind snow mountain", "arctic wind gust" | 3–4 s |
+
+**Optional, a fourth:** `assets/audio/music-gunnerside.m4a`, the mission's own music
+over its orders and the drop, as the other three have (ART-ASSETS.md §9, Music by
+screen): cold, slow, tense, strings or a low brass line, looped clean, under 1 MB.
+When it is in, Claude adds `"music": "music-gunnerside"` to the mission. Until then it
+plays the title music.
+
+---
+
 ## Later — once level design has settled
 
 Not worth making yet. The map and layout will still change.
@@ -1145,8 +1166,10 @@ These are part of M7b and are made as SVG in `src/render/theme.js`:
   green, a supply canister's in blue (M43c).
 - The soft drop shadow under counters.
 - Prints in the snow (M57, `prints`, half a hex of boot prints) and the boot mark on a
-  hovered path (`marker-boot`); Gunnerside's painted footprints come at M60 if wanted.
-- The heavy water plant's ground and targets (M58, a draft for M60's art hand-off): the
+  hovered path (`marker-boot`). Not asked for as a painting (M60): at half a hex a
+  painting would be a blur, as the parachutes would.
+- The heavy water plant's ground and targets (M58; the board stays drawn at M60, its
+  paintings are the panels and cards of Priority 31): the
   snowfield, drift, pine woods, rock, gorge sides, ice, plant walls, hall floor, cable
   duct, pipes, barracks and the suspension bridge's deck; the cells, the junction box on
   its pole, and the ski trail with its cairn at the way out. Since M58d its land is the

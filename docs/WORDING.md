@@ -13,7 +13,7 @@ them, move them, or drop them. The one shown is an example.
 
 A `/` between two phrases means the game shows one or the other, depending on the moment.
 
-Made 17 Oct 2026 (build M53). The game is unchanged until your rewording is carried back.
+Made 17 Oct 2026 (build M53); section O, the heavy water plant, added 19 Oct 2026 (M60). The game is unchanged until your rewording is carried back.
 
 ## A. The cover, the contents page and the title cards
 
@@ -1882,3 +1882,138 @@ Each step has three lines: the order on the card in capitals (say), what to do (
 - N338 tell | CHECKPOINT. ONE OF TWO SET, and burning. Set the second on the other ringed point, and get every man clear.
 - N339 say | GET ALL SIX OUT.
 - N340 tell | CHECKPOINT. The Training Bridge is down. Get all six men out by the gate.
+
+## O. The Heavy Water Plant (M60)
+
+Every line of mission 4, in one place: placeholder copy from its spec, for rewording.
+The lines it shares with the other missions (cards, buttons, the readout) are in the
+sections above.
+
+### The contents page and its title card
+
+- O1 | The Heavy Water Plant
+- O2 | Norway
+- O3 | A heavy water plant across a frozen gorge. Get in, blow the cells and get out without a shot fired.
+- O4 tagline | SIX MEN · ONE STATION · NOT A SHOT FIRED
+
+### The orders and how to play
+
+- O5 first line | Tonight six men are to drop onto a Norwegian plateau in the snow.
+- O6 its own line, in bold | Not a shot. Gunfire echoes down the gorge and the whole garrison hears it. The knife and the dark are your weapons.
+- O7 the bonus, first on the Bonus line | NOT A SHOT FIRED +‹5›
+- O8 HOW TO PLAY, TONIGHT, last line | Getting in and out without a shot fired, with the garrison never Alarmed and no flare, earns the biggest bonus of any mission.
+- O9 Easy | The cell hall takes two charges, and no squad comes up the road when it goes.
+- O10 Hard | With the telephone line still up, two squads come up the road when the cell hall goes.
+
+### The drop runs
+
+- O11 | West run
+- O12 | QUIET
+- O13 | In from the west over the pine woods: under the trees, and close to where the gorge narrows. A man who comes down in the pines loses his first turn.
+- O14 | North run
+- O15 | STEADY
+- O16 | Down from the north over the open middle of the plateau: the softest landing on the map, and prints wherever the men go.
+- O17 | East run
+- O18 | FAST
+- O19 | In from the east toward the road and the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.
+
+### Names on the map
+
+- O20 | Vassdal Works
+- O21 | Mørkgjelet Gorge
+- O22 | Isvidda
+- O23 | to Elvebyen
+- O24 | Cell Hall
+- O25 | Telephone Line
+- O26 | Bridge post (north)
+- O27 | Bridge post (south)
+- O28 | Gate guard
+- O29 | Plateau patrol
+- O30 | Rim patrol
+- O31 | Plant patrol
+- O32 | Road patrol
+- O33 | Reserve squad
+
+### The garrison’s cries
+
+- O34 seeing a man | ACHTUNG!
+- O35 seeing a man | HALT!
+- O36 seeing a man | ALARM!
+- O37 finding something | MEIN GOTT!
+- O38 finding something | WAS IST DAS?
+- O39 finding something | ALARM!
+- O40 finding prints | SPUREN!
+
+### Play: the turn card, the gun, the telephone
+
+- O41 turn 1, under the hint | Stay off the open snow where you can: the patrols read tracks.
+- O42 the hint, until the first shot | ‹SPEERS› could fire on the ‹bridge post (north)›, but a shot is heard across the board: alert +‹5›. The knife is quieter.
+- O43 under Suppress or Fire back, in red | ‹2› AP +‹6›
+- O44 its rollover, in red | +‹6› ALERT · HEARD EVERYWHERE, and the bonus for not a shot fired is lost.
+- O45 the enemy’s hover row | ‹SPEERS› can, now [S]: ‹2› AP, +‹6› alert · heard everywhere
+- O46 the line cut, in the log | the plant's telephone goes dead
+- O47 | the telephone line is already cut
+
+### The decoy flare
+
+- O48 its button and card | Decoy flare
+- O49 its card’s kicker | A FLARE OVER THE FAR RIDGE
+- O50 in the log | a flare over the far ridge
+- O51 what the leader carries | flare pistol
+- O52 what he does with it | fire
+- O53 its card | The flare went up over the far ridge. The garrison looks the other way.
+- O54 its card, none left | No more flares tonight.
+
+### The back page
+
+- O55 under the score, in red | ‹SPEERS› fired on turn ‹9›: the whole valley heard it.
+- O56 the clean run’s line | never ‹Alarmed›, not a shot fired, no diversion
+- O57 rating | HEARD IN ELVEBYEN
+- O58 rating | A QUIET JOB
+- O59 rating | LIKE GHOSTS
+- O60 rating | NOT A SHOT FIRED
+
+### The comic panels
+
+- O61 in the aircraft | OVER NORWAY. THE PLATEAU IS THIRTY MILES OF NOTHING, AND THEY'RE DROPPING US IN THE MIDDLE OF IT.
+- O62 after the landing | THE ISVIDDA, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK.
+- O63 mission accomplished | THE CELLS WERE WRECKED, AND THE GARRISON NEVER KNEW WHERE THEY'D GONE.
+
+### What the men say instead
+
+- O64 DUTCH, onLand | Into the pines, lads. Mind where you tread.
+- O65 DUTCH, onLand | Nobody fires tonight. Not one round.
+- O66 DUTCH, onLand | Quiet as the snow, lads.
+- O67 DUTCH, onKill | Quietly done.
+- O68 DUTCH, onKill | Not a sound. Good.
+- O69 DUTCH, onKill | Let the snow have him.
+- O70 FITCH, onLand | Snow? Nobody said snow!
+- O71 FITCH, onLand | Me fingers have gone numb already.
+- O72 FITCH, onLand | Cold enough to freeze a fella's tea.
+- O73 FITCH, onKill | Shh. Sleep tight.
+- O74 FITCH, onKill | Quiet now, mate.
+- O75 FITCH, onKill | Not a peep, there's a good lad.
+- O76 VANCE, onLand | The gorge is that way, Sarge.
+- O77 VANCE, onLand | Keep to the trees. The snow tells tales.
+- O78 VANCE, onLand | Plant's across the gorge. Can see the lights.
+- O79 VANCE, onSpotted | Should've kept to the trees.
+- O80 VANCE, onSpotted | He's seen me. Damn this snow.
+- O81 VANCE, onSpotted | Stood out like a crow on a sheet.
+- O82 VANCE, onKill | He never heard me.
+- O83 VANCE, onKill | Not a sound.
+- O84 VANCE, onKill | Quiet as the snow.
+- O85 BARROW, onLand | We're leaving a trail a blind man could follow.
+- O86 BARROW, onLand | Pines! Missed the lot of 'em.
+- O87 BARROW, onLand | Every step shows up here. Lovely.
+- O88 BARROW, onWounded | Leave it. Get to the plant.
+- O89 BARROW, onWounded | Don't wait for me. The cells!
+- O90 BARROW, onWounded | Just a nick. Go on.
+- O91 SPEERS, onLand | Bren stays slung tonight, lads.
+- O92 SPEERS, onLand | Bren's down safe. Pity I can't use it.
+- O93 SPEERS, onLand | Not a shot tonight. I'll manage.
+- O94 NUNN, onLand | Not a shot? Then what am I carrying this for?
+- O95 NUNN, onLand | Snow up to me knees.
+- O96 NUNN, onLand | Cold as charity up here.
+- O97 NUNN, onKill | Shh. That's him sorted.
+- O98 NUNN, onKill | Night night, pal.
+- O99 NUNN, onKill | Not a squeak out of him.

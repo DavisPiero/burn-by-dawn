@@ -219,6 +219,11 @@ the turn it is sighted or answers the signal; and the turn it lands, its last st
 with a wave breaking on the shingle under them. Its back page is France's fanfare. **The umpire's whistle** in a
 lesson (§15) is one short blast of a referee's whistle, and **the knife** is a short
 blow (both the operator's recordings, M48h; the knife was a pencil before).
+**The heavy water plant's** (M60), made in code until recordings come: a mission's
+`cues` put its own in place of the usual ones, so its suppress and fire back are the
+burst with its echo coming back down the gorge, and its drop has wind under the drone;
+its decoy flare is a pop, a rising hiss and a long fizz far off; and a night withdrawn
+or failed ends on the wind alone and the operator's dog far off.
 
 **Title music**: a recorded war-film main title, looped, over the orders and the run
 choice, fading at the jump and never between turns. A new game brings it back from the
