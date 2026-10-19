@@ -1302,7 +1302,7 @@ function actionsFor(unit) {
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     // Shown greyed where he could swim with his turn unspent (M49b, the operator's).
     { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, shown: canSwimHere(map, rules, state, unit) && (!lessonStep() || lessonLive({ kind: 'action', id: 'swim' })), ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
-  ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, ...loudShot(a, unit), apLabel: apLabel(a), active: state.targeting === a.id }));
+  ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, ...loudShot(a, unit) })).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
 }
 
 /** The gun's button where a shot is heard by the whole garrison (M60): its cost in red, and said in red in its rollover. */
