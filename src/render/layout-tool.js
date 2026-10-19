@@ -234,7 +234,7 @@ export function startLayoutTool({ layout, original, onChange, hexSize, missionId
     say('');
     update();
   }, true);
-  // A click on a placed thing is the end of a drag, never a choice (START HERE is on the course's line).
+  // A click on a placed thing is the end of a drag, never a choice (the clipboard sits on the course's page).
   document.addEventListener('click', (event) => {
     if (!event.target.closest?.('[data-layout]')) return;
     event.preventDefault();

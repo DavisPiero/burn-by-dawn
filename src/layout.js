@@ -1,6 +1,6 @@
 /**
  * Where the things the operator places by hand sit (M48k, data/layout.json):
- * START HERE and the clipboard on the contents pages, and each mission's drop
+ * the course's clipboard on the contents pages, and each mission's drop
  * cue and its rings' notes, (M58e) the hexes left clear of its ground
  * colour, and (M59d) its labels: each drop run's tab, each target's name and
  * EXFIL, and each place name, all moved by [x, y] hex radii. Art only: no rule reads it. Pure, so the layout
@@ -23,7 +23,7 @@ const isPair = (value) => Array.isArray(value) && value.length === 2 && value.ev
 export function validateLayout(json, { missions = null } = {}) {
   const where = 'data/layout.json';
   if (!json || typeof json !== 'object') throw new Error(`${where} must be an object`);
-  for (const key of ['flag', 'clipboard']) {
+  for (const key of ['clipboard']) {
     if (!isPair(json.contents?.[key])) throw new Error(`${where} contents.${key} must be [x, y] in pixels`);
   }
   if (!json.missions || typeof json.missions !== 'object') throw new Error(`${where} must have "missions"`);
@@ -43,7 +43,7 @@ export function validateLayout(json, { missions = null } = {}) {
   return json;
 }
 
-/** START HERE's or the clipboard's offset in pixels: `which` is 'flag' or 'clipboard'. */
+/** The clipboard's offset in pixels: `which` is 'clipboard'. */
 export function contentsOffset(layout, which) {
   return layout?.contents?.[which] ?? [0, 0];
 }
@@ -124,7 +124,7 @@ export function moved(layout, key, delta, from = [0, 0]) {
 export function movedCount(before, after) {
   const pairs = (layout) => {
     const found = new Map();
-    for (const which of ['flag', 'clipboard']) found.set(`contents:${which}`, contentsOffset(layout, which));
+    for (const which of ['clipboard']) found.set(`contents:${which}`, contentsOffset(layout, which));
     for (const [id, entry] of Object.entries(layout.missions ?? {})) {
       if (id.startsWith('_')) continue;
       found.set(`mission:${id}:dropCue`, entry.dropCue ?? null);

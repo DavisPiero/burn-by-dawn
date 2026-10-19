@@ -8,8 +8,6 @@
       "id": "training",
       "status": "playable",
       "ground": "meadow",
-      "_flag": "M48g: a word or two printed by its line on the contents page, in the red pen. The course is where a new player starts.",
-      "flag": "START HERE",
       "title": "The Practice Ground",
       "place": "Tatton Park, England",
       "page": 2,
@@ -436,42 +434,42 @@
       "_dialogue": "M60, placeholder for the operator (MISSION-GUNNERSIDE-WORDS.md, the men's lines): the snow, the cold, holding fire, and the knife's lines quiet.",
       "dialogue": {
         "holloway": {
-          "onLand": ["Into the pines, lads. Mind where you tread.", "Nobody fires tonight. Not one round.", "Quiet as the snow, lads."],
+          "onLand": ["Mind where you tread, lads. Stay frosty.", "Nobody fires tonight. Not a round.", "Quiet, lads. Move like ghosts."],
           "onKill": ["Quietly done.", "Not a sound. Good.", "Let the snow have him."]
         },
         "fitch": {
-          "onLand": ["Snow? Nobody said snow!", "Me fingers have gone numb already.", "Cold enough to freeze a fella's tea."],
-          "onKill": ["Shh. Sleep tight.", "Quiet now, mate.", "Not a peep, there's a good lad."]
+          "onLand": ["Snow? Nobody said snow!", "Me fingers are numb already.", "Cold enough to freeze a bloke's bollocks."],
+          "onKill": ["Sleep tight, Fritz.", "Quiet now mate.", "Not a peep, there's a good lad."]
         },
         "vance": {
-          "onLand": ["The gorge is that way, Sarge.", "Keep to the trees. The snow tells tales.", "Plant's across the gorge. Can see the lights."],
-          "onSpotted": ["Should've kept to the trees.", "He's seen me. Damn this snow.", "Stood out like a crow on a sheet."],
-          "onKill": ["He never heard me.", "Not a sound.", "Quiet as the snow."]
+          "onLand": ["The gorge is that way, Sarge.", "Keep to the trees. The snow tells tales.", "The plant's across the gorge. Tricky."],
+          "onSpotted": ["Should've kept to the trees.", "He's seen me. Damn snow!", "Stood out, dammit."],
+          "onKill": ["He never heard a thing.", "Not a sound.", "Quietly now."]
         },
         "barrow": {
-          "onLand": ["We're leaving a trail a blind man could follow.", "Pines! Missed the lot of 'em.", "Every step shows up here. Lovely."],
-          "onWounded": ["Leave it. Get to the plant.", "Don't wait for me. The cells!", "Just a nick. Go on."]
+          "onLand": ["We're leaving a trail a blind man could follow.", "This place is just like home. Kidding!", "Every step shows up here. Bloody lovely."],
+          "onWounded": ["Leave it. Get to the plant.", "Don't wait for me. The cells!", "Just a scratch. Go on."]
         },
         "speers": {
-          "onLand": ["Bren stays slung tonight, lads.", "Bren's down safe. Pity I can't use it.", "Not a shot tonight. I'll manage."]
+          "onLand": ["Bren stays slung tonight, lads.", "Bren's down safe. Pity I can't use it.", "Not a shot tonight, huh? I'll manage."]
         },
         "nunn": {
-          "onLand": ["Not a shot? Then what am I carrying this for?", "Snow up to me knees.", "Cold as charity up here."],
-          "onKill": ["Shh. That's him sorted.", "Night night, pal.", "Not a squeak out of him."]
+          "onLand": ["Not a shot? Then what am I carrying this heavy bloody gun for?", "Snow up to me knees.", "Cold as a nun up here."],
+          "onKill": ["Shh. That's him sorted.", "Nighty night, pal.", "Not a squeak out of him."]
         }
       },
       "comicPanels": {
         "dakota": {
           "art": ["assets/panels/panel-dakota-gunnerside.jpg", "assets/panels/panel-dakota.jpg"],
-          "caption": "OVER NORWAY. THE PLATEAU IS THIRTY MILES OF NOTHING, AND THEY'RE DROPPING US IN THE MIDDLE OF IT."
+          "caption": "OVER NORWAY. THIRTY MILES OF BARREN SNOW, AND THEY'RE DROPPING US IN THE MIDDLE OF IT."
         },
         "landing": {
           "art": "assets/panels/panel-landing-gunnerside.jpg",
-          "caption": "THE ISVIDDA, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK."
+          "caption": "MØRKGJELET GORGE, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK."
         },
         "success": {
           "art": "assets/title/contents-gunnerside_full.jpg",
-          "caption": "THE CELLS WERE WRECKED, AND THE GARRISON NEVER KNEW WHERE THEY'D GONE."
+          "caption": "THE CELLS WERE DESTROYED, AND THE GARRISON NEVER KNEW WHAT WENT WRONG."
         }
       },
       "_cues": "M60: the shot echoes down the gorge; wind under the drop's drone (MISSION-GUNNERSIDE-WORDS.md, Its sounds).",
@@ -485,7 +483,7 @@
       "ratings": [
         {
           "from": 0,
-          "label": "HEARD IN ELVEBYEN"
+          "label": "HEARD FOR MILES"
         },
         {
           "from": 24,
@@ -493,11 +491,11 @@
         },
         {
           "from": 30,
-          "label": "LIKE GHOSTS"
+          "label": "NOT A SHOT FIRED"
         },
         {
           "from": 35,
-          "label": "NOT A SHOT FIRED"
+          "label": "LIKE GHOSTS"
         }
       ],
       "titleCard": "assets/title/title-card-gunnerside.jpg",

@@ -343,7 +343,7 @@ GAME, sized and handled as the landing panels: `assets/panels/panel-dakota.jpg`,
 by every mission, and optionally `panel-dakota-<mission id>.jpg`, tried first (the heavy
 water plant's Halifax, `panel-dakota-gunnerside.jpg`, Priority 31c; a
 mission's `comicPanels.dakota.art` is that list). Supplied at 3:2, 1200 x 800, kept as
-`_full.jpg`; the game loads a 900 x 600 copy. Not supplied, nothing is shown.
+`_full.jpg`; the game loads a 900 x 600 copy. The shared one supplied at M60b (the operator's). Not supplied, nothing is shown.
 
 **The title painting** (M55, ART-PROMPTS.md Priority 29): `assets/title/title-painting.jpg`,
 **16:10, 2400 x 1500**, JPEG, sRGB, opaque, no text, behind the opening page, cropped

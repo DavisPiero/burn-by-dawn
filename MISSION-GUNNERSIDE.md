@@ -307,8 +307,8 @@ inside.)
 
 **The score**: France's, with no train and no salvo, the clean run NOT A SHOT FIRED at 5.
 The rating's bands (M59b, from the bot's winning scores on Normal, whose middle half is
-23 to 34): under 24 HEARD IN ELVEBYEN, 24 A QUIET JOB, 30 LIKE GHOSTS, 35 NOT A SHOT FIRED,
-the top wanting the telephone or the clean run. The names are placeholders.
+23 to 34): under 24 HEARD FOR MILES, 24 A QUIET JOB, 30 NOT A SHOT FIRED, 35 LIKE GHOSTS,
+the top wanting the telephone or the clean run. The names are the operator's (M60b).
 
 ### The alert on this ground
 

@@ -412,7 +412,7 @@ mission is built, and this spec gains only the engine rules the mission needs.
 ## 15. The training mission — the practice ground
 
 **In `MISSION-TRAINING.md`**: a course of lessons at a parachute school in England, and
-the lesson engine that runs it. The engine is built and the course, all seventeen lessons, is playable from the contents page, where it is first and flagged START HERE.
+the lesson engine that runs it. The engine is built and the course, all seventeen lessons, is playable from the contents page, where it is first.
 
 ---
 
