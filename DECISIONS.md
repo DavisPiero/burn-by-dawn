@@ -188,3 +188,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-19 | m59d | In ?layout a click on a run's tab is the end of a drag, never a choice of run (as START HERE's); 1-3 still pick one
 2026-10-19 | m59d | Place names are drawn in a group of their own that the board redraws when data/layout.json moves them (paintPlaces, as paintClearHexes), since the terrain is printed once; the ? pages' scenes have no places and are untouched
 2026-10-19 | m59d | While PAINT CLEAR or PAINT GROUND is on, labels let the click through to the hex under them (index.html), so a hex under a place name can still be painted
+2026-10-19 | m59d | M59d signed off by the operator ("M59d is signed off, merge it") and merged; build M59d; next M60, MISSION-GUNNERSIDE.md split first
