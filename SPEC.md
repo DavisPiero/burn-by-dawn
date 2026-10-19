@@ -13,7 +13,7 @@ heavy water plant (§16, `MISSION-GUNNERSIDE.md`), is playable too since M60.
 
 This file says how the game works **now**. It keeps no history: when and why each rule
 came to be as it is, and the balance numbers each change was measured against, are in
-`DECISIONS.md` (before M50, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
+`DECISIONS.md` (before M56, `DECISIONS-ARCHIVE.md`). What comes next is in `ROADMAP.md`.
 Turns and actions (§4) are in `TURNS.md`, detection and alert (§6) in `DETECTION.md`,
 sabotage (§7) in `SABOTAGE.md`, the drop (§9) in `DROP.md` and winning and scoring (§10) in `WINNING.md`, each as
 authoritative as this file; the milestones done are in `MILESTONES.md`.
@@ -393,7 +393,7 @@ tagged.
 ### Done
 
 The table of milestones finished is in `MILESTONES.md`. Each is recorded in full in
-`DECISIONS.md` (before M50, `DECISIONS-ARCHIVE.md`) and the git history.
+`DECISIONS.md` (before M56, `DECISIONS-ARCHIVE.md`) and the git history.
 
 ---
 

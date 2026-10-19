@@ -43,7 +43,7 @@ writing code.
   Keep its "what Claude is drawing in code" list true when sprites change.
 - `STATE.md` — one page: where the project stands, what is next, what is open with the
   operator. **Read it at the start of every session and rewrite it at the end.**
-- `DECISIONS.md` — append-only log. See below. Entries before M50 are in
+- `DECISIONS.md` — append-only log. See below. Entries before M56 are in
   `DECISIONS-ARCHIVE.md`, which is not read every session.
 - `ROADMAP.md` — what comes after the current milestone, and in what order. Read it when
   choosing or scoping the next milestone. SPEC.md still wins where they differ.

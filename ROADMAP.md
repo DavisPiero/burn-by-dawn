@@ -13,10 +13,10 @@ Phase N" means the archive.
 
 ## Where we are
 
-18 Oct 2026, build M58e. Three missions (France, the airfield, the aqueduct) and the
-training course, all playable from the contents page, at three difficulty levels, with
-painted art and recorded sound; the fourth, Gunnerside, a draft at `?mission=gunnerside`
-awaiting its balance (M59). Each map is printed on its own ground colour (M58d), and
+19 Oct 2026, build M60. Four missions (France, the airfield, the aqueduct and, since
+M60, the heavy water plant) and the training course, all playable from the contents
+page, at three difficulty levels, with painted art and recorded sound (the heavy water
+plant's paintings and recordings asked for, ART-PROMPTS.md Priorities 31 and 32). Each map is printed on its own ground colour (M58d), and
 the operator places notes and clears hexes in `?layout` (M58e), paints a map's ground there (M59c), and drags the board's labels (M59d). The test of the game is SPEC.md's two pillars: every
 success makes the rest harder, and the player is hunter and hunted at once.
 
@@ -34,8 +34,8 @@ success makes the rest harder, and the player is hunter and hunted at once.
 2. **Then the fourth mission, Gunnerside** (chosen 17 Oct 2026), because it plays least
    like the three there are. **Specified at M56** in `MISSION-GUNNERSIDE.md` (18 Oct
    2026): the stealth mission, a gorge to climb, tracks in the snow, NOT A SHOT FIRED.
-   Built as M57 (engine) to M60 (words, sounds, art), with M61 for new comic panel
-   moments if wanted; the order is in that file.
+   Built as M57 (engine) to M60 (words, sounds, art), **playable since M60**, with M61
+   for new comic panel moments if wanted; the order is in that file.
 3. **Playtests on people who have never seen the game** (`docs/PLAYTEST.md`,
    `?playtest`) whenever a tester can be found, and a milestone of fixes for what they
    trip on, as M49b was.
