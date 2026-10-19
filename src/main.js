@@ -25,7 +25,7 @@ import { dangerWash, firedOn, hideSaves } from './sight.js';
 import { alertOrigins, canSwimHere, canSwimNow, getClear, opportunities, wayOut } from './cues.js';
 import { POINT_KINDS, advance, allows, back, beginLesson, hold, caughtOut, lessonLandings, lessonStart, live, qualifications, stepMet, stepStart, umpireSays, validateLessons } from './lessons.js';
 import { boatAt } from './boat.js';
-import { clearHexes, contentsOffset, dropCueAt, noteNudge, validateLayout } from './layout.js';
+import { clearHexes, contentsOffset, dropCueAt, labelsOf, noteNudge, validateLayout } from './layout.js';
 import { layoutFromQuery, startLayoutTool } from './render/layout-tool.js';
 import { newRecord, note, playtestFromQuery, recordText } from './playtest.js';
 import { startPlaytestPanel } from './render/playtest-panel.js';
@@ -39,7 +39,7 @@ import {
   chargeCapacity, chargeRoom, checkHide, checkKill, checkKnife, checkPackParachute, checkPassCharge, checkPickUpCharge, checkStabilise, checkSuppress, checkThrowStone,
   hasInSights, onBoard, overloadApLoss, planMove, reachableFor, returnsFire, traitEffects, unitAt,
 } from './units.js';
-import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, paintClearHexes, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
+import { boardPixelBounds, canisterPopAt, createBoard, diversionTimeline, drawCounterKey, drawHelpScene, dropTimeline, paintClearHexes, paintPlaces, pickDiversionLine, renderPieces, resetBoardMemory } from './render/board.js';
 import { isMuted, loadSuppliedSounds, playCue, setMuted, startMusic, stopMusic, unlockSound } from './render/sound.js';
 import { describeUnitReadout, renderRoster } from './render/roster.js';
 import {
@@ -482,6 +482,7 @@ function deriveView() {
     timerTin: null, // M31d: the tin of time pencils, while its timers are open
     dropCue: null,
     dropCueAt: null, // where the drop cue centres and its key for the layout tool (M48k)
+    labels: labelsOf(layout, mission.id), // where the targets' names and EXFIL sit (M59d)
     selectCue: false,
   };
 
@@ -862,7 +863,7 @@ function deriveDrop(view, hex) {
   if (step && (course.progress.met || !allows(step, { kind: selected ? 'jump' : 'run' }))) view.dropCue = null;
   view.drop = {
     runs: baseMap.dropRuns.map((run) => ({
-      id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, labelNudge: run.labelNudge ?? null, windAlong: run.windAlong ?? null,
+      id: run.id, label: run.label, tag: run.tag, wind: run.wind, labelAlong: run.labelAlong ?? null, labelNudge: view.labels.runTabs[run.id] ?? null, layoutKey: `${view.labels.layoutKey}:runTabs:${run.id}`, windAlong: run.windAlong ?? null,
       from: { q: run.from[0], r: run.from[1] }, to: { q: run.to[0], r: run.to[1] },
       jumps: jumpPoints(run, count), selected: run.id === state.dropRunId,
     })),
@@ -1745,6 +1746,8 @@ function render() {
   noteHeard();
   // The hexes the operator left clear of the ground colour (M58e, art only).
   paintClearHexes(layers, clearHexes(layout, mission.id));
+  // And its place names where it puts them (M59d).
+  paintPlaces(layers, labelsOf(layout, mission.id));
   renderPieces(layers, state, view);
   renderAlertDial(alertDial, alertCaption, view.alert);
   renderReport(reportList, state, view.place, locateHex, earlierReports);

@@ -102,7 +102,7 @@ export function createBoard(svg, map, handlers) {
   for (const layer of layerList) svg.appendChild(layer);
 
   const hexNodes = new Map();
-  printTerrain(terrain, defs, map, corners, edge, (hex, q, r) => {
+  const places = printTerrain(terrain, defs, map, corners, edge, (hex, q, r) => {
     hex.style.cursor = 'pointer';
     hex.addEventListener('click', () => handlers.onHexClick(q, r));
     hex.addEventListener('mouseenter', () => handlers.onHexHover(q, r));
@@ -112,7 +112,7 @@ export function createBoard(svg, map, handlers) {
   svg.addEventListener('mouseleave', () => handlers.onHexLeave());
 
   return {
-    svg, map, corners, handlers, hexNodes, art, vision, chutes, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
+    svg, map, corners, handlers, hexNodes, places, art, vision, chutes, sites, reachable, routes, path, highlight, counters, tokens, risk, effects, speech,
     // Drawing memory: where each counter was last drawn, and recent blasts.
     motion: new Map(),
     deaths: new Map(), // unit id -> { since, q, r }: a man seen alive, then dead (M21)
@@ -197,13 +197,17 @@ function printTerrain(terrain, defs, map, corners, edge, onHex = null, clipPrefi
   drawRoads(lines, map, edge, railway);
   drawRoadArt(lines, map);
   drawRailway(lines, map, edge, railway);
-  drawPlaces(lines, map);
+  // In a group of their own, which the board redraws as data/layout.json moves them (M59d).
+  const places = el('g');
+  drawPlaces(places, map);
+  lines.appendChild(places);
   terrain.appendChild(lines);
 
   terrain.appendChild(el('rect', {
     x: edge.left, y: edge.top, width: edge.right - edge.left, height: edge.bottom - edge.top,
     fill: 'none', stroke: GRID.border, 'stroke-width': GRID.borderWidth, 'pointer-events': 'none',
   }));
+  return places;
 }
 
 /** The art of the terrain printed round hex (q, r), on the board. */
@@ -600,24 +604,41 @@ function stampPoint(map, state, objective) {
   return { ...at, x: at.x + nudge[0] * map.hexSize, y: at.y + nudge[1] * map.hexSize };
 }
 
-/** Place names, printed on the map under everything that moves. */
-function drawPlaces(layer, map) {
+/**
+ * Place names, printed on the map under everything that moves. `labels` (M59d,
+ * data/layout.json) moves each by [x, y] hex radii, by its name, and marks it
+ * for the layout tool.
+ */
+function drawPlaces(layer, map, labels = null) {
   for (const place of map.places ?? []) {
     const style = PLACE[place.kind] ?? PLACE.other;
     const c = axialToPixel(place.at[0], place.at[1], map.hexSize);
-    const x = c.x + (place.dx ?? 0) * map.hexSize;
-    const y = c.y + (place.dy ?? 0) * map.hexSize;
+    const [dx, dy] = labels?.places?.[place.name] ?? [0, 0];
+    const x = c.x + dx * map.hexSize;
+    const y = c.y + dy * map.hexSize;
     const attrs = {
       x, y, 'font-family': PLACE.font, 'font-size': style.size, 'font-weight': style.weight,
       'font-style': style.italic ? 'italic' : 'normal', 'letter-spacing': style.spacing,
       ...(place.angle ? { transform: `rotate(${place.angle} ${x} ${y})` } : {}),
     };
     const name = style.capitals ? place.name.toUpperCase() : place.name;
+    const g = el('g');
+    if (labels) g.dataset.layout = `${labels.layoutKey}:places:${place.name}`;
     if (style.halo !== false) {
-      layer.appendChild(text(name, { ...attrs, fill: 'none', stroke: style.halo ?? PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': style.haloOpacity ?? 0.85 }));
+      g.appendChild(text(name, { ...attrs, fill: 'none', stroke: style.halo ?? PLACE.halo, 'stroke-width': PLACE.haloWidth, 'stroke-linejoin': 'round', 'stroke-opacity': style.haloOpacity ?? 0.85 }));
     }
-    layer.appendChild(text(name, { ...attrs, fill: style.fill, 'fill-opacity': style.opacity ?? 1 }));
+    g.appendChild(text(name, { ...attrs, fill: style.fill, 'fill-opacity': style.opacity ?? 1 }));
+    layer.appendChild(g);
   }
+}
+
+/** The place names where data/layout.json has them (M59d), redrawn only when they move. */
+export function paintPlaces(layers, labels) {
+  const stamp = JSON.stringify([labels.layoutKey, labels.places]);
+  if (layers.placesStamp === stamp) return;
+  layers.placesStamp = stamp;
+  layers.places.replaceChildren();
+  drawPlaces(layers.places, layers.map, labels);
 }
 
 /** The directions from a hedgerow hex to the hedgerow hexes its hedge joins. */
@@ -2260,9 +2281,11 @@ function drawSites(layers, state, view) {
   const exfilAt = labelPoint(map, view.exfil);
   const exfilWords = view.exfilLabel ?? 'EXFIL';
   const exfilLabelAt = labelInside(map, exfilAt, exfilWords);
-  // Moved by the map's `exfilLabelNudge`, in hex radii (art only).
-  const [lx, ly] = (map.exfilLabelNudge ?? [0, 0]).map((v) => v * map.hexSize);
-  layers.sites.appendChild(casedText(exfilWords, exfilLabelAt.x + lx, exfilLabelAt.y + ly, view.exfilShut ? EXFIL.shutStroke : EXFIL.label));
+  // Moved by data/layout.json's `names.exfil`, in hex radii (art only; the map's `exfilLabelNudge` before M59d).
+  const [lx, ly] = (view.labels?.names?.exfil ?? [0, 0]).map((v) => v * map.hexSize);
+  const exfilLabel = casedText(exfilWords, exfilLabelAt.x + lx, exfilLabelAt.y + ly, view.exfilShut ? EXFIL.shutStroke : EXFIL.label);
+  if (view.labels) exfilLabel.dataset.layout = `${view.labels.layoutKey}:names:exfil`;
+  layers.sites.appendChild(exfilLabel);
   // The job is done and the way out is open (M46): its ground throbs green,
   // and with the tips on GET OUT! is lettered over it in the same green.
   if (view.goOut) {
@@ -2310,12 +2333,17 @@ function drawSites(layers, state, view) {
     const needed = view.winTargetIds.has(objective.id);
     const name = needed ? `${objective.label.toUpperCase()} ★` : objective.label.toUpperCase();
     // Names go on last, over the charge points around them.
-    // `nameNudge` (M33, art only) moves the name by [x, y] hex radii, and
+    // Its nudge in data/layout.json's `names` (M59d; the map's `nameNudge`
+    // since M33, art only) moves the name by [x, y] hex radii, and
     // `nameWrap` (M33b, art only) prints it a word to a line, the last line
     // where one line would sit: the airfield's Stukas' names are under them,
     // clear of their pens' charge points, and BOMB STORE is two lines.
     const mapObjective = map.objectives?.find((o) => o.id === objective.id);
-    const [nameX, nameY] = (mapObjective?.nameNudge ?? [0, 0]).map((v) => v * map.hexSize);
+    const [nameX, nameY] = (view.labels?.names?.[objective.id] ?? [0, 0]).map((v) => v * map.hexSize);
+    // Its lines are one thing to the layout tool (M59d).
+    const nameGroup = el('g');
+    if (view.labels) nameGroup.dataset.layout = `${view.labels.layoutKey}:names:${objective.id}`;
+    labels.push(nameGroup);
     // Where the map says so (`namesInPlay` false, M41b: the airfield's board was
     // all words), a name is printed only before the jump and under the mouse;
     // in play the win's targets keep their star and the rest say nothing.
@@ -2324,11 +2352,11 @@ function drawSites(layers, state, view) {
     // Every charge it needs is set and burning (M41b, the operator's: the pen
     // note went with the next click): said under its name until it goes up.
     if (!objective.destroyed && view.chargedObjectiveIds?.has(objective.id)) {
-      labels.push(casedText('ALL CHARGES SET · GET CLEAR', at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY + OBJECTIVE.labelSize * OBJECTIVE.labelLeading, OBJECTIVE.primaryLabel));
+      nameGroup.appendChild(casedText('ALL CHARGES SET · GET CLEAR', at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY + OBJECTIVE.labelSize * OBJECTIVE.labelLeading, OBJECTIVE.primaryLabel));
     }
     words.forEach((word, k) => {
       const up = (words.length - 1 - k) * OBJECTIVE.labelSize * OBJECTIVE.labelLeading;
-      labels.push(casedText(word, at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY - up, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
+      nameGroup.appendChild(casedText(word, at.x + nameX, at.top - map.hexSize * OBJECTIVE.labelLift + nameY - up, needed ? OBJECTIVE.primaryLabel : OBJECTIVE.label));
     });
     // The exchange's telephone lines run out to a pole on each of its charge
     // points (M12), so "cut the line" has a line to cut; cut or blown, they hang snapped.
@@ -2735,7 +2763,7 @@ function drawDrop(layers, drop) {
     // close together in the north-west corner and their names would collide.
     // Centred on the line, so the line runs through its middle (M12); a run
     // may set how far along (`labelAlong` in map.json).
-    // Nudged off the line where map.json says (M24), as a charge point's satchel is.
+    // Nudged off the line where data/layout.json says (M59d; the map's since M24), as a charge point's satchel is.
     const along = run.labelAlong ?? DROP.labelAlong;
     const [nx, ny] = run.labelNudge ?? [0, 0];
     const at = { x: a.x + (b.x - a.x) * along + nx * map.hexSize, y: a.y + (b.y - a.y) * along + ny * map.hexSize };
@@ -2778,6 +2806,7 @@ function runTab(layers, run, at) {
   tab.addEventListener('mouseleave', () => layers.handlers.onRunLeave?.());
   tab.addEventListener('click', () => layers.handlers.onRunChoose?.(run.id));
   tab.at = { x: at.x, y: at.y, w: width, h: height, selected: run.selected };
+  if (run.layoutKey) tab.dataset.layout = run.layoutKey;
   return tab;
 }
 

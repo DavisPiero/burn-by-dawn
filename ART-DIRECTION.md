@@ -142,7 +142,7 @@ board must read at a glance.
   and its arch's face hanging from the deck over the water. The rules read the bridge.
 - **Place names** from `map.json`: the village in spaced capitals, water in italic on the
   water, a gorge in spaced capitals along it (M58b), the rest in italic, each nudged off
-  its hex (`dx`, `dy`) to sit in what it names. The turn report uses them ("the field by
+  its hex to sit in what it names (`places` in `data/layout.json`, dragged in `?layout`, M59d). The turn report uses them ("the field by
   Ferme Lebrun").
 - **A wall reads as a wall** (M58b, the operator's: the plant's walls and pipes trapped
   men who could not see them): ground marked `wall` in theme.js (the plant's walls and
@@ -183,7 +183,7 @@ board must read at a glance.
   chip, never a selected man's solid frame.
 - A map may print its targets' names only before the jump and under the mouse
   (`namesInPlay` false: the airfield), leaving the win's stars in play.
-- An objective's name is printed above it; a map may move one (`nameNudge`, art only:
+- An objective's name is printed above it; `data/layout.json` may move one (`names`, by objective id, and `exfil` for EXFIL; art only, dragged in `?layout`, M59d:
   the airfield's Stukas' are under them, clear of their pens' charge points) or print it
   a word to a line (`nameWrap`: BOMB STORE). A target that is not stood on and whose
   charge point sits among its neighbours' (the bowser, the bomb store) has a **lead**

@@ -5,11 +5,21 @@
     "flag": [86, 21],
     "clipboard": [0, 0]
   },
-  "_missions": "Each mission's drop screen, by its id in missions.json. dropCue is the hex PICK A DROP DIRECTION centres on, [q, r], fractions allowed; with none it centres on the runs' names. clear (M58e) lists the hexes printed bare paper whatever the mission's ground colour, painted with PAINT CLEAR in ?layout. notes moves a ring's note by [x, y] hex radii (a hex across is 1.73, a row 1.5): keyed by the objective's id in its map, and exfil for the way out's. These were each map's noteNudge, exfilNoteNudge and dropCueAt, and France's drop cue an offset in theme.js, before M48k.",
+  "_missions": "Each mission's drop screen, by its id in missions.json. dropCue is the hex PICK A DROP DIRECTION centres on, [q, r], fractions allowed; with none it centres on the runs' names. clear (M58e) lists the hexes printed bare paper whatever the mission's ground colour, painted with PAINT CLEAR in ?layout. notes moves a ring's note by [x, y] hex radii (a hex across is 1.73, a row 1.5): keyed by the objective's id in its map, and exfil for the way out's. runTabs, names and places (M59d) move the board's labels by [x, y] hex radii: runTabs a drop run's tab off its line, by the run's id; names a target's name, by its id, and the EXFIL label as exfil; places a place name, by the name as its map spells it. Those were each map's labelNudge, nameNudge, exfilLabelNudge and places' dx and dy before M59d. The rest were each map's noteNudge, exfilNoteNudge and dropCueAt, and France's drop cue an offset in theme.js, before M48k.",
   "missions": {
     "training": {
       "dropCue": [1.4, 6.2],
       "notes": {},
+      "names": {
+        "dummy-bridge": [0, 0.4]
+      },
+      "places": {
+        "Tatton Hall": [0.45, -0.75],
+        "Tatton Mere": [0.4, -0.6],
+        "The Mere Brook": [0.36, -0.4],
+        "Tatton Wood": [0, 0.2],
+        "The Knoll": [0.4, 0]
+      },
       "clear": [
         [4, 9],
         [3, 10],
@@ -21,6 +31,17 @@
     "france": {
       "dropCue": [3.98, 2.03],
       "notes": {},
+      "runTabs": {
+        "west": [-0.3, 0],
+        "east": [0.35, 0]
+      },
+      "places": {
+        "Bellecour": [0, 0.1],
+        "Bois des Moines": [0, -0.78],
+        "La Butte": [0, 0.25],
+        "Ferme Lebrun": [0, 0.98],
+        "Canal St-Rémy": [-0.15, 0.12]
+      },
       "clear": [
         [15, 2],
         [1, 4],
@@ -64,6 +85,22 @@
         "bomb-store": [0, -3.2],
         "signals": [2.9, 0.3],
         "exfil": [-4.25, 0]
+      },
+      "runTabs": {
+        "west": [1.27, 0],
+        "north": [1.73, 0]
+      },
+      "names": {
+        "stuka-1": [0, 2.12],
+        "stuka-2": [0, 2.12],
+        "stuka-3": [0, 2.12],
+        "stuka-4": [0, 2.12]
+      },
+      "places": {
+        "Bir el Kasra": [0, 0.75],
+        "Erg Safra": [0, -0.6],
+        "Djebel Rhar": [0.6, -0.3],
+        "Oued Melah": [0.97, -1.5]
       }
     },
     "gunnerside": {
@@ -71,6 +108,21 @@
       "notes": {
         "cell-hall": [-5.7, 3.56],
         "telephone": [3.18, -0.07]
+      },
+      "runTabs": {
+        "west": [4.43, -0.9],
+        "north": [0.67, 0.85],
+        "east": [-3.33, -0.5]
+      },
+      "names": {
+        "cell-hall": [-0.87, 0],
+        "exfil": [0, -3]
+      },
+      "places": {
+        "Vassdal Works": [0, 0.15],
+        "Mørkgjelet Gorge": [0.87, 0],
+        "Isvidda": [0, -0.6],
+        "to Elvebyen": [-0.6, 0.9]
       }
     },
     "aqueduct": {
@@ -79,6 +131,12 @@
         "aqueduct": [-6.8, 2.2],
         "road-bridge": [5.43, 2.3],
         "exfil": [-1.97, -1.27]
+      },
+      "places": {
+        "Torrente Tragino": [0, -0.1],
+        "Masseria Lauro": [0.5, -0.85],
+        "Marina": [-1.2, 2.2],
+        "Monte Carruozzo": [0.4, 0.2]
       }
     }
   }

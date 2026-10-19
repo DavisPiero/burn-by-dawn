@@ -1,7 +1,7 @@
 // The layout (M48k, data/layout.json): where the things the operator places
 // by hand sit, and the layout tool's moves and Copy, which are pure.
 
-import { clearHexes, contentsOffset, dropCueAt, groundSwatches, layoutText, moved, paintedCount, paintedRows, rowsText, targetsOn, toggledClear, movedCount, noteNudge, pixelsToAxial, pixelsToRadii, validateLayout } from '../src/layout.js';
+import { LABELS, clearHexes, contentsOffset, dropCueAt, groundSwatches, labelsOf, layoutPath, layoutText, moved, paintedCount, paintedRows, rowsText, targetsOn, toggledClear, movedCount, noteNudge, pixelsToAxial, pixelsToRadii, validateLayout } from '../src/layout.js';
 import { axialToPixel } from '../src/hex.js';
 import { checkMap, inBounds, legendCharAt, loadJson, loadMap } from '../src/map.js';
 
@@ -40,6 +40,54 @@ export default [
       for (const key of ['dropCueAt', 'exfilNoteNudge']) assert(!(key in map), `${mission.map} still has ${key}`);
       for (const o of map.objectives) assert(!('noteNudge' in o), `${mission.map} ${o.id} still has noteNudge`);
     }
+  }],
+
+  ['no map still carries the label nudges moved into data/layout.json (M59d)', async () => {
+    const { missions } = await loadAll();
+    for (const mission of missions) {
+      const map = await loadJson(mission.map);
+      assert(!('exfilLabelNudge' in map), `${mission.map} still has exfilLabelNudge`);
+      for (const run of map.dropRuns) assert(!('labelNudge' in run), `${mission.map} run ${run.id} still has labelNudge`);
+      for (const o of map.objectives) assert(!('nameNudge' in o), `${mission.map} ${o.id} still has nameNudge`);
+      for (const p of map.places ?? []) assert(!('dx' in p) && !('dy' in p), `${mission.map} ${p.name} still has dx or dy`);
+    }
+  }],
+
+  ['every label in data/layout.json is a run, target or place its mission has (M59d)', async () => {
+    const { missions, layout } = await loadAll();
+    for (const mission of missions) {
+      const map = await loadJson(mission.map);
+      const known = {
+        runTabs: new Set(map.dropRuns.map((r) => r.id)),
+        names: new Set([...map.objectives.map((o) => o.id), 'exfil']),
+        places: new Set((map.places ?? []).map((p) => p.name)),
+      };
+      for (const kind of LABELS) {
+        for (const key of Object.keys(layout.missions[mission.id]?.[kind] ?? {})) assert(known[kind].has(key), `${mission.id}.${kind}: no "${key}"`);
+      }
+    }
+  }],
+
+  ['a mission\'s labels read from the layout, none where it says nothing, and moves like a note (M59d)', async () => {
+    const { layout } = await loadAll();
+    equal(labelsOf(layout, 'gunnerside').names.exfil, [0, -3], 'Gunnerside\'s EXFIL up two rows');
+    equal(labelsOf(layout, 'airfield').runTabs.west, [1.27, 0], 'the airfield\'s West tab');
+    equal(labelsOf(layout, 'france').places['Canal St-Rémy'], [-0.15, 0.12], 'a place by its name');
+    equal(labelsOf(layout, 'aqueduct').runTabs, {}, 'a mission that moves no tab');
+    equal(labelsOf(layout, 'france').layoutKey, 'mission:france', 'the tool\'s keys begin with the mission');
+    equal(layoutPath('mission:france:places:Canal St-Rémy'), ['missions', 'france', 'places', 'Canal St-Rémy'], 'a place\'s path');
+    equal(layoutPath('mission:aqueduct:names:exfil'), ['missions', 'aqueduct', 'names', 'exfil'], 'EXFIL\'s path, not the note\'s');
+    const tab = moved(layout, 'mission:airfield:runTabs:west', [0.5, -1]);
+    equal(tab.missions.airfield.runTabs.west, [1.77, -1], 'a tab moved from where it stood');
+    const place = moved(tab, 'mission:aqueduct:places:Torrente Tragino', [1, 1]);
+    equal(place.missions.aqueduct.places['Torrente Tragino'], [1, 0.9], 'a place moved');
+    const name = moved(place, 'mission:aqueduct:names:exfil', [0, 1]);
+    equal(name.missions.aqueduct.names.exfil, [0, 1], 'a label with no nudge moves from none');
+    equal(name.missions.aqueduct.notes.exfil, layout.missions.aqueduct.notes.exfil, 'the way-out note left where it was');
+    equal(movedCount(layout, name), 3, 'three labels moved');
+    let threw = false;
+    try { validateLayout({ ...layout, missions: { france: { places: { Bellecour: [1] } } } }); } catch { threw = true; }
+    assert(threw, 'a label that is not [x, y] is refused');
   }],
 
   ['a mission\'s drop cue and notes read from the layout, and nothing where it says nothing', async () => {

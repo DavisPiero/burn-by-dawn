@@ -22,11 +22,7 @@
       "jumpAt": 1,
       "spacing": 1,
       "wind": "W",
-      "labelAlong": 0.05,
-      "labelNudge": [
-        4.43,
-        -0.9
-      ]
+      "labelAlong": 0.05
     },
     {
       "id": "north",
@@ -44,11 +40,7 @@
       "jumpAt": 1,
       "spacing": 1,
       "wind": "NE",
-      "labelAlong": 0.0,
-      "labelNudge": [
-        0.67,
-        0.85
-      ]
+      "labelAlong": 0.0
     },
     {
       "id": "east",
@@ -66,11 +58,7 @@
       "jumpAt": 0,
       "spacing": 1,
       "wind": "W",
-      "labelAlong": 0.0,
-      "labelNudge": [
-        -3.33,
-        -0.5
-      ]
+      "labelAlong": 0.0
     }
   ],
   "_enemies": "SPEC.md §6, §16. Seven. Posts: the bridge post, one beside each end, each sweeping between the deck and the gorge; the gate guard by the gate, looking down the road to the town and sweeping to the main door (M59b: facing the door it left no way round). Patrols: the plateau patrol across the East run's ground east of the road, the one that reads prints; the rim patrol along the gorge's north rim west of the bridge; the plant patrol along the plant's north wall and the railway to the duct; the road patrol on the road between the gate and the town. They set out on turn 2.",
@@ -252,10 +240,6 @@
     {
       "id": "cell-hall",
       "label": "Cell Hall",
-      "nameNudge": [
-        -0.87,
-        0
-      ],
       "ringCharges": true,
       "kind": "cellHall",
       "primary": true,
@@ -319,7 +303,7 @@
       ]
     }
   ],
-  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes down the east edge from the corner, open all night. exfilArt names its picture: two lines of ski tracks and a cairn. `exfilLabelNudge` (art only, the operator's, after M59c) moves the EXFIL label by [x, y] hex radii: up two rows, beside the way out rather than under it.",
+  "_exfil": "SPEC.md §10, §16. The ski trail off the north-east corner of the plateau, three hexes down the east edge from the corner, open all night. exfilArt names its picture: two lines of ski tracks and a cairn. The EXFIL label is moved up two rows, beside the way out rather than under it (the operator's, after M59c): `names.exfil` in data/layout.json since M59d, dragged in ?layout.",
   "exfil": [
     [
       17,
@@ -335,10 +319,6 @@
     ]
   ],
   "exfilArt": "skiTrail",
-  "exfilLabelNudge": [
-    0,
-    -3
-  ],
   "_railway": "SPEC.md §11, art only: the line drawn through the railway's hexes along the shelf, from the west edge to the duct. Its hexes are Railway ground (terrain.json), which is what the rules read. `railwayStops` (M59b): the line ends at the duct rather than running on to the board's edge, over the plant.",
   "railway": [
     [
@@ -367,8 +347,7 @@
       "at": [
         3,
         9
-      ],
-      "dy": 0.15
+      ]
     },
     {
       "name": "Mørkgjelet Gorge",
@@ -376,8 +355,7 @@
       "at": [
         3,
         6
-      ],
-      "dx": 0.87
+      ]
     },
     {
       "name": "Isvidda",
@@ -385,8 +363,7 @@
       "at": [
         6,
         2
-      ],
-      "dy": -0.6
+      ]
     },
     {
       "name": "to Elvebyen",
@@ -394,9 +371,7 @@
       "at": [
         10,
         12
-      ],
-      "dy": 0.9,
-      "dx": -0.6
+      ]
     }
   ],
   "legend": {

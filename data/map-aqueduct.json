@@ -208,29 +208,22 @@
       "name": "Torrente Tragino",
       "kind": "wadi",
       "at": [5, 6],
-      "angle": 62,
-      "dy": -0.1
+      "angle": 62
     },
     {
       "name": "Masseria Lauro",
       "kind": "farm",
-      "at": [10, 3],
-      "dy": -0.85,
-      "dx": 0.5
+      "at": [10, 3]
     },
     {
       "name": "Marina",
       "kind": "village",
-      "at": [1, 10],
-      "dy": 2.2,
-      "dx": -1.2
+      "at": [1, 10]
     },
     {
       "name": "Monte Carruozzo",
       "kind": "high",
-      "at": [-1, 6],
-      "dy": 0.2,
-      "dx": 0.4
+      "at": [-1, 6]
     }
   ],
   "legend": {

@@ -24,7 +24,7 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
   OUT BEFORE THE BOAT: TURN 15).
 - **Ghost Dakotas**: until a run is picked, a faint grey Dakota flies each drop line again
   and again, staggered, so the lines read as flight paths. Silent.
-- Each run's tab sits on its line (`labelAlong`, `labelNudge` in `map.json`) with its word,
+- Each run's tab sits on its line (`labelAlong` in the map file; moved off it by `runTabs` in `data/layout.json`, dragged in `?layout`, M59d) with its word,
   QUIET, STEADY or FAST, as on its button and rollover.
 - **Where to start**: until a run is picked, **PICK A DROP DIRECTION** is lettered big in
   the player's pen, **in the blue of our kit** (the canisters' blue: in red it read as one
