@@ -18,10 +18,12 @@ writing code.
   - `MISSION-AIRFIELD.md` — SPEC §13: mission 2. **Read it before working on the
     airfield**, and as the pattern when specifying a new mission. Each later mission gets
     a `MISSION-<NAME>.md` like it, written before the mission is built.
-  - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, playable, not yet balanced. **Read it
+  - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, playable and balanced. **Read it
     before working on the aqueduct.**
-  - `MISSION-GUNNERSIDE.md` — SPEC §16: mission 4, specified, not yet built. **Read it
-    before working on Gunnerside.**
+  - `MISSION-GUNNERSIDE.md` — SPEC §16: mission 4, its rules, map and balance. **Read it
+    before working on Gunnerside.** Its words, panels, pictures and sounds are in
+    `MISSION-GUNNERSIDE-WORDS.md`: read that too before touching what Gunnerside's
+    player reads, sees or hears.
   - `MISSION-TRAINING.md` — SPEC §15: the training course and its lesson engine. **Read
     it before working on a lesson or on `src/lessons.js`.**
   - `TURNS.md` — SPEC §4: the turn, every action and its cost, mouse and keyboard.

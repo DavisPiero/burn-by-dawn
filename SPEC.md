@@ -427,7 +427,8 @@ rules: supply canisters (§9, `DROP.md`) and the way out on a timetable (§10).
 
 ## 16. Mission 4 — the heavy water plant
 
-**In `MISSION-GUNNERSIDE.md`**, specified at M56, its map a draft since M58: Norway, February
+**In `MISSION-GUNNERSIDE.md`**, with its words, panels, pictures and sounds in
+`MISSION-GUNNERSIDE-WORDS.md` (split at M60); specified at M56, its map a draft since M58: Norway, February
 1943, loosely Operation Gunnerside. The stealth mission: a gorge to climb, tracks in the
 snow, gunfire heard across the board, and NOT A SHOT FIRED as its clean run. Its one
 engine rule, tracks in the snow, is built (M57) and written in §9 (`DROP.md`); with it the no-shot
