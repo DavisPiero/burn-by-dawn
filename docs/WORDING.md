@@ -1909,13 +1909,13 @@ sections above.
 
 - O11 | West run
 - O12 | QUIET
-- O13 | In from the west over the pine woods: under the trees, and close to where the gorge narrows. A man who comes down in the pines loses his first turn.
+- O13 | In from the west over the pine woods: close to where the gorge narrows. A man who comes down in the pines loses his first turn.
 - O14 | North run
 - O15 | STEADY
-- O16 | Down from the north over the open middle of the plateau: the softest landing on the map, and prints wherever the men go.
+- O16 | Down from the north over the centre of the plateau: the softest landing on the map, but the men leave footprints wherever they go.
 - O17 | East run
 - O18 | FAST
-- O19 | In from the east toward the road and the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.
+- O19 | In from the east toward the road and the bridge: nearest the crossing and the way out, and nearest to the bridge post and plateau patrol.
 
 ### Names on the map
 
@@ -1968,52 +1968,52 @@ sections above.
 
 - O55 under the score, in red | ‹SPEERS› fired on turn ‹9›: the whole valley heard it.
 - O56 the clean run’s line | never ‹Alarmed›, not a shot fired, no diversion
-- O57 rating | HEARD IN ELVEBYEN
+- O57 rating | HEARD FOR MILES
 - O58 rating | A QUIET JOB
-- O59 rating | LIKE GHOSTS
-- O60 rating | NOT A SHOT FIRED
+- O59 rating | NOT A SHOT FIRED
+- O60 rating | LIKE GHOSTS
 
 ### The comic panels
 
-- O61 in the aircraft | OVER NORWAY. THE PLATEAU IS THIRTY MILES OF NOTHING, AND THEY'RE DROPPING US IN THE MIDDLE OF IT.
-- O62 after the landing | THE ISVIDDA, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK.
-- O63 mission accomplished | THE CELLS WERE WRECKED, AND THE GARRISON NEVER KNEW WHERE THEY'D GONE.
+- O61 in the aircraft | OVER NORWAY. THIRTY MILES OF BARREN SNOW, AND THEY'RE DROPPING US IN THE MIDDLE OF IT.
+- O62 after the landing | MØRKGJELET GORGE, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK.
+- O63 mission accomplished | THE CELLS WERE DESTROYED, AND THE GARRISON NEVER KNEW WHAT WENT WRONG.
 
 ### What the men say instead
 
-- O64 DUTCH, onLand | Into the pines, lads. Mind where you tread.
-- O65 DUTCH, onLand | Nobody fires tonight. Not one round.
-- O66 DUTCH, onLand | Quiet as the snow, lads.
+- O64 DUTCH, onLand | Mind where you tread, lads. Stay frosty.
+- O65 DUTCH, onLand | Nobody fires tonight. Not a round.
+- O66 DUTCH, onLand | Quiet, lads. Move like ghosts.
 - O67 DUTCH, onKill | Quietly done.
 - O68 DUTCH, onKill | Not a sound. Good.
 - O69 DUTCH, onKill | Let the snow have him.
 - O70 FITCH, onLand | Snow? Nobody said snow!
-- O71 FITCH, onLand | Me fingers have gone numb already.
-- O72 FITCH, onLand | Cold enough to freeze a fella's tea.
-- O73 FITCH, onKill | Shh. Sleep tight.
-- O74 FITCH, onKill | Quiet now, mate.
+- O71 FITCH, onLand | Me fingers are numb already.
+- O72 FITCH, onLand | Cold enough to freeze a bloke's bollocks.
+- O73 FITCH, onKill | Sleep tight, Fritz.
+- O74 FITCH, onKill | Quiet now mate.
 - O75 FITCH, onKill | Not a peep, there's a good lad.
 - O76 VANCE, onLand | The gorge is that way, Sarge.
 - O77 VANCE, onLand | Keep to the trees. The snow tells tales.
-- O78 VANCE, onLand | Plant's across the gorge. Can see the lights.
+- O78 VANCE, onLand | The plant's across the gorge. Tricky.
 - O79 VANCE, onSpotted | Should've kept to the trees.
-- O80 VANCE, onSpotted | He's seen me. Damn this snow.
-- O81 VANCE, onSpotted | Stood out like a crow on a sheet.
-- O82 VANCE, onKill | He never heard me.
+- O80 VANCE, onSpotted | He's seen me. Damn snow!
+- O81 VANCE, onSpotted | Stood out, dammit.
+- O82 VANCE, onKill | He never heard a thing.
 - O83 VANCE, onKill | Not a sound.
-- O84 VANCE, onKill | Quiet as the snow.
+- O84 VANCE, onKill | Quietly now.
 - O85 BARROW, onLand | We're leaving a trail a blind man could follow.
-- O86 BARROW, onLand | Pines! Missed the lot of 'em.
-- O87 BARROW, onLand | Every step shows up here. Lovely.
+- O86 BARROW, onLand | This place is just like home. Kidding!
+- O87 BARROW, onLand | Every step shows up here. Bloody lovely.
 - O88 BARROW, onWounded | Leave it. Get to the plant.
 - O89 BARROW, onWounded | Don't wait for me. The cells!
-- O90 BARROW, onWounded | Just a nick. Go on.
+- O90 BARROW, onWounded | Just a scratch. Go on.
 - O91 SPEERS, onLand | Bren stays slung tonight, lads.
 - O92 SPEERS, onLand | Bren's down safe. Pity I can't use it.
-- O93 SPEERS, onLand | Not a shot tonight. I'll manage.
-- O94 NUNN, onLand | Not a shot? Then what am I carrying this for?
+- O93 SPEERS, onLand | Not a shot tonight, huh? I'll manage.
+- O94 NUNN, onLand | Not a shot? Then what am I carrying this heavy bloody gun for?
 - O95 NUNN, onLand | Snow up to me knees.
-- O96 NUNN, onLand | Cold as charity up here.
+- O96 NUNN, onLand | Cold as a nun up here.
 - O97 NUNN, onKill | Shh. That's him sorted.
-- O98 NUNN, onKill | Night night, pal.
+- O98 NUNN, onKill | Nighty night, pal.
 - O99 NUNN, onKill | Not a squeak out of him.

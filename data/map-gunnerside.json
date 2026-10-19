@@ -10,7 +10,7 @@
       "id": "west",
       "label": "West run",
       "tag": "quiet",
-      "description": "In from the west over the pine woods: under the trees, and close to where the gorge narrows. A man who comes down in the pines loses his first turn.",
+      "description": "In from the west over the pine woods: close to where the gorge narrows. A man who comes down in the pines loses his first turn.",
       "from": [
         -1,
         2
@@ -28,7 +28,7 @@
       "id": "north",
       "label": "North run",
       "tag": "steady",
-      "description": "Down from the north over the open middle of the plateau: the softest landing on the map, and prints wherever the men go.",
+      "description": "Down from the north over the centre of the plateau: the softest landing on the map, but the men leave footprints wherever they go.",
       "from": [
         11,
         0
@@ -46,7 +46,7 @@
       "id": "east",
       "label": "East run",
       "tag": "fast",
-      "description": "In from the east toward the road and the bridge: the nearest to the crossing and the way out, and the nearest to the bridge post and the plateau patrol.",
+      "description": "In from the east toward the road and the bridge: nearest the crossing and the way out, and nearest to the bridge post and plateau patrol.",
       "from": [
         15,
         4

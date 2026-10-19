@@ -45,7 +45,7 @@ read as they did.
 - **The men's lines** (a `dialogue` patch, three to a moment, as M54): every man's
   onLand on the snow and the cold; the gunners on holding fire (Speers: "Bren stays
   slung tonight, lads.", his gun being a Bren; Nunn: "Not a shot? Then what am I
-  carrying this for?"); quiet, grim onKill lines for the four who knife; Vance's
+  carrying this heavy bloody gun for?"); quiet, grim onKill lines for the four who knife; Vance's
   onSpotted ("Should've kept to the trees."); Barrow's tracks line ("We're leaving a
   trail a blind man could follow.") among his onLand, as there is no moment for laying
   prints; his onWounded sends them on to the plant. Speers has no line of his own on
@@ -74,11 +74,11 @@ quiet ones that a painting tells better than a log line.
 (ART-PROMPTS.md Priority 31):**
 - **The aircraft** (the Dakota slot, `panel-dakota-gunnerside.jpg` tried before the shared one): the men in the back of
   a Halifax over the snow, as Gunnerside flew, the jump hole open, cold. "OVER NORWAY.
-  THE PLATEAU IS THIRTY MILES OF NOTHING, AND THEY'RE DROPPING US IN THE MIDDLE OF IT."
+  THIRTY MILES OF BARREN SNOW, AND THEY'RE DROPPING US IN THE MIDDLE OF IT."
 - **The landing**: canopies on the snow under a low moon, the gorge a black line far
-  off. "THE ISVIDDA, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK."
+  off. "MØRKGJELET GORGE, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK."
 - **Mission accomplished**: the contents panel, as for every mission. "THE CELLS WERE
-  WRECKED, AND THE GARRISON NEVER KNEW WHERE THEY'D GONE."
+  DESTROYED, AND THE GARRISON NEVER KNEW WHAT WENT WRONG."
 
 **New moments, to develop** (an engine addition: a short fixed list of panel triggers
 in `missions.json`, in the spirit of the win conditions, never a code branch for one
