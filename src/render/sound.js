@@ -681,6 +681,64 @@ const SYNTHS = {
     // The stones dragged back: a thinner hiss under the wave's tail.
     noiseThrough(ctx, out, at + 1.1, 1.2, [filter(ctx, 'highpass', 2800, 0.5), envelope(ctx, at + 1.1, 0.12, 1.15, 0.3)], v * 0.11 + 0.7);
   },
+
+  // The heavy water plant's (M60, MISSION-GUNNERSIDE-WORDS.md, Its sounds),
+  // made until recordings are found. The gorge's echo: the burst coming back
+  // off the far side three times, each later, duller and quieter, over a long
+  // low roll away down the gorge. It is the sound of the mistake.
+  echo: (ctx, out, at, v) => {
+    const rng = createRng(NOISE_SEED + 160 + v);
+    for (const [k, [delay, gain, dull]] of [[0, 0.5, 1300], [0.45, 0.28, 850], [1.05, 0.14, 520]].entries()) {
+      for (let i = 0; i < 4; i++) {
+        const t = at + delay + i * 0.11 + rng.next() * 0.02;
+        noiseThrough(ctx, out, t, 0.22, [filter(ctx, 'lowpass', dull), envelope(ctx, t, gain, 0.2, 0.004)], v * 0.13 + k * 0.29 + i * 0.07);
+      }
+    }
+    const roll = filter(ctx, 'lowpass', 420);
+    roll.frequency.setValueAtTime(420, at);
+    roll.frequency.exponentialRampToValueAtTime(110, at + 2.2);
+    noiseThrough(ctx, out, at, 2.3, [roll, envelope(ctx, at, 0.4, 2.2, 0.15)], v * 0.19 + 0.3);
+  },
+
+  // The decoy flare, far off: a pop, a rising hiss as it climbs, and a long
+  // fizz as it burns, all dulled by the distance.
+  flare: (ctx, destination, at, v) => {
+    const far = filter(ctx, 'lowpass', 4200);
+    far.connect(destination);
+    const pop = ctx.createOscillator();
+    pop.frequency.setValueAtTime(190, at);
+    pop.frequency.exponentialRampToValueAtTime(70, at + 0.12);
+    pop.connect(envelope(ctx, at, 0.8, 0.15, 0.002)).connect(far);
+    pop.start(at);
+    pop.stop(at + 0.18);
+    noiseThrough(ctx, far, at, 0.06, [filter(ctx, 'bandpass', 900, 1.5), envelope(ctx, at, 0.6, 0.05, 0.001)], v * 0.09);
+    const climb = filter(ctx, 'bandpass', 1400, 3);
+    climb.frequency.setValueAtTime(1400, at + 0.1);
+    climb.frequency.exponentialRampToValueAtTime(5200, at + 1.0);
+    noiseThrough(ctx, far, at + 0.1, 1.0, [climb, envelope(ctx, at + 0.1, 0.45, 0.95, 0.4)], v * 0.13 + 0.2);
+    const burn = filter(ctx, 'highpass', 2600, 0.7);
+    const flicker = ctx.createGain();
+    const rng = createRng(NOISE_SEED + 170 + v);
+    flicker.gain.setValueAtTime(0.0001, at + 0.95);
+    for (let t = at + 1.0; t < at + 2.5; t += 0.07) flicker.gain.linearRampToValueAtTime(0.12 + rng.next() * 0.16, t);
+    flicker.gain.exponentialRampToValueAtTime(0.0001, at + 2.6);
+    noiseThrough(ctx, far, at + 0.95, 1.65, [burn, flicker], v * 0.17 + 0.5);
+  },
+
+  // Wind over the snow: a low hollow gust that swells and falls away.
+  wind: (ctx, out, at, v) => {
+    const length = 2.4;
+    const hollow = filter(ctx, 'bandpass', 320, 1.4);
+    hollow.frequency.setValueAtTime(300, at);
+    hollow.frequency.linearRampToValueAtTime(680, at + 1.1);
+    hollow.frequency.linearRampToValueAtTime(380, at + length);
+    const gust = ctx.createGain();
+    gust.gain.setValueAtTime(0.0001, at);
+    gust.gain.exponentialRampToValueAtTime(0.8, at + 1.0);
+    gust.gain.exponentialRampToValueAtTime(0.45, at + 1.6);
+    gust.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    noiseThrough(ctx, out, at, length, [hollow, gust], v * 0.11 + 0.1);
+  },
 };
 
 export const SOUND_IDS = Object.keys(SYNTHS);
@@ -739,6 +797,14 @@ const CUES = {
   canister: [['canister-thump', 0.5, 0]],
   boatComing: [['oars', 0.3, 0.2]],
   boatIn: [['oars', 0.5, 0], ['surf', 0.5, 1.6]],
+  // The heavy water plant's (M60; data/missions.json `cues` puts them in place
+  // of the usual ones there): a shot with its echo down the gorge; the decoy
+  // flare; wind under the drop's drone; and for a night lost or given up, the
+  // wind alone and a dog far off.
+  shotEcho: [['gunfire', 0.45, 0], ['echo', 0.45, 0.3]],
+  flare: [['flare', 0.55, 0]],
+  dropWind: [['aircraft', 0.39, 0], ['wind', 0.3, 0.2]],
+  windDefeat: [['wind', 0.55, 0.35], ['dog-distant', 0.35, 1.5]],
   // The opening screens' music (M17): one pass of it; startMusic loops it.
   titleMusic: [['music-title', 0.5, 0]],
 };

@@ -446,6 +446,9 @@ function deriveView() {
     command: rules.command,
     diversionUses: rules.diversion.uses,
     diversionName: mission.words.diversionName,
+    // What the leader calls it with, and the verb (M60: the heavy water plant's flare pistol, fired).
+    diversionDevice: mission.words.diversionDevice ?? 'radio',
+    diversionVerb: mission.words.diversionVerb ?? 'call',
     // The stealth score (SPEC.md §10, M11b), for each man's roster rollover.
     unseenPoints: rules.scoring.perTrooperUnseen,
     // A spotted man can fire back himself (M36), for the words about contact.
@@ -1299,7 +1302,15 @@ function actionsFor(unit) {
     { id: 'cut', key: 'X', label: 'Cut the line', short: 'Cut line', help: cutLineHelp(), ...withCost(checkCutLine(state, unit, rules), () => `full turn, no noise, alert +${rules.alert.lineCut}`) },
     // Shown greyed where he could swim with his turn unspent (M49b, the operator's).
     { id: 'swim', key: 'W', label: 'Swim', help: `A full turn: across the ${map.terrain[rules.actions.swim.across]?.label.toLowerCase() ?? 'water'} to the far bank`, shown: canSwimHere(map, rules, state, unit) && (!lessonStep() || lessonLive({ kind: 'action', id: 'swim' })), ...withCost(checkSwim(map, state, unit, null, rules), () => 'full turn') },
-  ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, apLabel: apLabel(a), active: state.targeting === a.id }));
+  ].filter((a) => !never.has(a.id)).map((a) => ({ ...a, ...loudShot(a, unit), apLabel: apLabel(a), active: state.targeting === a.id }));
+}
+
+/** The gun's button where a shot is heard by the whole garrison (M60): its cost in red, and said in red in its rollover. */
+function loudShot(action, unit) {
+  const loud = action.id === 'suppress' && loudShotWords(unit);
+  if (!loud) return {};
+  const bonus = state.firstShot ? '' : `, and the bonus for ${mission.words.cleanBonus ?? 'a clean run'} is lost`;
+  return { danger: true, warn: `${loud.toUpperCase()}${bonus}.`, shotAlert: shotCost(unit).alert };
 }
 
 // Stabilise or Pass, if this man could take it right now (M26): the words for
@@ -1333,6 +1344,8 @@ function apLabel(action) {
   const wholeTurn = ['stabilise', 'cut', 'swim'].includes(action.id) || (action.id === 'knife' && rules.actions.knife.fullTurn);
   // Greyed for want of a whole turn (M49b): said so.
   if (wholeTurn && action.shown && !action.ok) return 'full turn';
+  // A shot heard by the whole garrison (M60): its alert beside its AP, in red.
+  if (action.shotAlert) return `${action.apCost} AP +${action.shotAlert}`;
   return wholeTurn ? 'all AP' : `${action.apCost} AP`;
 }
 
@@ -1576,13 +1589,53 @@ function enemyActsFor(unit, enemy) {
     role.kill && { label: 'KILL', key: 'K', check: checkKill(map, unit, enemy, rules) },
     { label: 'KNIFE', key: 'N', check: checkKnife(unit, enemy, rules) },
   ].filter(Boolean);
-  return acts.map(({ label, key, check }) => ({
-    label,
-    text: check.ok
-      ? `${unit.shortName} can, now [${key}]: ${label === 'KNIFE' && rules.actions.knife.fullTurn ? 'his whole turn' : `${check.cost} AP`}`
-      : `${unit.shortName} can't: ${check.reason}`,
-    tone: check.ok ? 'prompt' : null,
-  }));
+  const loud = loudShotWords(unit);
+  return acts.map(({ label, key, check }) => {
+    // A shot where it is heard by the whole garrison (M60): its cost, in red.
+    const gun = loud && key === 'S' && check.ok;
+    return {
+      label,
+      text: check.ok
+        ? `${unit.shortName} can, now [${key}]: ${label === 'KNIFE' && rules.actions.knife.fullTurn ? 'his whole turn' : `${check.cost} AP`}${gun ? `, ${loud}` : ''}`
+        : `${unit.shortName} can't: ${check.reason}`,
+      tone: gun ? 'danger' : check.ok ? 'prompt' : null,
+    };
+  });
+}
+
+/** A cue by name, or the one the mission puts in its place (M60, `cues`: the heavy water plant's echo and wind). */
+function cueFor(name) {
+  return mission.cues?.[name] ?? name;
+}
+
+/**
+ * The back page's line under the score where a shot cost the no-shot bonus
+ * (M60, `scoring.cleanNoShot`): "Speers fired on turn 9: the whole valley
+ * heard it". Null where nobody fired, or the mission does not ask.
+ */
+function firstShotNote() {
+  const shot = state.outcome && rules.scoring.cleanNoShot && state.firstShot;
+  if (!shot) return null;
+  const man = state.units.find((u) => u.id === shot.unitId);
+  return `${man?.shortName ?? 'A man'} fired on turn ${shot.turn}: ${mission.words.firstShotHeard ?? 'the whole garrison heard it'}.`;
+}
+
+/**
+ * A shot's cost where the mission asks before the first one (M60, `confirmShot`,
+ * the heavy water plant): "+6 alert · heard everywhere", said in red on the
+ * gun's button, its rollover and the enemy's hover row. Null elsewhere, so
+ * the other missions read as they did.
+ */
+function loudShotWords(unit) {
+  const cost = shotCost(unit);
+  return cost && `+${cost.alert} alert · heard ${cost.everywhere ? 'everywhere' : `${cost.radius} hexes off`}`;
+}
+
+/** What his shot would cost, where the first shot asks first (M60): { alert, radius, everywhere }, or null. */
+function shotCost(unit) {
+  if (!rules.confirmShot) return null;
+  const radius = hearingRadius('gunfire', state.alert.points, rules);
+  return { alert: applyHook(unit, 'onFire', 'alert', rules.alert.gunfire).value, radius, everywhere: radius >= Math.max(map.width, map.height) };
 }
 
 /** What a spotted man can do with a gun (M36): fire back himself, where the rules allow; else a gunner's job. */
@@ -1776,7 +1829,7 @@ function render() {
     ? { ...view.mission.diversion, ok: false, reason: 'not part of this step' }
     : view.mission.diversion);
   renderResults(resultsBox, state.outcome, level.label, { title: GAME_TITLE, tagline: mission.tagline }, () => { notePlay('restart', mission.id); restartMission(); }, openContents,
-    state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null);
+    state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null, firstShotNote());
   // Every man's name is set in bold on the card, as in the report.
   // Mission accomplished (M52): its panel once the bang has been seen.
   if (state.outcome?.kind === 'success') showComicPanel('success', state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0);
@@ -1870,7 +1923,7 @@ function commit(next, cue = 'action') {
   if (steps !== null && undoStack.length > steps) undoStack = undoStack.slice(-steps);
   const before = state;
   state = settleMission(next, rules, baseMap);
-  if (cue) playCue(cue);
+  if (cue) playCue(cueFor(cue));
   flyAlertPips(alertOrigins(before, state, selectedUnit(before)));
 }
 
@@ -3120,6 +3173,9 @@ function describeBriefing(which, view) {
       ...(salvo ? [`${salvo.count} in one bang +${salvo.points}`] : []),
       ...(rules.scoring.clean ? [`${mission.words.cleanBonus ?? 'a quiet night'} +${rules.scoring.clean}`] : []),
     ];
+    // Where the clean run is not a shot fired (M60, the heavy water plant), it is
+    // the bonus that matters most tonight, so it comes first, in capitals.
+    if (rules.scoring.clean && rules.scoring.cleanNoShot) extras.unshift(extras.pop().toUpperCase());
     return {
       banner: { title: GAME_TITLE, tagline: mission.tagline },
       // The mission's title heads its orders (M31d, the operator's), and
@@ -3138,6 +3194,8 @@ function describeBriefing(which, view) {
             ? { bold: `The BOAT is in on turn ${boat} and stays ${rules.exfil.openFor ?? 'till dawn'}${rules.exfil.openFor ? ' turns' : ''}. There is no way out before it.` }
             : `Dawn comes at the end of turn ${rules.turnLimit}. Every bang stirs the garrison.`,
           ...(rules.canisters ? [{ bold: `The charges are in the ${rules.canisters.count} CANISTERS, ${rules.canisters.charges} in each. Nobody jumps with one.` }] : []),
+          // The mission's own line (M60): the one thing tonight asks that no other night does.
+          ...(mission.words.ordersLine ? [{ bold: mission.words.ordersLine }] : []),
           ...(extras.length ? [`Bonus: ${extras.join(', ')}.`] : []),
         ],
       ],
@@ -3178,7 +3236,8 @@ function describeBriefing(which, view) {
         lines: lines.length ? lines.slice(0, shown) : ['A quiet night. Nothing seen.'],
         more: lines.length > shown ? `…and ${lines.length - shown} more in the report under the map.` : null,
       },
-      { heading: 'WHAT NEXT', hints: true, lines: turnHint(view).map((h) => h.text) },
+      // On the first turn, the mission's own line under the hint (M60, the heavy water plant's snow).
+      { heading: 'WHAT NEXT', hints: true, lines: [...turnHint(view).map((h) => h.text), ...(state.turn === 1 && mission.words.firstTurn ? [mission.words.firstTurn] : [])] },
     ],
     toggle: { on: briefingsOn },
   };
@@ -3186,7 +3245,18 @@ function describeBriefing(which, view) {
 
 /** The turn card's one hint (M44), with what it points at (M46). */
 function turnHint(view) {
-  return pointedHints(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName, waiting: waitingToBoard(state, rules, baseMap) }, 1);
+  return pointedHints(state, rules, { diversionOk: view.mission.diversion.ok, diversionName: mission.words.diversionName, diversionVerb: mission.words.diversionVerb, waiting: waitingToBoard(state, rules, baseMap), shot: shotOffered() }, 1);
+}
+
+/** A gunner who could fire now, where the first shot asks first (M60): { unit, enemy, alert, heard }, or null. */
+function shotOffered() {
+  if (!rules.confirmShot || state.firstShot) return null;
+  for (const unit of state.units.filter((u) => onBoard(u) && rules.roles[u.role].suppress)) {
+    const enemy = state.enemies.find((e) => checkSuppress(map, unit, e, rules).ok);
+    const cost = enemy && shotCost(unit);
+    if (enemy) return { unit, enemy, alert: cost.alert, heard: cost.everywhere ? 'across the board' : `${cost.radius} hexes off` };
+  }
+  return null;
 }
 
 /** The hexes the turn card's hint is about: the board rings each while the card is up. A handful at most. */
@@ -3494,10 +3564,11 @@ function describeDiversionCard(before) {
     kicker: mission.words.diversionKicker,
     // Headed in the diversion's own blue, as its button is (M11).
     tone: 'raf',
-    paragraphs: ['The radio worked! The garrison looks the other way.'],
+    // In the mission's own words where it has them (M60: the heavy water plant's flare).
+    paragraphs: [mission.words.diversionWorked ?? 'The radio worked! The garrison looks the other way.'],
     sections: [
       { heading: 'WHAT IT DID', lines },
-      { heading: 'THE RADIO', lines: [left > 0 ? `${left === 1 ? 'One more call' : `${left} more calls`} left, while the leader lives.` : 'No more calls this mission.'] },
+      { heading: `THE ${(mission.words.diversionDevice ?? 'radio').toUpperCase()}`, lines: [left > 0 ? `${left === 1 ? 'One more call' : `${left} more calls`} left, while the leader lives.` : mission.words.diversionSpent ?? 'No more calls this mission.'] },
     ],
   };
 }
@@ -3608,7 +3679,7 @@ function jumpNow() {
     dropShowTimer = setTimeout(endDropShow, timeline.length);
     // Each is on the ground, ringed, with its thump, as its canopy lands.
     startCanisterCue(dropShow.since, Object.fromEntries([...timeline.byCanister].map(([id, t]) => [id, t.landAt])));
-    dropSound = playCue('drop');
+    dropSound = playCue(cueFor('drop'));
     briefingAfterDrop = briefingsOn && !course?.lesson;
   } else if (state.phase !== 'drop' && briefingsOn && !course?.lesson) {
     briefing = { kind: 'turn' };

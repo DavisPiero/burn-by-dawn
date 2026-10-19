@@ -89,7 +89,11 @@ export function validateMissions(json, url = 'data/missions.json') {
     }
     // The orders' line about the clean run (M32c), optional.
     if (m.words.cleanOrders !== undefined && (typeof m.words.cleanOrders !== 'string' || !m.words.cleanOrders)) throw new Error(`${where} "words.cleanOrders" must be words`);
-    if (m.words.cleanBonus !== undefined && (typeof m.words.cleanBonus !== 'string' || !m.words.cleanBonus)) throw new Error(`${where} "words.cleanBonus" must be words`);
+    // The rest of the optional words: the orders' own line, the first turn's, who fired first,
+    // and the diversion's device, verb and card (M60, the heavy water plant).
+    for (const key of ['cleanBonus', 'ordersLine', 'firstTurn', 'firstShotHeard', 'diversionDevice', 'diversionVerb', 'diversionWorked', 'diversionSpent']) {
+      if (m.words[key] !== undefined && (typeof m.words[key] !== 'string' || !m.words[key])) throw new Error(`${where} "words.${key}" must be words`);
+    }
     for (const key of ['levels', 'dialogue']) {
       if (m[key] !== undefined && (typeof m[key] !== 'object' || m[key] === null || Array.isArray(m[key]))) throw new Error(`${where} "${key}" must be an object`);
     }
@@ -99,6 +103,8 @@ export function validateMissions(json, url = 'data/missions.json') {
         if (part[key] !== undefined && (typeof part[key] !== 'object' || part[key] === null || Array.isArray(part[key]))) throw new Error(`${where} levels.${id}.${key} must be an object`);
       }
     }
+    // Cues played in place of the usual ones (M60): { usual: its own }.
+    if (m.cues !== undefined && (typeof m.cues !== 'object' || m.cues === null || Array.isArray(m.cues) || Object.values(m.cues).some((c) => typeof c !== 'string' || !c))) throw new Error(`${where} "cues" must map cue names to cue names`);
     if (m.diversionSound !== undefined && (typeof m.diversionSound !== 'string' || !m.diversionSound)) throw new Error(`${where} "diversionSound" must name a sound cue`);
     for (const [moment, panel] of Object.entries(m.comicPanels ?? {})) {
       // One file, or a list tried in order (M55): the mission's own, then the shared one.

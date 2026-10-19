@@ -104,8 +104,9 @@ export function aidWords(prompt, units, rules) {
 /**
  * @param {object} state
  * @param {object} rules data/rules.json
- * @param {{ diversionOk?: boolean, diversionName?: string }} [extra] what the caller has already
- *   worked out, and the mission's name for its diversion (words.diversionName, M31)
+ * @param {{ diversionOk?: boolean, diversionName?: string, shot?: object }} [extra] what the caller has already
+ *   worked out, and the mission's name for its diversion (words.diversionName, M31); `shot` is
+ *   { unit, enemy, alert, heard }, a gunner who could fire now where the first shot asks first (M60)
  * @returns {string[]} most pressing first, at most `max`. The turn card shows one (M44),
  *   so each is a line or two: what to do, and its key.
  */
@@ -119,7 +120,7 @@ export function hintsFor(state, rules, extra = {}, max = 3) {
  * (the map's, which no hint is handed). Arguments as hintsFor's.
  * @returns {{ text: string, at: { q: number, r: number }[] | 'exfil' }[]}
  */
-export function pointedHints(state, rules, { diversionOk = false, diversionName = 'RAF diversion', waiting = [] } = {}, max = 3) {
+export function pointedHints(state, rules, { diversionOk = false, diversionName = 'RAF diversion', diversionVerb = 'call', waiting = [], shot = null } = {}, max = 3) {
   const list = [];
   const here = (things) => things.map((t) => ({ q: t.q, r: t.r }));
   // `at`: men, enemies, charges or hexes, anything with a q and an r.
@@ -163,10 +164,16 @@ export function pointedHints(state, rules, { diversionOk = false, diversionName 
     hints.push(fuse <= 1 ? `The ${label} blows at the end of this turn. Get everyone clear!` : `The ${label} blows in ${fuse} turns. Be off the red ground by then.`, on);
   }
 
+  // Where the first shot is heard by the whole garrison (M60, `confirmShot`,
+  // the heavy water plant): a gunner who could fire now is told its cost first.
+  if (shot && rules.confirmShot && !state.firstShot) {
+    hints.push(`${shot.unit.shortName} could fire on the ${shot.enemy.label.toLowerCase()}, but a shot is heard ${shot.heard}: alert +${shot.alert}. The knife is quieter.`, [shot.enemy]);
+  }
+
   // In a pickle (M26d): the diversion next, after any charge about to blow.
   const pickle = leader ? diversionPrompt(state, rules, diversionOk) : null;
   if (pickle) {
-    hints.push(`In a pickle: ${pickle}. Call the ${diversionName} [D] now.`, men.filter((u) => u.inContact));
+    hints.push(`In a pickle: ${pickle}. ${capitalFirst(diversionVerb)} the ${diversionName} [D] now.`, men.filter((u) => u.inContact));
   }
 
   // A scout starting his turn on a point he can cut (M20: a playtester could
