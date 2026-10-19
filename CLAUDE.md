@@ -41,6 +41,8 @@ writing code.
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
 - `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.
   Keep its "what Claude is drawing in code" list true when sprites change.
+  Only what is still to make, most wanted first. Move an item to `ART-PROMPTS-ARCHIVE.md`
+  (everything made, with its prompt; not read every session) when it is done.
 - `STATE.md` — one page: where the project stands, what is next, what is open with the
   operator. **Read it at the start of every session and rewrite it at the end.**
 - `DECISIONS.md` — append-only log. See below. Entries before M56 are in

@@ -320,11 +320,11 @@ airfield in `data/missions.json` and code sets BURN BY DAWN over it. The aqueduc
 `assets/title/title-card-aqueduct.jpg` (M43, ART-PROMPTS.md Priority 20), supplied at
 M43b with the title painted in: a 1600 x 400 copy, the painting kept as `_full.jpg`.
 The heavy water plant's is `assets/title/title-card-gunnerside.jpg` (M60, ART-PROMPTS.md
-Priority 31b), handled as the aqueduct's.
+Priority 31b), supplied at M60 with the title painted in, handled as the aqueduct's.
 
 **Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 120 x 80 since M60; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
 id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`, and since
-M60 `contents-gunnerside.jpg`, wired before it is painted: until then the line shows alone), **3:2,
+M60 `contents-gunnerside.jpg`, the operator's; a panel not yet painted leaves the line alone), **3:2,
 1200 x 800** (no smaller than 600 x 400), JPEG, sRGB, opaque, no text. A small painting
 beside each mission's line on the contents page (ART-PROMPTS.md Priority 14).
 
