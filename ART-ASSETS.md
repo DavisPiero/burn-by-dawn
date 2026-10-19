@@ -319,16 +319,19 @@ France's. If it is painted without the title, set `titleCardLettered: false` on 
 airfield in `data/missions.json` and code sets BURN BY DAWN over it. The aqueduct's is
 `assets/title/title-card-aqueduct.jpg` (M43, ART-PROMPTS.md Priority 20), supplied at
 M43b with the title painted in: a 1600 x 400 copy, the painting kept as `_full.jpg`.
+The heavy water plant's is `assets/title/title-card-gunnerside.jpg` (M60, ART-PROMPTS.md
+Priority 31b), supplied at M60 with the title painted in, handled as the aqueduct's.
 
-**Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 150 x 100; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
-id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`), **3:2,
+**Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 120 x 80 since M60; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
+id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`, and since
+M60 `contents-gunnerside.jpg`, the operator's; a panel not yet painted leaves the line alone), **3:2,
 1200 x 800** (no smaller than 600 x 400), JPEG, sRGB, opaque, no text. A small painting
-beside each mission's line on the contents page, shown about 180 x 120 (ART-PROMPTS.md
-Priority 14).
+beside each mission's line on the contents page (ART-PROMPTS.md Priority 14).
 
 **Comic panels** (M52; a mission's `comicPanels` in missions.json, ART-PROMPTS.md
 Priority 28): `assets/panels/panel-landing-<mission id>.jpg`, one per mission
-(`panel-landing-france.jpg`, `panel-landing-airfield.jpg`, `panel-landing-aqueduct.jpg`),
+(`panel-landing-france.jpg`, `panel-landing-airfield.jpg`, `panel-landing-aqueduct.jpg`,
+and `panel-landing-gunnerside.jpg` since M60, Priority 31d),
 supplied at **3:2, 1200 x 800**, sRGB, opaque, no text, and kept as
 `panel-landing-<id>_full.jpg`; the game loads a 900 x 600 copy at quality 80 (`sips -s
 format jpeg -s formatOptions 80 -z 600 900`). Shown about 550 x 370 over the board, tipped, in an ink frame the code draws, its
@@ -337,7 +340,8 @@ own `contents-<id>_full.jpg`. A panel not supplied is simply not shown.
 
 **The Dakota panel** (M55, ART-PROMPTS.md Priority 30): a comic panel shown at START
 GAME, sized and handled as the landing panels: `assets/panels/panel-dakota.jpg`, shared
-by every mission, and optionally `panel-dakota-<mission id>.jpg`, tried first (a
+by every mission, and optionally `panel-dakota-<mission id>.jpg`, tried first (the heavy
+water plant's Halifax, `panel-dakota-gunnerside.jpg`, Priority 31c; a
 mission's `comicPanels.dakota.art` is that list). Supplied at 3:2, 1200 x 800, kept as
 `_full.jpg`; the game loads a 900 x 600 copy. Not supplied, nothing is shown.
 
@@ -436,6 +440,9 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `surf.mp3` | under the oars as the boat lands (M43): one small wave breaking on shingle and dragging back. Supplied (M48h) | ~3.6 s |
 | `whistle.mp3` | a man caught out in a lesson (M47, SPEC §15): the umpire's whistle, one short blast. Supplied (M48h) | ~0.3 s |
 | `stab.mp3` | the knife (M48h): a short close blow. Supplied (M48h); before it the knife played the pencil | ~0.4 s |
+| `echo.mp3` | the heavy water plant's shot (M60): the burst coming back off the far side of a gorge, three times, fainter and duller, over a long low roll away; played just after the gunfire burst (cue `shotEcho`). Made in code until supplied | ~2–3 s |
+| `flare.mp3` | the heavy water plant's decoy flare (M60): a flare pistol's pop far off, a rising hiss as it climbs, a long crackling fizz as it burns. Made in code until supplied | ~2.5 s |
+| `wind.mp3` | the heavy water plant (M60): wind over high snow, a hollow gust that swells and falls; under the Dakota at the drop, and with the distant dog on a back page withdrawn or failed. Made in code until supplied | ~2.5–4 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 
 **Music by screen** (M48j, the operator's): `music-contents` over the contents page, and each

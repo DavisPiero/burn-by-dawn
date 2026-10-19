@@ -278,17 +278,18 @@
     },
     {
       "id": "gunnerside",
-      "status": "draft",
+      "status": "playable",
       "ground": "frost",
       "dropCueColour": "green",
       "title": "The Heavy Water Plant",
       "place": "Norway",
       "page": 46,
+      "panel": "assets/title/contents-gunnerside.jpg",
       "blurb": "A heavy water plant across a frozen gorge. Get in, blow the cells and get out without a shot fired.",
       "tagline": "SIX MEN · ONE STATION · NOT A SHOT FIRED",
       "map": "data/map-gunnerside.json",
       "roster": "data/roster.json",
-      "_rules": "MISSION-GUNNERSIDE.md (SPEC.md §16). A draft (M58), balanced at M59. A 20-turn night. Tracks in the snow on (2 turns, alert +1, once an enemy phase at most). The shot: gunfire +6 and heard across the whole board, the first shot of the night asked first (confirmShot), and the clean run NOT A SHOT FIRED (cleanNoShot) pays 5. Alarmed from 9 on this ground, not 7 (M59, the operator's pick): the snow and the knife leave more slips than elsewhere, and one shot and the bang still reach it. A sapper has room for two and the men jump with them, no canisters. Time pencils as on the aqueduct. The patrols set out on turn 2. A body found raises the alert but calls no squad (M59: the squads stood on the crossings for the rest of the night). The cell hall calls one squad up the road when it goes; the telephone line down stops the reserve and every squad (the exchange's payoff in France).",
+      "_rules": "MISSION-GUNNERSIDE.md (SPEC.md §16). A draft (M58), balanced at M59 and M59b, worded at M60. An 18-turn night. Tracks in the snow on (2 turns, alert +1, once an enemy phase at most). The shot: gunfire +6 and heard across the whole board, the first shot of the night asked first (confirmShot), and the clean run NOT A SHOT FIRED (cleanNoShot) pays 5. Alarmed from 9 on this ground, not 7 (M59, the operator's pick): the snow and the knife leave more slips than elsewhere, and one shot and the bang still reach it. A sapper has room for two and the men jump with them, no canisters. Time pencils as on the aqueduct. The patrols set out on turn 2. A body found raises the alert but calls no squad (M59: the squads stood on the crossings for the rest of the night). The cell hall calls one squad up the road when it goes; the telephone line down stops the reserve and every squad (the exchange's payoff in France).",
       "rules": {
         "turnLimit": 18,
         "roles": {
@@ -400,7 +401,7 @@
         }
       },
       "briefing": "Tonight six men are to drop onto a Norwegian plateau in the snow.",
-      "_words": "M58. Placeholder copy from MISSION-GUNNERSIDE.md for the operator to reword at M60; only what the engine needs to load the mission, and the cries. The diversion is a decoy flare: there were no bombers to call in Norway in 1943.",
+      "_words": "M58, M60. Placeholder copy from MISSION-GUNNERSIDE-WORDS.md for the operator to reword (docs/WORDING.md). Stealth said everywhere: the orders' own line, the first turn's line under the hint, who fired first on the back page. The diversion is a decoy flare from the leader's flare pistol: there were no bombers to call in Norway in 1943.",
       "words": {
         "lineGoesDead": "the plant's telephone goes dead",
         "lineIsDown": "the telephone line is already cut",
@@ -422,8 +423,63 @@
             "SPUREN!"
           ]
         },
-        "cleanBonus": "not a shot fired"
+        "cleanBonus": "not a shot fired",
+        "cleanOrders": "Getting in and out without a shot fired, with the garrison never Alarmed and no flare, earns the biggest bonus of any mission.",
+        "ordersLine": "Not a shot. Gunfire echoes down the gorge and the whole garrison hears it. The knife and the dark are your weapons.",
+        "firstTurn": "Stay off the open snow where you can: the patrols read tracks.",
+        "firstShotHeard": "the whole valley heard it",
+        "diversionDevice": "flare pistol",
+        "diversionVerb": "fire",
+        "diversionWorked": "The flare went up over the far ridge. The garrison looks the other way.",
+        "diversionSpent": "No more flares tonight."
       },
+      "_dialogue": "M60, placeholder for the operator (MISSION-GUNNERSIDE-WORDS.md, the men's lines): the snow, the cold, holding fire, and the knife's lines quiet.",
+      "dialogue": {
+        "holloway": {
+          "onLand": ["Into the pines, lads. Mind where you tread.", "Nobody fires tonight. Not one round.", "Quiet as the snow, lads."],
+          "onKill": ["Quietly done.", "Not a sound. Good.", "Let the snow have him."]
+        },
+        "fitch": {
+          "onLand": ["Snow? Nobody said snow!", "Me fingers have gone numb already.", "Cold enough to freeze a fella's tea."],
+          "onKill": ["Shh. Sleep tight.", "Quiet now, mate.", "Not a peep, there's a good lad."]
+        },
+        "vance": {
+          "onLand": ["The gorge is that way, Sarge.", "Keep to the trees. The snow tells tales.", "Plant's across the gorge. Can see the lights."],
+          "onSpotted": ["Should've kept to the trees.", "He's seen me. Damn this snow.", "Stood out like a crow on a sheet."],
+          "onKill": ["He never heard me.", "Not a sound.", "Quiet as the snow."]
+        },
+        "barrow": {
+          "onLand": ["We're leaving a trail a blind man could follow.", "Pines! Missed the lot of 'em.", "Every step shows up here. Lovely."],
+          "onWounded": ["Leave it. Get to the plant.", "Don't wait for me. The cells!", "Just a nick. Go on."]
+        },
+        "speers": {
+          "onLand": ["Bren stays slung tonight, lads.", "Bren's down safe. Pity I can't use it.", "Not a shot tonight. I'll manage."]
+        },
+        "nunn": {
+          "onLand": ["Not a shot? Then what am I carrying this for?", "Snow up to me knees.", "Cold as charity up here."],
+          "onKill": ["Shh. That's him sorted.", "Night night, pal.", "Not a squeak out of him."]
+        }
+      },
+      "comicPanels": {
+        "dakota": {
+          "art": ["assets/panels/panel-dakota-gunnerside.jpg", "assets/panels/panel-dakota.jpg"],
+          "caption": "OVER NORWAY. THE PLATEAU IS THIRTY MILES OF NOTHING, AND THEY'RE DROPPING US IN THE MIDDLE OF IT."
+        },
+        "landing": {
+          "art": "assets/panels/panel-landing-gunnerside.jpg",
+          "caption": "THE ISVIDDA, FEBRUARY 1943. NOT A SOUL FOR MILES — AND EVERY STEP LEAVES A MARK."
+        },
+        "success": {
+          "art": "assets/title/contents-gunnerside_full.jpg",
+          "caption": "THE CELLS WERE WRECKED, AND THE GARRISON NEVER KNEW WHERE THEY'D GONE."
+        }
+      },
+      "_cues": "M60: the shot echoes down the gorge; wind under the drop's drone (MISSION-GUNNERSIDE-WORDS.md, Its sounds).",
+      "cues": {
+        "suppress": "shotEcho",
+        "drop": "dropWind"
+      },
+      "diversionSound": "flare",
       "portraits": "assets/portraits/winter",
       "_ratings": "M58, a guess: the aqueduct's bands under this mission's names (MISSION-GUNNERSIDE.md), lowest first; M59 sets them.",
       "ratings": [
@@ -447,7 +503,7 @@
       "titleCard": "assets/title/title-card-gunnerside.jpg",
       "endSounds": {
         "success": "victory",
-        "otherwise": "defeat"
+        "otherwise": "windDefeat"
       }
     }
   ]

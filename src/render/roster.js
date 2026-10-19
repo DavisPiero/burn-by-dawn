@@ -139,7 +139,7 @@ export function describeUnit(unit, number, state, map, view) {
   for (const effect of view.traitEffectsById.get(unit.id) ?? []) {
     lines.push(`${effect.name} — ${capitalise(describeEffect(effect))}`);
   }
-  if (unit.leader) lines.push(...leaderLines(unit, state, view.command, view.diversionUses, view.diversionName));
+  if (unit.leader) lines.push(...leaderLines(unit, state, view));
   return [face(unit.id, 'popup-portrait'), html('b', null, unit.name), `\n${lines.join('\n')}`];
 }
 
@@ -170,7 +170,7 @@ export function describeUnitReadout(unit, number, state, map, view) {
     const led = state.units.filter((u) => u.commandBonus > 0).length;
     rows.push(
       { label: 'ORDERS', text: `${ordersWords(view.command).replace(/ of him$/, '').replace(/, \+(\d+) AP/, ', +$1')} · ${led === 0 ? 'nobody has' : led === 1 ? '1 has' : `${led} have`} them` },
-      { label: 'RADIO', text: `${view.diversionName} [D], ${timesWord(view.diversionUses)} a mission${state.diversionsCalled >= view.diversionUses ? ' · called' : ''}` },
+      { label: view.diversionDevice.toUpperCase(), text: `${view.diversionName} [D], ${timesWord(view.diversionUses)} a mission${state.diversionsCalled >= view.diversionUses ? ' · called' : ''}` },
     );
   }
   return { head: unit.name, note: `${number} · ${unit.roleLabel}${unit.leader ? ' · leader' : ''}`, stamp, rows };
@@ -198,11 +198,12 @@ const STAMP_TONE = { 'IN CONTACT': 'danger', WOUNDED: 'danger', HIDDEN: 'safe' }
 
 /**
  * What the ranking man gives the stick (SPEC.md §5 Command, §4 RAF diversion):
- * his orders, and the radio. Keyed to the `leader` flag, never a name
- * (CLAUDE.md rule 6); the numbers are rules.json's `command` and `diversion.uses`.
+ * his orders, and the radio (or the mission's own device, M60: a flare pistol). Keyed
+ * to the `leader` flag, never a name (CLAUDE.md rule 6); the numbers are rules.json's
+ * `command` and `diversion.uses`.
  */
-function leaderLines(unit, state, command, uses, diversionName) {
-  if (unit.dead) return ['He led the stick. His orders and the radio went with him.'];
+function leaderLines(unit, state, { command, diversionUses: uses, diversionName, diversionDevice: device, diversionVerb: verb }) {
+  if (unit.dead) return [`He led the stick. His orders and the ${device} went with him.`];
   const lines = [
     `Orders — at the start of each turn, ${ordersWords(command)}${command.leaderReceivesOwnBonus ? ', himself included' : ''}. Keep the stick close to move faster.`,
   ];
@@ -212,6 +213,6 @@ function leaderLines(unit, state, command, uses, diversionName) {
   }
   const called = state.diversionsCalled;
   const calledText = !called ? '' : called >= uses ? ' Already called.' : ` Called ${timesWord(called)}.`;
-  lines.push(`Radio — he can call the ${diversionName} [D]: ${timesWord(uses)} per mission, only while he lives.${calledText}`);
+  lines.push(`${capitalise(device)} — he can ${verb} the ${diversionName} [D]: ${timesWord(uses)} per mission, only while he lives.${calledText}`);
   return lines;
 }

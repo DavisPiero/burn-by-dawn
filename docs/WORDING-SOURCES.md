@@ -1865,3 +1865,134 @@ fixed words. The operator does not need this file.
 - N338 | data/lessons-training.json `lessons[16].steps[2].tell`
 - N339 | data/lessons-training.json `lessons[16].steps[3].say`
 - N340 | data/lessons-training.json `lessons[16].steps[3].tell`
+
+## O. The Heavy Water Plant (M60)
+
+### The contents page and its title card
+
+- O1 | data/missions.json `missions[gunnerside].title`
+- O2 | data/missions.json `missions[gunnerside].place`
+- O3 | data/missions.json `missions[gunnerside].blurb`
+- O4 | data/missions.json `missions[gunnerside].tagline`
+
+### The orders and how to play
+
+- O5 | data/missions.json `missions[gunnerside].briefing`
+- O6 | data/missions.json `missions[gunnerside].words.ordersLine`
+- O7 | data/missions.json `missions[gunnerside].words.cleanBonus` (set in capitals by src/main.js, the orders)
+- O8 | data/missions.json `missions[gunnerside].words.cleanOrders`
+- O9 | data/missions.json `missions[gunnerside].levels.easy.summary`
+- O10 | data/missions.json `missions[gunnerside].levels.hard.summary`
+
+### The drop runs
+
+- O11 | data/map-gunnerside.json `dropRuns[0].label`
+- O12 | data/map-gunnerside.json `dropRuns[0].tag`
+- O13 | data/map-gunnerside.json `dropRuns[0].description`
+- O14 | data/map-gunnerside.json `dropRuns[1].label`
+- O15 | data/map-gunnerside.json `dropRuns[1].tag`
+- O16 | data/map-gunnerside.json `dropRuns[1].description`
+- O17 | data/map-gunnerside.json `dropRuns[2].label`
+- O18 | data/map-gunnerside.json `dropRuns[2].tag`
+- O19 | data/map-gunnerside.json `dropRuns[2].description`
+
+### Names on the map
+
+- O20 | data/map-gunnerside.json `places[0].name`
+- O21 | data/map-gunnerside.json `places[1].name`
+- O22 | data/map-gunnerside.json `places[2].name`
+- O23 | data/map-gunnerside.json `places[3].name`
+- O24 | data/map-gunnerside.json `objectives[0].label`
+- O25 | data/map-gunnerside.json `objectives[1].label`
+- O26 | data/map-gunnerside.json `enemies[0].label`
+- O27 | data/map-gunnerside.json `enemies[1].label`
+- O28 | data/map-gunnerside.json `enemies[2].label`
+- O29 | data/map-gunnerside.json `enemies[3].label`
+- O30 | data/map-gunnerside.json `enemies[4].label`
+- O31 | data/map-gunnerside.json `enemies[5].label`
+- O32 | data/map-gunnerside.json `enemies[6].label`
+- O33 | data/map-gunnerside.json `reserve.label`
+
+### The garrison’s cries
+
+- O34 | data/missions.json `missions[gunnerside].words.cries.spotted[0]`
+- O35 | data/missions.json `missions[gunnerside].words.cries.spotted[1]`
+- O36 | data/missions.json `missions[gunnerside].words.cries.spotted[2]`
+- O37 | data/missions.json `missions[gunnerside].words.cries.found[0]`
+- O38 | data/missions.json `missions[gunnerside].words.cries.found[1]`
+- O39 | data/missions.json `missions[gunnerside].words.cries.found[2]`
+- O40 | data/missions.json `missions[gunnerside].words.cries.tracks[0]`
+
+### Play: the turn card, the gun, the telephone
+
+- O41 | data/missions.json `missions[gunnerside].words.firstTurn`
+- O42 | src/hints.js pointedHints, the hint before the first shot
+- O43 | src/main.js apLabel
+- O44 | src/main.js loudShot, loudShotWords
+- O45 | src/main.js enemyActsFor, loudShotWords
+- O46 | data/missions.json `missions[gunnerside].words.lineGoesDead`
+- O47 | data/missions.json `missions[gunnerside].words.lineIsDown`
+
+### The decoy flare
+
+- O48 | data/missions.json `missions[gunnerside].words.diversionName`
+- O49 | data/missions.json `missions[gunnerside].words.diversionKicker`
+- O50 | data/missions.json `missions[gunnerside].words.diversionLog`
+- O51 | data/missions.json `missions[gunnerside].words.diversionDevice` (the card’s heading THE FLARE PISTOL, the particulars)
+- O52 | data/missions.json `missions[gunnerside].words.diversionVerb` ("he can fire the Decoy flare", "Fire it now!")
+- O53 | data/missions.json `missions[gunnerside].words.diversionWorked`
+- O54 | data/missions.json `missions[gunnerside].words.diversionSpent`
+
+### The back page
+
+- O55 | data/missions.json `missions[gunnerside].words.firstShotHeard` (the rest src/main.js firstShotNote)
+- O56 | src/scoring.js cleanRun
+- O57 | data/missions.json `missions[gunnerside].ratings[0].label`
+- O58 | data/missions.json `missions[gunnerside].ratings[1].label`
+- O59 | data/missions.json `missions[gunnerside].ratings[2].label`
+- O60 | data/missions.json `missions[gunnerside].ratings[3].label`
+
+### The comic panels
+
+- O61 | data/missions.json `missions[gunnerside].comicPanels.dakota.caption`
+- O62 | data/missions.json `missions[gunnerside].comicPanels.landing.caption`
+- O63 | data/missions.json `missions[gunnerside].comicPanels.success.caption`
+
+### What the men say instead
+
+- O64 | data/missions.json `missions[gunnerside].dialogue.holloway.onLand[0]`
+- O65 | data/missions.json `missions[gunnerside].dialogue.holloway.onLand[1]`
+- O66 | data/missions.json `missions[gunnerside].dialogue.holloway.onLand[2]`
+- O67 | data/missions.json `missions[gunnerside].dialogue.holloway.onKill[0]`
+- O68 | data/missions.json `missions[gunnerside].dialogue.holloway.onKill[1]`
+- O69 | data/missions.json `missions[gunnerside].dialogue.holloway.onKill[2]`
+- O70 | data/missions.json `missions[gunnerside].dialogue.fitch.onLand[0]`
+- O71 | data/missions.json `missions[gunnerside].dialogue.fitch.onLand[1]`
+- O72 | data/missions.json `missions[gunnerside].dialogue.fitch.onLand[2]`
+- O73 | data/missions.json `missions[gunnerside].dialogue.fitch.onKill[0]`
+- O74 | data/missions.json `missions[gunnerside].dialogue.fitch.onKill[1]`
+- O75 | data/missions.json `missions[gunnerside].dialogue.fitch.onKill[2]`
+- O76 | data/missions.json `missions[gunnerside].dialogue.vance.onLand[0]`
+- O77 | data/missions.json `missions[gunnerside].dialogue.vance.onLand[1]`
+- O78 | data/missions.json `missions[gunnerside].dialogue.vance.onLand[2]`
+- O79 | data/missions.json `missions[gunnerside].dialogue.vance.onSpotted[0]`
+- O80 | data/missions.json `missions[gunnerside].dialogue.vance.onSpotted[1]`
+- O81 | data/missions.json `missions[gunnerside].dialogue.vance.onSpotted[2]`
+- O82 | data/missions.json `missions[gunnerside].dialogue.vance.onKill[0]`
+- O83 | data/missions.json `missions[gunnerside].dialogue.vance.onKill[1]`
+- O84 | data/missions.json `missions[gunnerside].dialogue.vance.onKill[2]`
+- O85 | data/missions.json `missions[gunnerside].dialogue.barrow.onLand[0]`
+- O86 | data/missions.json `missions[gunnerside].dialogue.barrow.onLand[1]`
+- O87 | data/missions.json `missions[gunnerside].dialogue.barrow.onLand[2]`
+- O88 | data/missions.json `missions[gunnerside].dialogue.barrow.onWounded[0]`
+- O89 | data/missions.json `missions[gunnerside].dialogue.barrow.onWounded[1]`
+- O90 | data/missions.json `missions[gunnerside].dialogue.barrow.onWounded[2]`
+- O91 | data/missions.json `missions[gunnerside].dialogue.speers.onLand[0]`
+- O92 | data/missions.json `missions[gunnerside].dialogue.speers.onLand[1]`
+- O93 | data/missions.json `missions[gunnerside].dialogue.speers.onLand[2]`
+- O94 | data/missions.json `missions[gunnerside].dialogue.nunn.onLand[0]`
+- O95 | data/missions.json `missions[gunnerside].dialogue.nunn.onLand[1]`
+- O96 | data/missions.json `missions[gunnerside].dialogue.nunn.onLand[2]`
+- O97 | data/missions.json `missions[gunnerside].dialogue.nunn.onKill[0]`
+- O98 | data/missions.json `missions[gunnerside].dialogue.nunn.onKill[1]`
+- O99 | data/missions.json `missions[gunnerside].dialogue.nunn.onKill[2]`

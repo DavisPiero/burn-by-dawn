@@ -1019,6 +1019,8 @@
     /* The rating (M32): the band earned as a stamp's words, and the annual's
        score table under it, the earned row in bold. Green since M58b (the
        operator's: in red a good rating read as something gone wrong). */
+    /* Who fired first (M60): the pen's red, under the score. */
+    #results .score-note { color: var(--red); font-style: italic; }
     #results .rating { margin-top: 8px; }
     #results .rating-earned { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
     #results .rating-earned small { font-family: var(--slab); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; }
@@ -1484,7 +1486,7 @@
       align-items: flex-start;
       box-sizing: border-box;
       width: 100%;
-      padding: 7px 10px 8px;
+      padding: 4px 10px;
       text-align: left;
       font: inherit;
       color: inherit;
@@ -1492,8 +1494,10 @@
       border: 2px solid transparent;
     }
     #briefing button.contents-pick { cursor: pointer; }
-    /* A mission's panel (M31c): a small painting beside its line. */
-    #briefing .contents-panel { flex: none; width: 150px; height: 100px; object-fit: cover; border: 2px solid var(--ink); box-sizing: border-box; }
+    /* A mission's panel (M31c): a small painting beside its line. 120 × 80 since
+       M60, so five missions fit the card at 1280 × 800 (at 150 × 100 the fifth
+       ran off its foot). */
+    #briefing .contents-panel { flex: none; width: 120px; height: 80px; object-fit: cover; border: 2px solid var(--ink); box-sizing: border-box; }
     #briefing .contents-words { flex: 1; min-width: 0; display: block; }
     #briefing button.contents-pick:hover,
     #briefing button.contents-pick:focus-visible { border-color: var(--ink); box-shadow: 3px 3px 0 var(--red); outline: none; }
@@ -1849,6 +1853,9 @@
         // Subresource failures (a module that 404s) arrive as an error event
         // on the element and carry no message, so say which one it was.
         if (event.target && event.target !== window && event.target.src) {
+          // A picture not painted yet is no fault (M60: a contents panel to come
+          // shows the line alone); only a script that will not load is.
+          if (event.target.tagName === 'IMG') return;
           if (notOurs(event.target.src)) return;
           report('A script failed to load.', event.target.src);
           return;

@@ -18,10 +18,12 @@ writing code.
   - `MISSION-AIRFIELD.md` — SPEC §13: mission 2. **Read it before working on the
     airfield**, and as the pattern when specifying a new mission. Each later mission gets
     a `MISSION-<NAME>.md` like it, written before the mission is built.
-  - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, playable, not yet balanced. **Read it
+  - `MISSION-AQUEDUCT.md` — SPEC §14: mission 3, playable and balanced. **Read it
     before working on the aqueduct.**
-  - `MISSION-GUNNERSIDE.md` — SPEC §16: mission 4, specified, not yet built. **Read it
-    before working on Gunnerside.**
+  - `MISSION-GUNNERSIDE.md` — SPEC §16: mission 4, its rules, map and balance. **Read it
+    before working on Gunnerside.** Its words, panels, pictures and sounds are in
+    `MISSION-GUNNERSIDE-WORDS.md`: read that too before touching what Gunnerside's
+    player reads, sees or hears.
   - `MISSION-TRAINING.md` — SPEC §15: the training course and its lesson engine. **Read
     it before working on a lesson or on `src/lessons.js`.**
   - `TURNS.md` — SPEC §4: the turn, every action and its cost, mouse and keyboard.
@@ -39,9 +41,11 @@ writing code.
   create a sprite id, an asset filename, or an asset dimension. Those must match it exactly.
 - `ART-PROMPTS.md` — what art to generate next, with specs and prompts, for the operator.
   Keep its "what Claude is drawing in code" list true when sprites change.
+  Only what is still to make, most wanted first. Move an item to `ART-PROMPTS-ARCHIVE.md`
+  (everything made, with its prompt; not read every session) when it is done.
 - `STATE.md` — one page: where the project stands, what is next, what is open with the
   operator. **Read it at the start of every session and rewrite it at the end.**
-- `DECISIONS.md` — append-only log. See below. Entries before M50 are in
+- `DECISIONS.md` — append-only log. See below. Entries before M56 are in
   `DECISIONS-ARCHIVE.md`, which is not read every session.
 - `ROADMAP.md` — what comes after the current milestone, and in what order. Read it when
   choosing or scoping the next milestone. SPEC.md still wins where they differ.

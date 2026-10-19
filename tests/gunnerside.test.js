@@ -13,6 +13,8 @@ import { runDetection, runEnemyPhase } from '../src/enemy.js';
 import { validateTraits } from '../src/traits.js';
 import { largestPool, planMove } from '../src/units.js';
 import { describePlan } from '../src/render/ui.js';
+import { CUE_NAMES } from '../src/render/sound.js';
+import { pointedHints } from '../src/hints.js';
 import { exfilArtId, hasSprite, objectiveArt, terrainArt, terrainMotifId } from '../src/render/theme.js';
 
 function assert(condition, message) {
@@ -46,10 +48,11 @@ function sapperAt(state, q, r, ap = 3) {
 }
 
 export default [
-  ['the heavy water plant is a draft (M58): stamped on the contents page, opened by ?mission=gunnerside', async () => {
+  ['the heavy water plant is playable (M60): picked from the contents page, opened by ?mission=gunnerside', async () => {
     const { json, mission } = await loadGunnerside();
-    equal(mission.status, 'draft', 'not yet announced');
-    assert(canPlay(mission), 'a draft can be played');
+    equal(mission.status, 'playable', 'announced');
+    assert(canPlay(mission), 'it can be played');
+    equal(mission.panel, 'assets/title/contents-gunnerside.jpg', 'its painting beside its line, once it is in');
     equal(missionFromQuery('?mission=gunnerside', json), 'gunnerside', 'the address opens it');
     equal(json.default, 'france', 'France still opens by default');
   }],
@@ -232,5 +235,48 @@ export default [
       assert(stood.some((e) => hexDistance(e, { q, r }) <= rules.tracks.findRange), `${key} is within findRange of the garrison's walk`);
     }
     equal(watchedSnow(map, { ...rules, tracks: null }, detected.enemies, after), null, 'off without tracks');
+  }],
+
+  ['its words (M60): the orders\' own line, the first turn\'s, who fired first, the flare pistol; no other mission has them', async () => {
+    const { json, mission } = await loadGunnerside();
+    const w = mission.words;
+    assert(/Not a shot/.test(w.ordersLine), 'the orders say it');
+    assert(/snow/.test(w.firstTurn), 'the first turn says it');
+    assert(w.firstShotHeard && w.diversionWorked && w.diversionSpent, 'the back page and the flare card have words');
+    equal(w.diversionDevice, 'flare pistol', 'the leader carries a flare pistol, not the radio');
+    equal(w.diversionVerb, 'fire', 'and fires it');
+    for (const other of json.missions.filter((m) => m.id !== 'gunnerside')) {
+      for (const key of ['ordersLine', 'firstTurn', 'firstShotHeard', 'diversionDevice', 'diversionVerb', 'diversionWorked', 'diversionSpent']) {
+        equal(other.words[key], undefined, `${other.id} reads as it did: no ${key}`);
+      }
+      equal(other.cues, undefined, `${other.id} plays its usual cues`);
+    }
+  }],
+
+  ['its men\'s lines (M60): three to each moment, for men in the roster; its panels in the three slots; its cues are scored', async () => {
+    const { mission, roster } = await loadGunnerside();
+    for (const [id, moments] of Object.entries(mission.dialogue)) {
+      for (const [moment, lines] of Object.entries(moments)) equal(lines.length, 3, `${id}.${moment}`);
+    }
+    const speers = roster.troopers.find((t) => t.id === 'speers');
+    assert(speers.dialogue.onLand.some((l) => /slung/.test(l)), 'the patch is over the roster');
+    equal(Object.keys(mission.comicPanels).sort().join(), 'dakota,landing,success', 'the three slots there are');
+    equal([mission.comicPanels.dakota.art].flat().at(-1), 'assets/panels/panel-dakota.jpg', 'the Halifax falls back to the shared Dakota');
+    for (const cue of [...Object.values(mission.cues), mission.diversionSound, mission.endSounds.success, mission.endSounds.otherwise]) {
+      assert(CUE_NAMES.includes(cue), `the cue ${cue} is scored`);
+    }
+    for (const usual of Object.keys(mission.cues)) assert(CUE_NAMES.includes(usual), `${usual} is a cue it stands in for`);
+  }],
+
+  ['the hint before the first shot (M60): a gunner who could fire is told the cost, only until the first shot, only where the shot asks first', async () => {
+    const { map, rules, traits, roster } = await loadGunnerside();
+    const state = jump(chooseDropRun(createInitialState(roster, traits, rules, map, 3), map, 'north'), map, rules);
+    const unit = state.units.find((u) => u.role === 'gunner');
+    const shot = { unit, enemy: state.enemies[0], alert: 6, heard: 'across the board' };
+    const words = (s, r) => pointedHints(s, r, { shot }, 20).map((h) => h.text).join(' | ');
+    assert(words(state, rules).includes(`${unit.shortName} could fire on the`), 'said');
+    assert(words(state, rules).includes('alert +6'), 'with its cost');
+    assert(!words({ ...state, firstShot: { unitId: unit.id, turn: 1 } }, rules).includes('could fire on'), 'not after the first shot');
+    assert(!words(state, { ...rules, confirmShot: false }).includes('could fire on'), 'not where the shot does not ask');
   }],
 ];

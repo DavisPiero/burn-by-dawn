@@ -564,6 +564,8 @@ function contentsList({ entries, onChoose, record = null, flagAt = [0, 0], clipb
       const panel = html('img', 'contents-panel');
       panel.src = entry.panel;
       panel.alt = '';
+      // Not painted yet (M60: the heavy water plant's): the line alone, as before it had one.
+      panel.addEventListener('error', () => panel.remove());
       words.unshift(panel);
     }
     const item = html('li', entry.playable ? 'contents-entry' : 'contents-entry coming');
@@ -1121,7 +1123,7 @@ export function renderDiversion(button, check) {
   button.disabled = !check.ok;
   // In a pickle (M26d): red, and saying so.
   button.classList.toggle('suggest', Boolean(check.ok && check.suggest));
-  const small = !check.ok ? capitalise(check.reason) : check.suggest ? '[D] Call it now!' : `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP`;
+  const small = !check.ok ? capitalise(check.reason) : check.suggest ? `[D] ${capitalise(missionWords.diversionVerb ?? 'call')} it now!` : `[D] ${check.left === 1 ? 'once' : `${check.left} left`}, no AP`;
   button.replaceChildren(missionWords.diversionName.toUpperCase(), html('small', null, boldKeys(small)));
 }
 
@@ -1167,7 +1169,11 @@ export function renderComicPanel(element, panel) {
   element.hidden = false;
 }
 
-export function renderResults(element, outcome, levelLabel, banner, onAgain, onContents, rating = null) {
+/**
+ * `note` is a line under the score, or null: on the heavy water plant (M60), who
+ * fired first and on what turn, where the no-shot bonus was lost to it.
+ */
+export function renderResults(element, outcome, levelLabel, banner, onAgain, onContents, rating = null, note = null) {
   element.replaceChildren();
   element.hidden = !outcome;
   if (!outcome) return;
@@ -1228,6 +1234,7 @@ export function renderResults(element, outcome, levelLabel, banner, onAgain, onC
     html('p', null, [`${outcome.reason[0].toUpperCase()}${outcome.reason.slice(1)}.`, html('br'), `Turn ${outcome.turn}, on ${levelLabel}.`]),
     fates,
     score,
+    ...(note ? [html('p', 'score-note', note)] : []),
     ...(ladder ? [ladder] : []),
     html('div', 'again', [again, contents]),
   );
@@ -1421,6 +1428,8 @@ function actionPopup(action) {
   return [
     html('b', null, `${action.label.toUpperCase()}${open ? '' : ' (UNAVAILABLE)'}`),
     `\n${action.suggest && action.ok ? `${action.suggest}\n` : ''}${action.help}\n${action.ok || action.active ? `Cost: ${capitalise(action.cost)}` : `Not now: ${capitalise(action.reason)}`}`,
+    // A shot heard by the whole garrison (M60, the heavy water plant): its cost in red.
+    ...(action.warn ? ['\n', html('span', 'popup-cue', action.warn)] : []),
   ];
 }
 
