@@ -112,7 +112,7 @@ tests.html        every test suite, in the browser
   rules.json      everything else: costs, detection, alert, noise, combat, scoring
   difficulty.json the levels, as patches over rules.json and enemies.json
   version.json    the build shown in the margin
-  layout.json     where the operator placed things by hand (art only, M48k)
+  layout.json     where the operator placed things by hand (art only, M48k; the board's labels since M59d)
 /assets           supplied art, fonts and sound (ART-ASSETS.md); code draws what is missing
 /tests            headless suites (node tools/run-tests.mjs)
 /tools            balance-bot.mjs, run-tests.mjs, make-chips.js (developer only)

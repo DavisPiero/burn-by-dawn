@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 19 Oct 2026: M59c signed off, merged and pushed.
+Last updated: 19 Oct 2026: M59d built on `m59d-layout-labels`, waiting for sign-off.
 
 ## Where we are
 
-- **`main` is M59c, pushed.** The margin says build M59c. Tests: 276 headless, 279 in
-  `tests.html`.
+- **`main` is M59c, pushed.** **M59d** (drag the board's labels) is on the branch
+  `m59d-layout-labels`, not merged. Tests: 279 headless, 282 in `tests.html`.
 - **Four missions and the course.** France, the airfield and the aqueduct playable; the
   heavy water plant (Gunnerside) a draft at `?mission=gunnerside`, balanced (M59, M59b),
   not yet worded.
@@ -26,6 +26,13 @@ Last updated: 19 Oct 2026: M59c signed off, merged and pushed.
 2. M61 (panel moments), if wanted. **The Dakota panel** whenever it is painted
    (ART-PROMPTS.md Priority 30).
 
+## The labels in ?layout (M59d, on the branch)
+
+`?layout` now also drags each run's tab, each target's name, EXFIL and each place
+name. COPY saves them in `data/layout.json` (`runTabs`, `names`, `places`), pasted
+over the file as before. They used to live in the map files; moved across unchanged,
+every label measured identical on all five boards.
+
 ## The terrain painter (M59c)
 
 `?layout`, before the jump: PAINT GROUND, pick a ground, click or drag over hexes; a
@@ -35,9 +42,9 @@ shows the numbers before and after.
 
 ## Open with the operator
 
-0. **Labels the layout tool cannot drag** (19 Oct 2026): the run tabs, place names,
-   target names and EXFIL were placed by hand from the operator's notes. Proposed:
-   make them draggable in `?layout`, so the operator places them and COPY saves it.
+0. **M59d to try and sign off**: drag Gunnerside's tabs, names and EXFIL in `?layout`,
+   COPY, paste over `data/layout.json`. Guesses: a tab click in `?layout` does not pick
+   the run (1-3 do); the branch name and the milestone number.
 1. **Guesses in M59b**, kept unless changed: prints found 2 hexes ahead; the plant one
    up and one west, the plateau and gorge left; charge points two above and two below
    the cells; the gate guard looking E, sweeping NW; the bands 24 / 30 / 35. **In M59**:
