@@ -2,111 +2,21 @@
 
 A shopping list for an image generator: **only what is still to make**, the most wanted
 first. Each entry has the file it becomes, the exact size and format, where it shows in
-the game, and a prompt. Paste **the style block** (below the list, under "How to use
-this") after every prompt.
+the game, and a prompt. Paste **the core prompt** (just below) after every prompt.
 
 Everything already made is in `ART-PROMPTS-ARCHIVE.md` (moved there at M60, 19 Oct 2026),
 with its prompt, in case a piece is ever redone. `ART-ASSETS.md` is the full manifest and
 still rules on formats. The list at the foot says which pieces the code draws itself, so
 nobody makes those twice. When an item is done, Claude moves it to the archive.
 
-**To make now:** 31c and 31d (Gunnerside's two comic panels), 32 (Gunnerside's sounds). **Optional:** 21, 17, 18.
+**To make now:** 32 (Gunnerside's echo and wind; its music optional). **Optional:** 21, 17, 18.
+
+CORE PROMPT:
+Illustration in the style of a 1980s British boys' comic annual (Commando, Warlord, Battle Picture Weekly). Confident black ink linework with brush-weight variation, flat areas of limited spot colour: olive army green #5C6B4A, warm cream #F2E8D5, brick red #C1272D, slate blue #3D5A73, near-black ink #1A1A18. Light Ben-Day halftone dots for shading only, used sparingly. Printed on cheap matte paper. Strong readable silhouette, clear light and dark shapes, simple background. No text, no lettering, no signature, no watermark, no border, no frame.
 
 ---
 
-## Priority 31 — the heavy water plant's paintings (Gunnerside) — 31c and 31d to make (31a, 31b ✅ in, 2026-10-19)
-
-**Why** (M60): Gunnerside becomes playable at the end of M60, and it is the only
-mission with none of its own pictures yet. Four paintings, in the order to make them:
-the first two are what a player sees before anything else, the last two are the comic
-panels in the slots already built (Priority 28, Priority 30). Each loads the moment its
-file is in; until then the contents page shows the line alone, the orders France's title
-card, and a panel with no painting shows nothing.
-
-**The setting, for every one of them.** Norway, February 1943, loosely Operation
-Gunnerside. A hydroelectric plant on a narrow shelf cut into a mountainside: the
-**hydrogen plant**, a long concrete block of four or five storeys with rows of tall
-windows, where the heavy-water cells are, and behind and above it the **power station**
-with **great penstock pipes** running straight down the cliff to it. In front of the
-shelf a deep, narrow **gorge** with a frozen river at the bottom, crossed by a small
-**suspension bridge**. Above the gorge on the near side, the bare snow of a high
-**plateau** with scattered pines and rock. Deep snow, a hard clear cold. **The men wear
-white hooded snow smocks over their battledress**, white covers on rimless steel
-helmets (or wool caps), faces blackened, Sten guns and rucksacks; no skis needed. The
-garrison is German.
-
-**Colour.** The style block's palette, with the snow as the cream paper and pale cold
-blue (`#EEF2F2` and `#D2DBE0` steer it), the shadows slate blue, the night ink. Fire
-orange only for the bang. It should read colder than the aqueduct.
-
-| # | File | Size, format | Shown at | Code does |
-|---|---|---|---|---|
-| 31a ✅ in (M60) | `assets/title/contents-gunnerside.jpg` | **As Priority 14**: 3:2, 1200 × 800, JPEG ~85, sRGB, opaque | 120 × 80 beside its line on the contents page, and again as the **mission accomplished** panel (about 550 × 370) | Claude makes the 480 × 320 copy; your original kept as `contents-gunnerside_full.jpg` |
-| 31b ✅ in (M60, BURN BY DAWN painted in) | `assets/title/title-card-gunnerside.jpg` | **As Priority 2b**: 4:1, 2400 × 600, JPEG ~85 | Across the top of the orders and the back page | Claude makes the 1600 × 400 copy; original kept as `_full`. **Say whether BURN BY DAWN is painted in** |
-| 31c | `assets/panels/panel-dakota-gunnerside.jpg` | **As Priority 30**: 3:2, 1200 × 800, JPEG ~85, no text | After START GAME, before the run is picked. **Top-left quarter quiet**: the caption sits there | Claude makes the 900 × 600 copy; original kept as `_full`. Until it is in, the shared Dakota panel shows (once that is painted) |
-| 31d | `assets/panels/panel-landing-gunnerside.jpg` | **As Priority 28**: 3:2, 1200 × 800, JPEG ~85, no text | After the jump, before turn 1. **Top-left quarter quiet** | As 31c |
-
-The contents panel must read at thumbnail size and again large as the last thing a
-winning player sees, so it is the bang, with the men already slipping away, as the
-other missions' panels are.
-
-### Prompt — 31a, the contents panel (add the style block)
-
-> A single comic-book panel, a bitter cold winter night in the mountains of Norway,
-> February 1943: a long concrete industrial building of four storeys with rows of tall
-> windows stands on a narrow snowy shelf against a dark cliff, great steel pipes running
-> straight down the cliff behind it, and at the moment of an explosion inside it every
-> window on its lower floor blows out in a burst of orange light and glass. In the
-> foreground, small and dark against the lit snow, three British commandos in white
-> hooded snow smocks run low away from it across deep snow toward the edge of a gorge,
-> leaving a line of footprints. A small suspension bridge over the black gorge on the
-> right, a starry sky. Pale cream and cold blue snow, slate-blue night, one burst of
-> fire orange. Strong simple shapes that read at thumbnail size. No text.
-
-### Prompt — 31b, the title card (add the style block)
-
-> Wide panoramic night scene, February 1943, the mountains of Norway: a stick of
-> paratroopers in white snow smocks coming down under round canopies over a bare snowy
-> plateau with scattered dark pines, a four-engined Handley Page Halifax bomber flying
-> away low. Along the bottom edge, the plateau breaks off into a deep black gorge with a
-> small suspension bridge across it, and on the far side a long concrete plant on a
-> shelf, a few lit windows, steel pipes running down the cliff behind it. A low moon,
-> a hard clear starry sky. The centre of the picture is open dark night sky; the
-> canopies and the aircraft are grouped toward the left and right edges. Deep slate
-> blue and ink night palette, cream and pale cold blue moonlit snow.
-
-The aircraft is a Halifax here, not a Dakota: Gunnerside flew in one (four engines, a
-deep slab-sided fuselage, twin fins). The board's own aircraft stays the Dakota.
-
-### Prompt — 31c, the Halifax panel (add the style block)
-
-> A single comic-book panel, night, inside the dark fuselage of a Handley Page Halifax
-> bomber, seen from low down close to a round hatch open in the floor: paratroopers in
-> white hooded snow smocks sit hunched on the cold metal floor round the hole, legs
-> dangling toward it, static lines hooked to a rail overhead, breath steaming. Through
-> the hatch, far below, moonlit snow and black pines. The nearest man, close to us, lit
-> red from one side by a jump light, stares down into the hole. Ribbed metal fuselage,
-> frost on the ribs. Deep shadow and red light against cold slate blue and the pale snow
-> below. The top-left of the picture is dark fuselage.
-
-### Prompt — 31d, the landing (add the style block)
-
-> A single comic-book panel, a still, bitter cold night on a high snowy plateau in
-> Norway, February 1943, seen from low down and close: a paratrooper in a white hooded
-> snow smock lands in deep snow and sinks to his knees, snow spraying up, his round
-> parachute collapsing in great pale folds behind him. Behind him, his first few deep
-> boot prints already crossing the untouched snow. Far off on the right, the plateau
-> ends in the black line of a gorge, and beyond it a few faint lights. A low moon,
-> stars, a few dark pines. Cream and pale cold blue moonlit snow, slate-blue night,
-> near-black shadows. The top-left of the picture is open dark sky.
-
-If the generator will not leave off text on the plant (signs, numbers), paint it out:
-the game names the plant itself.
-
-
----
-
-## Priority 32 — the heavy water plant's sounds (find, don't generate) — to find
+## Priority 32 — the heavy water plant's sounds (find, don't generate) — echo and wind to find (flare ✅ in)
 
 **Why** (M60): three sounds are made in code for now and play already; a recording
 dropped in with the right name replaces each with no code change, as Priority 11's did.
@@ -116,7 +26,7 @@ M4A or MP3, mono, 44.1 kHz, under 200 KB, no silence at the front.
 | File | What it is | Length |
 |---|---|---|
 | `assets/audio/echo.m4a` | **The shot's echo.** Not the shot: what comes back. Gunfire echoing off the far side of a mountain gorge, three or so returns each fainter and duller, then a low roll dying away. Search "gunshot echo canyon", "rifle echo valley" and cut the first shot off | 2–3 s |
-| `assets/audio/flare.m4a` | **The decoy flare, far off.** A flare pistol's pop, the rising hiss of the flare climbing, then a long crackling fizz as it burns. Search "flare gun", "signal flare launch" | 2–3 s |
+| `assets/audio/flare.m4a` ✅ in (M60c, the operator's) | **The decoy flare, far off.** A flare pistol's pop, the rising hiss of the flare climbing, then a long crackling fizz as it burns. Search "flare gun", "signal flare launch" | 2–3 s |
 | `assets/audio/wind.m4a` | **Wind over high snow.** A hollow gust that swells and falls away, no whistling trees, no rain. Search "wind snow mountain", "arctic wind gust" | 3–4 s |
 
 **Optional, a fourth:** `assets/audio/music-gunnerside.m4a`, the mission's own music
@@ -229,8 +139,8 @@ and wire the wreck in if asked:
 
 ## How to use this
 
-- **One style block for everything.** Paste the style block below at the end of every
-  prompt. Consistent style matters more than any single image being perfect.
+- **One style block for everything.** Paste the core prompt at the top of this file at
+  the end of every prompt. Consistent style matters more than any single image being perfect.
 - **Generate the six portraits as one batch**, same session and same seed if your tool
   allows it. Then regenerate any single man who drifts off-style. Six men who look like
   they came from one annual beat one great portrait and five mismatched ones.
@@ -246,13 +156,8 @@ and wire the wreck in if asked:
 
 ### The style block
 
-> Illustration in the style of a 1980s British boys' comic annual (Commando, Warlord,
-> Battle Picture Weekly). Confident black ink linework with brush-weight variation, flat
-> areas of limited spot colour: olive army green #5C6B4A, warm cream #F2E8D5, brick red
-> #C1272D, slate blue #3D5A73, near-black ink #1A1A18. Light Ben-Day halftone dots for
-> shading only, used sparingly. Printed on cheap matte paper. Strong readable
-> silhouette, clear light and dark shapes, simple background. No text, no lettering, no
-> signature, no watermark, no border, no frame.
+It is the **core prompt** at the top of this file (the operator moved it there, as it is
+wanted every time); "add the style block" in a prompt means that.
 
 The hex values are there to steer the palette. Most generators won't match them exactly,
 and that's fine. The game tints nothing in a portrait.

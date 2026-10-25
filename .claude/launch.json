@@ -8,6 +8,10 @@
         "8001"
       ],
       "port": 8001
+    },
+    {
+      "name": "night-drop-attach",
+      "url": "http://localhost:8001"
     }
   ]
 }

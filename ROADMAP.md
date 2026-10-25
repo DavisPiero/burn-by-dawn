@@ -13,10 +13,11 @@ Phase N" means the archive.
 
 ## Where we are
 
-19 Oct 2026, build M60. Four missions (France, the airfield, the aqueduct and, since
+25 Oct 2026, build M60c. Four missions (France, the airfield, the aqueduct and, since
 M60, the heavy water plant) and the training course, all playable from the contents
 page, at three difficulty levels, with painted art and recorded sound (the heavy water
-plant's paintings and recordings asked for, ART-PROMPTS.md Priorities 31 and 32). Each map is printed on its own ground colour (M58d), and
+plant's paintings all in; its echo and wind still made in code, ART-PROMPTS.md
+Priority 32). Each map is printed on its own ground colour (M58d), and
 the operator places notes and clears hexes in `?layout` (M58e), paints a map's ground there (M59c), and drags the board's labels (M59d). The test of the game is SPEC.md's two pillars: every
 success makes the rest harder, and the player is hunter and hunted at once.
 

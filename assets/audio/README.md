@@ -27,6 +27,7 @@ and encoded as AAC with macOS `afconvert`. None needs a credit line.
 | `siren.m4a` | "Sound Effect - WW2 UK Air Raid Siren", ScottishPerson, [Pixabay](https://pixabay.com/sound-effects/film-special-effects-sound-effect-ww2-uk-air-raid-siren-164346/) | Pixabay Content License | 6 s from 23.5 s, faded 0.8 s in, 1.6 s out (M31c, the airfield's withdrawn or failed) |
 | `music-title.m4a` | "War Epic", PaulYudin, [Pixabay music](https://pixabay.com/music/main-title-war-epic-182501/) | Pixabay Content License | whole, 1:33, faded out over its last 2 s |
 | `whistle.m4a` | the operator's "40 Whistles Multiple Short" (assets/audio/SRC_Select/Whistle.aiff) | the operator's | 0.30 s from 0.62 s, the second blast (M48h, the umpire's) |
+| `flare.m4a` | the operator's "SI-6076_19 Flare Single Flare Burn Fire" (Src/) | the operator's | 1.71 s from 0.40 s, the first of its two takes (the longer); faded 0.4 s out; loudest 0.4 s at RMS 0.15, peak 0.48 (M60c, Gunnerside's decoy flare, in place of the made one) |
 | `train.m4a` | the operator's "Steam Train Passing" (SRC_Select/Train.mp3) | the operator's | 4.0 s from 21.0 s, the pass and its high whistle-like note; faded 0.6 s in, 1.0 s out |
 | `canister-thump.m4a` | the operator's (SRC_Select/Cannister_Thump.wav) | the operator's | 0.39 s from the hit at 0.235 s, faded over its last 0.08 s |
 | `oars.m4a` | the operator's (SRC_Select/Oars.mp3) | the operator's | 3.0 s from 0.45 s, the first strokes; faded 0.4 s out |

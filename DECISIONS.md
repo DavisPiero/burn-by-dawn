@@ -150,3 +150,7 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-19 | m60b | START HERE taken off the contents page (the operator's: The Practice Ground's name says it): the whole feature went, not only its word, so no drawing, layout entry or check is left for something nothing uses: missions.json `flag`, layout.json `contents.flag`, the stamp's style, its tests
 2026-10-19 | m60b | The operator's shared Dakota panel in: a 900 x 600 copy at quality 80, the original kept as `_full`; it shows in every mission at START GAME, Gunnerside too until its Halifax is painted; ART-PROMPTS.md Priority 30 to the archive
 2026-10-19 | m60b | M60b signed off by the operator ("merge it and push") and merged
+2026-10-25 | m60c | The operator's Halifax and landing panels for Gunnerside in (900 x 600 copies at quality 80, the originals kept as `_full`); Priority 31 done and moved to the archive
+2026-10-25 | m60c | The operator's flare recording held two takes; the first, longer one (1.71 s) cut, faded 0.4 s out and levelled to RMS 0.15 as their other recordings were, AAC 64 kbps: it is shorter than the 2.5 s made flare, but the whole of one flare
+2026-10-25 | m60c | The operator moved the style block to the top of ART-PROMPTS.md as the "core prompt"; the copy under "How to use this" now points to it, so there is one copy to keep true
+2026-10-25 | m60c | M60c signed off by the operator ("signed off", at the session's wrap) and merged
