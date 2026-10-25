@@ -8,6 +8,7 @@ import {
 import { canLandOn, canisterPoints, dropArea, jumpPoints, runById } from './drop.js';
 import { applyDifficulty, difficultyFromQuery, levelById, validateDifficulty } from './difficulty.js';
 import { DIRECTION_NAMES, axialToPixel, hexDistance } from './hex.js';
+import { checkPanelNames, panelsDue } from './panels.js';
 import { checkMap, forEachCell, hexKey, isInPlay, loadMap, loadJson, terrainAt } from './map.js';
 import { createRng, freshSeed, seedFromQuery } from './rng.js';
 import {
@@ -206,9 +207,13 @@ let musicOff = new URLSearchParams(window.location.search).get('music') === 'off
 // `comicPanels` names a painting and its caption for each moment (the landing,
 // the mission accomplished); each is shown once a game, over the board, until a
 // click or key, and a painting not yet supplied shows nothing. Display only.
+// More moments come from the mission's `when` (M61, panels.js); one due while
+// another is up waits in `panelQueue` until that one is put away.
 let comicPanel = null;
 let panelsSeen = new Set();
-let panelTimer = null;
+let panelTimers = [];
+let panelQueue = [];
+let panelsShown = 0;
 // The turns before this one, newest first, for the report's log (M21b): display only.
 let earlierReports = [];
 // Brings the report's ▲ ▼ up to date after a redraw (M22).
@@ -1832,7 +1837,14 @@ function render() {
     state.outcome?.kind === 'success' ? ratingOf(mission, state.outcome.score.total) : null, firstShotNote());
   // Every man's name is set in bold on the card, as in the report.
   // Mission accomplished (M52): its panel once the bang has been seen.
-  if (state.outcome?.kind === 'success') showComicPanel('success', state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0);
+  const bang = state.report.some((e) => e.kind === 'explosion') ? BLAST.holdMs : 0;
+  if (state.outcome?.kind === 'success') showComicPanel('success', bang);
+  // The mission's own moments (M61): a shot's after its burst, the rest after the bang.
+  if (!course?.lesson) {
+    for (const moment of panelsDue(mission, state, map, panelsSeen)) {
+      showComicPanel(moment, mission.comicPanels[moment].when.firstShot ? PANEL_AFTER_SHOT_MS : bang);
+    }
+  }
   renderComicPanel(comicPanelBox, comicPanel);
   const card = briefing && { names: state.units.map((u) => u.shortName), ...describeBriefing(briefing, view) };
   showCounterKey(briefing?.kind === 'help');
@@ -2736,6 +2748,7 @@ async function openMission(id) {
 async function loadMission(id, seed) {
   const next = missionById(missions, id);
   const nextMap = await loadMap(next.map, undefined, undefined, (types) => missionEnemyTypes(next, types));
+  checkPanelNames(next, nextMap);
   const nextRules = missionRules(next, await loadJson('data/rules.json'));
   const nextRoster = missionRoster(next, await loadJson(next.roster));
   // The levels, with the mission's own part of each (M28) carried on them.
@@ -2881,9 +2894,7 @@ function startMission(nextLevel, seed) {
   sightFor = { stamp: null, unitId: null, wash: null, firedStamp: null, firedOn: new Set() };
   cuesFor = { stamp: null, clear: [], out: null, unitStamp: null, unitId: null, strikes: null, ghost: null };
   earlierReports = [];
-  clearTimeout(panelTimer);
-  comicPanel = null;
-  panelsSeen = new Set();
+  forgetComicPanels();
   renderSeed(seedBox, seed, level, level.id === difficulty.default ? null : level.id, handleLevelClick);
 }
 
@@ -3716,20 +3727,39 @@ function showComicPanel(moment, delay = 0) {
   const panel = mission.comicPanels?.[moment];
   if (!panel || panelsSeen.has(moment)) return;
   panelsSeen.add(moment);
-  clearTimeout(panelTimer);
   const shownFor = mission;
-  panelTimer = setTimeout(async () => {
+  const seen = panelsSeen;
+  panelTimers.push(setTimeout(async () => {
     const src = await firstPicture([panel.art].flat());
-    // Not if the game moved on meanwhile (another mission loaded in place).
-    if (!src || mission !== shownFor || !panelsSeen.has(moment)) return;
-    comicPanel = { src, caption: panel.caption ?? null };
+    // Not if the game moved on meanwhile (a new game, or another mission loaded in place).
+    if (!src || mission !== shownFor || panelsSeen !== seen) return;
+    // Tipped one way then the other (M61, the operator's), so no two in a row lean alike.
+    const next = { src, caption: panel.caption ?? null, tilt: COMIC_TILTS[panelsShown++ % COMIC_TILTS.length] };
+    if (comicPanel) panelQueue.push(next);
+    else comicPanel = next;
     render();
-  }, delay);
+  }, delay));
 }
 
+// The first shot's panel once the burst and its echoes have come back down the gorge.
+const PANEL_AFTER_SHOT_MS = 1600;
+
+// The panels' tilts in turn, in degrees: left, right, a little less left, a little less right.
+const COMIC_TILTS = [-4, 4, -3, 3];
+
 function dismissComicPanel() {
-  comicPanel = null;
+  comicPanel = panelQueue.shift() ?? null;
   render();
+}
+
+/** A new game: no panel up, none waiting, none seen. */
+function forgetComicPanels() {
+  panelTimers.forEach(clearTimeout);
+  panelTimers = [];
+  panelQueue = [];
+  panelsShown = 0;
+  comicPanel = null;
+  panelsSeen = new Set();
 }
 
 /** Each canister lands `at[id]` ms after `since`: its thump is played then, and the board shows it from then. */

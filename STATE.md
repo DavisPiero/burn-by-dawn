@@ -4,59 +4,47 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 25 Oct 2026: M60c signed off, merged and pushed.
+Last updated: 25 Oct 2026: M61 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M60c, pushed**: Gunnerside's Halifax and landing panels and the
-  operator's flare recording in. The margin says build M60c. Tests: 282 headless, 285 in `tests.html`.
-- **Four missions and the course, all playable**: the heavy water plant (Gunnerside)
-  is on the contents page with its painted panel and title card, worded, with its
-  sounds made in code.
-  Its balance is M59b's, measured unchanged (naive Normal 87/92/79).
-- **Its words** are the operator's since M60b, all in the wording sheet's section O
-  (`docs/WORDING.md`): the orders' "Not a shot…" line and NOT A SHOT FIRED first on the
-  Bonus line; the snow line on turn 1; the gun's cost in red on Suppress, its rollover
-  and the enemy's hover row; the hint before the first shot; who fired first on the
-  back page; the flare pistol; the men's lines; the three panels' captions.
-- **Its art is all in** (the operator's): contents panel, title card, Halifax and
-  landing panels. **Its sounds**: the flare recorded (the operator's); the echo and wind
-  still made in code, asked for in Priority 32 with optional music.
-- MISSION-GUNNERSIDE.md split: words, panels, pictures and sounds now in
-  MISSION-GUNNERSIDE-WORDS.md. DECISIONS.md's M50 to M55c moved to the archive.
-- **ART-PROMPTS.md holds only what is still to make** (432 lines); everything made is in
-  ART-PROMPTS-ARCHIVE.md.
+- **`main` is M61, pushed.** The margin says build M61. Tests: 286 headless, 289 in
+  `tests.html`.
+- **M61 built:**
+  - **Comic panels at new moments**: a mission's panel can name when it shows (the first
+    man onto a ground, the first shot, an objective blown, the night failed or
+    withdrawn). Gunnerside has five: the climb, inside the duct, the first shot, the
+    bang, failed. **None shows until its painting is in** (ART-PROMPTS.md Priority 33).
+  - Two panels due at once wait their turn instead of one cancelling the other.
+  - **Panels tip left and right in turn** (left 4°, right 4°, left 3°, right 3°), the operator's ask.
+  - **The contents card is bigger**: 980 wide across the whole table, panels 138 × 92.
+    150 × 100 does not fit 1280 × 800 at any width, so this is the largest that does.
+- **Four missions and the course, all playable**; Gunnerside's balance is M59b's.
 
 ## Next
 
-1. The operator's choice: **M61** (Gunnerside's new panel moments), a playtest on
-   someone new (ROADMAP.md, `docs/PLAYTEST.md`), or Gunnerside's echo and wind
-   recordings (ART-PROMPTS.md Priority 32).
+1. Paint Priority 33 (Gunnerside's five moment panels), the first shot first.
+2. Then: a playtest on someone new (`docs/PLAYTEST.md`), or Gunnerside's echo and wind
+   recordings (Priority 32).
 
 ## Open with the operator
 
-0. **Guesses in M60**, kept unless changed:
-   - The contents panels are smaller (120 × 80, was 150 × 100) so five missions fit
-     the card at 1280 × 800; the fifth was running off its foot. **Please look.**
-   - The turn-1 snow line goes under the hint, not instead of it.
-   - The hint before the first shot shows on any turn until the first shot.
-   - Speers says "Bren stays slung", not "Sten". Barrow's tracks line is an onLand line.
-   - The flare pistol is "fired" ("Fire it now!"); the flare card ends "No more flares
-     tonight."
-   - Gunnerside plays the title music until it has its own.
-   - M60b: "MORKGJELET" in the landing caption kept as MØRKGJELET, as the map spells
-     it; the two swapped ratings taken as meant (30 NOT A SHOT FIRED, 35 LIKE GHOSTS).
-1. **Guess in M59d**, kept unless changed: a tab click in `?layout` does not pick the
-   run (1-3 do).
-2. **Guesses in M59 and M59b**, kept unless changed: prints found 2 hexes ahead and
-   lasting 2 turns; the plant one up and one west; charge points two above and two
-   below the cells; the gate guard looking E, sweeping NW; the bands 24 / 30 / 35; the
-   plateau patrol's beat; the bot's `STAY=1`.
-3. **Still standing:** France a little easier than its baselines say; the bugle for a
-   lesson passed; the knife's cry worded "a cry"; the record's tab at the top centre.
+0. **Guesses in M61**, kept unless changed:
+   - The captions for the bang (O63d) and failed (O63e) panels; failed is neutral on
+     the hall, as a night can fail with it blown. One painting for failed and withdrawn.
+   - A silenced kill counts as the first shot (as the back page counts it), so the
+     "shot rang down the gorge" panel can follow a kill.
+   - The tilt order is fixed (left, right, left, right), not random.
+   - The contents masthead is a slimmer strip of the title card (8:1, was 5.8:1) to
+     make room. **Please look.**
+1. **Still standing from before** (the operator accepted M60's guesses on 25 Oct):
+   France a little easier than its baselines say; the bugle for a lesson passed; the
+   knife's cry worded "a cry"; the record's tab at the top centre; M59–M59d's map and
+   bot guesses.
 
 ## Owed
 
-- **From the operator:** Gunnerside's echo and wind (32, music optional);
-  optional art 21 (winter kit).
-- **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.
+- **From the operator:** Gunnerside's five moment panels (33); its echo and wind (32,
+  music optional); optional art 21 (winter kit).
+- **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body,
+  more panel moments for the other missions.

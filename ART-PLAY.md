@@ -184,7 +184,7 @@ authoritative as SPEC.md; it says how things are **now** and keeps no history
 
 **Comic panels** (M52, the operator's: tried behind a switch, then kept for everyone). At
 three story moments a painting pops up over the board as a panel in a graphic novel would:
-tipped 4° (the operator's: 2° read as a panel not quite level), in a thick ink frame on a paper
+tipped 4° (the operator's: 2° read as a panel not quite level), one way then the other in turn (M61, the operator's: left 4°, right 4°, left 3°, right 3°, then again), in a thick ink frame on a paper
 gutter with a hard shadow, popping in from smaller and more tipped (220 ms, from 11°), its caption
 in comic lettering in a paper box over the top-left corner (the mission's
 `comicPanels`, placeholder words for the operator), CLICK OR ANY KEY under it. **The
@@ -193,8 +193,14 @@ away, before a run is picked, in every mission but the course: the mission's own
 painting if there is one, else the shared one (`art` may be a list, tried in order).
 **The landing**, when the drop show ends, over the turn card; **mission accomplished**, on a
 win, once the bang has been seen, beside the back page: the mission's contents panel.
-Each shows once a game; a click or any key puts it away and does nothing else. A
-painting not supplied shows nothing. No sound of its own.
+**A mission's own moments** (M61): a panel with a `when` shows the first time it comes, from
+a short fixed list (`src/panels.js`): the first man onto a terrain (passing through counts,
+landing on it does not), the first shot (once its echoes have come back), an objective
+destroyed (once the bang has been seen), and the night ending failed or withdrawn (beside
+the back page, as success). Only the heavy water plant has any (MISSION-GUNNERSIDE-WORDS.md).
+Each shows once a game; a click or any key puts it away and does nothing else, and one due
+while another is up waits until that one is put away. A painting not supplied shows
+nothing. No sound of its own.
 
 ### Sound
 

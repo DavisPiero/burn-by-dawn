@@ -80,10 +80,10 @@ quiet ones that a painting tells better than a log line.
 - **Mission accomplished**: the contents panel, as for every mission. "THE CELLS WERE
   DESTROYED, AND THE GARRISON NEVER KNEW WHAT WENT WRONG."
 
-**New moments, to develop** (an engine addition: a short fixed list of panel triggers
-in `missions.json`, in the spirit of the win conditions, never a code branch for one
-mission; each shows once a game, behaves as the panels do now, and shows nothing
-until its painting is in):
+**Five moments of its own, built (M61)**: a `when` on each, from a short fixed list of
+panel triggers in `src/panels.js` (ART-PLAY.md, Comic panels), in the spirit of the win
+conditions, never a code branch for one mission. Each shows once a game, behaves as the
+panels do now, and shows nothing until its painting is in (ART-PROMPTS.md Priority 33):
 - **The climb** (`firstEnter` a terrain: Gorge side): a man on a rope going down into the
   dark, the bridge lit above him. "DOWN INTO THE GORGE. ONE SLIP AND THE BRIDGE GUARDS
   WOULD HEAR HIM FALL."
@@ -94,13 +94,14 @@ until its painting is in):
   ON THE SHELF WAS AWAKE NOW." The one panel that is a warning: it is shown at the first
   shot so the cost is felt, not just read.
 - **The bang** (`objectiveDestroyed`: the primary): the hall's windows blown out, the
-  cells spilling. Could serve every mission later, each with its own painting.
+  cells spilling. "A DULL THUMP INSIDE THE HALL — AND THE HEAVY WATER RAN AWAY DOWN THE
+  DRAINS." Could serve every mission later, each with its own painting.
 - **Failed** (`outcome`: failed or withdrawn), a panel beside the back page as success
-  has: parked in ROADMAP.md for every mission, worth doing first here, where it can
-  show the snow closing over the tracks.
+  has, the snow closing over the tracks. "THE SNOW CAME DOWN AND FILLED THEIR TRACKS. THE
+  PLATEAU KEPT ITS SECRETS." (Neutral on the hall: a night can fail with it blown.)
 
-The three in today's slots are asked for in ART-PROMPTS.md Priority 31 (M60), with the
-contents panel and the title card. The new moments' art waits for M61.
+The first shot is any shot the back page counts, a gunner's silenced kill among them,
+as it loses NOT A SHOT FIRED too. The three in today's slots are in (Priority 31).
 
 ### Its pictures
 

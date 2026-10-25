@@ -260,7 +260,8 @@ export default [
     }
     const speers = roster.troopers.find((t) => t.id === 'speers');
     assert(speers.dialogue.onLand.some((l) => /slung/.test(l)), 'the patch is over the roster');
-    equal(Object.keys(mission.comicPanels).sort().join(), 'dakota,landing,success', 'the three slots there are');
+    const slots = Object.keys(mission.comicPanels).filter((m) => !mission.comicPanels[m].when);
+    equal(slots.sort().join(), 'dakota,landing,success', 'the three slots there are; the rest have their moments (M61)');
     equal([mission.comicPanels.dakota.art].flat().at(-1), 'assets/panels/panel-dakota.jpg', 'the Halifax falls back to the shared Dakota');
     for (const cue of [...Object.values(mission.cues), mission.diversionSound, mission.endSounds.success, mission.endSounds.otherwise]) {
       assert(CUE_NAMES.includes(cue), `the cue ${cue} is scored`);

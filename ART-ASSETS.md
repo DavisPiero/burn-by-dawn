@@ -322,7 +322,7 @@ M43b with the title painted in: a 1600 x 400 copy, the painting kept as `_full.j
 The heavy water plant's is `assets/title/title-card-gunnerside.jpg` (M60, ART-PROMPTS.md
 Priority 31b), supplied at M60 with the title painted in, handled as the aqueduct's.
 
-**Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 120 x 80 since M60; the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
+**Contents page panels** (M29b; shown since M31c, a mission's `panel` in missions.json, at 138 x 92 since M61 (120 x 80 at M60); the game loads a 480 x 320 copy, the supplied 1200 x 800 kept as `contents-<id>_full.jpg`): `assets/title/contents-<mission
 id>.jpg`, one per mission (`contents-france.jpg`, `contents-airfield.jpg`, and since
 M60 `contents-gunnerside.jpg`, the operator's; a panel not yet painted leaves the line alone), **3:2,
 1200 x 800** (no smaller than 600 x 400), JPEG, sRGB, opaque, no text. A small painting
@@ -344,6 +344,15 @@ by every mission, and optionally `panel-dakota-<mission id>.jpg`, tried first (t
 water plant's Halifax, `panel-dakota-gunnerside.jpg`, supplied at M60c; a
 mission's `comicPanels.dakota.art` is that list). Supplied at 3:2, 1200 x 800, kept as
 `_full.jpg`; the game loads a 900 x 600 copy. The shared one supplied at M60b (the operator's). Not supplied, nothing is shown.
+
+**The heavy water plant's moment panels** (M61, ART-PROMPTS.md Priority 33; each a
+`comicPanels` entry with a `when`, shown the first time its moment comes): sized and
+handled as the landing panels (3:2, 1200 x 800 supplied and kept as `_full.jpg`, the
+game loads a 900 x 600 copy), in `assets/panels/`: `panel-climb-gunnerside.jpg` (the
+first man onto the gorge side), `panel-inside-gunnerside.jpg` (the first into the cable
+duct), `panel-shot-gunnerside.jpg` (the first shot), `panel-bang-gunnerside.jpg` (the
+cell hall blown) and `panel-failed-gunnerside.jpg` (failed or withdrawn, beside the back
+page). Not supplied, nothing is shown.
 
 **The title painting** (M55, ART-PROMPTS.md Priority 29): `assets/title/title-painting.jpg`,
 **16:10, 2400 x 1500**, JPEG, sRGB, opaque, no text, behind the opening page, cropped
