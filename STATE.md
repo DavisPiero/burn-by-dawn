@@ -16,7 +16,7 @@ Last updated: 25 Oct 2026: M61 built on `m61-panel-triggers`, waiting on sign-of
     withdrawn). Gunnerside has five: the climb, inside the duct, the first shot, the
     bang, failed. **None shows until its painting is in** (ART-PROMPTS.md Priority 33).
   - Two panels due at once wait their turn instead of one cancelling the other.
-  - **Panels tip left and right in turn** (4°, then −4°, 3°, −3°), the operator's ask.
+  - **Panels tip left and right in turn** (left 4°, right 4°, left 3°, right 3°), the operator's ask.
   - **The contents card is bigger**: 980 wide across the whole table, panels 138 × 92.
     150 × 100 does not fit 1280 × 800 at any width, so this is the largest that does.
 - **Four missions and the course, all playable**; Gunnerside's balance is M59b's.
