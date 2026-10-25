@@ -9,10 +9,76 @@ with its prompt, in case a piece is ever redone. `ART-ASSETS.md` is the full man
 still rules on formats. The list at the foot says which pieces the code draws itself, so
 nobody makes those twice. When an item is done, Claude moves it to the archive.
 
-**To make now:** 32 (Gunnerside's echo and wind; its music optional). **Optional:** 21, 17, 18.
+**To make now:** 33 (Gunnerside's five moment panels), 32 (Gunnerside's echo and wind; its music optional). **Optional:** 21, 17, 18.
 
 CORE PROMPT:
 Illustration in the style of a 1980s British boys' comic annual (Commando, Warlord, Battle Picture Weekly). Confident black ink linework with brush-weight variation, flat areas of limited spot colour: olive army green #5C6B4A, warm cream #F2E8D5, brick red #C1272D, slate blue #3D5A73, near-black ink #1A1A18. Light Ben-Day halftone dots for shading only, used sparingly. Printed on cheap matte paper. Strong readable silhouette, clear light and dark shapes, simple background. No text, no lettering, no signature, no watermark, no border, no frame.
+
+---
+
+## Priority 33 — the heavy water plant's moment panels (Gunnerside, M61)
+
+**Why** (M61): the game can now show a comic panel the first time something happens
+in the night, not only at the drop, the landing and the win. Gunnerside has five such
+moments built and waiting; each painting shows the moment its file is in, and until
+then nothing shows. In the order they matter: the first shot is the one panel that
+teaches (the cost of a shot, felt), so it comes first.
+
+**Every one:** as Priority 28's landing panels, **3:2, 1200 × 800, JPEG ~85, sRGB,
+opaque, no text**, the **top-left quarter quiet** (the caption sits there). Claude makes
+the 900 × 600 copy and keeps your original as `_full`. **The setting** is Priority 31's
+(ART-PROMPTS-ARCHIVE.md): Norway, February 1943, the plant on its shelf across a frozen
+gorge, men in white hooded snow smocks, German garrison, snow as cream and pale cold
+blue, night as slate blue and ink.
+
+| # | File | Shown when | Caption (yours to reword, wording sheet O63a–e) |
+|---|---|---|---|
+| 33a | `assets/panels/panel-shot-gunnerside.jpg` | The night's first shot | THE SHOT RANG DOWN THE GORGE. EVERY GERMAN ON THE SHELF WAS AWAKE NOW. |
+| 33b | `assets/panels/panel-climb-gunnerside.jpg` | The first man onto the gorge side | DOWN INTO THE GORGE. ONE SLIP AND THE BRIDGE GUARDS WOULD HEAR HIM FALL. |
+| 33c | `assets/panels/panel-inside-gunnerside.jpg` | The first man into the cable duct | THROUGH THE CABLE DUCT, INTO THE HEART OF THE PLANT. |
+| 33d | `assets/panels/panel-bang-gunnerside.jpg` | The cell hall blown | A DULL THUMP INSIDE THE HALL — AND THE HEAVY WATER RAN AWAY DOWN THE DRAINS. |
+| 33e | `assets/panels/panel-failed-gunnerside.jpg` | Failed or withdrawn, beside the back page | THE SNOW CAME DOWN AND FILLED THEIR TRACKS. THE PLATEAU KEPT ITS SECRETS. |
+
+### Prompt — 33a, the first shot (add the style block)
+
+> A single comic-book panel, night in a deep snowy gorge in Norway, 1943: in the
+> foreground a British commando in a white hooded snow smock fires a Bren light machine
+> gun from the snow, a hard red-orange muzzle flash. The sound is drawn as great pale
+> rings spreading out from the flash and running away down the length of the black
+> gorge. Across the gorge on a shelf, a long concrete plant whose windows are lighting
+> up one after another, a searchlight swinging on. Cold blue and ink, one burst of red.
+
+### Prompt — 33b, the climb (add the style block)
+
+> A single comic-book panel, night, looking up a sheer icy cliff in a narrow gorge in
+> Norway: a British commando in a white hooded snow smock hangs on a rope partway down
+> the rock face, boots braced, rucksack on his back, a long drop to a frozen river below.
+> High above him a small suspension bridge crosses the gorge, a lamp on it and the dark
+> shape of a German sentry. Ink-black rock, pale ice, slate-blue night.
+
+### Prompt — 33c, inside (add the style block)
+
+> A single comic-book panel, a cramped concrete tunnel packed with thick cables and pipes
+> on brackets: a British commando in a white snow smock crawls through it on his elbows
+> toward the viewer, a small electric torch held in his teeth throwing a hard cone of
+> light, a canvas bag of explosives dragged behind him. Darkness all round the torch
+> beam. Ink, concrete grey, the torchlight cream.
+
+### Prompt — 33d, the bang (add the style block)
+
+> A single comic-book panel, inside a long industrial hall at night: a row of tall
+> steel cells along the floor bursts open in a flat, muffled explosion, a white flash,
+> metal peeling back, liquid spilling across the concrete floor, the tall windows along
+> the wall blowing outwards. No men in the room. Ink, steel grey, cream flash, a little
+> fire orange.
+
+### Prompt — 33e, failed (add the style block)
+
+> A single comic-book panel, dawn over a bare snowy plateau in Norway: snow falling
+> thickly, a line of boot prints across the snow already filling in and fading, an
+> abandoned white snow smock and a Sten gun half buried. Far off, small and grey, the
+> lights of the plant still burning on its shelf across the gorge. Quiet, cold, still.
+> Pale cream and cold blue, slate-blue shadows, no fire.
 
 ---
 

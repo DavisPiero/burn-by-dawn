@@ -154,3 +154,11 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-25 | m60c | The operator's flare recording held two takes; the first, longer one (1.71 s) cut, faded 0.4 s out and levelled to RMS 0.15 as their other recordings were, AAC 64 kbps: it is shorter than the 2.5 s made flare, but the whole of one flare
 2026-10-25 | m60c | The operator moved the style block to the top of ART-PROMPTS.md as the "core prompt"; the copy under "How to use this" now points to it, so there is one copy to keep true
 2026-10-25 | m60c | M60c signed off by the operator ("signed off", at the session's wrap) and merged
+2026-10-25 | m61 | Comic panel triggers are a `when` on a `comicPanels` entry, one of four (firstEnter, firstShot, objectiveDestroyed, outcome) in src/panels.js, pure and tested; the Dakota, landing and success keep their own moments, so nothing that was there changes
+2026-10-25 | m61 | firstEnter reads each man's trail (every hex entered this turn), checked after every action: passing through counts, landing on the ground does not (the operator agreed)
+2026-10-25 | m61 | The first-shot panel waits 1.6 s, the burst and its three echoes; a panel for a bang or an ending waits the blast's hold, as success already did (the operator agreed)
+2026-10-25 | m61 | The first shot is state.firstShot, what the back page counts: a silenced kill sets it too, as it costs NOT A SHOT FIRED; so the panel can follow a kill, whose caption says "the shot rang"
+2026-10-25 | m61 | Panels due while one is up wait in a queue and show in turn after each dismissal; before, a second panel cancelled the first still loading
+2026-10-25 | m61 | Panels tip left 4°, right 4°, left 3°, right 3° in turn through a game (the operator's: not always the same angle); a fixed order, not random, so no draw on rng.js and no two in a row alike
+2026-10-25 | m61 | Contents card across the whole table, 980 wide, masthead 8:1, entries closer, panels 138 x 92 (the operator's: bigger card); 150 x 100 measured 57 px over the card at 1280 x 800 with any width, so 138 x 92 is the largest that fits
+2026-10-25 | m61 | Captions guessed for the bang and failed panels (O63d, O63e); failed kept neutral on the hall, as a night can fail with it blown; one painting for failed and withdrawn

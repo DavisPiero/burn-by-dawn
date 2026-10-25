@@ -398,4 +398,4 @@ Hard alone measured a few points.
 | **M59** | Balance: the map and beats to the alert budget, dawn, the gorge, the prints, the levels, the stealth check, the rating's bands |
 | **M59b** | The operator's notes from playing Hard: prints found where an enemy looks, the cell hall a loop with two ways to every charge point, the gate guard, slower patrols, Hard three charges and three men out, an 18-turn night |
 | **M60** | Words, sounds and the art hand-off: the stealth wording everywhere above, the men's lines, the decoy flare, the three panels in today's slots, the art asked for |
-| **M61** | The new panel moments (the panel triggers), if the operator wants them then |
+| **M61** | The new panel moments: the panel triggers and Gunnerside's five, waiting on their paintings (Priority 33) |

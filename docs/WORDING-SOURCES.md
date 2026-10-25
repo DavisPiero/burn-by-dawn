@@ -1957,6 +1957,11 @@ fixed words. The operator does not need this file.
 - O61 | data/missions.json `missions[gunnerside].comicPanels.dakota.caption`
 - O62 | data/missions.json `missions[gunnerside].comicPanels.landing.caption`
 - O63 | data/missions.json `missions[gunnerside].comicPanels.success.caption`
+- O63a | data/missions.json `missions[gunnerside].comicPanels.climb.caption`
+- O63b | data/missions.json `missions[gunnerside].comicPanels.inside.caption`
+- O63c | data/missions.json `missions[gunnerside].comicPanels.firstShot.caption`
+- O63d | data/missions.json `missions[gunnerside].comicPanels.bang.caption`
+- O63e | data/missions.json `missions[gunnerside].comicPanels.failed.caption`
 
 ### What the men say instead
 

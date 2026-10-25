@@ -495,7 +495,7 @@
         "failed": {
           "when": { "outcome": ["failed", "withdrawn"] },
           "art": "assets/panels/panel-failed-gunnerside.jpg",
-          "caption": "THE SNOW CAME DOWN OVER THEIR TRACKS. BY MORNING THE PLANT WAS RUNNING AGAIN."
+          "caption": "THE SNOW CAME DOWN AND FILLED THEIR TRACKS. THE PLATEAU KEPT ITS SECRETS."
         }
       },
       "_cues": "M60: the shot echoes down the gorge; wind under the drop's drone (MISSION-GUNNERSIDE-WORDS.md, Its sounds).",

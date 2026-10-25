@@ -26,8 +26,10 @@ SPEC.md; it says how things are **now** and keeps no history (DECISIONS.md has i
 - **The contents page comes first** (§10 Missions), as the annual's contents: the title
   card with PARATROOPER RAIDS BEHIND ENEMY LINES, then each mission as a contents line, its
   title run to its page number with a dotted leader, its place in italic and a line about
-  it, its painted panel beside it at 120 × 80 (M60: at 150 × 100 the fifth mission ran
-  off the card's foot at 1280 × 800; a panel not yet painted leaves the line alone). A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
+  it, its painted panel beside it at 138 × 92 (a panel not yet painted leaves the line
+  alone). The card is 980 wide, across the whole table rather than the left page, its
+  masthead a slimmer 8:1 strip of the title card (M61, the operator's: bigger; 150 × 100
+  ran the fifth mission off the card's foot at 1280 × 800, 120 × 80 looked mean). A mission to come is printed faint and stamped NEXT YEAR'S ANNUAL in red rubber,
   askew; a click on it does nothing. The course is first, and nothing more marks it
   out (M60b, the operator's: START HERE was taken out, as The Practice Ground says it).
   **Where the operator places things by hand** is `data/layout.json` (M48k): the

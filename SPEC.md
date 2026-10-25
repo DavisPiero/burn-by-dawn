@@ -385,9 +385,9 @@ comes after the current milestone is in `ROADMAP.md`.
 
 ### Current
 
-Next (STATE.md): the operator's choice after M60 (mission 4 worded and playable):
-**M61**, Gunnerside's new comic panel moments (`MISSION-GUNNERSIDE-WORDS.md`), if wanted,
-or the playtests in `ROADMAP.md`. The milestones before are in `MILESTONES.md`. v1.0 is
+**M61**, under way: the comic panels' triggers and Gunnerside's five new moments
+(`MISSION-GUNNERSIDE-WORDS.md`, Comic panels), the panels tipped left and right in turn,
+and a bigger contents card. After it, the playtests in `ROADMAP.md`. The milestones before are in `MILESTONES.md`. v1.0 is
 tagged.
 
 ### Done
