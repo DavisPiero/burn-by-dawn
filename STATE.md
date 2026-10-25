@@ -4,13 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 19 Oct 2026: M60b signed off, merged and pushed.
+Last updated: 25 Oct 2026: M60c built on `m60c-gunnerside-art-flare`, not yet signed off.
 
 ## Where we are
 
-- **`main` is M60b, pushed**: the operator's rewording of Gunnerside carried back,
-  START HERE taken off the contents page, the shared Dakota panel in. The margin says
-  build M60b. Tests: 282 headless, 285 in `tests.html`.
+- **`main` is M60b, pushed. M60c is on its branch**: Gunnerside's Halifax and landing
+  panels and the operator's flare recording in. The margin says build M60c there. Tests: 282 headless, 285 in `tests.html`.
 - **Four missions and the course, all playable**: the heavy water plant (Gunnerside)
   is on the contents page with its painted panel and title card, worded, with its
   sounds made in code.
@@ -20,9 +19,9 @@ Last updated: 19 Oct 2026: M60b signed off, merged and pushed.
   Bonus line; the snow line on turn 1; the gun's cost in red on Suppress, its rollover
   and the enemy's hover row; the hint before the first shot; who fired first on the
   back page; the flare pistol; the men's lines; the three panels' captions.
-- **Its art**: contents panel and title card in (the operator's); the Halifax and
-  landing panels (ART-PROMPTS.md 31c, 31d) show the moment their files are in;
-  **its sounds** (echo, flare, wind, optional music) in Priority 32.
+- **Its art is all in** (the operator's): contents panel, title card, Halifax and
+  landing panels. **Its sounds**: the flare recorded (the operator's); the echo and wind
+  still made in code, asked for in Priority 32 with optional music.
 - MISSION-GUNNERSIDE.md split: words, panels, pictures and sounds now in
   MISSION-GUNNERSIDE-WORDS.md. DECISIONS.md's M50 to M55c moved to the archive.
 - **ART-PROMPTS.md holds only what is still to make** (432 lines); everything made is in
@@ -30,8 +29,7 @@ Last updated: 19 Oct 2026: M60b signed off, merged and pushed.
 
 ## Next
 
-1. **When the panels come** (31c, 31d): Claude makes the game's 900 × 600 copies
-   and keeps the originals as `_full`, then moves the item to the archive.
+1. **Sign off M60c**, or send notes.
 2. Then the operator's choice: **M61** (Gunnerside's new panel moments), the playtests
    (ROADMAP.md), or rewording from the sheet.
 
@@ -59,6 +57,6 @@ Last updated: 19 Oct 2026: M60b signed off, merged and pushed.
 
 ## Owed
 
-- **From the operator:** Gunnerside's two comic panels (31c, 31d) and sounds (32);
+- **From the operator:** Gunnerside's echo and wind (32, music optional);
   optional art 21 (winter kit).
 - **Parked in ROADMAP.md:** tips as in-world briefings, an Advice button, hiding a body.

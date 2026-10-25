@@ -331,7 +331,7 @@ beside each mission's line on the contents page (ART-PROMPTS.md Priority 14).
 **Comic panels** (M52; a mission's `comicPanels` in missions.json, ART-PROMPTS.md
 Priority 28): `assets/panels/panel-landing-<mission id>.jpg`, one per mission
 (`panel-landing-france.jpg`, `panel-landing-airfield.jpg`, `panel-landing-aqueduct.jpg`,
-and `panel-landing-gunnerside.jpg` since M60, Priority 31d),
+and `panel-landing-gunnerside.jpg`, supplied at M60c),
 supplied at **3:2, 1200 x 800**, sRGB, opaque, no text, and kept as
 `panel-landing-<id>_full.jpg`; the game loads a 900 x 600 copy at quality 80 (`sips -s
 format jpeg -s formatOptions 80 -z 600 900`). Shown about 550 x 370 over the board, tipped, in an ink frame the code draws, its
@@ -341,7 +341,7 @@ own `contents-<id>_full.jpg`. A panel not supplied is simply not shown.
 **The Dakota panel** (M55, ART-PROMPTS.md Priority 30): a comic panel shown at START
 GAME, sized and handled as the landing panels: `assets/panels/panel-dakota.jpg`, shared
 by every mission, and optionally `panel-dakota-<mission id>.jpg`, tried first (the heavy
-water plant's Halifax, `panel-dakota-gunnerside.jpg`, Priority 31c; a
+water plant's Halifax, `panel-dakota-gunnerside.jpg`, supplied at M60c; a
 mission's `comicPanels.dakota.art` is that list). Supplied at 3:2, 1200 x 800, kept as
 `_full.jpg`; the game loads a 900 x 600 copy. The shared one supplied at M60b (the operator's). Not supplied, nothing is shown.
 
@@ -441,7 +441,7 @@ names say `.mp3`; the same name in `.m4a` does as well.
 | `whistle.mp3` | a man caught out in a lesson (M47, SPEC §15): the umpire's whistle, one short blast. Supplied (M48h) | ~0.3 s |
 | `stab.mp3` | the knife (M48h): a short close blow. Supplied (M48h); before it the knife played the pencil | ~0.4 s |
 | `echo.mp3` | the heavy water plant's shot (M60): the burst coming back off the far side of a gorge, three times, fainter and duller, over a long low roll away; played just after the gunfire burst (cue `shotEcho`). Made in code until supplied | ~2–3 s |
-| `flare.mp3` | the heavy water plant's decoy flare (M60): a flare pistol's pop far off, a rising hiss as it climbs, a long crackling fizz as it burns. Made in code until supplied | ~2.5 s |
+| `flare.mp3` | the heavy water plant's decoy flare (M60): a flare pistol's pop far off, a rising hiss as it climbs, a long crackling fizz as it burns. Supplied (M60c, the operator's recording) | ~1.7 s |
 | `wind.mp3` | the heavy water plant (M60): wind over high snow, a hollow gust that swells and falls; under the Dakota at the drop, and with the distant dog on a back page withdrawn or failed. Made in code until supplied | ~2.5–4 s |
 | `music-title.mp3` | the opening screens, the orders and picking a run (M17): tense 1940s war-film music, looped until the stick jumps, then faded. Cut it to loop without a seam; the size limit above does not apply, but keep it under 1 MB | ~30–60 s |
 

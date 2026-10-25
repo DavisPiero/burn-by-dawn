@@ -146,7 +146,7 @@ asks which mission is on.
   coming back three times, each later, duller and quieter, over a long low roll down
   the gorge. It is the sound of the mistake. A kill's silenced shot has no echo.
 - **The decoy flare** (`diversionSound` `flare`): a pop, a rising hiss, a long fizz,
-  far off.
+  far off; the operator's recording since M60c (`assets/audio/flare.m4a`).
 - **Wind** over the plateau under the drop's drone (`dropWind`, in place of `drop`).
 - **The back page**: France's fanfare for success; for withdrawn or failed, the wind
   alone, and a dog far off (`windDefeat`, the operator's dog recording).
