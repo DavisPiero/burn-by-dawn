@@ -1154,6 +1154,12 @@
     #briefing-backdrop.orders.on-table::before {
       background: radial-gradient(ellipse 60% 50% at 50% 45%, rgba(242, 232, 213, 0.06), transparent), #2d2b26;
     }
+    /* Its card across the whole table, not the left page only (M61, the
+       operator's: bigger, for bigger panels): 980 wide, the masthead a
+       slimmer strip of the title card, so the five fit 1280 × 800. */
+    #briefing-backdrop.orders.on-table { position: fixed; }
+    #briefing-backdrop.orders.on-table #briefing { width: min(980px, 94%); }
+    #briefing-backdrop.orders.on-table #briefing .title-banner { aspect-ratio: 8 / 1; }
     /* The orders: wider than a turn card, with more air between its parts (M13).
        820 since M31d (800 since M22, 720 before), the operator's: the job's line ends
        at the EXFIL and the bonus paragraph at "before dawn!" unbroken. */
@@ -1478,7 +1484,7 @@
        its title run to its page number with a dotted leader. A mission not
        yet written is printed faint and stamped in red rubber, askew. */
     #briefing .contents { margin: 4px 0 0; padding: 0; list-style: none; }
-    #briefing .contents-entry { position: relative; padding: 0; margin: 0 0 10px; }
+    #briefing .contents-entry { position: relative; padding: 0; margin: 0 0 4px; }
     #briefing .contents-entry::before { content: none; }
     #briefing .contents-pick {
       display: flex;
@@ -1486,7 +1492,7 @@
       align-items: flex-start;
       box-sizing: border-box;
       width: 100%;
-      padding: 4px 10px;
+      padding: 2px 10px;
       text-align: left;
       font: inherit;
       color: inherit;
@@ -1494,10 +1500,10 @@
       border: 2px solid transparent;
     }
     #briefing button.contents-pick { cursor: pointer; }
-    /* A mission's panel (M31c): a small painting beside its line. 120 × 80 since
-       M60, so five missions fit the card at 1280 × 800 (at 150 × 100 the fifth
-       ran off its foot). */
-    #briefing .contents-panel { flex: none; width: 120px; height: 80px; object-fit: cover; border: 2px solid var(--ink); box-sizing: border-box; }
+    /* A mission's panel (M31c): a small painting beside its line. 138 × 92 on
+       the wider card since M61 (120 × 80 at M60, 150 × 100 before, when the
+       fifth ran off its foot); any bigger and the five overflow 1280 × 800. */
+    #briefing .contents-panel { flex: none; width: 138px; height: 92px; object-fit: cover; border: 2px solid var(--ink); box-sizing: border-box; }
     #briefing .contents-words { flex: 1; min-width: 0; display: block; }
     #briefing button.contents-pick:hover,
     #briefing button.contents-pick:focus-visible { border-color: var(--ink); box-shadow: 3px 3px 0 var(--red); outline: none; }
