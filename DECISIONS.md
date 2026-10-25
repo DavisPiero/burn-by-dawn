@@ -153,3 +153,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-25 | m60c | The operator's Halifax and landing panels for Gunnerside in (900 x 600 copies at quality 80, the originals kept as `_full`); Priority 31 done and moved to the archive
 2026-10-25 | m60c | The operator's flare recording held two takes; the first, longer one (1.71 s) cut, faded 0.4 s out and levelled to RMS 0.15 as their other recordings were, AAC 64 kbps: it is shorter than the 2.5 s made flare, but the whole of one flare
 2026-10-25 | m60c | The operator moved the style block to the top of ART-PROMPTS.md as the "core prompt"; the copy under "How to use this" now points to it, so there is one copy to keep true
+2026-10-25 | m60c | M60c signed off by the operator ("signed off", at the session's wrap) and merged

@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 25 Oct 2026: M60c built on `m60c-gunnerside-art-flare`, not yet signed off.
+Last updated: 25 Oct 2026: M60c signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M60b, pushed. M60c is on its branch**: Gunnerside's Halifax and landing
-  panels and the operator's flare recording in. The margin says build M60c there. Tests: 282 headless, 285 in `tests.html`.
+- **`main` is M60c, pushed**: Gunnerside's Halifax and landing panels and the
+  operator's flare recording in. The margin says build M60c. Tests: 282 headless, 285 in `tests.html`.
 - **Four missions and the course, all playable**: the heavy water plant (Gunnerside)
   is on the contents page with its painted panel and title card, worded, with its
   sounds made in code.
@@ -29,9 +29,9 @@ Last updated: 25 Oct 2026: M60c built on `m60c-gunnerside-art-flare`, not yet si
 
 ## Next
 
-1. **Sign off M60c**, or send notes.
-2. Then the operator's choice: **M61** (Gunnerside's new panel moments), the playtests
-   (ROADMAP.md), or rewording from the sheet.
+1. The operator's choice: **M61** (Gunnerside's new panel moments), a playtest on
+   someone new (ROADMAP.md, `docs/PLAYTEST.md`), or Gunnerside's echo and wind
+   recordings (ART-PROMPTS.md Priority 32).
 
 ## Open with the operator
 
