@@ -6,6 +6,7 @@
 // Pure functions. Nothing here touches the DOM.
 
 import { deepMerge } from './difficulty.js';
+import { validatePanelWhen } from './panels.js';
 import { chainFrom, kindOf } from './sabotage.js';
 import { chargeRoom, onBoard } from './units.js';
 
@@ -109,6 +110,8 @@ export function validateMissions(json, url = 'data/missions.json') {
       const art = [panel?.art].flat();
       if (!art.length || art.some((a) => typeof a !== 'string' || !a)) throw new Error(`${where} comicPanels.${moment} needs "art", a file or a list of files`);
       if (panel.caption !== undefined && typeof panel.caption !== 'string') throw new Error(`${where} comicPanels.${moment}.caption must be words`);
+      // Its moment (M61, panels.js): the Dakota, the landing and success have their own and no `when`.
+      if (panel.when !== undefined) validatePanelWhen(panel.when, `${where} comicPanels.${moment}.when`);
     }
     if (m.titleCardLettered !== undefined && typeof m.titleCardLettered !== 'boolean') throw new Error(`${where} "titleCardLettered" must be true or false`);
     if (typeof m.endSounds?.success !== 'string' || typeof m.endSounds?.otherwise !== 'string') {

@@ -458,6 +458,7 @@
           "onKill": ["Shh. That's him sorted.", "Nighty night, pal.", "Not a squeak out of him."]
         }
       },
+      "_comicPanels": "M61 (MISSION-GUNNERSIDE-WORDS.md, Comic panels): the panels after success each show the first time their `when` comes (src/panels.js), once a game, and nothing until their painting is in (ART-PROMPTS.md Priority 33).",
       "comicPanels": {
         "dakota": {
           "art": ["assets/panels/panel-dakota-gunnerside.jpg", "assets/panels/panel-dakota.jpg"],
@@ -470,6 +471,31 @@
         "success": {
           "art": "assets/title/contents-gunnerside_full.jpg",
           "caption": "THE CELLS WERE DESTROYED, AND THE GARRISON NEVER KNEW WHAT WENT WRONG."
+        },
+        "climb": {
+          "when": { "firstEnter": "gorgeSide" },
+          "art": "assets/panels/panel-climb-gunnerside.jpg",
+          "caption": "DOWN INTO THE GORGE. ONE SLIP AND THE BRIDGE GUARDS WOULD HEAR HIM FALL."
+        },
+        "inside": {
+          "when": { "firstEnter": "duct" },
+          "art": "assets/panels/panel-inside-gunnerside.jpg",
+          "caption": "THROUGH THE CABLE DUCT, INTO THE HEART OF THE PLANT."
+        },
+        "firstShot": {
+          "when": { "firstShot": true },
+          "art": "assets/panels/panel-shot-gunnerside.jpg",
+          "caption": "THE SHOT RANG DOWN THE GORGE. EVERY GERMAN ON THE SHELF WAS AWAKE NOW."
+        },
+        "bang": {
+          "when": { "objectiveDestroyed": "primary" },
+          "art": "assets/panels/panel-bang-gunnerside.jpg",
+          "caption": "A DULL THUMP INSIDE THE HALL — AND THE HEAVY WATER RAN AWAY DOWN THE DRAINS."
+        },
+        "failed": {
+          "when": { "outcome": ["failed", "withdrawn"] },
+          "art": "assets/panels/panel-failed-gunnerside.jpg",
+          "caption": "THE SNOW CAME DOWN OVER THEIR TRACKS. BY MORNING THE PLANT WAS RUNNING AGAIN."
         }
       },
       "_cues": "M60: the shot echoes down the gorge; wind under the drop's drone (MISSION-GUNNERSIDE-WORDS.md, Its sounds).",

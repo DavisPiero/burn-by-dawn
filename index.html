@@ -917,7 +917,7 @@
       background: var(--paper);
       border: 4px solid var(--ink);
       box-shadow: 8px 10px 0 rgba(26, 26, 24, 0.55);
-      transform: rotate(-4deg);
+      transform: rotate(var(--tilt, -4deg));
       animation: comic-pop 220ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
     }
     #comic-panel .comic-frame img {
@@ -952,8 +952,8 @@
       text-shadow: 0 1px 2px var(--ink);
     }
     @keyframes comic-pop {
-      from { opacity: 0; transform: rotate(-11deg) scale(0.6); }
-      to { opacity: 1; transform: rotate(-4deg) scale(1); }
+      from { opacity: 0; transform: rotate(calc(var(--tilt, -4deg) * 2.75)) scale(0.6); }
+      to { opacity: 1; transform: rotate(var(--tilt, -4deg)) scale(1); }
     }
 
     /* The results: the back page of the annual (SPEC.md §10), printed over

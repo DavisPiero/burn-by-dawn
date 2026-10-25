@@ -1142,7 +1142,7 @@ const FATE_WORDS = { out: 'got out', killed: 'killed', 'left behind': 'left behi
 /**
  * A comic panel over the board (M52, the operator's): the
  * mission's painting for a moment, tipped in an ink frame, its caption boxed
- * in the corner as a comic's is. `panel` is { src, caption }, or null to put
+ * in the corner as a comic's is. `panel` is { src, caption, tilt }, or null to put
  * it away. Any click or key puts it away (main.js); it covers nothing else.
  */
 export function renderComicPanel(element, panel) {
@@ -1157,6 +1157,8 @@ export function renderComicPanel(element, panel) {
   element.replaceChildren();
   element.dataset.src = panel.src;
   const frame = html('figure', 'comic-frame');
+  // Its tilt (M61): it pops in from nearly three times as far over.
+  frame.style.setProperty('--tilt', `${panel.tilt ?? -4}deg`);
   const img = html('img');
   img.src = panel.src;
   img.alt = '';
