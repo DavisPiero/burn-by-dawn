@@ -162,3 +162,4 @@ Format: `YYYY-MM-DD | M<n> | decision — reason`
 2026-10-25 | m61 | Panels tip left 4°, right 4°, left 3°, right 3° in turn through a game (the operator's: not always the same angle); a fixed order, not random, so no draw on rng.js and no two in a row alike
 2026-10-25 | m61 | Contents card across the whole table, 980 wide, masthead 8:1, entries closer, panels 138 x 92 (the operator's: bigger card); 150 x 100 measured 57 px over the card at 1280 x 800 with any width, so 138 x 92 is the largest that fits
 2026-10-25 | m61 | Captions guessed for the bang and failed panels (O63d, O63e); failed kept neutral on the hall, as a night can fail with it blown; one painting for failed and withdrawn
+2026-10-25 | m61 | M61 signed off by the operator ("merge it, push main and delete the branch") and merged

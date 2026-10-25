@@ -4,12 +4,12 @@ The short version of where the project stands. Rewritten at the end of every ses
 keep it under a page. SPEC.md says how the game works, ROADMAP.md says what comes after
 and why, DECISIONS.md says why things are as they are. This file only says where we are.
 
-Last updated: 25 Oct 2026: M61 built on `m61-panel-triggers`, waiting on sign-off.
+Last updated: 25 Oct 2026: M61 signed off, merged and pushed.
 
 ## Where we are
 
-- **`main` is M60c, pushed.** **M61 is on its branch, `m61-panel-triggers`**, not yet
-  merged: the margin there says M61. Tests: 286 headless, 289 in `tests.html`.
+- **`main` is M61, pushed.** The margin says build M61. Tests: 286 headless, 289 in
+  `tests.html`.
 - **M61 built:**
   - **Comic panels at new moments**: a mission's panel can name when it shows (the first
     man onto a ground, the first shot, an objective blown, the night failed or
@@ -23,10 +23,8 @@ Last updated: 25 Oct 2026: M61 built on `m61-panel-triggers`, waiting on sign-of
 
 ## Next
 
-1. **The operator: try M61 and sign it off** (the contents page; a Gunnerside game:
-   the Dakota tips left, the landing right).
-2. Paint Priority 33 (Gunnerside's five moment panels), the first shot first.
-3. Then: a playtest on someone new (`docs/PLAYTEST.md`), or Gunnerside's echo and wind
+1. Paint Priority 33 (Gunnerside's five moment panels), the first shot first.
+2. Then: a playtest on someone new (`docs/PLAYTEST.md`), or Gunnerside's echo and wind
    recordings (Priority 32).
 
 ## Open with the operator
